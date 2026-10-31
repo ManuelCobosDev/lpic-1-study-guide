@@ -138,9 +138,12 @@ export const routes: Routes = [
   },
   {
     path: 'buscar',
-    loadComponent: loadStub,
-    title: 'Buscador Global',
-    data: { title: 'Búsqueda', breadcrumb: 'Buscar', phase: 'Fase 6' }
+    loadComponent: () =>
+      import('./features/search/pages/search-page.component').then(
+        (m) => m.SearchPageComponent
+      ),
+    title: 'Buscador Global LPIC-1',
+    data: { title: 'Buscador', breadcrumb: 'Buscar', phase: 'Fase 6' }
   },
   {
     path: 'progreso',

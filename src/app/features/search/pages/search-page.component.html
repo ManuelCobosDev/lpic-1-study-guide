@@ -1,0 +1,302 @@
+<div class="search-page-view py-6 sm:py-8">
+  <app-container>
+    <div class="max-w-4xl mx-auto space-y-6">
+      <!-- Encabezado de página -->
+      <header class="space-y-2">
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--text)]">
+          Buscador Global
+        </h1>
+        <p class="text-sm sm:text-base text-[var(--text-muted)]">
+          Busca en el temario oficial LPIC-1, diapositivas interactivas, catálogo de comandos, glosario técnico y prácticas de laboratorio.
+        </p>
+      </header>
+
+      <!-- Barra de búsqueda principal -->
+      <section class="search-box-section bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3 sm:p-4 shadow-sm" aria-label="Formulario de búsqueda">
+        <form (ngSubmit)="onSearchSubmit()" class="flex flex-col sm:flex-row gap-2">
+          <div class="relative flex-1 flex items-center">
+            <span class="absolute left-3.5 text-[var(--text-muted)] text-lg select-none" aria-hidden="true">
+              🔍
+            </span>
+
+            <input
+              type="search"
+              name="searchQuery"
+              [(ngModel)]="query"
+              placeholder="Buscar por comando (grep), código (103.4) o término…"
+              aria-label="Buscar en todo el contenido de LPIC-1"
+              class="w-full pl-10 pr-10 py-2.5 sm:py-3 text-sm sm:text-base rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all font-mono"
+            />
+
+            @if (query().trim()) {
+              <button
+                type="button"
+                (click)="clearSearch()"
+                class="absolute right-3 text-[var(--text-muted)] hover:text-[var(--text)] p-1 rounded-full cursor-pointer"
+                title="Limpiar búsqueda"
+                aria-label="Limpiar búsqueda"
+              >
+                ✕
+              </button>
+            }
+          </div>
+
+          <app-button
+            variant="primary"
+            size="md"
+            (btnClick)="onSearchSubmit()"
+            class="shrink-0"
+          >
+            Buscar
+          </app-button>
+        </form>
+
+        <!-- Filtros por Categoría (Chips) -->
+        <nav class="category-filters mt-4 pt-3 border-t border-[var(--border)] flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1" aria-label="Filtrar por categoría">
+          @for (chip of categoryChips; track chip.id) {
+            <button
+              type="button"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer shrink-0 select-none"
+              [class.bg-[var(--primary)]]="activeFilter() === chip.id"
+              [class.text-[var(--color-slate-900)]]="activeFilter() === chip.id"
+              [class.border-[var(--primary)]]="activeFilter() === chip.id"
+              [class.font-semibold]="activeFilter() === chip.id"
+              [class.bg-[var(--surface-muted)]]="activeFilter() !== chip.id"
+              [class.text-[var(--text-muted)]]="activeFilter() !== chip.id"
+              [class.border-[var(--border)]]="activeFilter() !== chip.id"
+              [class.hover:border-[var(--border-strong)]]="activeFilter() !== chip.id"
+              [class.hover:text-[var(--text)]]="activeFilter() !== chip.id"
+              (click)="setFilter(chip.id)"
+            >
+              <span aria-hidden="true">{{ chip.icon }}</span>
+              <span>{{ chip.label }}</span>
+              @if (query().trim()) {
+                <span
+                  class="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-mono"
+                  [class.bg-[var(--color-slate-900)]/20]="activeFilter() === chip.id"
+                  [class.bg-[var(--surface)]]="activeFilter() !== chip.id"
+                  [class.border]="activeFilter() !== chip.id"
+                  [class.border-[var(--border)]]="activeFilter() !== chip.id"
+                >
+                  {{ countByCategory()[chip.id] }}
+                </span>
+              }
+            </button>
+          }
+        </nav>
+      </section>
+
+      <!-- Mensaje aria-live para accesibilidad -->
+      <div class="sr-only" aria-live="polite" aria-atomic="true">
+        @if (query().trim()) {
+          {{ totalResults() }} resultados encontrados para la búsqueda "{{ query() }}".
+        }
+      </div>
+
+      <!-- Resumen de resultados -->
+      @if (query().trim() && totalResults() > 0) {
+        <div class="flex items-center justify-between text-xs sm:text-sm text-[var(--text-muted)] px-1">
+          <span class="font-mono">{{ rangeLabel() }}</span>
+          <span class="font-mono text-xs">Página {{ currentPage() }} de {{ totalPages() }}</span>
+        </div>
+      }
+
+      <!-- Cuerpo principal: Estado vacío, sugerencias o lista de resultados -->
+      @if (query().trim() === '') {
+        <!-- Estado inicial: Sin búsqueda introducida -->
+        <div class="space-y-6">
+          <app-empty-state
+            title="Introduce un término para comenzar a buscar"
+            description="Puedes buscar por conceptos, opciones de comandos o códigos específicos del temario."
+          >
+            <div icon class="text-4xl" aria-hidden="true">💡</div>
+          </app-empty-state>
+
+          <!-- Búsquedas sugeridas -->
+          <div class="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 sm:p-5 space-y-3">
+            <h2 class="text-xs font-mono uppercase tracking-wider font-bold text-[var(--text-muted)]">
+              Términos frecuentes del examen
+            </h2>
+            <div class="flex flex-wrap gap-2">
+              @for (term of popularTerms; track term) {
+                <button
+                  type="button"
+                  (click)="onSearchSubmit(term)"
+                  class="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] text-xs font-mono text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary-text)] cursor-pointer transition-colors"
+                >
+                  {{ term }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Búsquedas recientes si existen -->
+          @if (searchService.recentSearches().length > 0) {
+            <div class="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 sm:p-5 space-y-3">
+              <div class="flex items-center justify-between">
+                <h2 class="text-xs font-mono uppercase tracking-wider font-bold text-[var(--text-muted)]">
+                  Historial de búsquedas recientes
+                </h2>
+                <button
+                  type="button"
+                  (click)="searchService.clearRecentSearches()"
+                  class="text-xs text-[var(--text-muted)] hover:text-[var(--text)] underline cursor-pointer"
+                >
+                  Borrar historial
+                </button>
+              </div>
+
+              <div class="flex flex-wrap gap-2">
+                @for (item of searchService.recentSearches(); track item) {
+                  <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] text-xs font-mono text-[var(--text)]">
+                    <button
+                      type="button"
+                      (click)="onSearchSubmit(item)"
+                      class="hover:text-[var(--primary-text)] cursor-pointer"
+                    >
+                      {{ item }}
+                    </button>
+                    <button
+                      type="button"
+                      (click)="searchService.removeRecentSearch(item)"
+                      class="text-[var(--text-muted)] hover:text-[var(--danger-text)] cursor-pointer ml-1"
+                      title="Eliminar del historial"
+                      aria-label="Eliminar búsqueda"
+                    >
+                      ×
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @else if (totalResults() === 0) {
+        <!-- Estado sin resultados -->
+        <div class="space-y-6">
+          <app-empty-state
+            title="No se encontraron resultados"
+            [description]="'No hemos encontrado ninguna coincidencia para el término «' + query() + '» en la categoría seleccionada.'"
+          >
+            <div icon class="text-4xl" aria-hidden="true">🔎</div>
+
+            <div actions class="flex flex-wrap items-center justify-center gap-2 mt-2">
+              @if (activeFilter() !== 'all') {
+                <app-button variant="secondary" size="sm" (btnClick)="setFilter('all')">
+                  Ver en todas las categorías
+                </app-button>
+              }
+              <app-button variant="ghost" size="sm" (btnClick)="clearSearch()">
+                Limpiar búsqueda
+              </app-button>
+            </div>
+          </app-empty-state>
+
+          <!-- Sugerencias para reintentar -->
+          <div class="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 sm:p-5 space-y-3">
+            <h2 class="text-xs font-mono uppercase tracking-wider font-bold text-[var(--text-muted)]">
+              Prueba con alguno de estos términos populares
+            </h2>
+            <div class="flex flex-wrap gap-2">
+              @for (term of popularTerms; track term) {
+                <button
+                  type="button"
+                  (click)="onSearchSubmit(term)"
+                  class="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] text-xs font-mono text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary-text)] cursor-pointer transition-colors"
+                >
+                  {{ term }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      } @else {
+        <!-- Lista de Resultados (20 por página) -->
+        <main class="search-results-list space-y-3" role="feed" aria-label="Lista de resultados de búsqueda">
+          @for (item of paginatedResults(); track item.id) {
+            <article class="search-result-card p-4 sm:p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] hover:border-[var(--primary)] transition-all space-y-2 group shadow-xs">
+              <div class="flex items-center justify-between gap-3 flex-wrap">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg" aria-hidden="true">{{ getIconForType(item.type) }}</span>
+                  <app-badge [variant]="getBadgeVariant(item.type)">
+                    {{ getCategoryLabel(item.type) }}
+                  </app-badge>
+                </div>
+
+                @if (item.breadcrumb) {
+                  <span class="text-xs font-mono text-[var(--text-muted)] truncate max-w-md">
+                    {{ item.breadcrumb }}
+                  </span>
+                }
+              </div>
+
+              <!-- Título con enlace y resaltado -->
+              <h2 class="text-base sm:text-lg font-bold text-[var(--text)] group-hover:text-[var(--primary-text)] transition-colors">
+                <a
+                  [routerLink]="getDestinationUrl(item)"
+                  class="hover:underline focus:outline-none focus:ring-2 focus:ring-[var(--primary)] rounded-sm"
+                  [innerHTML]="item.title"
+                ></a>
+              </h2>
+
+              <!-- Snippet contextual con <mark> -->
+              @if (item.snippet) {
+                <p
+                  class="search-snippet text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed font-sans line-clamp-3"
+                  [innerHTML]="item.snippet"
+                ></p>
+              }
+
+              <!-- Enlace de acción rápida -->
+              <div class="pt-2 flex items-center justify-between border-t border-[var(--border)] text-xs text-[var(--text-muted)] font-mono">
+                <span class="truncate max-w-xs">{{ item.url }}</span>
+                <a
+                  [routerLink]="getDestinationUrl(item)"
+                  class="font-semibold text-[var(--primary-text)] hover:underline flex items-center gap-1"
+                >
+                  <span>Abrir recurso</span>
+                  <span aria-hidden="true">→</span>
+                </a>
+              </div>
+            </article>
+          }
+        </main>
+
+        <!-- Barra de Paginación -->
+        @if (totalPages() > 1) {
+          <nav
+            class="pagination-controls flex items-center justify-between gap-2 pt-4 border-t border-[var(--border)]"
+            aria-label="Paginación de resultados"
+          >
+            <app-button
+              variant="secondary"
+              size="sm"
+              [disabled]="currentPage() <= 1"
+              (btnClick)="goToPage(currentPage() - 1)"
+              ariaLabel="Página anterior"
+            >
+              ← Anterior
+            </app-button>
+
+            <div class="flex items-center gap-1">
+              <span class="text-xs sm:text-sm font-mono text-[var(--text-muted)] px-2">
+                Página <strong class="text-[var(--text)]">{{ currentPage() }}</strong> de <strong class="text-[var(--text)]">{{ totalPages() }}</strong>
+              </span>
+            </div>
+
+            <app-button
+              variant="secondary"
+              size="sm"
+              [disabled]="currentPage() >= totalPages()"
+              (btnClick)="goToPage(currentPage() + 1)"
+              ariaLabel="Página siguiente"
+            >
+              Siguiente →
+            </app-button>
+          </nav>
+        }
+      }
+    </div>
+  </app-container>
+</div>
+
