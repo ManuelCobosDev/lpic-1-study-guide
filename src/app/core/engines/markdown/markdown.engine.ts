@@ -71,3 +71,4 @@ export function parseInlineMarkdown(text: string): string {
 
   return sanitizeHtml(html);
 }
+

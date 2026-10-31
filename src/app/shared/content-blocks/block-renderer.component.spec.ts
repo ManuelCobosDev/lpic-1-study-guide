@@ -139,3 +139,4 @@ describe('BlockRendererComponent', () => {
     expect(feedback.textContent).toContain('modo append');
   });
 });
+

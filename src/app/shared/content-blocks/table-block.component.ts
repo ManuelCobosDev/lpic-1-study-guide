@@ -49,3 +49,4 @@ export class TableBlockComponent {
     return parseInlineMarkdown(text);
   }
 }
+

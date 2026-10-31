@@ -143,3 +143,4 @@ export class QuizInlineBlockComponent {
     this.status.set('unanswered');
   }
 }
+

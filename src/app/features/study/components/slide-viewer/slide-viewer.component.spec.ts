@@ -132,3 +132,4 @@ describe('SlideViewerComponent', () => {
     expect(component.ariaAnnouncement()).toContain('Diapositiva 2 de 3: Los tres canales estándar');
   });
 });
+

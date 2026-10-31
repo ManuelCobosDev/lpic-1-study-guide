@@ -22,3 +22,4 @@ export class SlideHtmlBlockComponent {
   readonly assetPath = input.required<string>();
   readonly title = input<string>('Diapositiva HTML');
 }
+

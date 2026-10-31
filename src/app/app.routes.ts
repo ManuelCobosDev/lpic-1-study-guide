@@ -54,7 +54,10 @@ export const routes: Routes = [
       },
       {
         path: 'imprimir',
-        loadComponent: loadStub,
+        loadComponent: () =>
+          import('./features/study/pages/lesson-print-page.component').then(
+            (m) => m.LessonPrintPageComponent
+          ),
         title: 'Imprimir Lección / PDF',
         data: { title: 'Imprimir', breadcrumb: 'Imprimir', phase: 'Fase 5' }
       }

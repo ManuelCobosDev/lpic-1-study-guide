@@ -60,3 +60,4 @@ describe('DiagramViewComponent', () => {
     expect(figcaption.textContent).toContain('Etapas del proceso de inicialización');
   });
 });
+

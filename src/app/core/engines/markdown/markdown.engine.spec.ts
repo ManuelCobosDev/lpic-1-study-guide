@@ -49,3 +49,4 @@ describe('MarkdownEngine (Sanitización y Parser Inline)', () => {
     expect(parsed).toContain('stdout');
   });
 });
+

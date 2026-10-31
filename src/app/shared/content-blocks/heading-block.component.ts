@@ -42,3 +42,4 @@ export class HeadingBlockComponent {
 
   readonly parsedHtml = computed(() => parseInlineMarkdown(this.text()));
 }
+
