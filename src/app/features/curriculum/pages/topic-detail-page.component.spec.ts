@@ -141,6 +141,15 @@ describe('TopicDetailPageComponent', () => {
     expect(globalMissionTitle).toContain('Práctica global del Tema 101');
   });
 
+  it('el árbol lateral marca el subtema actual (Gate 4)', () => {
+    const tree = fixture.nativeElement.querySelector('app-curriculum-tree-sidebar');
+    expect(tree).toBeTruthy();
+
+    const activeLink = tree.querySelector('.subtopic-active');
+    expect(activeLink).toBeTruthy();
+    expect(activeLink.textContent).toContain('101.1');
+  });
+
   it('ofrece navegación adyacente hacia el Tema 102', () => {
     expect(component.prevTopic()).toBeNull(); // Es el primer tema
     expect(component.nextTopic()).not.toBeNull();

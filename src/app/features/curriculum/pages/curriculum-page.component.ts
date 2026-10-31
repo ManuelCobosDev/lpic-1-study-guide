@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { ContentService } from '../../../core/services/content.service';
 import { ProgressService } from '../../../core/services/progress.service';
 import { selectExamProgress } from '../../../core/selectors/progress.selectors';
@@ -11,7 +10,6 @@ import { CurriculumCardComponent } from '../components/curriculum-card/curriculu
   selector: 'app-curriculum-page',
   standalone: true,
   imports: [
-    RouterLink,
     ContainerComponent,
     BadgeComponent,
     ChipComponent,

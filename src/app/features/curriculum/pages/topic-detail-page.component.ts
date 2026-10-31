@@ -9,12 +9,12 @@ import {
   BadgeComponent,
   ButtonComponent,
   CardComponent,
-  ChipComponent,
   ContainerComponent,
   ProgressBarComponent,
   ProgressRingComponent,
   WeightMeterComponent
 } from '../../../shared/ui';
+import { CurriculumTreeSidebarComponent } from '../../../shared/layout/curriculum-tree/curriculum-tree.component';
 
 @Component({
   selector: 'app-topic-detail-page',
@@ -25,10 +25,10 @@ import {
     BadgeComponent,
     ButtonComponent,
     CardComponent,
-    ChipComponent,
     ProgressBarComponent,
     ProgressRingComponent,
-    WeightMeterComponent
+    WeightMeterComponent,
+    CurriculumTreeSidebarComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -279,6 +279,15 @@ import {
             <!-- Columna lateral: Datos del tema y navegación entre temas -->
             <aside class="sidebar-column" aria-label="Información complementaria del tema">
               <div class="sticky-sidebar">
+                <!-- Árbol de Navegación del Temario -->
+                <div class="sidebar-tree-wrapper">
+                  <app-curriculum-tree-sidebar
+                    [manifest]="manifest()"
+                    [completedSubtopics]="progress().completedSubtopics"
+                    [activeSubtopicId]="nextSubtopicId()"
+                  />
+                </div>
+
                 <!-- Tarjeta de Objetivos y Comandos -->
                 <div class="sidebar-box">
                   <h3 class="sidebar-box-title">Ponderación LPI</h3>

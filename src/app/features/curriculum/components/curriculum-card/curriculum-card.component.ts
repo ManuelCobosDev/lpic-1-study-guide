@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { Subtopic, Topic } from '../../../../core/models/curriculum.model';
 import { UserProgress } from '../../../../core/models/progress.model';
 import { selectSubtopicProgress, selectTopicProgress } from '../../../../core/selectors/progress.selectors';
-import { BadgeComponent, ButtonComponent, WeightMeterComponent } from '../../../../shared/ui';
+import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
 
 @Component({
   selector: 'app-curriculum-card',
@@ -11,8 +11,7 @@ import { BadgeComponent, ButtonComponent, WeightMeterComponent } from '../../../
   imports: [
     RouterLink,
     WeightMeterComponent,
-    BadgeComponent,
-    ButtonComponent
+    BadgeComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `

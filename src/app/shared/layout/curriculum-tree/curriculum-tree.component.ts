@@ -300,8 +300,8 @@ export class CurriculumTreeSidebarComponent {
   /** Datos del manifiesto de curriculo a representar */
   readonly manifest = input<CurriculumManifest | null>(null);
 
-  /** Diccionario de subtemas completados (id -> boolean) */
-  readonly completedSubtopics = input<Record<string, boolean>>({});
+  /** Diccionario de subtemas completados (id -> boolean | string timestamp) */
+  readonly completedSubtopics = input<Record<string, boolean | string>>({});
 
   /** Subtema activo opcional via input (o auto-detectado por URL) */
   readonly activeSubtopicId = input<string>('');
