@@ -57,3 +57,10 @@
 - Archivos: docs/agent/INVENTARIO_LEGACY.md, docs/agent/DECISIONS.md.
 - Verificación: auditoría de rutas y recuentos en _legacy/ completada; verificación de que _legacy/ permaneció 100% en modo solo lectura (git status limpio); Gate 1 superado.
 - Pendiente / deuda: ninguna para la Fase 1. Siguiente fase: Fase 2 (Currículo, pipeline de contenido, dominio + tajada vertical 103.4).
+
+## C-0008 · 2026-10-31 · Fase 2 · Modelos de dominio, esquemas Zod y currículo oficial LPIC-1
+- Qué: definición completa de modelos TypeScript en src/app/core/models/ (curriculum, block con unión discriminada, slide con 9 layouts, lesson con esquema predefinido global para doble vista y Wikipedia-style refs, lab, question en español, command, glossary, errata, preferences, progress, attempt). Esquemas de validación Zod en src/app/core/schemas/. Currículo oficial en content-src/curriculum.yaml con los 10 temas y 42 subtemas exactos de 07-curriculo.md (pesos 60/60, omisión de 104.4, referencias a globalLabId y summarySubtopicId). Suite scripts/curriculum.spec.ts con 7 tests unitarios.
+- Por qué: base de dominio y fuente de verdad para el pipeline de contenido y el Gate 2 (03-dominio.md, 07-curriculo.md, 08-fases.md, D-004).
+- Archivos: content-src/curriculum.yaml, src/app/core/models/*.ts, src/app/core/schemas/*.ts, scripts/curriculum.spec.ts, tsconfig.scripts.json.
+- Verificación: npm run typecheck (0 errores con TypeScript estricto), npm run test (13/13 tests pasando, incluidos los 7 tests de currículo), npm run lint, npm run check:tokens, npm run check:boundaries en verde.
+- Pendiente / deuda: Tarea 2.2 (C-0009: PersistedStore, ClockService, PreferencesService, ProgressService y selectores puros de progreso).
