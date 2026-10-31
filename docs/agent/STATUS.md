@@ -2,16 +2,16 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0032
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0033
 
 ## Estado
-- **Fase actual**: Fase 6 (Buscador global) en curso.
-- **Último gate superado**: Gate 5 (etiqueta `fase-5-ok`).
-- **Trabajo en curso**: Fase 6 · Tarea 6.5 (Suite E2E de Gate 6, capturas visuales, npm run verify y etiqueta fase-6-ok).
+- **Fase actual**: Fase 6 completada · Preparado para Fase 7 (Laboratorios y terminal interactivo).
+- **Último gate superado**: Gate 6 (etiqueta `fase-6-ok`).
+- **Trabajo en curso**: ninguno (esperando confirmación del usuario para Fase 7).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Implementar Tarea 6.5 (C-0033): crear `e2e/fase-6.spec.ts` cubriendo todos los criterios del Gate 6 (Ctrl+K abre paleta, búsqueda de comando 'tee' devuelve comando/diapositivas/término, búsqueda '103.4' lleva a subtema, búsqueda sin tilde 'tuberias' encuentra 'tuberías', diapositiva abre con ?slide=2&q=tee y <mark>, /buscar?q= pagina a 20 por página, preguntas de simulador ausentes, auditoría Axe en claro/oscuro y capturas visuales en `e2e/screenshots/fase-6/`). Ejecutar `npm run verify`, revisar capturas con `read_file`, registrar C-0033 y sellar con `git tag fase-6-ok`.
+Iniciar Fase 7 (Laboratorios y terminal interactivo) ejecutando `/ejecutar-fase 7` tras confirmación del usuario: implementar `LabsService`, emulador web de terminal Linux (soporte de piping, redirección y flags), validador declarativo de misiones de laboratorio, página de catálogo `/laboratorios` y vista de práctica guiada `/laboratorios/:id`.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -22,7 +22,7 @@ Implementar Tarea 6.5 (C-0033): crear `e2e/fase-6.spec.ts` cubriendo todos los c
 | 3 | Sistema de diseño | completada (Gate 3 OK) |
 | 4 | Home y Temario | completada (Gate 4 OK) |
 | 5 | Lecciones y Estudiar | completada (Gate 5 OK) |
-| 6 | Buscador | en curso (Tareas 6.1, 6.2, 6.3 y 6.4 OK) |
+| 6 | Buscador | completada (Gate 6 OK) |
 | 7 | Laboratorios | pendiente |
 | 8 | Simulador | pendiente |
 | 9 | Comandos, Glosario y Flashcards | pendiente |

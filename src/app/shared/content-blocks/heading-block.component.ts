@@ -39,7 +39,20 @@ import { parseInlineMarkdown } from '../../core/engines/markdown/markdown.engine
 export class HeadingBlockComponent {
   readonly level = input<1 | 2 | 3 | 4 | 5 | 6>(2);
   readonly text = input.required<string>();
+  readonly highlightQuery = input<string>('');
 
-  readonly parsedHtml = computed(() => parseInlineMarkdown(this.text()));
+  readonly parsedHtml = computed(() => {
+    let html = parseInlineMarkdown(this.text());
+    const q = this.highlightQuery()?.trim();
+    if (q) {
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(${escaped})`, 'gi');
+      html = html.replace(
+        regex,
+        '<mark class="bg-[var(--warning-soft)] text-[var(--warning-text)] px-0.5 rounded font-semibold">$1</mark>'
+      );
+    }
+    return html;
+  });
 }
 

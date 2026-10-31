@@ -63,6 +63,7 @@ export class SearchPageComponent {
 
   // Resultados completos sin paginar para el término actual (todas las categorías)
   private readonly allUnfilteredResults = computed<SearchResultItem[]>(() => {
+    this.searchService.indexingStatus();
     const q = this.query().trim();
     if (!q) return [];
     return this.searchService.search(q, { filter: 'all', limit: 1000 });
@@ -124,6 +125,8 @@ export class SearchPageComponent {
   });
 
   constructor() {
+    void this.searchService.ensureIndex();
+
     // Sincronización desde los query params de la URL
     this.route.queryParamMap.subscribe((params) => {
       const q = params.get('q') || '';
@@ -226,6 +229,29 @@ export class SearchPageComponent {
       default:
         return '📄';
     }
+  }
+
+  getRouterPath(item: SearchResultItem): string {
+    return item.url.split('?')[0] || item.url;
+  }
+
+  getQueryParams(item: SearchResultItem): Record<string, string> {
+    const params: Record<string, string> = {};
+    const q = this.query().trim();
+    if (q) {
+      params['q'] = q;
+    }
+
+    const questionIndex = item.url.indexOf('?');
+    if (questionIndex !== -1) {
+      const queryString = item.url.slice(questionIndex + 1);
+      const searchParams = new URLSearchParams(queryString);
+      searchParams.forEach((val, key) => {
+        params[key] = val;
+      });
+    }
+
+    return params;
   }
 
   /**

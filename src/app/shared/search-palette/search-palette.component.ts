@@ -284,6 +284,7 @@ export class SearchPaletteComponent {
   ];
 
   readonly results = computed<SearchResultItem[]>(() => {
+    this.searchService.indexingStatus();
     const q = this.query().trim();
     if (!q) return [];
     return this.searchService.search(q, {

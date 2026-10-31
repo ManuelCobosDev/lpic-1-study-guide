@@ -25,6 +25,8 @@ describe('SearchPageComponent', () => {
 
   const mockSearchService = {
     isReady: signal(true),
+    indexingStatus: signal<'idle' | 'indexing' | 'ready' | 'error'>('ready'),
+    ensureIndex: vi.fn().mockResolvedValue(undefined),
     isPaletteOpen: signal(false),
     recentSearches: signal<string[]>(['grep', 'tuberías']),
     search: vi.fn().mockImplementation((query: string) => {

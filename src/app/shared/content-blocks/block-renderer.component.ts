@@ -33,7 +33,7 @@ import { DiagramSpec } from '../../core/models/diagram.model';
     @switch (block().type) {
       @case ('heading') {
         @let b = asHeading(block());
-        <app-heading-block [level]="b.level" [text]="b.text" />
+        <app-heading-block [level]="b.level" [text]="b.text" [highlightQuery]="highlightQuery()" />
       }
       @case ('paragraph') {
         @let b = asParagraph(block());

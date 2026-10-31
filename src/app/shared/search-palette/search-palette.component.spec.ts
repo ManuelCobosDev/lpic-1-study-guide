@@ -18,6 +18,8 @@ describe('SearchPaletteComponent', () => {
     addRecentSearch: ReturnType<typeof vi.fn>;
     removeRecentSearch: ReturnType<typeof vi.fn>;
     clearRecentSearches: ReturnType<typeof vi.fn>;
+    indexingStatus: ReturnType<typeof signal<'idle' | 'indexing' | 'ready' | 'error'>>;
+    ensureIndex: ReturnType<typeof vi.fn>;
   };
   let router: Router;
 
@@ -51,7 +53,9 @@ describe('SearchPaletteComponent', () => {
       closePalette: vi.fn().mockImplementation(() => mockSearchService.isPaletteOpen.set(false)),
       addRecentSearch: vi.fn(),
       removeRecentSearch: vi.fn(),
-      clearRecentSearches: vi.fn()
+      clearRecentSearches: vi.fn(),
+      indexingStatus: signal<'idle' | 'indexing' | 'ready' | 'error'>('ready'),
+      ensureIndex: vi.fn().mockResolvedValue(undefined)
     };
 
     const mockPreferencesService = {

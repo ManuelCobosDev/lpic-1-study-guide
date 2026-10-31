@@ -92,9 +92,10 @@ import { KbdComponent } from '../../../../shared/ui/kbd/kbd.component';
                   <div class="cover-eyebrow text-xs font-mono font-bold text-[var(--primary-text)] uppercase tracking-wider mb-2">
                     Objetivo Oficial LPIC-1 {{ subtopicId() }}
                   </div>
-                  <h1 class="text-4xl lg:text-5xl font-black text-[var(--text)] tracking-tight leading-tight mb-4">
-                    {{ slide.title }}
-                  </h1>
+                  <h1
+                    class="text-4xl lg:text-5xl font-black text-[var(--text)] tracking-tight leading-tight mb-4"
+                    [innerHTML]="highlightTitle(slide.title)"
+                  ></h1>
                 } @else {
                   <div class="flex items-center justify-between gap-4 mb-2">
                     <span class="text-xs font-mono font-semibold text-[var(--text-muted)]">
@@ -106,9 +107,10 @@ import { KbdComponent } from '../../../../shared/ui/kbd/kbd.component';
                       </span>
                     }
                   </div>
-                  <h2 class="text-2xl lg:text-3xl font-extrabold text-[var(--text)] tracking-tight leading-snug">
-                    {{ slide.title }}
-                  </h2>
+                  <h2
+                    class="text-2xl lg:text-3xl font-extrabold text-[var(--text)] tracking-tight leading-snug"
+                    [innerHTML]="highlightTitle(slide.title)"
+                  ></h2>
                 }
               </header>
 
@@ -485,6 +487,17 @@ export class SlideViewerComponent implements OnInit, OnDestroy {
     const idx = this.currentIndex();
     return list[idx] ?? null;
   });
+
+  highlightTitle(title: string): string {
+    const q = this.highlightQuery()?.trim();
+    if (!q) return title;
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escaped})`, 'gi');
+    return title.replace(
+      regex,
+      '<mark class="bg-[var(--warning-soft)] text-[var(--warning-text)] px-0.5 rounded font-semibold">$1</mark>'
+    );
+  }
 
   readonly progressPercent = computed(() => {
     const total = this.totalSlides();

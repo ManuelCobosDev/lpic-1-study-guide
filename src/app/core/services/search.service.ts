@@ -64,6 +64,13 @@ export class SearchService {
         if (event.key === '/' && !isInput && !isModifier) {
           event.preventDefault();
           this.openPalette();
+          return;
+        }
+
+        if (event.key === 'Escape' && this.isPaletteOpen()) {
+          event.preventDefault();
+          this.closePalette();
+          return;
         }
       });
     }
@@ -128,54 +135,57 @@ export class SearchService {
           ]
         };
 
-        // Procesar subtemas y lecciones cargadas
+        // Procesar subtemas del manifiesto
         for (const sub of manifest.subtopics) {
           source.subtopics.push({
             id: sub.id,
             topicId: sub.topicId,
             title: sub.title
           });
+        }
 
-          // Intentar obtener lección detallada si está disponible
-          try {
-            const lesson = await this.contentService.getLesson(sub.id);
-            if (lesson && lesson.slides) {
-              for (const slide of lesson.slides) {
-                const headings: string[] = [];
-                const texts: string[] = [];
-                const codes: string[] = [];
+        // Cargar lecciones en paralelo sin bloquear secuencialmente
+        const lessonResults = await Promise.allSettled(
+          manifest.subtopics.map((sub) =>
+            this.contentService.getLesson(sub.id).then((lesson) => ({ sub, lesson }))
+          )
+        );
 
-                for (const b of slide.blocks) {
-                  if (b.type === 'heading') headings.push(b.text);
-                  else if (b.type === 'paragraph') texts.push(b.text);
-                  else if (b.type === 'code') codes.push(b.code);
-                  else if (b.type === 'terminal') {
-                    codes.push(b.lines.map((l) => l.command ?? '').join(' '));
-                  }
+        for (const res of lessonResults) {
+          if (res.status === 'fulfilled' && res.value.lesson?.slides) {
+            const { sub, lesson } = res.value;
+            for (const slide of lesson.slides) {
+              const headings: string[] = [];
+              const texts: string[] = [];
+              const codes: string[] = [];
+
+              for (const b of slide.blocks) {
+                if (b.type === 'heading') headings.push(b.text);
+                else if (b.type === 'paragraph') texts.push(b.text);
+                else if (b.type === 'code') codes.push(b.code);
+                else if (b.type === 'terminal') {
+                  codes.push(b.lines.map((l) => l.command ?? '').join(' '));
                 }
-
-                source.slides.push({
-                  subtopicId: sub.id,
-                  topicId: sub.topicId,
-                  slideNumber: slide.slideNumber,
-                  title: slide.title,
-                  headings,
-                  text: texts.join(' '),
-                  code: codes,
-                  notes: slide.notes
-                });
               }
+
+              source.slides.push({
+                subtopicId: sub.id,
+                topicId: sub.topicId,
+                slideNumber: slide.slideNumber,
+                title: slide.title,
+                headings,
+                text: texts.join(' '),
+                code: codes,
+                notes: slide.notes
+              });
             }
-          } catch {
-            // Si la lección no está disponible o es placeholder, solo se indexa el subtema
           }
         }
 
         this.engine.indexAll(source);
         this.indexingStatus.set('ready');
-      } catch (err) {
+      } catch {
         this.indexingStatus.set('error');
-        throw err;
       } finally {
         this.indexPromise = null;
       }
