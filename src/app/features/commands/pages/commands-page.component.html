@@ -1,0 +1,372 @@
+<app-container size="wide">
+  <div class="commands-page">
+    <!-- Encabezado -->
+    <header class="page-header">
+      <div class="header-titles">
+        <h1 class="page-title">Catálogo de Comandos LPIC-1</h1>
+        <p class="page-subtitle">
+          Referencia rápida de sintaxis, banderas esenciales y ejemplos prácticos requeridos en la certificación.
+        </p>
+      </div>
+      <div class="header-counter">
+        <app-badge variant="info" class="commands-counter-badge">
+          <span class="counter-text">{{ counterText() }}</span>
+        </app-badge>
+      </div>
+    </header>
+
+    <!-- Barra de Filtros y Búsqueda -->
+    <section class="toolbar-section" aria-label="Filtros del catálogo de comandos">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          type="search"
+          class="search-input"
+          placeholder="Buscar comando, opción o descripción..."
+          aria-label="Buscar comandos"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearchInput($event)"
+        />
+        @if (searchQuery()) {
+          <button
+            type="button"
+            class="clear-btn"
+            aria-label="Borrar búsqueda"
+            (click)="onSearchInput('')"
+          >
+            ×
+          </button>
+        }
+      </div>
+
+      <div class="filters-row">
+        <!-- Selector de Categoría -->
+        <div class="filter-group">
+          <label for="category-select" class="filter-label">Categoría:</label>
+          <select
+            id="category-select"
+            class="filter-select category-filter"
+            [ngModel]="selectedCategory()"
+            (ngModelChange)="onCategorySelect($event)"
+          >
+            <option value="todas">Todas las categorías</option>
+            @for (cat of categories(); track cat) {
+              <option [value]="cat">{{ cat }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Selector de Tema -->
+        <div class="filter-group">
+          <label for="topic-select" class="filter-label">Tema:</label>
+          <select
+            id="topic-select"
+            class="filter-select topic-filter"
+            [ngModel]="selectedTopic()"
+            (ngModelChange)="onTopicSelect($event)"
+          >
+            @for (t of availableTopics; track t.id) {
+              <option [value]="t.id">{{ t.label }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Alternador Vista Tabla / Tarjetas -->
+        <div class="view-mode-toggle" role="group" aria-label="Modo de visualización">
+          <button
+            type="button"
+            class="toggle-btn"
+            [class.active]="viewMode() === 'table'"
+            [attr.aria-pressed]="viewMode() === 'table'"
+            (click)="toggleViewMode('table')"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon" aria-hidden="true">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+            <span>Tabla</span>
+          </button>
+          <button
+            type="button"
+            class="toggle-btn"
+            [class.active]="viewMode() === 'cards'"
+            [attr.aria-pressed]="viewMode() === 'cards'"
+            (click)="toggleViewMode('cards')"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon" aria-hidden="true">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>Tarjetas</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Estado de Carga -->
+    @if (loading()) {
+      <div class="loading-skeleton">
+        <app-skeleton variant="text" height="3rem" class="skeleton-item"></app-skeleton>
+        <app-skeleton variant="rectangular" height="20rem" class="skeleton-item"></app-skeleton>
+      </div>
+    }
+
+    <!-- Estado Vacío -->
+    @if (!loading() && filteredCount() === 0) {
+      <app-empty-state
+        title="No se encontraron comandos"
+        description="No hay comandos que coincidan con los filtros aplicados. Intenta ampliar los términos de búsqueda."
+      >
+        <app-button variant="secondary" (btnClick)="resetFilters()">
+          Restablecer filtros
+        </app-button>
+      </app-empty-state>
+    }
+
+    <!-- Vista de Tabla -->
+    @if (!loading() && filteredCount() > 0 && viewMode() === 'table') {
+      <div class="table-container">
+        <table class="commands-table" aria-label="Tabla de comandos LPIC-1">
+          <thead>
+            <tr>
+              <th scope="col" class="col-name">Comando</th>
+              <th scope="col" class="col-category">Categoría</th>
+              <th scope="col" class="col-subtopic">Subtemas</th>
+              <th scope="col" class="col-description">Descripción</th>
+              <th scope="col" class="col-actions">Detalles</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (cmd of filteredCommands(); track cmd.id) {
+              <!-- Fila principal -->
+              <tr
+                class="command-row"
+                [class.expanded]="expandedCommandId() === cmd.id"
+                (click)="toggleExpand(cmd.id)"
+              >
+                <td class="col-name">
+                  <span class="cmd-name-badge font-mono">{{ cmd.name }}</span>
+                </td>
+                <td class="col-category">
+                  <span class="category-pill">{{ cmd.category }}</span>
+                </td>
+                <td class="col-subtopic">
+                  <div class="subtopic-links">
+                    @for (sub of cmd.subtopicIds; track sub) {
+                      <a
+                        [routerLink]="['/estudiar', sub]"
+                        class="subtopic-link"
+                        (click)="$event.stopPropagation()"
+                        title="Estudiar lección {{ sub }}"
+                      >
+                        {{ sub }}
+                      </a>
+                    }
+                  </div>
+                </td>
+                <td class="col-description">
+                  <p class="description-text">{{ cmd.description }}</p>
+                </td>
+                <td class="col-actions">
+                  <button
+                    type="button"
+                    class="expand-btn"
+                    [attr.aria-expanded]="expandedCommandId() === cmd.id"
+                    [attr.aria-label]="expandedCommandId() === cmd.id ? 'Plegar detalles de ' + cmd.name : 'Ver detalles de ' + cmd.name"
+                  >
+                    <svg
+                      class="chevron-icon"
+                      [class.rotated]="expandedCommandId() === cmd.id"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      aria-hidden="true"
+                    >
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+
+              <!-- Fila expandible con detalles completos -->
+              @if (expandedCommandId() === cmd.id) {
+                <tr class="details-row">
+                  <td colspan="5" class="details-cell">
+                    <div class="expanded-panel">
+                      <!-- Sinopsis -->
+                      <div class="detail-block">
+                        <div class="block-header">
+                          <span class="block-title">Sinopsis de uso</span>
+                          <button
+                            type="button"
+                            class="copy-btn"
+                            (click)="copyText(cmd.synopsis, 'syn-' + cmd.id)"
+                            aria-label="Copiar sinopsis"
+                          >
+                            @if (copiedCommandId() === 'syn-' + cmd.id) {
+                              <span class="copied-badge">✓ ¡Copiado!</span>
+                            } @else {
+                              <span>Copiar</span>
+                            }
+                          </button>
+                        </div>
+                        <pre class="code-preview font-mono"><code>{{ cmd.synopsis }}</code></pre>
+                      </div>
+
+                      <!-- Ejemplo práctico -->
+                      @if (cmd.example) {
+                        <div class="detail-block">
+                          <div class="block-header">
+                            <span class="block-title">Ejemplo práctico</span>
+                            <button
+                              type="button"
+                              class="copy-btn"
+                              (click)="copyText(cmd.example, 'ex-' + cmd.id)"
+                              aria-label="Copiar comando de ejemplo"
+                            >
+                              @if (copiedCommandId() === 'ex-' + cmd.id) {
+                                <span class="copied-badge">✓ ¡Copiado!</span>
+                              } @else {
+                                <span>Copiar</span>
+                              }
+                            </button>
+                          </div>
+                          <pre class="code-preview font-mono"><code>{{ cmd.example }}</code></pre>
+                        </div>
+                      }
+
+                      <!-- Opciones y Flags -->
+                      @if (cmd.flags.length > 0) {
+                        <div class="detail-block">
+                          <span class="block-title">Opciones principales (flags)</span>
+                          <ul class="flags-list">
+                            @for (f of cmd.flags; track f.flag) {
+                              <li class="flag-item">
+                                <code class="flag-code font-mono">{{ f.flag }}</code>
+                                <span class="flag-desc">{{ f.description }}</span>
+                              </li>
+                            }
+                          </ul>
+                        </div>
+                      }
+
+                      <!-- Enlaces a lecciones -->
+                      <div class="detail-footer">
+                        <span class="footer-label">Aparece en:</span>
+                        <div class="footer-links">
+                          @for (sub of cmd.subtopicIds; track sub) {
+                            <a [routerLink]="['/estudiar', sub]" class="lesson-deeplink">
+                              Subtema {{ sub }} →
+                            </a>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <!-- Vista de Tarjetas -->
+    @if (!loading() && filteredCount() > 0 && viewMode() === 'cards') {
+      <div class="cards-grid">
+        @for (cmd of filteredCommands(); track cmd.id) {
+          <article class="command-card">
+            <header class="card-header">
+              <div class="card-title-row">
+                <h2 class="card-name font-mono">{{ cmd.name }}</h2>
+                <span class="category-pill">{{ cmd.category }}</span>
+              </div>
+              <p class="card-desc">{{ cmd.description }}</p>
+            </header>
+
+            <div class="card-body">
+              <div class="card-code-block">
+                <div class="code-header">
+                  <span class="code-tag">Sinopsis</span>
+                  <button
+                    type="button"
+                    class="copy-btn-mini"
+                    (click)="copyText(cmd.synopsis, 'syn-' + cmd.id)"
+                    aria-label="Copiar sinopsis"
+                  >
+                    @if (copiedCommandId() === 'syn-' + cmd.id) {
+                      <span>✓</span>
+                    } @else {
+                      <span>Copiar</span>
+                    }
+                  </button>
+                </div>
+                <code class="font-mono block-code">{{ cmd.synopsis }}</code>
+              </div>
+
+              @if (cmd.example) {
+                <div class="card-code-block">
+                  <div class="code-header">
+                    <span class="code-tag">Ejemplo</span>
+                    <button
+                      type="button"
+                      class="copy-btn-mini"
+                      (click)="copyText(cmd.example, 'ex-' + cmd.id)"
+                      aria-label="Copiar ejemplo"
+                    >
+                      @if (copiedCommandId() === 'ex-' + cmd.id) {
+                        <span>✓</span>
+                      } @else {
+                        <span>Copiar</span>
+                      }
+                    </button>
+                  </div>
+                  <code class="font-mono block-code">{{ cmd.example }}</code>
+                </div>
+              }
+
+              @if (expandedCommandId() === cmd.id && cmd.flags.length > 0) {
+                <div class="card-flags-expanded">
+                  <span class="flags-title">Opciones:</span>
+                  <ul class="card-flags-list">
+                    @for (f of cmd.flags; track f.flag) {
+                      <li>
+                        <code class="font-mono">{{ f.flag }}</code>: {{ f.description }}
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+            </div>
+
+            <footer class="card-footer">
+              <button
+                type="button"
+                class="card-expand-toggle"
+                (click)="toggleExpand(cmd.id)"
+              >
+                {{ expandedCommandId() === cmd.id ? 'Menos detalles' : 'Más detalles (' + cmd.flags.length + ' flags)' }}
+              </button>
+
+              <div class="card-subtopics">
+                @for (sub of cmd.subtopicIds; track sub) {
+                  <a [routerLink]="['/estudiar', sub]" class="subtopic-link">
+                    {{ sub }}
+                  </a>
+                }
+              </div>
+            </footer>
+          </article>
+        }
+      </div>
+    }
+  </div>
+</app-container>
+

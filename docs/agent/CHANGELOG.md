@@ -343,4 +343,12 @@
 - Verificación: npm run typecheck (0 errores), npm run test (295 tests unitarios en verde, 279 Angular + 16 Vitest), npm run lint (0 errores), npm run check:tokens (PASS), npm run check:boundaries (PASS).
 - Pendiente / deuda: Tarea 9.3 (C-0047: Pantalla /comandos con vista tabla/tarjetas, filtros en URL y comandos copiables).
 
+## C-0047 · 2026-10-31 · Fase 9 · Pantalla /comandos con vista tabla/tarjetas, filtros bidireccionales en URL y comandos copiables
+- Qué: implementación de la pantalla oficial del catálogo de comandos en `src/app/features/commands/pages/commands-page.component.ts` (HTML/CSS): (1) sincronización bidireccional de parámetros de búsqueda y filtros con la URL (`?q=&cat=&tema=`) tanto al teclear/seleccionar como al recargar la página directamente; (2) contador dinámico y reactivo `N de M comandos` computado desde el catálogo real; (3) alternador de vista accesible entre tabla tabular y cuadrícula de tarjetas responsivas; (4) fila y tarjeta expandible con sinopsis completa, ejemplos prácticos reales de ejecución, lista de opciones/flags con descripción, y deep links con ancla directa a las lecciones de los subtemas correspondientes (`/estudiar/103.4`); (5) botones de copiado al portapapeles de la sinopsis y ejemplos con retroalimentación visual inmediata ("¡Copiado!"). Conexión de la ruta `/comandos` en `src/app/app.routes.ts`, actualización de `scripts/check-stubs.ts` (8 stubs pendientes, 15 implementadas) y de `e2e/fase-0.spec.ts`. Suite de 5 pruebas unitarias en `commands-page.component.spec.ts`.
+- Por qué: requisito de la herramienta de comandos de LPIC-1 (06b-pantallas-herramientas.md §6.8, 08-fases.md, Gate 9).
+- Archivos: src/app/features/commands/pages/commands-page.component.ts, src/app/features/commands/pages/commands-page.component.html, src/app/features/commands/pages/commands-page.component.css, src/app/features/commands/pages/commands-page.component.spec.ts, src/app/app.routes.ts, scripts/check-stubs.ts, e2e/fase-0.spec.ts.
+- Verificación: npm run typecheck (0 errores), npm run test (300 tests unitarios en verde, 284 Angular + 16 Vitest), npm run lint (0 errores), npm run check:tokens (PASS), npm run check:boundaries (PASS), npm run check:stubs (8 pendientes, 15 implementadas).
+- Pendiente / deuda: Tarea 9.4 (C-0048: Pantalla /glosario con componente AlphaIndex A-Z accesible).
+
+
 

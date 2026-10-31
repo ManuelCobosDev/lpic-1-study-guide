@@ -19,7 +19,7 @@ export const STUBS: StubDefinition[] = [
   { route: '/simulador/examen', implementedIn: 'Fase 8', isImplemented: true },
   { route: '/simulador/practica', implementedIn: 'Fase 8', isImplemented: true },
   { route: '/simulador/resultados', implementedIn: 'Fase 8', isImplemented: true },
-  { route: '/comandos', implementedIn: 'Fase 9', isImplemented: false },
+  { route: '/comandos', implementedIn: 'Fase 9', isImplemented: true },
   { route: '/glosario', implementedIn: 'Fase 9', isImplemented: false },
   { route: '/flashcards', implementedIn: 'Fase 9', isImplemented: false },
   { route: '/mapa-mental', implementedIn: 'Fase 10', isImplemented: false },

@@ -134,7 +134,10 @@ export const routes: Routes = [
   },
   {
     path: 'comandos',
-    loadComponent: loadStub,
+    loadComponent: () =>
+      import('./features/commands/pages/commands-page.component').then(
+        (m) => m.CommandsPageComponent
+      ),
     title: 'Comandos Linux LPIC-1',
     data: { title: 'Comandos', breadcrumb: 'Comandos', phase: 'Fase 9' }
   },
