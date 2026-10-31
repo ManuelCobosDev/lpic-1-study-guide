@@ -350,5 +350,13 @@
 - Verificación: npm run typecheck (0 errores), npm run test (300 tests unitarios en verde, 284 Angular + 16 Vitest), npm run lint (0 errores), npm run check:tokens (PASS), npm run check:boundaries (PASS), npm run check:stubs (8 pendientes, 15 implementadas).
 - Pendiente / deuda: Tarea 9.4 (C-0048: Pantalla /glosario con componente AlphaIndex A-Z accesible).
 
+## C-0048 · 2026-10-31 · Fase 9 · Pantalla /glosario con componente presentacional AlphaIndex A–Z y navegación suave
+- Qué: implementación de la pantalla oficial del glosario en `src/app/features/glossary/pages/glossary-page.component.ts` (HTML/CSS) y del componente presentacional `AlphaIndexComponent` en `src/app/features/glossary/components/alpha-index/`: (1) barra de navegación alfabética A a Z sticky en la parte superior con foco accesible, botones con recuento, y deshabilitación visual y semántica (`aria-disabled="true"`) de letras sin términos; (2) buscador textual reactivo en tiempo real con parámetro en URL (`?q=...`); (3) lista agrupada alfabéticamente por inicial con anclas `#letter-X` y salto suave `scrollIntoView`; (4) tarjetas de conceptos técnicos con tipografía mono, definición, enlaces a términos relacionados con salto suave y feedback de destello (`highlight-flash`), y deep links directos a los subtemas correspondientes (`/estudiar/103.4`). Conexión de la ruta `/glosario` en `src/app/app.routes.ts`, actualización de `scripts/check-stubs.ts` (7 stubs pendientes, 16 implementadas) y de `e2e/fase-0.spec.ts`. Suites de pruebas unitarias para `AlphaIndexComponent` (4 tests) y `GlossaryPageComponent` (4 tests).
+- Por qué: requisito del glosario de términos LPIC-1 (06b-pantallas-herramientas.md §6.8, 08-fases.md, Gate 9).
+- Archivos: src/app/features/glossary/components/alpha-index/alpha-index.component.ts, src/app/features/glossary/components/alpha-index/alpha-index.component.html, src/app/features/glossary/components/alpha-index/alpha-index.component.css, src/app/features/glossary/components/alpha-index/alpha-index.component.spec.ts, src/app/features/glossary/pages/glossary-page.component.ts, src/app/features/glossary/pages/glossary-page.component.html, src/app/features/glossary/pages/glossary-page.component.css, src/app/features/glossary/pages/glossary-page.component.spec.ts, src/app/app.routes.ts, scripts/check-stubs.ts, e2e/fase-0.spec.ts.
+- Verificación: npm run typecheck (0 errores), npm run test (308 tests unitarios en verde, 292 Angular + 16 Vitest), npm run lint (0 errores), npm run check:tokens (PASS), npm run check:boundaries (PASS), npm run check:stubs (7 pendientes, 16 implementadas).
+- Pendiente / deuda: Tarea 9.5 (C-0049: Pantalla /flashcards con mazo interactivo Leitner y atajos de teclado).
+
+
 
 

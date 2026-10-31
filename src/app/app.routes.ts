@@ -143,7 +143,10 @@ export const routes: Routes = [
   },
   {
     path: 'glosario',
-    loadComponent: loadStub,
+    loadComponent: () =>
+      import('./features/glossary/pages/glossary-page.component').then(
+        (m) => m.GlossaryPageComponent
+      ),
     title: 'Glosario de Términos',
     data: { title: 'Glosario', breadcrumb: 'Glosario', phase: 'Fase 9' }
   },

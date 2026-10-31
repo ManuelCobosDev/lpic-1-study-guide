@@ -2,18 +2,17 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0047
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0048
 
 ## Estado
 - **Fase actual**: Fase 9 (Comandos, Glosario y Flashcards) EN CURSO.
 - **Último gate superado**: Gate 8 (etiqueta `fase-8-ok`).
-- **Trabajo en curso**: Tarea 9.4 (Pantalla `/glosario` con componente AlphaIndex A-Z accesible).
+- **Trabajo en curso**: Tarea 9.5 (Pantalla `/flashcards` con mazo interactivo Leitner y atajos de teclado).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-1. Tarea 9.4: Implementar la página `GlossaryPageComponent` en `/glosario` (`src/app/features/glossary/pages/glossary-page.component.ts`) y el componente presentacional `AlphaIndexComponent` (`src/app/features/glossary/components/alpha-index/`) con barra sticky A-Z accesible, letras sin términos deshabilitadas (`aria-disabled="true"`), salto suave a la letra seleccionada, lista agrupada con términos relacionados y deep links a lecciones.
-2. Tarea 9.5: Página `/flashcards` con giro animado, interacción por teclado y feedback Leitner.
-3. Tarea 9.6: Suite E2E de Gate 9, capturas visuales, `npm run verify` completo y etiqueta `fase-9-ok`.
+1. Tarea 9.5: Implementar la página `FlashcardsPageComponent` en `/flashcards` (`src/app/features/flashcards/pages/flashcards-page.component.ts`) y el componente `FlashcardCardComponent` (`src/app/features/flashcards/components/flashcard-card/`): selector de mazos (Glosario, Comandos, Mixto), contador "N para hoy", tarjeta centrada con flip animado en 3D (clic o `Espacio`), botones "Otra vez · Difícil · Bien · Fácil" con atajos de teclado accesibles `1–4`, pantalla de resumen de sesión al terminar y persistencia en `StorageService`.
+2. Tarea 9.6: Suite E2E de Gate 9, capturas visuales, `npm run verify` completo y etiqueta `fase-9-ok`.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -27,7 +26,7 @@
 | 6 | Buscador | completada (Gate 6 OK) |
 | 7 | Laboratorios | completada (Gate 7 OK) |
 | 8 | Simulador | completada (Gate 8 OK) |
-| 9 | Comandos, Glosario y Flashcards | en curso (Tareas 9.1 a 9.3 listas) |
+| 9 | Comandos, Glosario y Flashcards | en curso (Tareas 9.1 a 9.4 listas) |
 | 10 | Mapa mental, Progreso, Ajustes, Erratas, Acerca de, 404 | pendiente |
 | 11 | Importación completa del legacy | pendiente |
 | 12 | Pulido, accesibilidad, rendimiento y documentación | pendiente |
@@ -35,13 +34,13 @@
 ## Stubs (páginas aún no implementadas)
 | Ruta | Se implementa en |
 |---|---|
-| `/glosario` · `/flashcards` | Fase 9 |
+| `/flashcards` | Fase 9 |
 | `/mapa-mental` · `/progreso` · `/erratas` · `/ajustes` · `/acerca-de` · `**` (404) | Fase 10 |
 
 ## Comandos útiles
-- `npm run verify`: pipeline completo de 9 etapas en verde (300 unitarios + 50 E2E).
-- `npm run test`: suite de tests unitarios (300 tests en verde: 284 Angular + 16 Vitest).
-- `npm run check:stubs`: lista de stubs pendientes (8 rutas pendientes, 15 implementadas).
+- `npm run verify`: pipeline completo de 9 etapas en verde (308 unitarios + 50 E2E).
+- `npm run test`: suite de tests unitarios (308 tests en verde: 292 Angular + 16 Vitest).
+- `npm run check:stubs`: lista de stubs pendientes (7 rutas pendientes, 16 implementadas).
 
 ## Deuda conocida
 Ninguna.
