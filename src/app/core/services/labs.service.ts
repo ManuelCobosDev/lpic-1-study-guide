@@ -139,6 +139,10 @@ export class LabsService {
     }));
   }
 
+  dismissVmNotice(): void {
+    this.dismissDebianVmNotice();
+  }
+
   resetDebianVmNotice(): void {
     this.store.update((s) => ({
       ...s,

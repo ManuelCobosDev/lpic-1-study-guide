@@ -80,7 +80,10 @@ export const routes: Routes = [
       },
       {
         path: ':id',
-        loadComponent: loadStub,
+        loadComponent: () =>
+          import('./features/labs/pages/lab-detail-page.component').then(
+            (m) => m.LabDetailPageComponent
+          ),
         title: 'Práctica de Laboratorio',
         data: { title: 'Práctica', breadcrumb: 'Práctica', phase: 'Fase 7' }
       }

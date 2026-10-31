@@ -2,16 +2,22 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0036
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0037
 
 ## Estado
 - **Fase actual**: Fase 7 (Laboratorios) en curso.
 - **Último gate superado**: Gate 6 (etiqueta `fase-6-ok`).
-- **Trabajo en curso**: Fase 7 · Tarea 7.4 (Vista de práctica guiada `/laboratorios/:id`).
+- **Trabajo en curso**: Fase 7 · Tarea 7.5 (Suite E2E Gate 7, capturas visuales y cierre de fase).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Implementar Tarea 7.4 (C-0037): crear `LabDetailPageComponent` en `src/app/features/labs/pages/lab-detail-page.component.ts` (HTML y CSS) para la ruta `/laboratorios/:id`. Integrar barra de progreso sticky superior, banner descartable de advertencia "Necesitas una VM Debian 12" con modal explicativo, distribución en 2 columnas con `LabStepperComponent` a la izquierda y el detalle de la misión/paso activo a la derecha con comandos copiables (`app-code-block`), salida esperada plegable, callouts de pistas/examen, botones de marcar como hecho, ver solución y reiniciar práctica, y diálogo sobrio de felicitación al completar todos los pasos. Reemplazar el stub en `app.routes.ts`, actualizar `scripts/check-stubs.ts` y tests unitarios en `lab-detail-page.component.spec.ts`.
+Implementar Tarea 7.5 (C-0038): crear `e2e/fase-7.spec.ts` para verificar todos los criterios de Gate 7:
+1. En `/laboratorios/103.4`, marcar 3 pasos de práctica, recargar la página y verificar persistencia en `localStorage`.
+2. Copiar un comando escribe en el portapapeles (`navigator.clipboard`).
+3. Completar todos los pasos abre el diálogo sobrio de enhorabuena y el catálogo `/laboratorios` marca la práctica como completada.
+4. Los filtros del catálogo (Tema, Dificultad, Estado, Búsqueda de texto) funcionan de forma reactiva.
+5. Auditoría Axe en modo claro y oscuro sin violaciones críticas o serias.
+6. Generación de capturas visuales en `e2e/screenshots/fase-7/` (catálogo y detalle, desktop y móvil, claro y oscuro), inspección con `read_file`, ejecución completa de `npm run verify`, commit y etiquetado `git tag fase-7-ok`.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -23,7 +29,7 @@ Implementar Tarea 7.4 (C-0037): crear `LabDetailPageComponent` en `src/app/featu
 | 4 | Home y Temario | completada (Gate 4 OK) |
 | 5 | Lecciones y Estudiar | completada (Gate 5 OK) |
 | 6 | Buscador | completada (Gate 6 OK) |
-| 7 | Laboratorios | en curso (Tareas 7.1, 7.2 y 7.3 OK) |
+| 7 | Laboratorios | en curso (Tareas 7.1 a 7.4 OK) |
 | 8 | Simulador | pendiente |
 | 9 | Comandos, Glosario y Flashcards | pendiente |
 | 10 | Mapa mental, Progreso, Ajustes, Erratas, Acerca de, 404 | pendiente |
@@ -33,15 +39,14 @@ Implementar Tarea 7.4 (C-0037): crear `LabDetailPageComponent` en `src/app/featu
 ## Stubs (páginas aún no implementadas)
 | Ruta | Se implementa en |
 |---|---|
-| `/laboratorios/:id` | Fase 7 |
 | `/simulador` · `/simulador/examen` · `/simulador/practica` · `/simulador/resultados` | Fase 8 |
 | `/comandos` · `/glosario` · `/flashcards` | Fase 9 |
 | `/mapa-mental` · `/progreso` · `/erratas` · `/ajustes` · `/acerca-de` · `**` (404) | Fase 10 |
 
 ## Comandos útiles
 - `npm run verify`: pipeline completo de 9 etapas en verde.
-- `npm run test`: suite de tests unitarios (195 tests en verde).
-- `npm run check:stubs`: lista de stubs pendientes (14 rutas pendientes, 9 implementadas).
+- `npm run test`: suite de tests unitarios (203 tests en verde).
+- `npm run check:stubs`: lista de stubs pendientes (13 rutas pendientes, 10 implementadas).
 
 ## Deuda conocida
 Ninguna.

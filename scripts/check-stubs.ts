@@ -14,7 +14,7 @@ export const STUBS: StubDefinition[] = [
   { route: '/estudiar/:subtema', implementedIn: 'Fase 5', isImplemented: true },
   { route: '/estudiar/:subtema/imprimir', implementedIn: 'Fase 5', isImplemented: true },
   { route: '/laboratorios', implementedIn: 'Fase 7', isImplemented: true },
-  { route: '/laboratorios/:id', implementedIn: 'Fase 7', isImplemented: false },
+  { route: '/laboratorios/:id', implementedIn: 'Fase 7', isImplemented: true },
   { route: '/simulador', implementedIn: 'Fase 8', isImplemented: false },
   { route: '/simulador/examen', implementedIn: 'Fase 8', isImplemented: false },
   { route: '/simulador/practica', implementedIn: 'Fase 8', isImplemented: false },
