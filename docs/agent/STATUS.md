@@ -2,16 +2,16 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0020
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0021
 
 ## Estado
 - **Fase actual**: Fase 4 (Home y Temario) en curso.
 - **Último gate superado**: Gate 3 (etiqueta `fase-3-ok`).
-- **Trabajo en curso**: Fase 4 · Tarea 4.4 (Detalle de Tema `/temario/:examen/:tema`).
+- **Trabajo en curso**: Fase 4 · Tarea 4.5 (Suite E2E `e2e/fase-4.spec.ts`, auditoría Axe, capturas, Gate 4).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Implementar Tarea 4.4 (C-0021): crear `TopicDetailPageComponent` en `src/app/features/curriculum/pages/topic-detail-page.component.ts` con cabecera de progreso del tema, botón "Continuar", secciones de teoría, prácticas con retos guiados, cuestionario temático de examen, subtema resumen y navegación entre temas; conectar la ruta en `app.routes.ts`, actualizar `check-stubs.ts` (stubs bajan a 18) y añadir tests unitarios.
+Implementar Tarea 4.5 (C-0022): crear `e2e/fase-4.spec.ts` validando todos los criterios de Gate 4 (progreso 0% inicial sin checks verdes, 4 tarjetas 101 con igual altura, títulos sin elipsis, flujo interactivo de navegación Home → Temario → Tema → Subtema, cobertura de 23 subtemas del 101 y 19 del 102, métricas calculadas dinámicamente y auditoría Axe en claro/oscuro), capturas de pantalla, ejecutar `npm run verify` con 9 etapas en verde, tag `fase-4-ok` y detención obligatoria.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -20,7 +20,7 @@ Implementar Tarea 4.4 (C-0021): crear `TopicDetailPageComponent` en `src/app/fea
 | 1 | Inventario del legacy (solo lectura) + decisión D-004 | completada (Gate 1 OK) |
 | 2 | Currículo, pipeline de contenido, dominio + tajada vertical 103.4 | completada (Gate 2 OK) |
 | 3 | Sistema de diseño | completada (Gate 3 OK) |
-| 4 | Home y Temario | en curso (Tareas 4.1, 4.2 y 4.3 OK) |
+| 4 | Home y Temario | en curso (Tareas 4.1 a 4.4 OK) |
 | 5 | Lecciones y Estudiar | pendiente |
 | 6 | Buscador | pendiente |
 | 7 | Laboratorios | pendiente |
@@ -33,7 +33,6 @@ Implementar Tarea 4.4 (C-0021): crear `TopicDetailPageComponent` en `src/app/fea
 ## Stubs (páginas aún no implementadas)
 | Ruta | Se implementa en |
 |---|---|
-| `/temario/:examen/:tema` | Fase 4 |
 | `/estudiar/:subtema` · `/estudiar/:subtema/imprimir` | Fase 5 |
 | `/buscar` | Fase 6 |
 | `/laboratorios` · `/laboratorios/:id` | Fase 7 |
@@ -43,8 +42,8 @@ Implementar Tarea 4.4 (C-0021): crear `TopicDetailPageComponent` en `src/app/fea
 
 ## Comandos útiles
 - `npm run verify`: pipeline completo en verde (9 etapas).
-- `npm run test`: suite de tests unitarios (87 tests en verde).
-- `npm run check:stubs`: lista de stubs pendientes (19 rutas).
+- `npm run test`: suite de tests unitarios (92 tests en verde).
+- `npm run check:stubs`: lista de stubs pendientes (18 rutas, 0 de Fase 4 pendientes).
 
 ## Deuda conocida
 Ninguna.
