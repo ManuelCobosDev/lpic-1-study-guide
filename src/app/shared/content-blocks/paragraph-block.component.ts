@@ -27,8 +27,24 @@ export class ParagraphBlockComponent {
   private readonly wikiRefService = inject(WikiRefService);
 
   readonly text = input.required<string>();
+  readonly highlightQuery = input<string>('');
 
-  readonly parsedHtml = computed(() => parseInlineMarkdown(this.text()));
+  readonly parsedHtml = computed(() => {
+    let html = parseInlineMarkdown(this.text());
+    const query = this.highlightQuery()?.trim();
+    if (query && query.length > 1) {
+      const terms = query.split(/\s+/).filter((t) => t.length > 1);
+      for (const term of terms) {
+        const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const pattern = new RegExp(`(?![^<]*>)(${escaped})`, 'gi');
+        html = html.replace(
+          pattern,
+          '<mark class="bg-[var(--warning-soft)] text-[var(--warning-text)] px-0.5 rounded font-semibold">$1</mark>'
+        );
+      }
+    }
+    return html;
+  });
 
   handleClick(event: MouseEvent): void {
     const target = event.target as HTMLElement | null;

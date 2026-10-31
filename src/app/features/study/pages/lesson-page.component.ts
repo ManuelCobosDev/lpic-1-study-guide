@@ -178,6 +178,7 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
               [subtopicId]="l.id"
               [slides]="l.slides"
               [currentSlideNumber]="currentSlideNumber()"
+              [highlightQuery]="highlightQuery()"
               (slideChange)="onSlideChange($event)"
             />
           } @else if (vista() === 'web') {
@@ -406,6 +407,7 @@ export class LessonPageComponent implements OnInit, OnDestroy {
 
   readonly currentSlideNumber = signal<number>(1);
   readonly vista = signal<DefaultStudyView>('slides');
+  readonly highlightQuery = signal<string>('');
   readonly activeTab = signal<'lab' | 'notes' | 'reference'>('notes');
   readonly subtopicNote = signal<string>('');
 
@@ -458,6 +460,13 @@ export class LessonPageComponent implements OnInit, OnDestroy {
         if (!isNaN(slideNum) && slideNum > 0) {
           this.currentSlideNumber.set(slideNum);
         }
+      }
+
+      const qParam = qParams.get('q');
+      if (qParam) {
+        this.highlightQuery.set(qParam);
+      } else {
+        this.highlightQuery.set('');
       }
 
       const vistaParam = qParams.get('vista') as DefaultStudyView | null;

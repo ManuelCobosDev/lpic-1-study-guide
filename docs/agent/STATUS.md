@@ -2,16 +2,16 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0029
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0030
 
 ## Estado
 - **Fase actual**: Fase 6 (Buscador global) en curso.
 - **Último gate superado**: Gate 5 (etiqueta `fase-5-ok`).
-- **Trabajo en curso**: Fase 6 · Tarea 6.2 (`SearchService` y atajos globales).
+- **Trabajo en curso**: Fase 6 · Tarea 6.3 (Paleta de búsqueda modal `SearchPaletteComponent`).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Implementar Tarea 6.2 (C-0030): crear `SearchService` (`src/app/core/services/search.service.ts`) con carga lazy en segundo plano a partir de `ContentService`, persistencia de las 8 búsquedas recientes en `localStorage`, atajos globales `Ctrl+K`/`Cmd+K`/`/`, y soporte de resaltado de términos por query param `?q=` en `LessonPageComponent` y bloques.
+Implementar Tarea 6.3 (C-0031): crear `SearchPaletteComponent` (`src/app/shared/search-palette/search-palette.component.ts`) accesible con `role="dialog"`, input grande, chips de categoría (`Todo`, `Temario`, `Diapositivas`, `Comandos`, `Glosario`, `Prácticas`), navegación por teclado (`↑↓`, `Enter`, `Tab`, `Esc`), historial de búsquedas recientes y enlace a `/buscar?q=...`. Integrar en `HeaderComponent` y `ShellComponent`.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -22,7 +22,7 @@ Implementar Tarea 6.2 (C-0030): crear `SearchService` (`src/app/core/services/se
 | 3 | Sistema de diseño | completada (Gate 3 OK) |
 | 4 | Home y Temario | completada (Gate 4 OK) |
 | 5 | Lecciones y Estudiar | completada (Gate 5 OK) |
-| 6 | Buscador | en curso (Tarea 6.1 OK) |
+| 6 | Buscador | en curso (Tareas 6.1 y 6.2 OK) |
 | 7 | Laboratorios | pendiente |
 | 8 | Simulador | pendiente |
 | 9 | Comandos, Glosario y Flashcards | pendiente |
@@ -41,7 +41,7 @@ Implementar Tarea 6.2 (C-0030): crear `SearchService` (`src/app/core/services/se
 
 ## Comandos útiles
 - `npm run verify`: pipeline completo de 9 etapas en verde.
-- `npm run test`: suite de tests unitarios (154 tests en verde).
+- `npm run test`: suite de tests unitarios (159 tests en verde).
 - `npm run check:stubs`: lista de stubs pendientes (16 rutas pendientes, 7 implementadas).
 
 ## Deuda conocida

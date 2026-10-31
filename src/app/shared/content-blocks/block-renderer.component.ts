@@ -37,7 +37,7 @@ import { DiagramSpec } from '../../core/models/diagram.model';
       }
       @case ('paragraph') {
         @let b = asParagraph(block());
-        <app-paragraph-block [text]="b.text" />
+        <app-paragraph-block [text]="b.text" [highlightQuery]="highlightQuery()" />
       }
       @case ('code') {
         @let b = asCode(block());
@@ -113,6 +113,7 @@ import { DiagramSpec } from '../../core/models/diagram.model';
 })
 export class BlockRendererComponent {
   readonly block = input.required<Block>();
+  readonly highlightQuery = input<string>('');
 
   // Type casts auxiliares para el template
   asHeading(b: Block) { return b as Extract<Block, { type: 'heading' }>; }

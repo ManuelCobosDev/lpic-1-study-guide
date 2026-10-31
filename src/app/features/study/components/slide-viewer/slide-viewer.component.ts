@@ -120,7 +120,7 @@ import { KbdComponent } from '../../../../shared/ui/kbd/kbd.component';
                 [class.gap-8]="slide.layout === 'two-column'"
               >
                 @for (block of slide.blocks; track $index) {
-                  <app-block-renderer [block]="block" />
+                  <app-block-renderer [block]="block" [highlightQuery]="highlightQuery()" />
                 }
               </div>
 
@@ -450,6 +450,7 @@ export class SlideViewerComponent implements OnInit, OnDestroy {
   readonly slides = input.required<Slide[]>();
   readonly currentSlideNumber = model<number>(1);
   readonly viewedSlides = input<number[]>([]);
+  readonly highlightQuery = input<string>('');
 
   readonly slideChange = output<number>();
   readonly slideViewed = output<number>();
