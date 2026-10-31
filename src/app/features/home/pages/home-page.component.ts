@@ -216,15 +216,15 @@ interface FaqItem {
 
               <div class="exam-meta-row mb-6">
                 <div>
-                  <span class="text-xs text-[var(--text-subtle)] block">Peso oficial</span>
+                  <span class="text-xs text-[var(--text-muted)] block">Peso oficial</span>
                   <span class="font-mono font-bold text-sm">60 / 60</span>
                 </div>
                 <div>
-                  <span class="text-xs text-[var(--text-subtle)] block">Temas</span>
+                  <span class="text-xs text-[var(--text-muted)] block">Temas</span>
                   <span class="font-mono font-bold text-sm">4 temas (101–104)</span>
                 </div>
                 <div>
-                  <span class="text-xs text-[var(--text-subtle)] block">Subtemas</span>
+                  <span class="text-xs text-[var(--text-muted)] block">Subtemas</span>
                   <span class="font-mono font-bold text-sm">23 subtemas</span>
                 </div>
               </div>
@@ -249,15 +249,15 @@ interface FaqItem {
 
             <div class="exam-meta-row mb-6">
               <div>
-                <span class="text-xs text-[var(--text-subtle)] block">Peso oficial</span>
+                <span class="text-xs text-[var(--text-muted)] block">Peso oficial</span>
                 <span class="font-mono font-bold text-sm">60 / 60</span>
               </div>
               <div>
-                <span class="text-xs text-[var(--text-subtle)] block">Temas</span>
+                <span class="text-xs text-[var(--text-muted)] block">Temas</span>
                 <span class="font-mono font-bold text-sm">6 temas (105–110)</span>
               </div>
               <div>
-                <span class="text-xs text-[var(--text-subtle)] block">Subtemas</span>
+                <span class="text-xs text-[var(--text-muted)] block">Subtemas</span>
                 <span class="font-mono font-bold text-sm">19 subtemas</span>
               </div>
             </div>

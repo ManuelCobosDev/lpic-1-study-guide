@@ -165,7 +165,7 @@ import { ThemeService } from '../../../core/services/theme.service';
       background-color: var(--surface-muted);
     }
     .nav-link-active {
-      color: var(--primary);
+      color: var(--primary-text);
       font-weight: 600;
       border-bottom: 2px solid var(--primary);
       border-radius: 0;

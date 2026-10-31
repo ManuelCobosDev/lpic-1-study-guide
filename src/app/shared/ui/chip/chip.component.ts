@@ -13,6 +13,7 @@ import { CommonModule } from '@angular/common';
       >
         <button
           type="button"
+          [attr.aria-label]="ariaLabel()"
           class="inline-flex items-center text-inherit bg-transparent border-none p-0 cursor-pointer focus:outline-hidden"
           (click)="handleClick()"
         >
@@ -46,6 +47,7 @@ import { CommonModule } from '@angular/common';
 export class ChipComponent {
   readonly selected = input<boolean>(false);
   readonly removable = input<boolean>(false);
+  readonly ariaLabel = input<string>('Etiqueta');
   readonly chipToggle = output<boolean>();
   readonly chipRemove = output<void>();
 

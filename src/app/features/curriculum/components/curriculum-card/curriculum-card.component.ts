@@ -32,8 +32,11 @@ import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
         </div>
 
         <h3 class="topic-title">
-          <a [routerLink]="['/temario', topic().examId, topic().id]" class="title-link">
-            {{ topic().title }}
+          <a
+            [routerLink]="['/temario', topic().examId, topic().id]"
+            class="title-link"
+          >
+            <span class="title-text">{{ topic().title }}</span>
           </a>
         </h3>
 
@@ -66,7 +69,7 @@ import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
               </span>
 
               <!-- Título a máx 2 líneas sin truncar con elipsis -->
-              <span class="subtopic-title">
+              <span class="subtopic-title text-[var(--text)]">
                 {{ sub.title }}
               </span>
 
@@ -132,13 +135,17 @@ import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
     :host {
       display: block;
       height: 100%;
+      color: var(--text);
     }
 
     .curriculum-card {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      height: 100%;
+      height: 640px;
+      min-height: 640px;
+      max-height: 640px;
+      box-sizing: border-box;
       border-radius: var(--radius-2xl, 16px);
       background-color: var(--surface);
       border: 1px solid var(--border);
@@ -159,6 +166,13 @@ import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
     /* Cabecera */
     .card-header {
       padding: 24px;
+      height: 156px;
+      min-height: 156px;
+      max-height: 156px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
       border-bottom: 1px solid var(--border);
       background-color: var(--surface);
     }
@@ -185,18 +199,23 @@ import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
     .topic-title {
       font-size: 18px;
       line-height: 24px;
+      min-height: 48px;
       font-weight: 700;
       color: var(--text);
       margin: 0 0 10px 0;
     }
 
     .title-link {
-      color: inherit;
       text-decoration: none;
+      display: inline-block;
+    }
+
+    .title-text {
+      color: var(--text);
       transition: color 0.15s ease;
     }
 
-    .title-link:hover {
+    .title-link:hover .title-text {
       color: var(--primary-text);
     }
 
@@ -222,6 +241,9 @@ import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
       display: flex;
       flex-direction: column;
       flex: 1 1 auto;
+      height: 420px;
+      max-height: 420px;
+      overflow-y: auto;
       background-color: var(--surface);
     }
 
@@ -252,14 +274,15 @@ import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
       background-color: transparent;
     }
 
-    .subtopic-link {
+    .subtopic-link,
+    .subtopic-link:visited {
       display: flex;
       align-items: center;
       gap: 12px;
       flex: 1 1 auto;
       min-width: 0;
       text-decoration: none;
-      color: inherit;
+      color: var(--text);
     }
 
     /* Chip de código mono fijo de 52 px */
@@ -359,6 +382,12 @@ import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
     /* Pie Fijo */
     .card-footer {
       padding: 12px 16px;
+      height: 64px;
+      min-height: 64px;
+      max-height: 64px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
       background-color: var(--surface-sunken);
       border-top: 1px solid var(--border);
       margin-top: auto;

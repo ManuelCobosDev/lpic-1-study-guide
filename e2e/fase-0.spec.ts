@@ -80,12 +80,12 @@ test.describe('Gate 0: Shell, Persistencia, Accesibilidad y Rutas Stub', () => {
     expect(darkViolations).toHaveLength(0);
   });
 
-  test('todas las rutas responden con su stub etiquetado y ninguna da 404', async ({ page }) => {
+  test('todas las rutas responden con su stub etiquetado o pagina real y ninguna da 404', async ({ page }) => {
     const testRoutes = [
       '/',
       '/temario',
       '/temario/101',
-      '/temario/101/101.1',
+      '/temario/101/101',
       '/estudiar/101.1',
       '/estudiar/101.1/imprimir',
       '/laboratorios',
@@ -105,15 +105,22 @@ test.describe('Gate 0: Shell, Persistencia, Accesibilidad y Rutas Stub', () => {
       '/acerca-de'
     ];
 
+    const implementedRoutes = ['/', '/temario', '/temario/101', '/temario/101/101'];
+
     for (const r of testRoutes) {
       const response = await page.goto(r);
       expect(response?.status()).toBe(200);
 
-      const titleEl = page.locator('#page-title');
-      await expect(titleEl).toBeVisible();
+      if (!implementedRoutes.includes(r)) {
+        const titleEl = page.locator('#page-title');
+        await expect(titleEl).toBeVisible();
 
-      const stubBadge = page.locator('app-not-implemented-page');
-      await expect(stubBadge).toBeVisible();
+        const stubBadge = page.locator('app-not-implemented-page');
+        await expect(stubBadge).toBeVisible();
+      } else {
+        await expect(page.locator('app-shell')).toBeVisible();
+        await expect(page.locator('app-not-implemented-page')).toHaveCount(0);
+      }
     }
   });
 

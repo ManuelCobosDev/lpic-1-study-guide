@@ -122,11 +122,14 @@ import { CurriculumTreeSidebarComponent } from '../../../shared/layout/curriculu
                         <span class="subtopic-code font-mono">{{ sub.id }}</span>
                         <div class="subtopic-card-body">
                           <h3 class="subtopic-card-title">
-                            <a [routerLink]="['/estudiar', sub.id]" class="subtopic-title-link">
-                              {{ sub.title }}
+                            <a
+                              [routerLink]="['/estudiar', sub.id]"
+                              class="subtopic-title-link"
+                            >
+                              <span class="subtopic-name">{{ sub.title }}</span>
                             </a>
                           </h3>
-                          <div class="subtopic-card-meta font-mono">
+                          <div class="subtopic-card-meta font-mono text-[var(--text-muted)]">
                             <span>Peso {{ sub.weight }}</span>
                             <span>·</span>
                             <span>{{ sub.estimatedMinutes }} min</span>
@@ -362,8 +365,14 @@ import { CurriculumTreeSidebarComponent } from '../../../shared/layout/curriculu
     </div>
   `,
   styles: [`
+    :host {
+      display: block;
+      color: var(--text);
+    }
+
     .topic-detail-page {
       padding: 32px 0 64px 0;
+      color: var(--text);
     }
 
     .back-link {
@@ -563,16 +572,22 @@ import { CurriculumTreeSidebarComponent } from '../../../shared/layout/curriculu
       font-size: 14px;
       line-height: 20px;
       font-weight: 600;
+      color: var(--text);
       margin: 0 0 4px 0;
     }
 
     .subtopic-title-link {
-      color: var(--text);
       text-decoration: none;
+      display: inline-block;
+    }
+
+    .subtopic-name {
+      color: var(--text);
+      font-weight: 600;
       transition: color 0.15s ease;
     }
 
-    .subtopic-title-link:hover {
+    .subtopic-title-link:hover .subtopic-name {
       color: var(--primary-text);
     }
 

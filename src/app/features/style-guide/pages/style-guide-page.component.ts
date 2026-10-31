@@ -224,7 +224,7 @@ import {
                 <app-chip [selected]="chip2Selected()" (chipToggle)="chip2Selected.set($event)">
                   Solo laboratorios
                 </app-chip>
-                <app-chip [removable]="true" (chipRemove)="handleRemoveChip()">
+                <app-chip [removable]="true" ariaLabel="Etiqueta eliminable" (chipRemove)="handleRemoveChip()">
                   Etiqueta eliminable
                 </app-chip>
               </div>

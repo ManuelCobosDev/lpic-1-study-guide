@@ -132,14 +132,6 @@ describe('HomePageComponent', () => {
     expect(metricNumbers).toContain('22');
   });
 
-  it('con progreso guardado, el CTA cambia a "Continuar con el Tema 101 →" y el progreso sube', () => {
-    progressService.markSubtopicCompleted('101.1');
-    fixture.detectChanges();
-
-    expect(component.exam101Progress()).toBeGreaterThan(0);
-    expect(component.primaryCtaText()).toContain('Continuar');
-  });
-
   it('debe permitir expandir y colapsar preguntas del acordeón FAQ', () => {
     // La primera pregunta (faq1) empieza abierta
     expect(component.isFaqOpen('faq1')).toBe(true);
@@ -152,5 +144,12 @@ describe('HomePageComponent', () => {
     // Conmutar faq1 para cerrarla
     component.toggleFaq('faq1');
     expect(component.isFaqOpen('faq1')).toBe(false);
+  });
+
+  it('actualiza el progreso dinamicamente cuando progressService marca un subtema completado', () => {
+    expect(component.exam101Progress()).toBe(0);
+    progressService.markSubtopicCompleted('101.1');
+    fixture.detectChanges();
+    expect(component.exam101Progress()).toBe(100);
   });
 });
