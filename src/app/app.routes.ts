@@ -34,7 +34,10 @@ export const routes: Routes = [
       },
       {
         path: ':examen/:tema',
-        loadComponent: loadStub,
+        loadComponent: () =>
+          import('./features/curriculum/pages/topic-detail-page.component').then(
+            (m) => m.TopicDetailPageComponent
+          ),
         title: 'Tema de Estudio',
         data: { title: 'Tema', breadcrumb: 'Tema', phase: 'Fase 4' }
       }

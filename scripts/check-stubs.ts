@@ -10,7 +10,7 @@ export const STUBS: StubDefinition[] = [
   { route: '/', implementedIn: 'Fase 4', isImplemented: true },
   { route: '/temario', implementedIn: 'Fase 4', isImplemented: true },
   { route: '/temario/:examen', implementedIn: 'Fase 4', isImplemented: true },
-  { route: '/temario/:examen/:tema', implementedIn: 'Fase 4', isImplemented: false },
+  { route: '/temario/:examen/:tema', implementedIn: 'Fase 4', isImplemented: true },
   { route: '/estudiar/:subtema', implementedIn: 'Fase 5', isImplemented: false },
   { route: '/estudiar/:subtema/imprimir', implementedIn: 'Fase 5', isImplemented: false },
   { route: '/laboratorios', implementedIn: 'Fase 7', isImplemented: false },
