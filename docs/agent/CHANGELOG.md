@@ -50,3 +50,10 @@
 - Archivos: e2e/fase-0.spec.ts, e2e/screenshots/fase-0/*.png, .postcssrc.json, src/styles.css, src/app/shared/layout/header/header.component.ts, src/app/shared/layout/not-implemented-page/not-implemented-page.component.ts, src/app/shared/ui/button/button.component.ts.
 - Verificación: npm run verify (9 etapas en verde: build:content, validate:content, typecheck, lint, check:tokens, check:boundaries, test con 7 unitarios, build y e2e con 5 tests Playwright pasando). Inspección visual de capturas aprobada.
 - Pendiente / deuda: ninguna para la Fase 0. Siguiente fase: Fase 1 (Inventario del contenido legacy).
+
+## C-0007 · 2026-10-31 · Fase 1 · Inventario de solo lectura del material legacy y registro de decisión D-004
+- Qué: realización del inventario exhaustivo de _legacy/ (INVENTARIO_LEGACY.md). Descubrimiento de fuentes JSON limpias en Recurso Final Definitivo/content/ y contenido completo existente para el Examen 102. Registro formal de la decisión D-004 (Estrategia C híbrida, esquema JSON global de lecciones, auto-vinculación de glosario/comandos estilo Wikipedia, idioma 100% en español, estructura de 5 bloques por tema y Examen 102 en Fase 11).
+- Por qué: requisito obligatorio de la Fase 1 y Gate 1 (08-fases.md).
+- Archivos: docs/agent/INVENTARIO_LEGACY.md, docs/agent/DECISIONS.md.
+- Verificación: auditoría de rutas y recuentos en _legacy/ completada; verificación de que _legacy/ permaneció 100% en modo solo lectura (git status limpio); Gate 1 superado.
+- Pendiente / deuda: ninguna para la Fase 1. Siguiente fase: Fase 2 (Currículo, pipeline de contenido, dominio + tajada vertical 103.4).
