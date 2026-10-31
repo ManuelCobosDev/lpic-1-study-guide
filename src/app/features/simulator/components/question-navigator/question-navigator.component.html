@@ -1,0 +1,110 @@
+<!-- Botón disparador para móviles -->
+<div class="mobile-drawer-trigger">
+  <button
+    type="button"
+    class="mobile-trigger-btn"
+    (click)="toggleMobileDrawer()"
+    [attr.aria-expanded]="isMobileDrawerOpen()"
+    aria-controls="question-nav-panel"
+  >
+    <span class="trigger-label">Preguntas ({{ answeredCount() }}/{{ questions().length }})</span>
+    <span class="trigger-indicator">
+      @if (flaggedCount() > 0) {
+        <span class="mobile-flag-pill">🚩 {{ flaggedCount() }}</span>
+      }
+      <svg
+        class="chevron-icon"
+        [class.open]="isMobileDrawerOpen()"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <polyline points="18 15 12 9 6 15"></polyline>
+      </svg>
+    </span>
+  </button>
+</div>
+
+<!-- Panel de navegación (columna en desktop, cajón en móvil) -->
+<aside
+  id="question-nav-panel"
+  class="navigator-panel"
+  [class.mobile-open]="isMobileDrawerOpen()"
+  aria-label="Panel de navegación entre preguntas del examen"
+>
+  <div class="navigator-header">
+    <h3 class="navigator-title">Preguntas</h3>
+    <div class="navigator-summary">
+      <span class="stat-badge">
+        <strong>{{ answeredCount() }}</strong> / {{ questions().length }} respondidas
+      </span>
+      @if (flaggedCount() > 0) {
+        <span class="stat-badge flagged">
+          <strong>{{ flaggedCount() }}</strong> para revisar
+        </span>
+      }
+    </div>
+  </div>
+
+  <!-- Leyenda de estados -->
+  <div class="navigator-legend" role="note" aria-label="Leyenda de estados">
+    <div class="legend-item">
+      <span class="legend-dot current"></span>
+      <span>Actual</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot answered"></span>
+      <span>Respondida</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot unanswered"></span>
+      <span>Pendiente</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot flagged"></span>
+      <span>Marcada</span>
+    </div>
+  </div>
+
+  <!-- Rejilla numerada de preguntas -->
+  <nav class="questions-grid" aria-label="Lista de preguntas">
+    @for (q of questions(); track q.id; let idx = $index) {
+      <button
+        type="button"
+        class="grid-item"
+        [class.current]="idx === currentIndex()"
+        [class.answered]="isAnswered(q.id)"
+        [class.flagged]="isFlagged(q.id)"
+        (click)="onQuestionClick(idx)"
+        [attr.aria-current]="idx === currentIndex() ? 'true' : null"
+        [attr.aria-label]="
+          'Pregunta ' +
+          (idx + 1) +
+          (idx === currentIndex() ? ', actual' : '') +
+          (isAnswered(q.id) ? ', respondida' : ', sin responder') +
+          (isFlagged(q.id) ? ', marcada para revisar' : '')
+        "
+      >
+        <span class="item-number">{{ idx + 1 }}</span>
+        @if (isFlagged(q.id)) {
+          <span class="flag-indicator" aria-hidden="true">★</span>
+        }
+      </button>
+    }
+  </nav>
+</aside>
+
+<!-- Fondo oscuro para el cajón en móvil cuando está abierto -->
+@if (isMobileDrawerOpen()) {
+  <div
+    class="mobile-backdrop"
+    (click)="toggleMobileDrawer()"
+    aria-hidden="true"
+  ></div>
+}
+

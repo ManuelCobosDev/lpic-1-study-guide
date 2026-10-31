@@ -2,20 +2,24 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0040
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0041
 
 ## Estado
 - **Fase actual**: Fase 8 (Simulador) en curso.
 - **Último gate superado**: Gate 7 (etiqueta `fase-7-ok`).
-- **Trabajo en curso**: Fase 8 · Tarea 8.3 (Componentes de UI del simulador).
+- **Trabajo en curso**: Fase 8 · Tarea 8.4 (Páginas /simulador y /simulador/practica).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Implementar Tarea 8.3 (C-0041): crear los componentes presentacionales accesibles del simulador en `src/app/features/simulator/components/`:
-1. `TimerBarComponent` (`timer-bar/`): barra sticky superior con minutos:segundos, cambio de color semántico (ámbar a ≤ 10 min, rojo a ≤ 2 min), botón "Finalizar examen", y `aria-live`.
-2. `QuestionCardComponent` (`question-card/`): tarjeta centrada (máx 760 px) para tipos `single`, `multiple` (con aviso "Elige N respuestas") y `fill` (input normalizado), botón "Marcar para revisar", y modo práctica con solución/explicación inmediata.
-3. `QuestionNavigatorComponent` (`question-navigator/`): panel con selector numerado por pregunta con estados accesibles (actual, respondida, sin responder, marcada), adaptativo (columna en desktop, cajón en móvil).
-Suites de pruebas unitarias para cada componente.
+Implementar Tarea 8.4 (C-0042):
+1. `SimulatorHubPageComponent` (`src/app/features/simulator/pages/simulator-hub-page.component.ts`):
+   - Banner "Retomar simulacro en curso" si hay sesión activa en `ExamService`.
+   - Tarjetas principales "Simulacro cronometrado" (iniciar examen de 60 preguntas o disponibles, 90 min) y "Práctica libre" (sin límite de tiempo).
+   - Sección "Entrenar por tema" (chips para los 4 temas LPIC-1 con enlace directo a `/simulador/practica?tema=...`).
+   - Tabla "Últimos intentos" (5 filas: fecha, modo, puntuación oficial 200–800, badge Aprobado/Suspendido, enlace a resultados).
+2. `SimulatorPracticePageComponent` (`src/app/features/simulator/pages/simulator-practice-page.component.ts`):
+   - Práctica libre filtrable por tema, subtema, tipo, navegación pregunta a pregunta con botón "Comprobar respuesta" y retroalimentación pedagógica inmediata.
+3. Conectar rutas en `src/app/app.routes.ts` y suites unitarias para ambas páginas.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -28,7 +32,7 @@ Suites de pruebas unitarias para cada componente.
 | 5 | Lecciones y Estudiar | completada (Gate 5 OK) |
 | 6 | Buscador | completada (Gate 6 OK) |
 | 7 | Laboratorios | completada (Gate 7 OK) |
-| 8 | Simulador | en curso (Tareas 8.1 y 8.2 OK) |
+| 8 | Simulador | en curso (Tareas 8.1, 8.2 y 8.3 OK) |
 | 9 | Comandos, Glosario y Flashcards | pendiente |
 | 10 | Mapa mental, Progreso, Ajustes, Erratas, Acerca de, 404 | pendiente |
 | 11 | Importación completa del legacy | pendiente |
@@ -43,7 +47,7 @@ Suites de pruebas unitarias para cada componente.
 
 ## Comandos útiles
 - `npm run verify`: pipeline completo de 9 etapas en verde.
-- `npm run test`: suite de tests unitarios (228 tests en verde).
+- `npm run test`: suite de tests unitarios (243 tests en verde).
 - `npm run check:stubs`: lista de stubs pendientes (13 rutas pendientes, 10 implementadas).
 
 ## Deuda conocida
