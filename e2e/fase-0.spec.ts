@@ -116,7 +116,9 @@ test.describe('Gate 0: Shell, Persistencia, Accesibilidad y Rutas Stub', () => {
       '/laboratorios',
       '/laboratorios/101.1',
       '/simulador',
-      '/simulador/practica'
+      '/simulador/examen',
+      '/simulador/practica',
+      '/simulador/resultados'
     ];
 
     for (const r of testRoutes) {

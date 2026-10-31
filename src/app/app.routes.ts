@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { canStartExamGuard } from './features/simulator/guards/can-start-exam.guard';
 
 const loadStub = () =>
   import('./shared/layout/not-implemented-page/not-implemented-page.component').then(
@@ -103,7 +104,11 @@ export const routes: Routes = [
       },
       {
         path: 'examen',
-        loadComponent: loadStub,
+        loadComponent: () =>
+          import('./features/simulator/pages/simulator-exam-page.component').then(
+            (m) => m.SimulatorExamPageComponent
+          ),
+        canActivate: [canStartExamGuard],
         title: 'Modo Simulacro Real',
         data: { title: 'Simulacro', breadcrumb: 'Simulacro', phase: 'Fase 8' }
       },
@@ -118,7 +123,10 @@ export const routes: Routes = [
       },
       {
         path: 'resultados',
-        loadComponent: loadStub,
+        loadComponent: () =>
+          import('./features/simulator/pages/simulator-results-page.component').then(
+            (m) => m.SimulatorResultsPageComponent
+          ),
         title: 'Resultados del Examen',
         data: { title: 'Resultados', breadcrumb: 'Resultados', phase: 'Fase 8' }
       }

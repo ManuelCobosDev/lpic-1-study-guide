@@ -2,28 +2,26 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0042
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0043
 
 ## Estado
 - **Fase actual**: Fase 8 (Simulador) en curso.
 - **Último gate superado**: Gate 7 (etiqueta `fase-7-ok`).
-- **Trabajo en curso**: Fase 8 · Tarea 8.5 (Páginas /simulador/examen y /simulador/resultados).
+- **Trabajo en curso**: Fase 8 · Tarea 8.6 (Suite E2E Gate 8, capturas y cierre de fase).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Implementar Tarea 8.5 (C-0043):
-1. `SimulatorExamPageComponent` (`src/app/features/simulator/pages/simulator-exam-page.component.ts`):
-   - Pantalla completa sin sidebar, integración de `TimerBar`, `QuestionCard` y `QuestionNavigator`.
-   - Cuenta atrás sincronizada con `startedAt` persistido (sobrevive a recargas con tiempo exacto).
-   - Guardado continuo de respuestas y marcas para revisión en `ExamService`.
-   - Diálogo modal de confirmación al pulsar "Finalizar examen" que advierte sobre preguntas sin responder o marcadas.
-   - Finalización automática al agotarse el tiempo y redirección a `/simulador/resultados?id=...`.
-2. `SimulatorResultsPageComponent` (`src/app/features/simulator/pages/simulator-results-page.component.ts`):
-   - Carga del intento mediante query param `?id=...` desde el historial persistido (funciona tanto al terminar como tras recarga de página).
-   - Anillo con puntuación oficial LPI 200–800, badge Aprobado (≥ 500) o Suspendido, y tiempo total invertido.
-   - Desglose por tema con barras de acierto y detección de temas débiles (< 70%) con deep links al temario.
-   - Acordeón de revisión de preguntas con filtros Todas / Falladas / Marcadas, mostrando respuesta dada, respuesta correcta y explicación oficial.
-3. Conexión de rutas en `app.routes.ts` con `canStartExamGuard`, actualización de `scripts/check-stubs.ts` (stubs bajan a 9) y `e2e/fase-0.spec.ts`.
+Implementar Tarea 8.6 (C-0044):
+1. Crear suite E2E `e2e/fase-8.spec.ts` validando de forma objetiva:
+   - Iniciar simulacro, responder preguntas, marcar para revisión, **recargar la página y verificar que se reanuda con el tiempo restante correcto y las respuestas persistidas**.
+   - Finalizar el examen produce puntuación oficial 200–800 y resultados por tema en `/simulador/resultados?id=…` **que también funciona tras recargar**.
+   - En modo práctica (`/simulador/practica`), la explicación aparece al comprobar.
+   - `canStartExamGuard` bloquea o redirige si no hay preguntas.
+   - Auditoría Axe en modo claro y oscuro limpia de violaciones críticas/serias.
+   - Generación de capturas visuales en `e2e/screenshots/fase-8/`.
+2. Inspeccionar capturas con `read_file` (Regla R5).
+3. Ejecutar `npm run verify` completo (las 9 etapas en verde).
+4. Registrar en CHANGELOG/STATUS, crear commit, tag `git tag fase-8-ok` y **DETENERSE**.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -36,7 +34,7 @@ Implementar Tarea 8.5 (C-0043):
 | 5 | Lecciones y Estudiar | completada (Gate 5 OK) |
 | 6 | Buscador | completada (Gate 6 OK) |
 | 7 | Laboratorios | completada (Gate 7 OK) |
-| 8 | Simulador | en curso (Tareas 8.1, 8.2, 8.3 y 8.4 OK) |
+| 8 | Simulador | en curso (Tareas 8.1 a 8.5 OK) |
 | 9 | Comandos, Glosario y Flashcards | pendiente |
 | 10 | Mapa mental, Progreso, Ajustes, Erratas, Acerca de, 404 | pendiente |
 | 11 | Importación completa del legacy | pendiente |
@@ -45,14 +43,13 @@ Implementar Tarea 8.5 (C-0043):
 ## Stubs (páginas aún no implementadas)
 | Ruta | Se implementa en |
 |---|---|
-| `/simulador/examen` · `/simulador/resultados` | Fase 8 |
 | `/comandos` · `/glosario` · `/flashcards` | Fase 9 |
 | `/mapa-mental` · `/progreso` · `/erratas` · `/ajustes` · `/acerca-de` · `**` (404) | Fase 10 |
 
 ## Comandos útiles
 - `npm run verify`: pipeline completo de 9 etapas en verde.
-- `npm run test`: suite de tests unitarios (251 tests en verde).
-- `npm run check:stubs`: lista de stubs pendientes (11 rutas pendientes, 12 implementadas).
+- `npm run test`: suite de tests unitarios (262 tests en verde).
+- `npm run check:stubs`: lista de stubs pendientes (9 rutas pendientes, 14 implementadas).
 
 ## Deuda conocida
 Ninguna.

@@ -1,0 +1,271 @@
+<app-container>
+  <div class="results-page-layout">
+    <!-- Migas de pan -->
+    <nav class="breadcrumbs" aria-label="Migas de pan">
+      <ol class="breadcrumbs-list">
+        <li><a routerLink="/" class="breadcrumb-link">Home</a></li>
+        <li class="separator" aria-hidden="true">/</li>
+        <li><a routerLink="/simulador" class="breadcrumb-link">Simulador</a></li>
+        <li class="separator" aria-hidden="true">/</li>
+        <li class="current" aria-current="page">Resultados</li>
+      </ol>
+    </nav>
+
+    @if (!attempt()) {
+      <div class="no-results-card" role="region" aria-label="Sin resultados encontrados">
+        <h2 class="no-results-title">No se han encontrado resultados de este examen</h2>
+        <p class="no-results-desc">El intento solicitado no existe en tu historial o ha sido eliminado.</p>
+        <app-button variant="primary" size="md" routerLink="/simulador">
+          Volver al simulador
+        </app-button>
+      </div>
+    } @else {
+      <!-- Cabecera de resultados y puntuación oficial -->
+      <section
+        class="score-hero"
+        [class.passed]="passed()"
+        [class.failed]="!passed()"
+        aria-labelledby="score-hero-title"
+      >
+        <div class="hero-main-content">
+          <div class="hero-badge-row">
+            @if (passed()) {
+              <app-badge variant="success">Aprobado</app-badge>
+            } @else {
+              <app-badge variant="danger">Suspendido</app-badge>
+            }
+            <span class="exam-type-pill">
+              {{ attempt()!.mode === 'exam' ? 'Simulacro oficial' : 'Práctica libre' }}
+            </span>
+          </div>
+
+          <h1 id="score-hero-title" class="hero-title">
+            {{ passed() ? '¡Enhorabuena! Has superado el examen' : 'Examen no superado' }}
+          </h1>
+
+          <p class="hero-meta">
+            Realizado el <strong>{{ attempt()!.startedAt | date:'medium' }}</strong>
+            · Tiempo invertido: <strong>{{ timeSpentFormatted() }}</strong>
+          </p>
+
+          <!-- Acciones principales del hero -->
+          <div class="hero-actions">
+            <app-button
+              variant="primary"
+              size="md"
+              (clicked)="repeatExam()"
+              aria-label="Repetir este simulacro de examen"
+            >
+              Repetir simulacro
+            </app-button>
+
+            @if (weakTopicIds().length > 0) {
+              <app-button
+                variant="secondary"
+                size="md"
+                (clicked)="goToPracticeWeakTopics()"
+                aria-label="Entrenar los temas con menos del 70% de acierto"
+              >
+                Practicar temas débiles
+              </app-button>
+            }
+
+            <app-button
+              variant="ghost"
+              size="md"
+              routerLink="/simulador"
+              aria-label="Volver a la página principal del simulador"
+            >
+              Volver al simulador
+            </app-button>
+          </div>
+        </div>
+
+        <!-- Anillo / Marcador numérico de puntuación oficial -->
+        <div class="score-display-card" role="region" aria-label="Puntuación oficial del examen">
+          <div class="score-number-group">
+            <span class="score-label">Puntuación oficial</span>
+            <span class="score-value font-mono">{{ score() }}</span>
+            <span class="score-scale">Escala LPI: 200 – 800</span>
+            <span class="score-cutoff">Mínimo para aprobar: 500 puntos</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Desglose de resultados por tema -->
+      <section class="topic-breakdown-section" aria-labelledby="topic-breakdown-title">
+        <h2 id="topic-breakdown-title" class="section-title">Resultados por tema de LPIC-1</h2>
+
+        <div class="topics-grid" role="list">
+          @for (ts of topicScoresList(); track ts.topicId) {
+            <article
+              class="topic-score-card"
+              [class.weak-card]="ts.isWeak"
+              role="listitem"
+            >
+              <div class="topic-card-header">
+                <span class="topic-code">Tema {{ ts.topicId }}</span>
+                @if (ts.isWeak) {
+                  <span class="weak-badge">Tema débil (< 70%)</span>
+                }
+              </div>
+              <h3 class="topic-title">{{ ts.topicTitle }}</h3>
+
+              <div class="progress-bar-container">
+                <div class="progress-bar-track">
+                  <div
+                    class="progress-bar-fill"
+                    [class.fill-success]="!ts.isWeak"
+                    [class.fill-warning]="ts.isWeak"
+                    [style.width.%]="ts.percentage"
+                  ></div>
+                </div>
+              </div>
+
+              <div class="topic-card-footer">
+                <span class="score-ratio">
+                  <strong>{{ ts.correct }}</strong> de <strong>{{ ts.total }}</strong> correctas
+                </span>
+                <span class="score-percent font-mono">{{ ts.percentage }}%</span>
+              </div>
+
+              @if (ts.isWeak) {
+                <div class="topic-review-link">
+                  <a
+                    [routerLink]="['/simulador/practica']"
+                    [queryParams]="{ tema: ts.topicId }"
+                    class="weak-link"
+                  >
+                    Entrenar preguntas del Tema {{ ts.topicId }} →
+                  </a>
+                </div>
+              }
+            </article>
+          }
+        </div>
+      </section>
+
+      <!-- Revisión detallada de preguntas (Acordeón) -->
+      <section class="review-section" aria-labelledby="review-section-title">
+        <div class="review-header">
+          <h2 id="review-section-title" class="section-title">Revisión de preguntas</h2>
+
+          <!-- Filtros de revisión -->
+          <div class="review-filters" role="tablist" aria-label="Filtro de preguntas para revisión">
+            <button
+              type="button"
+              class="filter-tab"
+              [class.active]="reviewFilter() === 'all'"
+              (click)="setReviewFilter('all')"
+              role="tab"
+              [attr.aria-selected]="reviewFilter() === 'all'"
+            >
+              Todas ({{ questions().length }})
+            </button>
+            <button
+              type="button"
+              class="filter-tab"
+              [class.active]="reviewFilter() === 'failed'"
+              (click)="setReviewFilter('failed')"
+              role="tab"
+              [attr.aria-selected]="reviewFilter() === 'failed'"
+            >
+              Falladas
+            </button>
+            <button
+              type="button"
+              class="filter-tab"
+              [class.active]="reviewFilter() === 'flagged'"
+              (click)="setReviewFilter('flagged')"
+              role="tab"
+              [attr.aria-selected]="reviewFilter() === 'flagged'"
+            >
+              Marcadas
+            </button>
+          </div>
+        </div>
+
+        @if (filteredQuestions().length === 0) {
+          <div class="empty-review-box">
+            <p>No hay preguntas en este filtro de revisión.</p>
+          </div>
+        } @else {
+          <div class="questions-accordion">
+            @for (q of filteredQuestions(); track q.id; let idx = $index) {
+              <div
+                class="accordion-item"
+                [class.correct]="isQuestionCorrect(q)"
+                [class.incorrect]="!isQuestionCorrect(q)"
+              >
+                <!-- Cabecera del acordeón -->
+                <button
+                  type="button"
+                  class="accordion-trigger"
+                  (click)="toggleAccordion(q.id)"
+                  [attr.aria-expanded]="isAccordionExpanded(q.id)"
+                  [attr.aria-controls]="'review-panel-' + q.id"
+                >
+                  <div class="trigger-left">
+                    <span class="status-icon" aria-hidden="true">
+                      @if (isQuestionCorrect(q)) {
+                        ✓
+                      } @else {
+                        ✗
+                      }
+                    </span>
+                    <span class="question-title">
+                      <strong>{{ idx + 1 }}.</strong> {{ q.prompt }}
+                    </span>
+                  </div>
+
+                  <div class="trigger-right">
+                    <span class="subtopic-tag">Subtema {{ q.subtopicId }}</span>
+                    <svg
+                      class="chevron"
+                      [class.open]="isAccordionExpanded(q.id)"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </div>
+                </button>
+
+                <!-- Panel expandible del acordeón -->
+                @if (isAccordionExpanded(q.id)) {
+                  <div
+                    [id]="'review-panel-' + q.id"
+                    class="accordion-panel"
+                    role="region"
+                  >
+                    <div class="answers-comparison">
+                      <div class="answer-box user-answer" [class.correct-ans]="isQuestionCorrect(q)">
+                        <span class="answer-label">Tu respuesta:</span>
+                        <p class="answer-value">{{ getUserAnswerText(q) }}</p>
+                      </div>
+
+                      @if (!isQuestionCorrect(q)) {
+                        <div class="answer-box correct-answer">
+                          <span class="answer-label">Respuesta correcta:</span>
+                          <p class="answer-value">{{ getCorrectAnswerText(q) }}</p>
+                        </div>
+                      }
+                    </div>
+
+                    <div class="explanation-box">
+                      <h4 class="explanation-title">Explicación oficial</h4>
+                      <p class="explanation-text">{{ q.explanation }}</p>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+  </div>
+</app-container>
+
