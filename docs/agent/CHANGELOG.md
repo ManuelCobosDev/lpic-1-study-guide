@@ -92,3 +92,10 @@
 - Archivos: docs/agent/CHANGELOG.md, docs/agent/STATUS.md, e2e/screenshots/fase-0/shell-desktop-dark.png.
 - Verificación: npm run verify (9/9 etapas en verde), 36 tests unitarios pasando, auditoría de atajos prohibidos con 0 coincidencias, zonas protegidas intactas.
 - Pendiente / deuda: ninguna para la Fase 2. Siguiente fase: Fase 3 (Sistema de diseño, primitivas de shared/ui y /guia-estilos).
+
+## C-0013 · 2026-10-31 · Fase 3 · Primitivas Badge, Chip, Kbd, ProgressBar y StatCard
+- Qué: implementación de primitivas de UI en src/app/shared/ui/: BadgeComponent (altura exacta 24 px h-[24px] min-h-[24px] max-h-[24px], 6 variantes, dot opcional), ChipComponent (altura 28 px, modo seleccionable y removible con eventos chipToggle y chipRemove), KbdComponent (tecla mono accesible), ProgressBarComponent (altura 6 px con atributos ARIA y variantes) y StatCardComponent (tarjeta de métricas con badge y etiqueta). Barrel export en src/app/shared/ui/index.ts. Suites de tests unitarios en badge.component.spec.ts y progress-bar.component.spec.ts.
+- Por qué: requisitos de primitivas de diseño para Fase 3 (05-diseno.md, 08-fases.md, Gate 3).
+- Archivos: src/app/shared/ui/badge/badge.component.ts, src/app/shared/ui/badge/badge.component.spec.ts, src/app/shared/ui/chip/chip.component.ts, src/app/shared/ui/kbd/kbd.component.ts, src/app/shared/ui/progress-bar/progress-bar.component.ts, src/app/shared/ui/progress-bar/progress-bar.component.spec.ts, src/app/shared/ui/stat-card/stat-card.component.ts, src/app/shared/ui/index.ts.
+- Verificación: npm run typecheck (0 errores), npm run test (42/42 tests pasando, 26 Angular + 16 Vitest), npm run lint, check:tokens y check:boundaries en verde.
+- Pendiente / deuda: Tarea 3.2 (C-0014: Primitivas Card, Callout, Tabs, CodeBlock y EmptyState).

@@ -2,16 +2,16 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0012
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0013
 
 ## Estado
-- **Fase actual**: Fase 2 completada · Fase 3 pendiente.
+- **Fase actual**: Fase 3 (Sistema de diseño) en curso.
 - **Último gate superado**: Gate 2 (etiqueta `fase-2-ok`).
-- **Trabajo en curso**: ninguno (esperando instrucciones del usuario para arrancar Fase 3).
+- **Trabajo en curso**: Fase 3 · Tarea 3.2 (Primitivas Card, Callout, Tabs, CodeBlock y EmptyState).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Ejecutar `/ejecutar-fase 3` (Sistema de diseño: primitivas de `shared/ui`, variantes y tamaños de `app-button`, página `/guia-estilos` y auditoría de accesibilidad Axe).
+Implementar Tarea 3.2 (C-0014): componentes Card, Callout, Tabs, CodeBlock y EmptyState en `src/app/shared/ui/` con sus tests unitarios.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -19,7 +19,7 @@ Ejecutar `/ejecutar-fase 3` (Sistema de diseño: primitivas de `shared/ui`, vari
 | 0 | Andamiaje Angular (esqueleto limpio) | completada (Gate 0 OK) |
 | 1 | Inventario del legacy (solo lectura) + decisión D-004 | completada (Gate 1 OK) |
 | 2 | Currículo, pipeline de contenido, dominio + tajada vertical 103.4 | completada (Gate 2 OK) |
-| 3 | Sistema de diseño | pendiente |
+| 3 | Sistema de diseño | en curso (Tarea 3.1 OK) |
 | 4 | Home y Temario | pendiente |
 | 5 | Lecciones y Estudiar | pendiente |
 | 6 | Buscador | pendiente |
@@ -44,8 +44,7 @@ Ejecutar `/ejecutar-fase 3` (Sistema de diseño: primitivas de `shared/ui`, vari
 
 ## Comandos útiles
 - `npm run verify`: pipeline completo en verde (9 etapas).
-- `npm run test`: suite de tests unitarios (36 tests en verde).
-- `npm run import:legacy`: importador de tajada vertical 103.4.
+- `npm run test`: suite de tests unitarios (42 tests en verde).
 - `npm run check:stubs`: lista de stubs pendientes (23 rutas).
 
 ## Deuda conocida
