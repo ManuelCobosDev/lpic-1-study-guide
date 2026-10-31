@@ -48,7 +48,10 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        loadComponent: loadStub,
+        loadComponent: () =>
+          import('./features/study/pages/lesson-page.component').then(
+            (m) => m.LessonPageComponent
+          ),
         title: 'Estudiar Subtema',
         data: { title: 'Estudiar', breadcrumb: 'Estudiar', phase: 'Fase 5' }
       },
