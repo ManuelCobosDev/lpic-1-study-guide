@@ -85,3 +85,10 @@
 - Archivos: scripts/import-legacy/import-103-4.ts, scripts/import-legacy/index.ts, scripts/import-idempotent.spec.ts, content-src/lessons/103.4.json, content-src/labs/103.4.yaml, content-src/questions/103.yaml, content-src/commands.yaml, content-src/glossary.yaml, docs/agent/MAPEO_LEGACY.md, docs/agent/COBERTURA_IMPORT.md.
 - Verificación: npm run import:legacy ejecutado con éxito, npm run typecheck (0 errores), npm run test (36/36 tests unitarios pasando, incluido el test de idempotencia con doble hash), npm run lint, check:tokens y check:boundaries en verde.
 - Pendiente / deuda: Tarea 2.5 (C-0012: Verificación de Gate 2, pipeline npm run verify al 100%, etiqueta fase-2-ok y detención obligatoria).
+
+## C-0012 · 2026-10-31 · Fase 2 · Verificación formal de Gate 2 y etiquetado fase-2-ok
+- Qué: ejecución y superación formal de todos los criterios de Gate 2. Validación de las 9 etapas de npm run verify al 100% (build:content, validate:content, typecheck, lint, check:tokens, check:boundaries, test con 36 tests unitarios, build de producción y e2e con Playwright). Verificación de idoneidad del manifiesto (10 temas, 42 subtemas, pesos 60/60, títulos oficiales exactos, contadores derivados), cálculo de progreso por subtema/tema/examen, persistencia y migración en PersistedStore, fallback en memoria, idempotencia del importador comprobada y cero atajos prohibidos. Creación de la etiqueta git tag fase-2-ok.
+- Por qué: finalización formal de la Fase 2 según docs/spec/08-fases.md y reglas R2, R3, R4.
+- Archivos: docs/agent/CHANGELOG.md, docs/agent/STATUS.md, e2e/screenshots/fase-0/shell-desktop-dark.png.
+- Verificación: npm run verify (9/9 etapas en verde), 36 tests unitarios pasando, auditoría de atajos prohibidos con 0 coincidencias, zonas protegidas intactas.
+- Pendiente / deuda: ninguna para la Fase 2. Siguiente fase: Fase 3 (Sistema de diseño, primitivas de shared/ui y /guia-estilos).

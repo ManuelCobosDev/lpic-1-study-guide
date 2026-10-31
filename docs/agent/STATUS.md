@@ -2,23 +2,23 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0011
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0012
 
 ## Estado
-- **Fase actual**: Fase 2 en curso (Currículo, pipeline de contenido, dominio + tajada vertical 103.4).
-- **Último gate superado**: Gate 1 (etiqueta `fase-1-ok`).
-- **Trabajo en curso**: completadas Tareas 2.1 (C-0008), 2.2 (C-0009), 2.3 (C-0010) y 2.4 (C-0011). Siguiente: Tarea 2.5 (Gate 2).
+- **Fase actual**: Fase 2 completada · Fase 3 pendiente.
+- **Último gate superado**: Gate 2 (etiqueta `fase-2-ok`).
+- **Trabajo en curso**: ninguno (esperando instrucciones del usuario para arrancar Fase 3).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Ejecutar Tarea 2.5 (`C-0012`): ejecutar `/verificar-gate 2` (`npm run verify` completo con sus 9 etapas, verificación de criterios de Gate 2, etiqueta `git tag fase-2-ok`, actualización de memoria y detención obligatoria).
+Ejecutar `/ejecutar-fase 3` (Sistema de diseño: primitivas de `shared/ui`, variantes y tamaños de `app-button`, página `/guia-estilos` y auditoría de accesibilidad Axe).
 
 ## Fases
 | Fase | Descripción | Estado |
 |---|---|---|
 | 0 | Andamiaje Angular (esqueleto limpio) | completada (Gate 0 OK) |
 | 1 | Inventario del legacy (solo lectura) + decisión D-004 | completada (Gate 1 OK) |
-| 2 | Currículo, pipeline de contenido, dominio + tajada vertical 103.4 | en curso (Tareas 2.1 a 2.4 OK) |
+| 2 | Currículo, pipeline de contenido, dominio + tajada vertical 103.4 | completada (Gate 2 OK) |
 | 3 | Sistema de diseño | pendiente |
 | 4 | Home y Temario | pendiente |
 | 5 | Lecciones y Estudiar | pendiente |
@@ -45,7 +45,7 @@ Ejecutar Tarea 2.5 (`C-0012`): ejecutar `/verificar-gate 2` (`npm run verify` co
 ## Comandos útiles
 - `npm run verify`: pipeline completo en verde (9 etapas).
 - `npm run test`: suite de tests unitarios (36 tests en verde).
-- `npm run import:legacy`: importación de la tajada vertical 103.4.
+- `npm run import:legacy`: importador de tajada vertical 103.4.
 - `npm run check:stubs`: lista de stubs pendientes (23 rutas).
 
 ## Deuda conocida
