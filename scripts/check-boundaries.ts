@@ -11,6 +11,7 @@ const DOMAIN_SERVICES = [
   'ProgressService',
   'LabsService',
   'SimulatorService',
+  'ExamService',
   'FlashcardsService',
   'ActivityService',
   'NotesService',

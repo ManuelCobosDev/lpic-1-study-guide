@@ -2,16 +2,20 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0039
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0040
 
 ## Estado
 - **Fase actual**: Fase 8 (Simulador) en curso.
 - **Último gate superado**: Gate 7 (etiqueta `fase-7-ok`).
-- **Trabajo en curso**: Fase 8 · Tarea 8.2 (Servicio `ExamService` y guard `canStartExamGuard`).
+- **Trabajo en curso**: Fase 8 · Tarea 8.3 (Componentes de UI del simulador).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Implementar Tarea 8.2 (C-0040): crear `ExamService` en `src/app/core/services/exam.service.ts` sobre `PersistedStore` en `localStorage` (`exam_active_session` y `exam_history`), cálculo dinámico de tiempo restante basado en `startedAt` persistido (a prueba de recargas), persistencia de respuestas y marcas, guardado de intentos completados, y el guard `canStartExamGuard` (`src/app/features/simulator/guards/can-start-exam.guard.ts`). Suites de tests unitarios en `exam.service.spec.ts` y `can-start-exam.guard.spec.ts`.
+Implementar Tarea 8.3 (C-0041): crear los componentes presentacionales accesibles del simulador en `src/app/features/simulator/components/`:
+1. `TimerBarComponent` (`timer-bar/`): barra sticky superior con minutos:segundos, cambio de color semántico (ámbar a ≤ 10 min, rojo a ≤ 2 min), botón "Finalizar examen", y `aria-live`.
+2. `QuestionCardComponent` (`question-card/`): tarjeta centrada (máx 760 px) para tipos `single`, `multiple` (con aviso "Elige N respuestas") y `fill` (input normalizado), botón "Marcar para revisar", y modo práctica con solución/explicación inmediata.
+3. `QuestionNavigatorComponent` (`question-navigator/`): panel con selector numerado por pregunta con estados accesibles (actual, respondida, sin responder, marcada), adaptativo (columna en desktop, cajón en móvil).
+Suites de pruebas unitarias para cada componente.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -24,7 +28,7 @@ Implementar Tarea 8.2 (C-0040): crear `ExamService` en `src/app/core/services/ex
 | 5 | Lecciones y Estudiar | completada (Gate 5 OK) |
 | 6 | Buscador | completada (Gate 6 OK) |
 | 7 | Laboratorios | completada (Gate 7 OK) |
-| 8 | Simulador | en curso (Tarea 8.1 OK) |
+| 8 | Simulador | en curso (Tareas 8.1 y 8.2 OK) |
 | 9 | Comandos, Glosario y Flashcards | pendiente |
 | 10 | Mapa mental, Progreso, Ajustes, Erratas, Acerca de, 404 | pendiente |
 | 11 | Importación completa del legacy | pendiente |
@@ -39,7 +43,7 @@ Implementar Tarea 8.2 (C-0040): crear `ExamService` en `src/app/core/services/ex
 
 ## Comandos útiles
 - `npm run verify`: pipeline completo de 9 etapas en verde.
-- `npm run test`: suite de tests unitarios (217 tests en verde).
+- `npm run test`: suite de tests unitarios (228 tests en verde).
 - `npm run check:stubs`: lista de stubs pendientes (13 rutas pendientes, 10 implementadas).
 
 ## Deuda conocida
