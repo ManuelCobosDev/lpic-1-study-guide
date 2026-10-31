@@ -14,8 +14,7 @@ const DOMAIN_SERVICES = [
   'FlashcardsService',
   'ActivityService',
   'NotesService',
-  'BackupService',
-  'SearchService'
+  'BackupService'
 ];
 
 function getAllTsFiles(dir: string, fileList: string[] = []): string[] {

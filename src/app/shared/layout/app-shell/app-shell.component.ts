@@ -4,12 +4,21 @@ import { HeaderComponent } from '../header/header.component';
 import { BreadcrumbsComponent } from '../breadcrumbs/breadcrumbs.component';
 import { FooterComponent } from '../footer/footer.component';
 import { ContainerComponent } from '../../ui/container/container.component';
+import { SearchPaletteComponent } from '../../search-palette/search-palette.component';
 import { StorageService } from '../../../core/services/storage.service';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, HeaderComponent, BreadcrumbsComponent, FooterComponent, ContainerComponent],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    HeaderComponent,
+    BreadcrumbsComponent,
+    FooterComponent,
+    ContainerComponent,
+    SearchPaletteComponent
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <!-- Skip-link para accesibilidad -->
@@ -55,6 +64,9 @@ import { StorageService } from '../../../core/services/storage.service';
 
       <!-- Footer -->
       <app-footer />
+
+      <!-- Paleta modal de búsqueda global -->
+      <app-search-palette />
     </div>
   `
 })

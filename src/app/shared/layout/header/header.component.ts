@@ -3,6 +3,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { ContainerComponent } from '../../ui/container/container.component';
 import { ButtonComponent } from '../../ui/button/button.component';
 import { ThemeService } from '../../../core/services/theme.service';
+import { SearchService } from '../../../core/services/search.service';
 
 @Component({
   selector: 'app-header',
@@ -82,6 +83,7 @@ import { ThemeService } from '../../../core/services/theme.service';
               variant="secondary"
               size="sm"
               routerLink="/buscar"
+              (btnClick)="openSearchPalette($event)"
             >
               <span class="hidden sm:inline">Buscar…</span>
               <kbd class="ml-1 text-[11px] px-1 py-0.5 rounded border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)]">Ctrl K</kbd>
@@ -173,7 +175,15 @@ import { ThemeService } from '../../../core/services/theme.service';
 })
 export class HeaderComponent {
   protected readonly themeService = inject(ThemeService);
+  protected readonly searchService = inject(SearchService);
   protected readonly mobileMenuOpen = signal(false);
+
+  openSearchPalette(event?: MouseEvent): void {
+    if (event) {
+      event.preventDefault();
+    }
+    this.searchService.openPalette();
+  }
 
   toggleTheme(): void {
     this.themeService.toggle();
