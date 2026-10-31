@@ -254,6 +254,7 @@ test.describe('Gate 10: Herramientas complementarias, Ajustes, Backup, Progreso,
     await expect(svgCanvas).toBeVisible();
 
     // 2. Comprobar nodos renderizados
+    await expect(page.locator('.tree-node').first()).toBeVisible({ timeout: 10000 });
     const nodes = page.locator('.tree-node');
     expect(await nodes.count()).toBeGreaterThan(20);
 

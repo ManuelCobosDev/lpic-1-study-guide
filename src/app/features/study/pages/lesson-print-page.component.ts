@@ -71,7 +71,7 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
         <app-button
           variant="primary"
           size="sm"
-          (clicked)="printDocument()"
+          (btnClick)="printDocument()"
           title="Abrir cuadro de diálogo de impresión"
         >
           <span>🖨️ Imprimir / Guardar PDF</span>
