@@ -64,3 +64,10 @@
 - Archivos: content-src/curriculum.yaml, src/app/core/models/*.ts, src/app/core/schemas/*.ts, scripts/curriculum.spec.ts, tsconfig.scripts.json.
 - Verificación: npm run typecheck (0 errores con TypeScript estricto), npm run test (13/13 tests pasando, incluidos los 7 tests de currículo), npm run lint, npm run check:tokens, npm run check:boundaries en verde.
 - Pendiente / deuda: Tarea 2.2 (C-0009: PersistedStore, ClockService, PreferencesService, ProgressService y selectores puros de progreso).
+
+## C-0009 · 2026-10-31 · Fase 2 · PersistedStore, servicios de estado y selectores puros de progreso
+- Qué: implementación de ClockService inyectable, PersistedStore<T> con señal reactiva, debounce 300 ms en guardado, flush() y soporte de migración de esquema. Creación de PreferencesService y ProgressService conectados a PersistedStore y StorageService. Implementación de selectores puros en src/app/core/selectors/progress.selectors.ts (selectSubtopicProgress con cap 99/100, selectTopicProgress ponderado por minutos, selectExamProgress ponderado por peso LPI, selectNextRecommendedSubtopic priorizando subtemas en curso y selectWeakTopics). Suites de tests unitarios exhaustivos en persisted-store.spec.ts y progress.selectors.spec.ts.
+- Por qué: requisitos de persistencia, reactividad y dominio para Gate 2 (03-dominio.md §3.3, 08-fases.md).
+- Archivos: src/app/core/services/clock.service.ts, src/app/core/state/persisted-store.ts, src/app/core/services/preferences.service.ts, src/app/core/services/progress.service.ts, src/app/core/selectors/progress.selectors.ts, src/app/core/state/persisted-store.spec.ts, src/app/core/selectors/progress.selectors.spec.ts.
+- Verificación: npm run typecheck (0 errores), npm run test (31/31 unit tests pasando, 12 en progress.selectors y 5 en persisted-store), npm run lint, check:tokens y check:boundaries en verde.
+- Pendiente / deuda: Tarea 2.3 (C-0010: Pipeline de contenido build-content.ts, relleno determinista y ContentService).

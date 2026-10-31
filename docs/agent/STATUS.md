@@ -2,23 +2,23 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0008
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0009
 
 ## Estado
 - **Fase actual**: Fase 2 en curso (Currículo, pipeline de contenido, dominio + tajada vertical 103.4).
 - **Último gate superado**: Gate 1 (etiqueta `fase-1-ok`).
-- **Trabajo en curso**: completada Tarea 2.1 (C-0008). Siguiente: Tarea 2.2 (C-0009).
+- **Trabajo en curso**: completadas Tareas 2.1 (C-0008) y 2.2 (C-0009). Siguiente: Tarea 2.3 (C-0010).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Ejecutar Tarea 2.2 (`C-0009`): implementar `ClockService`, `PersistedStore<T>` con debounce 300 ms y migración, `PreferencesService`, `ProgressService` y selectores puros de progreso en `src/app/core/selectors/progress.selectors.ts` con tests unitarios exhaustivos.
+Ejecutar Tarea 2.3 (`C-0010`): actualizar `scripts/build-content.ts` con generador de relleno determinista (`placeholder: true`), validación Zod cruzada, generación de `manifest.json` y recursos en `public/content/`, `ContentService` y tests de fallo de validación ante archivo malformado.
 
 ## Fases
 | Fase | Descripción | Estado |
 |---|---|---|
 | 0 | Andamiaje Angular (esqueleto limpio) | completada (Gate 0 OK) |
 | 1 | Inventario del legacy (solo lectura) + decisión D-004 | completada (Gate 1 OK) |
-| 2 | Currículo, pipeline de contenido, dominio + tajada vertical 103.4 | en curso (Tarea 2.1 OK) |
+| 2 | Currículo, pipeline de contenido, dominio + tajada vertical 103.4 | en curso (Tareas 2.1 y 2.2 OK) |
 | 3 | Sistema de diseño | pendiente |
 | 4 | Home y Temario | pendiente |
 | 5 | Lecciones y Estudiar | pendiente |
@@ -44,7 +44,7 @@ Ejecutar Tarea 2.2 (`C-0009`): implementar `ClockService`, `PersistedStore<T>` c
 
 ## Comandos útiles
 - `npm run verify`: pipeline completo en verde (9 etapas).
-- `npm run test`: suite de tests unitarios (13 tests en verde).
+- `npm run test`: suite de tests unitarios (31 tests en verde).
 - `npm run check:stubs`: lista de stubs pendientes (23 rutas).
 
 ## Deuda conocida
