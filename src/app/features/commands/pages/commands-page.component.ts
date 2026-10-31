@@ -14,6 +14,7 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { EmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.component';
 import { SkeletonComponent } from '../../../shared/ui/skeleton/skeleton.component';
+import { CommandCardComponent } from '../components/command-card/command-card.component';
 import { CommandService } from '../../../core/services/command.service';
 import { Command } from '../../../core/models/command.model';
 
@@ -28,7 +29,8 @@ import { Command } from '../../../core/models/command.model';
     ButtonComponent,
     BadgeComponent,
     EmptyStateComponent,
-    SkeletonComponent
+    SkeletonComponent,
+    CommandCardComponent
   ],
   templateUrl: './commands-page.component.html',
   styleUrls: ['./commands-page.component.css'],

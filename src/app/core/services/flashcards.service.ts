@@ -113,6 +113,7 @@ export class FlashcardsService {
         [cardId]: updated
       }
     }));
+    this.store.flush();
 
     return updated;
   }

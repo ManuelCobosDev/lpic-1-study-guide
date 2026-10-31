@@ -217,7 +217,7 @@
                             }
                           </button>
                         </div>
-                        <pre class="code-preview font-mono"><code>{{ cmd.synopsis }}</code></pre>
+                        <pre class="code-preview font-mono" tabindex="0" role="region" aria-label="Sinopsis de uso"><code>{{ cmd.synopsis }}</code></pre>
                       </div>
 
                       <!-- Ejemplo práctico -->
@@ -238,7 +238,7 @@
                               }
                             </button>
                           </div>
-                          <pre class="code-preview font-mono"><code>{{ cmd.example }}</code></pre>
+                          <pre class="code-preview font-mono" tabindex="0" role="region" aria-label="Ejemplo práctico"><code>{{ cmd.example }}</code></pre>
                         </div>
                       }
 
@@ -282,88 +282,13 @@
     @if (!loading() && filteredCount() > 0 && viewMode() === 'cards') {
       <div class="cards-grid">
         @for (cmd of filteredCommands(); track cmd.id) {
-          <article class="command-card">
-            <header class="card-header">
-              <div class="card-title-row">
-                <h2 class="card-name font-mono">{{ cmd.name }}</h2>
-                <span class="category-pill">{{ cmd.category }}</span>
-              </div>
-              <p class="card-desc">{{ cmd.description }}</p>
-            </header>
-
-            <div class="card-body">
-              <div class="card-code-block">
-                <div class="code-header">
-                  <span class="code-tag">Sinopsis</span>
-                  <button
-                    type="button"
-                    class="copy-btn-mini"
-                    (click)="copyText(cmd.synopsis, 'syn-' + cmd.id)"
-                    aria-label="Copiar sinopsis"
-                  >
-                    @if (copiedCommandId() === 'syn-' + cmd.id) {
-                      <span>✓</span>
-                    } @else {
-                      <span>Copiar</span>
-                    }
-                  </button>
-                </div>
-                <code class="font-mono block-code">{{ cmd.synopsis }}</code>
-              </div>
-
-              @if (cmd.example) {
-                <div class="card-code-block">
-                  <div class="code-header">
-                    <span class="code-tag">Ejemplo</span>
-                    <button
-                      type="button"
-                      class="copy-btn-mini"
-                      (click)="copyText(cmd.example, 'ex-' + cmd.id)"
-                      aria-label="Copiar ejemplo"
-                    >
-                      @if (copiedCommandId() === 'ex-' + cmd.id) {
-                        <span>✓</span>
-                      } @else {
-                        <span>Copiar</span>
-                      }
-                    </button>
-                  </div>
-                  <code class="font-mono block-code">{{ cmd.example }}</code>
-                </div>
-              }
-
-              @if (expandedCommandId() === cmd.id && cmd.flags.length > 0) {
-                <div class="card-flags-expanded">
-                  <span class="flags-title">Opciones:</span>
-                  <ul class="card-flags-list">
-                    @for (f of cmd.flags; track f.flag) {
-                      <li>
-                        <code class="font-mono">{{ f.flag }}</code>: {{ f.description }}
-                      </li>
-                    }
-                  </ul>
-                </div>
-              }
-            </div>
-
-            <footer class="card-footer">
-              <button
-                type="button"
-                class="card-expand-toggle"
-                (click)="toggleExpand(cmd.id)"
-              >
-                {{ expandedCommandId() === cmd.id ? 'Menos detalles' : 'Más detalles (' + cmd.flags.length + ' flags)' }}
-              </button>
-
-              <div class="card-subtopics">
-                @for (sub of cmd.subtopicIds; track sub) {
-                  <a [routerLink]="['/estudiar', sub]" class="subtopic-link">
-                    {{ sub }}
-                  </a>
-                }
-              </div>
-            </footer>
-          </article>
+          <app-command-card
+            [command]="cmd"
+            [isExpanded]="expandedCommandId() === cmd.id"
+            [copiedTargetId]="copiedCommandId()"
+            (toggleExpand)="toggleExpand($event)"
+            (copyCommand)="copyText($event.text, $event.id)"
+          />
         }
       </div>
     }

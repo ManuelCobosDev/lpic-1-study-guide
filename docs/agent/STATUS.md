@@ -2,24 +2,16 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0049
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0050
 
 ## Estado
-- **Fase actual**: Fase 9 (Comandos, Glosario y Flashcards) EN CURSO.
-- **Último gate superado**: Gate 8 (etiqueta `fase-8-ok`).
-- **Trabajo en curso**: Tarea 9.6 (Suite E2E de Gate 9, capturas visuales, `npm run verify` completo y etiqueta `fase-9-ok`).
+- **Fase actual**: Fase 9 (Comandos, Glosario y Flashcards) COMPLETADA.
+- **Último gate superado**: Gate 9 (etiqueta `fase-9-ok`).
+- **Trabajo en curso**: Ninguno. Fase 9 cerrada y verificada al 100%.
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-1. Tarea 9.6: Implementar la suite de pruebas E2E `e2e/fase-9.spec.ts` validando:
-   - Filtros de comandos reflejados en URL y conservados tras recargar la página.
-   - Fila y tarjeta expandible con opciones y copiado funcional al portapapeles.
-   - AlphaIndex en `/glosario` con salto suave a letra y deshabilitación accesible de letras vacías.
-   - Sesión de flashcards con las 4 valoraciones persistiendo el estado de las cajas Leitner tras recarga.
-   - Pruebas unitarias de Leitner ejecutadas y en verde.
-   - Auditoría de accesibilidad Axe limpia en las 3 vistas (modo claro y oscuro).
-   - Generación de capturas visuales en `e2e/screenshots/fase-9/` inspeccionadas según Regla R5.
-   - `npm run verify` completo en verde y sellado con `git tag fase-9-ok`.
+1. Esperar confirmación del usuario para arrancar la **Fase 10: Herramientas complementarias** (`/ejecutar-fase 10`), que abarcará `/mapa-mental`, `/progreso`, `/erratas`, `/ajustes`, `/acerca-de` y la página `404` (`**`).
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -33,7 +25,7 @@
 | 6 | Buscador | completada (Gate 6 OK) |
 | 7 | Laboratorios | completada (Gate 7 OK) |
 | 8 | Simulador | completada (Gate 8 OK) |
-| 9 | Comandos, Glosario y Flashcards | en curso (Tareas 9.1 a 9.5 listas) |
+| 9 | Comandos, Glosario y Flashcards | completada (Gate 9 OK) |
 | 10 | Mapa mental, Progreso, Ajustes, Erratas, Acerca de, 404 | pendiente |
 | 11 | Importación completa del legacy | pendiente |
 | 12 | Pulido, accesibilidad, rendimiento y documentación | pendiente |
@@ -44,7 +36,7 @@
 | `/mapa-mental` · `/progreso` · `/erratas` · `/ajustes` · `/acerca-de` · `**` (404) | Fase 10 |
 
 ## Comandos útiles
-- `npm run verify`: pipeline completo de 9 etapas en verde (317 unitarios + 50 E2E).
+- `npm run verify`: pipeline completo de 9 etapas en verde (317 unitarios + 56 E2E).
 - `npm run test`: suite de tests unitarios (317 tests en verde: 301 Angular + 16 Vitest).
 - `npm run check:stubs`: lista de stubs pendientes (6 rutas pendientes, 17 implementadas).
 
