@@ -2,16 +2,16 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0018
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0019
 
 ## Estado
 - **Fase actual**: Fase 4 (Home y Temario) en curso.
 - **Último gate superado**: Gate 3 (etiqueta `fase-3-ok`).
-- **Trabajo en curso**: Fase 4 · Tarea 4.2 (Página Home `/` y reemplazo del stub).
+- **Trabajo en curso**: Fase 4 · Tarea 4.3 (Temario General `/temario` y por Examen `/temario/:examen`).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Implementar Tarea 4.2 (C-0019): crear `HomePageComponent` en `src/app/features/home/pages/home-page.component.ts`, conectar la ruta en `src/app/app.routes.ts`, actualizar `scripts/check-stubs.ts` marcando `/` como implementado (los stubs bajan de 22 a 21) y añadir tests unitarios.
+Implementar Tarea 4.3 (C-0020): crear `CurriculumCardComponent` en `src/app/features/curriculum/components/curriculum-card/curriculum-card.component.ts` (grid stretch, altura igualada de tarjetas, chips mono de 52 px, títulos en 2 líneas sin elipsis, botón lab de 32 px y botón ancho de práctica global con trofeo), `CurriculumPageComponent` en `src/app/features/curriculum/pages/curriculum-page.component.ts`, `ExamPageComponent` para `/temario/:examen`, conectar rutas en `app.routes.ts`, actualizar `check-stubs.ts` y añadir pruebas unitarias.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -20,7 +20,7 @@ Implementar Tarea 4.2 (C-0019): crear `HomePageComponent` en `src/app/features/h
 | 1 | Inventario del legacy (solo lectura) + decisión D-004 | completada (Gate 1 OK) |
 | 2 | Currículo, pipeline de contenido, dominio + tajada vertical 103.4 | completada (Gate 2 OK) |
 | 3 | Sistema de diseño | completada (Gate 3 OK) |
-| 4 | Home y Temario | en curso (Tarea 4.1 OK) |
+| 4 | Home y Temario | en curso (Tareas 4.1 y 4.2 OK) |
 | 5 | Lecciones y Estudiar | pendiente |
 | 6 | Buscador | pendiente |
 | 7 | Laboratorios | pendiente |
@@ -33,7 +33,7 @@ Implementar Tarea 4.2 (C-0019): crear `HomePageComponent` en `src/app/features/h
 ## Stubs (páginas aún no implementadas)
 | Ruta | Se implementa en |
 |---|---|
-| `/` · `/temario` · `/temario/:examen` · `/temario/:examen/:tema` | Fase 4 |
+| `/temario` · `/temario/:examen` · `/temario/:examen/:tema` | Fase 4 |
 | `/estudiar/:subtema` · `/estudiar/:subtema/imprimir` | Fase 5 |
 | `/buscar` | Fase 6 |
 | `/laboratorios` · `/laboratorios/:id` | Fase 7 |
@@ -43,8 +43,8 @@ Implementar Tarea 4.2 (C-0019): crear `HomePageComponent` en `src/app/features/h
 
 ## Comandos útiles
 - `npm run verify`: pipeline completo en verde (9 etapas).
-- `npm run test`: suite de tests unitarios (70 tests en verde).
-- `npm run check:stubs`: lista de stubs pendientes (22 rutas).
+- `npm run test`: suite de tests unitarios (75 tests en verde).
+- `npm run check:stubs`: lista de stubs pendientes (21 rutas).
 
 ## Deuda conocida
 Ninguna.
