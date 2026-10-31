@@ -71,3 +71,10 @@
 - Archivos: src/app/core/services/clock.service.ts, src/app/core/state/persisted-store.ts, src/app/core/services/preferences.service.ts, src/app/core/services/progress.service.ts, src/app/core/selectors/progress.selectors.ts, src/app/core/state/persisted-store.spec.ts, src/app/core/selectors/progress.selectors.spec.ts.
 - Verificación: npm run typecheck (0 errores), npm run test (31/31 unit tests pasando, 12 en progress.selectors y 5 en persisted-store), npm run lint, check:tokens y check:boundaries en verde.
 - Pendiente / deuda: Tarea 2.3 (C-0010: Pipeline de contenido build-content.ts, relleno determinista y ContentService).
+
+## C-0010 · 2026-10-31 · Fase 2 · Pipeline de contenido build-content, relleno determinista y ContentService
+- Qué: actualización completa de scripts/build-content.ts con validación Zod de currículo y recursos, generador determinista de lecciones de relleno (8 diapositivas con diversos layouts y bloques, webDocument estructurado y referencias wiki), prácticas de relleno de 5 pasos y preguntas de relleno en español. Cálculo dinámico de contadores en public/content/manifest.json. Implementación de ContentService en src/app/core/services/content.service.ts con carga perezosa y cacheada. Suites de tests unitarios en build-content.spec.ts y content.service.spec.ts.
+- Por qué: requisitos de pipeline y arquitectura de contenido para Gate 2 (03-dominio.md §3.1, §3.3, 08-fases.md).
+- Archivos: scripts/build-content.ts, scripts/build-content.spec.ts, src/app/core/services/content.service.ts, src/app/core/services/content.service.spec.ts.
+- Verificación: npm run typecheck (0 errores), npm run test (35/35 tests unitarios en verde, incluidos los tests de validación y simulación de fallo con process.exit), npm run lint, check:tokens, check:boundaries y validate:content en verde.
+- Pendiente / deuda: Tarea 2.4 (C-0011: Importador idempotente del subtema 103.4 de punta a punta con auto-vinculación estilo Wikipedia).

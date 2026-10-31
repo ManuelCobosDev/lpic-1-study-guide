@@ -2,23 +2,23 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0009
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0010
 
 ## Estado
 - **Fase actual**: Fase 2 en curso (Currículo, pipeline de contenido, dominio + tajada vertical 103.4).
 - **Último gate superado**: Gate 1 (etiqueta `fase-1-ok`).
-- **Trabajo en curso**: completadas Tareas 2.1 (C-0008) y 2.2 (C-0009). Siguiente: Tarea 2.3 (C-0010).
+- **Trabajo en curso**: completadas Tareas 2.1 (C-0008), 2.2 (C-0009) y 2.3 (C-0010). Siguiente: Tarea 2.4 (C-0011).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Ejecutar Tarea 2.3 (`C-0010`): actualizar `scripts/build-content.ts` con generador de relleno determinista (`placeholder: true`), validación Zod cruzada, generación de `manifest.json` y recursos en `public/content/`, `ContentService` y tests de fallo de validación ante archivo malformado.
+Ejecutar Tarea 2.4 (`C-0011`): implementar importador idempotente de punta a punta del subtema 103.4 (`scripts/import-legacy/`), generando lección real con doble vista (diapositivas y web), práctica 103.4, preguntas en español del Tema 103, ≥ 20 comandos, ≥ 20 términos de glosario y auto-vinculación estilo Wikipedia.
 
 ## Fases
 | Fase | Descripción | Estado |
 |---|---|---|
 | 0 | Andamiaje Angular (esqueleto limpio) | completada (Gate 0 OK) |
 | 1 | Inventario del legacy (solo lectura) + decisión D-004 | completada (Gate 1 OK) |
-| 2 | Currículo, pipeline de contenido, dominio + tajada vertical 103.4 | en curso (Tareas 2.1 y 2.2 OK) |
+| 2 | Currículo, pipeline de contenido, dominio + tajada vertical 103.4 | en curso (Tareas 2.1, 2.2, 2.3 OK) |
 | 3 | Sistema de diseño | pendiente |
 | 4 | Home y Temario | pendiente |
 | 5 | Lecciones y Estudiar | pendiente |
@@ -44,7 +44,7 @@ Ejecutar Tarea 2.3 (`C-0010`): actualizar `scripts/build-content.ts` con generad
 
 ## Comandos útiles
 - `npm run verify`: pipeline completo en verde (9 etapas).
-- `npm run test`: suite de tests unitarios (31 tests en verde).
+- `npm run test`: suite de tests unitarios (35 tests en verde).
 - `npm run check:stubs`: lista de stubs pendientes (23 rutas).
 
 ## Deuda conocida
