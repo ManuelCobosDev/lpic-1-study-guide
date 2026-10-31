@@ -2,16 +2,16 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0033
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0034
 
 ## Estado
-- **Fase actual**: Fase 6 completada · Preparado para Fase 7 (Laboratorios y terminal interactivo).
+- **Fase actual**: Fase 7 (Laboratorios) en curso.
 - **Último gate superado**: Gate 6 (etiqueta `fase-6-ok`).
-- **Trabajo en curso**: ninguno (esperando confirmación del usuario para Fase 7).
+- **Trabajo en curso**: Fase 7 · Tarea 7.2 (Componente `LabStepperComponent` y UI de pasos).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Iniciar Fase 7 (Laboratorios y terminal interactivo) ejecutando `/ejecutar-fase 7` tras confirmación del usuario: implementar `LabsService`, emulador web de terminal Linux (soporte de piping, redirección y flags), validador declarativo de misiones de laboratorio, página de catálogo `/laboratorios` y vista de práctica guiada `/laboratorios/:id`.
+Implementar Tarea 7.2 (C-0035): crear `LabStepperComponent` en `src/app/features/labs/components/lab-stepper/lab-stepper.component.ts` accesible, vertical, con lista interactiva de pasos, estados completado/activo/pendiente y emisión de eventos `stepSelect` y `stepToggle`. Crear suite de pruebas unitarias en `lab-stepper.component.spec.ts`.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -23,7 +23,7 @@ Iniciar Fase 7 (Laboratorios y terminal interactivo) ejecutando `/ejecutar-fase 
 | 4 | Home y Temario | completada (Gate 4 OK) |
 | 5 | Lecciones y Estudiar | completada (Gate 5 OK) |
 | 6 | Buscador | completada (Gate 6 OK) |
-| 7 | Laboratorios | pendiente |
+| 7 | Laboratorios | en curso (Tarea 7.1 OK) |
 | 8 | Simulador | pendiente |
 | 9 | Comandos, Glosario y Flashcards | pendiente |
 | 10 | Mapa mental, Progreso, Ajustes, Erratas, Acerca de, 404 | pendiente |
@@ -40,7 +40,7 @@ Iniciar Fase 7 (Laboratorios y terminal interactivo) ejecutando `/ejecutar-fase 
 
 ## Comandos útiles
 - `npm run verify`: pipeline completo de 9 etapas en verde.
-- `npm run test`: suite de tests unitarios (176 tests en verde).
+- `npm run test`: suite de tests unitarios (183 tests en verde).
 - `npm run check:stubs`: lista de stubs pendientes (15 rutas pendientes, 8 implementadas).
 
 ## Deuda conocida

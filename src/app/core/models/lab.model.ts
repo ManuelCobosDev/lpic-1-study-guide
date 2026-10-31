@@ -1,5 +1,6 @@
 export type LabDifficulty = 'basic' | 'intermediate' | 'advanced';
 export type LabType = 'subtopic' | 'global';
+export type LabStatus = 'pending' | 'in_progress' | 'completed';
 
 export interface LabStep {
   id: string;
@@ -24,4 +25,17 @@ export interface Lab {
   solutionNotes?: string;
   placeholder?: boolean;
 }
+
+export interface LabSummary {
+  id: string;
+  subtopicId: string;
+  topicId: string;
+  title: string;
+  estimatedMinutes: number;
+  difficulty: LabDifficulty;
+  type: LabType;
+  stepCount: number;
+  placeholder?: boolean;
+}
+
 
