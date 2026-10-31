@@ -18,13 +18,17 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        loadComponent: loadStub,
+        loadComponent: () =>
+          import('./features/curriculum/pages/curriculum-page.component').then(
+            (m) => m.CurriculumPageComponent
+          ),
         title: 'Temario Oficial LPIC-1',
         data: { title: 'Temario LPIC-1', breadcrumb: 'Temario', phase: 'Fase 4' }
       },
       {
         path: ':examen',
-        loadComponent: loadStub,
+        loadComponent: () =>
+          import('./features/curriculum/pages/exam-page.component').then((m) => m.ExamPageComponent),
         title: 'Examen LPIC-1',
         data: { title: 'Examen', breadcrumb: 'Examen', phase: 'Fase 4' }
       },
