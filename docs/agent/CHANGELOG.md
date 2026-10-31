@@ -416,3 +416,11 @@
 - Archivos: scripts/import-legacy/import-labs.ts, content-src/labs/*.json, public/content/**, docs/agent/COBERTURA_IMPORT.md.
 - Verificación: npm run typecheck (0 errores), npm run build:content (código 0, 42 laboratorios reales, 0 placeholder), scripts/import-legacy/import-labs.ts (131 misiones importadas).
 - Pendiente / deuda: Tarea 11.3 (C-0059: Importación del banco de preguntas del simulador para Exámenes 101 y 102).
+
+
+## C-0059 · 2026-10-31 · Fase 11 · Importación completa de 240 preguntas del simulador (Exámenes 101 y 102)
+- Qué: implementación de `scripts/import-legacy/import-questions.ts` e importación sistemática de las 240 preguntas de examen desde `_legacy/lpic1-slides-publico/simulador/preguntas_101.json` y `preguntas_102.json` hacia `content-src/questions/*.json` estructuradas por tema (101 a 110): (1) 120 preguntas para Examen 101 y 120 preguntas para Examen 102; (2) tipos `single`, `multiple` y `fill` con opciones, respuestas aceptadas y dificultad; (3) explicaciones didácticas detalladas; (4) corrección de inconsistencias en preguntas borde del legacy (caso q-101-83 fill y q-110-83 índices múltiples); (5) validación estricta con `TopicQuestionsSchema` y `QuestionSchema` (Zod); (6) actualización del manifiesto con `totalQuestionsReal = 240` y `totalQuestionsPlaceholder = 0`. Actualización de `COBERTURA_IMPORT.md` (100% de cobertura en preguntas).
+- Por qué: requisito de la Tarea 11.3 de la Fase 11 y decisión D-004 (08-fases.md).
+- Archivos: scripts/import-legacy/import-questions.ts, content-src/questions/*.json, public/content/**, docs/agent/COBERTURA_IMPORT.md.
+- Verificación: npm run typecheck (0 errores), npm run build:content (código 0, 240 preguntas reales, 0 placeholder), scripts/import-legacy/import-questions.ts (240 preguntas validadas).
+- Pendiente / deuda: Tarea 11.4 (C-0060: Importación del catálogo completo de comandos y glosario oficial).
