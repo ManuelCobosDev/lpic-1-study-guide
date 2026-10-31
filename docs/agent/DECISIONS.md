@@ -21,5 +21,15 @@
 - Decisión: `STATUS.md` (foto), `CHANGELOG.md` (append-only), `DECISIONS.md`, commits con `[C-NNNN]` y etiquetas `fase-N-ok`; skills `/iniciar-sesion` y `/cerrar-sesion` obligatorias. Decidió: usuario.
 - Consecuencias: cada tarea termina con registro y commit; ante dudas manda lo que digan los archivos y git.
 
-## D-004 · (pendiente) · Estrategia de importación del contenido legacy
-- Se decide tras la Fase 1 (`/inventario-legacy`): A convertir · B incrustar HTML · C híbrida.
+## D-004 · 2026-10-31 · Estrategia C de importación híbrida y arquitectura enriquecida de contenido
+- Contexto: El inventario de la Fase 1 demostró que en `_legacy/Recurso Final Definitivo/content/` ya existen 52 archivos JSON limpios con la estructura de diapositivas, notas y diagramas, y en `practicas-v2/` 70 archivos Markdown de prácticas.
+- Opciones: A) Convertir todo a Markdown/YAML puro · B) Incrustar HTML compilado en `<iframe>` · C) Enfoque híbrido estructurado directo desde los JSON/MD fuente hacia esquemas JSON/Zod de dominio Angular con renderizado nativo.
+- Decisión: C (Híbrida estructurada) · Decidió: usuario.
+- Consecuencias:
+  1. Se definirá un esquema JSON global predefinido y versionado para cada subtema (`Lesson`), apto para futuras traducciones o exportaciones.
+  2. Cada subtema ofrecerá vista interactiva de Diapositivas (lienzo escalado) y vista Web continua en texto estructurado.
+  3. Sistema de auto-vinculación estilo Wikipedia: referencias internas automáticas en el texto a comandos y términos de glosario (con tooltip/popover descriptivo al interactuar).
+  4. Idioma 100% en español: todos los enunciados de preguntas del simulador y explicaciones se normalizan al español.
+  5. Organización interna de cada tema: teoría por subtemas, sección de prácticas de subtema, práctica global integradora, cuestionario del tema extraído del banco de preguntas y subtema extra de resumen completo del tema (`repaso-grafico`).
+  6. Examen 102: se mantiene como "planificado" para las fases iniciales de desarrollo modular (Fases 2–10) y se importará de forma completa, limpia y ordenada en la Fase 11 a partir de su contenido existente en el legacy.
+- Revisable si: los requerimientos de la certificación LPI introducen cambios en la estructura de objetivos.
