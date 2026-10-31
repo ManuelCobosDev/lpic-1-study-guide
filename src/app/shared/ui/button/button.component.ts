@@ -162,7 +162,7 @@ export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
 
     .btn-link {
       background-color: transparent;
-      color: var(--primary);
+      color: var(--primary-text);
       border: 1px solid transparent;
       padding: 0;
       height: auto;

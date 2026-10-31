@@ -69,27 +69,33 @@ import {
           </p>
 
           <div class="sg-colors-grid">
-            <div class="sg-color-swatch swatch-primary">
+            <div class="sg-color-swatch">
+              <div class="swatch-preview swatch-primary" aria-hidden="true"></div>
               <span class="swatch-name">Azure (Primario)</span>
-              <span class="swatch-var">--primary / --primary-hover</span>
+              <span class="swatch-var">--primary</span>
             </div>
-            <div class="sg-color-swatch swatch-success">
+            <div class="sg-color-swatch">
+              <div class="swatch-preview swatch-success" aria-hidden="true"></div>
               <span class="swatch-name">Emerald (Éxito)</span>
-              <span class="swatch-var">--success (Completado)</span>
+              <span class="swatch-var">--success</span>
             </div>
-            <div class="sg-color-swatch swatch-warning">
+            <div class="sg-color-swatch">
+              <div class="swatch-preview swatch-warning" aria-hidden="true"></div>
               <span class="swatch-name">Amber (Simulador / Aviso)</span>
-              <span class="swatch-var">--warning (Examen)</span>
+              <span class="swatch-var">--warning</span>
             </div>
-            <div class="sg-color-swatch swatch-danger">
+            <div class="sg-color-swatch">
+              <div class="swatch-preview swatch-danger" aria-hidden="true"></div>
               <span class="swatch-name">Rose (Peligro / Error)</span>
-              <span class="swatch-var">--danger (Destructivo)</span>
+              <span class="swatch-var">--danger</span>
             </div>
-            <div class="sg-color-swatch swatch-info">
+            <div class="sg-color-swatch">
+              <div class="swatch-preview swatch-info" aria-hidden="true"></div>
               <span class="swatch-name">Sky (Información)</span>
-              <span class="swatch-var">--info (Datos técnicos)</span>
+              <span class="swatch-var">--info</span>
             </div>
-            <div class="sg-color-swatch swatch-surface">
+            <div class="sg-color-swatch">
+              <div class="swatch-preview swatch-surface" aria-hidden="true"></div>
               <span class="swatch-name">Superficie & Bordes</span>
               <span class="swatch-var">--surface / --border</span>
             </div>
@@ -265,7 +271,7 @@ import {
               <div class="card-inner">
                 <div class="flex items-center justify-between mb-3">
                   <app-badge variant="primary">Clickable</app-badge>
-                  <span class="text-xs text-[var(--primary)] font-medium">Interactivo</span>
+                  <span class="text-xs text-[var(--primary-text)] font-semibold">Interactivo</span>
                 </div>
                 <h3 class="text-lg font-semibold mb-2">Tarjeta Interactiva (Navegación)</h3>
                 <p class="text-sm text-[var(--text-muted)] mb-4">
@@ -316,7 +322,7 @@ import {
               [(activeId)]="activeTabId"
             />
             <div class="p-4 bg-[var(--surface-muted)] rounded-b-lg border-x border-b border-[var(--border)] mt-[-1px]">
-              <p class="text-sm">Contenido activo de la pestaña: <strong class="text-[var(--primary)]">{{ activeTabId() }}</strong></p>
+              <p class="text-sm">Contenido activo de la pestaña: <strong class="text-[var(--primary-text)]">{{ activeTabId() }}</strong></p>
             </div>
           </div>
 
@@ -537,53 +543,55 @@ import {
     .sg-color-swatch {
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
-      padding: 16px;
-      height: 110px;
+      padding: 12px;
+      background-color: var(--surface);
       border-radius: var(--radius-md);
       border: 1px solid var(--border);
-      font-size: 13px;
+    }
+
+    .swatch-preview {
+      height: 52px;
+      width: 100%;
+      border-radius: var(--radius-xs);
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
     }
 
     .swatch-name {
+      font-size: 13px;
       font-weight: 600;
+      color: var(--text);
       margin-bottom: 2px;
     }
 
     .swatch-var {
       font-size: 11px;
-      opacity: 0.85;
+      color: var(--text-muted);
       font-family: var(--font-mono);
     }
 
     .swatch-primary {
       background-color: var(--primary);
-      color: var(--color-slate-0);
     }
 
     .swatch-success {
       background-color: var(--success);
-      color: var(--color-slate-0);
     }
 
     .swatch-warning {
       background-color: var(--warning);
-      color: var(--color-slate-900);
     }
 
     .swatch-danger {
       background-color: var(--danger);
-      color: var(--color-slate-0);
     }
 
     .swatch-info {
       background-color: var(--info);
-      color: var(--color-slate-0);
     }
 
     .swatch-surface {
-      background-color: var(--surface);
-      color: var(--text);
+      background-color: var(--surface-muted);
     }
 
     /* Tipografia */
@@ -815,4 +823,3 @@ export class StyleGuidePageComponent {
     // Demo de remoción
   }
 }
-

@@ -82,22 +82,24 @@ export function checkBoundaries(appDir = path.resolve(process.cwd(), 'src/app'))
 
     // Regla 4: Una feature no importa de otra feature
     const featureMatch = rel.match(/\/features\/([^/]+)\//);
-    if (featureMatch) {
+    if (featureMatch && featureMatch[1]) {
       const currentFeature = featureMatch[1];
       lines.forEach((line, idx) => {
         const importMatch = line.match(/from\s+['"]([^'"]+)['"]/);
-        if (importMatch && importMatch[1]) {
-          const importPath = importMatch[1];
+        const importPath = importMatch ? importMatch[1] : undefined;
+        if (importPath) {
           if (importPath.startsWith('.')) {
             const resolvedPath = path.resolve(path.dirname(file), importPath).replace(/\\/g, '/');
             const targetFeatureMatch = resolvedPath.match(/\/features\/([^/]+)/);
-            if (targetFeatureMatch && targetFeatureMatch[1] && targetFeatureMatch[1] !== currentFeature) {
-              errors.push(`${rel}:${idx + 1} - Feature "${currentFeature}" no debe importar de feature "${targetFeatureMatch[1]}"`);
+            const targetFeature = targetFeatureMatch ? targetFeatureMatch[1] : undefined;
+            if (targetFeature && targetFeature !== currentFeature) {
+              errors.push(`${rel}:${idx + 1} - Feature "${currentFeature}" no debe importar de feature "${targetFeature}"`);
             }
           } else {
             const targetFeatureMatch = importPath.match(/(?:^|\/)features\/([^/]+)/);
-            if (targetFeatureMatch && targetFeatureMatch[1] && targetFeatureMatch[1] !== currentFeature) {
-              errors.push(`${rel}:${idx + 1} - Feature "${currentFeature}" no debe importar de feature "${targetFeatureMatch[1]}"`);
+            const targetFeature = targetFeatureMatch ? targetFeatureMatch[1] : undefined;
+            if (targetFeature && targetFeature !== currentFeature) {
+              errors.push(`${rel}:${idx + 1} - Feature "${currentFeature}" no debe importar de feature "${targetFeature}"`);
             }
           }
         }

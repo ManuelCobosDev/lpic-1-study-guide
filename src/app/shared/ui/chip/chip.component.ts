@@ -6,29 +6,36 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <button
-      type="button"
-      class="inline-flex items-center gap-1.5 shrink-0 h-[28px] min-h-[28px] max-h-[28px] px-3 text-[13px] font-medium leading-none rounded-lg border transition-all select-none focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-      [ngClass]="classes()"
-      (click)="handleClick()"
-    >
-      <ng-content></ng-content>
-      @if (removable()) {
-        <span
-          role="button"
-          tabindex="0"
-          aria-label="Eliminar"
-          class="ml-0.5 hover:opacity-75 focus:outline-hidden"
+    @if (removable()) {
+      <span
+        class="inline-flex items-center gap-1.5 shrink-0 h-[28px] min-h-[28px] max-h-[28px] pl-3 pr-1.5 text-[13px] font-medium leading-none rounded-lg border transition-all select-none box-border"
+        [ngClass]="classes()"
+      >
+        <span class="inline-flex items-center">
+          <ng-content></ng-content>
+        </span>
+        <button
+          type="button"
+          aria-label="Eliminar etiqueta"
+          class="inline-flex items-center justify-center p-0.5 rounded text-inherit bg-transparent border-none hover:opacity-75 focus:outline-hidden cursor-pointer"
           (click)="handleRemove($event)"
-          (keydown.enter)="handleRemove($event)"
         >
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
-        </span>
-      }
-    </button>
+        </button>
+      </span>
+    } @else {
+      <button
+        type="button"
+        class="inline-flex items-center gap-1.5 shrink-0 h-[28px] min-h-[28px] max-h-[28px] px-3 text-[13px] font-medium leading-none rounded-lg border transition-all select-none focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[var(--ring)] cursor-pointer box-border"
+        [ngClass]="classes()"
+        (click)="handleClick()"
+      >
+        <ng-content></ng-content>
+      </button>
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })

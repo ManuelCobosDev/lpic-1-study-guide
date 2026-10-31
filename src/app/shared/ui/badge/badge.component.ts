@@ -9,7 +9,7 @@ export type BadgeVariant = 'neutral' | 'primary' | 'success' | 'warning' | 'dang
   imports: [CommonModule],
   template: `
     <span
-      class="inline-flex items-center justify-center shrink-0 h-[24px] min-h-[24px] max-h-[24px] px-2.5 text-[12px] font-semibold leading-none rounded-full border transition-colors select-none"
+      class="badge-base inline-flex items-center justify-center shrink-0 h-[24px] min-h-[24px] max-h-[24px] px-2.5 text-[12px] font-semibold leading-none rounded-full border transition-colors select-none box-border"
       [ngClass]="classes()"
     >
       @if (dot()) {
