@@ -26,7 +26,7 @@ export const STUBS: StubDefinition[] = [
   { route: '/buscar', implementedIn: 'Fase 6', isImplemented: true },
   { route: '/progreso', implementedIn: 'Fase 10', isImplemented: false },
   { route: '/erratas', implementedIn: 'Fase 10', isImplemented: false },
-  { route: '/ajustes', implementedIn: 'Fase 10', isImplemented: false },
+  { route: '/ajustes', implementedIn: 'Fase 10', isImplemented: true },
   { route: '/acerca-de', implementedIn: 'Fase 10', isImplemented: false },
   { route: '/guia-estilos', implementedIn: 'Fase 3', isImplemented: true },
   { route: '** (404)', implementedIn: 'Fase 10', isImplemented: false }

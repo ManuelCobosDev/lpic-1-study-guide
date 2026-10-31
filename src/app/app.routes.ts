@@ -188,7 +188,10 @@ export const routes: Routes = [
   },
   {
     path: 'ajustes',
-    loadComponent: loadStub,
+    loadComponent: () =>
+      import('./features/settings/pages/settings-page.component').then(
+        (m) => m.SettingsPageComponent
+      ),
     title: 'Ajustes y Copia de Seguridad',
     data: { title: 'Ajustes', breadcrumb: 'Ajustes', phase: 'Fase 10' }
   },
