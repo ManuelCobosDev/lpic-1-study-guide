@@ -43,3 +43,10 @@
 - Archivos: src/app/core/services/storage.service.ts, src/app/core/services/theme.service.ts, src/app/shared/ui/container/container.component.ts, src/app/shared/ui/button/button.component.ts, src/app/shared/layout/header/header.component.ts, src/app/shared/layout/breadcrumbs/breadcrumbs.component.ts, src/app/shared/layout/footer/footer.component.ts, src/app/shared/layout/app-shell/app-shell.component.ts, src/app/shared/layout/not-implemented-page/not-implemented-page.component.ts, src/app/app.ts, src/app/app.routes.ts, src/app/app.config.ts, src/app/app.spec.ts.
 - Verificación: npm run typecheck (código 0), npm run lint (código 0), npm run check:tokens (código 0), npm run check:boundaries (código 0), npm test (7 tests pasando), ng build (código 0, bundle inicial 290.70 kB) y postbuild (404.html generado).
 - Pendiente / deuda: tests E2E con Playwright + Axe, capturas de pantalla y verificación del Gate 0 (Tarea 6).
+
+## C-0006 · 2026-10-31 · Fase 0 · Tests E2E con Playwright, accesibilidad axe, capturas y superación de Gate 0
+- Qué: implementación de suite e2e/fase-0.spec.ts (consola limpia, persistencia de tema oscuro tras reload, auditoría a11y axe en claro y oscuro con 0 violaciones graves, navegación de las 23 rutas stub sin 404, y generación de 4 capturas visuales en escritorio y móvil). Ajustes de dimensiones explícitas en SVG y utilidades de accesibilidad en src/styles.css. Superación de todas las etapas de npm run verify y Gate 0.
+- Por qué: requisito obligatorio de cierre de la Fase 0 (08-fases.md, Gate 0).
+- Archivos: e2e/fase-0.spec.ts, e2e/screenshots/fase-0/*.png, .postcssrc.json, src/styles.css, src/app/shared/layout/header/header.component.ts, src/app/shared/layout/not-implemented-page/not-implemented-page.component.ts, src/app/shared/ui/button/button.component.ts.
+- Verificación: npm run verify (9 etapas en verde: build:content, validate:content, typecheck, lint, check:tokens, check:boundaries, test con 7 unitarios, build y e2e con 5 tests Playwright pasando). Inspección visual de capturas aprobada.
+- Pendiente / deuda: ninguna para la Fase 0. Siguiente fase: Fase 1 (Inventario del contenido legacy).

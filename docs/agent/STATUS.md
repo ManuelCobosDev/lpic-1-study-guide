@@ -2,21 +2,21 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0005
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0006
 
 ## Estado
-- **Fase actual**: Fase 0 · Andamiaje Angular (esqueleto limpio).
-- **Último gate superado**: ninguno (Fase 0 en curso).
-- **Trabajo en curso**: Fase 0 · Tarea 6 (E2E, capturas y verificación del Gate 0).
+- **Fase actual**: Fase 0 completada · Fase 1 pendiente.
+- **Último gate superado**: Gate 0 (etiqueta `fase-0-ok`).
+- **Trabajo en curso**: ninguno (esperando confirmación del usuario para Fase 1).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Fase 0 · Tarea 6: Escribir `e2e/fase-0.spec.ts` (consola limpia, persistencia de tema oscuro tras reload, auditoría axe a11y, navegación de todas las rutas stub, 4 capturas en `e2e/screenshots/fase-0/`) y ejecutar `/verificar-gate 0`.
+Ejecutar `/inventario-legacy` (Fase 1 · Inventario de solo lectura del material antiguo del curso en `_legacy/` + propuesta de decisión D-004).
 
 ## Fases
 | Fase | Descripción | Estado |
 |---|---|---|
-| 0 | Andamiaje Angular (esqueleto limpio) | en curso |
+| 0 | Andamiaje Angular (esqueleto limpio) | completada (Gate 0 OK) |
 | 1 | Inventario del legacy (solo lectura) + decisión D-004 | pendiente |
 | 2 | Currículo, pipeline de contenido, dominio + tajada vertical 103.4 | pendiente |
 | 3 | Sistema de diseño | pendiente |
@@ -43,11 +43,10 @@ Fase 0 · Tarea 6: Escribir `e2e/fase-0.spec.ts` (consola limpia, persistencia d
 | `/mapa-mental` · `/progreso` · `/erratas` · `/ajustes` · `/acerca-de` · `**` (404) | Fase 10 |
 
 ## Comandos útiles
-- `npm run verify`: pipeline completo ordenado.
-- `npm test`: suite completa de tests unitarios (Angular + scripts).
-- `npm run check:tokens`: auditoría de colores literales.
-- `npm run check:boundaries`: verificación de fronteras arquitectónicas.
-- `npm run check:stubs`: lista de páginas pendientes.
+- `npm run verify`: pipeline completo en verde (9 etapas).
+- `npm run start`: servidor de desarrollo (`ng serve`).
+- `npm run e2e`: tests de Playwright con auditoría axe y capturas.
+- `npm run check:stubs`: lista de stubs pendientes (23 rutas).
 
 ## Deuda conocida
 Ninguna.
