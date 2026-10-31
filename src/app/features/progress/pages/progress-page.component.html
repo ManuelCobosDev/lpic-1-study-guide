@@ -1,0 +1,230 @@
+<div class="progress-page">
+  <header class="page-header">
+    <h1 class="page-title">Tu progreso</h1>
+    <p class="page-subtitle">
+      Estadísticas de estudio, evolución de simulacros y avance en el temario de certificación LPIC-1.
+    </p>
+  </header>
+
+  <!-- 4 StatCards -->
+  <section class="stat-cards-grid" aria-label="Métricas principales de progreso">
+    <!-- Stat 1: Lecciones -->
+    <div class="stat-card" data-testid="stat-lessons">
+      <div class="stat-header">
+        <span class="stat-icon" aria-hidden="true">📖</span>
+        <span class="stat-title">Lecciones completadas</span>
+      </div>
+      <div class="stat-value-row">
+        <span class="stat-main-number">{{ lessonsStat().completed }}</span>
+        <span class="stat-total-label">/ {{ lessonsStat().total }}</span>
+      </div>
+      <div class="progress-track" role="progressbar" [attr.aria-valuenow]="lessonsStat().percentage" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-fill" [style.width.%]="lessonsStat().percentage"></div>
+      </div>
+      <p class="stat-meta">{{ lessonsStat().percentage }}% del temario completado</p>
+    </div>
+
+    <!-- Stat 2: Exámenes -->
+    <div class="stat-card" data-testid="stat-exams">
+      <div class="stat-header">
+        <span class="stat-icon" aria-hidden="true">🎯</span>
+        <span class="stat-title">Simulacros de examen</span>
+      </div>
+      <div class="stat-value-row">
+        <span class="stat-main-number">{{ examsStat().count }}</span>
+        <span class="stat-total-label">realizados</span>
+      </div>
+      <div class="stat-secondary-info">
+        <span>Media: <strong>{{ examsStat().avgScore }} pts</strong></span>
+        <span>Aprobados: <strong>{{ examsStat().passRate }}%</strong></span>
+      </div>
+      <p class="stat-meta">Nota de corte oficial: 500 / 800</p>
+    </div>
+
+    <!-- Stat 3: Flashcards -->
+    <div class="stat-card" data-testid="stat-flashcards">
+      <div class="stat-header">
+        <span class="stat-icon" aria-hidden="true">🧠</span>
+        <span class="stat-title">Tarjetas dominadas</span>
+      </div>
+      <div class="stat-value-row">
+        <span class="stat-main-number">{{ flashcardsStat().mastered }}</span>
+        <span class="stat-total-label">en Caja 5</span>
+      </div>
+      <div class="stat-secondary-info">
+        <span>En estudio: <strong>{{ flashcardsStat().total }} tarjetas</strong></span>
+      </div>
+      <p class="stat-meta">Sistema de repetición espaciada Leitner</p>
+    </div>
+
+    <!-- Stat 4: Racha -->
+    <div class="stat-card" data-testid="stat-streak">
+      <div class="stat-header">
+        <span class="stat-icon" aria-hidden="true">🔥</span>
+        <span class="stat-title">Racha de estudio</span>
+      </div>
+      <div class="stat-value-row">
+        <span class="stat-main-number">{{ streakStat().current }}</span>
+        <span class="stat-total-label">días seguidos</span>
+      </div>
+      <div class="stat-secondary-info">
+        <span>Récord personal: <strong>{{ streakStat().longest }} días</strong></span>
+      </div>
+      <p class="stat-meta">Estudia a diario para afianzar retención</p>
+    </div>
+  </section>
+
+  <!-- Siguiente paso recomendado -->
+  <section class="next-step-section" aria-label="Siguiente paso recomendado">
+    <div class="next-step-card" [class.is-weak]="nextStep().type === 'weak_review'">
+      <div class="next-step-content">
+        <span class="next-step-badge">
+          @if (nextStep().type === 'weak_review') {
+            Refuerzo recomendado
+          } @else if (nextStep().type === 'continue') {
+            Siguiente lección
+          } @else {
+            Objetivo cumplido
+          }
+        </span>
+        <h2 class="next-step-title">{{ nextStep().title }}</h2>
+        <p class="next-step-subtitle">{{ nextStep().subtitle }}</p>
+      </div>
+      <div class="next-step-action">
+        <a [routerLink]="nextStep().link" class="btn-primary" data-testid="next-step-btn">
+          {{ nextStep().actionText }} &rarr;
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Heatmap de actividad -->
+  <section class="progress-section" aria-label="Actividad de estudio">
+    <div class="section-header">
+      <h2 class="section-title">Actividad de estudio</h2>
+      <span class="section-badge">Últimas 26 semanas</span>
+    </div>
+    <div class="card-box">
+      <app-activity-heatmap [activityData]="activityDatesMap()"></app-activity-heatmap>
+    </div>
+  </section>
+
+  <!-- Gráfico de puntuaciones de simulacros -->
+  <section class="progress-section" aria-label="Evolución en simulacros de examen">
+    <div class="section-header">
+      <h2 class="section-title">Evolución en simulacros</h2>
+      <span class="section-badge">Línea de corte: 500 puntos</span>
+    </div>
+    <div class="card-box">
+      <app-score-chart [attempts]="examHistory()"></app-score-chart>
+    </div>
+  </section>
+
+  <!-- Temas débiles -->
+  <section class="progress-section" aria-label="Áreas de mejora">
+    <div class="section-header">
+      <h2 class="section-title">Temas débiles (< 70% de precisión)</h2>
+    </div>
+    @if (weakTopics().length === 0) {
+      <div class="card-box empty-weak-state">
+        <span class="check-icon" aria-hidden="true">✨</span>
+        <p class="empty-weak-title">¡No tienes temas débiles detectados!</p>
+        <p class="empty-weak-desc">
+          Mantienes una precisión superior al 70% en tus simulacros o aún estás completando tus primeros exámenes.
+        </p>
+      </div>
+    } @else {
+      <div class="weak-topics-grid">
+        @for (topic of weakTopics(); track topic.topicId) {
+          <div class="weak-card">
+            <div class="weak-info">
+              <div class="weak-header">
+                <span class="topic-badge">Examen {{ topic.exam }}</span>
+                <span class="accuracy-badge">{{ topic.accuracy }}% aciertos</span>
+              </div>
+              <h3 class="weak-title">{{ topic.title }}</h3>
+              <p class="weak-reason">{{ topic.reason }}</p>
+            </div>
+            <a [routerLink]="['/simulador']" [queryParams]="{ topic: topic.topicId }" class="btn-secondary">
+              Practicar &rarr;
+            </a>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Tabla de progreso por tema -->
+  <section class="progress-section" aria-label="Desglose por temas oficiales">
+    <div class="section-header">
+      <h2 class="section-title">Progreso por temas oficiales LPIC-1</h2>
+    </div>
+    <div class="card-box table-wrapper">
+      <table class="progress-table">
+        <thead>
+          <tr>
+            <th scope="col">Tema</th>
+            <th scope="col" class="text-center">Examen</th>
+            <th scope="col" class="text-center">Peso</th>
+            <th scope="col">Progreso</th>
+            <th scope="col" class="text-center">Estado</th>
+            <th scope="col" class="text-right">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (topic of topicProgressList(); track topic.id) {
+            <tr>
+              <td class="topic-name-cell">
+                <span class="topic-num">{{ topic.number }}</span>
+                <span class="topic-label">{{ topic.title }}</span>
+              </td>
+              <td class="text-center">
+                <span class="exam-tag">LPIC-1 {{ topic.exam }}</span>
+              </td>
+              <td class="text-center">
+                <span class="weight-badge">{{ topic.weight }}</span>
+              </td>
+              <td class="progress-cell">
+                <div class="table-progress">
+                  <div class="progress-track sm" role="progressbar" [attr.aria-valuenow]="topic.percentage" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-fill" [style.width.%]="topic.percentage"></div>
+                  </div>
+                  <span class="table-progress-text">
+                    {{ topic.completedSubtopics }} / {{ topic.totalSubtopics }} ({{ topic.percentage }}%)
+                  </span>
+                </div>
+              </td>
+              <td class="text-center">
+                <span
+                  class="status-pill"
+                  [class.status-completed]="topic.status === 'completed'"
+                  [class.status-progress]="topic.status === 'in_progress'"
+                  [class.status-pending]="topic.status === 'pending'"
+                >
+                  @if (topic.status === 'completed') {
+                    Completado
+                  } @else if (topic.status === 'in_progress') {
+                    En curso
+                  } @else {
+                    Pendiente
+                  }
+                </span>
+              </td>
+              <td class="text-right">
+                @if (topic.nextSubtopicId; as subId) {
+                  <a [routerLink]="['/leccion', subId]" class="table-action-link">
+                    Estudiar &rarr;
+                  </a>
+                } @else {
+                  <a [routerLink]="['/temario']" [fragment]="topic.id" class="table-action-link">
+                    Repasar &rarr;
+                  </a>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

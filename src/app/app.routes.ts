@@ -176,7 +176,10 @@ export const routes: Routes = [
   },
   {
     path: 'progreso',
-    loadComponent: loadStub,
+    loadComponent: () =>
+      import('./features/progress/pages/progress-page.component').then(
+        (m) => m.ProgressPageComponent
+      ),
     title: 'Progreso de Estudio',
     data: { title: 'Progreso', breadcrumb: 'Progreso', phase: 'Fase 10' }
   },
