@@ -122,7 +122,11 @@ test.describe('Gate 0: Shell, Persistencia, Accesibilidad y Rutas Stub', () => {
       '/comandos',
       '/glosario',
       '/flashcards',
-      '/ajustes'
+      '/ajustes',
+      '/progreso',
+      '/mapa-mental',
+      '/erratas',
+      '/acerca-de'
     ];
 
     for (const r of testRoutes) {

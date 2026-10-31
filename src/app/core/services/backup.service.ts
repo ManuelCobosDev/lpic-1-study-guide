@@ -197,8 +197,12 @@ export class BackupService {
 
     try {
       const snapshot = JSON.parse(raw) as Record<string, string>;
-      for (const [key, value] of Object.entries(snapshot)) {
-        this.storage.setItem(key, value);
+      for (const key of this.BACKUP_STORES) {
+        if (key in snapshot && snapshot[key] !== undefined) {
+          this.storage.setItem(key, snapshot[key] as string);
+        } else {
+          this.storage.removeItem(key);
+        }
       }
       this.storage.removeItem(PRE_IMPORT_SNAPSHOT_KEY);
       return true;
