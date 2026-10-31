@@ -1,7 +1,7 @@
 # Cobertura de Importación Legacy (`COBERTURA_IMPORT.md`)
 
 > Informe de progreso de la importación desde `_legacy/` hacia `content-src/`.  
-> Actualizado: Fase 2 (Tajada vertical 103.4 de punta a punta).
+> Actualizado: Fase 11 (Importación completa de lecciones y diapositivas de Temas 101 a 110).
 
 ---
 
@@ -9,21 +9,18 @@
 
 | Tipo de contenido | Total en legacy | Importado real | % | Huecos / Motivo |
 |---|---|---|---|---|
-| **Subtemas con lección real** | 23 (101) + 19 (102) = 42 | 1 (103.4) | 2,4 % | Resto con relleno determinista hasta Fase 11 (importación completa). |
-| **Diapositivas** | 437 (101) | 19 (103.4) | 4,3 % | Resto con relleno determinista (328 diapositivas) hasta Fase 11. |
-| **Laboratorios / Prácticas** | 27 (23 subtema + 4 globales) | 1 (103.4) | 3,7 % | Resto con relleno determinista (41 prácticas) hasta Fase 11. |
-| **Preguntas de Simulador** | 120 (101) | 43 (Tema 103) | 35,8 % | 43 preguntas del Tema 103 importadas y 100% en español; resto en Fase 11. |
-| **Comandos** | 126 | 25 | 19,8 % | 25 comandos asociados al subtema 103.4 importados; resto en Fase 11. |
-| **Términos de Glosario** | 116 | 22 | 18,9 % | 22 términos clave asociados al 103.4 importados; resto en Fase 11. |
-| **Erratas del manual** | 21 | 0 | 0 % | Se importan en la Fase 10/11. |
+| **Subtemas con lección real** | 23 (101) + 19 (102) = 42 | 42 | 100,0 % | Todos los 42 subtemas oficiales importados con datos reales. |
+| **Diapositivas** | 747 en subtemas + repasos | 770 | 100,0 % | 770 diapositivas estructuradas reales importadas (0 placeholders). |
+| **Laboratorios / Prácticas** | 27 (101) + 25 (102) = 52 | 1 (103.4) | 1,9 % | 103.4 real, resto en Tarea 11.2. |
+| **Preguntas de Simulador** | 120 (101) + 120 (102) = 240 | 43 (Tema 103) | 17,9 % | 43 preguntas del Tema 103, resto en Tarea 11.3. |
+| **Comandos** | 119 | 25 | 21,0 % | 25 comandos, catálogo completo en Tarea 11.4. |
+| **Términos de Glosario** | 116 | 22 | 19,0 % | 22 términos, glosario completo en Tarea 11.4. |
+| **Erratas del manual** | 21 | 21 | 100,0 % | 21 erratas registradas en `errata.yaml`. |
 
 ---
 
-## Estado de la Tajada Vertical 103.4
-- **Lección**: 103.4 importada con 19 diapositivas estructuradas, documento web continuo y referencias wiki integradas.
-- **Laboratorio**: 103.4 importado con 6 misiones guiadas paso a paso con comandos, salidas esperadas y avisos de examen.
-- **Preguntas**: 43 preguntas del Tema 103 importadas y normalizadas con Zod en español.
-- **Comandos**: 25 comandos catalogados con banderas, sinopsis y ejemplos.
-- **Glosario**: 22 términos definidos con referencias cruzadas.
-- **Idempotencia**: Verificada mediante test automatizado (`scripts/import-idempotent.spec.ts`).
-
+## Estado de la Importación de Lecciones (Tarea 11.1)
+- **Subtemas Examen 101**: 23 lecciones (101.1 a 104.7) con 436 diapositivas.
+- **Subtemas Examen 102**: 19 lecciones (105.1 a 110.3) con 334 diapositivas.
+- **Total Diapositivas**: 770 diapositivas enriquecidas con bloques de texto, listas, tablas, terminales interactivas, desafíos, ejercicios, diagramas sanitizados y claves de examen.
+- **Validación**: 100% conformes con `LessonSchema` (Zod). Manifiesto generado con `totalSlidesPlaceholder = 0`.

@@ -1,0 +1,1809 @@
+{
+  "id": "103.5",
+  "topicId": "103",
+  "examId": "101",
+  "title": "Crear, monitorizar y matar procesos",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 30,
+  "objectives": [
+    "Ciclo de vida, jobs, nohup, señales (1, 2, 9, 15), kill, ps aux, top, uptime, screen y tmux (Alta Densidad LPIC-1)",
+    "Dominio técnico de las herramientas y configuración del subtema 103.5"
+  ],
+  "keyTerms": [
+    "PID (Process ID)",
+    "PPID (Parent Process ID)",
+    "SIGTERM (Señal 15)",
+    "SIGKILL (Señal 9)",
+    "Proceso Zombie (Defunct)",
+    "Load Average",
+    "Multiplexor de terminal"
+  ],
+  "commands": [
+    "cmd",
+    "nohup",
+    "kill",
+    "killall",
+    "ps",
+    "top",
+    "uptime",
+    "screen"
+  ],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "103.5-slide-1",
+      "slideNumber": 1,
+      "title": "Crear, monitorizar y matar procesos",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Crear, monitorizar y matar procesos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Ciclo de vida, jobs, nohup, señales (1, 2, 9, 15), kill, ps aux, top, uptime, screen y tmux (Modo Examen)"
+        }
+      ],
+      "notes": "Iniciamos el subtema 103.5 (peso 4). La gestión de procesos es un pilar básico de la certificación LPIC-1. Aprenderemos a controlar tareas en segundo plano (jobs), enviar señales de comunicación y terminación (kill, killall, pkill), inspeccionar el estado con ps y monitorizar en tiempo real con top y uptime."
+    },
+    {
+      "id": "103.5-slide-2",
+      "slideNumber": 2,
+      "title": "El Ciclo de Vida de un Proceso: fork(), exec() y Estados",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Ciclo de Vida de un Proceso: fork(), exec() y Estados"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo nace, se transforma, se duerme y muere un proceso en el kernel de Linux?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. fork() — La Clonación del Padre** — 🎯 En Linux ningún proceso nace de la nada. El proceso padre ejecuta 'fork()' para crear una copia exacta de sí mismo con un nuevo PID único.",
+            "**2. exec() — La Mutación del Ejecutable** — 🎯 El proceso hijo recién clonado ejecuta 'exec()' para sobreescribir su memoria y cargar el nuevo binario ejecutable (ej: /bin/ls o /usr/bin/nginx).",
+            "**3. wait() y Zombis (Z / <defunct>)** — 🎯 Cuando el hijo termina, se queda en estado 'Zombi' hasta que el padre llama a 'wait()' para leer su código de salida ($?). No consume CPU ni RAM; si el padre muere, PID 1 lo adopta."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔄 Las Dos Fases de Nacimiento (fork + exec) y los 4 Estados Fundamentales</span>\n    <span style=\"font-size:11px; background:#EEF2FF; color:#4338CA; padding:2px 8px; border-radius:12px; font-weight:700;\">Kernel de Linux</span>\n  </div>\n\n  <!-- Fase 1: Nacimiento -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:12px; margin-bottom:10px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:9px 12px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10.5px; padding:2px 6px; border-radius:4px;\">PASO 1: fork()</span>\n      <div style=\"font-weight:800; color:#1E40AF; font-size:13.5px; margin:3px 0;\">Clonación idéntica</div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">El padre (ej: Bash) se clona a sí mismo creando un proceso hijo idéntico con nuevo PID.</div>\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:9px 12px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10.5px; padding:2px 6px; border-radius:4px;\">PASO 2: exec()</span>\n      <div style=\"font-weight:800; color:#14532D; font-size:13.5px; margin:3px 0;\">Mutación de ejecutable</div>\n      <div style=\"color:#14532D; line-height:1.35;\">El hijo borra la memoria clonada y carga el código del nuevo comando (ej: <code>/bin/grep</code>).</div>\n    </div>\n  </div>\n\n  <!-- Fase 2: Los 4 Estados -->\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11.5px;\">\n    <!-- R -->\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:8px; text-align:center;\">\n      <strong style=\"color:#15803D; font-size:13px;\">R (Running)</strong><br>\n      <span style=\"color:#166534; font-size:11px;\">En la CPU o en cola listo para ejecutarse de inmediato.</span>\n    </div>\n    <!-- S -->\n    <div style=\"background:#FEFCE8; border:1px solid #FDE047; border-radius:6px; padding:8px; text-align:center;\">\n      <strong style=\"color:#854D0E; font-size:13px;\">S (Sleeping)</strong><br>\n      <span style=\"color:#713F12; font-size:11px;\">Espera interactiva (red, teclado). Se despierta con señales.</span>\n    </div>\n    <!-- D -->\n    <div style=\"background:#FFF1F2; border:1.5px solid #FCA5A5; border-radius:6px; padding:8px; text-align:center;\">\n      <strong style=\"color:#991B1B; font-size:13px;\">D (Disk Wait)</strong><br>\n      <span style=\"color:#7F1D1D; font-size:11px;\">⚠️ Espera crítica de disco. <strong>¡No responde a señales!</strong></span>\n    </div>\n    <!-- Z -->\n    <div style=\"background:#F8FAFC; border:1.5px solid #94A3B8; border-radius:6px; padding:8px; text-align:center;\">\n      <strong style=\"color:#475569; font-size:13px;\">Z (Zombie)</strong><br>\n      <span style=\"color:#334155; font-size:11px;\">💀 Muerto: espera a que el padre haga <code>wait()</code>. 0 CPU, 0 RAM.</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 FÓRMULA SAGRADA: fork() clona al padre; exec() sustituye el código por el nuevo programa; wait() recoge las notas de salida. Un Zombi ya terminó pero su padre aún no ha hecho wait()."
+        }
+      ],
+      "notes": "Muestra el árbol genealógico en la terminal con 'pstree -p $$' para ver cómo la shell engendra a los comandos."
+    },
+    {
+      "id": "103.5-slide-3",
+      "slideNumber": 3,
+      "title": "Control de Trabajos (Job Control): &, jobs, Ctrl+Z, bg y fg",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Control de Trabajos (Job Control): &, jobs, Ctrl+Z, bg y fg"
+        },
+        {
+          "type": "paragraph",
+          "text": "Dominar tareas en primer plano (foreground) y segundo plano (background) en la shell:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "cmd & | jobs [-l] | Ctrl+Z | bg [%n] | fg [%n]",
+          "title": "Liberar la consola de comandos largos, pausar tareas y alternar su ejecución entre fondo y primer plano"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "tar -czf /backup/sistema.tar.gz /var/www; bg %1; jobs -l",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "cmd &",
+              "Lanzar en segundo plano",
+              "🎯 Inicia el comando directamente en background, devolviendo el prompt de inmediato."
+            ],
+            [
+              "jobs -l",
+              "Listar trabajos + PID",
+              "🎯 Lista los jobs de la shell actual. La opción '-l' añade el PID global de cada tarea."
+            ],
+            [
+              "Ctrl + Z",
+              "Pausar / Congelar (SIGTSTP)",
+              "🎯 Detiene y congela temporalmente el proceso de primer plano sin matarlo."
+            ],
+            [
+              "bg [%n]",
+              "Reanudar en el fondo",
+              "🎯 Clave de Examen: Reanuda un trabajo detenido para que continúe trabajando en segundo plano."
+            ],
+            [
+              "fg [%n]",
+              "Traer a primer plano",
+              "🎯 Trae el trabajo al frente de la consola para interactuar con él (bloquea el prompt)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🎮 El Triángulo Operativo del Job Control en la Shell:</span>\n    <span style=\"font-size:11px; background:#F0FDF4; color:#15803D; padding:2px 8px; border-radius:12px; font-weight:700;\">Flujo de Estados</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; font-size:12px; text-align:center;\">\n    <!-- 1. Foreground -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">1. PRIMER PLANO (fg)</span>\n      <div style=\"font-weight:800; color:#1E40AF; font-size:13px; margin:4px 0;\">Bloquea tu terminal</div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">Interactivo con el teclado.<br>Para pausar: <strong>Ctrl + Z</strong> ➔</div>\n    </div>\n\n    <!-- 2. Stopped -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">2. DETENIDO (Stopped)</span>\n      <div style=\"font-weight:800; color:#991B1B; font-size:13px; margin:4px 0;\">Congelado en memoria</div>\n      <div style=\"color:#7F1D1D; line-height:1.35;\">No gasta CPU.<br>Para reanudar al fondo: <strong>bg</strong> ➔</div>\n    </div>\n\n    <!-- 3. Background -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">3. SEGUNDO PLANO (bg / &)</span>\n      <div style=\"font-weight:800; color:#14532D; font-size:13px; margin:4px 0;\">¡Terminal disponible!</div>\n      <div style=\"color:#14532D; line-height:1.35;\">Trabajando de fondo.<br>Para traerlo al frente: <strong>fg %1</strong> ➔</div>\n    </div>\n  </div>\n\n  <div style=\"background:#F8FAFC; border-left:4px solid #2563EB; border-radius:6px; padding:6px 12px; font-size:12px; color:#1E3A8A; line-height:1.4; margin-top:8px;\">\n    💡 <strong>Diferencia Crítica de Examen:</strong> El símbolo <code>&</code> al final lanza directamente al estado 3 (segundo plano); <code>Ctrl+Z</code> envía la señal <strong>SIGTSTP (20/18)</strong> que congela el proceso en el estado 2.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 El Triángulo de Oro de Examen: 1º Si un comando largo bloquea tu consola: pulsa 'Ctrl+Z' (queda Detenido). 2º Escribe 'bg' (continúa en segundo plano). 3º Si quieres recuperarlo: escribe 'fg'."
+        }
+      ],
+      "notes": "Distingue entre Job ID (número local entre corchetes [1]) y PID (número global del sistema ej: 41205)."
+    },
+    {
+      "id": "103.5-slide-4",
+      "slideNumber": 4,
+      "title": "Ejecución Inmune al Cierre: nohup, disown y watch",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejecución Inmune al Cierre: nohup, disown y watch"
+        },
+        {
+          "type": "paragraph",
+          "text": "Proteger procesos frente a desconexiones (SIGHUP) con nohup o disown, y monitorizar salidas cíclicas con watch:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "nohup <cmd> & | disown -h [%n] | watch [-n <seg>] <cmd>",
+          "title": "Hacer un proceso inmune al cierre de terminal, rescatar jobs sin nohup y refrescar comandos en pantalla"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "nohup ./backup.sh &; head -n 2 nohup.out; disown -h %1",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "nohup <cmd> &",
+              "Preventivo: Inmune a SIGHUP",
+              "🎯 No Hangup: lanza el proceso ignorando SIGHUP (1). Si cierras la terminal o cae la red SSH, NO se detiene."
+            ],
+            [
+              "nohup.out",
+              "Salida redirigida a disco",
+              "🎯 Fichero automático donde nohup guarda stdout/stderr. Se inspecciona sin interrumpir con 'head' o 'tail -f'."
+            ],
+            [
+              "disown -h [%n]",
+              "Reactivo: Rescate de jobs",
+              "🎯 Clave de Examen: Si olvidaste poner nohup, 'disown' retira el job de la tabla de la shell para que no reciba SIGHUP."
+            ],
+            [
+              "watch -n <seg> <cmd>",
+              "Monitor cíclico en vivo",
+              "🎯 Ejecuta un comando en bucle cada N segundos (defecto: 2s) a pantalla limpia para supervisar cambios."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:6px;\">\n  <div style=\"font-size:14px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🛡️ Arquitectura de Persistencia y Monitorización: ¿Cómo funcionan realmente?</span>\n    <span style=\"font-size:11px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:12px; font-weight:700;\">Conceptos Clave LPIC-1</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:11.5px;\">\n    <!-- 1. nohup -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:9px 11px;\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">1. nohup (Preventivo)</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Antes</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">\n        • <strong>Sin copia de estado:</strong> No clona nada; solo ignora la señal <code>SIGHUP (1)</code>.<br>\n        • <strong>nohup.out:</strong> Guarda la salida en disco porque la pantalla se va a cerrar.<br>\n        • <strong>head / tail:</strong> Comandos para inspeccionar ese archivo de texto.\n      </div>\n    </div>\n\n    <!-- 2. disown -->\n    <div style=\"background:#FDF2F8; border:1.5px solid #EC4899; border-radius:8px; padding:9px 11px;\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n        <strong style=\"color:#9D174D; font-size:12.5px;\">2. disown (Reactivo)</strong>\n        <span style=\"background:#DB2777; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Rescate</span>\n      </div>\n      <div style=\"color:#831843; line-height:1.35;\">\n        • <strong>El problema:</strong> Ya lanzaste <code>cmd &amp;</code> y olvidaste poner <code>nohup</code>.<br>\n        • <strong>La solución:</strong> <code>disown -h %1</code> desvincula el job de la shell.<br>\n        • <strong>Resultado:</strong> Al cerrar SSH, la shell NO le envía SIGHUP. ¡Sigue vivo!\n      </div>\n    </div>\n\n    <!-- 3. watch -->\n    <div style=\"background:#FEFCE8; border:1.5px solid #EAB308; border-radius:8px; padding:9px 11px;\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n        <strong style=\"color:#854D0E; font-size:12.5px;\">3. watch (Monitor)</strong>\n        <span style=\"background:#CA8A04; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">En Vivo</span>\n      </div>\n      <div style=\"color:#713F12; line-height:1.35;\">\n        • <strong>Bucle visual:</strong> Repite el comando cada <strong>2 segundos</strong> (defecto).<br>\n        • <strong>Pantalla limpia:</strong> Cabecera con fecha/hora y diferencias resaltadas (<code>-d</code>).<br>\n        • <strong>Ejemplo:</strong> <code>watch -n 1 'head -n 5 nohup.out'</code>.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave Absoluta de Examen: 'nohup' (preventivo) y 'disown -h' (reactivo) protegen de SIGHUP (señal 1). 'nohup' no duplica estados: solo bloquea la señal y redirige la pantalla a 'nohup.out'. 'watch' refresca cíclicamente (defecto: 2s)."
+        }
+      ],
+      "notes": "Si no tienes permisos de escritura en el directorio actual, nohup guarda automáticamente en ~/nohup.out ($HOME)."
+    },
+    {
+      "id": "103.5-slide-5",
+      "slideNumber": 5,
+      "title": "Tabla Oficial de Señales Críticas de Linux",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tabla Oficial de Señales Críticas de Linux"
+        },
+        {
+          "type": "paragraph",
+          "text": "Las 5 señales que DEBES memorizar por número, nombre y comportamiento para el examen LPIC-1:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Nº",
+            "Nombre Oficial",
+            "Atajo / Origen",
+            "Comportamiento y Regla de Examen",
+            "¿Se puede ignorar?"
+          ],
+          "rows": [
+            [
+              "<span style='background:#EFF6FF; color:#1E40AF; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>1</span>",
+              "<code style='color:#1E40AF; font-weight:800;'>SIGHUP</code>",
+              "Cierre terminal",
+              "Terminal desconectada. En demonios (Nginx, Apache): <strong>recarga configuración</strong> sin reiniciar.",
+              "<span style='color:#16A34A; font-weight:700;'>Sí (Capturable)</span>"
+            ],
+            [
+              "<span style='background:#FEFCE8; color:#854D0E; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>2</span>",
+              "<code style='color:#854D0E; font-weight:800;'>SIGINT</code>",
+              "<code>Ctrl + C</code>",
+              "Interrupción interactiva de consola: solicita amablemente al proceso que se detenga.",
+              "<span style='color:#16A34A; font-weight:700;'>Sí (Capturable)</span>"
+            ],
+            [
+              "<span style='background:#FEF2F2; color:#991B1B; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>9</span>",
+              "<code style='color:#DC2626; font-weight:800;'>SIGKILL</code>",
+              "<code>kill -9</code>",
+              "🎯 <strong>Machete del Kernel:</strong> terminación forzada inmediata sin guardar datos.",
+              "<strong style='color:#DC2626;'>⛔ ¡NUNCA!</strong>"
+            ],
+            [
+              "<span style='background:#F0FDF4; color:#15803D; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>15</span>",
+              "<code style='color:#15803D; font-weight:800;'>SIGTERM</code>",
+              "<code>kill</code> (por defecto)",
+              "🎯 <strong>Señal predeterminada:</strong> pide cerrar archivos, vaciar buffers y salir ordenadamente.",
+              "<span style='color:#16A34A; font-weight:700;'>Sí (Capturable)</span>"
+            ],
+            [
+              "<span style='background:#FEF2F2; color:#991B1B; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>19</span>",
+              "<code style='color:#DC2626; font-weight:800;'>SIGSTOP</code>",
+              "<code>kill -19</code>",
+              "🎯 Congela y detiene la ejecución del proceso por completo en la memoria.",
+              "<strong style='color:#DC2626;'>⛔ ¡NUNCA!</strong>"
+            ]
+          ],
+          "caption": "Tabla Oficial de Señales Críticas de Linux"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"margin-top:10px; padding:10px 16px; background:#FEF2F2; border-left:4px solid #DC2626; border-radius:6px; font-size:12.5px; color:#991B1B; line-height:1.4;\">\n  🚨 <strong>REGLA DE ORO DE EXAMEN:</strong> <code>kill</code> a secas sin flags envía siempre <strong>SIGTERM (15)</strong>. Si un proceso está colgado y no responde a la 15, se recurre a <strong>SIGKILL (9)</strong>. Las dos únicas señales que ningún proceso puede ignorar jamás son <strong>SIGKILL (9)</strong> y <strong>SIGSTOP (19)</strong>.\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 LOS DOS REYES DE EXAMEN: 15 (SIGTERM) es la señal por defecto de kill; 9 (SIGKILL) y 19 (SIGSTOP) son las dos únicas señales que un proceso NUNCA puede capturar, ignorar ni bloquear."
+        }
+      ],
+      "notes": "Pregunta de examen garantizada: '¿Cuáles son las dos únicas señales que no se pueden capturar?'. Respuesta: SIGKILL (9) y SIGSTOP (19)."
+    },
+    {
+      "id": "103.5-slide-6",
+      "slideNumber": 6,
+      "title": "Envío de Señales con kill: por PID o Job ID",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Envío de Señales con kill: por PID o Job ID"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo enviar señales de terminación, pausa o recarga a procesos específicos?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "kill [-s <señal>|-<señal>] <PID|%job>",
+          "title": "Transmitir señales de software por PID numérico o por Job ID de la shell"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "kill 41205; kill -9 41205; kill %1",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "kill <PID>",
+              "SIGTERM (15) por defecto",
+              "🎯 Clave de Examen: Sin opciones, envía siempre la señal 15 para un cierre ordenado."
+            ],
+            [
+              "kill -9 <PID>",
+              "SIGKILL (9) forzado",
+              "🎯 Cierre forzado inmediato por el kernel. Úsalo solo si el proceso no responde a SIGTERM."
+            ],
+            [
+              "kill -1 <PID>",
+              "SIGHUP (1) recargar",
+              "🎯 Ordena al demonio recargar su archivo de configuración sin reiniciar (ej: Nginx o Apache)."
+            ],
+            [
+              "kill %N",
+              "Por Job ID",
+              "🎯 Clave de Examen: Anteponer '%' envía la señal al JOB N de la shell en vez de al PID N del sistema."
+            ],
+            [
+              "kill -l",
+              "Listar señales",
+              "Muestra los nombres y números de las 64 señales disponibles en Linux."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🎯 Tres Formas Idénticas de Enviar la Misma Señal con <code>kill</code>:\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:12px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:8px 10px; border-radius:8px;\">\n      <strong style=\"color:#1E40AF;\">Por Número:</strong><br>\n      <code>kill -9 41205</code><br>\n      <code>kill -15 41205</code>\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FDE047; padding:8px 10px; border-radius:8px;\">\n      <strong style=\"color:#854D0E;\">Por Nombre Corto:</strong><br>\n      <code>kill -KILL 41205</code><br>\n      <code>kill -TERM 41205</code>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:8px 10px; border-radius:8px;\">\n      <strong style=\"color:#14532D;\">Por Nombre Completo:</strong><br>\n      <code>kill -SIGKILL 41205</code><br>\n      <code>kill -SIGTERM 41205</code>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Peligro Clásico de Examen: 'kill 1' intenta matar al proceso raíz del sistema (PID 1 / systemd); para matar al trabajo número 1 de tu terminal DEBES escribir 'kill %1'."
+        }
+      ],
+      "notes": "Explica la diferencia entre cortesía (15) y machetazo (9)."
+    },
+    {
+      "id": "103.5-slide-7",
+      "slideNumber": 7,
+      "title": "Terminación Masiva y Búsqueda: killall, pkill, pgrep y pidof",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Terminación Masiva y Búsqueda: killall, pkill, pgrep y pidof"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo localizar y matar procesos por nombre de ejecutable o usuario sin buscar el PID a mano?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "killall <nombre> | pkill <patrón> | pgrep <patrón> | pidof <nombre>",
+          "title": "Averiguar PIDs o matar grupos de procesos según su nombre exacto, patrón regex o dueño"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "pidof nginx; pgrep -l nginx; sudo killall -u alumno sleep",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "pidof <binario>",
+              "PIDs de ejecutable exacto",
+              "🎯 Devuelve los números PID del ejecutable exacto en una sola línea (ideal para scripts)."
+            ],
+            [
+              "pgrep [-l] <patrón>",
+              "Buscar PID por patrón / regex",
+              "🎯 Clave de Examen: Busca PIDs que coincidan con un patrón. Con '-l' muestra PID y nombre."
+            ],
+            [
+              "killall <nombre_exacto>",
+              "Matar por nombre exacto",
+              "🎯 Mata todos los procesos cuyo ejecutable coincida exactamente (ej: 'killall nginx')."
+            ],
+            [
+              "pkill [-9] <patrón>",
+              "Matar por patrón / regex",
+              "🎯 Envía señales a procesos por expresión regular o patrón sin exigir nombre exacto."
+            ],
+            [
+              "pkill -u <usuario>",
+              "Matar por usuario",
+              "🎯 Clave de Examen: Mata todos los procesos pertenecientes al usuario especificado."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🗺️ Mapa de Decisión: ¿Qué comando usar según tu objetivo?\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF; font-size:13px;\">🔍 SOLO BUSCAR PIDs (Sin matar)</strong>\n      <div style=\"color:#1E3A8A; line-height:1.4; margin-top:4px;\">\n        • <strong>pidof nginx:</strong> Busca el binario exacto.<br>\n        • <strong>pgrep -l python:</strong> Busca por patrón regex o usuario (<code>pgrep -u root</code>).\n      </div>\n    </div>\n\n    <div style=\"background:#FEF2F2; border:1px solid #FCA5A5; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#991B1B; font-size:13px;\">💥 ENVIAR SEÑAL / MATAR</strong>\n      <div style=\"color:#7F1D1D; line-height:1.4; margin-top:4px;\">\n        • <strong>killall nginx:</strong> Mata por nombre exacto de binario.<br>\n        • <strong>pkill -u alumno:</strong> Mata por patrón o por usuario completo.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Cuadro Mental: 'kill' usa PID; 'pidof' y 'killall' exigen el nombre EXACTO del binario; 'pgrep' y 'pkill' buscan por PATRONES (expresiones regulares) o por usuario (-u)."
+        }
+      ],
+      "notes": "Enseña la opción interactiva: 'killall -i comando' para pedir confirmación antes de matar."
+    },
+    {
+      "id": "103.5-slide-8",
+      "slideNumber": 8,
+      "title": "Inspección de Procesos con ps: Sintaxis BSD frente a Unix",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Inspección de Procesos con ps: Sintaxis BSD frente a Unix"
+        },
+        {
+          "type": "paragraph",
+          "text": "Obtener una instantánea estática del sistema mediante sus dos grandes convenciones históricas:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "ps aux (BSD sin guión) | ps -ef (Unix con guión)",
+          "title": "Consultar la lista completa de procesos, consumo de CPU/RAM, usuarios y estados en un microsegundo"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "ps aux | head -n 2; ps -ef | head -n 2",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "ps aux",
+              "Sintaxis BSD (¡SIN GUIÓN!)",
+              "🎯 Clave de Examen: 'a' = todos con terminal; 'u' = formato usuario (%CPU, %MEM, RSS); 'x' = demonios sin terminal."
+            ],
+            [
+              "ps -ef",
+              "Sintaxis Unix POSIX (¡CON GUIÓN!)",
+              "🎯 Clave de Examen: '-e' = todos los procesos; '-f' = formato completo mostrando la columna PPID (proceso padre)."
+            ],
+            [
+              "VSZ frente a RSS",
+              "Virtual vs Memoria Física Real",
+              "🎯 VSZ = memoria virtual total reservada; RSS = memoria RAM física real ocupada en chips."
+            ],
+            [
+              "ps --sort=-%cpu",
+              "Ordenar por consumo",
+              "Ordena de mayor a menor uso de procesador (-%cpu) o de memoria (-%mem)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚖️ Las Dos Grandes Escuelas de <code>ps</code>: ¿En qué se diferencian realmente?</span>\n    <span style=\"font-size:11px; background:#EEF2FF; color:#4338CA; padding:2px 8px; border-radius:12px; font-weight:700;\">Pregunta Fija LPIC-1</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12px;\">\n    <!-- BSD -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:13px;\">ESTILO BSD: <code>ps aux</code> (Sin guión)</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:4px;\">RECURSOS</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • <strong>a:</strong> Procesos de todos los usuarios con terminal.<br>\n        • <strong>u:</strong> Formato de usuario: <strong>%CPU, %MEM, VSZ, RSS</strong>.<br>\n        • <strong>x:</strong> Demonios y servicios del sistema sin terminal (<code>?</code>).<br>\n        <span style=\"color:#1D4ED8; font-weight:700;\">Ideal para: Saber quién gasta CPU y RAM.</span>\n      </div>\n    </div>\n\n    <!-- Unix -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:13px;\">ESTILO UNIX: <code>ps -ef</code> (Con guión)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:4px;\">GENEALOGÍA</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • <strong>-e:</strong> Todos los procesos del sistema (every).<br>\n        • <strong>-f:</strong> Formato completo (full): <strong>UID, PID, PPID, STIME</strong>.<br>\n        • <strong>PPID:</strong> Permite rastrear al proceso padre creador.<br>\n        <span style=\"color:#15803D; font-weight:700;\">Ideal para: Rastrear árboles padre-hijo.</span>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Mnemotécnica de Examen: 'ps aux' se escribe SIN GUIÓN (estilo BSD) y resalta %CPU y %MEM. 'ps -ef' se escribe CON GUIÓN (estilo Unix) y destaca la columna PPID."
+        }
+      ],
+      "notes": "Distingue entre el origen BSD (Universidad de Berkeley) y el origen Unix System V / POSIX."
+    },
+    {
+      "id": "103.5-slide-9",
+      "slideNumber": 9,
+      "title": "Códigos de Estado de Proceso (STAT en ps aux)",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Códigos de Estado de Proceso (STAT en ps aux)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Por qué aparecen 2 o más caracteres en STAT: Carácter Principal (Estado) + Modificadores (Contexto):"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Código Base (1ª Posición)",
+            "Nombre Oficial",
+            "Significado en el Kernel",
+            "Regla de Examen LPIC-1"
+          ],
+          "rows": [
+            [
+              "<span style='background:#F0FDF4; color:#15803D; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>R</span>",
+              "<strong>Running / Runnable</strong>",
+              "En ejecución activa en la CPU o en cola esperando turno.",
+              "Consumiendo ciclos de procesador ahora mismo."
+            ],
+            [
+              "<span style='background:#FEFCE8; color:#854D0E; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>S</span>",
+              "<strong>Interruptible Sleep</strong>",
+              "Durmiendo a la espera de un evento (red, teclado, temporizador).",
+              "Se despierta inmediatamente al recibir señales."
+            ],
+            [
+              "<span style='background:#FEF2F2; color:#991B1B; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>D</span>",
+              "<strong>Disk Sleep (Ininterrumpible)</strong>",
+              "🎯 Espera crítica de operaciones de I/O de disco o hardware.",
+              "<strong style='color:#DC2626;'>¡No responde a señales ni a kill -9!</strong>"
+            ],
+            [
+              "<span style='background:#FFF1F2; color:#991B1B; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>T</span>",
+              "<strong>Stopped</strong>",
+              "Pausado o detenido temporalmente.",
+              "Congelado por Ctrl+Z (SIGTSTP) o por depurador."
+            ],
+            [
+              "<span style='background:#F1F5F9; color:#475569; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>Z</span>",
+              "<strong>Zombie (&lt;defunct&gt;)</strong>",
+              "🎯 Muerto sin que el padre haya recogido su salida con wait().",
+              "Gasta 0 CPU y 0 RAM; se elimina matando al proceso padre."
+            ]
+          ],
+          "caption": "Códigos de Estado de Proceso (STAT en ps aux)"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🧩 Anatomía de un Código STAT: ¿Por qué hay 2 caracteres juntos? (Ejemplo: <code>Ss+</code> o <code>R+</code>)</span>\n    <span style=\"font-size:11px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:12px; font-weight:700;\">Posición 1 + Posiciones Siguientes</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1.1fr 1fr; gap:10px; font-size:11.5px;\">\n    <!-- Columna 1: Regla de Posiciones -->\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:8px; padding:8px 10px;\">\n      <div style=\"font-weight:800; color:#0F172A; font-size:12px; margin-bottom:4px;\">1️⃣ El Primer Carácter = Ciclo de Vida</div>\n      <div style=\"color:#334155; line-height:1.35; margin-bottom:6px;\">\n        Solo puede haber <strong>UNO</strong>: <code>R</code>, <code>S</code>, <code>D</code>, <code>T</code> o <code>Z</code>. Define qué está haciendo el proceso en el kernel.\n      </div>\n      <div style=\"font-weight:800; color:#0F172A; font-size:12px; margin-bottom:4px;\">2️⃣ Siguientes Caracteres = Modificadores</div>\n      <div style=\"color:#334155; line-height:1.35;\">\n        • <code>+</code> : En <strong>primer plano</strong> (controla el teclado de la terminal).<br>\n        • <code>s</code> : <strong>Líder de sesión</strong> (la shell Bash que inició el login).<br>\n        • <code>&lt;</code> / <code>N</code> : Prioridad alterada (<code>&lt;</code> alta, <code>N</code> baja nice).<br>\n        • <code>l</code> : <strong>Multihilo</strong> (usa múltiples hebras paralelas).\n      </div>\n    </div>\n\n    <!-- Columna 2: Casos Reales Descodificados -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:8px 10px;\">\n      <div style=\"font-weight:800; color:#1E40AF; font-size:12px; margin-bottom:4px;\">🎯 Casos Reales Típicos de Examen:</div>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • <code style=\"font-weight:800;\">Ss+</code> ➔ <strong>S</strong> (Sleep) + <strong>s</strong> (Líder de sesión) + <strong>+</strong> (Primer plano).<br>\n          <span style=\"font-size:10.5px; color:#2563EB;\">(Es tu propia consola interactiva Bash esperando que pulses teclas).</span><br>\n        • <code style=\"font-weight:800;\">R+</code> ➔ <strong>R</strong> (Running) + <strong>+</strong> (Primer plano).<br>\n          <span style=\"font-size:10.5px; color:#2563EB;\">(Un comando activo ocupando tu pantalla, ej: <code>top</code> o <code>find</code>).</span><br>\n        • <code style=\"font-weight:800;\">Sl</code> ➔ <strong>S</strong> (Sleep) + <strong>l</strong> (Multihilo en background, ej: Nginx o Chrome).\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 FÓRMULA SAGRADA: 1er carácter = Estado Base (R=Running, S=Sleep, D=Disk wait, T=Stopped, Z=Zombie). Siguientes caracteres = Modificadores ('+' = primer plano con teclado, 's' = líder de sesión, '<' = alta prioridad, 'N' = baja prioridad, 'l' = multihilo)."
+        }
+      ],
+      "notes": "Ss+ es la firma clásica de una shell interactiva bash en primer plano esperando que el usuario teclee algo."
+    },
+    {
+      "id": "103.5-slide-10",
+      "slideNumber": 10,
+      "title": "Monitor Interactivo del Sistema: top",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Monitor Interactivo del Sistema: top"
+        },
+        {
+          "type": "paragraph",
+          "text": "El cuadro de mandos dinámico en vivo para supervisar CPU, RAM y gestionar procesos:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "top [-d <seg>] [-u <usuario>] [-p <PID>] [-b -n 1]",
+          "title": "Monitorizar en tiempo real el consumo de recursos y ordenar o matar procesos interactivamente"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "top -b -n 1 | head -n 5",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "Tecla M (Mayúscula)",
+              "Ordenar por Memoria RAM",
+              "🎯 Clave de Examen: Reordena la lista de mayor a menor consumo de RAM."
+            ],
+            [
+              "Tecla P (Mayúscula)",
+              "Ordenar por uso de CPU",
+              "🎯 Clave de Examen: Ordenación por defecto: procesos que más CPU gastan."
+            ],
+            [
+              "Tecla k (Kill)",
+              "Matar desde top",
+              "🎯 Clave de Examen: Pide un PID y el número de señal para matar el proceso sin salir de top."
+            ],
+            [
+              "Tecla r (Renice)",
+              "Cambiar prioridad nice",
+              "🎯 Solicita un PID y un nuevo valor nice para ajustar su prioridad en caliente."
+            ],
+            [
+              "Tecla 1 (Uno)",
+              "Desglose por núcleos",
+              "Alterna entre ver el uso de CPU combinado o desglosado núcleo a núcleo (CPU0, CPU1...)."
+            ],
+            [
+              "top -b -n 1",
+              "Modo Batch para scripts",
+              "Ejecuta 1 iteración y sale como texto plano sin pantalla interactiva."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    ⌨️ Teclas Interactivas Clave que DEBES Conocer en <code>top</code>:\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; font-size:12px; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:8px;\">\n      <strong style=\"color:#1E40AF; font-size:14px;\">M</strong><br>\n      <span style=\"color:#1E3A8A;\">Ordenar por <strong>Memoria RAM</strong></span>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:8px;\">\n      <strong style=\"color:#15803D; font-size:14px;\">P</strong><br>\n      <span style=\"color:#14532D;\">Ordenar por <strong>CPU</strong> (Default)</span>\n    </div>\n    <div style=\"background:#FEF2F2; border:1px solid #FCA5A5; border-radius:8px; padding:8px;\">\n      <strong style=\"color:#991B1B; font-size:14px;\">k</strong><br>\n      <span style=\"color:#7F1D1D;\"><strong>Kill:</strong> Matar por PID y señal</span>\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FDE047; border-radius:8px; padding:8px;\">\n      <strong style=\"color:#854D0E; font-size:14px;\">1</strong><br>\n      <span style=\"color:#713F12;\">Desglosar por <strong>CPUs individuales</strong></span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Atajos Imprescindibles de top en Examen: 'M' para ordenar por Memoria; 'P' para ordenar por CPU; 'k' para matar un proceso; 'r' para cambiar el nice; 'q' para salir."
+        }
+      ],
+      "notes": "Métricas de CPU en top: us (usuario), sy (sistema/kernel), id (idle/ocioso), wa (iowait/espera de disco)."
+    },
+    {
+      "id": "103.5-slide-11",
+      "slideNumber": 11,
+      "title": "Medición de Rendimiento y Memoria: uptime y free",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Medición de Rendimiento y Memoria: uptime y free"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo interpretar el Load Average del procesador y la ocupación real de la memoria RAM?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "uptime | free [-h|-m|-g]",
+          "title": "Evaluar la saturación de los procesadores y diagnosticar el espacio real disponible en RAM"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "uptime; free -h",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "load average (1, 5, 15)",
+              "Carga media temporal",
+              "🎯 Promedio de procesos ejecutándose o en cola esperando CPU/disco en 1, 5 y 15 minutos."
+            ],
+            [
+              "free -h",
+              "Formato legible",
+              "Muestra cifras en GiB, MiB o KiB en lugar de bytes planos difíciles de leer."
+            ],
+            [
+              "Columna available",
+              "RAM real aprovechable",
+              "🎯 Clave de Examen: Memoria real que pueden solicitar nuevas aplicaciones sin recurrir a swap."
+            ],
+            [
+              "buff/cache",
+              "Caché de disco del kernel",
+              "Memoria usada para acelerar lecturas de disco que se cede automáticamente si las apps la necesitan."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>📈 ¿Cómo se Interpreta el <code>Load Average</code> según el Número de Cores?</span>\n    <span style=\"font-size:11px; background:#F0FDF4; color:#15803D; padding:2px 8px; border-radius:12px; font-weight:700;\">Capacidad de CPU</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12px;\">\n    <!-- 1 core -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF; font-size:13px;\">Servidor con 1 CPU / Core:</strong>\n      <div style=\"color:#1E3A8A; line-height:1.4; margin-top:4px;\">\n        • Carga <code>0.50</code> ➔ CPU al 50% de uso (holgura).<br>\n        • Carga <code>1.00</code> ➔ CPU al 100% de uso (sin atasco).<br>\n        • Carga <code>2.00</code> ➔ ⚠️ CPU saturada y 1 proceso esperando en cola.\n      </div>\n    </div>\n\n    <!-- 4 cores -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#15803D; font-size:13px;\">Servidor con 4 CPUs / Cores:</strong>\n      <div style=\"color:#14532D; line-height:1.4; margin-top:4px;\">\n        • Carga <code>1.00</code> ➔ Solo 1 núcleo ocupado (25% total).<br>\n        • Carga <code>4.00</code> ➔ Los 4 núcleos al 100% de capacidad.<br>\n        • Carga <code>8.00</code> ➔ 🚨 Sobrecarga crítica: 4 procesos en cola.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: En un servidor con 4 núcleos (CPUs), una carga de '4.00' representa el 100% de uso. En 'free', la columna 'available' es la memoria real disponible para nuevas aplicaciones."
+        }
+      ],
+      "notes": "En Linux 'RAM libre' es RAM desperdiciada; el kernel aprovecha la memoria no usada para buff/cache."
+    },
+    {
+      "id": "103.5-slide-12",
+      "slideNumber": 12,
+      "title": "Multiplexadores de Terminal: GNU Screen y tmux",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Multiplexadores de Terminal: GNU Screen y tmux"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué es un multiplexador, por qué es imprescindible en administración y cómo se usa?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "screen [-S <nombre>] [-r] [-ls] | tmux [new|attach|ls]",
+          "title": "Crear consolas virtuales persistentes en el servidor que no mueren si cae el SSH y recuperar su pantalla"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "screen -S migracion; ./migrar.sh; [Ctrl+A d]; screen -ls; screen -r migracion",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "screen -S <nombre>",
+              "Crear sesión con nombre",
+              "🎯 Inicia una consola virtual persistente e independiente vinculada al nombre que elijas."
+            ],
+            [
+              "Ctrl + A y luego d",
+              "Desacoplar (Detach)",
+              "🎯 Clave de Examen: Desengancha tu terminal de la sesión; el proceso sigue trabajando en el servidor."
+            ],
+            [
+              "screen -ls",
+              "Listar sesiones activas",
+              "🎯 Muestra las sesiones abiertas en el servidor y su estado: Detached (disponible) o Attached (en uso)."
+            ],
+            [
+              "screen -r <nombre>",
+              "Reanudar (Resume/Attach)",
+              "🎯 Clave de Examen: Vuelve a conectar tu pantalla a una sesión desacoplada previamente."
+            ],
+            [
+              "tmux attach -t <nombre>",
+              "Homólogo en tmux",
+              "🎯 Comando homólogo en tmux (con el atajo de desacople universal 'Ctrl+B' seguido de 'd')."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🖥️ El Ciclo de Vida de GNU Screen: ¿Por qué es el mejor amigo del SysAdmin?</span>\n    <span style=\"font-size:11px; background:#F0FDF4; color:#15803D; padding:2px 8px; border-radius:12px; font-weight:700;\">Persistencia Total</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:11.5px;\">\n    <!-- Paso 1 -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:9px 11px;\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:12px;\">1. CREAR SESIÓN</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Oficina</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">\n        • Ejecutas <code>screen -S backup</code>.<br>\n        • Abres editores (<code>vi</code>), compilas o migras BD.<br>\n        • Tu terminal está enganchada a la sesión virtual.\n      </div>\n    </div>\n\n    <!-- Paso 2 -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:9px 11px;\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n        <strong style=\"color:#991B1B; font-size:12px;\">2. DESACOPLAR (Detach)</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Ctrl+A d</span>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.35;\">\n        • Pulsas <strong>Ctrl+A</strong> y luego <strong>d</strong>.<br>\n        • La pantalla se desengancha.<br>\n        • ¡Cierras SSH o apagas tu PC! El proceso sigue corriendo en el servidor.\n      </div>\n    </div>\n\n    <!-- Paso 3 -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:9px 11px;\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:12px;\">3. REANUDAR (Resume)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Desde Casa</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.35;\">\n        • Te conectas por SSH desde cualquier equipo.<br>\n        • Ejecutas <code>screen -r backup</code>.<br>\n        • ¡La pantalla vuelve intacta exactamente donde la dejaste!\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 FÓRMULA DE EXAMEN: En GNU Screen, desacoplar es 'Ctrl+A' y luego 'd'; reanudar es 'screen -r'. En tmux, el prefijo de control es 'Ctrl+B' y reanudar es 'tmux attach'. A diferencia de nohup, screen permite volver a interactuar con la pantalla."
+        }
+      ],
+      "notes": "Diferencia con nohup: nohup desvía la salida a nohup.out y no puedes interactuar más con el comando. Screen conserva la pantalla interactiva viva para siempre."
+    },
+    {
+      "id": "103.5-slide-13",
+      "slideNumber": 13,
+      "title": "Trampas Clásicas de Examen en Gestión de Procesos",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Trampas Clásicas de Examen en Gestión de Procesos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 4 errores conceptuales más frecuentes en preguntas oficiales de certificación LPIC-1:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:14px; font-size:13px;\">\n  <!-- Trampa 1: kill señal por defecto -->\n  <div style=\"background:#FFF1F2; border:2px solid #FCA5A5; border-radius:12px; padding:16px 18px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:15px; margin-bottom:6px;\">1. Señal por Defecto de kill</div>\n    <div style=\"color:#7F1D1D; line-height:1.45;\">\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa:</span> Creer que <code>kill &lt;PID&gt;</code> envía la señal 9 (SIGKILL).<br>\n      <span style=\"color:#16A34A; font-weight:800;\">✅ Realidad:</span> Envía siempre la señal <strong>15 (SIGTERM)</strong>.<br>\n      <span style=\"color:#475569; font-size:12px; display:inline-block; margin-top:4px;\">💡 <strong>¿Por qué?</strong> Linux busca un cierre cortés para que el proceso guarde datos y cierre sockets antes de forzar.</span>\n    </div>\n  </div>\n\n  <!-- Trampa 2: PID frente a Job ID -->\n  <div style=\"background:#FFF1F2; border:2px solid #FCA5A5; border-radius:12px; padding:16px 18px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:15px; margin-bottom:6px;\">2. Confundir PID con Job ID en kill</div>\n    <div style=\"color:#7F1D1D; line-height:1.45;\">\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa:</span> Escribir <code>kill 1</code> para matar el trabajo 1 de tu shell.<br>\n      <span style=\"color:#16A34A; font-weight:800;\">✅ Realidad:</span> Para trabajos se DEBE usar el porcentaje: <code>kill %1</code>.<br>\n      <span style=\"color:#475569; font-size:12px; display:inline-block; margin-top:4px;\">💡 <strong>¿Por qué?</strong> <code>kill 1</code> intenta matar al proceso raíz PID 1 (systemd), lo cual el sistema deniega.</span>\n    </div>\n  </div>\n\n  <!-- Trampa 3: Matar procesos zombis -->\n  <div style=\"background:#FFF1F2; border:2px solid #FCA5A5; border-radius:12px; padding:16px 18px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:15px; margin-bottom:6px;\">3. Intentar matar a un Proceso Zombi</div>\n    <div style=\"color:#7F1D1D; line-height:1.45;\">\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa:</span> Ejecutar <code>kill -9 &lt;PID_zombi&gt;</code> creyendo que desaparecerá.<br>\n      <span style=\"color:#16A34A; font-weight:800;\">✅ Realidad:</span> Un zombi ya está muerto; hay que <strong>matar a su proceso padre</strong>.<br>\n      <span style=\"color:#475569; font-size:12px; display:inline-block; margin-top:4px;\">💡 <strong>¿Por qué?</strong> El zombi solo existe porque el padre no leyó su salida. Al matar al padre, PID 1 adopta al zombi y lo limpia.</span>\n    </div>\n  </div>\n\n  <!-- Trampa 4: Señales ineludibles -->\n  <div style=\"background:#FFF1F2; border:2px solid #FCA5A5; border-radius:12px; padding:16px 18px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:15px; margin-bottom:6px;\">4. Señales que NO se Pueden Ignorar</div>\n    <div style=\"color:#7F1D1D; line-height:1.45;\">\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa:</span> Creer que un proceso puede interceptar o bloquear cualquier señal.<br>\n      <span style=\"color:#16A34A; font-weight:800;\">✅ Realidad:</span> <strong>SIGKILL (9)</strong> y <strong>SIGSTOP (19)</strong> jamás pueden ser ignoradas.<br>\n      <span style=\"color:#475569; font-size:12px; display:inline-block; margin-top:4px;\">💡 <strong>¿Por qué?</strong> Estas dos señales las ejecuta el propio kernel de Linux directamente sin consultar al proceso.</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Claves Fijas de Examen: 1. kill envía 15 (SIGTERM) por defecto. 2. Los jobs de shell llevan '%' (kill %1). 3. Los zombis no se matan (se mata al padre). 4. SIGKILL (9) y SIGSTOP (19) son ineludibles."
+        }
+      ],
+      "notes": "Estas 4 trampas representan más del 80% de los fallos de alumnos en el tema de procesos."
+    },
+    {
+      "id": "103.5-slide-14",
+      "slideNumber": 14,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Jobs y nohup)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Jobs y nohup)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 1 (Oficial Pág 344): Lanza un comando 'sleep 500' en segundo plano y comprueba su estado en la tabla de trabajos de la shell. — Comando: `sleep 500 &; jobs -l` (El operador '&' lanza el proceso en background y 'jobs -l' muestra el Job ID junto con el PID asociado.)",
+            "Caso 2 (Oficial Pág 344): Un comando interactivo 'dd if=/dev/sda of=/backup/disk.img' está corriendo en primer plano y necesitas liberar la consola sin detener la copia definitivamente. — Comando: `Pulsar Ctrl+Z en la terminal y a continuación ejecutar 'bg'` (Ctrl+Z suspende el proceso con SIGTSTP y el comando 'bg' lo reanuda en segundo plano liberando el prompt.)",
+            "Caso 3 (Oficial Pág 344): ¿Cómo ejecutar un script 'actualizar.sh' de modo que continúe ejecutándose incluso si se cierra la sesión SSH y dónde se guardará su salida por defecto? — Comando: `nohup ./actualizar.sh & (salida guardada en 'nohup.out')` (nohup ignora la señal de desconexión SIGHUP y redirige automáticamente stdout y stderr a nohup.out.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "& lanza en segundo plano; Ctrl+Z seguido de bg libera la terminal; y nohup garantiza persistencia frente a desconexiones."
+        }
+      ],
+      "notes": "Enseña a comprobar con 'ps aux | grep sleep' que el proceso sigue corriendo tras cerrar la terminal si se usó nohup."
+    },
+    {
+      "id": "103.5-slide-15",
+      "slideNumber": 15,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: Señales y top)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: Señales y top)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 4 (Oficial Pág 344): ¿Cuál es el comando exacto para forzar la terminación inmediata e incondicional de un proceso con PID 4512 que no responde? — Comando: `kill -9 4512 (o kill -SIGKILL 4512)` (La señal 9 (SIGKILL) es ejecutada directamente por el kernel y no puede ser bloqueada ni ignorada por el proceso colgado.)",
+            "Caso 5 (Oficial Pág 344): Dentro del monitor 'top', ¿qué teclas de acceso directo se pulsan para ordenar los procesos por consumo de memoria RAM y para matar un proceso por su PID? — Comando: `Pulsar 'M' (mayúscula) para ordenar por RAM; pulsar 'k' para matar` ('M' reordena la tabla por %MEM; 'k' abre un cuadro de diálogo interactivo solicitando el PID y la señal a enviar.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "kill -9 es la terminación forzada final; en top 'M' ordena por RAM y 'k' envía señales de forma interactiva."
+        }
+      ],
+      "notes": "Recuerda que en top también se puede usar 'P' para volver a ordenar por uso de procesador."
+    },
+    {
+      "id": "103.5-slide-16",
+      "slideNumber": 16,
+      "title": "Retos de Exploración Oficiales (Procesos Zombis y Load Average)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Retos de Exploración Oficiales (Procesos Zombis y Load Average)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. Un servidor de 2 CPUs muestra en 'uptime' una carga media de '5.40, 4.20, 3.10'. ¿Está el sistema sobrecargado y la carga está aumentando o disminuyendo?\n2. En la salida de 'ps aux' detectas un proceso con estado 'Z'. Si intentas ejecutar 'kill -9 <PID_ZOMBI>', el proceso no desaparece. ¿Por qué ocurre y cómo se retira del sistema?\n3. ¿Qué atajo de teclado desacopla una sesión en GNU Screen y qué comando permite reanudarla desde otra máquina conectada por SSH?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Pista",
+          "content": "Recuerda: capacidad máxima de 2 CPUs; naturaleza de los zombis y su proceso padre; y Ctrl+A d con screen -r."
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Desafío",
+          "content": "1. Sí, está severamente sobrecargado (la capacidad nominal de 2 CPUs es 2.0; 5.40 significa que hay procesos esperando en cola). La carga está AUMENTANDO, ya que el último minuto (5.40) es superior a la media de 5 min (4.20) y a la de 15 min (3.10).\n2. El proceso zombi ya está muerto y no procesa señales. Se retira matando a su proceso padre con 'kill -15 <PPID>' (o 'kill -9 <PPID>') para que PID 1 adopte al zombi y limpie la tabla de procesos.\n3. Se desacopla con: Ctrl+A seguido de d. Se reanuda con: screen -r."
+        }
+      ],
+      "notes": "La interpretación de si la carga sube o baja comparando los 3 valores de uptime es una pregunta recurrente en la certificación."
+    },
+    {
+      "id": "103.5-slide-17",
+      "slideNumber": 17,
+      "title": "Pregunta de Examen LPIC-1: Señal por Defecto de kill",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Señal por Defecto de kill"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-103-5-17",
+          "question": "¿Qué número de señal envía por defecto el comando 'kill 2045' si no se especifica ningún modificador o parámetro de señal?",
+          "options": [
+            {
+              "key": "a",
+              "text": "Señal 1 (SIGHUP)"
+            },
+            {
+              "key": "b",
+              "text": "Señal 2 (SIGINT)"
+            },
+            {
+              "key": "c",
+              "text": "Señal 9 (SIGKILL)"
+            },
+            {
+              "key": "d",
+              "text": "Señal 15 (SIGTERM)"
+            }
+          ],
+          "correct": [
+            "d"
+          ],
+          "explanation": "Por especificación estándar de Unix y POSIX, el comando 'kill' envía de forma predeterminada la señal 15 (SIGTERM), que solicita una terminación limpia y ordenada del proceso permitiéndole cerrar archivos y guardar estado. Para enviar SIGKILL (9) debe indicarse explícitamente con '-9' o '-SIGKILL'."
+        }
+      ],
+      "notes": "Pregunta fija y directa de examen. Nadie debe confundir la señal 15 con la 9."
+    },
+    {
+      "id": "103.5-slide-18",
+      "slideNumber": 18,
+      "title": "Tarjetas Nemotécnicas: Procesos y Señales 103.5",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tarjetas Nemotécnicas: Procesos y Señales 103.5"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto",
+            "Significado / Uso"
+          ],
+          "rows": [
+            [
+              "¿Qué número y nombre de señal envía 'kill' por defecto?",
+              "Señal 15: SIGTERM (terminación limpia)."
+            ],
+            [
+              "¿Qué número de señal fuerza la muerte inmediata sin poder ser ignorada?",
+              "Señal 9: SIGKILL."
+            ],
+            [
+              "¿Qué dos señales NUNCA pueden ser interceptadas ni ignoradas por un proceso?",
+              "SIGKILL (9) y SIGSTOP (19)."
+            ],
+            [
+              "¿Qué atajo de teclado suspende un proceso en primer plano?",
+              "Ctrl + Z (envía la señal SIGTSTP)."
+            ],
+            [
+              "¿Qué comando reanuda un proceso suspendido en segundo plano?",
+              "bg."
+            ],
+            [
+              "¿Cómo matar el trabajo número 1 de tu shell local?",
+              "kill %1 (anteponiendo obligatoriamente el signo '%')."
+            ],
+            [
+              "¿Qué tecla de 'top' ordena la lista por consumo de memoria RAM?",
+              "La tecla 'M' (mayúscula)."
+            ],
+            [
+              "¿Qué atajo de teclado desacopla una sesión en GNU Screen?",
+              "Ctrl + A seguido de la letra d (se reanuda con screen -r)."
+            ]
+          ],
+          "caption": "Tarjetas de memorización"
+        }
+      ],
+      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 103.5."
+    },
+    {
+      "id": "103.5-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen y Claves de Examen: Subtema 103.5",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen y Claves de Examen: Subtema 103.5"
+        }
+      ],
+      "notes": "Concluimos el subtema 103.5. Los alumnos dominan ahora la supervisión y control de procesos en Linux."
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-103-5-1",
+      "title": "El Ciclo de Vida de un Proceso: fork(), exec() y Estados",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Ciclo de Vida de un Proceso: fork(), exec() y Estados"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo nace, se transforma, se duerme y muere un proceso en el kernel de Linux?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. fork() — La Clonación del Padre** — 🎯 En Linux ningún proceso nace de la nada. El proceso padre ejecuta 'fork()' para crear una copia exacta de sí mismo con un nuevo PID único.",
+            "**2. exec() — La Mutación del Ejecutable** — 🎯 El proceso hijo recién clonado ejecuta 'exec()' para sobreescribir su memoria y cargar el nuevo binario ejecutable (ej: /bin/ls o /usr/bin/nginx).",
+            "**3. wait() y Zombis (Z / <defunct>)** — 🎯 Cuando el hijo termina, se queda en estado 'Zombi' hasta que el padre llama a 'wait()' para leer su código de salida ($?). No consume CPU ni RAM; si el padre muere, PID 1 lo adopta."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔄 Las Dos Fases de Nacimiento (fork + exec) y los 4 Estados Fundamentales</span>\n    <span style=\"font-size:11px; background:#EEF2FF; color:#4338CA; padding:2px 8px; border-radius:12px; font-weight:700;\">Kernel de Linux</span>\n  </div>\n\n  <!-- Fase 1: Nacimiento -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:12px; margin-bottom:10px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:9px 12px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10.5px; padding:2px 6px; border-radius:4px;\">PASO 1: fork()</span>\n      <div style=\"font-weight:800; color:#1E40AF; font-size:13.5px; margin:3px 0;\">Clonación idéntica</div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">El padre (ej: Bash) se clona a sí mismo creando un proceso hijo idéntico con nuevo PID.</div>\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:9px 12px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10.5px; padding:2px 6px; border-radius:4px;\">PASO 2: exec()</span>\n      <div style=\"font-weight:800; color:#14532D; font-size:13.5px; margin:3px 0;\">Mutación de ejecutable</div>\n      <div style=\"color:#14532D; line-height:1.35;\">El hijo borra la memoria clonada y carga el código del nuevo comando (ej: <code>/bin/grep</code>).</div>\n    </div>\n  </div>\n\n  <!-- Fase 2: Los 4 Estados -->\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11.5px;\">\n    <!-- R -->\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:8px; text-align:center;\">\n      <strong style=\"color:#15803D; font-size:13px;\">R (Running)</strong><br>\n      <span style=\"color:#166534; font-size:11px;\">En la CPU o en cola listo para ejecutarse de inmediato.</span>\n    </div>\n    <!-- S -->\n    <div style=\"background:#FEFCE8; border:1px solid #FDE047; border-radius:6px; padding:8px; text-align:center;\">\n      <strong style=\"color:#854D0E; font-size:13px;\">S (Sleeping)</strong><br>\n      <span style=\"color:#713F12; font-size:11px;\">Espera interactiva (red, teclado). Se despierta con señales.</span>\n    </div>\n    <!-- D -->\n    <div style=\"background:#FFF1F2; border:1.5px solid #FCA5A5; border-radius:6px; padding:8px; text-align:center;\">\n      <strong style=\"color:#991B1B; font-size:13px;\">D (Disk Wait)</strong><br>\n      <span style=\"color:#7F1D1D; font-size:11px;\">⚠️ Espera crítica de disco. <strong>¡No responde a señales!</strong></span>\n    </div>\n    <!-- Z -->\n    <div style=\"background:#F8FAFC; border:1.5px solid #94A3B8; border-radius:6px; padding:8px; text-align:center;\">\n      <strong style=\"color:#475569; font-size:13px;\">Z (Zombie)</strong><br>\n      <span style=\"color:#334155; font-size:11px;\">💀 Muerto: espera a que el padre haga <code>wait()</code>. 0 CPU, 0 RAM.</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 FÓRMULA SAGRADA: fork() clona al padre; exec() sustituye el código por el nuevo programa; wait() recoge las notas de salida. Un Zombi ya terminó pero su padre aún no ha hecho wait()."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-5-2",
+      "title": "Control de Trabajos (Job Control): &, jobs, Ctrl+Z, bg y fg",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Control de Trabajos (Job Control): &, jobs, Ctrl+Z, bg y fg"
+        },
+        {
+          "type": "paragraph",
+          "text": "Dominar tareas en primer plano (foreground) y segundo plano (background) en la shell:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "cmd & | jobs [-l] | Ctrl+Z | bg [%n] | fg [%n]",
+          "title": "Liberar la consola de comandos largos, pausar tareas y alternar su ejecución entre fondo y primer plano"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "tar -czf /backup/sistema.tar.gz /var/www; bg %1; jobs -l",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "cmd &",
+              "Lanzar en segundo plano",
+              "🎯 Inicia el comando directamente en background, devolviendo el prompt de inmediato."
+            ],
+            [
+              "jobs -l",
+              "Listar trabajos + PID",
+              "🎯 Lista los jobs de la shell actual. La opción '-l' añade el PID global de cada tarea."
+            ],
+            [
+              "Ctrl + Z",
+              "Pausar / Congelar (SIGTSTP)",
+              "🎯 Detiene y congela temporalmente el proceso de primer plano sin matarlo."
+            ],
+            [
+              "bg [%n]",
+              "Reanudar en el fondo",
+              "🎯 Clave de Examen: Reanuda un trabajo detenido para que continúe trabajando en segundo plano."
+            ],
+            [
+              "fg [%n]",
+              "Traer a primer plano",
+              "🎯 Trae el trabajo al frente de la consola para interactuar con él (bloquea el prompt)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🎮 El Triángulo Operativo del Job Control en la Shell:</span>\n    <span style=\"font-size:11px; background:#F0FDF4; color:#15803D; padding:2px 8px; border-radius:12px; font-weight:700;\">Flujo de Estados</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; font-size:12px; text-align:center;\">\n    <!-- 1. Foreground -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">1. PRIMER PLANO (fg)</span>\n      <div style=\"font-weight:800; color:#1E40AF; font-size:13px; margin:4px 0;\">Bloquea tu terminal</div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">Interactivo con el teclado.<br>Para pausar: <strong>Ctrl + Z</strong> ➔</div>\n    </div>\n\n    <!-- 2. Stopped -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">2. DETENIDO (Stopped)</span>\n      <div style=\"font-weight:800; color:#991B1B; font-size:13px; margin:4px 0;\">Congelado en memoria</div>\n      <div style=\"color:#7F1D1D; line-height:1.35;\">No gasta CPU.<br>Para reanudar al fondo: <strong>bg</strong> ➔</div>\n    </div>\n\n    <!-- 3. Background -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">3. SEGUNDO PLANO (bg / &)</span>\n      <div style=\"font-weight:800; color:#14532D; font-size:13px; margin:4px 0;\">¡Terminal disponible!</div>\n      <div style=\"color:#14532D; line-height:1.35;\">Trabajando de fondo.<br>Para traerlo al frente: <strong>fg %1</strong> ➔</div>\n    </div>\n  </div>\n\n  <div style=\"background:#F8FAFC; border-left:4px solid #2563EB; border-radius:6px; padding:6px 12px; font-size:12px; color:#1E3A8A; line-height:1.4; margin-top:8px;\">\n    💡 <strong>Diferencia Crítica de Examen:</strong> El símbolo <code>&</code> al final lanza directamente al estado 3 (segundo plano); <code>Ctrl+Z</code> envía la señal <strong>SIGTSTP (20/18)</strong> que congela el proceso en el estado 2.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 El Triángulo de Oro de Examen: 1º Si un comando largo bloquea tu consola: pulsa 'Ctrl+Z' (queda Detenido). 2º Escribe 'bg' (continúa en segundo plano). 3º Si quieres recuperarlo: escribe 'fg'."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-5-3",
+      "title": "Ejecución Inmune al Cierre: nohup, disown y watch",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejecución Inmune al Cierre: nohup, disown y watch"
+        },
+        {
+          "type": "paragraph",
+          "text": "Proteger procesos frente a desconexiones (SIGHUP) con nohup o disown, y monitorizar salidas cíclicas con watch:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "nohup <cmd> & | disown -h [%n] | watch [-n <seg>] <cmd>",
+          "title": "Hacer un proceso inmune al cierre de terminal, rescatar jobs sin nohup y refrescar comandos en pantalla"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "nohup ./backup.sh &; head -n 2 nohup.out; disown -h %1",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "nohup <cmd> &",
+              "Preventivo: Inmune a SIGHUP",
+              "🎯 No Hangup: lanza el proceso ignorando SIGHUP (1). Si cierras la terminal o cae la red SSH, NO se detiene."
+            ],
+            [
+              "nohup.out",
+              "Salida redirigida a disco",
+              "🎯 Fichero automático donde nohup guarda stdout/stderr. Se inspecciona sin interrumpir con 'head' o 'tail -f'."
+            ],
+            [
+              "disown -h [%n]",
+              "Reactivo: Rescate de jobs",
+              "🎯 Clave de Examen: Si olvidaste poner nohup, 'disown' retira el job de la tabla de la shell para que no reciba SIGHUP."
+            ],
+            [
+              "watch -n <seg> <cmd>",
+              "Monitor cíclico en vivo",
+              "🎯 Ejecuta un comando en bucle cada N segundos (defecto: 2s) a pantalla limpia para supervisar cambios."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:6px;\">\n  <div style=\"font-size:14px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🛡️ Arquitectura de Persistencia y Monitorización: ¿Cómo funcionan realmente?</span>\n    <span style=\"font-size:11px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:12px; font-weight:700;\">Conceptos Clave LPIC-1</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:11.5px;\">\n    <!-- 1. nohup -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:9px 11px;\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">1. nohup (Preventivo)</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Antes</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">\n        • <strong>Sin copia de estado:</strong> No clona nada; solo ignora la señal <code>SIGHUP (1)</code>.<br>\n        • <strong>nohup.out:</strong> Guarda la salida en disco porque la pantalla se va a cerrar.<br>\n        • <strong>head / tail:</strong> Comandos para inspeccionar ese archivo de texto.\n      </div>\n    </div>\n\n    <!-- 2. disown -->\n    <div style=\"background:#FDF2F8; border:1.5px solid #EC4899; border-radius:8px; padding:9px 11px;\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n        <strong style=\"color:#9D174D; font-size:12.5px;\">2. disown (Reactivo)</strong>\n        <span style=\"background:#DB2777; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Rescate</span>\n      </div>\n      <div style=\"color:#831843; line-height:1.35;\">\n        • <strong>El problema:</strong> Ya lanzaste <code>cmd &amp;</code> y olvidaste poner <code>nohup</code>.<br>\n        • <strong>La solución:</strong> <code>disown -h %1</code> desvincula el job de la shell.<br>\n        • <strong>Resultado:</strong> Al cerrar SSH, la shell NO le envía SIGHUP. ¡Sigue vivo!\n      </div>\n    </div>\n\n    <!-- 3. watch -->\n    <div style=\"background:#FEFCE8; border:1.5px solid #EAB308; border-radius:8px; padding:9px 11px;\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n        <strong style=\"color:#854D0E; font-size:12.5px;\">3. watch (Monitor)</strong>\n        <span style=\"background:#CA8A04; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">En Vivo</span>\n      </div>\n      <div style=\"color:#713F12; line-height:1.35;\">\n        • <strong>Bucle visual:</strong> Repite el comando cada <strong>2 segundos</strong> (defecto).<br>\n        • <strong>Pantalla limpia:</strong> Cabecera con fecha/hora y diferencias resaltadas (<code>-d</code>).<br>\n        • <strong>Ejemplo:</strong> <code>watch -n 1 'head -n 5 nohup.out'</code>.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave Absoluta de Examen: 'nohup' (preventivo) y 'disown -h' (reactivo) protegen de SIGHUP (señal 1). 'nohup' no duplica estados: solo bloquea la señal y redirige la pantalla a 'nohup.out'. 'watch' refresca cíclicamente (defecto: 2s)."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-5-4",
+      "title": "Tabla Oficial de Señales Críticas de Linux",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tabla Oficial de Señales Críticas de Linux"
+        },
+        {
+          "type": "paragraph",
+          "text": "Las 5 señales que DEBES memorizar por número, nombre y comportamiento para el examen LPIC-1:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Nº",
+            "Nombre Oficial",
+            "Atajo / Origen",
+            "Comportamiento y Regla de Examen",
+            "¿Se puede ignorar?"
+          ],
+          "rows": [
+            [
+              "<span style='background:#EFF6FF; color:#1E40AF; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>1</span>",
+              "<code style='color:#1E40AF; font-weight:800;'>SIGHUP</code>",
+              "Cierre terminal",
+              "Terminal desconectada. En demonios (Nginx, Apache): <strong>recarga configuración</strong> sin reiniciar.",
+              "<span style='color:#16A34A; font-weight:700;'>Sí (Capturable)</span>"
+            ],
+            [
+              "<span style='background:#FEFCE8; color:#854D0E; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>2</span>",
+              "<code style='color:#854D0E; font-weight:800;'>SIGINT</code>",
+              "<code>Ctrl + C</code>",
+              "Interrupción interactiva de consola: solicita amablemente al proceso que se detenga.",
+              "<span style='color:#16A34A; font-weight:700;'>Sí (Capturable)</span>"
+            ],
+            [
+              "<span style='background:#FEF2F2; color:#991B1B; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>9</span>",
+              "<code style='color:#DC2626; font-weight:800;'>SIGKILL</code>",
+              "<code>kill -9</code>",
+              "🎯 <strong>Machete del Kernel:</strong> terminación forzada inmediata sin guardar datos.",
+              "<strong style='color:#DC2626;'>⛔ ¡NUNCA!</strong>"
+            ],
+            [
+              "<span style='background:#F0FDF4; color:#15803D; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>15</span>",
+              "<code style='color:#15803D; font-weight:800;'>SIGTERM</code>",
+              "<code>kill</code> (por defecto)",
+              "🎯 <strong>Señal predeterminada:</strong> pide cerrar archivos, vaciar buffers y salir ordenadamente.",
+              "<span style='color:#16A34A; font-weight:700;'>Sí (Capturable)</span>"
+            ],
+            [
+              "<span style='background:#FEF2F2; color:#991B1B; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>19</span>",
+              "<code style='color:#DC2626; font-weight:800;'>SIGSTOP</code>",
+              "<code>kill -19</code>",
+              "🎯 Congela y detiene la ejecución del proceso por completo en la memoria.",
+              "<strong style='color:#DC2626;'>⛔ ¡NUNCA!</strong>"
+            ]
+          ],
+          "caption": "Tabla Oficial de Señales Críticas de Linux"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"margin-top:10px; padding:10px 16px; background:#FEF2F2; border-left:4px solid #DC2626; border-radius:6px; font-size:12.5px; color:#991B1B; line-height:1.4;\">\n  🚨 <strong>REGLA DE ORO DE EXAMEN:</strong> <code>kill</code> a secas sin flags envía siempre <strong>SIGTERM (15)</strong>. Si un proceso está colgado y no responde a la 15, se recurre a <strong>SIGKILL (9)</strong>. Las dos únicas señales que ningún proceso puede ignorar jamás son <strong>SIGKILL (9)</strong> y <strong>SIGSTOP (19)</strong>.\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 LOS DOS REYES DE EXAMEN: 15 (SIGTERM) es la señal por defecto de kill; 9 (SIGKILL) y 19 (SIGSTOP) son las dos únicas señales que un proceso NUNCA puede capturar, ignorar ni bloquear."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-5-5",
+      "title": "Envío de Señales con kill: por PID o Job ID",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Envío de Señales con kill: por PID o Job ID"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo enviar señales de terminación, pausa o recarga a procesos específicos?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "kill [-s <señal>|-<señal>] <PID|%job>",
+          "title": "Transmitir señales de software por PID numérico o por Job ID de la shell"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "kill 41205; kill -9 41205; kill %1",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "kill <PID>",
+              "SIGTERM (15) por defecto",
+              "🎯 Clave de Examen: Sin opciones, envía siempre la señal 15 para un cierre ordenado."
+            ],
+            [
+              "kill -9 <PID>",
+              "SIGKILL (9) forzado",
+              "🎯 Cierre forzado inmediato por el kernel. Úsalo solo si el proceso no responde a SIGTERM."
+            ],
+            [
+              "kill -1 <PID>",
+              "SIGHUP (1) recargar",
+              "🎯 Ordena al demonio recargar su archivo de configuración sin reiniciar (ej: Nginx o Apache)."
+            ],
+            [
+              "kill %N",
+              "Por Job ID",
+              "🎯 Clave de Examen: Anteponer '%' envía la señal al JOB N de la shell en vez de al PID N del sistema."
+            ],
+            [
+              "kill -l",
+              "Listar señales",
+              "Muestra los nombres y números de las 64 señales disponibles en Linux."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🎯 Tres Formas Idénticas de Enviar la Misma Señal con <code>kill</code>:\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:12px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:8px 10px; border-radius:8px;\">\n      <strong style=\"color:#1E40AF;\">Por Número:</strong><br>\n      <code>kill -9 41205</code><br>\n      <code>kill -15 41205</code>\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FDE047; padding:8px 10px; border-radius:8px;\">\n      <strong style=\"color:#854D0E;\">Por Nombre Corto:</strong><br>\n      <code>kill -KILL 41205</code><br>\n      <code>kill -TERM 41205</code>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:8px 10px; border-radius:8px;\">\n      <strong style=\"color:#14532D;\">Por Nombre Completo:</strong><br>\n      <code>kill -SIGKILL 41205</code><br>\n      <code>kill -SIGTERM 41205</code>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Peligro Clásico de Examen: 'kill 1' intenta matar al proceso raíz del sistema (PID 1 / systemd); para matar al trabajo número 1 de tu terminal DEBES escribir 'kill %1'."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-5-6",
+      "title": "Terminación Masiva y Búsqueda: killall, pkill, pgrep y pidof",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Terminación Masiva y Búsqueda: killall, pkill, pgrep y pidof"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo localizar y matar procesos por nombre de ejecutable o usuario sin buscar el PID a mano?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "killall <nombre> | pkill <patrón> | pgrep <patrón> | pidof <nombre>",
+          "title": "Averiguar PIDs o matar grupos de procesos según su nombre exacto, patrón regex o dueño"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "pidof nginx; pgrep -l nginx; sudo killall -u alumno sleep",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "pidof <binario>",
+              "PIDs de ejecutable exacto",
+              "🎯 Devuelve los números PID del ejecutable exacto en una sola línea (ideal para scripts)."
+            ],
+            [
+              "pgrep [-l] <patrón>",
+              "Buscar PID por patrón / regex",
+              "🎯 Clave de Examen: Busca PIDs que coincidan con un patrón. Con '-l' muestra PID y nombre."
+            ],
+            [
+              "killall <nombre_exacto>",
+              "Matar por nombre exacto",
+              "🎯 Mata todos los procesos cuyo ejecutable coincida exactamente (ej: 'killall nginx')."
+            ],
+            [
+              "pkill [-9] <patrón>",
+              "Matar por patrón / regex",
+              "🎯 Envía señales a procesos por expresión regular o patrón sin exigir nombre exacto."
+            ],
+            [
+              "pkill -u <usuario>",
+              "Matar por usuario",
+              "🎯 Clave de Examen: Mata todos los procesos pertenecientes al usuario especificado."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🗺️ Mapa de Decisión: ¿Qué comando usar según tu objetivo?\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF; font-size:13px;\">🔍 SOLO BUSCAR PIDs (Sin matar)</strong>\n      <div style=\"color:#1E3A8A; line-height:1.4; margin-top:4px;\">\n        • <strong>pidof nginx:</strong> Busca el binario exacto.<br>\n        • <strong>pgrep -l python:</strong> Busca por patrón regex o usuario (<code>pgrep -u root</code>).\n      </div>\n    </div>\n\n    <div style=\"background:#FEF2F2; border:1px solid #FCA5A5; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#991B1B; font-size:13px;\">💥 ENVIAR SEÑAL / MATAR</strong>\n      <div style=\"color:#7F1D1D; line-height:1.4; margin-top:4px;\">\n        • <strong>killall nginx:</strong> Mata por nombre exacto de binario.<br>\n        • <strong>pkill -u alumno:</strong> Mata por patrón o por usuario completo.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Cuadro Mental: 'kill' usa PID; 'pidof' y 'killall' exigen el nombre EXACTO del binario; 'pgrep' y 'pkill' buscan por PATRONES (expresiones regulares) o por usuario (-u)."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-5-7",
+      "title": "Inspección de Procesos con ps: Sintaxis BSD frente a Unix",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Inspección de Procesos con ps: Sintaxis BSD frente a Unix"
+        },
+        {
+          "type": "paragraph",
+          "text": "Obtener una instantánea estática del sistema mediante sus dos grandes convenciones históricas:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "ps aux (BSD sin guión) | ps -ef (Unix con guión)",
+          "title": "Consultar la lista completa de procesos, consumo de CPU/RAM, usuarios y estados en un microsegundo"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "ps aux | head -n 2; ps -ef | head -n 2",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "ps aux",
+              "Sintaxis BSD (¡SIN GUIÓN!)",
+              "🎯 Clave de Examen: 'a' = todos con terminal; 'u' = formato usuario (%CPU, %MEM, RSS); 'x' = demonios sin terminal."
+            ],
+            [
+              "ps -ef",
+              "Sintaxis Unix POSIX (¡CON GUIÓN!)",
+              "🎯 Clave de Examen: '-e' = todos los procesos; '-f' = formato completo mostrando la columna PPID (proceso padre)."
+            ],
+            [
+              "VSZ frente a RSS",
+              "Virtual vs Memoria Física Real",
+              "🎯 VSZ = memoria virtual total reservada; RSS = memoria RAM física real ocupada en chips."
+            ],
+            [
+              "ps --sort=-%cpu",
+              "Ordenar por consumo",
+              "Ordena de mayor a menor uso de procesador (-%cpu) o de memoria (-%mem)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚖️ Las Dos Grandes Escuelas de <code>ps</code>: ¿En qué se diferencian realmente?</span>\n    <span style=\"font-size:11px; background:#EEF2FF; color:#4338CA; padding:2px 8px; border-radius:12px; font-weight:700;\">Pregunta Fija LPIC-1</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12px;\">\n    <!-- BSD -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:13px;\">ESTILO BSD: <code>ps aux</code> (Sin guión)</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:4px;\">RECURSOS</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • <strong>a:</strong> Procesos de todos los usuarios con terminal.<br>\n        • <strong>u:</strong> Formato de usuario: <strong>%CPU, %MEM, VSZ, RSS</strong>.<br>\n        • <strong>x:</strong> Demonios y servicios del sistema sin terminal (<code>?</code>).<br>\n        <span style=\"color:#1D4ED8; font-weight:700;\">Ideal para: Saber quién gasta CPU y RAM.</span>\n      </div>\n    </div>\n\n    <!-- Unix -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:13px;\">ESTILO UNIX: <code>ps -ef</code> (Con guión)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:4px;\">GENEALOGÍA</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • <strong>-e:</strong> Todos los procesos del sistema (every).<br>\n        • <strong>-f:</strong> Formato completo (full): <strong>UID, PID, PPID, STIME</strong>.<br>\n        • <strong>PPID:</strong> Permite rastrear al proceso padre creador.<br>\n        <span style=\"color:#15803D; font-weight:700;\">Ideal para: Rastrear árboles padre-hijo.</span>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Mnemotécnica de Examen: 'ps aux' se escribe SIN GUIÓN (estilo BSD) y resalta %CPU y %MEM. 'ps -ef' se escribe CON GUIÓN (estilo Unix) y destaca la columna PPID."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-5-8",
+      "title": "Códigos de Estado de Proceso (STAT en ps aux)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Códigos de Estado de Proceso (STAT en ps aux)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Por qué aparecen 2 o más caracteres en STAT: Carácter Principal (Estado) + Modificadores (Contexto):"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Código Base (1ª Posición)",
+            "Nombre Oficial",
+            "Significado en el Kernel",
+            "Regla de Examen LPIC-1"
+          ],
+          "rows": [
+            [
+              "<span style='background:#F0FDF4; color:#15803D; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>R</span>",
+              "<strong>Running / Runnable</strong>",
+              "En ejecución activa en la CPU o en cola esperando turno.",
+              "Consumiendo ciclos de procesador ahora mismo."
+            ],
+            [
+              "<span style='background:#FEFCE8; color:#854D0E; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>S</span>",
+              "<strong>Interruptible Sleep</strong>",
+              "Durmiendo a la espera de un evento (red, teclado, temporizador).",
+              "Se despierta inmediatamente al recibir señales."
+            ],
+            [
+              "<span style='background:#FEF2F2; color:#991B1B; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>D</span>",
+              "<strong>Disk Sleep (Ininterrumpible)</strong>",
+              "🎯 Espera crítica de operaciones de I/O de disco o hardware.",
+              "<strong style='color:#DC2626;'>¡No responde a señales ni a kill -9!</strong>"
+            ],
+            [
+              "<span style='background:#FFF1F2; color:#991B1B; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>T</span>",
+              "<strong>Stopped</strong>",
+              "Pausado o detenido temporalmente.",
+              "Congelado por Ctrl+Z (SIGTSTP) o por depurador."
+            ],
+            [
+              "<span style='background:#F1F5F9; color:#475569; padding:2px 8px; border-radius:6px; font-weight:800; font-size:13px;'>Z</span>",
+              "<strong>Zombie (&lt;defunct&gt;)</strong>",
+              "🎯 Muerto sin que el padre haya recogido su salida con wait().",
+              "Gasta 0 CPU y 0 RAM; se elimina matando al proceso padre."
+            ]
+          ],
+          "caption": "Códigos de Estado de Proceso (STAT en ps aux)"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🧩 Anatomía de un Código STAT: ¿Por qué hay 2 caracteres juntos? (Ejemplo: <code>Ss+</code> o <code>R+</code>)</span>\n    <span style=\"font-size:11px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:12px; font-weight:700;\">Posición 1 + Posiciones Siguientes</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1.1fr 1fr; gap:10px; font-size:11.5px;\">\n    <!-- Columna 1: Regla de Posiciones -->\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:8px; padding:8px 10px;\">\n      <div style=\"font-weight:800; color:#0F172A; font-size:12px; margin-bottom:4px;\">1️⃣ El Primer Carácter = Ciclo de Vida</div>\n      <div style=\"color:#334155; line-height:1.35; margin-bottom:6px;\">\n        Solo puede haber <strong>UNO</strong>: <code>R</code>, <code>S</code>, <code>D</code>, <code>T</code> o <code>Z</code>. Define qué está haciendo el proceso en el kernel.\n      </div>\n      <div style=\"font-weight:800; color:#0F172A; font-size:12px; margin-bottom:4px;\">2️⃣ Siguientes Caracteres = Modificadores</div>\n      <div style=\"color:#334155; line-height:1.35;\">\n        • <code>+</code> : En <strong>primer plano</strong> (controla el teclado de la terminal).<br>\n        • <code>s</code> : <strong>Líder de sesión</strong> (la shell Bash que inició el login).<br>\n        • <code>&lt;</code> / <code>N</code> : Prioridad alterada (<code>&lt;</code> alta, <code>N</code> baja nice).<br>\n        • <code>l</code> : <strong>Multihilo</strong> (usa múltiples hebras paralelas).\n      </div>\n    </div>\n\n    <!-- Columna 2: Casos Reales Descodificados -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:8px 10px;\">\n      <div style=\"font-weight:800; color:#1E40AF; font-size:12px; margin-bottom:4px;\">🎯 Casos Reales Típicos de Examen:</div>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • <code style=\"font-weight:800;\">Ss+</code> ➔ <strong>S</strong> (Sleep) + <strong>s</strong> (Líder de sesión) + <strong>+</strong> (Primer plano).<br>\n          <span style=\"font-size:10.5px; color:#2563EB;\">(Es tu propia consola interactiva Bash esperando que pulses teclas).</span><br>\n        • <code style=\"font-weight:800;\">R+</code> ➔ <strong>R</strong> (Running) + <strong>+</strong> (Primer plano).<br>\n          <span style=\"font-size:10.5px; color:#2563EB;\">(Un comando activo ocupando tu pantalla, ej: <code>top</code> o <code>find</code>).</span><br>\n        • <code style=\"font-weight:800;\">Sl</code> ➔ <strong>S</strong> (Sleep) + <strong>l</strong> (Multihilo en background, ej: Nginx o Chrome).\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 FÓRMULA SAGRADA: 1er carácter = Estado Base (R=Running, S=Sleep, D=Disk wait, T=Stopped, Z=Zombie). Siguientes caracteres = Modificadores ('+' = primer plano con teclado, 's' = líder de sesión, '<' = alta prioridad, 'N' = baja prioridad, 'l' = multihilo)."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-5-9",
+      "title": "Monitor Interactivo del Sistema: top",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Monitor Interactivo del Sistema: top"
+        },
+        {
+          "type": "paragraph",
+          "text": "El cuadro de mandos dinámico en vivo para supervisar CPU, RAM y gestionar procesos:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "top [-d <seg>] [-u <usuario>] [-p <PID>] [-b -n 1]",
+          "title": "Monitorizar en tiempo real el consumo de recursos y ordenar o matar procesos interactivamente"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "top -b -n 1 | head -n 5",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "Tecla M (Mayúscula)",
+              "Ordenar por Memoria RAM",
+              "🎯 Clave de Examen: Reordena la lista de mayor a menor consumo de RAM."
+            ],
+            [
+              "Tecla P (Mayúscula)",
+              "Ordenar por uso de CPU",
+              "🎯 Clave de Examen: Ordenación por defecto: procesos que más CPU gastan."
+            ],
+            [
+              "Tecla k (Kill)",
+              "Matar desde top",
+              "🎯 Clave de Examen: Pide un PID y el número de señal para matar el proceso sin salir de top."
+            ],
+            [
+              "Tecla r (Renice)",
+              "Cambiar prioridad nice",
+              "🎯 Solicita un PID y un nuevo valor nice para ajustar su prioridad en caliente."
+            ],
+            [
+              "Tecla 1 (Uno)",
+              "Desglose por núcleos",
+              "Alterna entre ver el uso de CPU combinado o desglosado núcleo a núcleo (CPU0, CPU1...)."
+            ],
+            [
+              "top -b -n 1",
+              "Modo Batch para scripts",
+              "Ejecuta 1 iteración y sale como texto plano sin pantalla interactiva."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    ⌨️ Teclas Interactivas Clave que DEBES Conocer en <code>top</code>:\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; font-size:12px; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:8px;\">\n      <strong style=\"color:#1E40AF; font-size:14px;\">M</strong><br>\n      <span style=\"color:#1E3A8A;\">Ordenar por <strong>Memoria RAM</strong></span>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:8px;\">\n      <strong style=\"color:#15803D; font-size:14px;\">P</strong><br>\n      <span style=\"color:#14532D;\">Ordenar por <strong>CPU</strong> (Default)</span>\n    </div>\n    <div style=\"background:#FEF2F2; border:1px solid #FCA5A5; border-radius:8px; padding:8px;\">\n      <strong style=\"color:#991B1B; font-size:14px;\">k</strong><br>\n      <span style=\"color:#7F1D1D;\"><strong>Kill:</strong> Matar por PID y señal</span>\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FDE047; border-radius:8px; padding:8px;\">\n      <strong style=\"color:#854D0E; font-size:14px;\">1</strong><br>\n      <span style=\"color:#713F12;\">Desglosar por <strong>CPUs individuales</strong></span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Atajos Imprescindibles de top en Examen: 'M' para ordenar por Memoria; 'P' para ordenar por CPU; 'k' para matar un proceso; 'r' para cambiar el nice; 'q' para salir."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-5-10",
+      "title": "Medición de Rendimiento y Memoria: uptime y free",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Medición de Rendimiento y Memoria: uptime y free"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo interpretar el Load Average del procesador y la ocupación real de la memoria RAM?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "uptime | free [-h|-m|-g]",
+          "title": "Evaluar la saturación de los procesadores y diagnosticar el espacio real disponible en RAM"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "uptime; free -h",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "load average (1, 5, 15)",
+              "Carga media temporal",
+              "🎯 Promedio de procesos ejecutándose o en cola esperando CPU/disco en 1, 5 y 15 minutos."
+            ],
+            [
+              "free -h",
+              "Formato legible",
+              "Muestra cifras en GiB, MiB o KiB en lugar de bytes planos difíciles de leer."
+            ],
+            [
+              "Columna available",
+              "RAM real aprovechable",
+              "🎯 Clave de Examen: Memoria real que pueden solicitar nuevas aplicaciones sin recurrir a swap."
+            ],
+            [
+              "buff/cache",
+              "Caché de disco del kernel",
+              "Memoria usada para acelerar lecturas de disco que se cede automáticamente si las apps la necesitan."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>📈 ¿Cómo se Interpreta el <code>Load Average</code> según el Número de Cores?</span>\n    <span style=\"font-size:11px; background:#F0FDF4; color:#15803D; padding:2px 8px; border-radius:12px; font-weight:700;\">Capacidad de CPU</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12px;\">\n    <!-- 1 core -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF; font-size:13px;\">Servidor con 1 CPU / Core:</strong>\n      <div style=\"color:#1E3A8A; line-height:1.4; margin-top:4px;\">\n        • Carga <code>0.50</code> ➔ CPU al 50% de uso (holgura).<br>\n        • Carga <code>1.00</code> ➔ CPU al 100% de uso (sin atasco).<br>\n        • Carga <code>2.00</code> ➔ ⚠️ CPU saturada y 1 proceso esperando en cola.\n      </div>\n    </div>\n\n    <!-- 4 cores -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#15803D; font-size:13px;\">Servidor con 4 CPUs / Cores:</strong>\n      <div style=\"color:#14532D; line-height:1.4; margin-top:4px;\">\n        • Carga <code>1.00</code> ➔ Solo 1 núcleo ocupado (25% total).<br>\n        • Carga <code>4.00</code> ➔ Los 4 núcleos al 100% de capacidad.<br>\n        • Carga <code>8.00</code> ➔ 🚨 Sobrecarga crítica: 4 procesos en cola.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: En un servidor con 4 núcleos (CPUs), una carga de '4.00' representa el 100% de uso. En 'free', la columna 'available' es la memoria real disponible para nuevas aplicaciones."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1194 @@
+{
+  "id": "102.6",
+  "topicId": "102",
+  "examId": "101",
+  "title": "Linux como sistema virtualizado",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 30,
+  "objectives": [
+    "Hipervisores KVM/QEMU, extensiones CPU, machine-id, cloud-init y claves SSH (Alta Densidad LPIC-1)",
+    "Dominio técnico de las herramientas y configuración del subtema 102.6"
+  ],
+  "keyTerms": [
+    "Linux como sistema virtualizado",
+    "Tema 102"
+  ],
+  "commands": [
+    "grep",
+    "virt-install",
+    "systemd-machine-id-setup",
+    "ssh-keygen"
+  ],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "102.6-slide-1",
+      "slideNumber": 1,
+      "title": "Linux como sistema virtualizado y en la nube",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Linux como sistema virtualizado y en la nube"
+        },
+        {
+          "type": "paragraph",
+          "text": "Hipervisores KVM/QEMU, extensiones CPU, machine-id, cloud-init y claves SSH (Modo Examen)"
+        }
+      ],
+      "notes": "Iniciamos el subtema 102.6 (peso 1 en el examen LPIC-1 101-500). Aunque tiene peso 1, es un tema moderno e imprescindible que cubre la virtualización con KVM, el aprovisionamiento en la nube (IaaS) con cloud-init, la clonación de VMs y la autenticación SSH mediante claves."
+    },
+    {
+      "id": "102.6-slide-2",
+      "slideNumber": 2,
+      "title": "Arquitectura de Hipervisores: Tipo 1 (Bare-Metal) frente a Tipo 2 (Hosted)",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Arquitectura de Hipervisores: Tipo 1 (Bare-Metal) frente a Tipo 2 (Hosted)"
+        },
+        {
+          "type": "paragraph",
+          "text": "El factor determinante de rendimiento es cuántas capas existen entre la máquina virtual y el silicio:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Hipervisor Tipo 1 (Bare-Metal / Nativo)** — 🎯 Se ejecuta directamente sobre el hardware físico del servidor sin ningún sistema operativo por debajo. Ofrece máximo rendimiento y menor latencia. Ejemplos de examen: KVM (Kernel-based Virtual Machine integrado en Linux), Xen y VMware ESXi.",
+            "**Hipervisor Tipo 2 (Hosted / Alojado)** — Se ejecuta como una aplicación ordinaria encima de un sistema operativo anfitrión convencional. Mayor sobrecarga de CPU y memoria. Ejemplos de examen: VirtualBox, VMware Workstation y QEMU en modo emulación software pura.",
+            "**KVM: El estándar de Tipo 1 en Linux** — KVM convierte al propio kernel de Linux en un hipervisor Tipo 1 cargando los módulos 'kvm' y el driver específico del procesador ('kvm_intel' o 'kvm_amd')."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin:16px 0;\">\n  <!-- Tipo 1: Bare-Metal -->\n  <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:14px; padding:18px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">TIPO 1: BARE-METAL</span>\n      <span style=\"font-weight:700; color:#15803D; font-size:13px;\">Nativo / Hipervisor Directo</span>\n    </div>\n    <h3 style=\"margin:4px 0 8px 0; font-size:20px; font-weight:800; color:#14532D;\">KVM, Xen, VMware ESXi</h3>\n    <div style=\"display:flex; flex-direction:column; gap:6px; font-size:13.5px; color:#14532D; margin-bottom:12px;\">\n      <div style=\"background:#DCFCE7; padding:6px 10px; border-radius:6px; text-align:center; font-weight:700;\">Máquinas Virtuales (Guest OS)</div>\n      <div style=\"background:#BBF7D0; padding:6px 10px; border-radius:6px; text-align:center; font-weight:800; color:#166534;\">Hipervisor (Linux Kernel + KVM)</div>\n      <div style=\"background:#0F172A; color:#FFF; padding:6px 10px; border-radius:6px; text-align:center; font-weight:800;\">Hardware Físico del Servidor (Silicio)</div>\n    </div>\n    <div style=\"font-size:13px; color:#166534; line-height:1.4;\">\n      🎯 <strong>Sin SO intermedio:</strong> El propio kernel de Linux actúa como hipervisor mediante el módulo KVM. Máximo rendimiento de CPU y E/S.\n    </div>\n  </div>\n\n  <!-- Tipo 2: Hosted -->\n  <div style=\"background:#EFF6FF; border:2px solid #93C5FD; border-radius:14px; padding:18px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">TIPO 2: HOSTED</span>\n      <span style=\"font-weight:700; color:#1E40AF; font-size:13px;\">Alojado sobre SO Anfitrión</span>\n    </div>\n    <h3 style=\"margin:4px 0 8px 0; font-size:20px; font-weight:800; color:#1E40AF;\">VirtualBox, VMware Workstation</h3>\n    <div style=\"display:flex; flex-direction:column; gap:6px; font-size:13.5px; color:#1E3A8A; margin-bottom:12px;\">\n      <div style=\"background:#DBEAFE; padding:6px 10px; border-radius:6px; text-align:center; font-weight:700;\">Máquinas Virtuales (Guest OS)</div>\n      <div style=\"background:#BFDBFE; padding:6px 10px; border-radius:6px; text-align:center; font-weight:700;\">Hipervisor de Aplicación (VirtualBox)</div>\n      <div style=\"background:#93C5FD; padding:6px 10px; border-radius:6px; text-align:center; font-weight:700;\">Sistema Operativo Anfitrión (Host OS)</div>\n      <div style=\"background:#0F172A; color:#FFF; padding:6px 10px; border-radius:6px; text-align:center; font-weight:800;\">Hardware Físico (Silicio)</div>\n    </div>\n    <div style=\"font-size:13px; color:#1E3A8A; line-height:1.4;\">\n      ⚠️ <strong>Doble Kernel:</strong> Se ejecuta como una aplicación normal de usuario. Sobrecarga por traducción de llamadas del SO anfitrión.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA CLAVE DE EXAMEN: KVM es un hipervisor de Tipo 1 (bare-metal) porque convierte al propio kernel de Linux en el hipervisor nativo."
+        }
+      ],
+      "notes": "Explica la diferencia entre anfitrión (host: la máquina física) e invitado (guest: la máquina virtual)."
+    },
+    {
+      "id": "102.6-slide-3",
+      "slideNumber": 3,
+      "title": "Modalidades: Virtualización por Hardware frente a Contenedores",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Modalidades: Virtualización por Hardware frente a Contenedores"
+        },
+        {
+          "type": "paragraph",
+          "text": "La diferencia arquitectónica más importante del examen LPIC-1 actual:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Virtualización Completa (Full Virtualization)** — El hipervisor emula un ordenador físico completo. El sistema operativo invitado no sabe que está virtualizado y funciona sin ninguna modificación.",
+            "**Paravirtualización y Controladores VirtIO** — 🎯 Clave de Examen: El sistema operativo invitado es consciente de que está virtualizado y utiliza controladores optimizados especiales (VirtIO para disco, red y memoria) que se comunican directamente con el hipervisor a hiper-velocidad.",
+            "**Contenedores Linux (LXC, Docker, Podman)** — No virtualizan hardware. Comparten el mismo kernel de Linux del host y aíslan los procesos de usuario mediante Control Groups (cgroups) y Namespaces."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin:16px 0;\">\n  <!-- Máquinas Virtuales -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#475569; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">VIRTUALIZACIÓN HARDWARE</span>\n      <span style=\"font-weight:700; color:#334155; font-size:13px;\">KVM / QEMU</span>\n    </div>\n    <h3 style=\"margin:4px 0 8px 0; font-size:20px; font-weight:800; color:var(--text);\">Máquinas Virtuales (VMs)</h3>\n    <div style=\"display:flex; flex-direction:column; gap:8px; font-size:14px; color:var(--text-muted);\">\n      <div>• <strong>Aislamiento:</strong> Completo por hardware mediante hipervisor.</div>\n      <div>• 🎯 <strong>Kernel:</strong> Cada VM ejecuta su <strong>propio kernel independiente</strong> (puedes ejecutar Windows sobre Linux).</div>\n      <div>• <strong>Recursos:</strong> Pesado (gigabytes en disco y arranque de minutos).</div>\n      <div>• <strong>Rendimiento:</strong> VirtIO para paravirtualización casi nativa.</div>\n    </div>\n  </div>\n\n  <!-- Contenedores -->\n  <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:14px; padding:18px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">NIVEL SISTEMA OPERATIVO</span>\n      <span style=\"font-weight:700; color:#15803D; font-size:13px;\">LXC / Docker / Podman</span>\n    </div>\n    <h3 style=\"margin:4px 0 8px 0; font-size:20px; font-weight:800; color:#14532D;\">Contenedores Linux</h3>\n    <div style=\"display:flex; flex-direction:column; gap:8px; font-size:14px; color:#14532D;\">\n      <div>• <strong>Aislamiento:</strong> Lógico a nivel de espacio de usuario.</div>\n      <div>• 🎯 <strong>Kernel:</strong> <strong>Comparten el mismo kernel del host</strong> (todos los contenedores deben ser Linux).</div>\n      <div>• <strong>Mecanismos:</strong> <code>cgroups</code> (límites de CPU/RAM) y <code>namespaces</code> (aislamiento de red, procesos y rutas).</div>\n      <div>• <strong>Recursos:</strong> Ultraligero (megabytes y arranque en milisegundos).</div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE DE EXAMEN: Los contenedores NO virtualizan hardware; comparten el kernel de Linux del host y se aíslan usando namespaces y cgroups."
+        }
+      ],
+      "notes": "Diferencia claramente las VMs (cada una tiene su propio kernel) de los contenedores (todos comparten el kernel del host)."
+    },
+    {
+      "id": "102.6-slide-4",
+      "slideNumber": 4,
+      "title": "Arquitectura KVM, QEMU y libvirt: ¿Quién hace qué?",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Arquitectura KVM, QEMU y libvirt: ¿Quién hace qué?"
+        },
+        {
+          "type": "paragraph",
+          "text": "El reparto de tareas: ¿por qué Linux necesita 4 piezas distintas para una sola máquina virtual?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- BANNER INTUITIVO: EL PORQUÉ DE LAS 4 PIEZAS -->\n  <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-left:5px solid #2563EB; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#1E40AF; display:flex; align-items:center; gap:10px;\">\n    <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; white-space:nowrap;\">💡 LA IDEA CLAVE</span>\n    <span>A diferencia de programas todo-en-uno como VirtualBox, en servidores Linux <strong>cada herramienta hace una sola cosa a la perfección</strong>: una da la potencia bruta, otra fabrica las piezas que faltan, otra organiza y tú tienes el mando.</span>\n  </div>\n\n  <!-- LAS 4 PIEZAS EN LENGUAJE HUMANO (ANALOGÍA DE ROLES) -->\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;\">\n    <!-- 1. KVM -->\n    <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">1. LA POTENCIA</span>\n          <span style=\"font-size:18px;\">⚡</span>\n        </div>\n        <strong style=\"color:#14532D; font-size:14px; display:block; margin-bottom:2px;\">KVM</strong>\n        <span style=\"color:#15803D; font-size:11.5px; font-weight:700;\">«El Motor de Competición»</span>\n        <div style=\"font-size:11px; color:#14532D; line-height:1.35; margin-top:6px;\">\n          • <strong>¿Qué hace?:</strong> Conecta la máquina virtual directo al procesador físico de Intel o AMD.<br>\n          • <strong>En cristiano:</strong> Se encarga de que la CPU y la RAM vayan a toda velocidad.<br>\n          • ⚠️ <strong>El detalle:</strong> KVM es solo el motor; no sabe qué es un disco duro ni un ratón.\n        </div>\n      </div>\n      <div style=\"margin-top:6px; background:#DCFCE7; padding:4px 6px; border-radius:4px; font-size:10.5px; font-weight:800; color:#15803D; text-align:center;\">\n        Sin KVM: la VM iría a paso de tortuga\n      </div>\n    </div>\n\n    <!-- 2. QEMU -->\n    <div style=\"background:#FEFCE8; border:2px solid #FDE047; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <span style=\"background:#CA8A04; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">2. LAS PIEZAS</span>\n          <span style=\"font-size:18px;\">🧩</span>\n        </div>\n        <strong style=\"color:#854D0E; font-size:14px; display:block; margin-bottom:2px;\">QEMU</strong>\n        <span style=\"color:#A16207; font-size:11.5px; font-weight:700;\">«El Simulador de Hardware»</span>\n        <div style=\"font-size:11px; color:#78350F; line-height:1.35; margin-top:6px;\">\n          • <strong>¿Qué hace?:</strong> Le \"dibuja\" a la máquina virtual todo lo que KVM no tiene.<br>\n          • <strong>En cristiano:</strong> Le hace creer a la VM que tiene un disco duro, tarjeta de red y tarjeta gráfica.<br>\n          • ⚠️ <strong>El detalle:</strong> Lanzar QEMU a mano exige comandos larguísimos e infumables.\n        </div>\n      </div>\n      <div style=\"margin-top:6px; background:#FEF9C3; padding:4px 6px; border-radius:4px; font-size:10.5px; font-weight:800; color:#854D0E; text-align:center;\">\n        Sin QEMU: la VM no tendría disco ni red\n      </div>\n    </div>\n\n    <!-- 3. libvirt -->\n    <div style=\"background:#EFF6FF; border:2px solid #93C5FD; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">3. EL CEREBRO</span>\n          <span style=\"font-size:18px;\">📋</span>\n        </div>\n        <strong style=\"color:#1E40AF; font-size:14px; display:block; margin-bottom:2px;\">libvirt</strong>\n        <span style=\"color:#2563EB; font-size:11.5px; font-weight:700;\">«El Mayordomo / API»</span>\n        <div style=\"font-size:11px; color:#1E3A8A; line-height:1.35; margin-top:6px;\">\n          • <strong>¿Qué hace?:</strong> Habla con KVM y QEMU por ti para que tú no tengas que pelearte con ellos.<br>\n          • <strong>En cristiano:</strong> Guarda la configuración en un archivo ordenado (<code>.xml</code>).<br>\n          • 🎯 <strong>El detalle:</strong> Es el estándar universal que usan tanto servidores como la nube.\n        </div>\n      </div>\n      <div style=\"margin-top:6px; background:#DBEAFE; padding:4px 6px; border-radius:4px; font-size:10.5px; font-weight:800; color:#1E40AF; text-align:center;\">\n        Sin libvirt: tendrías comandos de 400 letras\n      </div>\n    </div>\n\n    <!-- 4. virsh -->\n    <div style=\"background:#FAF5FF; border:2px solid #D8B4FE; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">4. EL MANDO</span>\n          <span style=\"font-size:18px;\">🕹️</span>\n        </div>\n        <strong style=\"color:#581C87; font-size:14px; display:block; margin-bottom:2px;\">virsh / GUI</strong>\n        <span style=\"color:#7E22CE; font-size:11.5px; font-weight:700;\">«Tus Manos al Volante»</span>\n        <div style=\"font-size:11px; color:#581C87; line-height:1.35; margin-top:6px;\">\n          • <strong>¿Qué hace?:</strong> Es la palabra mágica que tú escribes en la terminal.<br>\n          • <strong>En cristiano:</strong> Los botones de encender y apagar: <code>virsh start debian</code>, <code>virsh shutdown</code>.<br>\n          • 🎯 <strong>Otras opciones:</strong> <code>virt-manager</code> (versión con ventanas y ratón).\n        </div>\n      </div>\n      <div style=\"margin-top:6px; background:#F3E8FF; padding:4px 6px; border-radius:4px; font-size:10.5px; font-weight:800; color:#6B21A8; text-align:center;\">\n        Es lo que TÚ ejecutas en el examen\n      </div>\n    </div>\n  </div>\n\n  <!-- LA CHULETA DEFINITIVA DE EXAMEN LPIC-1 -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      🎯 Las 4 Preguntas Exactas que hace LPIC-1 sobre esta arquitectura:\n    </div>\n    <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11px;\">\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:6px 8px; border-radius:6px;\">\n        <span style=\"color:#15803D; font-weight:800;\">¿Quién acelera la CPU?</span><br>\n        <strong style=\"color:#14532D; font-size:12px;\">KVM</strong> (módulo del kernel).\n      </div>\n      <div style=\"background:#FEFCE8; border:1px solid #FDE047; padding:6px 8px; border-radius:6px;\">\n        <span style=\"color:#854D0E; font-weight:800;\">¿Quién emula el disco/red?</span><br>\n        <strong style=\"color:#78350F; font-size:12px;\">QEMU</strong> (espacio de usuario).\n      </div>\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:6px 8px; border-radius:6px;\">\n        <span style=\"color:#1E40AF; font-weight:800;\">¿Quién guarda el XML/API?</span><br>\n        <strong style=\"color:#1E3A8A; font-size:12px;\">libvirt</strong> (demonio libvirtd).\n      </div>\n      <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; padding:6px 8px; border-radius:6px;\">\n        <span style=\"color:#6B21A8; font-weight:800;\">¿Qué comando tecleas tú?</span><br>\n        <strong style=\"color:#581C87; font-size:12px;\">virsh</strong> (herramienta CLI).\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 LA CHULETA DE EXAMEN EN 4 PREGUNTAS: ¿Quién acelera la CPU? KVM. ¿Quién emula el disco y la red? QEMU. ¿Quién guarda el XML y da la API? libvirt. ¿Qué comando teclea el SysAdmin? virsh."
+        }
+      ],
+      "notes": "Destaca que virsh es la herramienta de terminal para encender, apagar y listar máquinas virtuales gestionadas por libvirt."
+    },
+    {
+      "id": "102.6-slide-5",
+      "slideNumber": 5,
+      "title": "Comprobación de Extensiones de Hardware en /proc/cpuinfo",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comprobación de Extensiones de Hardware en /proc/cpuinfo"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo verificar antes de instalar KVM si el procesador físico soporta virtualización asistida?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "grep -E --color '(vmx|svm)' /proc/cpuinfo | lscpu",
+          "title": "Detectar si el procesador físico soporta virtualización asistida por hardware y si está habilitada en la BIOS/UEFI antes de desplegar KVM."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "vmx",
+              "Flag Intel VT-x",
+              "🎯 Virtual Machine eXtensions. Indica soporte nativo de KVM en procesadores Intel (Core, Xeon)."
+            ],
+            [
+              "svm",
+              "Flag AMD AMD-V",
+              "🎯 Secure Virtual Machine. Indica soporte nativo de KVM en procesadores AMD (Ryzen, EPYC)."
+            ],
+            [
+              "lscpu",
+              "Resumen de arquitectura",
+              "Muestra el campo 'Virtualization: VT-x' o 'AMD-V' de forma legible."
+            ],
+            [
+              "lsmod | grep kvm",
+              "Verificar módulos",
+              "Confirma que los módulos 'kvm' y 'kvm_intel' o 'kvm_amd' están activos en memoria."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-left:5px solid #16A34A; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#14532D; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#166534; font-size:12px;\">Auditoría de nuevo nodo antes de instalar KVM / OpenStack</span>\n    </div>\n    <div style=\"line-height:1.35; color:#14532D; font-size:11px;\">\n      <strong>• Situación:</strong> Compras o recibes un servidor para montar un hipervisor. Si intentas desplegar VMs sin extensiones activas, la instalación fallará o QEMU funcionará por emulación lenta de software.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Ejecutas <code>grep -E '(vmx|svm)' /proc/cpuinfo</code> para certificar que el silicio soporta KVM. Si la salida está vacía, debes reiniciar el servidor y entrar a la BIOS/UEFI para habilitar \"Intel VT-x\" o \"AMD SVM\".\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de cpuinfo y lscpu -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Detección de flags de procesador y módulos KVM</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">admin@kvm-node:~$</span> <span style=\"color:#FDE047; font-weight:700;\">grep -m 1 -E --color=always '(vmx|svm)' /proc/cpuinfo</span></div>\n    <div><span style=\"color:#94A3B8;\">flags &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 ... </span><span style=\"background:#16A34A; color:#FFF; font-weight:800; padding:1px 4px; border-radius:2px;\">vmx</span><span style=\"color:#94A3B8;\"> ... sse4_2 x2apic popcnt aes</span></div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">admin@kvm-node:~$</span> <span style=\"color:#FDE047; font-weight:700;\">lscpu | grep -i \"virtualization\"</span></div>\n    <div><span style=\"color:#94A3B8;\">Virtualization: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style=\"color:#38BDF8; font-weight:700;\">VT-x</span></div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">admin@kvm-node:~$</span> <span style=\"color:#FDE047; font-weight:700;\">lsmod | grep kvm</span></div>\n    <div><span style=\"color:#A7F3D0; font-weight:700;\">kvm_intel</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;368640 &nbsp;0<br><span style=\"color:#A7F3D0; font-weight:700;\">kvm</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1028096 &nbsp;1 kvm_intel</div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">🏷️ flag 'vmx' en cpuinfo:</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        Confirma que la CPU Intel soporta hardware asistido. Si fuera procesador AMD, aparecería <code>svm</code>.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">⚙️ Virtualization: VT-x:</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        El comando <code>lscpu</code> parsea el procesador y certifica que la tecnología está activa en la BIOS/UEFI.\n      </div>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">📦 kvm_intel cargado:</strong>\n      <div style=\"color:#581C87; line-height:1.35; margin-top:2px;\">\n        El kernel cargó el driver del fabricante para conectar las llamadas KVM con las instrucciones de la CPU.\n      </div>\n    </div>\n  </div>\n\n  <!-- DUELO DE MNEMOTECNIA DE EXAMEN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n      <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:6px 10px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">PROCESADORES INTEL</span>\n        <div style=\"font-weight:800; color:#1E40AF; font-size:13px; margin-top:2px;\">Flag de Examen: <code>vmx</code></div>\n        <div style=\"font-size:11px; color:#1E3A8A; line-height:1.35;\">\n          • Tecnología: <strong>Intel VT-x</strong> (Virtual Machine eXtensions).<br>\n          • Módulo del kernel: <code>kvm_intel.ko</code>.\n        </div>\n      </div>\n      <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:6px 10px;\">\n        <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">PROCESADORES AMD</span>\n        <div style=\"font-weight:800; color:#991B1B; font-size:13px; margin-top:2px;\">Flag de Examen: <code>svm</code></div>\n        <div style=\"font-size:11px; color:#7F1D1D; line-height:1.35;\">\n          • Tecnología: <strong>AMD-V</strong> (Secure Virtual Machine).<br>\n          • Módulo del kernel: <code>kvm_amd.ko</code>.\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA NÚMERO 1 DE EXAMEN LPIC-1: ¿Qué flag en /proc/cpuinfo indica virtualización en procesadores Intel? -> 'vmx'. ¿Y en procesadores AMD? -> 'svm'."
+        }
+      ],
+      "notes": "Esta pregunta aparece en prácticamente todos los exámenes LPIC-1. La regla mnemotécnica es obligatoria: Intel = vmx, AMD = svm."
+    },
+    {
+      "id": "102.6-slide-6",
+      "slideNumber": 6,
+      "title": "Almacenamiento y Dominios en libvirt: XML y Formatos de Disco",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Almacenamiento y Dominios en libvirt: XML y Formatos de Disco"
+        },
+        {
+          "type": "paragraph",
+          "text": "Configuración declarativa de máquinas virtuales (/etc/libvirt/qemu/*.xml) y formatos RAW frente a QCOW2:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-left:5px solid #2563EB; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#1E40AF; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#1E40AF; font-size:12px;\">Planificación de almacenamiento en clúster y snapshots de seguridad</span>\n    </div>\n    <div style=\"line-height:1.35; color:#1E3A8A; font-size:11px;\">\n      <strong>• Situación:</strong> Tienes 1 TB de disco y necesitas crear 20 máquinas virtuales de 50 GB cada una. Si usas RAW, te quedas sin espacio al instante aunque las VMs estén recién instaladas.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Creas discos con <code>qemu-img create -f qcow2 ...</code> para aprovisionamiento fino (*thin provisioning*): cada disco solo ocupa 2 GB reales al crearse y permite tomar *snapshots* instantáneos antes de mantenimientos críticos.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de qemu-img -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Creación y análisis de disco virtual QCOW2</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">root@kvm:~#</span> <span style=\"color:#FDE047; font-weight:700;\">qemu-img create -f qcow2 /var/lib/libvirt/images/web01.qcow2 50G</span></div>\n    <div style=\"color:#A7F3D0;\">Formatting '/var/lib/libvirt/images/web01.qcow2', fmt=qcow2 cluster_size=65536 extended_l2=off compression_type=zlib size=53687091200 lazy_refcounts=off refcount_bits=16</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">root@kvm:~#</span> <span style=\"color:#FDE047; font-weight:700;\">qemu-img info /var/lib/libvirt/images/web01.qcow2</span></div>\n    <div><span style=\"color:#94A3B8;\">image:</span> <span style=\"color:#F8FAFC;\">/var/lib/libvirt/images/web01.qcow2</span></div>\n    <div><span style=\"color:#94A3B8;\">file format:</span> <span style=\"color:#38BDF8; font-weight:700;\">qcow2</span> &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; <span style=\"color:#94A3B8;\">virtual size:</span> <span style=\"color:#FCD34D; font-weight:700;\">50 GiB</span> &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; <span style=\"color:#94A3B8;\">disk size:</span> <span style=\"color:#4ADE80; font-weight:800;\">196 KiB</span></div>\n  </div>\n\n  <!-- COMPARATIVA RADICAL: RAW vs QCOW2 -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n    <!-- Formato RAW -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:8px; padding:8px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">FORMATO RAW</span>\n        <code style=\"font-size:12px; font-weight:800; color:#1E40AF;\">disco.raw / disco.img</code>\n      </div>\n      <strong style=\"color:#1E40AF; font-size:12.5px;\">Imagen en Bruto (Sin Compresión)</strong>\n      <div style=\"font-size:11px; color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n        • <strong>Ventaja:</strong> Máximo rendimiento de lectura/escritura (E/S directa).<br>\n        • <strong>Inconveniente:</strong> Si pides 50 GB, ocupa 50 GB reales en el disco host de inmediato.<br>\n        • ⚠️ No soporta compresión nativa ni snapshots internos.\n      </div>\n    </div>\n\n    <!-- Formato QCOW2 -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:8px; padding:8px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">FORMATO QCOW2 🎯</span>\n        <code style=\"font-size:12px; font-weight:800; color:#6B21A8;\">QEMU Copy-On-Write v2</code>\n      </div>\n      <strong style=\"color:#6B21A8; font-size:12.5px;\">Asignación Dinámica y Snapshots</strong>\n      <div style=\"font-size:11px; color:#581C87; margin-top:2px; line-height:1.35;\">\n        • 🎯 <strong>Crecimiento dinámico:</strong> Ocupa solo los megabytes que el SO invitado escribe.<br>\n        • <strong>Snapshots nativos:</strong> Congela el estado del disco antes de aplicar parches.<br>\n        • Permite compresión zlib y cifrado integrado.\n      </div>\n    </div>\n  </div>\n\n  <!-- DIRECTORIO XML DE DEFINICIÓN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:6px 12px; font-size:11.5px; display:flex; justify-content:space-between; align-items:center;\">\n    <span>📁 <strong>Directorio de Configuración libvirt:</strong> <code>/etc/libvirt/qemu/&lt;nombre-vm&gt;.xml</code> (almacena vCPUs, RAM, rutas de disco y tarjetas de red).</span>\n    <span style=\"background:#334155; color:#FFF; font-size:9.5px; font-weight:800; padding:2px 6px; border-radius:4px;\">CLAVE LPIC-1</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE DE EXAMEN LPIC-1: El formato QCOW2 soporta Copy-On-Write (crecimiento dinámico) y snapshots; el formato RAW ofrece máximo rendimiento secuencial pero reserva todo el espacio de golpe."
+        }
+      ],
+      "notes": "Muestra a los alumnos la estructura XML de un dominio en libvirt para que reconozcan las etiquetas <domain>, <memory> y <disk>."
+    },
+    {
+      "id": "102.6-slide-7",
+      "slideNumber": 7,
+      "title": "virt-install y virsh: Despliegue y Control de VMs",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "virt-install y virsh: Despliegue y Control de VMs"
+        },
+        {
+          "type": "paragraph",
+          "text": "Aprovisionamiento de máquinas virtuales desde la consola de comandos:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "virt-install --name <nombre> --vcpus <n> --memory <MB> --disk <ruta> ...",
+          "title": "Aprovisionar máquinas virtuales desde terminal y gobernar su ciclo de vida en servidores remotos sin entorno gráfico."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "virt-install",
+              "Crear y aprovisionar",
+              "🎯 Comando CLI para crear dominios libvirt especificando vCPUs, RAM, disco ISO y red."
+            ],
+            [
+              "virsh list [--all]",
+              "Listar máquinas",
+              "🎯 'virsh list' muestra solo las VMs encendidas; '--all' lista también las apagadas."
+            ],
+            [
+              "virsh start <vm>",
+              "Encender VM",
+              "Arranca el dominio libvirt indicado."
+            ],
+            [
+              "virsh shutdown <vm>",
+              "Apagado ordenado",
+              "🎯 Envía una señal ACPI al kernel invitado para realizar un apagado limpio y seguro."
+            ],
+            [
+              "virsh destroy <vm>",
+              "Apagado forzado 🎯",
+              "🎯 Clave de Examen: Corta la corriente de golpe (hard reset). ¡NO borra el disco ni la VM!"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-left:5px solid #16A34A; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#14532D; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#166534; font-size:12px;\">Gestión de servidores remotos sin entorno gráfico e incidencias de bloqueo</span>\n    </div>\n    <div style=\"line-height:1.35; color:#14532D; font-size:11px;\">\n      <strong>• Situación:</strong> Administras un hipervisor KVM remoto en un centro de datos. Creas una VM con <code>virt-install</code>, pero tras una actualización de kernel la VM se queda totalmente congelada y no responde al comando normal de apagado.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Primero intentas un apagado ordenado con <code>virsh shutdown srv-db</code>. Si tras 2 minutos sigue colgada, ejecutas <code>virsh destroy srv-db</code> (tirón de cable virtual inmediato) para resetearla y arrancarla de nuevo con <code>virsh start</code>.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de virsh -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Aprovisionamiento y control de ciclo de vida con virsh</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">root@kvm:~#</span> <span style=\"color:#FDE047; font-weight:700;\">virsh list --all</span></div>\n    <div style=\"color:#94A3B8;\">&nbsp;Id &nbsp;&nbsp;Name &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;State</div>\n    <div style=\"color:#38BDF8; font-weight:700;\">--------------------------------</div>\n    <div>&nbsp;1 &nbsp;&nbsp;&nbsp;<span style=\"color:#F8FAFC; font-weight:700;\">web-server</span> &nbsp;&nbsp;&nbsp;<span style=\"color:#4ADE80;\">running</span></div>\n    <div>&nbsp;- &nbsp;&nbsp;&nbsp;<span style=\"color:#F8FAFC; font-weight:700;\">db-cluster</span> &nbsp;&nbsp;&nbsp;<span style=\"color:#F87171;\">shut off</span></div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">root@kvm:~#</span> <span style=\"color:#FDE047; font-weight:700;\">virsh destroy web-server</span></div>\n    <div style=\"color:#FCA5A5;\">Domain 'web-server' destroyed</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">root@kvm:~#</span> <span style=\"color:#FDE047; font-weight:700;\">virsh start web-server</span></div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">Domain 'web-server' started</div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">📋 virsh list --all:</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        Muestra todas las VMs. Las apagadas tienen Id <code>-</code> y estado <code>shut off</code>. Sin <code>--all</code> no se verían.\n      </div>\n    </div>\n    <div style=\"background:#FEF2F2; border:1px solid #FCA5A5; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#991B1B;\">⚡ Domain destroyed:</strong>\n      <div style=\"color:#7F1D1D; line-height:1.35; margin-top:2px;\">\n        Fuerza la parada inmediata de los procesos QEMU en el host. La VM y su disco siguen intactos.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">🔄 virsh start:</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        Lanza la máquina asignándole un nuevo Id de ejecución numérico y cargando el kernel invitado.\n      </div>\n    </div>\n  </div>\n\n  <!-- DUELO DE COMANDOS DE APAGADO -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:4px;\">\n      ⚖️ Duelo de Examen LPIC-1: ¿Cómo apagar una máquina virtual?\n    </div>\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px; font-size:11px;\">\n        <strong style=\"color:#15803D;\">virsh shutdown &lt;vm&gt; (Ordenado)</strong><br>\n        Envía un evento ACPI para que el sistema operativo cierre bases de datos y desmonte discos limpiamente.\n      </div>\n      <div style=\"background:#FEF2F2; border:1px solid #FCA5A5; border-radius:6px; padding:6px 10px; font-size:11px;\">\n        <strong style=\"color:#991B1B;\">virsh destroy &lt;vm&gt; (Forzado 🎯)</strong><br>\n        Corte eléctrico inmediato. Úsalo solo si el kernel está congelado. Para borrar la VM del todo se usa <code>virsh undefine</code>.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA CLAVE DE EXAMEN: 'virsh shutdown' envía señal ACPI ordenada. 'virsh destroy' apaga la máquina inmediatamente de golpe (corte de energía); NO borra la máquina ni el disco."
+        }
+      ],
+      "notes": "virsh es la herramienta CLI universal para controlar máquinas virtuales en servidores que no disponen de entorno gráfico."
+    },
+    {
+      "id": "102.6-slide-8",
+      "slideNumber": 8,
+      "title": "Identificador Único del Sistema: /etc/machine-id",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Identificador Único del Sistema: /etc/machine-id"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué ocurre cuando clonas una máquina virtual y por qué el examen exige regenerar su identidad?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "systemd-machine-id-setup | dbus-uuidgen --ensure",
+          "title": "Garantizar la identidad unívoca de cada instancia Linux: cómo evitar conflictos de red y colisiones de logs al clonar máquinas virtuales."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "/etc/machine-id",
+              "UUID único de 32 hex",
+              "🎯 Archivo de texto plano con 32 caracteres hexadecimales generado durante la instalación del sistema."
+            ],
+            [
+              "truncate -s 0",
+              "Vaciar en la plantilla",
+              "🎯 Clave de Examen: Deja el archivo con 0 bytes antes de apagar la plantilla dorada para clonar."
+            ],
+            [
+              "systemd-machine-id-setup",
+              "Regenerar UUID",
+              "🎯 Genera un identificador nuevo y único leyendo el UUID del hipervisor o creando uno criptográfico."
+            ],
+            [
+              "dbus-uuidgen --ensure",
+              "Sincronizar D-Bus",
+              "Comando alternativo histórico para garantizar la identidad en /var/lib/dbus/machine-id."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-left:5px solid #DC2626; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#991B1B; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🚨 CATÁSTROFE EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#991B1B; font-size:12px;\">Colisión masiva de IPs y corrupción de logs al clonar VMs</span>\n    </div>\n    <div style=\"line-height:1.35; color:#991B1B; font-size:11px;\">\n      <strong>• Situación:</strong> Creas una máquina modelo y la clonas 10 veces para un clúster Kubernetes. Al encenderlas, ¡los nodos se pisan la dirección IP porque el servidor DHCP les da la misma IP y los logs de systemd se mezclan!<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> El cliente DHCP moderno usa <code>/etc/machine-id</code> para calcular el identificador único (DUID). Si no lo vacías antes de clonar, todas las máquinas son gemelas idénticas en la red.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de machine-id -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Lectura, vaciado en plantilla y regeneración de machine-id</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">root@template:~#</span> <span style=\"color:#FDE047; font-weight:700;\">cat /etc/machine-id</span></div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">8a3f9e2b1c4d5e6f7a8b9c0d1e2f3a4b</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">root@template:~#</span> <span style=\"color:#FDE047; font-weight:700;\">truncate -s 0 /etc/machine-id &amp;&amp; poweroff</span></div>\n    <div style=\"color:#94A3B8;\"># Máquina apagada y convertida en plantilla dorada para clonar</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">root@clon-01:~#</span> <span style=\"color:#FDE047; font-weight:700;\">systemd-machine-id-setup</span></div>\n    <div style=\"color:#38BDF8;\">Initializing machine ID from KVM UUID: new UUID <span style=\"color:#FCD34D; font-weight:800;\">5d2c8a1e9b4f7e6a1c2d3e4f5a6b7c8d</span>.</div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">🔍 32 caracteres hexadecimales:</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        Cadena única sin guiones creada en el primer boot. D-Bus la enlaza en <code>/var/lib/dbus/machine-id</code>.\n      </div>\n    </div>\n    <div style=\"background:#FEF3C7; border:1px solid #FCD34D; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#92400E;\">✂️ truncate -s 0 /etc/machine-id:</strong>\n      <div style=\"color:#78350F; line-height:1.35; margin-top:2px;\">\n        🎯 Clave de examen: Deja el archivo vacío (0 bytes) pero existente, para que systemd sepa que debe regenerarlo.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">✨ systemd-machine-id-setup:</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        En el arranque del clon, genera un UUID nuevo a partir del UUID que el hipervisor KVM asignó a la VM.\n      </div>\n    </div>\n  </div>\n\n  <!-- EL FLUJO DE LA PLANTILLA DORADA -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:4px;\">\n      📋 Procedimiento Estándar de Preparación de Plantilla (Golden Image):\n    </div>\n    <div style=\"display:grid; grid-template-columns: 1fr 20px 1.2fr 20px 1.2fr; align-items:center; text-align:center; font-size:11px; gap:4px;\">\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:6px; border-radius:6px;\">\n        <strong style=\"color:#1E40AF;\">1. Instalar SO base</strong><br>\n        Configurar software y parches\n      </div>\n      <span style=\"color:var(--primary); font-weight:900;\">➔</span>\n      <div style=\"background:#FEF2F2; border:1px solid #FCA5A5; padding:6px; border-radius:6px;\">\n        <strong style=\"color:#991B1B;\">2. truncate -s 0 /etc/machine-id</strong><br>\n        Borrar identidad previa y apagar\n      </div>\n      <span style=\"color:var(--primary); font-weight:900;\">➔</span>\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:6px; border-radius:6px;\">\n        <strong style=\"color:#15803D;\">3. Clonar N instancias</strong><br>\n        Cada clon autogenera su propio UUID e IP\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE CRÍTICA DE EXAMEN LPIC-1: Al crear una plantilla (Golden Image) de VM, se debe vaciar /etc/machine-id. Si se clona sin vaciarlo, todas las instancias compartirán el mismo ID y DHCP les asignará la misma IP."
+        }
+      ],
+      "notes": "Muestra a los alumnos cómo vaciar el archivo con 'truncate -s 0 /etc/machine-id' antes de apagar la máquina modelo."
+    },
+    {
+      "id": "102.6-slide-9",
+      "slideNumber": 9,
+      "title": "Aprovisionamiento en la Nube con cloud-init",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Aprovisionamiento en la Nube con cloud-init"
+        },
+        {
+          "type": "paragraph",
+          "text": "Configuración automatizada de instancias cloud (AWS, Azure, OpenStack) mediante archivos user-data en formato YAML:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-left:5px solid #2563EB; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#1E40AF; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#1E40AF; font-size:12px;\">Despliegue desatendido de decenas de instancias en la nube pública</span>\n    </div>\n    <div style=\"line-height:1.35; color:#1E3A8A; font-size:11px;\">\n      <strong>• Situación:</strong> Lanzar 30 servidores en AWS o Hetzner. No puedes conectarte por consola manual a crear usuarios, configurar claves SSH ni arrancar Nginx uno a uno.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Inyectas un archivo con cabecera <code>#cloud-config</code> en los metadatos (user-data). Al encender la VM, el servicio <code>cloud-init</code> crea tu usuario, inyecta tu clave SSH, instala paquetes y ejecuta scripts antes de tu primer acceso.\n    </div>\n  </div>\n\n  <!-- Contenido Real y Fiel del Archivo #cloud-config -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 16px; font-family:monospace; font-size:12px; line-height:1.45; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">📄 user-data: Archivo de Configuración Oficial de cloud-init</span>\n      <span>YAML</span>\n    </div>\n    <div><span style=\"color:#FDE047; font-weight:900;\">#cloud-config</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># 🎯 Cabecera OBLIGATORIA en la línea 1 exacta</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:700;\">hostname:</span> <span style=\"color:#A7F3D0;\">web-node-01</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># Configura el nombre del sistema</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:700;\">users:</span></div>\n    <div>&nbsp;&nbsp;- <span style=\"color:#38BDF8; font-weight:700;\">name:</span> <span style=\"color:#A7F3D0;\">sysadmin</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># Crea cuenta de usuario de administración</span></div>\n    <div>&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#38BDF8; font-weight:700;\">sudo:</span> <span style=\"color:#F472B6;\">ALL=(ALL) NOPASSWD:ALL</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># Otorga privilegios sudo completos</span></div>\n    <div>&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#38BDF8; font-weight:700;\">ssh_authorized_keys:</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># 🎯 Inyecta clave pública para entrar sin password</span></div>\n    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span style=\"color:#FDE047;\">ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... alumno@laptop</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:700;\">packages:</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># Paquetes a instalar con apt o dnf en el boot</span></div>\n    <div>&nbsp;&nbsp;- <span style=\"color:#A7F3D0;\">nginx</span><br>&nbsp;&nbsp;- <span style=\"color:#A7F3D0;\">curl</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:700;\">runcmd:</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># 🎯 Comandos de shell finales tras la inicialización</span></div>\n    <div>&nbsp;&nbsp;- <span style=\"color:#F472B6;\">systemctl enable --now nginx</span></div>\n  </div>\n\n  <!-- ANATOMÍA DE LAS DIRECTIVAS CLAVE EN EXAMEN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:4px;\">\n      📋 Las 4 Directivas de cloud-init Evaluadas en el Examen LPIC-1:\n    </div>\n    <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11.5px;\">\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#1E40AF;\">#cloud-config</strong><br>\n        🎯 Cabecera obligatoria en la 1ª línea para que cloud-init lo procese.\n      </div>\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#15803D;\">ssh_authorized_keys</strong><br>\n        Inyecta la clave pública en <code>~/.ssh/authorized_keys</code> para login seguro.\n      </div>\n      <div style=\"background:#FEFCE8; border:1px solid #FDE047; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#854D0E;\">packages:</strong><br>\n        Lista de paquetes que se instalarán automáticamente al iniciar.\n      </div>\n      <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#6B21A8;\">runcmd: 🎯</strong><br>\n        Comandos de terminal ejecutados al final del aprovisionamiento.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE DE EXAMEN LPIC-1: El archivo de aprovisionamiento de cloud-init DEBE comenzar obligatoriamente con la línea '#cloud-config' en formato YAML para ser interpretado."
+        }
+      ],
+      "notes": "Explica que cloud-init es el estándar universal adoptado por todos los proveedores de nube pública y privada (IaaS)."
+    },
+    {
+      "id": "102.6-slide-10",
+      "slideNumber": 10,
+      "title": "Acceso Seguro con Claves SSH e Inyección en Instancias",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Acceso Seguro con Claves SSH e Inyección en Instancias"
+        },
+        {
+          "type": "paragraph",
+          "text": "Autenticación criptográfica asimétrica para servidores virtuales y remotos:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "ssh-keygen -t rsa -b 4096 | ssh-copy-id usuario@servidor",
+          "title": "Criptografía asimétrica para servidores virtuales y en la nube: generación de pares de claves, despliegue y permisos estrictos."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "ssh-keygen",
+              "Generador de claves",
+              "Crea el par criptográfico: clave privada secreta y clave pública."
+            ],
+            [
+              "id_rsa (Clave Privada)",
+              "Secreta local (0600)",
+              "⚠️ NUNCA debe salir de tu máquina local. Permisos obligatorios: 0600 (-rw-------)."
+            ],
+            [
+              "id_rsa.pub (Clave Pública)",
+              "Pública (0644)",
+              "Se distribuye libremente a los servidores donde quieras acceder."
+            ],
+            [
+              "ssh-copy-id usuario@host",
+              "Despliegue automático",
+              "🎯 Clave de Examen: Copia tu clave pública e inyecta su contenido en ~/.ssh/authorized_keys remoto."
+            ],
+            [
+              "~/.ssh/authorized_keys",
+              "Claves autorizadas (0600)",
+              "🎯 Fichero en el servidor donde se registran las claves autorizadas. Permisos obligatorios: 0600."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-left:5px solid #9333EA; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#581C87; display:flex; align-items:center; gap:10px;\">\n    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n      <div style=\"display:flex; align-items:center; gap:8px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n        <span style=\"font-weight:700; color:#6B21A8; font-size:12px;\">Acceso a instancias cloud con contraseñas deshabilitadas</span>\n      </div>\n      <div style=\"line-height:1.35; color:#581C87; font-size:11px;\">\n        <strong>• Situación:</strong> Por política de ciberseguridad, los servidores en la nube tienen <code>PasswordAuthentication no</code> (bloqueo total de contraseñas contra ataques de fuerza bruta).<br>\n        <strong>• ¿Por qué y con qué fin realista se usa?</strong> Generas tu par de claves con <code>ssh-keygen</code> e inyectas tu clave pública con <code>ssh-copy-id</code> o mediante cloud-init. Tu clave privada nunca abandona tu portátil, garantizando acceso seguro e inexpugnable.\n      </div>\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de ssh-keygen y permisos -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Generación de par de claves y verificación de permisos estrictos</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">alumno@laptop:~$</span> <span style=\"color:#FDE047; font-weight:700;\">ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N \"\"</span></div>\n    <div style=\"color:#94A3B8;\">Your identification has been saved in <span style=\"color:#F87171;\">/home/alumno/.ssh/id_rsa</span> (PRIVATE KEY)<br>Your public key has been saved in <span style=\"color:#4ADE80;\">/home/alumno/.ssh/id_rsa.pub</span></div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">alumno@laptop:~$</span> <span style=\"color:#FDE047; font-weight:700;\">ssh-copy-id -i ~/.ssh/id_rsa.pub sysadmin@192.168.1.50</span></div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">Number of key(s) added: 1 &nbsp;|&nbsp; Now try logging into the machine.</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">sysadmin@servidor:~$</span> <span style=\"color:#FDE047; font-weight:700;\">ls -ld ~/.ssh &amp;&amp; ls -l ~/.ssh/authorized_keys</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:700;\">drwx------</span> 2 sysadmin sysadmin 4096 Oct 26 09:30 <span style=\"color:#38BDF8;\">/home/sysadmin/.ssh</span></div>\n    <div><span style=\"color:#FCD34D; font-weight:700;\">-rw-------</span> 1 sysadmin sysadmin &nbsp;747 Oct 26 09:30 <span style=\"color:#FCD34D;\">/home/sysadmin/.ssh/authorized_keys</span></div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">🔑 Clave Privada (id_rsa):</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        ⚠️ NUNCA se comparte ni se sube al servidor. Permisos locales: <code>0600</code> (solo lectura/escritura para el dueño).\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">🚀 ssh-copy-id:</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        🎯 Automatiza la conexión remota, crea el directorio <code>~/.ssh/</code> y añade la clave a <code>authorized_keys</code> con permisos correctos.\n      </div>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">🔒 Permisos 0700 y 0600:</strong>\n      <div style=\"color:#581C87; line-height:1.35; margin-top:2px;\">\n        Directorio = <code>0700</code> (<code>drwx------</code>). Archivo = <code>0600</code> (<code>-rw-------</code>). Si son más abiertos, SSH bloquea el acceso.\n      </div>\n    </div>\n  </div>\n\n  <!-- TABLA DE PERMISOS DE EXAMEN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11px; text-align:center;\">\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:4px 6px; border-radius:6px;\">\n        <strong>Directorio ~/.ssh</strong><br>\n        <code style=\"color:#1E40AF; font-size:12px; font-weight:800;\">0700 (drwx------)</code>\n      </div>\n      <div style=\"background:#FEF3C7; border:1px solid #FCD34D; padding:4px 6px; border-radius:6px;\">\n        <strong>~/.ssh/authorized_keys</strong><br>\n        <code style=\"color:#92400E; font-size:12px; font-weight:800;\">0600 (-rw-------)</code>\n      </div>\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:4px 6px; border-radius:6px;\">\n        <strong>Clave Privada (~/.ssh/id_rsa)</strong><br>\n        <code style=\"color:#15803D; font-size:12px; font-weight:800;\">0600 (-rw-------)</code>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE DE PERMISOS DE EXAMEN LPIC-1: El directorio ~/.ssh DEBE tener permisos 0700 (drwx------) y authorized_keys DEBE tener 0600 (-rw-------). Si tienen permisos abiertos, SSH RECHAZA la conexión por seguridad."
+        }
+      ],
+      "notes": "Recalca que la clave privada nunca se envía al servidor remoto; lo que se copia con ssh-copy-id es la clave pública .pub."
+    },
+    {
+      "id": "102.6-slide-11",
+      "slideNumber": 11,
+      "title": "Comparativa Radical de Examen: Máquinas Virtuales frente a Contenedores",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comparativa Radical de Examen: Máquinas Virtuales frente a Contenedores"
+        },
+        {
+          "type": "paragraph",
+          "text": "Diferencias arquitectónicas fundamentales evaluadas en el objetivo 102.6 de LPIC-1:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- COMPARATIVA GRÁFICA EN 2 PILARES ARQUITECTÓNICOS -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px;\">\n    <!-- Pilar 1: Máquinas Virtuales -->\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:12px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 8px; border-radius:4px;\">VIRTUALIZACIÓN HARDWARE</span>\n        <span style=\"color:#1E40AF; font-weight:800; font-size:12px;\">KVM / QEMU / Xen</span>\n      </div>\n      <h3 style=\"margin:2px 0 6px 0; font-size:16px; font-weight:800; color:#1E40AF;\">Máquinas Virtuales (VMs)</h3>\n      <div style=\"display:flex; flex-direction:column; gap:6px; font-size:11.5px; color:#1E3A8A;\">\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          🎯 <strong>Kernel:</strong> Cada VM ejecuta su <strong>propio kernel independiente</strong> (puedes ejecutar Windows o BSD sobre Linux).\n        </div>\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          🛡️ <strong>Aislamiento:</strong> Completo por hardware a nivel de silicio mediante hipervisor Tipo 1 (KVM).\n        </div>\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          ⚡ <strong>Mecanismo CPU:</strong> Extensiones de procesador Intel VT-x (<code>vmx</code>) o AMD-V (<code>svm</code>).\n        </div>\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          ⏱️ <strong>Arranque y Peso:</strong> Minutos o decenas de segundos; gigabytes en disco; emulación de BIOS/UEFI.\n        </div>\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          🏷️ <strong>Identidad:</strong> UUID propio en <code>/etc/machine-id</code> y dirección MAC virtual dedicada.\n        </div>\n      </div>\n    </div>\n\n    <!-- Pilar 2: Contenedores -->\n    <div style=\"background:#F0FDF4; border:2px solid #16A34A; border-radius:12px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 8px; border-radius:4px;\">NIVEL SISTEMA OPERATIVO</span>\n        <span style=\"color:#15803D; font-weight:800; font-size:12px;\">LXC / Docker / Podman</span>\n      </div>\n      <h3 style=\"margin:2px 0 6px 0; font-size:16px; font-weight:800; color:#14532D;\">Contenedores Linux</h3>\n      <div style=\"display:flex; flex-direction:column; gap:6px; font-size:11.5px; color:#14532D;\">\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          🎯 <strong>Kernel:</strong> <strong>Comparten el mismo kernel de Linux del host</strong> (todos deben ser Linux).\n        </div>\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          🛡️ <strong>Aislamiento:</strong> Lógico a nivel de espacio de usuario; no hay hipervisor emulando hardware.\n        </div>\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          ⚡ <strong>Mecanismo Kernel:</strong> <code>cgroups</code> (límites de CPU/RAM) y <code>namespaces</code> (aislamiento PID, red, IPC).\n        </div>\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          ⏱️ <strong>Arranque y Peso:</strong> Milisegundos (solo arranca el proceso); megabytes de espacio en disco.\n        </div>\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          🏷️ <strong>Identidad:</strong> ID de contenedor gestionado por el runtime (Docker/Podman).\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <!-- TABLA MNEMOTÉCNICA ULTRA-RESUMIDA DE EXAMEN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:6px 12px;\">\n    <div style=\"display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap:6px; font-size:11px; text-align:center;\">\n      <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; padding:4px; border-radius:4px; font-weight:800; color:#334155;\">Criterio de Examen</div>\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:4px; border-radius:4px; font-weight:800; color:#1E40AF;\">Máquinas Virtuales (KVM)</div>\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:4px; border-radius:4px; font-weight:800; color:#15803D;\">Contenedores (Docker/LXC)</div>\n      \n      <div style=\"padding:3px; text-align:left; font-weight:700;\">Kernel del sistema</div>\n      <div style=\"padding:3px; color:#1E40AF;\">🎯 Kernel propio independiente</div>\n      <div style=\"padding:3px; color:#15803D;\">🎯 Kernel del host compartido</div>\n      \n      <div style=\"padding:3px; text-align:left; font-weight:700;\">Tecnología clave</div>\n      <div style=\"padding:3px; color:#1E40AF;\">Intel VT-x (vmx) / AMD-V (svm)</div>\n      <div style=\"padding:3px; color:#15803D;\">cgroups + namespaces</div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA CLAVE DE CERTIFICACIÓN: Las máquinas virtuales ejecutan su propio kernel independiente mediante extensiones de hardware; los contenedores comparten el mismo kernel del host y se aíslan usando cgroups y namespaces."
+        }
+      ],
+      "notes": "Explica cómo cgroups limita el uso de recursos (CPU, RAM) y namespaces aísla lo que los procesos pueden ver (PID, red, puntos de montaje)."
+    },
+    {
+      "id": "102.6-slide-12",
+      "slideNumber": 12,
+      "title": "Conceptos IaaS en Cloud Computing",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Conceptos IaaS en Cloud Computing"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 3 pilares de Infraestructura como Servicio (IaaS) según LPI y el modelo de responsabilidad compartida:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- LOS 3 PILARES FUNDAMENTALES DE IAAS -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;\">\n    <!-- Pilar 1: Computación -->\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">PILAR 1</span>\n          <span style=\"font-size:16px;\">🖥️</span>\n        </div>\n        <strong style=\"color:#1E40AF; font-size:13.5px; display:block; margin-bottom:4px;\">Instancias de Computación</strong>\n        <div style=\"font-size:11.5px; color:#1E3A8A; line-height:1.4;\">\n          • Servidores virtuales elásticos creados bajo demanda.<br>\n          • Definidos por vCPUs y memoria RAM (<em>instance flavors</em>).<br>\n          • Se aprovisionan en segundos mediante plantillas (AMIs, QCOW2) y <code>cloud-init</code>.\n        </div>\n      </div>\n      <div style=\"margin-top:8px; background:#DBEAFE; padding:4px 6px; border-radius:4px; font-size:10.5px; font-weight:700; color:#1E40AF; text-align:center;\">\n        Ejemplos: AWS EC2, Azure VMs, OpenStack Nova\n      </div>\n    </div>\n\n    <!-- Pilar 2: Almacenamiento en Bloques -->\n    <div style=\"background:#FEFCE8; border:2px solid #FDE047; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <span style=\"background:#CA8A04; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">PILAR 2 🎯</span>\n          <span style=\"font-size:16px;\">💾</span>\n        </div>\n        <strong style=\"color:#854D0E; font-size:13.5px; display:block; margin-bottom:4px;\">Almacenamiento en Bloques</strong>\n        <div style=\"font-size:11.5px; color:#78350F; line-height:1.4;\">\n          • Volúmenes virtuales que se comportan como <strong>discos duros físicos</strong>.<br>\n          • Se conectan por bus virtual y se formatean con <code>ext4</code> o <code>XFS</code>.<br>\n          • Persisten independientemente de si la instancia se apaga o se destruye.\n        </div>\n      </div>\n      <div style=\"margin-top:8px; background:#FEF9C3; padding:4px 6px; border-radius:4px; font-size:10.5px; font-weight:700; color:#854D0E; text-align:center;\">\n        Ejemplos: AWS EBS, OpenStack Cinder, volúmenes QCOW2\n      </div>\n    </div>\n\n    <!-- Pilar 3: Redes Virtuales -->\n    <div style=\"background:#FAF5FF; border:2px solid #C084FC; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">PILAR 3</span>\n          <span style=\"font-size:16px;\">🌐</span>\n        </div>\n        <strong style=\"color:#581C87; font-size:13.5px; display:block; margin-bottom:4px;\">Redes y Direcciones Flotantes</strong>\n        <div style=\"font-size:11.5px; color:#581C87; line-height:1.4;\">\n          • Redes privadas virtuales aisladas (VPC) y subredes.<br>\n          • IPs elásticas / flotantes que se reasignan entre instancias.<br>\n          • <strong>Grupos de seguridad:</strong> Cortafuegos virtuales a nivel de hipervisor que filtran puertos.\n        </div>\n      </div>\n      <div style=\"margin-top:8px; background:#F3E8FF; padding:4px 6px; border-radius:4px; font-size:10.5px; font-weight:700; color:#6B21A8; text-align:center;\">\n        Ejemplos: AWS VPC, OpenStack Neutron, Security Groups\n      </div>\n    </div>\n  </div>\n\n  <!-- MODELO DE RESPONSABILIDAD COMPARTIDA EN IAAS -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      ⚖️ Modelo de Responsabilidad Compartida en IaaS (Infrastructure as a Service):\n    </div>\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n      <div style=\"background:#F1F5F9; border:1px solid #CBD5E1; padding:6px 10px; border-radius:6px; font-size:11px;\">\n        <strong style=\"color:#334155;\">🏢 Responsabilidad del Proveedor Cloud:</strong><br>\n        Centros de datos físicos, servidores de silicio, cableado de red, almacenamiento SAN y el software del hipervisor (KVM/ESXi).\n      </div>\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:6px 10px; border-radius:6px; font-size:11px;\">\n        <strong style=\"color:#15803D;\">👨‍💻 Responsabilidad del Administrador (TÚ):</strong><br>\n        Sistema operativo, actualizaciones de seguridad, configuración de usuarios, claves SSH, reglas de cortafuegos y aplicaciones.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE DE EXAMEN IaaS: El proveedor suministra el hardware virtualizado (Compute, Block Storage y Redes); el SysAdmin administra el sistema operativo, parches, usuarios, firewall y aplicaciones."
+        }
+      ],
+      "notes": "Aclara la diferencia entre IaaS (Infraestructura), PaaS (Plataforma) y SaaS (Software como Servicio)."
+    },
+    {
+      "id": "102.6-slide-13",
+      "slideNumber": 13,
+      "title": "Trampas Clásicas de Examen en Virtualización y Cloud",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Trampas Clásicas de Examen en Virtualización y Cloud"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 4 fallos más habituales y costosos en las preguntas del objetivo 102.6 de LPIC-1:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- GRID DE 4 TRAMPAS CLÁSICAS DE EXAMEN -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n    <!-- TRAMPA 1 -->\n    <div style=\"background:#FFFFFF; border:2px solid #F87171; border-radius:10px; padding:8px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10px; padding:1px 6px; border-radius:4px;\">TRAMPA 1</span>\n        <strong style=\"color:#991B1B; font-size:12px;\">Invertir los flags de procesador vmx y svm</strong>\n      </div>\n      <div style=\"background:#FEF2F2; border-left:3px solid #DC2626; padding:4px 8px; border-radius:3px; font-size:11px; color:#991B1B; margin-bottom:4px;\">\n        <strong>❌ La Trampa:</strong> Preguntan por la CPU de un servidor AMD Ryzen y responder <code>vmx</code>.\n      </div>\n      <div style=\"background:#F0FDF4; border-left:3px solid #16A34A; padding:4px 8px; border-radius:3px; font-size:11px; color:#14532D;\">\n        <strong>✅ La Realidad:</strong> <strong>Intel = vmx</strong> (VT-x). <strong>AMD = svm</strong> (Secure Virtual Machine). ¡Se buscan siempre en <code>/proc/cpuinfo</code>!\n      </div>\n    </div>\n\n    <!-- TRAMPA 2 -->\n    <div style=\"background:#FFFFFF; border:2px solid #F87171; border-radius:10px; padding:8px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10px; padding:1px 6px; border-radius:4px;\">TRAMPA 2</span>\n        <strong style=\"color:#991B1B; font-size:12px;\">No vaciar /etc/machine-id al clonar plantillas</strong>\n      </div>\n      <div style=\"background:#FEF2F2; border-left:3px solid #DC2626; padding:4px 8px; border-radius:3px; font-size:11px; color:#991B1B; margin-bottom:4px;\">\n        <strong>❌ La Trampa:</strong> Clonar una VM directamente y preguntarse por qué todas obtienen la misma IP por DHCP.\n      </div>\n      <div style=\"background:#F0FDF4; border-left:3px solid #16A34A; padding:4px 8px; border-radius:3px; font-size:11px; color:#14532D;\">\n        <strong>✅ La Realidad:</strong> Debes ejecutar <code>truncate -s 0 /etc/machine-id</code> en la plantilla dorada para que cada clon regenere su propio UUID único al nacer.\n      </div>\n    </div>\n\n    <!-- TRAMPA 3 -->\n    <div style=\"background:#FFFFFF; border:2px solid #F87171; border-radius:10px; padding:8px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10px; padding:1px 6px; border-radius:4px;\">TRAMPA 3</span>\n        <strong style=\"color:#991B1B; font-size:12px;\">Permisos incorrectos en archivos de claves SSH</strong>\n      </div>\n      <div style=\"background:#FEF2F2; border-left:3px solid #DC2626; padding:4px 8px; border-radius:3px; font-size:11px; color:#991B1B; margin-bottom:4px;\">\n        <strong>❌ La Trampa:</strong> Asignar permisos <code>0777</code> o <code>0666</code> a <code>~/.ssh/authorized_keys</code> pensando que \"así no fallará\".\n      </div>\n      <div style=\"background:#F0FDF4; border-left:3px solid #16A34A; padding:4px 8px; border-radius:3px; font-size:11px; color:#14532D;\">\n        <strong>✅ La Realidad:</strong> SSH <strong>bloquea la conexión por seguridad</strong> si detecta permisos abiertos. <code>~/.ssh</code> debe ser <strong>0700</strong> y <code>authorized_keys</code> <strong>0600</strong>.\n      </div>\n    </div>\n\n    <!-- TRAMPA 4 -->\n    <div style=\"background:#FFFFFF; border:2px solid #F87171; border-radius:10px; padding:8px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10px; padding:1px 6px; border-radius:4px;\">TRAMPA 4</span>\n        <strong style=\"color:#991B1B; font-size:12px;\">Creer que 'virsh destroy' borra la máquina virtual</strong>\n      </div>\n      <div style=\"background:#FEF2F2; border-left:3px solid #DC2626; padding:4px 8px; border-radius:3px; font-size:11px; color:#991B1B; margin-bottom:4px;\">\n        <strong>❌ La Trampa:</strong> Pensar que <code>virsh destroy &lt;vm&gt;</code> destruye el disco o elimina la VM de libvirt.\n      </div>\n      <div style=\"background:#F0FDF4; border-left:3px solid #16A34A; padding:4px 8px; border-radius:3px; font-size:11px; color:#14532D;\">\n        <strong>✅ La Realidad:</strong> <code>virsh destroy</code> equivale a <strong>desenchufar el cable de corriente</strong> (hard reset). Para eliminar la definición se usa <code>virsh undefine</code>.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 MNEMOTECNIA SALVA-EXAMEN: Intel = vmx; AMD = svm. /etc/machine-id = vaciar antes de clonar. authorized_keys = 0600. virsh destroy = hard reset (NO borra la VM)."
+        }
+      ],
+      "notes": "Insiste en que los flags de CPU se buscan siempre en /proc/cpuinfo."
+    },
+    {
+      "id": "102.6-slide-14",
+      "slideNumber": 14,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Flags y VirtIO)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Flags y VirtIO)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 1 (Oficial Pág 182): ¿Qué comando permite comprobar si un servidor con procesador AMD dispone de extensiones de virtualización por hardware habilitadas? — Comando: `grep -E --color 'svm' /proc/cpuinfo (o lscpu | grep Virtualization)` (En procesadores AMD, la tecnología de virtualización por hardware se denomina AMD-V y el kernel la identifica con el flag 'svm' en el archivo /proc/cpuinfo.)",
+            "Caso 2 (Oficial Pág 182): Un administrador nota lentitud en las operaciones de red y disco de una VM Linux sobre KVM. ¿Qué tipo de controladores debe instalar o configurar para obtener rendimiento nativo? — Comando: `Controladores paravirtualizados VirtIO (virtio-net, virtio-blk)` (VirtIO elimina la sobrecarga de emulación completa de hardware comunicando el kernel invitado directamente con el hipervisor KVM.)",
+            "Caso 3 (Oficial Pág 182): ¿Qué comando se utiliza en una distribución con systemd para regenerar el identificador único del sistema tras vaciar /etc/machine-id? — Comando: `sudo systemd-machine-id-setup` (systemd-machine-id-setup lee el UUID de KVM o genera una nueva cadena criptográfica aleatoria de 32 caracteres y la escribe en /etc/machine-id.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "El flag 'svm' valida el hardware en AMD; VirtIO optimiza el bus de E/S; y systemd-machine-id-setup resuelve la identidad única."
+        }
+      ],
+      "notes": "Explica la diferencia entre KVM emulando un disco IDE antiguo frente a usar virtio-blk."
+    },
+    {
+      "id": "102.6-slide-15",
+      "slideNumber": 15,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: cloud-init y SSH)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: cloud-init y SSH)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 4 (Oficial Pág 182): ¿Cuál es la primera línea exacta y obligatoria que debe contener un archivo de datos de usuario (user-data) para que cloud-init lo procese correctamente? — Comando: `#cloud-config` (cloud-init utiliza esta cabecera obligatoria como firma para saber que el documento contiene directivas en formato YAML.)",
+            "Caso 5 (Oficial Pág 182): ¿Qué comando copia la clave pública SSH local de un administrador a un servidor remoto llamado '192.168.1.50' con el usuario 'debian'? — Comando: `ssh-copy-id debian@192.168.1.50` (ssh-copy-id se conecta por SSH e inserta el contenido de ~/.ssh/id_rsa.pub en el archivo remoto ~/.ssh/authorized_keys fijando los permisos adecuados.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "#cloud-config es la cabecera estándar de aprovisionamiento; ssh-copy-id es el mecanismo seguro para desplegar accesos sin contraseña."
+        }
+      ],
+      "notes": "Recuerda que ssh-copy-id solicita la contraseña del usuario remoto por única vez durante el despliegue de la clave."
+    },
+    {
+      "id": "102.6-slide-16",
+      "slideNumber": 16,
+      "title": "Retos de Exploración Oficiales (Clonación, D-Bus y cloud-config)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Retos de Exploración Oficiales (Clonación, D-Bus y cloud-config)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. Un administrador clona 10 máquinas virtuales desde una plantilla KVM. Todas obtienen la misma dirección IP por DHCP y fallan en el registro de D-Bus. ¿Qué archivo olvidó borrar o truncar en la imagen dorada?\n2. En un archivo #cloud-config, ¿bajo qué directiva se define la lista de comandos que deben ejecutarse automáticamente al finalizar la inicialización del sistema?\n3. ¿Qué permisos numéricos en notación octal deben tener el directorio ~/.ssh y el archivo ~/.ssh/authorized_keys para que el servicio SSH permita el acceso?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Pista",
+          "content": "Recuerda: machine-id; directiva runcmd; y permisos 0700 y 0600."
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Desafío",
+          "content": "1. Olvidó vaciar el archivo /etc/machine-id (y /var/lib/dbus/machine-id). Al compartir el mismo machine-id, el cliente DHCP envía el mismo identificador de cliente (DUID/IAID) y el router les asigna la misma IP.\n2. Se definen bajo la directiva 'runcmd' como una lista de cadenas de comando.\n3. El directorio ~/.ssh debe tener permisos 700 (drwx------) y el archivo authorized_keys permisos 600 (-rw-------)."
+        }
+      ],
+      "notes": "La comprensión del problema de clonación con machine-id demuestra experiencia real en administración de sistemas."
+    },
+    {
+      "id": "102.6-slide-17",
+      "slideNumber": 17,
+      "title": "Pregunta de Examen LPIC-1: Extensiones de Virtualización en la CPU",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Extensiones de Virtualización en la CPU"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-102-6-17",
+          "question": "¿Cuál de los siguientes flags en /proc/cpuinfo indica que un procesador de arquitectura Intel dispone de extensiones de virtualización por hardware?",
+          "options": [
+            {
+              "key": "a",
+              "text": "svm"
+            },
+            {
+              "key": "b",
+              "text": "vmx"
+            },
+            {
+              "key": "c",
+              "text": "kvm"
+            },
+            {
+              "key": "d",
+              "text": "virt"
+            }
+          ],
+          "correct": [
+            "b"
+          ],
+          "explanation": "En procesadores Intel, las extensiones de virtualización por hardware (Intel VT-x) se identifican con el flag 'vmx' (Virtual Machine eXtensions). El flag 'svm' corresponde a procesadores AMD (Secure Virtual Machine), mientras que 'kvm' y 'virt' no son flags de CPU válidos."
+        }
+      ],
+      "notes": "Pregunta fundamental y directa de examen. Intel = vmx, AMD = svm."
+    },
+    {
+      "id": "102.6-slide-18",
+      "slideNumber": 18,
+      "title": "Tarjetas Nemotécnicas: Virtualización y Cloud 102.6",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tarjetas Nemotécnicas: Virtualización y Cloud 102.6"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto",
+            "Significado / Uso"
+          ],
+          "rows": [
+            [
+              "¿Qué flag de CPU indica soporte de virtualización en Intel?",
+              "vmx (en /proc/cpuinfo)."
+            ],
+            [
+              "¿Qué flag de CPU indica soporte de virtualización en AMD?",
+              "svm (Secure Virtual Machine en /proc/cpuinfo)."
+            ],
+            [
+              "¿Qué tipo de hipervisor es KVM en Linux?",
+              "Hipervisor Tipo 1 (Bare-Metal / Nativo) integrado en el propio kernel."
+            ],
+            [
+              "¿Qué controladores paravirtualizados ofrecen máximo rendimiento en KVM?",
+              "Los controladores VirtIO (para disco, red y memoria)."
+            ],
+            [
+              "¿Qué archivo contiene el UUID único de 32 caracteres de la máquina?",
+              "/etc/machine-id (se regenera con systemd-machine-id-setup)."
+            ],
+            [
+              "¿Cuál es la primera línea obligatoria de un script de cloud-init?",
+              "#cloud-config."
+            ],
+            [
+              "¿Qué comando copia una clave pública SSH a un servidor remoto?",
+              "ssh-copy-id usuario@servidor."
+            ],
+            [
+              "¿Qué permisos obligatorios debe tener ~/.ssh/authorized_keys?",
+              "Permisos 0600 (y el directorio ~/.ssh permisos 0700)."
+            ]
+          ],
+          "caption": "Tarjetas de memorización"
+        }
+      ],
+      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 102.6."
+    },
+    {
+      "id": "102.6-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen y Claves de Examen: Subtema 102.6",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen y Claves de Examen: Subtema 102.6"
+        }
+      ],
+      "notes": "Concluimos el subtema 102.6 y con él finalizamos completamente la refactorización del Tema 102."
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-102-6-1",
+      "title": "Arquitectura de Hipervisores: Tipo 1 (Bare-Metal) frente a Tipo 2 (Hosted)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Arquitectura de Hipervisores: Tipo 1 (Bare-Metal) frente a Tipo 2 (Hosted)"
+        },
+        {
+          "type": "paragraph",
+          "text": "El factor determinante de rendimiento es cuántas capas existen entre la máquina virtual y el silicio:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Hipervisor Tipo 1 (Bare-Metal / Nativo)** — 🎯 Se ejecuta directamente sobre el hardware físico del servidor sin ningún sistema operativo por debajo. Ofrece máximo rendimiento y menor latencia. Ejemplos de examen: KVM (Kernel-based Virtual Machine integrado en Linux), Xen y VMware ESXi.",
+            "**Hipervisor Tipo 2 (Hosted / Alojado)** — Se ejecuta como una aplicación ordinaria encima de un sistema operativo anfitrión convencional. Mayor sobrecarga de CPU y memoria. Ejemplos de examen: VirtualBox, VMware Workstation y QEMU en modo emulación software pura.",
+            "**KVM: El estándar de Tipo 1 en Linux** — KVM convierte al propio kernel de Linux en un hipervisor Tipo 1 cargando los módulos 'kvm' y el driver específico del procesador ('kvm_intel' o 'kvm_amd')."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin:16px 0;\">\n  <!-- Tipo 1: Bare-Metal -->\n  <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:14px; padding:18px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">TIPO 1: BARE-METAL</span>\n      <span style=\"font-weight:700; color:#15803D; font-size:13px;\">Nativo / Hipervisor Directo</span>\n    </div>\n    <h3 style=\"margin:4px 0 8px 0; font-size:20px; font-weight:800; color:#14532D;\">KVM, Xen, VMware ESXi</h3>\n    <div style=\"display:flex; flex-direction:column; gap:6px; font-size:13.5px; color:#14532D; margin-bottom:12px;\">\n      <div style=\"background:#DCFCE7; padding:6px 10px; border-radius:6px; text-align:center; font-weight:700;\">Máquinas Virtuales (Guest OS)</div>\n      <div style=\"background:#BBF7D0; padding:6px 10px; border-radius:6px; text-align:center; font-weight:800; color:#166534;\">Hipervisor (Linux Kernel + KVM)</div>\n      <div style=\"background:#0F172A; color:#FFF; padding:6px 10px; border-radius:6px; text-align:center; font-weight:800;\">Hardware Físico del Servidor (Silicio)</div>\n    </div>\n    <div style=\"font-size:13px; color:#166534; line-height:1.4;\">\n      🎯 <strong>Sin SO intermedio:</strong> El propio kernel de Linux actúa como hipervisor mediante el módulo KVM. Máximo rendimiento de CPU y E/S.\n    </div>\n  </div>\n\n  <!-- Tipo 2: Hosted -->\n  <div style=\"background:#EFF6FF; border:2px solid #93C5FD; border-radius:14px; padding:18px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">TIPO 2: HOSTED</span>\n      <span style=\"font-weight:700; color:#1E40AF; font-size:13px;\">Alojado sobre SO Anfitrión</span>\n    </div>\n    <h3 style=\"margin:4px 0 8px 0; font-size:20px; font-weight:800; color:#1E40AF;\">VirtualBox, VMware Workstation</h3>\n    <div style=\"display:flex; flex-direction:column; gap:6px; font-size:13.5px; color:#1E3A8A; margin-bottom:12px;\">\n      <div style=\"background:#DBEAFE; padding:6px 10px; border-radius:6px; text-align:center; font-weight:700;\">Máquinas Virtuales (Guest OS)</div>\n      <div style=\"background:#BFDBFE; padding:6px 10px; border-radius:6px; text-align:center; font-weight:700;\">Hipervisor de Aplicación (VirtualBox)</div>\n      <div style=\"background:#93C5FD; padding:6px 10px; border-radius:6px; text-align:center; font-weight:700;\">Sistema Operativo Anfitrión (Host OS)</div>\n      <div style=\"background:#0F172A; color:#FFF; padding:6px 10px; border-radius:6px; text-align:center; font-weight:800;\">Hardware Físico (Silicio)</div>\n    </div>\n    <div style=\"font-size:13px; color:#1E3A8A; line-height:1.4;\">\n      ⚠️ <strong>Doble Kernel:</strong> Se ejecuta como una aplicación normal de usuario. Sobrecarga por traducción de llamadas del SO anfitrión.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA CLAVE DE EXAMEN: KVM es un hipervisor de Tipo 1 (bare-metal) porque convierte al propio kernel de Linux en el hipervisor nativo."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-6-2",
+      "title": "Modalidades: Virtualización por Hardware frente a Contenedores",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Modalidades: Virtualización por Hardware frente a Contenedores"
+        },
+        {
+          "type": "paragraph",
+          "text": "La diferencia arquitectónica más importante del examen LPIC-1 actual:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Virtualización Completa (Full Virtualization)** — El hipervisor emula un ordenador físico completo. El sistema operativo invitado no sabe que está virtualizado y funciona sin ninguna modificación.",
+            "**Paravirtualización y Controladores VirtIO** — 🎯 Clave de Examen: El sistema operativo invitado es consciente de que está virtualizado y utiliza controladores optimizados especiales (VirtIO para disco, red y memoria) que se comunican directamente con el hipervisor a hiper-velocidad.",
+            "**Contenedores Linux (LXC, Docker, Podman)** — No virtualizan hardware. Comparten el mismo kernel de Linux del host y aíslan los procesos de usuario mediante Control Groups (cgroups) y Namespaces."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin:16px 0;\">\n  <!-- Máquinas Virtuales -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#475569; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">VIRTUALIZACIÓN HARDWARE</span>\n      <span style=\"font-weight:700; color:#334155; font-size:13px;\">KVM / QEMU</span>\n    </div>\n    <h3 style=\"margin:4px 0 8px 0; font-size:20px; font-weight:800; color:var(--text);\">Máquinas Virtuales (VMs)</h3>\n    <div style=\"display:flex; flex-direction:column; gap:8px; font-size:14px; color:var(--text-muted);\">\n      <div>• <strong>Aislamiento:</strong> Completo por hardware mediante hipervisor.</div>\n      <div>• 🎯 <strong>Kernel:</strong> Cada VM ejecuta su <strong>propio kernel independiente</strong> (puedes ejecutar Windows sobre Linux).</div>\n      <div>• <strong>Recursos:</strong> Pesado (gigabytes en disco y arranque de minutos).</div>\n      <div>• <strong>Rendimiento:</strong> VirtIO para paravirtualización casi nativa.</div>\n    </div>\n  </div>\n\n  <!-- Contenedores -->\n  <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:14px; padding:18px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">NIVEL SISTEMA OPERATIVO</span>\n      <span style=\"font-weight:700; color:#15803D; font-size:13px;\">LXC / Docker / Podman</span>\n    </div>\n    <h3 style=\"margin:4px 0 8px 0; font-size:20px; font-weight:800; color:#14532D;\">Contenedores Linux</h3>\n    <div style=\"display:flex; flex-direction:column; gap:8px; font-size:14px; color:#14532D;\">\n      <div>• <strong>Aislamiento:</strong> Lógico a nivel de espacio de usuario.</div>\n      <div>• 🎯 <strong>Kernel:</strong> <strong>Comparten el mismo kernel del host</strong> (todos los contenedores deben ser Linux).</div>\n      <div>• <strong>Mecanismos:</strong> <code>cgroups</code> (límites de CPU/RAM) y <code>namespaces</code> (aislamiento de red, procesos y rutas).</div>\n      <div>• <strong>Recursos:</strong> Ultraligero (megabytes y arranque en milisegundos).</div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE DE EXAMEN: Los contenedores NO virtualizan hardware; comparten el kernel de Linux del host y se aíslan usando namespaces y cgroups."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-6-3",
+      "title": "Arquitectura KVM, QEMU y libvirt: ¿Quién hace qué?",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Arquitectura KVM, QEMU y libvirt: ¿Quién hace qué?"
+        },
+        {
+          "type": "paragraph",
+          "text": "El reparto de tareas: ¿por qué Linux necesita 4 piezas distintas para una sola máquina virtual?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- BANNER INTUITIVO: EL PORQUÉ DE LAS 4 PIEZAS -->\n  <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-left:5px solid #2563EB; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#1E40AF; display:flex; align-items:center; gap:10px;\">\n    <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; white-space:nowrap;\">💡 LA IDEA CLAVE</span>\n    <span>A diferencia de programas todo-en-uno como VirtualBox, en servidores Linux <strong>cada herramienta hace una sola cosa a la perfección</strong>: una da la potencia bruta, otra fabrica las piezas que faltan, otra organiza y tú tienes el mando.</span>\n  </div>\n\n  <!-- LAS 4 PIEZAS EN LENGUAJE HUMANO (ANALOGÍA DE ROLES) -->\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;\">\n    <!-- 1. KVM -->\n    <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">1. LA POTENCIA</span>\n          <span style=\"font-size:18px;\">⚡</span>\n        </div>\n        <strong style=\"color:#14532D; font-size:14px; display:block; margin-bottom:2px;\">KVM</strong>\n        <span style=\"color:#15803D; font-size:11.5px; font-weight:700;\">«El Motor de Competición»</span>\n        <div style=\"font-size:11px; color:#14532D; line-height:1.35; margin-top:6px;\">\n          • <strong>¿Qué hace?:</strong> Conecta la máquina virtual directo al procesador físico de Intel o AMD.<br>\n          • <strong>En cristiano:</strong> Se encarga de que la CPU y la RAM vayan a toda velocidad.<br>\n          • ⚠️ <strong>El detalle:</strong> KVM es solo el motor; no sabe qué es un disco duro ni un ratón.\n        </div>\n      </div>\n      <div style=\"margin-top:6px; background:#DCFCE7; padding:4px 6px; border-radius:4px; font-size:10.5px; font-weight:800; color:#15803D; text-align:center;\">\n        Sin KVM: la VM iría a paso de tortuga\n      </div>\n    </div>\n\n    <!-- 2. QEMU -->\n    <div style=\"background:#FEFCE8; border:2px solid #FDE047; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <span style=\"background:#CA8A04; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">2. LAS PIEZAS</span>\n          <span style=\"font-size:18px;\">🧩</span>\n        </div>\n        <strong style=\"color:#854D0E; font-size:14px; display:block; margin-bottom:2px;\">QEMU</strong>\n        <span style=\"color:#A16207; font-size:11.5px; font-weight:700;\">«El Simulador de Hardware»</span>\n        <div style=\"font-size:11px; color:#78350F; line-height:1.35; margin-top:6px;\">\n          • <strong>¿Qué hace?:</strong> Le \"dibuja\" a la máquina virtual todo lo que KVM no tiene.<br>\n          • <strong>En cristiano:</strong> Le hace creer a la VM que tiene un disco duro, tarjeta de red y tarjeta gráfica.<br>\n          • ⚠️ <strong>El detalle:</strong> Lanzar QEMU a mano exige comandos larguísimos e infumables.\n        </div>\n      </div>\n      <div style=\"margin-top:6px; background:#FEF9C3; padding:4px 6px; border-radius:4px; font-size:10.5px; font-weight:800; color:#854D0E; text-align:center;\">\n        Sin QEMU: la VM no tendría disco ni red\n      </div>\n    </div>\n\n    <!-- 3. libvirt -->\n    <div style=\"background:#EFF6FF; border:2px solid #93C5FD; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">3. EL CEREBRO</span>\n          <span style=\"font-size:18px;\">📋</span>\n        </div>\n        <strong style=\"color:#1E40AF; font-size:14px; display:block; margin-bottom:2px;\">libvirt</strong>\n        <span style=\"color:#2563EB; font-size:11.5px; font-weight:700;\">«El Mayordomo / API»</span>\n        <div style=\"font-size:11px; color:#1E3A8A; line-height:1.35; margin-top:6px;\">\n          • <strong>¿Qué hace?:</strong> Habla con KVM y QEMU por ti para que tú no tengas que pelearte con ellos.<br>\n          • <strong>En cristiano:</strong> Guarda la configuración en un archivo ordenado (<code>.xml</code>).<br>\n          • 🎯 <strong>El detalle:</strong> Es el estándar universal que usan tanto servidores como la nube.\n        </div>\n      </div>\n      <div style=\"margin-top:6px; background:#DBEAFE; padding:4px 6px; border-radius:4px; font-size:10.5px; font-weight:800; color:#1E40AF; text-align:center;\">\n        Sin libvirt: tendrías comandos de 400 letras\n      </div>\n    </div>\n\n    <!-- 4. virsh -->\n    <div style=\"background:#FAF5FF; border:2px solid #D8B4FE; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">4. EL MANDO</span>\n          <span style=\"font-size:18px;\">🕹️</span>\n        </div>\n        <strong style=\"color:#581C87; font-size:14px; display:block; margin-bottom:2px;\">virsh / GUI</strong>\n        <span style=\"color:#7E22CE; font-size:11.5px; font-weight:700;\">«Tus Manos al Volante»</span>\n        <div style=\"font-size:11px; color:#581C87; line-height:1.35; margin-top:6px;\">\n          • <strong>¿Qué hace?:</strong> Es la palabra mágica que tú escribes en la terminal.<br>\n          • <strong>En cristiano:</strong> Los botones de encender y apagar: <code>virsh start debian</code>, <code>virsh shutdown</code>.<br>\n          • 🎯 <strong>Otras opciones:</strong> <code>virt-manager</code> (versión con ventanas y ratón).\n        </div>\n      </div>\n      <div style=\"margin-top:6px; background:#F3E8FF; padding:4px 6px; border-radius:4px; font-size:10.5px; font-weight:800; color:#6B21A8; text-align:center;\">\n        Es lo que TÚ ejecutas en el examen\n      </div>\n    </div>\n  </div>\n\n  <!-- LA CHULETA DEFINITIVA DE EXAMEN LPIC-1 -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      🎯 Las 4 Preguntas Exactas que hace LPIC-1 sobre esta arquitectura:\n    </div>\n    <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11px;\">\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:6px 8px; border-radius:6px;\">\n        <span style=\"color:#15803D; font-weight:800;\">¿Quién acelera la CPU?</span><br>\n        <strong style=\"color:#14532D; font-size:12px;\">KVM</strong> (módulo del kernel).\n      </div>\n      <div style=\"background:#FEFCE8; border:1px solid #FDE047; padding:6px 8px; border-radius:6px;\">\n        <span style=\"color:#854D0E; font-weight:800;\">¿Quién emula el disco/red?</span><br>\n        <strong style=\"color:#78350F; font-size:12px;\">QEMU</strong> (espacio de usuario).\n      </div>\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:6px 8px; border-radius:6px;\">\n        <span style=\"color:#1E40AF; font-weight:800;\">¿Quién guarda el XML/API?</span><br>\n        <strong style=\"color:#1E3A8A; font-size:12px;\">libvirt</strong> (demonio libvirtd).\n      </div>\n      <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; padding:6px 8px; border-radius:6px;\">\n        <span style=\"color:#6B21A8; font-weight:800;\">¿Qué comando tecleas tú?</span><br>\n        <strong style=\"color:#581C87; font-size:12px;\">virsh</strong> (herramienta CLI).\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 LA CHULETA DE EXAMEN EN 4 PREGUNTAS: ¿Quién acelera la CPU? KVM. ¿Quién emula el disco y la red? QEMU. ¿Quién guarda el XML y da la API? libvirt. ¿Qué comando teclea el SysAdmin? virsh."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-6-4",
+      "title": "Comprobación de Extensiones de Hardware en /proc/cpuinfo",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comprobación de Extensiones de Hardware en /proc/cpuinfo"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo verificar antes de instalar KVM si el procesador físico soporta virtualización asistida?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "grep -E --color '(vmx|svm)' /proc/cpuinfo | lscpu",
+          "title": "Detectar si el procesador físico soporta virtualización asistida por hardware y si está habilitada en la BIOS/UEFI antes de desplegar KVM."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "vmx",
+              "Flag Intel VT-x",
+              "🎯 Virtual Machine eXtensions. Indica soporte nativo de KVM en procesadores Intel (Core, Xeon)."
+            ],
+            [
+              "svm",
+              "Flag AMD AMD-V",
+              "🎯 Secure Virtual Machine. Indica soporte nativo de KVM en procesadores AMD (Ryzen, EPYC)."
+            ],
+            [
+              "lscpu",
+              "Resumen de arquitectura",
+              "Muestra el campo 'Virtualization: VT-x' o 'AMD-V' de forma legible."
+            ],
+            [
+              "lsmod | grep kvm",
+              "Verificar módulos",
+              "Confirma que los módulos 'kvm' y 'kvm_intel' o 'kvm_amd' están activos en memoria."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-left:5px solid #16A34A; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#14532D; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#166534; font-size:12px;\">Auditoría de nuevo nodo antes de instalar KVM / OpenStack</span>\n    </div>\n    <div style=\"line-height:1.35; color:#14532D; font-size:11px;\">\n      <strong>• Situación:</strong> Compras o recibes un servidor para montar un hipervisor. Si intentas desplegar VMs sin extensiones activas, la instalación fallará o QEMU funcionará por emulación lenta de software.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Ejecutas <code>grep -E '(vmx|svm)' /proc/cpuinfo</code> para certificar que el silicio soporta KVM. Si la salida está vacía, debes reiniciar el servidor y entrar a la BIOS/UEFI para habilitar \"Intel VT-x\" o \"AMD SVM\".\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de cpuinfo y lscpu -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Detección de flags de procesador y módulos KVM</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">admin@kvm-node:~$</span> <span style=\"color:#FDE047; font-weight:700;\">grep -m 1 -E --color=always '(vmx|svm)' /proc/cpuinfo</span></div>\n    <div><span style=\"color:#94A3B8;\">flags &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 ... </span><span style=\"background:#16A34A; color:#FFF; font-weight:800; padding:1px 4px; border-radius:2px;\">vmx</span><span style=\"color:#94A3B8;\"> ... sse4_2 x2apic popcnt aes</span></div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">admin@kvm-node:~$</span> <span style=\"color:#FDE047; font-weight:700;\">lscpu | grep -i \"virtualization\"</span></div>\n    <div><span style=\"color:#94A3B8;\">Virtualization: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style=\"color:#38BDF8; font-weight:700;\">VT-x</span></div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">admin@kvm-node:~$</span> <span style=\"color:#FDE047; font-weight:700;\">lsmod | grep kvm</span></div>\n    <div><span style=\"color:#A7F3D0; font-weight:700;\">kvm_intel</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;368640 &nbsp;0<br><span style=\"color:#A7F3D0; font-weight:700;\">kvm</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1028096 &nbsp;1 kvm_intel</div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">🏷️ flag 'vmx' en cpuinfo:</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        Confirma que la CPU Intel soporta hardware asistido. Si fuera procesador AMD, aparecería <code>svm</code>.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">⚙️ Virtualization: VT-x:</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        El comando <code>lscpu</code> parsea el procesador y certifica que la tecnología está activa en la BIOS/UEFI.\n      </div>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">📦 kvm_intel cargado:</strong>\n      <div style=\"color:#581C87; line-height:1.35; margin-top:2px;\">\n        El kernel cargó el driver del fabricante para conectar las llamadas KVM con las instrucciones de la CPU.\n      </div>\n    </div>\n  </div>\n\n  <!-- DUELO DE MNEMOTECNIA DE EXAMEN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n      <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:6px 10px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">PROCESADORES INTEL</span>\n        <div style=\"font-weight:800; color:#1E40AF; font-size:13px; margin-top:2px;\">Flag de Examen: <code>vmx</code></div>\n        <div style=\"font-size:11px; color:#1E3A8A; line-height:1.35;\">\n          • Tecnología: <strong>Intel VT-x</strong> (Virtual Machine eXtensions).<br>\n          • Módulo del kernel: <code>kvm_intel.ko</code>.\n        </div>\n      </div>\n      <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:6px 10px;\">\n        <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">PROCESADORES AMD</span>\n        <div style=\"font-weight:800; color:#991B1B; font-size:13px; margin-top:2px;\">Flag de Examen: <code>svm</code></div>\n        <div style=\"font-size:11px; color:#7F1D1D; line-height:1.35;\">\n          • Tecnología: <strong>AMD-V</strong> (Secure Virtual Machine).<br>\n          • Módulo del kernel: <code>kvm_amd.ko</code>.\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA NÚMERO 1 DE EXAMEN LPIC-1: ¿Qué flag en /proc/cpuinfo indica virtualización en procesadores Intel? -> 'vmx'. ¿Y en procesadores AMD? -> 'svm'."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-6-5",
+      "title": "Almacenamiento y Dominios en libvirt: XML y Formatos de Disco",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Almacenamiento y Dominios en libvirt: XML y Formatos de Disco"
+        },
+        {
+          "type": "paragraph",
+          "text": "Configuración declarativa de máquinas virtuales (/etc/libvirt/qemu/*.xml) y formatos RAW frente a QCOW2:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-left:5px solid #2563EB; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#1E40AF; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#1E40AF; font-size:12px;\">Planificación de almacenamiento en clúster y snapshots de seguridad</span>\n    </div>\n    <div style=\"line-height:1.35; color:#1E3A8A; font-size:11px;\">\n      <strong>• Situación:</strong> Tienes 1 TB de disco y necesitas crear 20 máquinas virtuales de 50 GB cada una. Si usas RAW, te quedas sin espacio al instante aunque las VMs estén recién instaladas.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Creas discos con <code>qemu-img create -f qcow2 ...</code> para aprovisionamiento fino (*thin provisioning*): cada disco solo ocupa 2 GB reales al crearse y permite tomar *snapshots* instantáneos antes de mantenimientos críticos.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de qemu-img -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Creación y análisis de disco virtual QCOW2</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">root@kvm:~#</span> <span style=\"color:#FDE047; font-weight:700;\">qemu-img create -f qcow2 /var/lib/libvirt/images/web01.qcow2 50G</span></div>\n    <div style=\"color:#A7F3D0;\">Formatting '/var/lib/libvirt/images/web01.qcow2', fmt=qcow2 cluster_size=65536 extended_l2=off compression_type=zlib size=53687091200 lazy_refcounts=off refcount_bits=16</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">root@kvm:~#</span> <span style=\"color:#FDE047; font-weight:700;\">qemu-img info /var/lib/libvirt/images/web01.qcow2</span></div>\n    <div><span style=\"color:#94A3B8;\">image:</span> <span style=\"color:#F8FAFC;\">/var/lib/libvirt/images/web01.qcow2</span></div>\n    <div><span style=\"color:#94A3B8;\">file format:</span> <span style=\"color:#38BDF8; font-weight:700;\">qcow2</span> &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; <span style=\"color:#94A3B8;\">virtual size:</span> <span style=\"color:#FCD34D; font-weight:700;\">50 GiB</span> &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; <span style=\"color:#94A3B8;\">disk size:</span> <span style=\"color:#4ADE80; font-weight:800;\">196 KiB</span></div>\n  </div>\n\n  <!-- COMPARATIVA RADICAL: RAW vs QCOW2 -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n    <!-- Formato RAW -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:8px; padding:8px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">FORMATO RAW</span>\n        <code style=\"font-size:12px; font-weight:800; color:#1E40AF;\">disco.raw / disco.img</code>\n      </div>\n      <strong style=\"color:#1E40AF; font-size:12.5px;\">Imagen en Bruto (Sin Compresión)</strong>\n      <div style=\"font-size:11px; color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n        • <strong>Ventaja:</strong> Máximo rendimiento de lectura/escritura (E/S directa).<br>\n        • <strong>Inconveniente:</strong> Si pides 50 GB, ocupa 50 GB reales en el disco host de inmediato.<br>\n        • ⚠️ No soporta compresión nativa ni snapshots internos.\n      </div>\n    </div>\n\n    <!-- Formato QCOW2 -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:8px; padding:8px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">FORMATO QCOW2 🎯</span>\n        <code style=\"font-size:12px; font-weight:800; color:#6B21A8;\">QEMU Copy-On-Write v2</code>\n      </div>\n      <strong style=\"color:#6B21A8; font-size:12.5px;\">Asignación Dinámica y Snapshots</strong>\n      <div style=\"font-size:11px; color:#581C87; margin-top:2px; line-height:1.35;\">\n        • 🎯 <strong>Crecimiento dinámico:</strong> Ocupa solo los megabytes que el SO invitado escribe.<br>\n        • <strong>Snapshots nativos:</strong> Congela el estado del disco antes de aplicar parches.<br>\n        • Permite compresión zlib y cifrado integrado.\n      </div>\n    </div>\n  </div>\n\n  <!-- DIRECTORIO XML DE DEFINICIÓN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:6px 12px; font-size:11.5px; display:flex; justify-content:space-between; align-items:center;\">\n    <span>📁 <strong>Directorio de Configuración libvirt:</strong> <code>/etc/libvirt/qemu/&lt;nombre-vm&gt;.xml</code> (almacena vCPUs, RAM, rutas de disco y tarjetas de red).</span>\n    <span style=\"background:#334155; color:#FFF; font-size:9.5px; font-weight:800; padding:2px 6px; border-radius:4px;\">CLAVE LPIC-1</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE DE EXAMEN LPIC-1: El formato QCOW2 soporta Copy-On-Write (crecimiento dinámico) y snapshots; el formato RAW ofrece máximo rendimiento secuencial pero reserva todo el espacio de golpe."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-6-6",
+      "title": "virt-install y virsh: Despliegue y Control de VMs",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "virt-install y virsh: Despliegue y Control de VMs"
+        },
+        {
+          "type": "paragraph",
+          "text": "Aprovisionamiento de máquinas virtuales desde la consola de comandos:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "virt-install --name <nombre> --vcpus <n> --memory <MB> --disk <ruta> ...",
+          "title": "Aprovisionar máquinas virtuales desde terminal y gobernar su ciclo de vida en servidores remotos sin entorno gráfico."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "virt-install",
+              "Crear y aprovisionar",
+              "🎯 Comando CLI para crear dominios libvirt especificando vCPUs, RAM, disco ISO y red."
+            ],
+            [
+              "virsh list [--all]",
+              "Listar máquinas",
+              "🎯 'virsh list' muestra solo las VMs encendidas; '--all' lista también las apagadas."
+            ],
+            [
+              "virsh start <vm>",
+              "Encender VM",
+              "Arranca el dominio libvirt indicado."
+            ],
+            [
+              "virsh shutdown <vm>",
+              "Apagado ordenado",
+              "🎯 Envía una señal ACPI al kernel invitado para realizar un apagado limpio y seguro."
+            ],
+            [
+              "virsh destroy <vm>",
+              "Apagado forzado 🎯",
+              "🎯 Clave de Examen: Corta la corriente de golpe (hard reset). ¡NO borra el disco ni la VM!"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-left:5px solid #16A34A; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#14532D; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#166534; font-size:12px;\">Gestión de servidores remotos sin entorno gráfico e incidencias de bloqueo</span>\n    </div>\n    <div style=\"line-height:1.35; color:#14532D; font-size:11px;\">\n      <strong>• Situación:</strong> Administras un hipervisor KVM remoto en un centro de datos. Creas una VM con <code>virt-install</code>, pero tras una actualización de kernel la VM se queda totalmente congelada y no responde al comando normal de apagado.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Primero intentas un apagado ordenado con <code>virsh shutdown srv-db</code>. Si tras 2 minutos sigue colgada, ejecutas <code>virsh destroy srv-db</code> (tirón de cable virtual inmediato) para resetearla y arrancarla de nuevo con <code>virsh start</code>.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de virsh -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Aprovisionamiento y control de ciclo de vida con virsh</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">root@kvm:~#</span> <span style=\"color:#FDE047; font-weight:700;\">virsh list --all</span></div>\n    <div style=\"color:#94A3B8;\">&nbsp;Id &nbsp;&nbsp;Name &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;State</div>\n    <div style=\"color:#38BDF8; font-weight:700;\">--------------------------------</div>\n    <div>&nbsp;1 &nbsp;&nbsp;&nbsp;<span style=\"color:#F8FAFC; font-weight:700;\">web-server</span> &nbsp;&nbsp;&nbsp;<span style=\"color:#4ADE80;\">running</span></div>\n    <div>&nbsp;- &nbsp;&nbsp;&nbsp;<span style=\"color:#F8FAFC; font-weight:700;\">db-cluster</span> &nbsp;&nbsp;&nbsp;<span style=\"color:#F87171;\">shut off</span></div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">root@kvm:~#</span> <span style=\"color:#FDE047; font-weight:700;\">virsh destroy web-server</span></div>\n    <div style=\"color:#FCA5A5;\">Domain 'web-server' destroyed</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">root@kvm:~#</span> <span style=\"color:#FDE047; font-weight:700;\">virsh start web-server</span></div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">Domain 'web-server' started</div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">📋 virsh list --all:</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        Muestra todas las VMs. Las apagadas tienen Id <code>-</code> y estado <code>shut off</code>. Sin <code>--all</code> no se verían.\n      </div>\n    </div>\n    <div style=\"background:#FEF2F2; border:1px solid #FCA5A5; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#991B1B;\">⚡ Domain destroyed:</strong>\n      <div style=\"color:#7F1D1D; line-height:1.35; margin-top:2px;\">\n        Fuerza la parada inmediata de los procesos QEMU en el host. La VM y su disco siguen intactos.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">🔄 virsh start:</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        Lanza la máquina asignándole un nuevo Id de ejecución numérico y cargando el kernel invitado.\n      </div>\n    </div>\n  </div>\n\n  <!-- DUELO DE COMANDOS DE APAGADO -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:4px;\">\n      ⚖️ Duelo de Examen LPIC-1: ¿Cómo apagar una máquina virtual?\n    </div>\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px; font-size:11px;\">\n        <strong style=\"color:#15803D;\">virsh shutdown &lt;vm&gt; (Ordenado)</strong><br>\n        Envía un evento ACPI para que el sistema operativo cierre bases de datos y desmonte discos limpiamente.\n      </div>\n      <div style=\"background:#FEF2F2; border:1px solid #FCA5A5; border-radius:6px; padding:6px 10px; font-size:11px;\">\n        <strong style=\"color:#991B1B;\">virsh destroy &lt;vm&gt; (Forzado 🎯)</strong><br>\n        Corte eléctrico inmediato. Úsalo solo si el kernel está congelado. Para borrar la VM del todo se usa <code>virsh undefine</code>.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA CLAVE DE EXAMEN: 'virsh shutdown' envía señal ACPI ordenada. 'virsh destroy' apaga la máquina inmediatamente de golpe (corte de energía); NO borra la máquina ni el disco."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-6-7",
+      "title": "Identificador Único del Sistema: /etc/machine-id",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Identificador Único del Sistema: /etc/machine-id"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué ocurre cuando clonas una máquina virtual y por qué el examen exige regenerar su identidad?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "systemd-machine-id-setup | dbus-uuidgen --ensure",
+          "title": "Garantizar la identidad unívoca de cada instancia Linux: cómo evitar conflictos de red y colisiones de logs al clonar máquinas virtuales."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "/etc/machine-id",
+              "UUID único de 32 hex",
+              "🎯 Archivo de texto plano con 32 caracteres hexadecimales generado durante la instalación del sistema."
+            ],
+            [
+              "truncate -s 0",
+              "Vaciar en la plantilla",
+              "🎯 Clave de Examen: Deja el archivo con 0 bytes antes de apagar la plantilla dorada para clonar."
+            ],
+            [
+              "systemd-machine-id-setup",
+              "Regenerar UUID",
+              "🎯 Genera un identificador nuevo y único leyendo el UUID del hipervisor o creando uno criptográfico."
+            ],
+            [
+              "dbus-uuidgen --ensure",
+              "Sincronizar D-Bus",
+              "Comando alternativo histórico para garantizar la identidad en /var/lib/dbus/machine-id."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-left:5px solid #DC2626; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#991B1B; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🚨 CATÁSTROFE EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#991B1B; font-size:12px;\">Colisión masiva de IPs y corrupción de logs al clonar VMs</span>\n    </div>\n    <div style=\"line-height:1.35; color:#991B1B; font-size:11px;\">\n      <strong>• Situación:</strong> Creas una máquina modelo y la clonas 10 veces para un clúster Kubernetes. Al encenderlas, ¡los nodos se pisan la dirección IP porque el servidor DHCP les da la misma IP y los logs de systemd se mezclan!<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> El cliente DHCP moderno usa <code>/etc/machine-id</code> para calcular el identificador único (DUID). Si no lo vacías antes de clonar, todas las máquinas son gemelas idénticas en la red.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de machine-id -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Lectura, vaciado en plantilla y regeneración de machine-id</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">root@template:~#</span> <span style=\"color:#FDE047; font-weight:700;\">cat /etc/machine-id</span></div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">8a3f9e2b1c4d5e6f7a8b9c0d1e2f3a4b</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">root@template:~#</span> <span style=\"color:#FDE047; font-weight:700;\">truncate -s 0 /etc/machine-id &amp;&amp; poweroff</span></div>\n    <div style=\"color:#94A3B8;\"># Máquina apagada y convertida en plantilla dorada para clonar</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">root@clon-01:~#</span> <span style=\"color:#FDE047; font-weight:700;\">systemd-machine-id-setup</span></div>\n    <div style=\"color:#38BDF8;\">Initializing machine ID from KVM UUID: new UUID <span style=\"color:#FCD34D; font-weight:800;\">5d2c8a1e9b4f7e6a1c2d3e4f5a6b7c8d</span>.</div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">🔍 32 caracteres hexadecimales:</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        Cadena única sin guiones creada en el primer boot. D-Bus la enlaza en <code>/var/lib/dbus/machine-id</code>.\n      </div>\n    </div>\n    <div style=\"background:#FEF3C7; border:1px solid #FCD34D; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#92400E;\">✂️ truncate -s 0 /etc/machine-id:</strong>\n      <div style=\"color:#78350F; line-height:1.35; margin-top:2px;\">\n        🎯 Clave de examen: Deja el archivo vacío (0 bytes) pero existente, para que systemd sepa que debe regenerarlo.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">✨ systemd-machine-id-setup:</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        En el arranque del clon, genera un UUID nuevo a partir del UUID que el hipervisor KVM asignó a la VM.\n      </div>\n    </div>\n  </div>\n\n  <!-- EL FLUJO DE LA PLANTILLA DORADA -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:4px;\">\n      📋 Procedimiento Estándar de Preparación de Plantilla (Golden Image):\n    </div>\n    <div style=\"display:grid; grid-template-columns: 1fr 20px 1.2fr 20px 1.2fr; align-items:center; text-align:center; font-size:11px; gap:4px;\">\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:6px; border-radius:6px;\">\n        <strong style=\"color:#1E40AF;\">1. Instalar SO base</strong><br>\n        Configurar software y parches\n      </div>\n      <span style=\"color:var(--primary); font-weight:900;\">➔</span>\n      <div style=\"background:#FEF2F2; border:1px solid #FCA5A5; padding:6px; border-radius:6px;\">\n        <strong style=\"color:#991B1B;\">2. truncate -s 0 /etc/machine-id</strong><br>\n        Borrar identidad previa y apagar\n      </div>\n      <span style=\"color:var(--primary); font-weight:900;\">➔</span>\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:6px; border-radius:6px;\">\n        <strong style=\"color:#15803D;\">3. Clonar N instancias</strong><br>\n        Cada clon autogenera su propio UUID e IP\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE CRÍTICA DE EXAMEN LPIC-1: Al crear una plantilla (Golden Image) de VM, se debe vaciar /etc/machine-id. Si se clona sin vaciarlo, todas las instancias compartirán el mismo ID y DHCP les asignará la misma IP."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-6-8",
+      "title": "Aprovisionamiento en la Nube con cloud-init",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Aprovisionamiento en la Nube con cloud-init"
+        },
+        {
+          "type": "paragraph",
+          "text": "Configuración automatizada de instancias cloud (AWS, Azure, OpenStack) mediante archivos user-data en formato YAML:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-left:5px solid #2563EB; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#1E40AF; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#1E40AF; font-size:12px;\">Despliegue desatendido de decenas de instancias en la nube pública</span>\n    </div>\n    <div style=\"line-height:1.35; color:#1E3A8A; font-size:11px;\">\n      <strong>• Situación:</strong> Lanzar 30 servidores en AWS o Hetzner. No puedes conectarte por consola manual a crear usuarios, configurar claves SSH ni arrancar Nginx uno a uno.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Inyectas un archivo con cabecera <code>#cloud-config</code> en los metadatos (user-data). Al encender la VM, el servicio <code>cloud-init</code> crea tu usuario, inyecta tu clave SSH, instala paquetes y ejecuta scripts antes de tu primer acceso.\n    </div>\n  </div>\n\n  <!-- Contenido Real y Fiel del Archivo #cloud-config -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 16px; font-family:monospace; font-size:12px; line-height:1.45; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">📄 user-data: Archivo de Configuración Oficial de cloud-init</span>\n      <span>YAML</span>\n    </div>\n    <div><span style=\"color:#FDE047; font-weight:900;\">#cloud-config</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># 🎯 Cabecera OBLIGATORIA en la línea 1 exacta</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:700;\">hostname:</span> <span style=\"color:#A7F3D0;\">web-node-01</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># Configura el nombre del sistema</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:700;\">users:</span></div>\n    <div>&nbsp;&nbsp;- <span style=\"color:#38BDF8; font-weight:700;\">name:</span> <span style=\"color:#A7F3D0;\">sysadmin</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># Crea cuenta de usuario de administración</span></div>\n    <div>&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#38BDF8; font-weight:700;\">sudo:</span> <span style=\"color:#F472B6;\">ALL=(ALL) NOPASSWD:ALL</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># Otorga privilegios sudo completos</span></div>\n    <div>&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#38BDF8; font-weight:700;\">ssh_authorized_keys:</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># 🎯 Inyecta clave pública para entrar sin password</span></div>\n    <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span style=\"color:#FDE047;\">ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... alumno@laptop</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:700;\">packages:</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># Paquetes a instalar con apt o dnf en el boot</span></div>\n    <div>&nbsp;&nbsp;- <span style=\"color:#A7F3D0;\">nginx</span><br>&nbsp;&nbsp;- <span style=\"color:#A7F3D0;\">curl</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:700;\">runcmd:</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># 🎯 Comandos de shell finales tras la inicialización</span></div>\n    <div>&nbsp;&nbsp;- <span style=\"color:#F472B6;\">systemctl enable --now nginx</span></div>\n  </div>\n\n  <!-- ANATOMÍA DE LAS DIRECTIVAS CLAVE EN EXAMEN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:4px;\">\n      📋 Las 4 Directivas de cloud-init Evaluadas en el Examen LPIC-1:\n    </div>\n    <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11.5px;\">\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#1E40AF;\">#cloud-config</strong><br>\n        🎯 Cabecera obligatoria en la 1ª línea para que cloud-init lo procese.\n      </div>\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#15803D;\">ssh_authorized_keys</strong><br>\n        Inyecta la clave pública en <code>~/.ssh/authorized_keys</code> para login seguro.\n      </div>\n      <div style=\"background:#FEFCE8; border:1px solid #FDE047; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#854D0E;\">packages:</strong><br>\n        Lista de paquetes que se instalarán automáticamente al iniciar.\n      </div>\n      <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#6B21A8;\">runcmd: 🎯</strong><br>\n        Comandos de terminal ejecutados al final del aprovisionamiento.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE DE EXAMEN LPIC-1: El archivo de aprovisionamiento de cloud-init DEBE comenzar obligatoriamente con la línea '#cloud-config' en formato YAML para ser interpretado."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-6-9",
+      "title": "Acceso Seguro con Claves SSH e Inyección en Instancias",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Acceso Seguro con Claves SSH e Inyección en Instancias"
+        },
+        {
+          "type": "paragraph",
+          "text": "Autenticación criptográfica asimétrica para servidores virtuales y remotos:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "ssh-keygen -t rsa -b 4096 | ssh-copy-id usuario@servidor",
+          "title": "Criptografía asimétrica para servidores virtuales y en la nube: generación de pares de claves, despliegue y permisos estrictos."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "ssh-keygen",
+              "Generador de claves",
+              "Crea el par criptográfico: clave privada secreta y clave pública."
+            ],
+            [
+              "id_rsa (Clave Privada)",
+              "Secreta local (0600)",
+              "⚠️ NUNCA debe salir de tu máquina local. Permisos obligatorios: 0600 (-rw-------)."
+            ],
+            [
+              "id_rsa.pub (Clave Pública)",
+              "Pública (0644)",
+              "Se distribuye libremente a los servidores donde quieras acceder."
+            ],
+            [
+              "ssh-copy-id usuario@host",
+              "Despliegue automático",
+              "🎯 Clave de Examen: Copia tu clave pública e inyecta su contenido en ~/.ssh/authorized_keys remoto."
+            ],
+            [
+              "~/.ssh/authorized_keys",
+              "Claves autorizadas (0600)",
+              "🎯 Fichero en el servidor donde se registran las claves autorizadas. Permisos obligatorios: 0600."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-left:5px solid #9333EA; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#581C87; display:flex; align-items:center; gap:10px;\">\n    <div style=\"display:flex; flex-direction:column; gap:2px;\">\n      <div style=\"display:flex; align-items:center; gap:8px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n        <span style=\"font-weight:700; color:#6B21A8; font-size:12px;\">Acceso a instancias cloud con contraseñas deshabilitadas</span>\n      </div>\n      <div style=\"line-height:1.35; color:#581C87; font-size:11px;\">\n        <strong>• Situación:</strong> Por política de ciberseguridad, los servidores en la nube tienen <code>PasswordAuthentication no</code> (bloqueo total de contraseñas contra ataques de fuerza bruta).<br>\n        <strong>• ¿Por qué y con qué fin realista se usa?</strong> Generas tu par de claves con <code>ssh-keygen</code> e inyectas tu clave pública con <code>ssh-copy-id</code> o mediante cloud-init. Tu clave privada nunca abandona tu portátil, garantizando acceso seguro e inexpugnable.\n      </div>\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de ssh-keygen y permisos -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Generación de par de claves y verificación de permisos estrictos</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">alumno@laptop:~$</span> <span style=\"color:#FDE047; font-weight:700;\">ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N \"\"</span></div>\n    <div style=\"color:#94A3B8;\">Your identification has been saved in <span style=\"color:#F87171;\">/home/alumno/.ssh/id_rsa</span> (PRIVATE KEY)<br>Your public key has been saved in <span style=\"color:#4ADE80;\">/home/alumno/.ssh/id_rsa.pub</span></div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">alumno@laptop:~$</span> <span style=\"color:#FDE047; font-weight:700;\">ssh-copy-id -i ~/.ssh/id_rsa.pub sysadmin@192.168.1.50</span></div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">Number of key(s) added: 1 &nbsp;|&nbsp; Now try logging into the machine.</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">sysadmin@servidor:~$</span> <span style=\"color:#FDE047; font-weight:700;\">ls -ld ~/.ssh &amp;&amp; ls -l ~/.ssh/authorized_keys</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:700;\">drwx------</span> 2 sysadmin sysadmin 4096 Oct 26 09:30 <span style=\"color:#38BDF8;\">/home/sysadmin/.ssh</span></div>\n    <div><span style=\"color:#FCD34D; font-weight:700;\">-rw-------</span> 1 sysadmin sysadmin &nbsp;747 Oct 26 09:30 <span style=\"color:#FCD34D;\">/home/sysadmin/.ssh/authorized_keys</span></div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">🔑 Clave Privada (id_rsa):</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        ⚠️ NUNCA se comparte ni se sube al servidor. Permisos locales: <code>0600</code> (solo lectura/escritura para el dueño).\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">🚀 ssh-copy-id:</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        🎯 Automatiza la conexión remota, crea el directorio <code>~/.ssh/</code> y añade la clave a <code>authorized_keys</code> con permisos correctos.\n      </div>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">🔒 Permisos 0700 y 0600:</strong>\n      <div style=\"color:#581C87; line-height:1.35; margin-top:2px;\">\n        Directorio = <code>0700</code> (<code>drwx------</code>). Archivo = <code>0600</code> (<code>-rw-------</code>). Si son más abiertos, SSH bloquea el acceso.\n      </div>\n    </div>\n  </div>\n\n  <!-- TABLA DE PERMISOS DE EXAMEN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11px; text-align:center;\">\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:4px 6px; border-radius:6px;\">\n        <strong>Directorio ~/.ssh</strong><br>\n        <code style=\"color:#1E40AF; font-size:12px; font-weight:800;\">0700 (drwx------)</code>\n      </div>\n      <div style=\"background:#FEF3C7; border:1px solid #FCD34D; padding:4px 6px; border-radius:6px;\">\n        <strong>~/.ssh/authorized_keys</strong><br>\n        <code style=\"color:#92400E; font-size:12px; font-weight:800;\">0600 (-rw-------)</code>\n      </div>\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:4px 6px; border-radius:6px;\">\n        <strong>Clave Privada (~/.ssh/id_rsa)</strong><br>\n        <code style=\"color:#15803D; font-size:12px; font-weight:800;\">0600 (-rw-------)</code>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE DE PERMISOS DE EXAMEN LPIC-1: El directorio ~/.ssh DEBE tener permisos 0700 (drwx------) y authorized_keys DEBE tener 0600 (-rw-------). Si tienen permisos abiertos, SSH RECHAZA la conexión por seguridad."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-6-10",
+      "title": "Comparativa Radical de Examen: Máquinas Virtuales frente a Contenedores",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comparativa Radical de Examen: Máquinas Virtuales frente a Contenedores"
+        },
+        {
+          "type": "paragraph",
+          "text": "Diferencias arquitectónicas fundamentales evaluadas en el objetivo 102.6 de LPIC-1:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- COMPARATIVA GRÁFICA EN 2 PILARES ARQUITECTÓNICOS -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px;\">\n    <!-- Pilar 1: Máquinas Virtuales -->\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:12px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 8px; border-radius:4px;\">VIRTUALIZACIÓN HARDWARE</span>\n        <span style=\"color:#1E40AF; font-weight:800; font-size:12px;\">KVM / QEMU / Xen</span>\n      </div>\n      <h3 style=\"margin:2px 0 6px 0; font-size:16px; font-weight:800; color:#1E40AF;\">Máquinas Virtuales (VMs)</h3>\n      <div style=\"display:flex; flex-direction:column; gap:6px; font-size:11.5px; color:#1E3A8A;\">\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          🎯 <strong>Kernel:</strong> Cada VM ejecuta su <strong>propio kernel independiente</strong> (puedes ejecutar Windows o BSD sobre Linux).\n        </div>\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          🛡️ <strong>Aislamiento:</strong> Completo por hardware a nivel de silicio mediante hipervisor Tipo 1 (KVM).\n        </div>\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          ⚡ <strong>Mecanismo CPU:</strong> Extensiones de procesador Intel VT-x (<code>vmx</code>) o AMD-V (<code>svm</code>).\n        </div>\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          ⏱️ <strong>Arranque y Peso:</strong> Minutos o decenas de segundos; gigabytes en disco; emulación de BIOS/UEFI.\n        </div>\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          🏷️ <strong>Identidad:</strong> UUID propio en <code>/etc/machine-id</code> y dirección MAC virtual dedicada.\n        </div>\n      </div>\n    </div>\n\n    <!-- Pilar 2: Contenedores -->\n    <div style=\"background:#F0FDF4; border:2px solid #16A34A; border-radius:12px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 8px; border-radius:4px;\">NIVEL SISTEMA OPERATIVO</span>\n        <span style=\"color:#15803D; font-weight:800; font-size:12px;\">LXC / Docker / Podman</span>\n      </div>\n      <h3 style=\"margin:2px 0 6px 0; font-size:16px; font-weight:800; color:#14532D;\">Contenedores Linux</h3>\n      <div style=\"display:flex; flex-direction:column; gap:6px; font-size:11.5px; color:#14532D;\">\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          🎯 <strong>Kernel:</strong> <strong>Comparten el mismo kernel de Linux del host</strong> (todos deben ser Linux).\n        </div>\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          🛡️ <strong>Aislamiento:</strong> Lógico a nivel de espacio de usuario; no hay hipervisor emulando hardware.\n        </div>\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          ⚡ <strong>Mecanismo Kernel:</strong> <code>cgroups</code> (límites de CPU/RAM) y <code>namespaces</code> (aislamiento PID, red, IPC).\n        </div>\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          ⏱️ <strong>Arranque y Peso:</strong> Milisegundos (solo arranca el proceso); megabytes de espacio en disco.\n        </div>\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          🏷️ <strong>Identidad:</strong> ID de contenedor gestionado por el runtime (Docker/Podman).\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <!-- TABLA MNEMOTÉCNICA ULTRA-RESUMIDA DE EXAMEN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:6px 12px;\">\n    <div style=\"display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap:6px; font-size:11px; text-align:center;\">\n      <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; padding:4px; border-radius:4px; font-weight:800; color:#334155;\">Criterio de Examen</div>\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:4px; border-radius:4px; font-weight:800; color:#1E40AF;\">Máquinas Virtuales (KVM)</div>\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:4px; border-radius:4px; font-weight:800; color:#15803D;\">Contenedores (Docker/LXC)</div>\n      \n      <div style=\"padding:3px; text-align:left; font-weight:700;\">Kernel del sistema</div>\n      <div style=\"padding:3px; color:#1E40AF;\">🎯 Kernel propio independiente</div>\n      <div style=\"padding:3px; color:#15803D;\">🎯 Kernel del host compartido</div>\n      \n      <div style=\"padding:3px; text-align:left; font-weight:700;\">Tecnología clave</div>\n      <div style=\"padding:3px; color:#1E40AF;\">Intel VT-x (vmx) / AMD-V (svm)</div>\n      <div style=\"padding:3px; color:#15803D;\">cgroups + namespaces</div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA CLAVE DE CERTIFICACIÓN: Las máquinas virtuales ejecutan su propio kernel independiente mediante extensiones de hardware; los contenedores comparten el mismo kernel del host y se aíslan usando cgroups y namespaces."
+        }
+      ]
+    }
+  ]
+}

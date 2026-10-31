@@ -1,0 +1,1330 @@
+{
+  "id": "103.6",
+  "topicId": "103",
+  "examId": "101",
+  "title": "Modificar la prioridad de ejecución de los procesos",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 30,
+  "objectives": [
+    "Multitarea preventiva, escala de niceness (-20 a 19), ps -el, top, nice y renice (Alta Densidad LPIC-1)",
+    "Dominio técnico de las herramientas y configuración del subtema 103.6"
+  ],
+  "keyTerms": [
+    "nice / NI",
+    "renice",
+    "top",
+    "ps"
+  ],
+  "commands": [
+    "ps",
+    "top",
+    "nice",
+    "renice"
+  ],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "103.6-slide-1",
+      "slideNumber": 1,
+      "title": "Modificar la prioridad de ejecución de procesos",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Modificar la prioridad de ejecución de procesos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Multitarea preventiva, escala de niceness (-20 a 19), ps -el, top, nice y renice (Modo Examen)"
+        }
+      ],
+      "notes": "Iniciamos el subtema 103.6 (peso 2). En servidores de producción no todos los procesos tienen la misma urgencia: una base de datos crítica debe tener preferencia sobre una copia de seguridad pesada. Aprenderemos cómo el kernel planifica la CPU y cómo manipular la escala de 'amabilidad' (niceness) mediante nice y renice."
+    },
+    {
+      "id": "103.6-slide-2",
+      "slideNumber": 2,
+      "title": "Multitarea Preventiva y el Planificador del Kernel",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Multitarea Preventiva y el Planificador del Kernel"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo reparte Linux la CPU entre cientos de procesos sin que ninguno congele el sistema?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Multitarea Preventiva (Preemptive)** — 🎯 El kernel tiene el control supremo. Asigna a cada proceso una pequeña cuota de tiempo (time slice en ms). Cuando expira, desaloja al proceso por la fuerza para dar paso al siguiente.",
+            "**2. Planificador CFS (Completely Fair Scheduler)** — 🎯 Algoritmo de 'reparto equitativo': calcula dinámicamente qué proceso debe ejecutarse según el tiempo de CPU consumido y su factor de prioridad asignado.",
+            "**3. Niceness: La Palanca del Administrador** — 🎯 Permite al administrador graduar el peso de un proceso: los procesos más 'amables' reciben cuotas menores y los 'egoístas' acaparan mayor porcentaje de CPU."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:14px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚙️ Arquitectura del Planificador CFS: ¿Cómo reparte la CPU el Kernel?</span>\n    <span style=\"font-size:11px; background:#EEF2FF; color:#4338CA; padding:2px 8px; border-radius:12px; font-weight:700;\">Núcleo Linux</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; font-size:11.5px;\">\n    <!-- 1. Time Slice -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:9px 11px;\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">1. Cuotas de Tiempo (Time Slice)</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Milisegundos</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">\n        El kernel concede ráfagas de tiempo breves a cada tarea activa en la cola de ejecución.\n      </div>\n    </div>\n\n    <!-- 2. Desalojo -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:9px 11px;\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n        <strong style=\"color:#991B1B; font-size:12.5px;\">2. Desalojo Preventivo</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Sin Bloqueos</span>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.35;\">\n        Si un proceso intenta acaparar el 100% de la CPU, el kernel lo expulsa y rota al siguiente.\n      </div>\n    </div>\n\n    <!-- 3. Niceness -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:9px 11px;\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:12.5px;\">3. Factor Niceness (NI)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Ajuste Admin</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.35;\">\n        Valores negativos (-20) reciben cuotas gigantes; valores positivos (+19) reciben sobras.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Linux utiliza multitarea preventiva: el kernel decide cuándo expulsar un proceso de la CPU; 'nice' y 'renice' son las herramientas para influir en esa decisión."
+        }
+      ],
+      "notes": "La alternancia entre procesos es tan rápida (cientos de veces por segundo) que da la ilusión de ejecución simultánea continua."
+    },
+    {
+      "id": "103.6-slide-3",
+      "slideNumber": 3,
+      "title": "El Espectro de Niceness: De -20 (Máxima) a +19 (Mínima)",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Espectro de Niceness: De -20 (Máxima) a +19 (Mínima)"
+        },
+        {
+          "type": "paragraph",
+          "text": "La escala de amabilidad (niceness) es contraintuitiva: menor número implica mayor preferencia de CPU:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Valor -20: MÁXIMA Prioridad (Menos amable)** — 🎯 El proceso es muy egoísta ('poco amable' con los demás). Exige la mayor cuota de CPU posible. Se reserva para servicios ultra-críticos de tiempo real.",
+            "**Valor 0: Prioridad Estándar por Defecto** — 🎯 Todos los procesos ordinarios del sistema nacen con un valor de niceness fijado en 0 por defecto.",
+            "**Valor +19: MÍNIMA Prioridad (Más amable)** — 🎯 El proceso es extremadamente cortés y generoso ('muy amable'). Solo consume CPU cuando ningún otro proceso la está utilizando (ideal para backups, renders o minería)."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin:14px 0;\">\n  <div style=\"font-size:15.5px; font-weight:800; color:var(--text); margin-bottom:14px;\">\n    ⚡ El Gradiente de Amabilidad con la CPU en Linux:\n  </div>\n\n  <div style=\"display:flex; justify-content:space-between; align-items:center; font-size:12.5px; text-align:center; position:relative;\">\n    <!-- -20 a -1 (Root) -->\n    <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:12px; flex:1.2;\">\n      <div style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:12px; padding:2px 6px; border-radius:4px; margin-bottom:6px;\">\n        -20 a -1 (ALTA PRIORIDAD)\n      </div>\n      <strong style=\"color:#991B1B; font-size:14px;\">Menos Amable (Egoísta)</strong><br>\n      <span style=\"color:#7F1D1D; font-size:11.5px;\">Exige máxima cuota de CPU.</span><br>\n      <span style=\"background:#FEE2E2; color:#991B1B; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:800; display:inline-block; margin-top:4px;\">\n        🔒 SOLO ROOT\n      </span>\n    </div>\n\n    <!-- Flecha izquierda -->\n    <span style=\"font-size:18px; color:#DC2626; font-weight:900; margin:0 8px;\">◀</span>\n\n    <!-- 0 (Defecto) -->\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:12px; flex:1;\">\n      <div style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:12px; padding:2px 6px; border-radius:4px; margin-bottom:6px;\">\n        0 (POR DEFECTO)\n      </div>\n      <strong style=\"color:#1E40AF; font-size:14px;\">Prioridad Estándar</strong><br>\n      <span style=\"color:#475569; font-size:11.5px;\">Todo proceso nace en 0.</span><br>\n      <span style=\"color:#64748B; font-size:11px;\">Equilibrio normal</span>\n    </div>\n\n    <!-- Flecha derecha -->\n    <span style=\"font-size:18px; color:#16A34A; font-weight:900; margin:0 8px;\">▶</span>\n\n    <!-- +1 a +19 (Todos) -->\n    <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:12px; flex:1.2;\">\n      <div style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:2px 6px; border-radius:4px; margin-bottom:6px;\">\n        +1 a +19 (BAJA PRIORIDAD)\n      </div>\n      <strong style=\"color:#15803D; font-size:14px;\">Más Amable (Generoso)</strong><br>\n      <span style=\"color:#14532D; font-size:11.5px;\">Cede CPU voluntariamente.</span><br>\n      <span style=\"background:#DCFCE7; color:#15803D; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:800; display:inline-block; margin-top:4px;\">\n        👥 CUALQUIER USUARIO\n      </span>\n    </div>\n  </div>\n\n  <div style=\"margin-top:14px; padding:8px 14px; background:#F8FAFC; border-left:4px solid #3B82F6; border-radius:4px; font-size:13px; color:#1E3A8A;\">\n    🎯 <strong>MNEMOTECNIA DE ORO:</strong> 'Nice alto = prioridad baja' (eres muy educado, dejas pasar a los demás); 'Nice bajo/negativo = prioridad alta' (eres impaciente y acaparas la CPU).\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Mnemotécnica de Oro: Cuanto más negativo sea el número (-20), MÁS prioridad tiene; cuanto más positivo (+19), MENOS prioridad tiene."
+        }
+      ],
+      "notes": "Haz que los alumnos repitan: 'Nice alto = prioridad baja; Nice bajo = prioridad alta'."
+    },
+    {
+      "id": "103.6-slide-4",
+      "slideNumber": 4,
+      "title": "Mapeo de Escalas: Kernel Priority (PR) frente a Niceness (NI)",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Mapeo de Escalas: Kernel Priority (PR) frente a Niceness (NI)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué en 'top' se ven números como 20 o 0 mientras en 'ps' se ven números de -20 a 19?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Niceness (NI) — La Escala de Usuario (-20 a +19)** — 🎯 Es el valor de 40 niveles que el administrador manipula con 'nice' y 'renice'. Cuanto más negativo, mayor prioridad exige el proceso.",
+            "**2. Prioridad del Kernel (PR en top: 0 a 39)** — 🎯 Es la escala interna que usa el planificador del kernel para ordenar la cola de CPU. Menor número PR = el proceso se atiende antes.",
+            "**3. Procesos de Tiempo Real (RT)** — 🎯 Prioridades críticas de hardware (0 a 99 en kernel). En 'top' aparecen con la etiqueta 'rt' o valores negativos, con preferencia absoluta sobre todo lo demás."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:14px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🧮 La Fórmula Matemática del Planificador: <code>PR = 20 + NI</code></span>\n    <span style=\"font-size:11px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:12px; font-weight:700;\">Cálculo Directo LPIC-1</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; font-size:11.5px; text-align:center;\">\n    <!-- Normal -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:9px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">DEFECTO</span>\n      <div style=\"font-weight:800; color:#1E40AF; font-size:13px; margin:4px 0;\">NI = 0</div>\n      <div style=\"font-size:12px; color:#1E3A8A;\"><code>20 + 0 =</code> <strong>PR 20</strong></div>\n      <span style=\"color:#64748B; font-size:10.5px;\">Prioridad estándar</span>\n    </div>\n\n    <!-- Urgente -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #F87171; border-radius:8px; padding:9px;\">\n      <span style=\"background:#EF4444; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">URGENTE</span>\n      <div style=\"font-weight:800; color:#991B1B; font-size:13px; margin:4px 0;\">NI = -5</div>\n      <div style=\"font-size:12px; color:#991B1B;\"><code>20 + (-5) =</code> <strong>PR 15</strong></div>\n      <span style=\"color:#B91C1C; font-size:10.5px;\">Atendido antes</span>\n    </div>\n\n    <!-- Máxima -->\n    <div style=\"background:#FEF2F2; border:2px solid #DC2626; border-radius:8px; padding:9px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">MÁXIMA (Root)</span>\n      <div style=\"font-weight:800; color:#991B1B; font-size:13px; margin:4px 0;\">NI = -20</div>\n      <div style=\"font-size:12px; color:#991B1B;\"><code>20 + (-20) =</code> <strong>PR 0</strong></div>\n      <span style=\"color:#991B1B; font-size:10.5px; font-weight:800;\">Tope procesos CFS</span>\n    </div>\n\n    <!-- Mínima -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:9px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">MÍNIMA</span>\n      <div style=\"font-weight:800; color:#15803D; font-size:13px; margin:4px 0;\">NI = +19</div>\n      <div style=\"font-size:12px; color:#14532D;\"><code>20 + 19 =</code> <strong>PR 39</strong></div>\n      <span style=\"color:#15803D; font-size:10.5px;\">Máxima amabilidad</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 FÓRMULA SAGRADA DE EXAMEN: PR = 20 + NI. Si un proceso tiene nice de -5, en top su PR será 15 (20 + (-5)). Si tiene nice de 0, su PR será 20. Si tiene nice de +10, su PR será 30."
+        }
+      ],
+      "notes": "Pregunta clásica: 'Un proceso muestra PR = 10 en top. ¿Cuál es su valor NI?'. Respuesta: NI = -10 (10 - 20 = -10)."
+    },
+    {
+      "id": "103.6-slide-5",
+      "slideNumber": 5,
+      "title": "Inspección de Prioridades con ps: -l y Columnas a Medida",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Inspección de Prioridades con ps: -l y Columnas a Medida"
+        },
+        {
+          "type": "paragraph",
+          "text": "Comandos clave y opciones exactas de 'ps' para auditar los valores NI y PRI en el sistema:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "ps -l | ps -el | ps -o pid,user,ni,pri,stat,cmd",
+          "title": "Comprobar las columnas NI (Niceness) y PRI (Prioridad del kernel) y los indicadores de STAT"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "ps -o pid,user,ni,pri,stat,cmd -C render,backup,bash",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "ps -l (o ps -el)",
+              "Formato largo estándar",
+              "🎯 Clave de Examen: Añade obligatoriamente las columnas 'PRI' (prioridad) y 'NI' (niceness)."
+            ],
+            [
+              "ps -o <columnas>",
+              "Columnas personalizadas",
+              "🎯 Permite seleccionar solo los campos que te interesan (ej: 'ps -o pid,ni,pri,cmd')."
+            ],
+            [
+              "STAT: '<'",
+              "Alta prioridad",
+              "🎯 Clave de Examen: El proceso tiene niceness negativo (not nice, acapara CPU)."
+            ],
+            [
+              "STAT: 'N'",
+              "Baja prioridad",
+              "🎯 Clave de Examen: El proceso tiene niceness positivo (nice, cortés con la CPU)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Mnemotécnica de Examen: 'ps -l' muestra PRI y NI; en 'ps aux', la columna STAT muestra '<' si el nice es negativo (alta prioridad) y 'N' si el nice es positivo (baja prioridad)."
+        }
+      ],
+      "notes": "Muestra a los alumnos que en ps -l tradicional, la escala PRI puede variar según la versión, pero NI siempre es el valor exacto de -20 a 19."
+    },
+    {
+      "id": "103.6-slide-6",
+      "slideNumber": 6,
+      "title": "Supervisión Interactiva en top: Columnas PR, NI y la tecla 'r'",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Supervisión Interactiva en top: Columnas PR, NI y la tecla 'r'"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo monitorizar las prioridades en tiempo real y ejecutar renice interactivamente con la tecla 'r'?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "top (dentro de top pulsar la tecla 'r')",
+          "title": "Supervisar las columnas PR y NI en vivo y modificar la prioridad de un proceso sin salir del monitor"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "top (pulsar 'r' -> 4120 -> 15)",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "Columna PR",
+              "Prioridad kernel dinámica",
+              "🎯 Valor de 0 a 39 que el kernel usa para el reparto de CPU (PR = 20 + NI)."
+            ],
+            [
+              "Columna NI",
+              "Niceness estático",
+              "🎯 Valor de -20 a +19 fijado por el usuario o administrador."
+            ],
+            [
+              "Tecla 'r' (Renice)",
+              "Reasignar prioridad",
+              "🎯 Clave de Examen: Solicita el PID y el nuevo valor de nice para aplicarlo al vuelo."
+            ],
+            [
+              "Tecla 'q'",
+              "Salir de top",
+              "Cierra el monitor interactivo y devuelve el control a la terminal."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Atajo Fijo de Examen: En el monitor interactivo 'top', la tecla 'r' ejecuta la acción de renice para alterar la prioridad de un proceso en ejecución sin cerrarlo."
+        }
+      ],
+      "notes": "Explica que un usuario ordinario dentro de top solo podrá aumentar el valor de NI de sus propios procesos; para valores negativos se necesita ejecutar top como root."
+    },
+    {
+      "id": "103.6-slide-7",
+      "slideNumber": 7,
+      "title": "Lanzar Nuevos Procesos con Prioridad Modificada: nice",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Lanzar Nuevos Procesos con Prioridad Modificada: nice"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Para qué sirve nice y cómo arrancar un comando fijando su amabilidad desde el primer segundo?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "nice [-n <incremento>] <comando> [argumentos...]",
+          "title": "Arrancar un proceso NUEVO con un valor de niceness diferente al estándar 0"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "nice -n 15 tar -czf /backup/sistema.tar.gz /var/www &; sudo nice -n -10 make -j4",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "nice cmd (sin número)",
+              "Suma +10 por defecto",
+              "🎯 Pregunta Fija de Certificación: Si ejecutas 'nice comando' a secas, arranca con nice = 10."
+            ],
+            [
+              "nice -n <valor> cmd",
+              "Sintaxis estándar POSIX",
+              "🎯 Sintaxis oficial recomendada: 'nice -n 5 script.sh' (+5) o 'nice -n -10 script.sh' (-10)."
+            ],
+            [
+              "nice -5 cmd (Histórico)",
+              "Asigna +5 (¡un guión!)",
+              "⚠️ Trampa de Examen: El guión es el indicador de opción, no el signo menos: asigna +5."
+            ],
+            [
+              "nice --5 cmd (Histórico)",
+              "Asigna -5 (doble guión)",
+              "⚠️ Trampa de Examen: 1er guión = opción; 2º guión = signo matemático negativo (exige root)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:6px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚠️ Trampa de Examen: Sintaxis Antigua de Guiones en <code>nice</code></span>\n    <span style=\"font-size:11px; background:#FEF2F2; color:#DC2626; padding:2px 8px; border-radius:12px; font-weight:700;\">Alerta LPIC-1</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:8px 11px;\">\n      <strong style=\"color:#1E40AF; font-size:12.5px;\"><code>nice -5 comando</code></strong><br>\n      <span style=\"color:#1E3A8A; line-height:1.35;\">\n        El guión '-' es la bandera del comando, NO un signo menos.<br>\n        ➔ <strong>Resultado:</strong> Asigna nice <strong>+5</strong> (amable, baja prioridad).<br>\n        <span style=\"color:#16A34A; font-weight:700;\">Cualquier usuario puede ejecutarlo.</span>\n      </span>\n    </div>\n\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:8px 11px;\">\n      <strong style=\"color:#991B1B; font-size:12.5px;\"><code>nice --5 comando</code></strong><br>\n      <span style=\"color:#7F1D1D; line-height:1.35;\">\n        1º guión = bandera de opción; 2º guión = signo negativo.<br>\n        ➔ <strong>Resultado:</strong> Asigna nice <strong>-5</strong> (alta prioridad de CPU).<br>\n        <span style=\"color:#DC2626; font-weight:800;\">🔒 ¡Exige permisos de ROOT!</span>\n      </span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 LAS DOS TRAMPAS CLAVE DE NICE: 1ª 'nice comando' sin argumentos arranca con nice = 10 (no 0). 2ª En sintaxis antigua, 'nice -5' es +5 de nice y 'nice --5' es -5 de nice (solo root)."
+        }
+      ],
+      "notes": "Asegúrate de que todos los alumnos entiendan por qué 'nice --5 comando' tiene dos guiones: el primero indica opción, el segundo es el signo negativo del número."
+    },
+    {
+      "id": "103.6-slide-8",
+      "slideNumber": 8,
+      "title": "Reglas de Privilegios en Prioridades: Usuario frente a Root",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Reglas de Privilegios en Prioridades: Usuario frente a Root"
+        },
+        {
+          "type": "paragraph",
+          "text": "Límites estrictos de seguridad: qué puede y qué NO puede hacer un usuario ordinario con la CPU:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Usuario Ordinario: Solo puede ser MÁS amable (0 a +19)** — 🎯 Puede voluntariamente ceder CPU asignando valores positivos (de 0 a 19). No puede perjudicar a otros usuarios.",
+            "**2. Usuario Ordinario: ¡Prohibidos los valores negativos!** — 🎯 No puede autoasignarse nice negativo (-1 a -20). Si lo intenta, el kernel responde: 'nice: cannot set niceness: Permission denied'.",
+            "**3. Superusuario Root: Control absoluto bidireccional** — 🎯 Solo root puede asignar valores negativos (-20 a -1) y modificar la prioridad de los procesos de cualquier usuario en cualquier sentido."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:14px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔒 Matriz de Privilegios de Planificación de Procesos</span>\n    <span style=\"font-size:11px; background:#F8FAFC; color:#475569; padding:2px 8px; border-radius:12px; font-weight:700;\">Seguridad Linux</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12px;\">\n    <!-- Usuario Ordinario -->\n    <div style=\"background:#F8FAFC; border:2px solid #CBD5E1; border-radius:10px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#0F172A; font-size:13px;\">👤 Usuario Estándar</strong>\n        <span style=\"background:#E2E8F0; color:#334155; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;\">Sin sudo</span>\n      </div>\n      <div style=\"color:#334155; line-height:1.4;\">\n        • <strong>Valores permitidos:</strong> Solo de <strong>0 a +19</strong>.<br>\n        • <strong>Acción:</strong> Solo puede ser <em>más amable</em> (bajar su prioridad).<br>\n        • <strong>Valores negativos (-1 a -20):</strong> <span style=\"color:#DC2626; font-weight:700;\">⛔ Permission Denied</span>.<br>\n        • <strong>Regla de sentido único:</strong> Si sube a 15, ¡no puede volver a bajar a 0!\n      </div>\n    </div>\n\n    <!-- Superusuario Root -->\n    <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#991B1B; font-size:13px;\">🛡️ Superusuario (root / sudo)</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;\">Total</span>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.4;\">\n        • <strong>Valores permitidos:</strong> Todo el rango de <strong>-20 a +19</strong>.<br>\n        • <strong>Acción:</strong> Puede subir o bajar la prioridad a su antojo.<br>\n        • <strong>Alcance:</strong> Sobre sus propios procesos o los de cualquier usuario.<br>\n        • <strong>Poder único:</strong> Puede rescatar y acelerar procesos en caliente.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Oro de Examen: Para asignar cualquier valor de nice negativo (-1 a -20) se requieren OBLIGATORIAMENTE privilegios de root."
+        }
+      ],
+      "notes": "Muestra cómo un alumno intentando hacer 'nice -n -2' recibe 'Permission denied'."
+    },
+    {
+      "id": "103.6-slide-9",
+      "slideNumber": 9,
+      "title": "Modificar Procesos en Ejecución: renice",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Modificar Procesos en Ejecución: renice"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo alterar el valor de niceness en caliente sobre procesos que ya están vivos en memoria?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "renice [-n] <nuevo_nice> -p <PID> | -u <usuario> | -g <PGID>",
+          "title": "Reasignar el valor absoluto de niceness a procesos activos por PID, por usuario o por grupo"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "renice -n 15 -p 4120; sudo renice -n -5 -p 1420; sudo renice -n 10 -u becario",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "renice -n <val> -p <PID>",
+              "Por PID específico",
+              "🎯 Fija el valor ABSOLUTO de niceness del proceso indicado (la opción -p es el modo por defecto)."
+            ],
+            [
+              "renice -n <val> -u <user>",
+              "Por nombre de usuario",
+              "🎯 Clave de Examen: Aplica el nuevo valor a la totalidad de procesos del usuario indicado."
+            ],
+            [
+              "renice -n <val> -g <PGID>",
+              "Por Process Group ID",
+              "Modifica la prioridad de un grupo de procesos completo a la vez."
+            ],
+            [
+              "Valor Absoluto",
+              "No suma ni resta",
+              "🎯 Clave de Examen: 'renice 5' asigna exactamente nice = 5 (no suma 5 a la prioridad anterior)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:6px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚡ Los 3 Selectores Clave de <code>renice</code>:</span>\n    <span style=\"font-size:11px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:12px; font-weight:700;\">Sintaxis Directa</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:11.5px; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:8px;\">\n      <strong style=\"color:#1E40AF; font-size:12.5px;\">-p (Por PID)</strong><br>\n      <code>renice 10 -p 1420</code><br>\n      <span style=\"color:#2563EB; font-size:10.5px;\">Afecta a un único proceso</span>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:8px;\">\n      <strong style=\"color:#15803D; font-size:12.5px;\">-u (Por Usuario)</strong><br>\n      <code>sudo renice 15 -u alumno</code><br>\n      <span style=\"color:#166534; font-size:10.5px;\">Afecta a todo el usuario</span>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:8px; padding:8px;\">\n      <strong style=\"color:#6B21A8; font-size:12.5px;\">-g (Por Grupo PGID)</strong><br>\n      <code>sudo renice 5 -g 3000</code><br>\n      <span style=\"color:#7E22CE; font-size:10.5px;\">Afecta al Process Group</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Examen: 'renice' fija siempre el valor ABSOLUTO de nice; nunca suma ni resta. Para modificar procesos de otros usuarios o asignar nice negativo se requiere sudo."
+        }
+      ],
+      "notes": "La comparativa detallada entre nice y renice se analiza en profundidad en la siguiente sección."
+    },
+    {
+      "id": "103.6-slide-10",
+      "slideNumber": 10,
+      "title": "Configuración de Límites: /etc/security/limits.conf",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Configuración de Límites: /etc/security/limits.conf"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Dónde y cómo se autoriza a usuarios específicos a fijar prioridades negativas sin ser root?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>📁 Anatomía de una Línea de Configuración en <code>/etc/security/limits.conf</code>:</span>\n    <span style=\"font-size:11px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:12px; font-weight:700;\">4 Columnas Clave</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11px; text-align:center;\">\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:7px;\">\n      <span style=\"font-weight:800; color:#1E40AF; font-size:12px;\">1. @devs</span><br>\n      <span style=\"color:#475569;\">Grupo o Usuario</span>\n    </div>\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:7px;\">\n      <span style=\"font-weight:800; color:#0F172A; font-size:12px;\">2. hard</span><br>\n      <span style=\"color:#475569;\">Techo Infranqueable</span>\n    </div>\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:7px;\">\n      <span style=\"font-weight:800; color:#B45309; font-size:12px;\">3. nice</span><br>\n      <span style=\"color:#475569;\">Recurso a Limitar</span>\n    </div>\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:6px; padding:7px;\">\n      <span style=\"font-weight:800; color:#2563EB; font-size:12px;\">4. -10</span><br>\n      <span style=\"color:#1E40AF; font-weight:700;\">Límite Asignado</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para que un usuario ordinario pueda usar nice negativo (-1 a -20) sin sudo, debe configurarse la directiva 'nice' en el archivo '/etc/security/limits.conf'."
+        }
+      ],
+      "notes": "Este archivo es evaluado por el módulo PAM 'pam_limits.so' durante el inicio de sesión del usuario."
+    },
+    {
+      "id": "103.6-slide-11",
+      "slideNumber": 11,
+      "title": "Comparativa Maestra: nice frente a renice",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comparativa Maestra: nice frente a renice"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 5 puntos de contraste clave para diferenciar ambas órdenes de forma definitiva:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Criterio de Examen",
+            "Comando nice",
+            "Comando renice"
+          ],
+          "rows": [
+            [
+              "<strong>Momento de Acción</strong>",
+              "🎯 <strong>Al arrancar</strong> un proceso nuevo.",
+              "🎯 <strong>En caliente</strong> sobre procesos que ya corren."
+            ],
+            [
+              "<strong>Identificador usado</strong>",
+              "El <strong>nombre del comando</strong> (ej: <code>nice tar ...</code>).",
+              "El <strong>PID</strong> (<code>-p</code>), <strong>usuario</strong> (<code>-u</code>) o <strong>PGID</strong> (<code>-g</code>)."
+            ],
+            [
+              "<strong>Valor por Defecto</strong>",
+              "🎯 Suma <strong>+10</strong> si no se indica número.",
+              "<strong>Sin valor por defecto</strong>: exige indicar el nuevo nice."
+            ],
+            [
+              "<strong>Tipo de Valor</strong>",
+              "Relativo (suma al valor base).",
+              "🎯 <strong>Valor Absoluto</strong> (fija exactamente el valor indicado)."
+            ],
+            [
+              "<strong>Privilegio de Usuario</strong>",
+              "Puede fijar nice de <strong>0 a +19</strong>.",
+              "🎯 Puede <em>subir</em> su nice (+), pero <strong>¡NUNCA volver a bajarlo!</strong>"
+            ]
+          ],
+          "caption": "Comparativa Maestra: nice frente a renice"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF; font-size:13px;\">nice (Nacimiento de Proceso)</strong>\n      <div style=\"color:#1E3A8A; line-height:1.4; margin-top:4px;\">\n        • Sintaxis: <code>nice -n 10 ./script.sh</code><br>\n        • Si omites <code>-n</code>: aplica <strong>+10</strong> automáticamente.<br>\n        • Modifica el entorno antes de hacer <code>exec()</code>.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#15803D; font-size:13px;\">renice (En Caliente en RAM)</strong>\n      <div style=\"color:#14532D; line-height:1.4; margin-top:4px;\">\n        • Sintaxis: <code>renice -n 15 -p 4120</code><br>\n        • Fija el valor <strong>absoluto</strong> (fija 15, no suma).<br>\n        • Permite rescate masivo con <code>-u <usuario></code>.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 FÓRMULA SAGRADA: 'nice' para procesos por nacer (suma +10 por defecto); 'renice' para procesos vivos (valor absoluto). Los usuarios normales solo pueden subir el nice, nunca reducirlo."
+        }
+      ],
+      "notes": "Esta diapositiva sintetiza todas las preguntas de comparación directa del examen 101-500."
+    },
+    {
+      "id": "103.6-slide-12",
+      "slideNumber": 12,
+      "title": "Trampas Clásicas de Examen en Prioridades y Niceness",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Trampas Clásicas de Examen en Prioridades y Niceness"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 4 descuidos conceptuales y de sintaxis más penalizados en las preguntas oficiales de certificación LPIC-1:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Creer que +19 es la máxima prioridad** — 🎯 ¡Totalmente al revés! Cuanto mayor es el número, más 'amable' es el proceso y MENOS CPU recibe. El valor -20 es la máxima prioridad y +19 es la mínima.",
+            "**2. La Trampa de los Guiones Históricos (nice -5 vs nice --5)** — 🎯 'nice -5' asigna +5 de nice (el guión es opción, no signo). Para asignar -5 debes escribir 'nice --5' o la sintaxis moderna 'nice -n -5' (ambas requieren root).",
+            "**3. Olvidar que 'nice comando' suma +10 por defecto** — 🎯 Ejecutar 'nice updatedb' sin argumentos NO arranca con nice 0 (nice 0 es el arranque sin nice). Arranca con nice = 10.",
+            "**4. Creer que un usuario normal puede revertir renice** — 🎯 Si un usuario sube su nice de 0 a 10 con renice, y luego intenta bajarlo a 0, fallará con 'Permission denied'. Solo root puede reducir el valor de niceness."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚡ Los 4 Falsos Amigos que Suspenden Candidatos en LPIC-1</span>\n    <span style=\"font-size:11px; background:#FEF2F2; color:#DC2626; padding:2px 8px; border-radius:12px; font-weight:700;\">Preguntas Trampa Oficiales</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:11.5px;\">\n    <!-- Trampa 1 -->\n    <div style=\"background:#FEF2F2; border-left:4px solid #DC2626; border-radius:6px; padding:8px 10px;\">\n      <div style=\"color:#991B1B; font-weight:800; font-size:12px;\">❌ Trampa 1: \"+19 corre más rápido que -20\"</div>\n      <div style=\"color:#7F1D1D; margin-top:2px; line-height:1.35;\">\n        <strong>Realidad:</strong> 'Nice' es amabilidad. Quien tiene nice +19 es hipereducado y cede la CPU. <strong>-20 es la máxima velocidad</strong>.\n      </div>\n    </div>\n\n    <!-- Trampa 2 -->\n    <div style=\"background:#FEF2F2; border-left:4px solid #DC2626; border-radius:6px; padding:8px 10px;\">\n      <div style=\"color:#991B1B; font-weight:800; font-size:12px;\">❌ Trampa 2: \"nice -5 asigna prioridad negativa\"</div>\n      <div style=\"color:#7F1D1D; margin-top:2px; line-height:1.35;\">\n        <strong>Realidad:</strong> El guión es el flag. Asigna <strong>+5</strong>. Para asignar -5 debes escribir <code>nice --5</code> o <code>nice -n -5</code> (solo root).\n      </div>\n    </div>\n\n    <!-- Trampa 3 -->\n    <div style=\"background:#FEF2F2; border-left:4px solid #DC2626; border-radius:6px; padding:8px 10px;\">\n      <div style=\"color:#991B1B; font-weight:800; font-size:12px;\">❌ Trampa 3: \"nice comando arranca en nice 0\"</div>\n      <div style=\"color:#7F1D1D; margin-top:2px; line-height:1.35;\">\n        <strong>Realidad:</strong> El comando <code>nice</code> sin argumentos <strong>añade +10</strong> por defecto. El proceso arranca con nice = 10.\n      </div>\n    </div>\n\n    <!-- Trampa 4 -->\n    <div style=\"background:#FEF2F2; border-left:4px solid #DC2626; border-radius:6px; padding:8px 10px;\">\n      <div style=\"color:#991B1B; font-weight:800; font-size:12px;\">❌ Trampa 4: \"El usuario puede deshacer su renice\"</div>\n      <div style=\"color:#7F1D1D; margin-top:2px; line-height:1.35;\">\n        <strong>Realidad:</strong> Un usuario estándar solo puede subir el nice (0 a 19). Reducir el valor para ganar CPU da <code>Permission denied</code>.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 RESUMEN DE TRAMPAS: -20 = máxima velocidad; +19 = mínima velocidad; 'nice' sin número = +10; 'nice -5' = +5; 'nice --5' = -5 (solo root); renice no tiene marcha atrás para usuarios normales."
+        }
+      ],
+      "notes": "Repasa estas 4 trampas clave antes de abordar los ejercicios guiados."
+    },
+    {
+      "id": "103.6-slide-13",
+      "slideNumber": 13,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Escalas y Mapeo)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Escalas y Mapeo)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 1 (Oficial Pág 360): ¿Cuál es el rango numérico completo de valores de 'niceness' que pueden asignarse a un proceso en Linux y cuál de los extremos representa la máxima prioridad de CPU? — Comando: `Rango de -20 a +19. El valor -20 representa la máxima prioridad.` (La escala de amabilidad consta de 40 niveles; los valores negativos representan menor amabilidad (mayor agresividad por la CPU) y los positivos representan mayor cortesía.)",
+            "Caso 2 (Oficial Pág 360): Un proceso en el monitor 'top' tiene un valor de Niceness de NI = -5. Según la fórmula del kernel (PR = 20 + NI), ¿qué valor numérico exacto mostrará la columna PR? — Comando: `PR = 15` (20 + (-5) = 15. En la escala interna de prioridades del kernel para procesos CFS ordinarios, 15 indica una preferencia elevada respecto al valor estándar 20.)",
+            "Caso 3 (Oficial Pág 360): ¿Qué opción del comando 'ps' permite visualizar en la consola las columnas de prioridad del kernel (PRI) y valor nice (NI)? — Comando: `ps -l (o ps -el / ps -Al)` (La opción -l (long format) incluye obligatoriamente los campos de estado y planificación del proceso.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "-20 a 19 con -20 máxima velocidad; fórmula PR = 20 + NI; y ps -l para inspección de columnas."
+        }
+      ],
+      "notes": "Muestra que si un proceso tiene NI = 0, en top su PR es exactamente 20."
+    },
+    {
+      "id": "103.6-slide-14",
+      "slideNumber": 14,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: nice y renice)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: nice y renice)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 4 (Oficial Pág 360): Un usuario estándar ejecuta 'nice -n -10 backup.sh' y recibe el mensaje de error 'nice: cannot set niceness: Permission denied'. ¿A qué se debe y cómo se soluciona? — Comando: `Se debe a que los valores de nice negativos requieren permisos de superusuario. Se soluciona ejecutándolo con root: 'sudo nice -n -10 ./backup.sh'` (Los usuarios sin privilegios tienen estrictamente prohibido aumentar la prioridad de sus procesos para evitar monopolizar la CPU.)",
+            "Caso 5 (Oficial Pág 360): ¿Cuál es el comando exacto para fijar el valor de niceness a 15 de todos los procesos que pertenecen al usuario 'invitado' en un solo paso? — Comando: `sudo renice -n 15 -u invitado` (El subcomando '-u' de renice aplica el nuevo valor a la totalidad de procesos cuyo propietario sea el usuario especificado.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "Valores negativos requieren root; renice -u aplica modificaciones masivas por cuenta de usuario."
+        }
+      ],
+      "notes": "Recuerda que renice -u es muy útil cuando un usuario ha lanzado muchas tareas que están saturando el servidor."
+    },
+    {
+      "id": "103.6-slide-15",
+      "slideNumber": 15,
+      "title": "Retos de Exploración Oficiales (Comportamiento de nice y top)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Retos de Exploración Oficiales (Comportamiento de nice y top)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. Si un administrador arranca una copia pesada ejecutando exactamente 'nice tar -czf backup.tar.gz /var', ¿con qué valor de niceness exacto nacerá el proceso tar?\n2. Estás monitorizando el sistema con 'top' y detectas un script que consume el 99% de CPU con PID 8420. ¿Qué teclas exactas debes pulsar dentro de top para cambiar su prioridad a nice 19 sin cerrar el monitor?\n3. ¿Puede un usuario ordinario que ha lanzado un script con 'nice -n 10 script.sh' usar luego el comando renice para devolverlo a nice 0?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Pista",
+          "content": "Recuerda: valor por defecto de nice a secas; tecla 'r' en top; y regla de irreversibilidad para usuarios normales."
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Desafío",
+          "content": "1. Nacerá con nice = 10 (el comando nice sin argumentos añade 10 al valor base 0).\n2. Se pulsa la tecla 'r', se teclea el PID '8420' y Enter, y luego se introduce '19' y Enter.\n3. ¡NO! Un usuario ordinario no puede aumentar la prioridad de un proceso (pasar de 10 a 0 es un aumento de prioridad). Dará error 'Permission denied' a menos que lo ejecute root."
+        }
+      ],
+      "notes": "El reto 3 ilustra una de las trampas más sutiles de la administración de sistemas."
+    },
+    {
+      "id": "103.6-slide-16",
+      "slideNumber": 16,
+      "title": "Pregunta de Examen LPIC-1: Valor por Defecto de nice",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Valor por Defecto de nice"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-103-6-16",
+          "question": "Si un usuario ejecuta en la consola de comandos la orden 'nice updatedb' sin especificar ningún flag adicional, ¿con qué valor de niceness se ejecutará el comando?",
+          "options": [
+            {
+              "key": "a",
+              "text": "0"
+            },
+            {
+              "key": "b",
+              "text": "5"
+            },
+            {
+              "key": "c",
+              "text": "10"
+            },
+            {
+              "key": "d",
+              "text": "19"
+            }
+          ],
+          "correct": [
+            "c"
+          ],
+          "explanation": "Por especificación estándar, cuando el comando 'nice' se invoca sin el parámetro '-n', aplica un incremento predeterminado de +10 al valor de niceness del proceso hijo. Por tanto, el comando se ejecutará con nice = 10."
+        }
+      ],
+      "notes": "Pregunta clásica de certificación que todo candidato debe acertar sin dudar."
+    },
+    {
+      "id": "103.6-slide-17",
+      "slideNumber": 17,
+      "title": "Tarjetas Nemotécnicas: Prioridades de Proceso 103.6",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tarjetas Nemotécnicas: Prioridades de Proceso 103.6"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto",
+            "Significado / Uso"
+          ],
+          "rows": [
+            [
+              "¿Cuál es el rango de valores de nice en Linux?",
+              "De -20 (máxima prioridad) a +19 (mínima prioridad)."
+            ],
+            [
+              "¿Qué valor de niceness tienen los procesos normales por defecto?",
+              "El valor 0."
+            ],
+            [
+              "¿Qué valor de niceness asigna 'nice comando' sin opciones?",
+              "El valor 10 (añade +10 al valor actual)."
+            ],
+            [
+              "¿Quién puede asignar valores de nice negativos (-1 a -20)?",
+              "Únicamente el superusuario root."
+            ],
+            [
+              "¿Qué comando modifica la prioridad de un proceso que ya está corriendo?",
+              "renice (ej: renice -n 5 -p <PID>)."
+            ],
+            [
+              "¿Qué fórmula relaciona la prioridad en top (PR) con el niceness (NI)?",
+              "PR = 20 + NI."
+            ],
+            [
+              "¿Qué tecla de 'top' permite cambiar la prioridad de un proceso?",
+              "La tecla 'r' (renice)."
+            ],
+            [
+              "¿Qué letra en la columna STAT de 'ps aux' indica un nice de alta prioridad?",
+              "El carácter '<' (alta prioridad); la letra 'N' indica baja prioridad."
+            ]
+          ],
+          "caption": "Tarjetas de memorización"
+        }
+      ],
+      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 103.6."
+    },
+    {
+      "id": "103.6-slide-18",
+      "slideNumber": 18,
+      "title": "Resumen y Claves de Examen: Subtema 103.6",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen y Claves de Examen: Subtema 103.6"
+        }
+      ],
+      "notes": "Concluimos el subtema 103.6. Los alumnos dominan ahora la planificación y prioridades de procesos."
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-103-6-1",
+      "title": "Multitarea Preventiva y el Planificador del Kernel",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Multitarea Preventiva y el Planificador del Kernel"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo reparte Linux la CPU entre cientos de procesos sin que ninguno congele el sistema?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Multitarea Preventiva (Preemptive)** — 🎯 El kernel tiene el control supremo. Asigna a cada proceso una pequeña cuota de tiempo (time slice en ms). Cuando expira, desaloja al proceso por la fuerza para dar paso al siguiente.",
+            "**2. Planificador CFS (Completely Fair Scheduler)** — 🎯 Algoritmo de 'reparto equitativo': calcula dinámicamente qué proceso debe ejecutarse según el tiempo de CPU consumido y su factor de prioridad asignado.",
+            "**3. Niceness: La Palanca del Administrador** — 🎯 Permite al administrador graduar el peso de un proceso: los procesos más 'amables' reciben cuotas menores y los 'egoístas' acaparan mayor porcentaje de CPU."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:14px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚙️ Arquitectura del Planificador CFS: ¿Cómo reparte la CPU el Kernel?</span>\n    <span style=\"font-size:11px; background:#EEF2FF; color:#4338CA; padding:2px 8px; border-radius:12px; font-weight:700;\">Núcleo Linux</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; font-size:11.5px;\">\n    <!-- 1. Time Slice -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:9px 11px;\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">1. Cuotas de Tiempo (Time Slice)</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Milisegundos</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">\n        El kernel concede ráfagas de tiempo breves a cada tarea activa en la cola de ejecución.\n      </div>\n    </div>\n\n    <!-- 2. Desalojo -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:9px 11px;\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n        <strong style=\"color:#991B1B; font-size:12.5px;\">2. Desalojo Preventivo</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Sin Bloqueos</span>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.35;\">\n        Si un proceso intenta acaparar el 100% de la CPU, el kernel lo expulsa y rota al siguiente.\n      </div>\n    </div>\n\n    <!-- 3. Niceness -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:9px 11px;\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:12.5px;\">3. Factor Niceness (NI)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Ajuste Admin</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.35;\">\n        Valores negativos (-20) reciben cuotas gigantes; valores positivos (+19) reciben sobras.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Linux utiliza multitarea preventiva: el kernel decide cuándo expulsar un proceso de la CPU; 'nice' y 'renice' son las herramientas para influir en esa decisión."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-6-2",
+      "title": "El Espectro de Niceness: De -20 (Máxima) a +19 (Mínima)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Espectro de Niceness: De -20 (Máxima) a +19 (Mínima)"
+        },
+        {
+          "type": "paragraph",
+          "text": "La escala de amabilidad (niceness) es contraintuitiva: menor número implica mayor preferencia de CPU:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Valor -20: MÁXIMA Prioridad (Menos amable)** — 🎯 El proceso es muy egoísta ('poco amable' con los demás). Exige la mayor cuota de CPU posible. Se reserva para servicios ultra-críticos de tiempo real.",
+            "**Valor 0: Prioridad Estándar por Defecto** — 🎯 Todos los procesos ordinarios del sistema nacen con un valor de niceness fijado en 0 por defecto.",
+            "**Valor +19: MÍNIMA Prioridad (Más amable)** — 🎯 El proceso es extremadamente cortés y generoso ('muy amable'). Solo consume CPU cuando ningún otro proceso la está utilizando (ideal para backups, renders o minería)."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin:14px 0;\">\n  <div style=\"font-size:15.5px; font-weight:800; color:var(--text); margin-bottom:14px;\">\n    ⚡ El Gradiente de Amabilidad con la CPU en Linux:\n  </div>\n\n  <div style=\"display:flex; justify-content:space-between; align-items:center; font-size:12.5px; text-align:center; position:relative;\">\n    <!-- -20 a -1 (Root) -->\n    <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:12px; flex:1.2;\">\n      <div style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:12px; padding:2px 6px; border-radius:4px; margin-bottom:6px;\">\n        -20 a -1 (ALTA PRIORIDAD)\n      </div>\n      <strong style=\"color:#991B1B; font-size:14px;\">Menos Amable (Egoísta)</strong><br>\n      <span style=\"color:#7F1D1D; font-size:11.5px;\">Exige máxima cuota de CPU.</span><br>\n      <span style=\"background:#FEE2E2; color:#991B1B; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:800; display:inline-block; margin-top:4px;\">\n        🔒 SOLO ROOT\n      </span>\n    </div>\n\n    <!-- Flecha izquierda -->\n    <span style=\"font-size:18px; color:#DC2626; font-weight:900; margin:0 8px;\">◀</span>\n\n    <!-- 0 (Defecto) -->\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:12px; flex:1;\">\n      <div style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:12px; padding:2px 6px; border-radius:4px; margin-bottom:6px;\">\n        0 (POR DEFECTO)\n      </div>\n      <strong style=\"color:#1E40AF; font-size:14px;\">Prioridad Estándar</strong><br>\n      <span style=\"color:#475569; font-size:11.5px;\">Todo proceso nace en 0.</span><br>\n      <span style=\"color:#64748B; font-size:11px;\">Equilibrio normal</span>\n    </div>\n\n    <!-- Flecha derecha -->\n    <span style=\"font-size:18px; color:#16A34A; font-weight:900; margin:0 8px;\">▶</span>\n\n    <!-- +1 a +19 (Todos) -->\n    <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:12px; flex:1.2;\">\n      <div style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:2px 6px; border-radius:4px; margin-bottom:6px;\">\n        +1 a +19 (BAJA PRIORIDAD)\n      </div>\n      <strong style=\"color:#15803D; font-size:14px;\">Más Amable (Generoso)</strong><br>\n      <span style=\"color:#14532D; font-size:11.5px;\">Cede CPU voluntariamente.</span><br>\n      <span style=\"background:#DCFCE7; color:#15803D; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:800; display:inline-block; margin-top:4px;\">\n        👥 CUALQUIER USUARIO\n      </span>\n    </div>\n  </div>\n\n  <div style=\"margin-top:14px; padding:8px 14px; background:#F8FAFC; border-left:4px solid #3B82F6; border-radius:4px; font-size:13px; color:#1E3A8A;\">\n    🎯 <strong>MNEMOTECNIA DE ORO:</strong> 'Nice alto = prioridad baja' (eres muy educado, dejas pasar a los demás); 'Nice bajo/negativo = prioridad alta' (eres impaciente y acaparas la CPU).\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Mnemotécnica de Oro: Cuanto más negativo sea el número (-20), MÁS prioridad tiene; cuanto más positivo (+19), MENOS prioridad tiene."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-6-3",
+      "title": "Mapeo de Escalas: Kernel Priority (PR) frente a Niceness (NI)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Mapeo de Escalas: Kernel Priority (PR) frente a Niceness (NI)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué en 'top' se ven números como 20 o 0 mientras en 'ps' se ven números de -20 a 19?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Niceness (NI) — La Escala de Usuario (-20 a +19)** — 🎯 Es el valor de 40 niveles que el administrador manipula con 'nice' y 'renice'. Cuanto más negativo, mayor prioridad exige el proceso.",
+            "**2. Prioridad del Kernel (PR en top: 0 a 39)** — 🎯 Es la escala interna que usa el planificador del kernel para ordenar la cola de CPU. Menor número PR = el proceso se atiende antes.",
+            "**3. Procesos de Tiempo Real (RT)** — 🎯 Prioridades críticas de hardware (0 a 99 en kernel). En 'top' aparecen con la etiqueta 'rt' o valores negativos, con preferencia absoluta sobre todo lo demás."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:14px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🧮 La Fórmula Matemática del Planificador: <code>PR = 20 + NI</code></span>\n    <span style=\"font-size:11px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:12px; font-weight:700;\">Cálculo Directo LPIC-1</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; font-size:11.5px; text-align:center;\">\n    <!-- Normal -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:9px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">DEFECTO</span>\n      <div style=\"font-weight:800; color:#1E40AF; font-size:13px; margin:4px 0;\">NI = 0</div>\n      <div style=\"font-size:12px; color:#1E3A8A;\"><code>20 + 0 =</code> <strong>PR 20</strong></div>\n      <span style=\"color:#64748B; font-size:10.5px;\">Prioridad estándar</span>\n    </div>\n\n    <!-- Urgente -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #F87171; border-radius:8px; padding:9px;\">\n      <span style=\"background:#EF4444; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">URGENTE</span>\n      <div style=\"font-weight:800; color:#991B1B; font-size:13px; margin:4px 0;\">NI = -5</div>\n      <div style=\"font-size:12px; color:#991B1B;\"><code>20 + (-5) =</code> <strong>PR 15</strong></div>\n      <span style=\"color:#B91C1C; font-size:10.5px;\">Atendido antes</span>\n    </div>\n\n    <!-- Máxima -->\n    <div style=\"background:#FEF2F2; border:2px solid #DC2626; border-radius:8px; padding:9px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">MÁXIMA (Root)</span>\n      <div style=\"font-weight:800; color:#991B1B; font-size:13px; margin:4px 0;\">NI = -20</div>\n      <div style=\"font-size:12px; color:#991B1B;\"><code>20 + (-20) =</code> <strong>PR 0</strong></div>\n      <span style=\"color:#991B1B; font-size:10.5px; font-weight:800;\">Tope procesos CFS</span>\n    </div>\n\n    <!-- Mínima -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:9px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">MÍNIMA</span>\n      <div style=\"font-weight:800; color:#15803D; font-size:13px; margin:4px 0;\">NI = +19</div>\n      <div style=\"font-size:12px; color:#14532D;\"><code>20 + 19 =</code> <strong>PR 39</strong></div>\n      <span style=\"color:#15803D; font-size:10.5px;\">Máxima amabilidad</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 FÓRMULA SAGRADA DE EXAMEN: PR = 20 + NI. Si un proceso tiene nice de -5, en top su PR será 15 (20 + (-5)). Si tiene nice de 0, su PR será 20. Si tiene nice de +10, su PR será 30."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-6-4",
+      "title": "Inspección de Prioridades con ps: -l y Columnas a Medida",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Inspección de Prioridades con ps: -l y Columnas a Medida"
+        },
+        {
+          "type": "paragraph",
+          "text": "Comandos clave y opciones exactas de 'ps' para auditar los valores NI y PRI en el sistema:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "ps -l | ps -el | ps -o pid,user,ni,pri,stat,cmd",
+          "title": "Comprobar las columnas NI (Niceness) y PRI (Prioridad del kernel) y los indicadores de STAT"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "ps -o pid,user,ni,pri,stat,cmd -C render,backup,bash",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "ps -l (o ps -el)",
+              "Formato largo estándar",
+              "🎯 Clave de Examen: Añade obligatoriamente las columnas 'PRI' (prioridad) y 'NI' (niceness)."
+            ],
+            [
+              "ps -o <columnas>",
+              "Columnas personalizadas",
+              "🎯 Permite seleccionar solo los campos que te interesan (ej: 'ps -o pid,ni,pri,cmd')."
+            ],
+            [
+              "STAT: '<'",
+              "Alta prioridad",
+              "🎯 Clave de Examen: El proceso tiene niceness negativo (not nice, acapara CPU)."
+            ],
+            [
+              "STAT: 'N'",
+              "Baja prioridad",
+              "🎯 Clave de Examen: El proceso tiene niceness positivo (nice, cortés con la CPU)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Mnemotécnica de Examen: 'ps -l' muestra PRI y NI; en 'ps aux', la columna STAT muestra '<' si el nice es negativo (alta prioridad) y 'N' si el nice es positivo (baja prioridad)."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-6-5",
+      "title": "Supervisión Interactiva en top: Columnas PR, NI y la tecla 'r'",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Supervisión Interactiva en top: Columnas PR, NI y la tecla 'r'"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo monitorizar las prioridades en tiempo real y ejecutar renice interactivamente con la tecla 'r'?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "top (dentro de top pulsar la tecla 'r')",
+          "title": "Supervisar las columnas PR y NI en vivo y modificar la prioridad de un proceso sin salir del monitor"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "top (pulsar 'r' -> 4120 -> 15)",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "Columna PR",
+              "Prioridad kernel dinámica",
+              "🎯 Valor de 0 a 39 que el kernel usa para el reparto de CPU (PR = 20 + NI)."
+            ],
+            [
+              "Columna NI",
+              "Niceness estático",
+              "🎯 Valor de -20 a +19 fijado por el usuario o administrador."
+            ],
+            [
+              "Tecla 'r' (Renice)",
+              "Reasignar prioridad",
+              "🎯 Clave de Examen: Solicita el PID y el nuevo valor de nice para aplicarlo al vuelo."
+            ],
+            [
+              "Tecla 'q'",
+              "Salir de top",
+              "Cierra el monitor interactivo y devuelve el control a la terminal."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Atajo Fijo de Examen: En el monitor interactivo 'top', la tecla 'r' ejecuta la acción de renice para alterar la prioridad de un proceso en ejecución sin cerrarlo."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-6-6",
+      "title": "Lanzar Nuevos Procesos con Prioridad Modificada: nice",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Lanzar Nuevos Procesos con Prioridad Modificada: nice"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Para qué sirve nice y cómo arrancar un comando fijando su amabilidad desde el primer segundo?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "nice [-n <incremento>] <comando> [argumentos...]",
+          "title": "Arrancar un proceso NUEVO con un valor de niceness diferente al estándar 0"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "nice -n 15 tar -czf /backup/sistema.tar.gz /var/www &; sudo nice -n -10 make -j4",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "nice cmd (sin número)",
+              "Suma +10 por defecto",
+              "🎯 Pregunta Fija de Certificación: Si ejecutas 'nice comando' a secas, arranca con nice = 10."
+            ],
+            [
+              "nice -n <valor> cmd",
+              "Sintaxis estándar POSIX",
+              "🎯 Sintaxis oficial recomendada: 'nice -n 5 script.sh' (+5) o 'nice -n -10 script.sh' (-10)."
+            ],
+            [
+              "nice -5 cmd (Histórico)",
+              "Asigna +5 (¡un guión!)",
+              "⚠️ Trampa de Examen: El guión es el indicador de opción, no el signo menos: asigna +5."
+            ],
+            [
+              "nice --5 cmd (Histórico)",
+              "Asigna -5 (doble guión)",
+              "⚠️ Trampa de Examen: 1er guión = opción; 2º guión = signo matemático negativo (exige root)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:6px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚠️ Trampa de Examen: Sintaxis Antigua de Guiones en <code>nice</code></span>\n    <span style=\"font-size:11px; background:#FEF2F2; color:#DC2626; padding:2px 8px; border-radius:12px; font-weight:700;\">Alerta LPIC-1</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:8px 11px;\">\n      <strong style=\"color:#1E40AF; font-size:12.5px;\"><code>nice -5 comando</code></strong><br>\n      <span style=\"color:#1E3A8A; line-height:1.35;\">\n        El guión '-' es la bandera del comando, NO un signo menos.<br>\n        ➔ <strong>Resultado:</strong> Asigna nice <strong>+5</strong> (amable, baja prioridad).<br>\n        <span style=\"color:#16A34A; font-weight:700;\">Cualquier usuario puede ejecutarlo.</span>\n      </span>\n    </div>\n\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:8px 11px;\">\n      <strong style=\"color:#991B1B; font-size:12.5px;\"><code>nice --5 comando</code></strong><br>\n      <span style=\"color:#7F1D1D; line-height:1.35;\">\n        1º guión = bandera de opción; 2º guión = signo negativo.<br>\n        ➔ <strong>Resultado:</strong> Asigna nice <strong>-5</strong> (alta prioridad de CPU).<br>\n        <span style=\"color:#DC2626; font-weight:800;\">🔒 ¡Exige permisos de ROOT!</span>\n      </span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 LAS DOS TRAMPAS CLAVE DE NICE: 1ª 'nice comando' sin argumentos arranca con nice = 10 (no 0). 2ª En sintaxis antigua, 'nice -5' es +5 de nice y 'nice --5' es -5 de nice (solo root)."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-6-7",
+      "title": "Reglas de Privilegios en Prioridades: Usuario frente a Root",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Reglas de Privilegios en Prioridades: Usuario frente a Root"
+        },
+        {
+          "type": "paragraph",
+          "text": "Límites estrictos de seguridad: qué puede y qué NO puede hacer un usuario ordinario con la CPU:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Usuario Ordinario: Solo puede ser MÁS amable (0 a +19)** — 🎯 Puede voluntariamente ceder CPU asignando valores positivos (de 0 a 19). No puede perjudicar a otros usuarios.",
+            "**2. Usuario Ordinario: ¡Prohibidos los valores negativos!** — 🎯 No puede autoasignarse nice negativo (-1 a -20). Si lo intenta, el kernel responde: 'nice: cannot set niceness: Permission denied'.",
+            "**3. Superusuario Root: Control absoluto bidireccional** — 🎯 Solo root puede asignar valores negativos (-20 a -1) y modificar la prioridad de los procesos de cualquier usuario en cualquier sentido."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:14px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔒 Matriz de Privilegios de Planificación de Procesos</span>\n    <span style=\"font-size:11px; background:#F8FAFC; color:#475569; padding:2px 8px; border-radius:12px; font-weight:700;\">Seguridad Linux</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12px;\">\n    <!-- Usuario Ordinario -->\n    <div style=\"background:#F8FAFC; border:2px solid #CBD5E1; border-radius:10px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#0F172A; font-size:13px;\">👤 Usuario Estándar</strong>\n        <span style=\"background:#E2E8F0; color:#334155; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;\">Sin sudo</span>\n      </div>\n      <div style=\"color:#334155; line-height:1.4;\">\n        • <strong>Valores permitidos:</strong> Solo de <strong>0 a +19</strong>.<br>\n        • <strong>Acción:</strong> Solo puede ser <em>más amable</em> (bajar su prioridad).<br>\n        • <strong>Valores negativos (-1 a -20):</strong> <span style=\"color:#DC2626; font-weight:700;\">⛔ Permission Denied</span>.<br>\n        • <strong>Regla de sentido único:</strong> Si sube a 15, ¡no puede volver a bajar a 0!\n      </div>\n    </div>\n\n    <!-- Superusuario Root -->\n    <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#991B1B; font-size:13px;\">🛡️ Superusuario (root / sudo)</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;\">Total</span>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.4;\">\n        • <strong>Valores permitidos:</strong> Todo el rango de <strong>-20 a +19</strong>.<br>\n        • <strong>Acción:</strong> Puede subir o bajar la prioridad a su antojo.<br>\n        • <strong>Alcance:</strong> Sobre sus propios procesos o los de cualquier usuario.<br>\n        • <strong>Poder único:</strong> Puede rescatar y acelerar procesos en caliente.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Oro de Examen: Para asignar cualquier valor de nice negativo (-1 a -20) se requieren OBLIGATORIAMENTE privilegios de root."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-6-8",
+      "title": "Modificar Procesos en Ejecución: renice",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Modificar Procesos en Ejecución: renice"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo alterar el valor de niceness en caliente sobre procesos que ya están vivos en memoria?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "renice [-n] <nuevo_nice> -p <PID> | -u <usuario> | -g <PGID>",
+          "title": "Reasignar el valor absoluto de niceness a procesos activos por PID, por usuario o por grupo"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "renice -n 15 -p 4120; sudo renice -n -5 -p 1420; sudo renice -n 10 -u becario",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "renice -n <val> -p <PID>",
+              "Por PID específico",
+              "🎯 Fija el valor ABSOLUTO de niceness del proceso indicado (la opción -p es el modo por defecto)."
+            ],
+            [
+              "renice -n <val> -u <user>",
+              "Por nombre de usuario",
+              "🎯 Clave de Examen: Aplica el nuevo valor a la totalidad de procesos del usuario indicado."
+            ],
+            [
+              "renice -n <val> -g <PGID>",
+              "Por Process Group ID",
+              "Modifica la prioridad de un grupo de procesos completo a la vez."
+            ],
+            [
+              "Valor Absoluto",
+              "No suma ni resta",
+              "🎯 Clave de Examen: 'renice 5' asigna exactamente nice = 5 (no suma 5 a la prioridad anterior)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:6px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚡ Los 3 Selectores Clave de <code>renice</code>:</span>\n    <span style=\"font-size:11px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:12px; font-weight:700;\">Sintaxis Directa</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:11.5px; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:8px;\">\n      <strong style=\"color:#1E40AF; font-size:12.5px;\">-p (Por PID)</strong><br>\n      <code>renice 10 -p 1420</code><br>\n      <span style=\"color:#2563EB; font-size:10.5px;\">Afecta a un único proceso</span>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:8px;\">\n      <strong style=\"color:#15803D; font-size:12.5px;\">-u (Por Usuario)</strong><br>\n      <code>sudo renice 15 -u alumno</code><br>\n      <span style=\"color:#166534; font-size:10.5px;\">Afecta a todo el usuario</span>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:8px; padding:8px;\">\n      <strong style=\"color:#6B21A8; font-size:12.5px;\">-g (Por Grupo PGID)</strong><br>\n      <code>sudo renice 5 -g 3000</code><br>\n      <span style=\"color:#7E22CE; font-size:10.5px;\">Afecta al Process Group</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Examen: 'renice' fija siempre el valor ABSOLUTO de nice; nunca suma ni resta. Para modificar procesos de otros usuarios o asignar nice negativo se requiere sudo."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-6-9",
+      "title": "Configuración de Límites: /etc/security/limits.conf",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Configuración de Límites: /etc/security/limits.conf"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Dónde y cómo se autoriza a usuarios específicos a fijar prioridades negativas sin ser root?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>📁 Anatomía de una Línea de Configuración en <code>/etc/security/limits.conf</code>:</span>\n    <span style=\"font-size:11px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:12px; font-weight:700;\">4 Columnas Clave</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11px; text-align:center;\">\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:7px;\">\n      <span style=\"font-weight:800; color:#1E40AF; font-size:12px;\">1. @devs</span><br>\n      <span style=\"color:#475569;\">Grupo o Usuario</span>\n    </div>\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:7px;\">\n      <span style=\"font-weight:800; color:#0F172A; font-size:12px;\">2. hard</span><br>\n      <span style=\"color:#475569;\">Techo Infranqueable</span>\n    </div>\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:7px;\">\n      <span style=\"font-weight:800; color:#B45309; font-size:12px;\">3. nice</span><br>\n      <span style=\"color:#475569;\">Recurso a Limitar</span>\n    </div>\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:6px; padding:7px;\">\n      <span style=\"font-weight:800; color:#2563EB; font-size:12px;\">4. -10</span><br>\n      <span style=\"color:#1E40AF; font-weight:700;\">Límite Asignado</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para que un usuario ordinario pueda usar nice negativo (-1 a -20) sin sudo, debe configurarse la directiva 'nice' en el archivo '/etc/security/limits.conf'."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-6-10",
+      "title": "Comparativa Maestra: nice frente a renice",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comparativa Maestra: nice frente a renice"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 5 puntos de contraste clave para diferenciar ambas órdenes de forma definitiva:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Criterio de Examen",
+            "Comando nice",
+            "Comando renice"
+          ],
+          "rows": [
+            [
+              "<strong>Momento de Acción</strong>",
+              "🎯 <strong>Al arrancar</strong> un proceso nuevo.",
+              "🎯 <strong>En caliente</strong> sobre procesos que ya corren."
+            ],
+            [
+              "<strong>Identificador usado</strong>",
+              "El <strong>nombre del comando</strong> (ej: <code>nice tar ...</code>).",
+              "El <strong>PID</strong> (<code>-p</code>), <strong>usuario</strong> (<code>-u</code>) o <strong>PGID</strong> (<code>-g</code>)."
+            ],
+            [
+              "<strong>Valor por Defecto</strong>",
+              "🎯 Suma <strong>+10</strong> si no se indica número.",
+              "<strong>Sin valor por defecto</strong>: exige indicar el nuevo nice."
+            ],
+            [
+              "<strong>Tipo de Valor</strong>",
+              "Relativo (suma al valor base).",
+              "🎯 <strong>Valor Absoluto</strong> (fija exactamente el valor indicado)."
+            ],
+            [
+              "<strong>Privilegio de Usuario</strong>",
+              "Puede fijar nice de <strong>0 a +19</strong>.",
+              "🎯 Puede <em>subir</em> su nice (+), pero <strong>¡NUNCA volver a bajarlo!</strong>"
+            ]
+          ],
+          "caption": "Comparativa Maestra: nice frente a renice"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF; font-size:13px;\">nice (Nacimiento de Proceso)</strong>\n      <div style=\"color:#1E3A8A; line-height:1.4; margin-top:4px;\">\n        • Sintaxis: <code>nice -n 10 ./script.sh</code><br>\n        • Si omites <code>-n</code>: aplica <strong>+10</strong> automáticamente.<br>\n        • Modifica el entorno antes de hacer <code>exec()</code>.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#15803D; font-size:13px;\">renice (En Caliente en RAM)</strong>\n      <div style=\"color:#14532D; line-height:1.4; margin-top:4px;\">\n        • Sintaxis: <code>renice -n 15 -p 4120</code><br>\n        • Fija el valor <strong>absoluto</strong> (fija 15, no suma).<br>\n        • Permite rescate masivo con <code>-u <usuario></code>.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 FÓRMULA SAGRADA: 'nice' para procesos por nacer (suma +10 por defecto); 'renice' para procesos vivos (valor absoluto). Los usuarios normales solo pueden subir el nice, nunca reducirlo."
+        }
+      ]
+    }
+  ]
+}

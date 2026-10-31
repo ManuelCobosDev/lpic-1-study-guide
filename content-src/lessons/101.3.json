@@ -1,0 +1,1275 @@
+{
+  "id": "101.3",
+  "topicId": "101",
+  "examId": "101",
+  "title": "Niveles de ejecución, objetivos y apagado",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 30,
+  "objectives": [
+    "Niveles de ejecución, objetivos systemd, gestión de demonios y apagado del sistema (Alta Densidad LPIC-1)",
+    "Dominio técnico de las herramientas y configuración del subtema 101.3"
+  ],
+  "keyTerms": [
+    "daemon",
+    "runlevel",
+    "target",
+    "init"
+  ],
+  "commands": [
+    "runlevel",
+    "systemctl",
+    "shutdown"
+  ],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "101.3-slide-1",
+      "slideNumber": 1,
+      "title": "Niveles de ejecución, objetivos y apagado",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Niveles de ejecución, objetivos y apagado"
+        },
+        {
+          "type": "paragraph",
+          "text": "Gestión de servicios con systemd y SysVinit, cambio de runlevels y comandos de apagado"
+        }
+      ],
+      "notes": "Llegamos al subtema 101.3 (peso 3), centrado en la administración de servicios y control del estado del sistema. Aprenderemos a arrancar, parar y habilitar demonios, cambiar entre modos gráfico y consola, y programar apagados ordenados."
+    },
+    {
+      "id": "101.3-slide-2",
+      "slideNumber": 2,
+      "title": "Demonios y Administradores de Servicios en Linux",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Demonios y Administradores de Servicios en Linux"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué es exactamente un demonio en Linux, por qué tiene TTY '?' y qué rol cumple PID 1?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**¿Qué es un demonio (daemon)?** — Es un programa que corre en segundo plano de forma silenciosa, sin teclado ni pantalla asociada, esperando peticiones o eventos para actuar (por convención terminan en 'd': sshd, crond, systemd).",
+            "**¿Por qué en la columna TTY aparece un signo '?'?** — TTY significa 'Teletype' (terminal/consola). Un comando normal tiene 'tty1' o 'pts/0' porque está atado a tu teclado y pantalla. Un demonio tiene '?' porque está 100% desvinculado de cualquier terminal interactiva.",
+            "**PID 1 como 'Padre Adoptivo' de Procesos Huérfanos** — Si un programa padre crea un proceso hijo y luego muere o se cuelga, el hijo se queda 'huérfano'. PID 1 (systemd) lo adopta automáticamente para que no quede como proceso zombi en el limbo y pueda liberar su memoria al terminar."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1.15fr; gap:16px; margin-top:8px;\">\n  \n  <!-- Columna Izquierda: Conceptos Clave TTY '?' y Adopción -->\n  <div style=\"display:flex; flex-direction:column; gap:10px;\">\n    \n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-left:4px solid var(--primary); border-radius:10px; padding:10px 14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:var(--primary); margin-bottom:3px; display:flex; align-items:center; gap:6px;\">\n        <span>❓</span>\n        <span>¿Por qué TTY muestra un signo '?'?:</span>\n      </div>\n      <div style=\"font-size:12px; color:var(--text-muted); line-height:1.4;\">\n        <strong>TTY</strong> es la terminal de entrada/salida (teclado/pantalla). Tu shell interactivo tiene <code>pts/0</code> o <code>tty1</code>. Los demonios tienen <strong style=\"color:var(--text);\">?</strong> porque <strong>no tienen ninguna terminal atada</strong>; corren en background invisible.\n      </div>\n    </div>\n\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-left:4px solid var(--success); border-radius:10px; padding:10px 14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:var(--success); margin-bottom:3px; display:flex; align-items:center; gap:6px;\">\n        <span>👶</span>\n        <span>¿Qué significa que PID 1 adopta si el padre muere?:</span>\n      </div>\n      <div style=\"font-size:12px; color:var(--text-muted); line-height:1.4;\">\n        En Linux todo proceso necesita un padre. Si el programa que lo lanzó se cierra o falla, el subproceso se convierte en un <strong>huérfano</strong>. <code>PID 1 (systemd)</code> lo <strong>adopta legalmente</strong> en su árbol para gestionarlo y evitar procesos zombis en RAM.\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Columna Derecha: Consola de Demostración Real -->\n  <div style=\"background:#0F172A; border:2px solid #334155; border-radius:12px; overflow:hidden; box-shadow:0 6px 16px rgba(15,23,42,0.18);\">\n    <div style=\"background:#1E293B; padding:8px 14px; border-bottom:1px solid #334155; display:flex; align-items:center; justify-content:space-between;\">\n      <div style=\"display:flex; align-items:center; gap:6px;\">\n        <span style=\"width:10px; height:10px; border-radius:50%; background:#EF4444; display:inline-block;\"></span>\n        <span style=\"width:10px; height:10px; border-radius:50%; background:#F59E0B; display:inline-block;\"></span>\n        <span style=\"width:10px; height:10px; border-radius:50%; background:#10B981; display:inline-block;\"></span>\n        <span style=\"font-family:monospace; font-size:12px; color:#94A3B8; margin-left:8px;\">bash — comprobación real</span>\n      </div>\n      <span style=\"font-size:11px; color:#38BDF8; font-weight:700;\">Demonios en ps</span>\n    </div>\n    <div style=\"padding:12px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; line-height:1.55; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># Ver demonios: TTY='?' (sin pantalla) y PPID=1 (hijos de systemd):</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@debian:~$</span> ps -eo pid,ppid,tty,cmd | grep -E 'sshd|cron'</div>\n      <div style=\"color:#E2E8F0;\">  PID  PPID TTY      CMD</div>\n      <div style=\"color:#E2E8F0;\">  654     <strong style=\"color:#34D399;\">1</strong> <strong style=\"color:#FCD34D;\">?</strong>        /usr/sbin/sshd -D</div>\n      <div style=\"color:#E2E8F0;\">  720     <strong style=\"color:#34D399;\">1</strong> <strong style=\"color:#FCD34D;\">?</strong>        /usr/sbin/cron -f</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># Árbol jerárquico: systemd (PID 1) es la raíz de todo:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@debian:~$</span> pstree -p 1 | head -n 3</div>\n      <div style=\"color:#34D399;\">systemd(1)─┬─cron(720)</div>\n      <div style=\"color:#34D399;\">           └─sshd(654)───sshd(1820)───bash(1825)</div>\n    </div>\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE TOP DE EXAMEN: En la salida de 'ps', un demonio se reconoce porque su columna TTY es '?' (sin terminal) y su PPID (Parent PID) suele ser 1 (adoptado o iniciado por systemd/init)."
+        }
+      ],
+      "notes": "Guión didáctico para clase:\n1. EXPLICACIÓN DE TTY '?':\n   - TTY = Teletypewriter. Cuando abres una terminal en Linux, el sistema te asigna un identificador (ej: pts/0).\n   - Los demonios no tienen pantalla ni teclado; por eso el sistema pone '?' en su columna TTY.\n2. EXPLICACIÓN DE LA ADOPCIÓN DE PROCESOS:\n   - Todo proceso en Linux tiene un padre (PPID).\n   - Si el padre muere antes que el hijo, el hijo se convierte en huérfano.\n   - En Linux existe la regla de que NINGÚN proceso puede quedarse sin padre. PID 1 actúa como el servicio social del sistema: adopta al huérfano para poder recoger su código de salida y limpiar su memoria RAM."
+    },
+    {
+      "id": "101.3-slide-3",
+      "slideNumber": 3,
+      "title": "Niveles de Ejecución en SysVinit (Runlevels 0 al 6)",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Niveles de Ejecución en SysVinit (Runlevels 0 al 6)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 7 estados operativos de SysVinit con nombres claros en español y los niveles clave de examen:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin-top:6px;\">\n  \n  <!-- Espectro de 7 runlevels con Nombres Claros en Español -->\n  <div style=\"display:grid; grid-template-columns: repeat(7, 1fr); gap:8px;\">\n    <!-- 0 -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:4px solid #EF4444; border-radius:10px; padding:8px 4px; text-align:center;\">\n      <span style=\"background:#EF4444; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px;\">0</span>\n      <div style=\"font-weight:800; font-size:12px; color:var(--text);\">Apagado Total</div>\n      <div style=\"font-size:10.5px; color:var(--text-muted); margin-top:2px;\">Corta corriente</div>\n    </div>\n    <!-- 1 -->\n    <div style=\"background:var(--surface-alt); border:2px solid #F59E0B; border-top:4px solid #F59E0B; border-radius:10px; padding:8px 4px; text-align:center; box-shadow:0 2px 6px rgba(245,158,11,0.15);\">\n      <span style=\"background:#F59E0B; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px;\">1</span>\n      <div style=\"font-weight:800; font-size:12px; color:var(--warning-ink);\">⭐ Rescate Local</div>\n      <div style=\"font-size:10.5px; color:var(--text-muted); margin-top:2px;\">Monousuario sin red</div>\n    </div>\n    <!-- 2 -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:4px solid #64748B; border-radius:10px; padding:8px 4px; text-align:center;\">\n      <span style=\"background:#64748B; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px;\">2</span>\n      <div style=\"font-weight:800; font-size:12px; color:var(--text);\">Consola Básica</div>\n      <div style=\"font-size:10.5px; color:var(--text-muted); margin-top:2px;\">Texto sin NFS</div>\n    </div>\n    <!-- 3 -->\n    <div style=\"background:var(--surface-alt); border:2px solid #2563EB; border-top:4px solid #2563EB; border-radius:10px; padding:8px 4px; text-align:center; box-shadow:0 2px 6px rgba(37,99,235,0.15);\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px;\">3</span>\n      <div style=\"font-weight:800; font-size:12px; color:var(--primary);\">⭐ Servidor Red</div>\n      <div style=\"font-size:10.5px; color:var(--text-muted); margin-top:2px;\">Modo texto multiusuario</div>\n    </div>\n    <!-- 4 -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:4px solid #64748B; border-radius:10px; padding:8px 4px; text-align:center;\">\n      <span style=\"background:#64748B; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px;\">4</span>\n      <div style=\"font-weight:800; font-size:12px; color:var(--text);\">Personalizado</div>\n      <div style=\"font-size:10.5px; color:var(--text-muted); margin-top:2px;\">Libre para admin</div>\n    </div>\n    <!-- 5 -->\n    <div style=\"background:var(--surface-alt); border:2px solid #16A34A; border-top:4px solid #16A34A; border-radius:10px; padding:8px 4px; text-align:center; box-shadow:0 2px 6px rgba(22,163,74,0.15);\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px;\">5</span>\n      <div style=\"font-weight:800; font-size:12px; color:var(--success);\">⭐ Escritorio GUI</div>\n      <div style=\"font-size:10.5px; color:var(--text-muted); margin-top:2px;\">Gráfico completo</div>\n    </div>\n    <!-- 6 -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:4px solid #EA580C; border-radius:10px; padding:8px 4px; text-align:center;\">\n      <span style=\"background:#EA580C; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px;\">6</span>\n      <div style=\"font-weight:800; font-size:12px; color:var(--text);\">Reinicio Total</div>\n      <div style=\"font-size:10.5px; color:var(--text-muted); margin-top:2px;\">Reboot ordenado</div>\n    </div>\n  </div>\n\n  <!-- Consola y Explicación de 'unknown' y 'N' -->\n  <div style=\"background:#0F172A; border:2px solid #334155; border-radius:10px; padding:10px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; color:#F8FAFC;\">\n    <div style=\"color:#64748B;\"># ¿Cómo interpretar las salidas del comando 'runlevel'?:</div>\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px;\">\n      <div>\n        <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@linux:~$</span> runlevel</div>\n        <div style=\"color:#FCD34D;\">N 5</div>\n        <div style=\"color:#94A3B8; font-size:11px; margin-top:3px;\">\n          • <strong style=\"color:#FFF;\">'N' (None):</strong> No hubo nivel previo (el PC arrancó directo en este estado).<br>\n          • <strong style=\"color:#FFF;\">'5':</strong> Nivel de ejecución actual (Modo Gráfico).\n        </div>\n      </div>\n      <div>\n        <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@linux:~$</span> runlevel</div>\n        <div style=\"color:#F87171;\">unknown</div>\n        <div style=\"color:#94A3B8; font-size:11px; margin-top:3px;\">\n          • <strong style=\"color:#FFF;\">'unknown':</strong> Típico en <code>systemd</code> puro. Ocurre si el sistema arrancó sin registrar un runlevel en el archivo <code>/run/utmp</code>.\n        </div>\n      </div>\n    </div>\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE TOP DE EXAMEN: Los dos reyes absolutos son el Nivel 3 (Servidor en modo consola con red) y el Nivel 5 (Puesto de trabajo con escritorio gráfico). Si 'runlevel' devuelve 'unknown', es porque systemd arrancó directamente sin usar la tabla utmp de SysV."
+        }
+      ],
+      "notes": "Guión didáctico para clase:\n1. ¿POR QUÉ SALE 'unknown' EN RUNLEVEL?:\n   - 'runlevel' lee el archivo histórico /run/utmp.\n   - En distribuciones modernas con systemd nativo, los runlevels no existen físicamente. Si el sistema no inicializó utmp con compatibilidad SysV, runlevel responde 'unknown'.\n   - 'N 5': 'N' significa 'None' (sin nivel previo), '5' es el nivel actual.\n2. LOS TRES NIVELES QUE SE PREGUNTAN SIEMPRE:\n   - Nivel 1 (Single / Rescate)\n   - Nivel 3 (Servidor en texto con red)\n   - Nivel 5 (Escritorio gráfico GUI)\n3. ADVERTENCIA: Jamás poner nivel 0 ni nivel 6 como predeterminado en /etc/inittab, o la máquina se apagará o reiniciará en bucle infinito."
+    },
+    {
+      "id": "101.3-slide-4",
+      "slideNumber": 4,
+      "title": "El Archivo Maestro /etc/inittab y la Acción initdefault",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Archivo Maestro /etc/inittab y la Acción initdefault"
+        },
+        {
+          "type": "paragraph",
+          "text": "Formato de `/etc/inittab`: estructura de 4 campos y ejemplos prácticos de configuración:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "",
+          "title": "/etc/inittab"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1.15fr 1fr; gap:16px; margin-top:6px;\">\n  \n  <!-- Columna Izquierda: Archivo Completo y Anatomía -->\n  <div style=\"display:flex; flex-direction:column; gap:10px;\">\n    \n    <!-- Anatomía de los 4 campos -->\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:10px; padding:10px 14px;\">\n      <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n        📋 Los 4 campos separados por dos puntos (<code>:</code>):\n      </div>\n      <div style=\"background:#0F172A; color:#E2E8F0; padding:6px 12px; border-radius:6px; font-family:monospace; font-size:13.5px; margin-bottom:6px;\">\n        <span style=\"color:#38BDF8; font-weight:bold;\">id</span>:<span style=\"color:#FBBF24; font-weight:bold;\">runlevels</span>:<span style=\"color:#4ADE80; font-weight:bold;\">action</span>:<span style=\"color:#F472B6; font-weight:bold;\">process</span>\n      </div>\n      <div style=\"font-size:11.5px; color:var(--text-muted); line-height:1.4;\">\n        • <strong style=\"color:#0284C7;\">id:</strong> Identificador (1-4 caracteres) | • <strong style=\"color:#B45309;\">runlevels:</strong> Niveles donde aplica (ej: <code>35</code>)<br>\n        • <strong style=\"color:#16A34A;\">action:</strong> <code>initdefault</code>, <code>respawn</code>, <code>wait</code>, <code>ctrlaltdel</code> | • <strong style=\"color:#BE185D;\">process:</strong> Comando a correr\n      </div>\n    </div>\n\n    <!-- Archivo Real Completo -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-radius:10px; padding:10px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; line-height:1.5;\">\n      <div style=\"color:var(--primary); font-weight:bold; font-size:11px; margin-bottom:4px;\"># Fichero real completo /etc/inittab:</div>\n      <div><strong style=\"color:var(--primary);\">id:3:initdefault:</strong> <span style=\"color:var(--text-muted);\"># Nivel de arranque por defecto (Servidor)</span></div>\n      <div>si::sysinit:/etc/rc.d/rc.sysinit <span style=\"color:var(--text-muted);\"># Inicialización del hardware</span></div>\n      <div>l3:3:wait:/etc/rc.d/rc 3 <span style=\"color:var(--text-muted);\"># Espera a que los scripts terminen</span></div>\n      <div>1:2345:respawn:/sbin/getty 38400 tty1 <span style=\"color:var(--text-muted);\"># Reabre login si se cierra</span></div>\n      <div>ca::ctrlaltdel:/sbin/shutdown -t3 -r now <span style=\"color:var(--text-muted);\"># Acción al pulsar Ctrl+Alt+Supr</span></div>\n    </div>\n\n  </div>\n\n  <!-- Columna Derecha: 3 Escenarios Reales y Consulta -->\n  <div style=\"display:flex; flex-direction:column; gap:10px;\">\n    \n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:10px; padding:10px 14px;\">\n      <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n        💡 3 Escenarios Prácticos de Configuración:\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:6px; font-size:11.5px; line-height:1.35;\">\n        <div style=\"background:var(--surface-alt); border-left:3px solid var(--primary); padding:6px 8px; border-radius:4px;\">\n          <strong>1. Servidor de Producción:</strong> <code>id:3:initdefault:</code><br>\n          Arranca en consola con red, ahorrando toda la memoria RAM de la interfaz gráfica.\n        </div>\n        <div style=\"background:var(--surface-alt); border-left:3px solid var(--success); padding:6px 8px; border-radius:4px;\">\n          <strong>2. Puesto de Oficina:</strong> <code>id:5:initdefault:</code><br>\n          Arranca automáticamente con escritorio gráfico para el usuario.\n        </div>\n        <div style=\"background:var(--surface-alt); border-left:3px solid var(--warning); padding:6px 8px; border-radius:4px;\">\n          <strong>3. Terminal Kiosko / Cajero:</strong> <code>k1:2345:respawn:/usr/bin/app</code><br>\n          Si la aplicación falla o alguien la cierra, <code>init</code> la <strong>reinicia al instante</strong>.\n        </div>\n      </div>\n    </div>\n\n    <!-- Consola de Consulta -->\n    <div style=\"background:#0F172A; border:2px solid #334155; border-radius:10px; padding:10px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:11.5px; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># Consultar nivel por defecto configurado:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@sysv:~$</span> grep initdefault /etc/inittab</div>\n      <div style=\"color:#FCD34D;\">id:3:initdefault:</div>\n      <div style=\"color:#94A3B8; font-size:10.5px; margin-top:4px;\">⚠️ Recuerda: En systemd este archivo NO existe (se usa default.target).</div>\n    </div>\n\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE TOP DE EXAMEN: En la línea 'initdefault', el cuarto campo (process) se deja SIEMPRE VACÍO (ej: id:3:initdefault:). Poner un comando o ruta ahí provoca un error de sintaxis."
+        }
+      ],
+      "notes": "Explica la estructura de 4 campos separados por dos puntos: id : runlevels : action : process. Es evaluada frecuentemente."
+    },
+    {
+      "id": "101.3-slide-5",
+      "slideNumber": 5,
+      "title": "Gestión de Niveles en SysV: runlevel, telinit y /etc/rcX.d/",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Gestión de Niveles en SysV: runlevel, telinit y /etc/rcX.d/"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué significa `/etc/rcX.d/`, cómo se organizan sus enlaces y cómo cambiar de nivel con `telinit`?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "runlevel | telinit | init",
+          "title": "Consultar el nivel previo y actual, y solicitar la transición hacia un nuevo nivel"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "runlevel",
+              "",
+              "🎯 Clave de Examen: Muestra dos caracteres: el nivel previo (N = ninguno si no ha cambiado desde el arranque) y el nivel actual."
+            ],
+            [
+              "telinit <0-6>",
+              "",
+              "Solicita a init cambiar al nivel indicado (ej: telinit 1 pasa a monousuario; telinit 6 reinicia)."
+            ],
+            [
+              "telinit q / Q",
+              "",
+              "🎯 Clave de Examen: Recarga el archivo /etc/inittab sin necesidad de reiniciar el sistema."
+            ],
+            [
+              "Prefijo 'S' (Start)",
+              "",
+              "En /etc/rcX.d/, los enlaces que empiezan por S (ej: S01ssh) arrancan el servicio pasando el argumento 'start'."
+            ],
+            [
+              "Prefijo 'K' (Kill)",
+              "",
+              "Los enlaces que empiezan por K (ej: K01apache2) detienen el servicio pasando el argumento 'stop'."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1.1fr 1fr; gap:16px; margin-top:8px;\">\n  \n  <!-- Columna Izquierda: Qué es /etc/rcX.d/ y los Enlaces -->\n  <div style=\"display:flex; flex-direction:column; gap:10px;\">\n    \n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; padding:12px 14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n        📁 ¿Qué es exactamente el directorio <code>/etc/rcX.d/</code>?:\n      </div>\n      <div style=\"font-size:12px; color:var(--text-muted); line-height:1.45;\">\n        • <strong>'rc'</strong> significa <em>Run Commands</em> (órdenes de ejecución).<br>\n        • La <strong>'X'</strong> es el número del runlevel (ej: <code>/etc/rc3.d/</code> para nivel 3; <code>/etc/rc5.d/</code> para nivel 5).<br>\n        • <strong>No contiene scripts reales:</strong> contiene <em>enlaces simbólicos</em> (accesos directos) que apuntan a los scripts reales en <code>/etc/init.d/</code>.\n      </div>\n    </div>\n\n    <!-- Regla de Enlaces K y S -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-radius:10px; padding:10px 14px; font-size:12px; display:flex; flex-direction:column; gap:6px;\">\n      <div style=\"font-weight:800; color:var(--text);\">🔄 Orden de Ejecución al cambiar de nivel:</div>\n      <div style=\"border-left:3px solid #EF4444; padding-left:8px;\">\n        <strong style=\"color:#DC2626;\">1. Enlaces K (Kill):</strong> Pasan el argumento <code>stop</code>. Se ejecutan <strong>primero</strong> en orden numérico (K01 a K99) para detener lo que no pertenezca al nuevo nivel.\n      </div>\n      <div style=\"border-left:3px solid #16A34A; padding-left:8px;\">\n        <strong style=\"color:#16A34A;\">2. Enlaces S (Start):</strong> Pasan el argumento <code>start</code>. Se ejecutan <strong>después</strong> en orden numérico (S01 a S99) para levantar los servicios del nuevo nivel.\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Columna Derecha: Terminal Real sin Duplicidades -->\n  <div style=\"background:#0F172A; border:2px solid #334155; border-radius:12px; overflow:hidden; box-shadow:0 6px 16px rgba(15,23,42,0.18);\">\n    <div style=\"background:#1E293B; padding:8px 14px; border-bottom:1px solid #334155; display:flex; align-items:center; justify-content:space-between;\">\n      <span style=\"font-family:monospace; font-size:12px; color:#94A3B8;\">bash — transiciones de nivel</span>\n      <span style=\"font-size:11px; color:#38BDF8; font-weight:700;\">Consola SysVinit</span>\n    </div>\n    <div style=\"padding:12px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; line-height:1.55; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># 1. Cambiar de nivel en caliente (ej: pasar a rescate):</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@sysv:~#</span> telinit 1</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@sysv:~#</span> runlevel</div>\n      <div style=\"color:#FCD34D;\">5 1</div>\n      <div style=\"color:#94A3B8; font-size:11px;\">↳ Estaba en nivel 5 y acaba de pasar al nivel 1</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 2. Recargar /etc/inittab sin reiniciar el equipo:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@sysv:~#</span> telinit q</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 3. Comprobar que S01ssh es un symlink a /etc/init.d/ssh:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@sysv:~#</span> ls -l /etc/rc3.d/S01ssh</div>\n      <div style=\"color:#34D399;\">lrwxrwxrwx 1 root root 13 /etc/rc3.d/S01ssh -> ../init.d/ssh</div>\n    </div>\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Examen: Los scripts reales están todos en /etc/init.d/. En /etc/rcX.d/ solo hay enlaces simbólicos cuyo número de 2 dígitos (01-99) indica el orden exacto de ejecución."
+        }
+      ],
+      "notes": "Muestra la salida de runlevel: 'N 3' significa que arrancó en nivel 3 y no ha cambiado. '3 5' significa que venía de 3 y ahora está en 5."
+    },
+    {
+      "id": "101.3-slide-6",
+      "slideNumber": 6,
+      "title": "Arquitectura de systemd: Unidades y Tipos",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Arquitectura de systemd: Unidades y Tipos"
+        },
+        {
+          "type": "paragraph",
+          "text": "systemd sustituye los viejos scripts por 'unidades' declarativas según el recurso que gestionan:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:12px; margin-top:6px;\">\n  \n  <!-- 4 Tarjetas Visuales Grandes de Tipos de Unidades -->\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:12px;\">\n    \n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-top:4px solid var(--primary); border-radius:12px; padding:12px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:4px;\">\n        <span style=\"font-size:18px;\">⚙️</span>\n        <div style=\"font-weight:800; font-size:15px; color:var(--primary);\">.service</div>\n      </div>\n      <div style=\"font-size:12px; color:var(--text); font-weight:700; margin-bottom:3px;\">Servicios y Demonios</div>\n      <div style=\"font-size:11.5px; color:var(--text-muted); line-height:1.35;\">\n        Programas de fondo continuos.<br>Ejemplos: <code>sshd.service</code>, <code>nginx.service</code>.\n      </div>\n    </div>\n\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-top:4px solid var(--success); border-radius:12px; padding:12px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:4px;\">\n        <span style=\"font-size:18px;\">🎯</span>\n        <div style=\"font-weight:800; font-size:15px; color:var(--success);\">.target</div>\n      </div>\n      <div style=\"font-size:12px; color:var(--text); font-weight:700; margin-bottom:3px;\">Estados y Grupos</div>\n      <div style=\"font-size:11.5px; color:var(--text-muted); line-height:1.35;\">\n        Agrupan servicios de arranque.<br>Ejemplos: <code>multi-user.target</code>, <code>graphical.target</code>.\n      </div>\n    </div>\n\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-top:4px solid var(--warning); border-radius:12px; padding:12px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:4px;\">\n        <span style=\"font-size:18px;\">🔌</span>\n        <div style=\"font-weight:800; font-size:15px; color:var(--warning-ink);\">.socket</div>\n      </div>\n      <div style=\"font-size:12px; color:var(--text); font-weight:700; margin-bottom:3px;\">Arranque por Red</div>\n      <div style=\"font-size:11.5px; color:var(--text-muted); line-height:1.35;\">\n        Escucha peticiones y despierta el servicio solo al recibir tráfico (ej: <code>cups.socket</code>).\n      </div>\n    </div>\n\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-top:4px solid #9333EA; border-radius:12px; padding:12px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:4px;\">\n        <span style=\"font-size:18px;\">⏱️</span>\n        <div style=\"font-weight:800; font-size:15px; color:#9333EA;\">.timer</div>\n      </div>\n      <div style=\"font-size:12px; color:var(--text); font-weight:700; margin-bottom:3px;\">Temporizadores</div>\n      <div style=\"font-size:11.5px; color:var(--text-muted); line-height:1.35;\">\n        Tareas programadas periódicas (el reemplazo moderno de <code>cron</code>).\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Jerarquía de Rutas y Consola Práctica -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1.15fr; gap:16px;\">\n    \n    <!-- Pirámide de Prioridad de Rutas -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-radius:12px; padding:12px 16px;\">\n      <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n        🏢 Jerarquía de Rutas (Prioridad en Sobreescritura):\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:6px; font-size:12px;\">\n        <div style=\"background:var(--surface); border-left:4px solid var(--primary); padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:var(--primary);\">1. /etc/systemd/system/ (MÁXIMA):</strong> Creado por el Administrador. Sobrescribe a todos los demás.\n        </div>\n        <div style=\"background:var(--surface); border-left:4px solid var(--warning); padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:var(--warning-ink);\">2. /run/systemd/system/ (VOLÁTIL):</strong> Generado en memoria RAM en runtime.\n        </div>\n        <div style=\"background:var(--surface); border-left:4px solid #64748B; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#475569;\">3. /lib/systemd/system/ (BASE):</strong> Archivos originales instalados por los paquetes (.deb/.rpm).\n        </div>\n      </div>\n    </div>\n\n    <!-- Consola Práctica -->\n    <div style=\"background:#0F172A; border:2px solid #334155; border-radius:12px; padding:12px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:11.5px; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># Ver servicios en ejecución y recargar tras editar un archivo:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@debian:~$</span> systemctl list-units --type=service --state=running | head -n 2</div>\n      <div style=\"color:#34D399;\">cron.service    loaded active running  Regular background program daemon</div>\n      <div style=\"color:#34D399;\">ssh.service     loaded active running  OpenBSD Secure Shell server</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 🎯 PREGUNTA TOP: Tras editar /etc/systemd/system/..., debes hacer:</div>\n      <div style=\"color:#FCD34D;\"><span style=\"color:#10B981;\">alumno@debian:~$</span> sudo systemctl daemon-reload</div>\n    </div>\n\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Si editas un archivo de unidad en /etc/systemd/system/, debes ejecutar inmediatamente 'systemctl daemon-reload' para que systemd lo cargue en memoria."
+        }
+      ],
+      "notes": "Muestra los 7 tipos de unidades. El sufijo define el comportamiento del recurso."
+    },
+    {
+      "id": "101.3-slide-7",
+      "slideNumber": 7,
+      "title": "Control Operativo de Servicios con systemctl",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Control Operativo de Servicios con systemctl"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo controlar servicios en vivo y cuál es la diferencia crítica entre restart y reload?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "systemctl",
+          "title": "Gestionar el estado en vivo de demonios y servicios (.service)"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "start <unidad>",
+              "",
+              "Arranca el servicio inmediatamente en la sesión actual."
+            ],
+            [
+              "stop <unidad>",
+              "",
+              "Detiene el servicio en ejecución inmediatamente."
+            ],
+            [
+              "restart <unidad>",
+              "",
+              "Reinicia el servicio (detiene y vuelve a arrancar)."
+            ],
+            [
+              "reload <unidad>",
+              "",
+              "Recarga la configuración del demonio sin cortar las conexiones activas."
+            ],
+            [
+              "status <unidad>",
+              "",
+              "🎯 Clave de Examen: Muestra si está cargado (Loaded), estado activo (Active), PID principal y últimos logs."
+            ],
+            [
+              "is-active <unidad>",
+              "",
+              "Devuelve texto ('active' o 'inactive') y código de salida 0 si está activo (ideal para scripts bash)."
+            ],
+            [
+              "is-failed <unidad>",
+              "",
+              "Devuelve código 0 si el servicio ha fallado durante la inicialización."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1.25fr; gap:16px; margin-top:8px;\">\n  \n  <!-- Columna Izquierda: Ciclo de Vida restart vs reload -->\n  <div style=\"display:flex; flex-direction:column; gap:10px;\">\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; padding:12px 14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n        🔄 Ciclo de Vida: restart frente a reload:\n      </div>\n      \n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:12px;\">\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--danger); padding:8px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--danger);\">systemctl restart nginx:</strong><br>\n          Mata el proceso y genera un <strong>nuevo PID</strong>. Corta momentáneamente las conexiones activas de los usuarios.\n        </div>\n\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--success); padding:8px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--success);\">systemctl reload nginx (Cero Caída):</strong><br>\n          Mantiene el <strong>mismo PID</strong>. Relee los archivos de configuración sin tirar a ningún cliente conectado.\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <!-- Columna Derecha: Terminal de Pruebas Reales -->\n  <div style=\"background:#0F172A; border:2px solid #334155; border-radius:12px; overflow:hidden; box-shadow:0 6px 16px rgba(15,23,42,0.18);\">\n    <div style=\"background:#1E293B; padding:8px 14px; border-bottom:1px solid #334155; display:flex; align-items:center; justify-content:space-between;\">\n      <span style=\"font-family:monospace; font-size:12px; color:#94A3B8;\">bash — inspección de servicios</span>\n      <span style=\"font-size:11px; color:#38BDF8; font-weight:700;\">systemctl en Vivo</span>\n    </div>\n    <div style=\"padding:12px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; line-height:1.55; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># 1. Comprobar estado detallado:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl status ssh</div>\n      <div style=\"color:#34D399;\">● ssh.service - OpenBSD Secure Shell server</div>\n      <div style=\"color:#E2E8F0;\">     Loaded: loaded (/lib/systemd/system/ssh.service; enabled)</div>\n      <div style=\"color:#E2E8F0;\">     Active: <strong style=\"color:#34D399;\">active (running)</strong> since Sun 2026-10-25; Main PID: 654</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 2. Recargar configuración de nginx sin cortar clientes:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl reload nginx</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 3. Comprobación rápida en scripts (devuelve exit code 0):</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl is-active ssh</div>\n      <div style=\"color:#34D399;\">active</div>\n    </div>\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Diferencia de Examen: 'restart' mata el proceso y lo vuelve a crear; 'reload' solo relee la configuración sin interrumpir el servicio (ej: recargar certificados en un servidor web)."
+        }
+      ],
+      "notes": "Haz leer a los alumnos la salida de status: 'loaded' significa que el archivo existe en disco; 'active (running)' que el proceso tiene un PID activo."
+    },
+    {
+      "id": "101.3-slide-8",
+      "slideNumber": 8,
+      "title": "Gestión de Servicios en el Arranque con systemctl",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Gestión de Servicios en el Arranque con systemctl"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo decidir qué demonios arrancan al encender el equipo y qué hace 'mask'?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "systemctl enable | disable | mask",
+          "title": "Habilitar, inhabilitar y enmascarar unidades para controlar el inicio automático"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "enable <unidad>",
+              "",
+              "🎯 Clave de Examen: Habilita el servicio para que arranque automáticamente al inicio creando un enlace simbólico en /etc/systemd/system/...wants/."
+            ],
+            [
+              "disable <unidad>",
+              "",
+              "Deshabilita el inicio automático eliminando el enlace simbólico (no detiene el servicio si está corriendo actualmente)."
+            ],
+            [
+              "mask <unidad>",
+              "",
+              "🎯 Pregunta de Examen: Enlaza el servicio a /dev/null. ¡Hace imposible iniciarlo, ni siquiera manualmente ni por dependencias de otros servicios!"
+            ],
+            [
+              "unmask <unidad>",
+              "",
+              "Elimina el enlace a /dev/null, permitiendo que el servicio vuelva a ser utilizado."
+            ],
+            [
+              "is-enabled <unidad>",
+              "",
+              "Comprueba si el servicio está programado para arrancar (devuelve 'enabled', 'disabled' o 'masked')."
+            ],
+            [
+              "list-units --type=service",
+              "",
+              "Lista todas las unidades de servicio activas en memoria."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1.25fr; gap:16px; margin-top:8px;\">\n  \n  <!-- Columna Izquierda: Los 3 Niveles de Control -->\n  <div style=\"display:flex; flex-direction:column; gap:10px;\">\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; padding:12px 14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n        🎯 Diferencias Fundamentales de Examen:\n      </div>\n      \n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:12px;\">\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--success); padding:8px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--success);\">enable:</strong> Crea un enlace simbólico en <code>.../multi-user.target.wants/</code>. Arranca automáticamente en el boot.\n        </div>\n\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--warning); padding:8px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--warning-ink);\">disable:</strong> Borra el symlink. No arrancará al inicio, pero <strong>sí puedes arrancarlo manualmente con 'start'</strong>.\n        </div>\n\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--danger); padding:8px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--danger);\">mask (Bloqueo Total):</strong> Apunta a <code>/dev/null</code>. <strong>Imposible iniciarlo</strong>, ni a mano ni por dependencias.\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <!-- Columna Derecha: Terminal de Pruebas Reales -->\n  <div style=\"background:#0F172A; border:2px solid #334155; border-radius:12px; overflow:hidden; box-shadow:0 6px 16px rgba(15,23,42,0.18);\">\n    <div style=\"background:#1E293B; padding:8px 14px; border-bottom:1px solid #334155; display:flex; align-items:center; justify-content:space-between;\">\n      <span style=\"font-family:monospace; font-size:12px; color:#94A3B8;\">bash — habilitar y bloquear</span>\n      <span style=\"font-size:11px; color:#38BDF8; font-weight:700;\">Comandos de Examen</span>\n    </div>\n    <div style=\"padding:12px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; line-height:1.55; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># 1. Habilitar y arrancar inmediatamente a la vez (--now):</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl enable --now mariadb</div>\n      <div style=\"color:#94A3B8; font-size:11px;\">Created symlink /etc/systemd/system/multi-user.target.wants/mariadb.service</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 2. Bloquear totalmente un servicio no deseado:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl mask apache2</div>\n      <div style=\"color:#94A3B8; font-size:11px;\">Created symlink /etc/systemd/system/apache2.service → /dev/null</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 3. Comprobar si está programado para arrancar:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl is-enabled apache2</div>\n      <div style=\"color:#EF4444; font-weight:bold;\">masked</div>\n    </div>\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta de Examen: ¿Qué comando impide totalmente que un servicio pueda ser iniciado por cualquier usuario o por otro servicio dependiente? Respuesta: systemctl mask <servicio>."
+        }
+      ],
+      "notes": "Explica la diferencia vital: 'disable' solo evita el arranque automático; 'mask' lo bloquea por completo apuntándolo a /dev/null."
+    },
+    {
+      "id": "101.3-slide-9",
+      "slideNumber": 9,
+      "title": "Equivalencias Directas: Targets de systemd vs Runlevels SysV",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Equivalencias Directas: Targets de systemd vs Runlevels SysV"
+        },
+        {
+          "type": "paragraph",
+          "text": "Esta tabla de equivalencias de arquitectura cae con absoluta certeza en el examen LPIC-1:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1.1fr 1fr; gap:16px; margin-top:6px;\">\n  \n  <!-- Columna Izquierda: Tabla Visual de Mapeo -->\n  <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; overflow:hidden;\">\n    <div style=\"background:var(--surface-alt); padding:8px 12px; font-weight:800; font-size:13px; color:var(--text); border-bottom:1px solid var(--border); display:grid; grid-template-columns: 110px 30px 150px 1fr;\">\n      <span>SysVinit</span><span></span><span>systemd Target</span><span>Propósito</span>\n    </div>\n    \n    <div style=\"display:flex; flex-direction:column; font-size:12px;\">\n      <div style=\"padding:6px 12px; display:grid; grid-template-columns: 110px 30px 150px 1fr; align-items:center; border-bottom:1px solid var(--border); background:var(--surface);\">\n        <strong style=\"color:#EF4444;\">Runlevel 0</strong><span>⇄</span><code style=\"color:#991B1B; font-weight:bold;\">poweroff.target</code><span>Apagar equipo</span>\n      </div>\n      <div style=\"padding:6px 12px; display:grid; grid-template-columns: 110px 30px 150px 1fr; align-items:center; border-bottom:1px solid var(--border); background:var(--surface-alt);\">\n        <strong style=\"color:#F59E0B;\">Runlevel 1 / S</strong><span>⇄</span><code style=\"color:#92400E; font-weight:bold;\">rescue.target</code><span>Rescate monousuario</span>\n      </div>\n      <div style=\"padding:6px 12px; display:grid; grid-template-columns: 110px 30px 150px 1fr; align-items:center; border-bottom:1px solid var(--border); background:var(--surface);\">\n        <strong style=\"color:#2563EB;\">Runlevels 2, 3, 4</strong><span>⇄</span><code style=\"color:#1E40AF; font-weight:bold;\">multi-user.target</code><span><strong>Servidor en texto</strong></span>\n      </div>\n      <div style=\"padding:6px 12px; display:grid; grid-template-columns: 110px 30px 150px 1fr; align-items:center; border-bottom:1px solid var(--border); background:var(--surface-alt);\">\n        <strong style=\"color:#16A34A;\">Runlevel 5</strong><span>⇄</span><code style=\"color:#14532D; font-weight:bold;\">graphical.target</code><span><strong>Escritorio GUI</strong></span>\n      </div>\n      <div style=\"padding:6px 12px; display:grid; grid-template-columns: 110px 30px 150px 1fr; align-items:center; background:var(--surface);\">\n        <strong style=\"color:#EA580C;\">Runlevel 6</strong><span>⇄</span><code style=\"color:#9A3412; font-weight:bold;\">reboot.target</code><span>Reiniciar máquina</span>\n      </div>\n    </div>\n  </div>\n\n  <!-- Columna Derecha: Demostración en Terminal Real -->\n  <div style=\"background:#0F172A; border:2px solid #334155; border-radius:12px; overflow:hidden; box-shadow:0 6px 16px rgba(15,23,42,0.18);\">\n    <div style=\"background:#1E293B; padding:8px 14px; border-bottom:1px solid #334155; display:flex; align-items:center; justify-content:space-between;\">\n      <span style=\"font-family:monospace; font-size:12px; color:#94A3B8;\">bash — compatibilidad de targets</span>\n      <span style=\"font-size:11px; color:#38BDF8; font-weight:700;\">Prueba en Debian</span>\n    </div>\n    <div style=\"padding:12px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; line-height:1.55; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># Ver cómo systemd mantiene los alias de SysV con symlinks:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@debian:~$</span> ls -l /lib/systemd/system/runlevel*.target | head -n 4</div>\n      <div style=\"color:#E2E8F0;\">runlevel1.target -> <span style=\"color:#FCD34D;\">rescue.target</span></div>\n      <div style=\"color:#E2E8F0;\">runlevel3.target -> <span style=\"color:#38BDF8;\">multi-user.target</span></div>\n      <div style=\"color:#E2E8F0;\">runlevel5.target -> <span style=\"color:#34D399;\">graphical.target</span></div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># Ver qué target está activo por defecto en la máquina:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@debian:~$</span> systemctl get-default</div>\n      <div style=\"color:#34D399;\">graphical.target</div>\n    </div>\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave Mnemotécnica: Recuerda las dos metas principales: multi-user.target = Runlevel 3 (Servidor); graphical.target = Runlevel 5 (Escritorio)."
+        }
+      ],
+      "notes": "Muestra que en systemd un target no es solo un modo de arranque: es un grupo de dependencias. graphical.target hereda y arranca todo lo que hay en multi-user.target más el entorno gráfico."
+    },
+    {
+      "id": "101.3-slide-10",
+      "slideNumber": 10,
+      "title": "Cambio de Objetivos en Vivo y Predeterminado en systemd",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Cambio de Objetivos en Vivo y Predeterminado en systemd"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo pasar de modo gráfico a modo consola en vivo y cómo fijar el target de inicio?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "systemctl isolate | get-default | set-default",
+          "title": "Conmutar el estado del sistema en vivo y configurar el target persistente"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "isolate <target>",
+              "",
+              "🎯 Clave de Examen: Cambia inmediatamente al objetivo indicado deteniendo todos los servicios que no pertenezcan al nuevo target (equivalente a telinit N)."
+            ],
+            [
+              "get-default",
+              "",
+              "Muestra el target que arrancará por defecto al encender el equipo."
+            ],
+            [
+              "set-default <target>",
+              "",
+              "🎯 Clave de Examen: Fija el target predeterminado modificando el enlace simbólico /etc/systemd/system/default.target."
+            ],
+            [
+              "systemd.unit=<target>",
+              "",
+              "Parámetro que se puede pasar al kernel en GRUB para arrancar temporalmente en otro target (ej: systemd.unit=rescue.target)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1.25fr; gap:16px; margin-top:8px;\">\n  \n  <!-- Columna Izquierda: isolate vs set-default -->\n  <div style=\"display:flex; flex-direction:column; gap:10px;\">\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; padding:12px 14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n        🎯 Dos formas de cambiar de target:\n      </div>\n      \n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:12px;\">\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--warning); padding:8px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--warning-ink);\">isolate &lt;target&gt; (En Caliente):</strong><br>\n          Cambia de estado ahora mismo. <strong>Apaga los servicios que sobren</strong> del target anterior (ej: cierra el escritorio gráfico si pasas a multi-user).\n        </div>\n\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--primary); padding:8px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--primary);\">set-default &lt;target&gt; (Para el Futuro):</strong><br>\n          Cambia a qué apunta el enlace simbólico <code>/etc/systemd/system/default.target</code>.\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <!-- Columna Derecha: Terminal de Pruebas Reales -->\n  <div style=\"background:#0F172A; border:2px solid #334155; border-radius:12px; overflow:hidden; box-shadow:0 6px 16px rgba(15,23,42,0.18);\">\n    <div style=\"background:#1E293B; padding:8px 14px; border-bottom:1px solid #334155; display:flex; align-items:center; justify-content:space-between;\">\n      <span style=\"font-family:monospace; font-size:12px; color:#94A3B8;\">bash — cambio de targets</span>\n      <span style=\"font-size:11px; color:#38BDF8; font-weight:700;\">systemctl isolate</span>\n    </div>\n    <div style=\"padding:12px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; line-height:1.55; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># 1. Apagar el entorno gráfico en caliente para liberar RAM:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl isolate multi-user.target</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 2. Fijar que el servidor arranque siempre en modo consola:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl set-default multi-user.target</div>\n      <div style=\"color:#94A3B8; font-size:11px;\">Removed /etc/systemd/system/default.target.</div>\n      <div style=\"color:#94A3B8; font-size:11px;\">Created symlink /etc/systemd/system/default.target → .../multi-user.target</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 3. Comprobar el target activo por defecto:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl get-default</div>\n      <div style=\"color:#34D399;\">multi-user.target</div>\n    </div>\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta de Examen: ¿A qué apunta físicamente /etc/systemd/system/default.target en un servidor sin interfaz gráfica? Respuesta: Es un enlace simbólico a /lib/systemd/system/multi-user.target."
+        }
+      ],
+      "notes": "Resalta el comando 'isolate': no solo arranca lo nuevo, sino que detiene los servicios que sobren. Si estás en graphical y haces 'isolate multi-user', cierra la GUI."
+    },
+    {
+      "id": "101.3-slide-11",
+      "slideNumber": 11,
+      "title": "Gestión de Energía y Suspensión: ACPI y systemd",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Gestión de Energía y Suspensión: ACPI y systemd"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué le ocurre exactamente al hardware (RAM, CPU, Disco y Batería) en cada estado de ahorro de energía?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin-top:2px;\">\n  \n  <!-- Fila Superior: 3 Opciones de Energía con Diagramas Gráficos y Ejemplos de Uso -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;\">\n    \n    <!-- 1. SUSPENSIÓN EN RAM -->\n    <div style=\"background:var(--surface); border:2px solid #BFDBFE; border-top:5px solid #2563EB; border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 3px 10px rgba(37,99,235,0.06);\">\n      <div>\n        <!-- Cabecera de la opción -->\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n          <div style=\"display:flex; align-items:center; gap:6px;\">\n            <span style=\"font-size:16px;\">⚡</span>\n            <span style=\"font-size:13.5px; font-weight:800; font-family:'JetBrains Mono', monospace; color:#1E40AF;\">systemctl suspend</span>\n          </div>\n          <span style=\"font-size:10px; font-weight:800; color:#1E40AF; background:#DBEAFE; padding:2px 7px; border-radius:5px; border:1px solid #93C5FD;\">ACPI S3</span>\n        </div>\n        <div style=\"font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:8px;\">Suspensión en RAM (Reposo ligero / Sleep)</div>\n        \n        <!-- Esquema Gráfico del Flujo de Hardware -->\n        <div style=\"background:var(--surface-alt); border:1.5px solid var(--border); border-radius:8px; padding:8px 10px; margin-bottom:8px;\">\n          <div style=\"font-size:10px; font-weight:800; text-transform:uppercase; color:#2563EB; letter-spacing:0.5px; margin-bottom:6px; display:flex; justify-content:space-between;\">\n            <span>Flujo de Hardware</span>\n            <span>⚡ RAM con corriente</span>\n          </div>\n          \n          <!-- Diagrama Gráfico -->\n          <div style=\"display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:10.5px; margin-bottom:6px;\">\n            <!-- Estado RAM -->\n            <div style=\"flex:1.1; background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:6px; padding:5px 6px; text-align:center;\">\n              <div style=\"font-weight:800; color:#1E40AF;\">🧠 Memoria RAM</div>\n              <div style=\"font-size:9.5px; color:#2563EB; font-weight:700;\">⚡ ALIMENTADA (1.2V)</div>\n              <div style=\"font-size:8.5px; color:#64748B;\">Mantiene apps vivas</div>\n            </div>\n            \n            <div style=\"font-weight:900; color:#94A3B8; font-size:12px;\">+</div>\n            \n            <!-- Estado CPU/Disco -->\n            <div style=\"flex:1.1; background:#F1F5F9; border:1.5px solid #CBD5E1; border-radius:6px; padding:5px 6px; text-align:center;\">\n              <div style=\"font-weight:800; color:#475569;\">⚙️ CPU y Disco</div>\n              <div style=\"font-size:9.5px; color:#64748B; font-weight:700;\">💤 DORMIDOS (0W)</div>\n              <div style=\"font-size:8.5px; color:#94A3B8;\">Ventiladores off</div>\n            </div>\n          </div>\n\n          <!-- Métricas clave en pastillas -->\n          <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:4px; font-size:10px;\">\n            <div style=\"background:#DCFCE7; color:#166534; padding:3px 6px; border-radius:4px; font-weight:700; text-align:center;\">\n              ⏱️ Despertar: 1 seg\n            </div>\n            <div style=\"background:#FEF3C7; color:#92400E; padding:3px 6px; border-radius:4px; font-weight:700; text-align:center;\">\n              🔋 Drenaje: 1-2%/h\n            </div>\n          </div>\n        </div>\n\n        <!-- Alerta de peligro -->\n        <div style=\"background:#FEF2F2; border-left:3px solid #DC2626; padding:5px 8px; border-radius:4px; font-size:10px; color:#991B1B; margin-bottom:8px; line-height:1.3;\">\n          ⚠️ <strong>Riesgo crítico:</strong> Si la batería se agota al 0% o se desenchufa la torre, la RAM pierde corriente y <strong>se pierden todos los datos no guardados</strong>.\n        </div>\n      </div>\n\n      <!-- Ejemplo Gráfico Real -->\n      <div style=\"background:#F0F9FF; border:1.5px dashed #0284C7; border-radius:6px; padding:6px 8px; font-size:10.5px; color:#0369A1; line-height:1.35;\">\n        ☕ <strong>Ejemplo real:</strong> Cerrar la tapa del portátil para ir a una reunión de 20 min en otra sala. Al abrir la tapa, el escritorio se reactiva en 1 segundo de inmediato.\n      </div>\n    </div>\n\n    <!-- 2. HIBERNACIÓN EN SWAP -->\n    <div style=\"background:var(--surface); border:2px solid #BBF7D0; border-top:5px solid #16A34A; border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 3px 10px rgba(22,163,74,0.06);\">\n      <div>\n        <!-- Cabecera de la opción -->\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n          <div style=\"display:flex; align-items:center; gap:6px;\">\n            <span style=\"font-size:16px;\">💾</span>\n            <span style=\"font-size:13.5px; font-weight:800; font-family:'JetBrains Mono', monospace; color:#15803D;\">systemctl hibernate</span>\n          </div>\n          <span style=\"font-size:10px; font-weight:800; color:#15803D; background:#DCFCE7; padding:2px 7px; border-radius:5px; border:1px solid #86EFAC;\">ACPI S4</span>\n        </div>\n        <div style=\"font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:8px;\">Hibernación Profunda (Volcado a Swap y Apagado)</div>\n        \n        <!-- Esquema Gráfico del Flujo de Hardware -->\n        <div style=\"background:var(--surface-alt); border:1.5px solid var(--border); border-radius:8px; padding:8px 10px; margin-bottom:8px;\">\n          <div style=\"font-size:10px; font-weight:800; text-transform:uppercase; color:#16A34A; letter-spacing:0.5px; margin-bottom:6px; display:flex; justify-content:space-between;\">\n            <span>Flujo de Volcado</span>\n            <span>🔌 Cero Consumo (0W)</span>\n          </div>\n          \n          <!-- Diagrama Gráfico con Flecha de Volcado -->\n          <div style=\"display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:10.5px; margin-bottom:6px;\">\n            <!-- Origen RAM -->\n            <div style=\"flex:1; background:#FEE2E2; border:1.5px solid #FCA5A5; border-radius:6px; padding:5px 4px; text-align:center;\">\n              <div style=\"font-weight:800; color:#991B1B;\">🧠 RAM</div>\n              <div style=\"font-size:8.5px; color:#DC2626;\">Copia 100% datos</div>\n            </div>\n            \n            <!-- Flecha de transferencia -->\n            <div style=\"display:flex; flex-direction:column; align-items:center;\">\n              <span style=\"font-size:9px; font-weight:800; color:#16A34A;\">volcado</span>\n              <span style=\"font-size:13px; font-weight:900; color:#16A34A; line-height:1;\">➔</span>\n            </div>\n            \n            <!-- Destino Swap -->\n            <div style=\"flex:1; background:#DCFCE7; border:1.5px solid #86EFAC; border-radius:6px; padding:5px 4px; text-align:center;\">\n              <div style=\"font-weight:800; color:#166534;\">💾 Swap Disco</div>\n              <div style=\"font-size:8.5px; color:#16A34A;\">Grabado en SSD/HDD</div>\n            </div>\n\n            <div style=\"font-weight:900; color:#94A3B8; font-size:11px;\">➔</div>\n\n            <!-- Apagado total -->\n            <div style=\"flex:0.9; background:#F1F5F9; border:1.5px solid #CBD5E1; border-radius:6px; padding:5px 4px; text-align:center;\">\n              <div style=\"font-weight:800; color:#475569;\">🔌 0 Watts</div>\n              <div style=\"font-size:8.5px; color:#64748B;\">PC Apagado</div>\n            </div>\n          </div>\n\n          <!-- Métricas clave en pastillas -->\n          <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:4px; font-size:10px;\">\n            <div style=\"background:#E0E7FF; color:#3730A3; padding:3px 6px; border-radius:4px; font-weight:700; text-align:center;\">\n              ⏱️ Despertar: 10-15s\n            </div>\n            <div style=\"background:#DCFCE7; color:#166534; padding:3px 6px; border-radius:4px; font-weight:700; text-align:center;\">\n              🔋 Drenaje: 0% (0 Vatios)\n            </div>\n          </div>\n        </div>\n\n        <!-- Ventaja de seguridad -->\n        <div style=\"background:#F0FDF4; border-left:3px solid #16A34A; padding:5px 8px; border-radius:4px; font-size:10px; color:#166534; margin-bottom:8px; line-height:1.3;\">\n          🛡️ <strong>Seguridad 100%:</strong> Puedes extraer la batería o desenchufar el equipo durante meses; <strong>los datos siguen grabados en el disco</strong>.\n        </div>\n      </div>\n\n      <!-- Ejemplo Gráfico Real -->\n      <div style=\"background:#ECFDF5; border:1.5px dashed #059669; border-radius:6px; padding:6px 8px; font-size:10.5px; color:#065F46; line-height:1.35;\">\n        ✈️ <strong>Ejemplo real:</strong> Meter el portátil en la maleta para un viaje de 14 horas de avión. Cero gasto de batería y al encender todo está tal y como lo dejaste.\n      </div>\n    </div>\n\n    <!-- 3. SUSPENSIÓN HÍBRIDA -->\n    <div style=\"background:var(--surface); border:2px solid #E9D5FF; border-top:5px solid #9333EA; border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 3px 10px rgba(147,51,234,0.06);\">\n      <div>\n        <!-- Cabecera de la opción -->\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n          <div style=\"display:flex; align-items:center; gap:6px;\">\n            <span style=\"font-size:16px;\">🛡️</span>\n            <span style=\"font-size:13px; font-weight:800; font-family:'JetBrains Mono', monospace; color:#6B21A8;\">systemctl hybrid-sleep</span>\n          </div>\n          <span style=\"font-size:10px; font-weight:800; color:#6B21A8; background:#F3E8FF; padding:2px 7px; border-radius:5px; border:1px solid #D8B4FE;\">S3 + S4</span>\n        </div>\n        <div style=\"font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:8px;\">Suspensión Híbrida (Doble Salvavidas Inteligente)</div>\n        \n        <!-- Esquema Gráfico del Flujo de Hardware -->\n        <div style=\"background:var(--surface-alt); border:1.5px solid var(--border); border-radius:8px; padding:8px 10px; margin-bottom:8px;\">\n          <div style=\"font-size:10px; font-weight:800; text-transform:uppercase; color:#9333EA; letter-spacing:0.5px; margin-bottom:6px; display:flex; justify-content:space-between;\">\n            <span>Doble Escritura Paralela</span>\n            <span>⚡ RAM + 💾 Swap</span>\n          </div>\n          \n          <!-- Diagrama Gráfico con Bifurcación -->\n          <div style=\"display:flex; flex-direction:column; gap:4px; font-size:10px; margin-bottom:6px;\">\n            <div style=\"display:flex; align-items:center; justify-content:space-between; gap:6px; background:#FAF5FF; border:1px solid #E9D5FF; padding:4px 6px; border-radius:5px;\">\n              <span>🔋 <strong>Si hay batería:</strong></span>\n              <span style=\"color:#16A34A; font-weight:800;\">⚡ Despierta en 1s (lee RAM)</span>\n            </div>\n            <div style=\"display:flex; align-items:center; justify-content:space-between; gap:6px; background:#FAF5FF; border:1px solid #E9D5FF; padding:4px 6px; border-radius:5px;\">\n              <span>🪫 <strong>Si muere batería:</strong></span>\n              <span style=\"color:#9333EA; font-weight:800;\">💾 Recupera de Swap (0 pérdida)</span>\n            </div>\n          </div>\n\n          <!-- Métricas clave en pastillas -->\n          <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:4px; font-size:10px;\">\n            <div style=\"background:#DCFCE7; color:#166534; padding:3px 6px; border-radius:4px; font-weight:700; text-align:center;\">\n              ⚡ Rapidez de S3\n            </div>\n            <div style=\"background:#F3E8FF; color:#6B21A8; padding:3px 6px; border-radius:4px; font-weight:700; text-align:center;\">\n              🛡️ Protección de S4\n            </div>\n          </div>\n        </div>\n\n        <!-- Ventaja de seguridad -->\n        <div style=\"background:#FAF5FF; border-left:3px solid #9333EA; padding:5px 8px; border-radius:4px; font-size:10px; color:#581C87; margin-bottom:8px; line-height:1.3;\">\n          🌟 <strong>Lo mejor de dos mundos:</strong> No sufres la lentitud del arranque de hibernación, pero tampoco tienes miedo de quedarte sin batería en la mochila.\n        </div>\n      </div>\n\n      <!-- Ejemplo Gráfico Real -->\n      <div style=\"background:#FAF5FF; border:1.5px dashed #A855F7; border-radius:6px; padding:6px 8px; font-size:10.5px; color:#6B21A8; line-height:1.35;\">\n        🎒 <strong>Ejemplo real:</strong> Te vas de la oficina el viernes con el portátil al 15% de batería. Duerme en RAM; cuando la batería muere de madrugada, la Swap rescata tu sesión intacta el lunes.\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Fila Inferior: Medidor Gráfico Swap vs RAM + Consola + Demonio acpid -->\n  <div style=\"display:grid; grid-template-columns: 1.15fr 1fr; gap:12px;\">\n    \n    <!-- Medidor Gráfico Swap >= RAM -->\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; padding:10px 14px;\">\n      <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;\">\n        <span>📊 Ecuación Gráfica de Examen: Swap frente a Memoria RAM</span>\n        <span style=\"font-size:10.5px; background:#DCFCE7; color:#166534; font-weight:800; padding:2px 8px; border-radius:4px;\">✔️ Apto para Hibernar</span>\n      </div>\n      \n      <!-- Barras visuales comparativas -->\n      <div style=\"display:flex; flex-direction:column; gap:6px;\">\n        <div>\n          <div style=\"display:flex; justify-content:space-between; font-size:11px; font-weight:700; margin-bottom:2px;\">\n            <span>Memoria RAM Física del Equipo (Datos activos)</span>\n            <span style=\"color:#D97706;\">7.7 GiB</span>\n          </div>\n          <div style=\"height:12px; background:var(--surface-alt); border-radius:6px; overflow:hidden; border:1px solid var(--border);\">\n            <div style=\"width:77%; height:100%; background:linear-gradient(90deg, #F59E0B, #D97706); border-radius:5px;\"></div>\n          </div>\n        </div>\n\n        <div>\n          <div style=\"display:flex; justify-content:space-between; font-size:11px; font-weight:700; margin-bottom:2px;\">\n            <span>Partición Swap en Disco SSD/HDD (Espacio disponible para volcar)</span>\n            <span style=\"color:#16A34A;\">8.0 GiB (Mayor que la RAM)</span>\n          </div>\n          <div style=\"height:12px; background:var(--surface-alt); border-radius:6px; overflow:hidden; border:1px solid var(--border);\">\n            <div style=\"width:80%; height:100%; background:linear-gradient(90deg, #22C55E, #16A34A); border-radius:5px;\"></div>\n          </div>\n        </div>\n      </div>\n\n      <div style=\"font-size:11px; color:var(--text-muted); margin-top:6px; line-height:1.35;\">\n        🎯 <strong>Regla sagrada LPIC-1:</strong> La partición Swap <strong>debe ser mayor o igual (≥) que la RAM física</strong>. Si la Swap mide menos (ej: 4 GB Swap con 8 GB RAM), el kernel se quedará sin espacio para volcar la memoria y cancelará la hibernación.\n      </div>\n    </div>\n\n    <!-- Consola Real + demonio acpid -->\n    <div style=\"display:flex; flex-direction:column; gap:6px;\">\n      <div style=\"background:#0F172A; border:2px solid #334155; border-radius:10px; padding:8px 12px; font-family:'JetBrains Mono', Consolas, monospace; font-size:11px; line-height:1.45; color:#F8FAFC;\">\n        <div style=\"color:#64748B;\"># Comprobar si la Swap es suficiente antes de hibernar:</div>\n        <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@portatil:~$</span> free -h</div>\n        <div style=\"color:#E2E8F0;\">Mem:   total: <strong style=\"color:#F59E0B;\">7.7Gi</strong> &nbsp; Swap: total: <strong style=\"color:#34D399;\">8.0Gi</strong></div>\n        \n        <div style=\"color:#64748B; margin-top:4px;\"># Ordenar la hibernación por terminal:</div>\n        <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@portatil:~$</span> sudo systemctl hibernate</div>\n      </div>\n\n      <div style=\"background:var(--surface-alt); border:1.5px solid var(--border-strong); border-radius:8px; padding:6px 10px; font-size:11px; display:flex; align-items:center; gap:8px;\">\n        <span style=\"font-size:15px;\">🔌</span>\n        <div style=\"line-height:1.3;\">\n          <strong>Demonio acpid:</strong> Escucha pulsaciones del botón Power, cierre de tapa o batería baja y dispara los scripts de <code>/etc/acpi/</code>.\n        </div>\n      </div>\n    </div>\n\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE TOP DE EXAMEN: Para que 'systemctl hibernate' funcione, el tamaño de la partición Swap DEBE ser al menos igual o mayor que la memoria RAM física (Swap >= RAM). Si no hay espacio suficiente para volcar la RAM, la hibernación fallará."
+        }
+      ],
+      "notes": "Guión didáctico para clase:\n1. RESUMEN VISUAL DE LOS 3 MODOS:\n   - Suspend (S3): La RAM sigue alimentada. CPU y discos apagados. Despierta en 1 segundo. Si se acaba la batería, se pierde la sesión.\n   - Hibernate (S4): Vuelca toda la RAM al Swap y apaga el ordenador al 100%. Consumo 0 vatios. Puedes quitar la batería y no pasa nada. Despierta más lento porque tiene que leer el disco.\n   - Hybrid-Sleep: Guarda en Swap y a la vez deja la RAM encendida. Despierta rápido, pero si se corta la corriente tiene el salvavidas en el disco.\n2. PREGUNTA CLÁSICA DE EXAMEN LPIC-1:\n   - ¿Qué requisito de disco es indispensable para hibernar?\n   - Respuesta: Partición Swap con tamaño mayor o igual que la memoria RAM física.\n3. DEMONIO ACPID:\n   - Es el que escucha eventos del chasis (pulsar botón de power, cerrar la tapa del portátil, desenchufar el cargador)."
+    },
+    {
+      "id": "101.3-slide-12",
+      "slideNumber": 12,
+      "title": "El Gestor de Transición Upstart (Ubuntu Legacy)",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Gestor de Transición Upstart (Ubuntu Legacy)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Entre SysVinit y systemd, Ubuntu utilizó Upstart: un gestor basado en eventos y tareas:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin-top:2px;\">\n  \n  <!-- Fila Superior: Diagrama Gráfico del Funcionamiento de Upstart (Modelo de Eventos) -->\n  <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; padding:12px 14px; box-shadow:0 3px 10px rgba(0,0,0,0.04);\">\n    <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:var(--text); display:flex; align-items:center; gap:8px;\">\n        <span>⚡</span>\n        <span>¿Cómo funciona Upstart en la práctica? El Ciclo de Vida Guiado por Eventos</span>\n      </div>\n      <span style=\"font-size:10.5px; font-weight:700; color:#0284C7; background:#E0F2FE; padding:2px 8px; border-radius:5px; border:1px solid #BAE6FD;\">\n        Reemplazó el orden secuencial rígido de SysVinit\n      </span>\n    </div>\n\n    <!-- 3 Pasos del Ciclo de Vida de Upstart -->\n    <div style=\"display:grid; grid-template-columns: 1fr 30px 1.25fr 30px 1fr; align-items:center; gap:4px;\">\n      \n      <!-- PASO 1: Se produce un evento -->\n      <div style=\"background:#FFFBEB; border:1.5px solid #FDE68A; border-top:4px solid #D97706; border-radius:10px; padding:8px 10px; height:100%; display:flex; flex-direction:column; justify-content:space-between;\">\n        <div>\n          <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n            <span style=\"font-size:10px; font-weight:800; color:#B45309; text-transform:uppercase;\">1. Ocurre un Evento</span>\n            <span style=\"font-size:14px;\">🔔</span>\n          </div>\n          <div style=\"font-size:12px; font-weight:800; color:#92400E; margin-bottom:4px;\">El Hardware o Kernel avisan</div>\n          <div style=\"font-size:10.5px; color:#78350F; line-height:1.35;\">\n            Upstart no sigue una lista estricta. Escucha señales del sistema en tiempo real:\n          </div>\n        </div>\n        <div style=\"display:flex; flex-direction:column; gap:3px; margin-top:6px; font-family:'JetBrains Mono', monospace; font-size:9.5px;\">\n          <div style=\"background:#FEF3C7; padding:2px 6px; border-radius:4px; color:#92400E;\">• startup <span style=\"color:#B45309;\">(arranque)</span></div>\n          <div style=\"background:#FEF3C7; padding:2px 6px; border-radius:4px; color:#92400E;\">• filesystem <span style=\"color:#B45309;\">(discos listos)</span></div>\n          <div style=\"background:#FEF3C7; padding:2px 6px; border-radius:4px; color:#92400E;\">• net-device-up <span style=\"color:#B45309;\">(red lista)</span></div>\n        </div>\n      </div>\n\n      <!-- Flecha 1 -->\n      <div style=\"display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:900; color:#0284C7;\">\n        ➔\n      </div>\n\n      <!-- PASO 2: Se consulta el Trabajo (Job) en /etc/init/*.conf -->\n      <div style=\"background:#F0F9FF; border:1.5px solid #BAE6FD; border-top:4px solid #0284C7; border-radius:10px; padding:8px 10px; height:100%; display:flex; flex-direction:column; justify-content:space-between;\">\n        <div>\n          <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n            <span style=\"font-size:10px; font-weight:800; color:#0369A1; text-transform:uppercase;\">2. Trabajo (Job) en /etc/init/</span>\n            <span style=\"font-size:14px;\">📄</span>\n          </div>\n          <div style=\"font-size:12px; font-weight:800; color:#075985; margin-bottom:4px;\">Archivo declarativo <code>.conf</code></div>\n          \n          <!-- Mini editor de código del Job -->\n          <div style=\"background:#0F172A; border:1px solid #334155; border-radius:6px; padding:6px 8px; font-family:'JetBrains Mono', monospace; font-size:9.5px; line-height:1.4; color:#F8FAFC;\">\n            <div style=\"color:#64748B;\"># /etc/init/networking.conf</div>\n            <div><span style=\"color:#38BDF8; font-weight:bold;\">start on</span> filesystem and net-device-up</div>\n            <div><span style=\"color:#F472B6; font-weight:bold;\">stop on</span> runlevel [016]</div>\n            <div><span style=\"color:#FBBF24; font-weight:bold;\">respawn</span> <span style=\"color:#94A3B8;\"># ¡Resucita si muere!</span></div>\n            <div><span style=\"color:#4ADE80; font-weight:bold;\">exec</span> /sbin/dhclient -d eth0</div>\n          </div>\n        </div>\n        <div style=\"font-size:10px; color:#0369A1; margin-top:5px; line-height:1.3;\">\n          ⚙️ Cuando se cumplen los eventos de <code>start on</code>, Upstart dispara la tarea inmediatamente.\n        </div>\n      </div>\n\n      <!-- Flecha 2 -->\n      <div style=\"display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:900; color:#16A34A;\">\n        ➔\n      </div>\n\n      <!-- PASO 3: Ejecución en Paralelo y Supervisión Continua -->\n      <div style=\"background:#F0FDF4; border:1.5px solid #BBF7D0; border-top:4px solid #16A34A; border-radius:10px; padding:8px 10px; height:100%; display:flex; flex-direction:column; justify-content:space-between;\">\n        <div>\n          <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n            <span style=\"font-size:10px; font-weight:800; color:#15803D; text-transform:uppercase;\">3. Ejecución & Supervisión</span>\n            <span style=\"font-size:14px;\">🚀</span>\n          </div>\n          <div style=\"font-size:12px; font-weight:800; color:#166534; margin-bottom:4px;\">Arranque en Paralelo</div>\n          <div style=\"font-size:10.5px; color:#14532D; line-height:1.35;\">\n            Todos los servicios cuyos eventos ocurran arrancan <strong>a la vez</strong>, aprovechando toda la CPU.\n          </div>\n        </div>\n        \n        <div style=\"background:#DCFCE7; border:1px solid #86EFAC; border-radius:6px; padding:5px 6px; margin-top:6px; font-size:10px; color:#166534; line-height:1.35;\">\n          🛡️ <strong>Directiva <code>respawn</code>:</strong><br>\n          Si el proceso se cae o lo matas por error, Upstart detecta la muerte del PID y <strong>lo reinicia automáticamente</strong>.\n        </div>\n      </div>\n\n    </div>\n  </div>\n\n  <!-- Fila Inferior: 2 Columnas (La Gran Trampa de Examen vs Consola Real) -->\n  <div style=\"display:grid; grid-template-columns: 1.15fr 1fr; gap:12px;\">\n    \n    <!-- Columna Izquierda: La Gran Trampa de Examen de Rutas -->\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; padding:10px 14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <div style=\"font-size:12.5px; font-weight:800; color:var(--text); display:flex; align-items:center; gap:6px;\">\n            <span style=\"font-size:14px;\">🎯</span>\n            <span>Trampa Clásica de Examen LPIC-1: Diferencia de Rutas</span>\n          </div>\n          <span style=\"font-size:10px; font-weight:800; background:#FEE2E2; color:#991B1B; padding:2px 7px; border-radius:4px; border:1px solid #FCA5A5;\">¡Pregunta fija!</span>\n        </div>\n\n        <!-- Tabla visual de las 4 rutas clave -->\n        <div style=\"display:flex; flex-direction:column; gap:5px; font-size:11px;\">\n          <div style=\"display:grid; grid-template-columns: 130px 85px 1fr; gap:6px; align-items:center; background:var(--surface-alt); padding:5px 8px; border-radius:6px; border-left:3px solid #DC2626;\">\n            <code style=\"font-weight:700; color:#B91C1C;\">/etc/inittab</code>\n            <span style=\"font-size:10px; font-weight:800; color:#B91C1C;\">SysVinit</span>\n            <span style=\"color:var(--text-muted); font-size:10.5px;\">Archivo único maestro de niveles y orden de arranque.</span>\n          </div>\n\n          <div style=\"display:grid; grid-template-columns: 130px 85px 1fr; gap:6px; align-items:center; background:var(--surface-alt); padding:5px 8px; border-radius:6px; border-left:3px solid #D97706;\">\n            <code style=\"font-weight:700; color:#B45309;\">/etc/init.d/</code>\n            <span style=\"font-size:10px; font-weight:800; color:#B45309;\">SysVinit</span>\n            <span style=\"color:var(--text-muted); font-size:10.5px;\">Directorio con scripts de shell clásicos (Bash).</span>\n          </div>\n\n          <div style=\"display:grid; grid-template-columns: 130px 85px 1fr; gap:6px; align-items:center; background:#EFF6FF; padding:5px 8px; border-radius:6px; border-left:3px solid #0284C7; border:1px solid #BAE6FD;\">\n            <code style=\"font-weight:800; color:#0369A1;\">/etc/init/*.conf</code>\n            <span style=\"font-size:10px; font-weight:800; color:#0369A1;\">⭐ UPSTART</span>\n            <span style=\"color:#0C4A6E; font-size:10.5px; font-weight:700;\">¡Aquí están los Trabajos (Jobs) de Upstart!</span>\n          </div>\n\n          <div style=\"display:grid; grid-template-columns: 130px 85px 1fr; gap:6px; align-items:center; background:var(--surface-alt); padding:5px 8px; border-radius:6px; border-left:3px solid #16A34A;\">\n            <code style=\"font-weight:700; color:#15803D;\">/etc/systemd/</code>\n            <span style=\"font-size:10px; font-weight:800; color:#15803D;\">systemd</span>\n            <span style=\"color:var(--text-muted); font-size:10.5px;\">Unidades modernas (servicios <code>.service</code> y targets).</span>\n          </div>\n        </div>\n      </div>\n\n      <div style=\"background:#FFFBEB; border:1px solid #FCD34D; padding:5px 8px; border-radius:6px; font-size:10px; color:#92400E; margin-top:6px; line-height:1.3;\">\n        💡 <strong>Regla mnemotécnica:</strong> Si termina en <code>.d/</code> es de SysVinit; si no tiene <code>.d</code> y contiene <code>.conf</code>, ¡es Upstart!\n      </div>\n    </div>\n\n    <!-- Columna Derecha: Consola Real de Comandos de Upstart -->\n    <div style=\"background:#0F172A; border:2px solid #334155; border-radius:12px; overflow:hidden; box-shadow:0 4px 12px rgba(15,23,42,0.15); display:flex; flex-direction:column; justify-content:space-between;\">\n      <div style=\"background:#1E293B; padding:6px 12px; border-bottom:1px solid #334155; display:flex; align-items:center; justify-content:space-between;\">\n        <span style=\"font-family:'JetBrains Mono', monospace; font-size:11px; color:#94A3B8;\">bash — comandos nativos de Upstart</span>\n        <span style=\"font-size:10px; color:#38BDF8; font-weight:700; background:#0B3654; padding:1px 6px; border-radius:4px;\">Ubuntu Legacy</span>\n      </div>\n      \n      <div style=\"padding:8px 12px; font-family:'JetBrains Mono', Consolas, monospace; font-size:10.5px; line-height:1.45; color:#F8FAFC;\">\n        <div style=\"color:#64748B;\"># 1. El comando maestro initctl para listar tareas:</div>\n        <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@ubuntu:~$</span> initctl list | head -n 3</div>\n        <div style=\"color:#34D399;\">tty1 start/running, process 1024</div>\n        <div style=\"color:#34D399;\">cron start/running, process 850</div>\n        <div style=\"color:#94A3B8;\">rc-sysinit stop/waiting</div>\n\n        <div style=\"color:#64748B; margin-top:6px;\"># 2. Atajos directos propios de Upstart (start/stop/status):</div>\n        <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@ubuntu:~$</span> sudo start networking</div>\n        <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@ubuntu:~$</span> sudo stop tty6</div>\n        <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@ubuntu:~$</span> status cron</div>\n        <div style=\"color:#34D399;\">cron start/running, process 850</div>\n      </div>\n\n      <div style=\"background:#1E293B; border-top:1px solid #334155; padding:4px 10px; font-size:10px; color:#CBD5E1; display:flex; align-items:center; gap:6px;\">\n        <span>⌨️</span>\n        <span><code>initctl</code> es la herramienta central; <code>start</code> y <code>stop</code> eran enlaces directos a ella.</span>\n      </div>\n    </div>\n\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: ¡No confundas /etc/init/ (directorio de trabajos de Upstart) con /etc/init.d/ (directorio de scripts tradicionales de SysVinit)!"
+        }
+      ],
+      "notes": "Advierte de la trampa clásica: /etc/init/ con extensión .conf es de Upstart; /etc/init.d/ con scripts es de SysVinit."
+    },
+    {
+      "id": "101.3-slide-13",
+      "slideNumber": 13,
+      "title": "Apagado y Reinicio Seguro: shutdown, reboot y wall",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Apagado y Reinicio Seguro: shutdown, reboot y wall"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo programar un apagado o reinicio seguro de un servidor avisando a todos los usuarios?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "shutdown | reboot | poweroff | wall",
+          "title": "Avisar a los usuarios y programar el cierre ordenado de procesos y desmontaje de discos"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-h / -P / --poweroff",
+              "",
+              "🎯 Clave de Examen: Detiene los procesos y corta la energía eléctrica de la máquina."
+            ],
+            [
+              "-r / --reboot",
+              "",
+              "🎯 Clave de Examen: Reinicia el sistema operativo tras el apagado ordenado."
+            ],
+            [
+              "-H / --halt",
+              "",
+              "Detiene todos los procesos y el kernel, pero deja la placa base con corriente encendida."
+            ],
+            [
+              "-c",
+              "",
+              "🎯 Clave de Examen: Cancela un apagado programado que estaba en cuenta atrás."
+            ],
+            [
+              "+m / hh:mm / now",
+              "",
+              "Especificación de tiempo: +15 (en 15 minutos), 23:30 (a las 23:30 horas), now (inmediatamente, equivale a +0)."
+            ],
+            [
+              "wall <mensaje>",
+              "",
+              "Difunde un mensaje de texto por terminal a TODOS los usuarios con sesión abierta simultáneamente."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1.25fr; gap:16px; margin-top:8px;\">\n  \n  <!-- Columna Izquierda: Cronograma del Apagado -->\n  <div style=\"display:flex; flex-direction:column; gap:10px;\">\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; padding:12px 14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n        ⏱️ Cronograma de <code>shutdown -h +15 \"Mensaje\"</code>:\n      </div>\n      \n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:12px;\">\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--primary); padding:6px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--primary);\">T-15 min:</strong> Mensaje broadcast automático a todas las terminales con <code>wall</code>.\n        </div>\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--warning); padding:6px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--warning-ink);\">T-5 min:</strong> Se crea <code>/run/nologin</code> para bloquear el acceso a nuevos usuarios.\n        </div>\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--danger); padding:6px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--danger);\">T-0:</strong> Envía SIGTERM/SIGKILL, sincroniza discos (sync) y corta energía.\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <!-- Columna Derecha: Terminal de Comandos Reales -->\n  <div style=\"background:#0F172A; border:2px solid #334155; border-radius:12px; overflow:hidden; box-shadow:0 6px 16px rgba(15,23,42,0.18);\">\n    <div style=\"background:#1E293B; padding:8px 14px; border-bottom:1px solid #334155; display:flex; align-items:center; justify-content:space-between;\">\n      <span style=\"font-family:monospace; font-size:12px; color:#94A3B8;\">bash — apagado y avisos</span>\n      <span style=\"font-size:11px; color:#38BDF8; font-weight:700;\">shutdown y wall</span>\n    </div>\n    <div style=\"padding:12px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; line-height:1.55; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># 1. Programar apagado en 10 minutos con mensaje de advertencia:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@servidor:~#</span> shutdown -h +10 \"Reinicio programado por actualización\"</div>\n      <div style=\"color:#FCD34D; font-size:11px;\">Shutdown scheduled for Sun 2026-10-25 14:10:00 CEST, use 'shutdown -c' to cancel.</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 2. Cancelar el apagado si la tarea se resuelve antes:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@servidor:~#</span> shutdown -c \"Mantenimiento cancelado\"</div>\n      <div style=\"color:#34D399; font-size:11px;\">Broadcast message: System shutdown has been cancelled</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 3. Enviar mensaje broadcast urgente a todas las pantallas:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@servidor:~#</span> echo \"Guardad vuestro trabajo ahora.\" | wall</div>\n    </div>\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Cuando quedan 5 minutos para el apagado programado por shutdown, el sistema crea el archivo /etc/nologin para impedir que nuevos usuarios inicien sesión."
+        }
+      ],
+      "notes": "Enseña la sintaxis de shutdown: 'shutdown -r +10 Advertencia'. Y el comando salvador 'shutdown -c' para cancelar."
+    },
+    {
+      "id": "101.3-slide-14",
+      "slideNumber": 14,
+      "title": "Ejercicios Guiados Oficiales (Parte 1: telinit y Enlaces K)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales (Parte 1: telinit y Enlaces K)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 1: En un servidor SysVinit, ¿con qué comando reiniciarías la máquina inmediatamente sin usar shutdown ni reboot? — Comando: `telinit 6  (o init 6)` (El runlevel 6 está reservado en el estándar SysV para reiniciar el sistema; telinit envía la petición al proceso PID 1.)",
+            "Caso 2: En /etc/rc3.d/ encuentras el archivo 'K01apache2'. ¿Qué significa exactamente y cuándo se ejecuta? — Comando: `El prefijo K (Kill) indica que el servicio se detendrá pasando el argumento 'stop' al entrar en el runlevel 3` (Al cambiar al nivel 3, el script rc ejecuta primero todos los enlaces K ordenados numéricamente (del 01 al 99) antes de arrancar los enlaces S (Start).)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "SysVinit gestiona las transiciones apagando primero los servicios que no corresponden al nuevo nivel (scripts K) y levantando después los servicios nuevos (scripts S)."
+        }
+      ],
+      "notes": "Explica a la clase el orden: primero se 'matan' los servicios no deseados con K, luego se 'inician' los nuevos con S."
+    },
+    {
+      "id": "101.3-slide-15",
+      "slideNumber": 15,
+      "title": "Ejercicios Guiados Oficiales (Parte 2: Verificación con systemctl)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales (Parte 2: Verificación con systemctl)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 3: ¿Qué comando comprueba si el servicio nginx está habilitado para arrancar al inicio devolviendo solo una palabra y código de salida? — Comando: `systemctl is-enabled nginx` (Devuelve 'enabled', 'disabled' o 'masked' y establece el exit code en 0 si está activo, ideal para condicionales en scripts.)",
+            "Caso 4: Un administrador quiere probar la configuración de red sin entorno gráfico en vivo. ¿Qué comando conmuta inmediatamente a modo consola? — Comando: `systemctl isolate multi-user.target` (El comando isolate detiene el servidor gráfico (graphical.target) y deja el sistema en el nivel multiusuario de consola.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "systemctl unifica tanto la consulta de estados de inicio como la transición de estados globales mediante 'isolate'."
+        }
+      ],
+      "notes": "Haz énfasis en isolate: es el análogo moderno al viejo 'telinit 3'."
+    },
+    {
+      "id": "101.3-slide-16",
+      "slideNumber": 16,
+      "title": "Retos de Exploración del Manual Oficial",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Retos de Exploración del Manual Oficial"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Resuelve estos 4 retos de examen planteados en el manual oficial LPIC-1 (Páginas 52-53):\n1. ¿Cuál es la diferencia entre arrancar con el parámetro '1' frente a arrancar con 'init=/bin/bash'?\n2. Si borras el archivo /sbin/init en Debian moderno, ¿por qué el sistema no puede arrancar?\n3. ¿Cómo configurarías el sistema para que siempre arranque en modo consola sin editar ningún archivo de texto a mano?\n4. Has programado un apagado para las 23:00 con shutdown. Son las 22:30 y necesitas cancelar la orden. ¿Qué comando ejecutas?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Pista",
+          "content": "Recuerda: Autenticación en monousuario; symlinks de PID 1; comandos set-default; y flags de cancelación de shutdown."
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Desafío",
+          "content": "1. El nivel '1' (single) ejecuta el proceso init/systemd completo, monta fstab y pide la contraseña de root; 'init=/bin/bash' se salta init y entrega una shell sin pedir ninguna contraseña.\n2. Porque /sbin/init es el enlace simbólico universal que apunta a /lib/systemd/systemd. Sin él, el kernel entra en Kernel Panic.\n3. Se ejecuta: sudo systemctl set-default multi-user.target.\n4. Se ejecuta: sudo shutdown -c (opcionalmente seguido de un mensaje aclaratorio a los usuarios con 'wall')."
+        }
+      ],
+      "notes": "Preguntas directas de examen. La diferencia entre 'single' e 'init=/bin/bash' es una de las favoritas de LPI."
+    },
+    {
+      "id": "101.3-slide-17",
+      "slideNumber": 17,
+      "title": "Pregunta de Examen LPIC-1: Runlevels y Targets",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Runlevels y Targets"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-101-3-17",
+          "question": "¿Qué comando de systemd conmuta el sistema operativo en tiempo de ejecución al equivalente del runlevel 3 de SysVinit, deteniendo el entorno gráfico?",
+          "options": [
+            {
+              "key": "a",
+              "text": "systemctl switch runlevel3"
+            },
+            {
+              "key": "b",
+              "text": "systemctl isolate multi-user.target"
+            },
+            {
+              "key": "c",
+              "text": "systemctl set-target multi-user.target"
+            },
+            {
+              "key": "d",
+              "text": "telinit graphical.target"
+            }
+          ],
+          "correct": [
+            "b"
+          ],
+          "explanation": "systemctl isolate cambia al target especificado deteniendo los servicios que no formen parte de él. En systemd, multi-user.target es el equivalente exacto del Runlevel 3 de SysVinit."
+        }
+      ],
+      "notes": "Pregunta de examen 101. Haz notar que switch y set-target no son subcomandos válidos de systemctl."
+    },
+    {
+      "id": "101.3-slide-18",
+      "slideNumber": 18,
+      "title": "Tarjetas de Memorización: Niveles, Targets y Comandos 101.3",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tarjetas de Memorización: Niveles, Targets y Comandos 101.3"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto",
+            "Significado / Uso"
+          ],
+          "rows": [
+            [
+              "¿Qué runlevel en SysVinit corresponde a multi-user.target y cuál a graphical.target?",
+              "multi-user.target = Runlevel 3 (consola con red). graphical.target = Runlevel 5 (modo gráfico)."
+            ],
+            [
+              "¿Qué hace 'systemctl mask <servicio>'?",
+              "Crea un enlace simbólico del servicio a /dev/null, impidiendo que pueda iniciarse manual o automáticamente."
+            ],
+            [
+              "¿Qué comando recarga el archivo /etc/inittab en SysVinit sin reiniciar?",
+              "telinit q (o telinit Q)."
+            ],
+            [
+              "¿Qué diferencia hay entre 'systemctl restart' y 'systemctl reload'?",
+              "restart detiene y levanta el proceso (cambia el PID); reload relee la configuración sin cortar conexiones activas."
+            ],
+            [
+              "¿Dónde almacena Upstart sus archivos de trabajo (jobs)?",
+              "En /etc/init/*.conf (no confundir con los scripts de SysVinit en /etc/init.d/)."
+            ],
+            [
+              "¿Qué comando fija el target de arranque por defecto en systemd?",
+              "systemctl set-default <target> (modifica /etc/systemd/system/default.target)."
+            ],
+            [
+              "¿Cómo cancelas un apagado programado con shutdown?",
+              "shutdown -c"
+            ],
+            [
+              "¿Qué hace el comando 'wall'?",
+              "Envía un mensaje de texto por terminal (broadcast) a todas las sesiones de usuarios conectadas."
+            ]
+          ],
+          "caption": "Tarjetas de memorización"
+        }
+      ],
+      "notes": "Repasa las tarjetas para asegurar que nadie confunda telinit q, systemctl mask ni las rutas de configuración."
+    },
+    {
+      "id": "101.3-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen y Claves de Examen: Subtema 101.3",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen y Claves de Examen: Subtema 101.3"
+        }
+      ],
+      "notes": "Hemos finalizado el Tema 101 completo. Los alumnos tienen las bases de hardware, arranque y administración de servicios listas para aprobar."
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-101-3-1",
+      "title": "Demonios y Administradores de Servicios en Linux",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Demonios y Administradores de Servicios en Linux"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué es exactamente un demonio en Linux, por qué tiene TTY '?' y qué rol cumple PID 1?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**¿Qué es un demonio (daemon)?** — Es un programa que corre en segundo plano de forma silenciosa, sin teclado ni pantalla asociada, esperando peticiones o eventos para actuar (por convención terminan en 'd': sshd, crond, systemd).",
+            "**¿Por qué en la columna TTY aparece un signo '?'?** — TTY significa 'Teletype' (terminal/consola). Un comando normal tiene 'tty1' o 'pts/0' porque está atado a tu teclado y pantalla. Un demonio tiene '?' porque está 100% desvinculado de cualquier terminal interactiva.",
+            "**PID 1 como 'Padre Adoptivo' de Procesos Huérfanos** — Si un programa padre crea un proceso hijo y luego muere o se cuelga, el hijo se queda 'huérfano'. PID 1 (systemd) lo adopta automáticamente para que no quede como proceso zombi en el limbo y pueda liberar su memoria al terminar."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1.15fr; gap:16px; margin-top:8px;\">\n  \n  <!-- Columna Izquierda: Conceptos Clave TTY '?' y Adopción -->\n  <div style=\"display:flex; flex-direction:column; gap:10px;\">\n    \n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-left:4px solid var(--primary); border-radius:10px; padding:10px 14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:var(--primary); margin-bottom:3px; display:flex; align-items:center; gap:6px;\">\n        <span>❓</span>\n        <span>¿Por qué TTY muestra un signo '?'?:</span>\n      </div>\n      <div style=\"font-size:12px; color:var(--text-muted); line-height:1.4;\">\n        <strong>TTY</strong> es la terminal de entrada/salida (teclado/pantalla). Tu shell interactivo tiene <code>pts/0</code> o <code>tty1</code>. Los demonios tienen <strong style=\"color:var(--text);\">?</strong> porque <strong>no tienen ninguna terminal atada</strong>; corren en background invisible.\n      </div>\n    </div>\n\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-left:4px solid var(--success); border-radius:10px; padding:10px 14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:var(--success); margin-bottom:3px; display:flex; align-items:center; gap:6px;\">\n        <span>👶</span>\n        <span>¿Qué significa que PID 1 adopta si el padre muere?:</span>\n      </div>\n      <div style=\"font-size:12px; color:var(--text-muted); line-height:1.4;\">\n        En Linux todo proceso necesita un padre. Si el programa que lo lanzó se cierra o falla, el subproceso se convierte en un <strong>huérfano</strong>. <code>PID 1 (systemd)</code> lo <strong>adopta legalmente</strong> en su árbol para gestionarlo y evitar procesos zombis en RAM.\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Columna Derecha: Consola de Demostración Real -->\n  <div style=\"background:#0F172A; border:2px solid #334155; border-radius:12px; overflow:hidden; box-shadow:0 6px 16px rgba(15,23,42,0.18);\">\n    <div style=\"background:#1E293B; padding:8px 14px; border-bottom:1px solid #334155; display:flex; align-items:center; justify-content:space-between;\">\n      <div style=\"display:flex; align-items:center; gap:6px;\">\n        <span style=\"width:10px; height:10px; border-radius:50%; background:#EF4444; display:inline-block;\"></span>\n        <span style=\"width:10px; height:10px; border-radius:50%; background:#F59E0B; display:inline-block;\"></span>\n        <span style=\"width:10px; height:10px; border-radius:50%; background:#10B981; display:inline-block;\"></span>\n        <span style=\"font-family:monospace; font-size:12px; color:#94A3B8; margin-left:8px;\">bash — comprobación real</span>\n      </div>\n      <span style=\"font-size:11px; color:#38BDF8; font-weight:700;\">Demonios en ps</span>\n    </div>\n    <div style=\"padding:12px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; line-height:1.55; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># Ver demonios: TTY='?' (sin pantalla) y PPID=1 (hijos de systemd):</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@debian:~$</span> ps -eo pid,ppid,tty,cmd | grep -E 'sshd|cron'</div>\n      <div style=\"color:#E2E8F0;\">  PID  PPID TTY      CMD</div>\n      <div style=\"color:#E2E8F0;\">  654     <strong style=\"color:#34D399;\">1</strong> <strong style=\"color:#FCD34D;\">?</strong>        /usr/sbin/sshd -D</div>\n      <div style=\"color:#E2E8F0;\">  720     <strong style=\"color:#34D399;\">1</strong> <strong style=\"color:#FCD34D;\">?</strong>        /usr/sbin/cron -f</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># Árbol jerárquico: systemd (PID 1) es la raíz de todo:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@debian:~$</span> pstree -p 1 | head -n 3</div>\n      <div style=\"color:#34D399;\">systemd(1)─┬─cron(720)</div>\n      <div style=\"color:#34D399;\">           └─sshd(654)───sshd(1820)───bash(1825)</div>\n    </div>\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE TOP DE EXAMEN: En la salida de 'ps', un demonio se reconoce porque su columna TTY es '?' (sin terminal) y su PPID (Parent PID) suele ser 1 (adoptado o iniciado por systemd/init)."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-3-2",
+      "title": "Niveles de Ejecución en SysVinit (Runlevels 0 al 6)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Niveles de Ejecución en SysVinit (Runlevels 0 al 6)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 7 estados operativos de SysVinit con nombres claros en español y los niveles clave de examen:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin-top:6px;\">\n  \n  <!-- Espectro de 7 runlevels con Nombres Claros en Español -->\n  <div style=\"display:grid; grid-template-columns: repeat(7, 1fr); gap:8px;\">\n    <!-- 0 -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:4px solid #EF4444; border-radius:10px; padding:8px 4px; text-align:center;\">\n      <span style=\"background:#EF4444; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px;\">0</span>\n      <div style=\"font-weight:800; font-size:12px; color:var(--text);\">Apagado Total</div>\n      <div style=\"font-size:10.5px; color:var(--text-muted); margin-top:2px;\">Corta corriente</div>\n    </div>\n    <!-- 1 -->\n    <div style=\"background:var(--surface-alt); border:2px solid #F59E0B; border-top:4px solid #F59E0B; border-radius:10px; padding:8px 4px; text-align:center; box-shadow:0 2px 6px rgba(245,158,11,0.15);\">\n      <span style=\"background:#F59E0B; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px;\">1</span>\n      <div style=\"font-weight:800; font-size:12px; color:var(--warning-ink);\">⭐ Rescate Local</div>\n      <div style=\"font-size:10.5px; color:var(--text-muted); margin-top:2px;\">Monousuario sin red</div>\n    </div>\n    <!-- 2 -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:4px solid #64748B; border-radius:10px; padding:8px 4px; text-align:center;\">\n      <span style=\"background:#64748B; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px;\">2</span>\n      <div style=\"font-weight:800; font-size:12px; color:var(--text);\">Consola Básica</div>\n      <div style=\"font-size:10.5px; color:var(--text-muted); margin-top:2px;\">Texto sin NFS</div>\n    </div>\n    <!-- 3 -->\n    <div style=\"background:var(--surface-alt); border:2px solid #2563EB; border-top:4px solid #2563EB; border-radius:10px; padding:8px 4px; text-align:center; box-shadow:0 2px 6px rgba(37,99,235,0.15);\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px;\">3</span>\n      <div style=\"font-weight:800; font-size:12px; color:var(--primary);\">⭐ Servidor Red</div>\n      <div style=\"font-size:10.5px; color:var(--text-muted); margin-top:2px;\">Modo texto multiusuario</div>\n    </div>\n    <!-- 4 -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:4px solid #64748B; border-radius:10px; padding:8px 4px; text-align:center;\">\n      <span style=\"background:#64748B; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px;\">4</span>\n      <div style=\"font-weight:800; font-size:12px; color:var(--text);\">Personalizado</div>\n      <div style=\"font-size:10.5px; color:var(--text-muted); margin-top:2px;\">Libre para admin</div>\n    </div>\n    <!-- 5 -->\n    <div style=\"background:var(--surface-alt); border:2px solid #16A34A; border-top:4px solid #16A34A; border-radius:10px; padding:8px 4px; text-align:center; box-shadow:0 2px 6px rgba(22,163,74,0.15);\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px;\">5</span>\n      <div style=\"font-weight:800; font-size:12px; color:var(--success);\">⭐ Escritorio GUI</div>\n      <div style=\"font-size:10.5px; color:var(--text-muted); margin-top:2px;\">Gráfico completo</div>\n    </div>\n    <!-- 6 -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:4px solid #EA580C; border-radius:10px; padding:8px 4px; text-align:center;\">\n      <span style=\"background:#EA580C; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:4px;\">6</span>\n      <div style=\"font-weight:800; font-size:12px; color:var(--text);\">Reinicio Total</div>\n      <div style=\"font-size:10.5px; color:var(--text-muted); margin-top:2px;\">Reboot ordenado</div>\n    </div>\n  </div>\n\n  <!-- Consola y Explicación de 'unknown' y 'N' -->\n  <div style=\"background:#0F172A; border:2px solid #334155; border-radius:10px; padding:10px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; color:#F8FAFC;\">\n    <div style=\"color:#64748B;\"># ¿Cómo interpretar las salidas del comando 'runlevel'?:</div>\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px;\">\n      <div>\n        <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@linux:~$</span> runlevel</div>\n        <div style=\"color:#FCD34D;\">N 5</div>\n        <div style=\"color:#94A3B8; font-size:11px; margin-top:3px;\">\n          • <strong style=\"color:#FFF;\">'N' (None):</strong> No hubo nivel previo (el PC arrancó directo en este estado).<br>\n          • <strong style=\"color:#FFF;\">'5':</strong> Nivel de ejecución actual (Modo Gráfico).\n        </div>\n      </div>\n      <div>\n        <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@linux:~$</span> runlevel</div>\n        <div style=\"color:#F87171;\">unknown</div>\n        <div style=\"color:#94A3B8; font-size:11px; margin-top:3px;\">\n          • <strong style=\"color:#FFF;\">'unknown':</strong> Típico en <code>systemd</code> puro. Ocurre si el sistema arrancó sin registrar un runlevel en el archivo <code>/run/utmp</code>.\n        </div>\n      </div>\n    </div>\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE TOP DE EXAMEN: Los dos reyes absolutos son el Nivel 3 (Servidor en modo consola con red) y el Nivel 5 (Puesto de trabajo con escritorio gráfico). Si 'runlevel' devuelve 'unknown', es porque systemd arrancó directamente sin usar la tabla utmp de SysV."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-3-3",
+      "title": "El Archivo Maestro /etc/inittab y la Acción initdefault",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Archivo Maestro /etc/inittab y la Acción initdefault"
+        },
+        {
+          "type": "paragraph",
+          "text": "Formato de `/etc/inittab`: estructura de 4 campos y ejemplos prácticos de configuración:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "",
+          "title": "/etc/inittab"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1.15fr 1fr; gap:16px; margin-top:6px;\">\n  \n  <!-- Columna Izquierda: Archivo Completo y Anatomía -->\n  <div style=\"display:flex; flex-direction:column; gap:10px;\">\n    \n    <!-- Anatomía de los 4 campos -->\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:10px; padding:10px 14px;\">\n      <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n        📋 Los 4 campos separados por dos puntos (<code>:</code>):\n      </div>\n      <div style=\"background:#0F172A; color:#E2E8F0; padding:6px 12px; border-radius:6px; font-family:monospace; font-size:13.5px; margin-bottom:6px;\">\n        <span style=\"color:#38BDF8; font-weight:bold;\">id</span>:<span style=\"color:#FBBF24; font-weight:bold;\">runlevels</span>:<span style=\"color:#4ADE80; font-weight:bold;\">action</span>:<span style=\"color:#F472B6; font-weight:bold;\">process</span>\n      </div>\n      <div style=\"font-size:11.5px; color:var(--text-muted); line-height:1.4;\">\n        • <strong style=\"color:#0284C7;\">id:</strong> Identificador (1-4 caracteres) | • <strong style=\"color:#B45309;\">runlevels:</strong> Niveles donde aplica (ej: <code>35</code>)<br>\n        • <strong style=\"color:#16A34A;\">action:</strong> <code>initdefault</code>, <code>respawn</code>, <code>wait</code>, <code>ctrlaltdel</code> | • <strong style=\"color:#BE185D;\">process:</strong> Comando a correr\n      </div>\n    </div>\n\n    <!-- Archivo Real Completo -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-radius:10px; padding:10px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; line-height:1.5;\">\n      <div style=\"color:var(--primary); font-weight:bold; font-size:11px; margin-bottom:4px;\"># Fichero real completo /etc/inittab:</div>\n      <div><strong style=\"color:var(--primary);\">id:3:initdefault:</strong> <span style=\"color:var(--text-muted);\"># Nivel de arranque por defecto (Servidor)</span></div>\n      <div>si::sysinit:/etc/rc.d/rc.sysinit <span style=\"color:var(--text-muted);\"># Inicialización del hardware</span></div>\n      <div>l3:3:wait:/etc/rc.d/rc 3 <span style=\"color:var(--text-muted);\"># Espera a que los scripts terminen</span></div>\n      <div>1:2345:respawn:/sbin/getty 38400 tty1 <span style=\"color:var(--text-muted);\"># Reabre login si se cierra</span></div>\n      <div>ca::ctrlaltdel:/sbin/shutdown -t3 -r now <span style=\"color:var(--text-muted);\"># Acción al pulsar Ctrl+Alt+Supr</span></div>\n    </div>\n\n  </div>\n\n  <!-- Columna Derecha: 3 Escenarios Reales y Consulta -->\n  <div style=\"display:flex; flex-direction:column; gap:10px;\">\n    \n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:10px; padding:10px 14px;\">\n      <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n        💡 3 Escenarios Prácticos de Configuración:\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:6px; font-size:11.5px; line-height:1.35;\">\n        <div style=\"background:var(--surface-alt); border-left:3px solid var(--primary); padding:6px 8px; border-radius:4px;\">\n          <strong>1. Servidor de Producción:</strong> <code>id:3:initdefault:</code><br>\n          Arranca en consola con red, ahorrando toda la memoria RAM de la interfaz gráfica.\n        </div>\n        <div style=\"background:var(--surface-alt); border-left:3px solid var(--success); padding:6px 8px; border-radius:4px;\">\n          <strong>2. Puesto de Oficina:</strong> <code>id:5:initdefault:</code><br>\n          Arranca automáticamente con escritorio gráfico para el usuario.\n        </div>\n        <div style=\"background:var(--surface-alt); border-left:3px solid var(--warning); padding:6px 8px; border-radius:4px;\">\n          <strong>3. Terminal Kiosko / Cajero:</strong> <code>k1:2345:respawn:/usr/bin/app</code><br>\n          Si la aplicación falla o alguien la cierra, <code>init</code> la <strong>reinicia al instante</strong>.\n        </div>\n      </div>\n    </div>\n\n    <!-- Consola de Consulta -->\n    <div style=\"background:#0F172A; border:2px solid #334155; border-radius:10px; padding:10px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:11.5px; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># Consultar nivel por defecto configurado:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@sysv:~$</span> grep initdefault /etc/inittab</div>\n      <div style=\"color:#FCD34D;\">id:3:initdefault:</div>\n      <div style=\"color:#94A3B8; font-size:10.5px; margin-top:4px;\">⚠️ Recuerda: En systemd este archivo NO existe (se usa default.target).</div>\n    </div>\n\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE TOP DE EXAMEN: En la línea 'initdefault', el cuarto campo (process) se deja SIEMPRE VACÍO (ej: id:3:initdefault:). Poner un comando o ruta ahí provoca un error de sintaxis."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-3-4",
+      "title": "Gestión de Niveles en SysV: runlevel, telinit y /etc/rcX.d/",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Gestión de Niveles en SysV: runlevel, telinit y /etc/rcX.d/"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué significa `/etc/rcX.d/`, cómo se organizan sus enlaces y cómo cambiar de nivel con `telinit`?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "runlevel | telinit | init",
+          "title": "Consultar el nivel previo y actual, y solicitar la transición hacia un nuevo nivel"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "runlevel",
+              "",
+              "🎯 Clave de Examen: Muestra dos caracteres: el nivel previo (N = ninguno si no ha cambiado desde el arranque) y el nivel actual."
+            ],
+            [
+              "telinit <0-6>",
+              "",
+              "Solicita a init cambiar al nivel indicado (ej: telinit 1 pasa a monousuario; telinit 6 reinicia)."
+            ],
+            [
+              "telinit q / Q",
+              "",
+              "🎯 Clave de Examen: Recarga el archivo /etc/inittab sin necesidad de reiniciar el sistema."
+            ],
+            [
+              "Prefijo 'S' (Start)",
+              "",
+              "En /etc/rcX.d/, los enlaces que empiezan por S (ej: S01ssh) arrancan el servicio pasando el argumento 'start'."
+            ],
+            [
+              "Prefijo 'K' (Kill)",
+              "",
+              "Los enlaces que empiezan por K (ej: K01apache2) detienen el servicio pasando el argumento 'stop'."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1.1fr 1fr; gap:16px; margin-top:8px;\">\n  \n  <!-- Columna Izquierda: Qué es /etc/rcX.d/ y los Enlaces -->\n  <div style=\"display:flex; flex-direction:column; gap:10px;\">\n    \n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; padding:12px 14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n        📁 ¿Qué es exactamente el directorio <code>/etc/rcX.d/</code>?:\n      </div>\n      <div style=\"font-size:12px; color:var(--text-muted); line-height:1.45;\">\n        • <strong>'rc'</strong> significa <em>Run Commands</em> (órdenes de ejecución).<br>\n        • La <strong>'X'</strong> es el número del runlevel (ej: <code>/etc/rc3.d/</code> para nivel 3; <code>/etc/rc5.d/</code> para nivel 5).<br>\n        • <strong>No contiene scripts reales:</strong> contiene <em>enlaces simbólicos</em> (accesos directos) que apuntan a los scripts reales en <code>/etc/init.d/</code>.\n      </div>\n    </div>\n\n    <!-- Regla de Enlaces K y S -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-radius:10px; padding:10px 14px; font-size:12px; display:flex; flex-direction:column; gap:6px;\">\n      <div style=\"font-weight:800; color:var(--text);\">🔄 Orden de Ejecución al cambiar de nivel:</div>\n      <div style=\"border-left:3px solid #EF4444; padding-left:8px;\">\n        <strong style=\"color:#DC2626;\">1. Enlaces K (Kill):</strong> Pasan el argumento <code>stop</code>. Se ejecutan <strong>primero</strong> en orden numérico (K01 a K99) para detener lo que no pertenezca al nuevo nivel.\n      </div>\n      <div style=\"border-left:3px solid #16A34A; padding-left:8px;\">\n        <strong style=\"color:#16A34A;\">2. Enlaces S (Start):</strong> Pasan el argumento <code>start</code>. Se ejecutan <strong>después</strong> en orden numérico (S01 a S99) para levantar los servicios del nuevo nivel.\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Columna Derecha: Terminal Real sin Duplicidades -->\n  <div style=\"background:#0F172A; border:2px solid #334155; border-radius:12px; overflow:hidden; box-shadow:0 6px 16px rgba(15,23,42,0.18);\">\n    <div style=\"background:#1E293B; padding:8px 14px; border-bottom:1px solid #334155; display:flex; align-items:center; justify-content:space-between;\">\n      <span style=\"font-family:monospace; font-size:12px; color:#94A3B8;\">bash — transiciones de nivel</span>\n      <span style=\"font-size:11px; color:#38BDF8; font-weight:700;\">Consola SysVinit</span>\n    </div>\n    <div style=\"padding:12px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; line-height:1.55; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># 1. Cambiar de nivel en caliente (ej: pasar a rescate):</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@sysv:~#</span> telinit 1</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@sysv:~#</span> runlevel</div>\n      <div style=\"color:#FCD34D;\">5 1</div>\n      <div style=\"color:#94A3B8; font-size:11px;\">↳ Estaba en nivel 5 y acaba de pasar al nivel 1</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 2. Recargar /etc/inittab sin reiniciar el equipo:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@sysv:~#</span> telinit q</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 3. Comprobar que S01ssh es un symlink a /etc/init.d/ssh:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@sysv:~#</span> ls -l /etc/rc3.d/S01ssh</div>\n      <div style=\"color:#34D399;\">lrwxrwxrwx 1 root root 13 /etc/rc3.d/S01ssh -> ../init.d/ssh</div>\n    </div>\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Examen: Los scripts reales están todos en /etc/init.d/. En /etc/rcX.d/ solo hay enlaces simbólicos cuyo número de 2 dígitos (01-99) indica el orden exacto de ejecución."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-3-5",
+      "title": "Arquitectura de systemd: Unidades y Tipos",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Arquitectura de systemd: Unidades y Tipos"
+        },
+        {
+          "type": "paragraph",
+          "text": "systemd sustituye los viejos scripts por 'unidades' declarativas según el recurso que gestionan:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:12px; margin-top:6px;\">\n  \n  <!-- 4 Tarjetas Visuales Grandes de Tipos de Unidades -->\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:12px;\">\n    \n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-top:4px solid var(--primary); border-radius:12px; padding:12px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:4px;\">\n        <span style=\"font-size:18px;\">⚙️</span>\n        <div style=\"font-weight:800; font-size:15px; color:var(--primary);\">.service</div>\n      </div>\n      <div style=\"font-size:12px; color:var(--text); font-weight:700; margin-bottom:3px;\">Servicios y Demonios</div>\n      <div style=\"font-size:11.5px; color:var(--text-muted); line-height:1.35;\">\n        Programas de fondo continuos.<br>Ejemplos: <code>sshd.service</code>, <code>nginx.service</code>.\n      </div>\n    </div>\n\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-top:4px solid var(--success); border-radius:12px; padding:12px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:4px;\">\n        <span style=\"font-size:18px;\">🎯</span>\n        <div style=\"font-weight:800; font-size:15px; color:var(--success);\">.target</div>\n      </div>\n      <div style=\"font-size:12px; color:var(--text); font-weight:700; margin-bottom:3px;\">Estados y Grupos</div>\n      <div style=\"font-size:11.5px; color:var(--text-muted); line-height:1.35;\">\n        Agrupan servicios de arranque.<br>Ejemplos: <code>multi-user.target</code>, <code>graphical.target</code>.\n      </div>\n    </div>\n\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-top:4px solid var(--warning); border-radius:12px; padding:12px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:4px;\">\n        <span style=\"font-size:18px;\">🔌</span>\n        <div style=\"font-weight:800; font-size:15px; color:var(--warning-ink);\">.socket</div>\n      </div>\n      <div style=\"font-size:12px; color:var(--text); font-weight:700; margin-bottom:3px;\">Arranque por Red</div>\n      <div style=\"font-size:11.5px; color:var(--text-muted); line-height:1.35;\">\n        Escucha peticiones y despierta el servicio solo al recibir tráfico (ej: <code>cups.socket</code>).\n      </div>\n    </div>\n\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-top:4px solid #9333EA; border-radius:12px; padding:12px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:4px;\">\n        <span style=\"font-size:18px;\">⏱️</span>\n        <div style=\"font-weight:800; font-size:15px; color:#9333EA;\">.timer</div>\n      </div>\n      <div style=\"font-size:12px; color:var(--text); font-weight:700; margin-bottom:3px;\">Temporizadores</div>\n      <div style=\"font-size:11.5px; color:var(--text-muted); line-height:1.35;\">\n        Tareas programadas periódicas (el reemplazo moderno de <code>cron</code>).\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Jerarquía de Rutas y Consola Práctica -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1.15fr; gap:16px;\">\n    \n    <!-- Pirámide de Prioridad de Rutas -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-radius:12px; padding:12px 16px;\">\n      <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n        🏢 Jerarquía de Rutas (Prioridad en Sobreescritura):\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:6px; font-size:12px;\">\n        <div style=\"background:var(--surface); border-left:4px solid var(--primary); padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:var(--primary);\">1. /etc/systemd/system/ (MÁXIMA):</strong> Creado por el Administrador. Sobrescribe a todos los demás.\n        </div>\n        <div style=\"background:var(--surface); border-left:4px solid var(--warning); padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:var(--warning-ink);\">2. /run/systemd/system/ (VOLÁTIL):</strong> Generado en memoria RAM en runtime.\n        </div>\n        <div style=\"background:var(--surface); border-left:4px solid #64748B; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#475569;\">3. /lib/systemd/system/ (BASE):</strong> Archivos originales instalados por los paquetes (.deb/.rpm).\n        </div>\n      </div>\n    </div>\n\n    <!-- Consola Práctica -->\n    <div style=\"background:#0F172A; border:2px solid #334155; border-radius:12px; padding:12px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:11.5px; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># Ver servicios en ejecución y recargar tras editar un archivo:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@debian:~$</span> systemctl list-units --type=service --state=running | head -n 2</div>\n      <div style=\"color:#34D399;\">cron.service    loaded active running  Regular background program daemon</div>\n      <div style=\"color:#34D399;\">ssh.service     loaded active running  OpenBSD Secure Shell server</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 🎯 PREGUNTA TOP: Tras editar /etc/systemd/system/..., debes hacer:</div>\n      <div style=\"color:#FCD34D;\"><span style=\"color:#10B981;\">alumno@debian:~$</span> sudo systemctl daemon-reload</div>\n    </div>\n\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Si editas un archivo de unidad en /etc/systemd/system/, debes ejecutar inmediatamente 'systemctl daemon-reload' para que systemd lo cargue en memoria."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-3-6",
+      "title": "Control Operativo de Servicios con systemctl",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Control Operativo de Servicios con systemctl"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo controlar servicios en vivo y cuál es la diferencia crítica entre restart y reload?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "systemctl",
+          "title": "Gestionar el estado en vivo de demonios y servicios (.service)"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "start <unidad>",
+              "",
+              "Arranca el servicio inmediatamente en la sesión actual."
+            ],
+            [
+              "stop <unidad>",
+              "",
+              "Detiene el servicio en ejecución inmediatamente."
+            ],
+            [
+              "restart <unidad>",
+              "",
+              "Reinicia el servicio (detiene y vuelve a arrancar)."
+            ],
+            [
+              "reload <unidad>",
+              "",
+              "Recarga la configuración del demonio sin cortar las conexiones activas."
+            ],
+            [
+              "status <unidad>",
+              "",
+              "🎯 Clave de Examen: Muestra si está cargado (Loaded), estado activo (Active), PID principal y últimos logs."
+            ],
+            [
+              "is-active <unidad>",
+              "",
+              "Devuelve texto ('active' o 'inactive') y código de salida 0 si está activo (ideal para scripts bash)."
+            ],
+            [
+              "is-failed <unidad>",
+              "",
+              "Devuelve código 0 si el servicio ha fallado durante la inicialización."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1.25fr; gap:16px; margin-top:8px;\">\n  \n  <!-- Columna Izquierda: Ciclo de Vida restart vs reload -->\n  <div style=\"display:flex; flex-direction:column; gap:10px;\">\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; padding:12px 14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n        🔄 Ciclo de Vida: restart frente a reload:\n      </div>\n      \n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:12px;\">\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--danger); padding:8px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--danger);\">systemctl restart nginx:</strong><br>\n          Mata el proceso y genera un <strong>nuevo PID</strong>. Corta momentáneamente las conexiones activas de los usuarios.\n        </div>\n\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--success); padding:8px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--success);\">systemctl reload nginx (Cero Caída):</strong><br>\n          Mantiene el <strong>mismo PID</strong>. Relee los archivos de configuración sin tirar a ningún cliente conectado.\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <!-- Columna Derecha: Terminal de Pruebas Reales -->\n  <div style=\"background:#0F172A; border:2px solid #334155; border-radius:12px; overflow:hidden; box-shadow:0 6px 16px rgba(15,23,42,0.18);\">\n    <div style=\"background:#1E293B; padding:8px 14px; border-bottom:1px solid #334155; display:flex; align-items:center; justify-content:space-between;\">\n      <span style=\"font-family:monospace; font-size:12px; color:#94A3B8;\">bash — inspección de servicios</span>\n      <span style=\"font-size:11px; color:#38BDF8; font-weight:700;\">systemctl en Vivo</span>\n    </div>\n    <div style=\"padding:12px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; line-height:1.55; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># 1. Comprobar estado detallado:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl status ssh</div>\n      <div style=\"color:#34D399;\">● ssh.service - OpenBSD Secure Shell server</div>\n      <div style=\"color:#E2E8F0;\">     Loaded: loaded (/lib/systemd/system/ssh.service; enabled)</div>\n      <div style=\"color:#E2E8F0;\">     Active: <strong style=\"color:#34D399;\">active (running)</strong> since Sun 2026-10-25; Main PID: 654</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 2. Recargar configuración de nginx sin cortar clientes:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl reload nginx</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 3. Comprobación rápida en scripts (devuelve exit code 0):</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl is-active ssh</div>\n      <div style=\"color:#34D399;\">active</div>\n    </div>\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Diferencia de Examen: 'restart' mata el proceso y lo vuelve a crear; 'reload' solo relee la configuración sin interrumpir el servicio (ej: recargar certificados en un servidor web)."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-3-7",
+      "title": "Gestión de Servicios en el Arranque con systemctl",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Gestión de Servicios en el Arranque con systemctl"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo decidir qué demonios arrancan al encender el equipo y qué hace 'mask'?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "systemctl enable | disable | mask",
+          "title": "Habilitar, inhabilitar y enmascarar unidades para controlar el inicio automático"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "enable <unidad>",
+              "",
+              "🎯 Clave de Examen: Habilita el servicio para que arranque automáticamente al inicio creando un enlace simbólico en /etc/systemd/system/...wants/."
+            ],
+            [
+              "disable <unidad>",
+              "",
+              "Deshabilita el inicio automático eliminando el enlace simbólico (no detiene el servicio si está corriendo actualmente)."
+            ],
+            [
+              "mask <unidad>",
+              "",
+              "🎯 Pregunta de Examen: Enlaza el servicio a /dev/null. ¡Hace imposible iniciarlo, ni siquiera manualmente ni por dependencias de otros servicios!"
+            ],
+            [
+              "unmask <unidad>",
+              "",
+              "Elimina el enlace a /dev/null, permitiendo que el servicio vuelva a ser utilizado."
+            ],
+            [
+              "is-enabled <unidad>",
+              "",
+              "Comprueba si el servicio está programado para arrancar (devuelve 'enabled', 'disabled' o 'masked')."
+            ],
+            [
+              "list-units --type=service",
+              "",
+              "Lista todas las unidades de servicio activas en memoria."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1.25fr; gap:16px; margin-top:8px;\">\n  \n  <!-- Columna Izquierda: Los 3 Niveles de Control -->\n  <div style=\"display:flex; flex-direction:column; gap:10px;\">\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; padding:12px 14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n        🎯 Diferencias Fundamentales de Examen:\n      </div>\n      \n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:12px;\">\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--success); padding:8px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--success);\">enable:</strong> Crea un enlace simbólico en <code>.../multi-user.target.wants/</code>. Arranca automáticamente en el boot.\n        </div>\n\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--warning); padding:8px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--warning-ink);\">disable:</strong> Borra el symlink. No arrancará al inicio, pero <strong>sí puedes arrancarlo manualmente con 'start'</strong>.\n        </div>\n\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--danger); padding:8px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--danger);\">mask (Bloqueo Total):</strong> Apunta a <code>/dev/null</code>. <strong>Imposible iniciarlo</strong>, ni a mano ni por dependencias.\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <!-- Columna Derecha: Terminal de Pruebas Reales -->\n  <div style=\"background:#0F172A; border:2px solid #334155; border-radius:12px; overflow:hidden; box-shadow:0 6px 16px rgba(15,23,42,0.18);\">\n    <div style=\"background:#1E293B; padding:8px 14px; border-bottom:1px solid #334155; display:flex; align-items:center; justify-content:space-between;\">\n      <span style=\"font-family:monospace; font-size:12px; color:#94A3B8;\">bash — habilitar y bloquear</span>\n      <span style=\"font-size:11px; color:#38BDF8; font-weight:700;\">Comandos de Examen</span>\n    </div>\n    <div style=\"padding:12px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; line-height:1.55; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># 1. Habilitar y arrancar inmediatamente a la vez (--now):</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl enable --now mariadb</div>\n      <div style=\"color:#94A3B8; font-size:11px;\">Created symlink /etc/systemd/system/multi-user.target.wants/mariadb.service</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 2. Bloquear totalmente un servicio no deseado:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl mask apache2</div>\n      <div style=\"color:#94A3B8; font-size:11px;\">Created symlink /etc/systemd/system/apache2.service → /dev/null</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 3. Comprobar si está programado para arrancar:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl is-enabled apache2</div>\n      <div style=\"color:#EF4444; font-weight:bold;\">masked</div>\n    </div>\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta de Examen: ¿Qué comando impide totalmente que un servicio pueda ser iniciado por cualquier usuario o por otro servicio dependiente? Respuesta: systemctl mask <servicio>."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-3-8",
+      "title": "Equivalencias Directas: Targets de systemd vs Runlevels SysV",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Equivalencias Directas: Targets de systemd vs Runlevels SysV"
+        },
+        {
+          "type": "paragraph",
+          "text": "Esta tabla de equivalencias de arquitectura cae con absoluta certeza en el examen LPIC-1:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1.1fr 1fr; gap:16px; margin-top:6px;\">\n  \n  <!-- Columna Izquierda: Tabla Visual de Mapeo -->\n  <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; overflow:hidden;\">\n    <div style=\"background:var(--surface-alt); padding:8px 12px; font-weight:800; font-size:13px; color:var(--text); border-bottom:1px solid var(--border); display:grid; grid-template-columns: 110px 30px 150px 1fr;\">\n      <span>SysVinit</span><span></span><span>systemd Target</span><span>Propósito</span>\n    </div>\n    \n    <div style=\"display:flex; flex-direction:column; font-size:12px;\">\n      <div style=\"padding:6px 12px; display:grid; grid-template-columns: 110px 30px 150px 1fr; align-items:center; border-bottom:1px solid var(--border); background:var(--surface);\">\n        <strong style=\"color:#EF4444;\">Runlevel 0</strong><span>⇄</span><code style=\"color:#991B1B; font-weight:bold;\">poweroff.target</code><span>Apagar equipo</span>\n      </div>\n      <div style=\"padding:6px 12px; display:grid; grid-template-columns: 110px 30px 150px 1fr; align-items:center; border-bottom:1px solid var(--border); background:var(--surface-alt);\">\n        <strong style=\"color:#F59E0B;\">Runlevel 1 / S</strong><span>⇄</span><code style=\"color:#92400E; font-weight:bold;\">rescue.target</code><span>Rescate monousuario</span>\n      </div>\n      <div style=\"padding:6px 12px; display:grid; grid-template-columns: 110px 30px 150px 1fr; align-items:center; border-bottom:1px solid var(--border); background:var(--surface);\">\n        <strong style=\"color:#2563EB;\">Runlevels 2, 3, 4</strong><span>⇄</span><code style=\"color:#1E40AF; font-weight:bold;\">multi-user.target</code><span><strong>Servidor en texto</strong></span>\n      </div>\n      <div style=\"padding:6px 12px; display:grid; grid-template-columns: 110px 30px 150px 1fr; align-items:center; border-bottom:1px solid var(--border); background:var(--surface-alt);\">\n        <strong style=\"color:#16A34A;\">Runlevel 5</strong><span>⇄</span><code style=\"color:#14532D; font-weight:bold;\">graphical.target</code><span><strong>Escritorio GUI</strong></span>\n      </div>\n      <div style=\"padding:6px 12px; display:grid; grid-template-columns: 110px 30px 150px 1fr; align-items:center; background:var(--surface);\">\n        <strong style=\"color:#EA580C;\">Runlevel 6</strong><span>⇄</span><code style=\"color:#9A3412; font-weight:bold;\">reboot.target</code><span>Reiniciar máquina</span>\n      </div>\n    </div>\n  </div>\n\n  <!-- Columna Derecha: Demostración en Terminal Real -->\n  <div style=\"background:#0F172A; border:2px solid #334155; border-radius:12px; overflow:hidden; box-shadow:0 6px 16px rgba(15,23,42,0.18);\">\n    <div style=\"background:#1E293B; padding:8px 14px; border-bottom:1px solid #334155; display:flex; align-items:center; justify-content:space-between;\">\n      <span style=\"font-family:monospace; font-size:12px; color:#94A3B8;\">bash — compatibilidad de targets</span>\n      <span style=\"font-size:11px; color:#38BDF8; font-weight:700;\">Prueba en Debian</span>\n    </div>\n    <div style=\"padding:12px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; line-height:1.55; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># Ver cómo systemd mantiene los alias de SysV con symlinks:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@debian:~$</span> ls -l /lib/systemd/system/runlevel*.target | head -n 4</div>\n      <div style=\"color:#E2E8F0;\">runlevel1.target -> <span style=\"color:#FCD34D;\">rescue.target</span></div>\n      <div style=\"color:#E2E8F0;\">runlevel3.target -> <span style=\"color:#38BDF8;\">multi-user.target</span></div>\n      <div style=\"color:#E2E8F0;\">runlevel5.target -> <span style=\"color:#34D399;\">graphical.target</span></div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># Ver qué target está activo por defecto en la máquina:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@debian:~$</span> systemctl get-default</div>\n      <div style=\"color:#34D399;\">graphical.target</div>\n    </div>\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave Mnemotécnica: Recuerda las dos metas principales: multi-user.target = Runlevel 3 (Servidor); graphical.target = Runlevel 5 (Escritorio)."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-3-9",
+      "title": "Cambio de Objetivos en Vivo y Predeterminado en systemd",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Cambio de Objetivos en Vivo y Predeterminado en systemd"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo pasar de modo gráfico a modo consola en vivo y cómo fijar el target de inicio?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "systemctl isolate | get-default | set-default",
+          "title": "Conmutar el estado del sistema en vivo y configurar el target persistente"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "isolate <target>",
+              "",
+              "🎯 Clave de Examen: Cambia inmediatamente al objetivo indicado deteniendo todos los servicios que no pertenezcan al nuevo target (equivalente a telinit N)."
+            ],
+            [
+              "get-default",
+              "",
+              "Muestra el target que arrancará por defecto al encender el equipo."
+            ],
+            [
+              "set-default <target>",
+              "",
+              "🎯 Clave de Examen: Fija el target predeterminado modificando el enlace simbólico /etc/systemd/system/default.target."
+            ],
+            [
+              "systemd.unit=<target>",
+              "",
+              "Parámetro que se puede pasar al kernel en GRUB para arrancar temporalmente en otro target (ej: systemd.unit=rescue.target)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1.25fr; gap:16px; margin-top:8px;\">\n  \n  <!-- Columna Izquierda: isolate vs set-default -->\n  <div style=\"display:flex; flex-direction:column; gap:10px;\">\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; padding:12px 14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n        🎯 Dos formas de cambiar de target:\n      </div>\n      \n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:12px;\">\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--warning); padding:8px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--warning-ink);\">isolate &lt;target&gt; (En Caliente):</strong><br>\n          Cambia de estado ahora mismo. <strong>Apaga los servicios que sobren</strong> del target anterior (ej: cierra el escritorio gráfico si pasas a multi-user).\n        </div>\n\n        <div style=\"background:var(--surface-alt); border-left:4px solid var(--primary); padding:8px 10px; border-radius:6px;\">\n          <strong style=\"color:var(--primary);\">set-default &lt;target&gt; (Para el Futuro):</strong><br>\n          Cambia a qué apunta el enlace simbólico <code>/etc/systemd/system/default.target</code>.\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <!-- Columna Derecha: Terminal de Pruebas Reales -->\n  <div style=\"background:#0F172A; border:2px solid #334155; border-radius:12px; overflow:hidden; box-shadow:0 6px 16px rgba(15,23,42,0.18);\">\n    <div style=\"background:#1E293B; padding:8px 14px; border-bottom:1px solid #334155; display:flex; align-items:center; justify-content:space-between;\">\n      <span style=\"font-family:monospace; font-size:12px; color:#94A3B8;\">bash — cambio de targets</span>\n      <span style=\"font-size:11px; color:#38BDF8; font-weight:700;\">systemctl isolate</span>\n    </div>\n    <div style=\"padding:12px 14px; font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; line-height:1.55; color:#F8FAFC;\">\n      <div style=\"color:#64748B;\"># 1. Apagar el entorno gráfico en caliente para liberar RAM:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl isolate multi-user.target</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 2. Fijar que el servidor arranque siempre en modo consola:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl set-default multi-user.target</div>\n      <div style=\"color:#94A3B8; font-size:11px;\">Removed /etc/systemd/system/default.target.</div>\n      <div style=\"color:#94A3B8; font-size:11px;\">Created symlink /etc/systemd/system/default.target → .../multi-user.target</div>\n\n      <div style=\"color:#64748B; margin-top:8px;\"># 3. Comprobar el target activo por defecto:</div>\n      <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">root@debian:~#</span> systemctl get-default</div>\n      <div style=\"color:#34D399;\">multi-user.target</div>\n    </div>\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta de Examen: ¿A qué apunta físicamente /etc/systemd/system/default.target en un servidor sin interfaz gráfica? Respuesta: Es un enlace simbólico a /lib/systemd/system/multi-user.target."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-3-10",
+      "title": "Gestión de Energía y Suspensión: ACPI y systemd",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Gestión de Energía y Suspensión: ACPI y systemd"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué le ocurre exactamente al hardware (RAM, CPU, Disco y Batería) en cada estado de ahorro de energía?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin-top:2px;\">\n  \n  <!-- Fila Superior: 3 Opciones de Energía con Diagramas Gráficos y Ejemplos de Uso -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;\">\n    \n    <!-- 1. SUSPENSIÓN EN RAM -->\n    <div style=\"background:var(--surface); border:2px solid #BFDBFE; border-top:5px solid #2563EB; border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 3px 10px rgba(37,99,235,0.06);\">\n      <div>\n        <!-- Cabecera de la opción -->\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n          <div style=\"display:flex; align-items:center; gap:6px;\">\n            <span style=\"font-size:16px;\">⚡</span>\n            <span style=\"font-size:13.5px; font-weight:800; font-family:'JetBrains Mono', monospace; color:#1E40AF;\">systemctl suspend</span>\n          </div>\n          <span style=\"font-size:10px; font-weight:800; color:#1E40AF; background:#DBEAFE; padding:2px 7px; border-radius:5px; border:1px solid #93C5FD;\">ACPI S3</span>\n        </div>\n        <div style=\"font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:8px;\">Suspensión en RAM (Reposo ligero / Sleep)</div>\n        \n        <!-- Esquema Gráfico del Flujo de Hardware -->\n        <div style=\"background:var(--surface-alt); border:1.5px solid var(--border); border-radius:8px; padding:8px 10px; margin-bottom:8px;\">\n          <div style=\"font-size:10px; font-weight:800; text-transform:uppercase; color:#2563EB; letter-spacing:0.5px; margin-bottom:6px; display:flex; justify-content:space-between;\">\n            <span>Flujo de Hardware</span>\n            <span>⚡ RAM con corriente</span>\n          </div>\n          \n          <!-- Diagrama Gráfico -->\n          <div style=\"display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:10.5px; margin-bottom:6px;\">\n            <!-- Estado RAM -->\n            <div style=\"flex:1.1; background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:6px; padding:5px 6px; text-align:center;\">\n              <div style=\"font-weight:800; color:#1E40AF;\">🧠 Memoria RAM</div>\n              <div style=\"font-size:9.5px; color:#2563EB; font-weight:700;\">⚡ ALIMENTADA (1.2V)</div>\n              <div style=\"font-size:8.5px; color:#64748B;\">Mantiene apps vivas</div>\n            </div>\n            \n            <div style=\"font-weight:900; color:#94A3B8; font-size:12px;\">+</div>\n            \n            <!-- Estado CPU/Disco -->\n            <div style=\"flex:1.1; background:#F1F5F9; border:1.5px solid #CBD5E1; border-radius:6px; padding:5px 6px; text-align:center;\">\n              <div style=\"font-weight:800; color:#475569;\">⚙️ CPU y Disco</div>\n              <div style=\"font-size:9.5px; color:#64748B; font-weight:700;\">💤 DORMIDOS (0W)</div>\n              <div style=\"font-size:8.5px; color:#94A3B8;\">Ventiladores off</div>\n            </div>\n          </div>\n\n          <!-- Métricas clave en pastillas -->\n          <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:4px; font-size:10px;\">\n            <div style=\"background:#DCFCE7; color:#166534; padding:3px 6px; border-radius:4px; font-weight:700; text-align:center;\">\n              ⏱️ Despertar: 1 seg\n            </div>\n            <div style=\"background:#FEF3C7; color:#92400E; padding:3px 6px; border-radius:4px; font-weight:700; text-align:center;\">\n              🔋 Drenaje: 1-2%/h\n            </div>\n          </div>\n        </div>\n\n        <!-- Alerta de peligro -->\n        <div style=\"background:#FEF2F2; border-left:3px solid #DC2626; padding:5px 8px; border-radius:4px; font-size:10px; color:#991B1B; margin-bottom:8px; line-height:1.3;\">\n          ⚠️ <strong>Riesgo crítico:</strong> Si la batería se agota al 0% o se desenchufa la torre, la RAM pierde corriente y <strong>se pierden todos los datos no guardados</strong>.\n        </div>\n      </div>\n\n      <!-- Ejemplo Gráfico Real -->\n      <div style=\"background:#F0F9FF; border:1.5px dashed #0284C7; border-radius:6px; padding:6px 8px; font-size:10.5px; color:#0369A1; line-height:1.35;\">\n        ☕ <strong>Ejemplo real:</strong> Cerrar la tapa del portátil para ir a una reunión de 20 min en otra sala. Al abrir la tapa, el escritorio se reactiva en 1 segundo de inmediato.\n      </div>\n    </div>\n\n    <!-- 2. HIBERNACIÓN EN SWAP -->\n    <div style=\"background:var(--surface); border:2px solid #BBF7D0; border-top:5px solid #16A34A; border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 3px 10px rgba(22,163,74,0.06);\">\n      <div>\n        <!-- Cabecera de la opción -->\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n          <div style=\"display:flex; align-items:center; gap:6px;\">\n            <span style=\"font-size:16px;\">💾</span>\n            <span style=\"font-size:13.5px; font-weight:800; font-family:'JetBrains Mono', monospace; color:#15803D;\">systemctl hibernate</span>\n          </div>\n          <span style=\"font-size:10px; font-weight:800; color:#15803D; background:#DCFCE7; padding:2px 7px; border-radius:5px; border:1px solid #86EFAC;\">ACPI S4</span>\n        </div>\n        <div style=\"font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:8px;\">Hibernación Profunda (Volcado a Swap y Apagado)</div>\n        \n        <!-- Esquema Gráfico del Flujo de Hardware -->\n        <div style=\"background:var(--surface-alt); border:1.5px solid var(--border); border-radius:8px; padding:8px 10px; margin-bottom:8px;\">\n          <div style=\"font-size:10px; font-weight:800; text-transform:uppercase; color:#16A34A; letter-spacing:0.5px; margin-bottom:6px; display:flex; justify-content:space-between;\">\n            <span>Flujo de Volcado</span>\n            <span>🔌 Cero Consumo (0W)</span>\n          </div>\n          \n          <!-- Diagrama Gráfico con Flecha de Volcado -->\n          <div style=\"display:flex; align-items:center; justify-content:space-between; gap:4px; font-size:10.5px; margin-bottom:6px;\">\n            <!-- Origen RAM -->\n            <div style=\"flex:1; background:#FEE2E2; border:1.5px solid #FCA5A5; border-radius:6px; padding:5px 4px; text-align:center;\">\n              <div style=\"font-weight:800; color:#991B1B;\">🧠 RAM</div>\n              <div style=\"font-size:8.5px; color:#DC2626;\">Copia 100% datos</div>\n            </div>\n            \n            <!-- Flecha de transferencia -->\n            <div style=\"display:flex; flex-direction:column; align-items:center;\">\n              <span style=\"font-size:9px; font-weight:800; color:#16A34A;\">volcado</span>\n              <span style=\"font-size:13px; font-weight:900; color:#16A34A; line-height:1;\">➔</span>\n            </div>\n            \n            <!-- Destino Swap -->\n            <div style=\"flex:1; background:#DCFCE7; border:1.5px solid #86EFAC; border-radius:6px; padding:5px 4px; text-align:center;\">\n              <div style=\"font-weight:800; color:#166534;\">💾 Swap Disco</div>\n              <div style=\"font-size:8.5px; color:#16A34A;\">Grabado en SSD/HDD</div>\n            </div>\n\n            <div style=\"font-weight:900; color:#94A3B8; font-size:11px;\">➔</div>\n\n            <!-- Apagado total -->\n            <div style=\"flex:0.9; background:#F1F5F9; border:1.5px solid #CBD5E1; border-radius:6px; padding:5px 4px; text-align:center;\">\n              <div style=\"font-weight:800; color:#475569;\">🔌 0 Watts</div>\n              <div style=\"font-size:8.5px; color:#64748B;\">PC Apagado</div>\n            </div>\n          </div>\n\n          <!-- Métricas clave en pastillas -->\n          <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:4px; font-size:10px;\">\n            <div style=\"background:#E0E7FF; color:#3730A3; padding:3px 6px; border-radius:4px; font-weight:700; text-align:center;\">\n              ⏱️ Despertar: 10-15s\n            </div>\n            <div style=\"background:#DCFCE7; color:#166534; padding:3px 6px; border-radius:4px; font-weight:700; text-align:center;\">\n              🔋 Drenaje: 0% (0 Vatios)\n            </div>\n          </div>\n        </div>\n\n        <!-- Ventaja de seguridad -->\n        <div style=\"background:#F0FDF4; border-left:3px solid #16A34A; padding:5px 8px; border-radius:4px; font-size:10px; color:#166534; margin-bottom:8px; line-height:1.3;\">\n          🛡️ <strong>Seguridad 100%:</strong> Puedes extraer la batería o desenchufar el equipo durante meses; <strong>los datos siguen grabados en el disco</strong>.\n        </div>\n      </div>\n\n      <!-- Ejemplo Gráfico Real -->\n      <div style=\"background:#ECFDF5; border:1.5px dashed #059669; border-radius:6px; padding:6px 8px; font-size:10.5px; color:#065F46; line-height:1.35;\">\n        ✈️ <strong>Ejemplo real:</strong> Meter el portátil en la maleta para un viaje de 14 horas de avión. Cero gasto de batería y al encender todo está tal y como lo dejaste.\n      </div>\n    </div>\n\n    <!-- 3. SUSPENSIÓN HÍBRIDA -->\n    <div style=\"background:var(--surface); border:2px solid #E9D5FF; border-top:5px solid #9333EA; border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 3px 10px rgba(147,51,234,0.06);\">\n      <div>\n        <!-- Cabecera de la opción -->\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n          <div style=\"display:flex; align-items:center; gap:6px;\">\n            <span style=\"font-size:16px;\">🛡️</span>\n            <span style=\"font-size:13px; font-weight:800; font-family:'JetBrains Mono', monospace; color:#6B21A8;\">systemctl hybrid-sleep</span>\n          </div>\n          <span style=\"font-size:10px; font-weight:800; color:#6B21A8; background:#F3E8FF; padding:2px 7px; border-radius:5px; border:1px solid #D8B4FE;\">S3 + S4</span>\n        </div>\n        <div style=\"font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:8px;\">Suspensión Híbrida (Doble Salvavidas Inteligente)</div>\n        \n        <!-- Esquema Gráfico del Flujo de Hardware -->\n        <div style=\"background:var(--surface-alt); border:1.5px solid var(--border); border-radius:8px; padding:8px 10px; margin-bottom:8px;\">\n          <div style=\"font-size:10px; font-weight:800; text-transform:uppercase; color:#9333EA; letter-spacing:0.5px; margin-bottom:6px; display:flex; justify-content:space-between;\">\n            <span>Doble Escritura Paralela</span>\n            <span>⚡ RAM + 💾 Swap</span>\n          </div>\n          \n          <!-- Diagrama Gráfico con Bifurcación -->\n          <div style=\"display:flex; flex-direction:column; gap:4px; font-size:10px; margin-bottom:6px;\">\n            <div style=\"display:flex; align-items:center; justify-content:space-between; gap:6px; background:#FAF5FF; border:1px solid #E9D5FF; padding:4px 6px; border-radius:5px;\">\n              <span>🔋 <strong>Si hay batería:</strong></span>\n              <span style=\"color:#16A34A; font-weight:800;\">⚡ Despierta en 1s (lee RAM)</span>\n            </div>\n            <div style=\"display:flex; align-items:center; justify-content:space-between; gap:6px; background:#FAF5FF; border:1px solid #E9D5FF; padding:4px 6px; border-radius:5px;\">\n              <span>🪫 <strong>Si muere batería:</strong></span>\n              <span style=\"color:#9333EA; font-weight:800;\">💾 Recupera de Swap (0 pérdida)</span>\n            </div>\n          </div>\n\n          <!-- Métricas clave en pastillas -->\n          <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:4px; font-size:10px;\">\n            <div style=\"background:#DCFCE7; color:#166534; padding:3px 6px; border-radius:4px; font-weight:700; text-align:center;\">\n              ⚡ Rapidez de S3\n            </div>\n            <div style=\"background:#F3E8FF; color:#6B21A8; padding:3px 6px; border-radius:4px; font-weight:700; text-align:center;\">\n              🛡️ Protección de S4\n            </div>\n          </div>\n        </div>\n\n        <!-- Ventaja de seguridad -->\n        <div style=\"background:#FAF5FF; border-left:3px solid #9333EA; padding:5px 8px; border-radius:4px; font-size:10px; color:#581C87; margin-bottom:8px; line-height:1.3;\">\n          🌟 <strong>Lo mejor de dos mundos:</strong> No sufres la lentitud del arranque de hibernación, pero tampoco tienes miedo de quedarte sin batería en la mochila.\n        </div>\n      </div>\n\n      <!-- Ejemplo Gráfico Real -->\n      <div style=\"background:#FAF5FF; border:1.5px dashed #A855F7; border-radius:6px; padding:6px 8px; font-size:10.5px; color:#6B21A8; line-height:1.35;\">\n        🎒 <strong>Ejemplo real:</strong> Te vas de la oficina el viernes con el portátil al 15% de batería. Duerme en RAM; cuando la batería muere de madrugada, la Swap rescata tu sesión intacta el lunes.\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Fila Inferior: Medidor Gráfico Swap vs RAM + Consola + Demonio acpid -->\n  <div style=\"display:grid; grid-template-columns: 1.15fr 1fr; gap:12px;\">\n    \n    <!-- Medidor Gráfico Swap >= RAM -->\n    <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; padding:10px 14px;\">\n      <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;\">\n        <span>📊 Ecuación Gráfica de Examen: Swap frente a Memoria RAM</span>\n        <span style=\"font-size:10.5px; background:#DCFCE7; color:#166534; font-weight:800; padding:2px 8px; border-radius:4px;\">✔️ Apto para Hibernar</span>\n      </div>\n      \n      <!-- Barras visuales comparativas -->\n      <div style=\"display:flex; flex-direction:column; gap:6px;\">\n        <div>\n          <div style=\"display:flex; justify-content:space-between; font-size:11px; font-weight:700; margin-bottom:2px;\">\n            <span>Memoria RAM Física del Equipo (Datos activos)</span>\n            <span style=\"color:#D97706;\">7.7 GiB</span>\n          </div>\n          <div style=\"height:12px; background:var(--surface-alt); border-radius:6px; overflow:hidden; border:1px solid var(--border);\">\n            <div style=\"width:77%; height:100%; background:linear-gradient(90deg, #F59E0B, #D97706); border-radius:5px;\"></div>\n          </div>\n        </div>\n\n        <div>\n          <div style=\"display:flex; justify-content:space-between; font-size:11px; font-weight:700; margin-bottom:2px;\">\n            <span>Partición Swap en Disco SSD/HDD (Espacio disponible para volcar)</span>\n            <span style=\"color:#16A34A;\">8.0 GiB (Mayor que la RAM)</span>\n          </div>\n          <div style=\"height:12px; background:var(--surface-alt); border-radius:6px; overflow:hidden; border:1px solid var(--border);\">\n            <div style=\"width:80%; height:100%; background:linear-gradient(90deg, #22C55E, #16A34A); border-radius:5px;\"></div>\n          </div>\n        </div>\n      </div>\n\n      <div style=\"font-size:11px; color:var(--text-muted); margin-top:6px; line-height:1.35;\">\n        🎯 <strong>Regla sagrada LPIC-1:</strong> La partición Swap <strong>debe ser mayor o igual (≥) que la RAM física</strong>. Si la Swap mide menos (ej: 4 GB Swap con 8 GB RAM), el kernel se quedará sin espacio para volcar la memoria y cancelará la hibernación.\n      </div>\n    </div>\n\n    <!-- Consola Real + demonio acpid -->\n    <div style=\"display:flex; flex-direction:column; gap:6px;\">\n      <div style=\"background:#0F172A; border:2px solid #334155; border-radius:10px; padding:8px 12px; font-family:'JetBrains Mono', Consolas, monospace; font-size:11px; line-height:1.45; color:#F8FAFC;\">\n        <div style=\"color:#64748B;\"># Comprobar si la Swap es suficiente antes de hibernar:</div>\n        <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@portatil:~$</span> free -h</div>\n        <div style=\"color:#E2E8F0;\">Mem:   total: <strong style=\"color:#F59E0B;\">7.7Gi</strong> &nbsp; Swap: total: <strong style=\"color:#34D399;\">8.0Gi</strong></div>\n        \n        <div style=\"color:#64748B; margin-top:4px;\"># Ordenar la hibernación por terminal:</div>\n        <div style=\"color:#38BDF8;\"><span style=\"color:#10B981;\">alumno@portatil:~$</span> sudo systemctl hibernate</div>\n      </div>\n\n      <div style=\"background:var(--surface-alt); border:1.5px solid var(--border-strong); border-radius:8px; padding:6px 10px; font-size:11px; display:flex; align-items:center; gap:8px;\">\n        <span style=\"font-size:15px;\">🔌</span>\n        <div style=\"line-height:1.3;\">\n          <strong>Demonio acpid:</strong> Escucha pulsaciones del botón Power, cierre de tapa o batería baja y dispara los scripts de <code>/etc/acpi/</code>.\n        </div>\n      </div>\n    </div>\n\n  </div>\n\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE TOP DE EXAMEN: Para que 'systemctl hibernate' funcione, el tamaño de la partición Swap DEBE ser al menos igual o mayor que la memoria RAM física (Swap >= RAM). Si no hay espacio suficiente para volcar la RAM, la hibernación fallará."
+        }
+      ]
+    }
+  ]
+}

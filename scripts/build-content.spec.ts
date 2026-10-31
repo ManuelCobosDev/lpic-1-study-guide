@@ -35,8 +35,8 @@ describe('build-content pipeline (Gate 2: generación y validación)', () => {
     expect(manifest.stats.totalExams).toBe(2);
     expect(manifest.stats.totalTopics).toBe(10);
     expect(manifest.stats.totalSubtopics).toBe(42);
-    expect(manifest.stats.availableSubtopics).toBe(23);
-    expect(manifest.stats.plannedSubtopics).toBe(19);
+    expect(manifest.stats.availableSubtopics).toBe(42);
+    expect(manifest.stats.plannedSubtopics).toBe(0);
 
     // Archivos generados en disco
     expect(fs.existsSync(path.join(tmpOut, 'manifest.json'))).toBe(true);

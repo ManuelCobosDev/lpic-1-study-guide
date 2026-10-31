@@ -1,0 +1,1210 @@
+{
+  "id": "102.4",
+  "topicId": "102",
+  "examId": "101",
+  "title": "Gestión de paquetes Debian",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 30,
+  "objectives": [
+    "dpkg, dpkg-query, dpkg-reconfigure, apt-get, apt-cache, apt-file y sources.list (Alta Densidad LPIC-1)",
+    "Dominio técnico de las herramientas y configuración del subtema 102.4"
+  ],
+  "keyTerms": [
+    ".deb",
+    "dpkg",
+    "APT (Advanced Package Tool)",
+    "sources.list",
+    "alien"
+  ],
+  "commands": [],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "102.4-slide-1",
+      "slideNumber": 1,
+      "title": "Gestión de paquetes Debian y APT",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Gestión de paquetes Debian y APT"
+        },
+        {
+          "type": "paragraph",
+          "text": "dpkg, dpkg-query, dpkg-reconfigure, apt-get, apt-cache, apt-file y sources.list (Modo Examen)"
+        }
+      ],
+      "notes": "Iniciamos el subtema 102.4 (peso 3 en el examen LPIC-1 101-500). Dominar el ecosistema Debian es fundamental: dpkg para operaciones de bajo nivel sin resolución de dependencias, y el conjunto APT para la gestión remota con resolución automática."
+    },
+    {
+      "id": "102.4-slide-2",
+      "slideNumber": 2,
+      "title": "Ecosistema Debian: La Arquitectura de 2 Capas",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ecosistema Debian: La Arquitectura de 2 Capas"
+        },
+        {
+          "type": "paragraph",
+          "text": "Debian separa estrictamente la resolución inteligente en red del motor de instalación local:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**dpkg: El motor de bajo nivel para paquetes .deb locales** — Instala, borra y consulta archivos .deb que ya residen en el disco local. NO descarga paquetes de Internet ni resuelve dependencias automáticamente: si falta una librería requerida, la instalación se detiene con error.",
+            "**APT (Advanced Package Tool): Front-end de alto nivel** — Consulta repositorios remotos a través de la red, calcula el árbol de dependencias, descarga todos los paquetes necesarios e invoca internamente a dpkg para instalarlos en el orden correcto.",
+            "**Base de datos local de estado: /var/lib/dpkg/status** — 🎯 Clave de Examen: dpkg registra cada paquete instalado, su versión y su estado (Installed, Config-Files, Unpacked) en el archivo de texto plano /var/lib/dpkg/status."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:16px 0;\">\n  <!-- Capa Superior: APT -->\n  <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:14px; padding:16px 20px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:13px; padding:2px 8px; border-radius:6px;\">CAPA ALTO NIVEL</span>\n      <span style=\"font-size:13px; font-weight:700; color:#1E40AF;\">Red, Repositorios & Dependencias</span>\n    </div>\n    <div style=\"font-size:18px; font-weight:800; color:#1E40AF; margin-bottom:6px;\">APT (apt-get, apt-cache, apt)</div>\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:14px; color:#1E3A8A;\">\n      <div>• Consulta servidores remotos definidos en <code>/etc/apt/sources.list</code>.</div>\n      <div>• Calcula el árbol completo de dependencias transitivas.</div>\n      <div>• Descarga paquetes a <code>/var/cache/apt/archives/</code>.</div>\n      <div>• 🎯 Invoca a <code>dpkg</code> por debajo para instalar en el orden correcto.</div>\n    </div>\n  </div>\n\n  <!-- Flecha de invocación -->\n  <div style=\"display:flex; justify-content:center; align-items:center; gap:10px;\">\n    <span style=\"font-size:22px; color:#2563EB; font-weight:900;\">⬇️</span>\n    <span style=\"font-size:13px; font-weight:700; color:#475569; background:#F1F5F9; padding:3px 12px; border-radius:12px; border:1px solid #CBD5E1;\">\n      APT ejecuta internamente a dpkg\n    </span>\n    <span style=\"font-size:22px; color:#2563EB; font-weight:900;\">⬇️</span>\n  </div>\n\n  <!-- Capa Inferior: dpkg -->\n  <div style=\"background:#F0FDF4; border:2px solid #16A34A; border-radius:14px; padding:16px 20px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:13px; padding:2px 8px; border-radius:6px;\">CAPA BAJO NIVEL</span>\n      <span style=\"font-size:13px; font-weight:700; color:#15803D;\">Motor Local de Ficheros .deb</span>\n    </div>\n    <div style=\"font-size:18px; font-weight:800; color:#14532D; margin-bottom:6px;\">dpkg (Debian Package Manager)</div>\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:14px; color:#14532D;\">\n      <div>• Opera únicamente sobre archivos <code>.deb</code> locales en disco.</div>\n      <div>• <strong>NO tiene acceso a red</strong> ni descarga archivos de repositorios.</div>\n      <div>• 🎯 <strong>NO resuelve dependencias:</strong> si falta una librería, aborta con error.</div>\n      <div>• Mantiene el estado del sistema en <code>/var/lib/dpkg/status</code>.</div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA CLAVE DE EXAMEN: ¿Qué herramienta resuelve dependencias y descarga paquetes por red? APT. ¿Qué herramienta gestiona paquetes .deb a bajo nivel en local sin red? dpkg."
+        }
+      ],
+      "notes": "Explica a la clase que dpkg nunca se conecta a la red. Si el profesor o un administrador quiere descargar e instalar en 1 solo paso, debe usar apt-get o apt."
+    },
+    {
+      "id": "102.4-slide-3",
+      "slideNumber": 3,
+      "title": "dpkg: Instalación, Eliminación y Ciclo de Vida de Paquetes",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "dpkg: Instalación, Eliminación y Ciclo de Vida de Paquetes"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-i, --install",
+              "Instalar fichero .deb",
+              "Desempaqueta y configura un archivo .deb local en el disco."
+            ],
+            [
+              "-r, --remove",
+              "Eliminar (guarda config)",
+              "🎯 Elimina binarios y librerías, pero CONSERVA los ficheros de configuración en /etc/ (estado rc)."
+            ],
+            [
+              "-P, --purge",
+              "Purgar (borra todo)",
+              "🎯 Eliminación total: borra binarios Y destruye toda la configuración en /etc/ (estado un)."
+            ],
+            [
+              "--unpack",
+              "Solo desempaquetar",
+              "Extrae los ficheros en disco sin ejecutar los scripts de configuración debconf/postinst."
+            ],
+            [
+              "--configure",
+              "Configurar paquete",
+              "Configura un paquete previamente desempaquetado con --unpack ejecutando scripts postinst."
+            ],
+            [
+              "-C, --audit",
+              "Auditar paquetes rotos",
+              "Busca paquetes a medio instalar o con dependencias y configuraciones rotas en el sistema."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:4px 0;\">\n  <!-- Terminal Realista con Salida Real de Instalación y Eliminación -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Instalación y desinstalación a bajo nivel con dpkg</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">sudo dpkg -i tree_1.8.0-1_amd64.deb</span></div>\n    <div style=\"color:#94A3B8;\">Selecting previously unselected package tree ... Unpacking tree (1.8.0-1) ...</div>\n    <div style=\"color:#4ADE80;\">Setting up tree (1.8.0-1) ... <span style=\"color:#94A3B8;\">Processing triggers for man-db (2.11.2-2) ...</span></div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#F87171; font-weight:700;\">sudo dpkg -r tree</span></div>\n    <div style=\"color:#FCA5A5;\">Removing tree (1.8.0-1) ... <span style=\"color:#94A3B8;\">Processing triggers for man-db ...</span></div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">📦 1. Unpacking (Desempaquetar):</strong>\n      <div style=\"color:#1E3A8A; margin-top:2px; line-height:1.3;\">\n        Extrae binarios (<code>/usr/bin/tree</code>) y manuales en disco sin configurarlos todavía.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">⚙️ 2. Setting up (Configurar):</strong>\n      <div style=\"color:#14532D; margin-top:2px; line-height:1.3;\">\n        Ejecuta el script <code>postinst</code> para registrar servicios y configuración en <code>/etc/</code>.\n      </div>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">🔔 3. Processing triggers:</strong>\n      <div style=\"color:#581C87; margin-top:2px; line-height:1.3;\">\n        Actualiza cachés del sistema de forma diferida (índice de manpages con <code>man-db</code>).\n      </div>\n    </div>\n  </div>\n\n  <!-- DIAGRAMA ESQUEMÁTICO: CICLO DE VIDA Y ESTADOS (ii, rc, un) -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 14px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:var(--text);\">🔄 Ciclo de Vida y Estados Oficiales de Paquetes en Debian:</div>\n      <span style=\"background:#0F172A; color:#FFF; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;\">BASE DE DATOS /var/lib/dpkg/status</span>\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1fr 18px 1.15fr 18px 1.15fr; align-items:center; gap:4px; font-size:11.5px;\">\n      <!-- ESTADO 1: INSTALADO (ii) -->\n      <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:8px; padding:8px 10px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n          <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 5px; border-radius:3px;\">ESTADO ii</span>\n          <code style=\"font-weight:800; color:#15803D; font-size:11px;\">dpkg -i pkg.deb</code>\n        </div>\n        <strong style=\"color:#14532D; font-size:12.5px;\">Instalado Totalmente</strong>\n        <div style=\"margin-top:3px; color:#14532D; line-height:1.3;\">\n          ✅ Binarios en <code>/usr/bin/</code><br>\n          ✅ Librerías y manuales<br>\n          ✅ Configuración en <code>/etc/</code>\n        </div>\n      </div>\n\n      <div style=\"text-align:center; font-size:15px; color:#D97706; font-weight:900;\">➔</div>\n\n      <!-- ESTADO 2: REMOVE (rc) -->\n      <div style=\"background:#FFFBEB; border:1.5px solid #FCD34D; border-radius:8px; padding:8px 10px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n          <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 5px; border-radius:3px;\">ESTADO rc</span>\n          <code style=\"font-weight:800; color:#B45309; font-size:11px;\">dpkg -r pkg</code>\n        </div>\n        <strong style=\"color:#92400E; font-size:12.5px;\">Remove (Desinstalado)</strong>\n        <div style=\"margin-top:3px; color:#78350F; line-height:1.3;\">\n          ❌ Binarios eliminados<br>\n          ❌ Manuales eliminados<br>\n          ⚠️ <strong>Conserva configuración en <code>/etc/</code></strong>\n        </div>\n      </div>\n\n      <div style=\"text-align:center; font-size:15px; color:#DC2626; font-weight:900;\">➔</div>\n\n      <!-- ESTADO 3: PURGE (un) -->\n      <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-radius:8px; padding:8px 10px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n          <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 5px; border-radius:3px;\">ESTADO un</span>\n          <code style=\"font-weight:800; color:#DC2626; font-size:11px;\">dpkg -P pkg</code>\n        </div>\n        <strong style=\"color:#991B1B; font-size:12.5px;\">Purge (Purgado Total)</strong>\n        <div style=\"margin-top:3px; color:#7F1D1D; line-height:1.3;\">\n          ❌ Binarios eliminados<br>\n          ❌ Manuales eliminados<br>\n          💥 <strong>Destruye ficheros de <code>/etc/</code></strong>\n        </div>\n      </div>\n    </div>\n\n    <!-- Barra de rescate de dependencias -->\n    <div style=\"margin-top:8px; padding:5px 10px; background:#EFF6FF; border-left:4px solid #2563EB; border-radius:4px; font-size:11.5px; color:#1E40AF; display:flex; justify-content:space-between; align-items:center;\">\n      <span>💡 <strong>¿Qué hacer si dpkg -i falla por dependencias rotas?</strong> Ejecuta: <code style=\"background:#DBEAFE; color:#1E40AF; font-weight:800; padding:1px 6px; border-radius:4px;\">sudo apt-get install -f</code> (o <code>sudo apt --fix-broken install</code>).</span>\n      <span style=\"font-weight:700; color:#2563EB; font-size:11px;\">🎯 PREGUNTA CLAVE LPIC-1</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Examen: 'dpkg -r' conserva configuración en /etc/ (estado rc); 'dpkg -P' destruye ejecutables y configuración (estado un)."
+        }
+      ],
+      "notes": "Recalca a los alumnos que -i requiere el nombre del archivo terminado en .deb (ej: tree_1.8.deb), mientras que -r y -P requieren el nombre lógico del paquete (ej: tree)."
+    },
+    {
+      "id": "102.4-slide-4",
+      "slideNumber": 4,
+      "title": "dpkg y dpkg-query: Inspección de Paquetes y Pertenencias",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "dpkg y dpkg-query: Inspección de Paquetes y Pertenencias"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-L, --listfiles <paquete>",
+              "Listar ficheros instalados",
+              "🎯 Lista todos los archivos y directorios que el paquete ha instalado en el disco."
+            ],
+            [
+              "-S, --search <ruta>",
+              "Buscar dueño en disco",
+              "🎯 dpkg -S o dpkg-query -S: averigua qué paquete instalado proporcionó un archivo o ruta existente."
+            ],
+            [
+              "-l, --list [patrón]",
+              "Listar paquetes instalados",
+              "Muestra tabla de paquetes con su código de estado (ii = instalado OK, rc = borrado con config)."
+            ],
+            [
+              "-s, --status <paquete>",
+              "Ver ficha de paquete instalado",
+              "Muestra estado detallado, dependencias y versión de un paquete ya presente en el sistema."
+            ],
+            [
+              "-c, --contents <fichero.deb>",
+              "Ver ficheros de un .deb",
+              "🎯 Lista los archivos contenidos dentro de un archivo .deb sin necesidad de instalarlo."
+            ],
+            [
+              "-I, --info <fichero.deb>",
+              "Ver metadatos de un .deb",
+              "Muestra la ficha técnica de un paquete .deb almacenado en disco antes de instalarlo."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:4px 0;\">\n  <!-- Terminal Realista de Inspección con Salida Real Compacta -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Consultas en la base de datos de dpkg</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">dpkg-query -S /bin/ls</span></div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">coreutils: /bin/ls</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">dpkg -l bash</span></div>\n    <div style=\"color:#94A3B8;\">||/ Name      Version         Architecture Description</div>\n    <div style=\"color:#38BDF8; font-weight:700;\">+++-=========-===============-============-=======================================</div>\n    <div><span style=\"color:#4ADE80; font-weight:800;\">ii</span>  <span style=\"color:#F8FAFC; font-weight:700;\">bash</span>      <span style=\"color:#FCD34D;\">5.2.15-2+b7</span>     <span style=\"color:#C084FC;\">amd64</span>        <span style=\"color:#94A3B8;\">GNU Bourne Again SHell</span></div>\n  </div>\n\n  <!-- Desglose de las Columnas de dpkg -l -->\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:5px 8px;\">\n      <strong style=\"color:#14532D;\">1ª Letra (Deseado):</strong><br>\n      <code>i</code> = Install | <code>h</code> = Hold\n    </div>\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:5px 8px;\">\n      <strong style=\"color:#1E40AF;\">2ª Letra (Estado Real):</strong><br>\n      <code>i</code> = Installed | <code>c</code> = Config-files\n    </div>\n    <div style=\"background:#FFFBEB; border:1px solid #FDE047; border-radius:6px; padding:5px 8px;\">\n      <strong style=\"color:#92400E;\">Versión & Arquitectura:</strong><br>\n      <code>5.2.15-2+b7</code> | <code>amd64</code>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:5px 8px;\">\n      <strong style=\"color:#6B21A8;\">dpkg-query -S:</strong><br>\n      Busca en <code>info/*.list</code> el dueño de una ruta.\n    </div>\n  </div>\n\n  <!-- COMPARATIVA RADICAL DE EXAMEN: ¿EN DISCO O EN REPOSITORIO? -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 14px;\">\n    <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      ⚖️ La Gran Comparativa de Examen: ¿Dónde está el archivo que buscas?\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n      <!-- EN DISCO: dpkg -S -->\n      <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:8px; padding:8px 10px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">EN DISCO LOCAL</span>\n          <code style=\"font-size:12.5px; font-weight:800; color:#1E40AF;\">dpkg -S &lt;ruta&gt;</code>\n        </div>\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">El archivo FÍSICO ya existe en tu máquina</strong>\n        <div style=\"font-size:11.5px; color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n          • Busca en los índices locales <code>/var/lib/dpkg/info/*.list</code>.<br>\n          • Averigua qué paquete instalado colocó ese archivo (ej: <code>dpkg -S /bin/ls</code> devuelve <code>coreutils</code>).<br>\n          • ⚠️ <strong>Si el archivo no está en tu disco, da error.</strong>\n        </div>\n      </div>\n\n      <!-- EN REPOSITORIO: apt-file search -->\n      <div style=\"background:#FAF5FF; border:2px solid #9333EA; border-radius:8px; padding:8px 10px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">EN LA NUBE (REPOSITORIOS)</span>\n          <code style=\"font-size:12.5px; font-weight:800; color:#7E22CE;\">apt-file search &lt;fichero&gt;</code>\n        </div>\n        <strong style=\"color:#6B21A8; font-size:12.5px;\">El archivo NO está instalado en tu máquina</strong>\n        <div style=\"font-size:11.5px; color:#581C87; margin-top:2px; line-height:1.35;\">\n          • Descarga los metadatos globales <code>Contents-*.gz</code> de los repositorios.<br>\n          • Te dice qué paquete debes instalar para tener un archivo o cabecera que te falta (ej: <code>apt-file search stdio.h</code> devuelve <code>libc6-dev</code>).<br>\n          • 🎯 <strong>No requiere tener el paquete ni el archivo instalado.</strong>\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para buscar el dueño de un archivo que YA EXISTE en disco usa 'dpkg -S'. Si el archivo NO está instalado, usa 'apt-file search'."
+        }
+      ],
+      "notes": "Muestra a los alumnos las columnas de dpkg -l: la primera letra indica el estado deseado (i=install), la segunda el estado actual (i=installed)."
+    },
+    {
+      "id": "102.4-slide-5",
+      "slideNumber": 5,
+      "title": "dpkg-reconfigure y apt-mark: Reconfigurar y Proteger Paquetes",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "dpkg-reconfigure y apt-mark: Reconfigurar y Proteger Paquetes"
+        },
+        {
+          "type": "paragraph",
+          "text": "Dos herramientas esenciales de post-instalación para administrar servicios y estabilidad en servidores Debian:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:16px; margin:12px 0;\">\n  <!-- GRID DE 2 COLUMNAS CLAVE: dpkg-reconfigure vs apt-mark -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:20px;\">\n    \n    <!-- COLUMNA 1: dpkg-reconfigure -->\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:12px; padding:18px 20px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n          <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:11px; padding:3px 8px; border-radius:4px;\">RECONFIGURAR SIN REINSTALAR</span>\n          <span style=\"font-size:12px; font-weight:700; color:#1E40AF;\">Asistente debconf</span>\n        </div>\n        <div style=\"font-size:20px; font-weight:800; color:#1E40AF; margin-bottom:8px;\">\n          sudo dpkg-reconfigure &lt;paquete&gt;\n        </div>\n        <div style=\"font-size:14px; color:#1E3A8A; line-height:1.45; margin-bottom:14px;\">\n          • Vuelve a abrir las pantallas interactivas de configuración de un paquete <strong>que ya está instalado</strong>.<br>\n          • <strong>Evita el error típico:</strong> no necesitas desinstalar y reinstalar el programa ni editar ficheros complejos a mano en <code>/etc/</code>.\n        </div>\n\n        <!-- Terminal Real -->\n        <div style=\"background:#0F172A; color:#F8FAFC; border-radius:8px; padding:12px 14px; font-family:monospace; font-size:12.5px; line-height:1.45; margin-bottom:12px;\">\n          <div><span style=\"color:#4ADE80;\">usuario@servidor:~$</span> <span style=\"color:#FDE047; font-weight:700;\">sudo dpkg-reconfigure tzdata</span></div>\n          <div style=\"color:#94A3B8;\"># Abre menú interactivo en consola para elegir continente y ciudad</div>\n          <div style=\"color:#A7F3D0; font-weight:700;\">Current default time zone: 'Europe/Madrid'</div>\n          <div style=\"color:#94A3B8;\">Local time is now: Sun Oct 25 22:45:00 CET 2026.</div>\n        </div>\n      </div>\n\n      <!-- Casos Reales y Opciones Clave -->\n      <div style=\"background:#FFFFFF; border:1px solid #BFDBFE; border-radius:8px; padding:10px 14px; font-size:12.5px; color:#1E40AF;\">\n        <strong>Casos reales frecuentes en examen:</strong><br>\n        • <code>tzdata</code> (Zona horaria) &nbsp;|&nbsp; • <code>locales</code> (Idiomas UTF-8) &nbsp;|&nbsp; • <code>keyboard-configuration</code><br>\n        • <strong>Opción útil:</strong> <code>-p critical</code> (solo hace las preguntas indispensables).\n      </div>\n    </div>\n\n    <!-- COLUMNA 2: apt-mark hold -->\n    <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:12px; padding:18px 20px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n          <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:11px; padding:3px 8px; border-radius:4px;\">BLOQUEAR / CONGELAR PAQUETE</span>\n          <span style=\"font-size:12px; font-weight:700; color:#92400E;\">Protección de Producción</span>\n        </div>\n        <div style=\"font-size:20px; font-weight:800; color:#92400E; margin-bottom:8px;\">\n          sudo apt-mark hold &lt;paquete&gt;\n        </div>\n        <div style=\"font-size:14px; color:#78350F; line-height:1.45; margin-bottom:14px;\">\n          • Pone un <strong>candado</strong> al paquete para que <code>apt-get upgrade</code> o <code>dist-upgrade</code> <strong>no lo actualicen jamás</strong>.<br>\n          • <strong>Caso real en servidores:</strong> congelar la versión del Kernel o de la base de datos para garantizar estabilidad absoluta en producción.\n        </div>\n\n        <!-- Terminal Real -->\n        <div style=\"background:#0F172A; color:#F8FAFC; border-radius:8px; padding:12px 14px; font-family:monospace; font-size:12.5px; line-height:1.45; margin-bottom:12px;\">\n          <div><span style=\"color:#4ADE80;\">usuario@servidor:~$</span> <span style=\"color:#FDE047; font-weight:700;\">sudo apt-mark hold linux-image-amd64</span></div>\n          <div style=\"color:#38BDF8; font-weight:700;\">linux-image-amd64 set on hold.</div>\n          <div><span style=\"color:#4ADE80;\">usuario@servidor:~$</span> <span style=\"color:#FDE047; font-weight:700;\">apt-mark showhold</span></div>\n          <div style=\"color:#FCD34D;\">linux-image-amd64</div>\n        </div>\n      </div>\n\n      <!-- Comandos de Gestión y Alternativa -->\n      <div style=\"background:#FFFFFF; border:1px solid #FDE68A; border-radius:8px; padding:10px 14px; font-size:12.5px; color:#78350F;\">\n        <strong>Comandos clave para gestionarlo:</strong><br>\n        • <code>apt-mark hold &lt;pkg&gt;</code> (Poner candado) &nbsp;|&nbsp; • <code>apt-mark unhold &lt;pkg&gt;</code> (Desbloquear)<br>\n        • <code>apt-mark showhold</code> (Ver lista) &nbsp;|&nbsp; • Clásico de tuberías: <code>dpkg --set-selections</code>.\n      </div>\n    </div>\n\n  </div>\n\n  <!-- BANNER RESUMEN DIRECTO DE EXAMEN -->\n  <div style=\"background:#F8FAFC; border:1.5px solid #CBD5E1; border-left:6px solid #2563EB; border-radius:8px; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; font-size:13.5px; color:#0F172A;\">\n    <div>\n      🎯 <strong>Resumen para el Examen LPIC-1:</strong><br>\n      • ¿Quieres cambiar la hora o el idioma sin reinstalar? ➔ <code style=\"background:#EFF6FF; color:#1E40AF; font-weight:800; padding:2px 8px; border-radius:4px; font-size:14px;\">sudo dpkg-reconfigure &lt;pkg&gt;</code>.<br>\n      • ¿Quieres evitar que una actualización masiva toque tu kernel? ➔ <code style=\"background:#FFFBEB; color:#92400E; font-weight:800; padding:2px 8px; border-radius:4px; font-size:14px;\">sudo apt-mark hold &lt;pkg&gt;</code>.\n    </div>\n    <span style=\"background:#0F172A; color:#FFF; font-weight:800; font-size:11px; padding:6px 12px; border-radius:6px; white-space:nowrap;\">PUNTOS CLAVE DE EXAMEN</span>\n  </div>\n</div>\n"
+        }
+      ],
+      "notes": "Explica los dos escenarios reales: cambiar la zona horaria con tzdata y congelar el kernel linux-image-amd64 en servidores de producción."
+    },
+    {
+      "id": "102.4-slide-6",
+      "slideNumber": 6,
+      "title": "Repositorios APT: sources.list y sources.list.d/",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Repositorios APT: sources.list y sources.list.d/"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "",
+          "title": "/etc/apt/sources.list y /etc/apt/sources.list.d/*.list"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin:6px 0;\">\n  <!-- Diferencia de Archivos: Archivo Maestro vs Directorio Modular -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px;\">\n    <!-- sources.list -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:8px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">FICHERO CENTRAL</span>\n        <code style=\"font-weight:800; color:#1E40AF; font-size:13px;\">/etc/apt/sources.list</code>\n      </div>\n      <strong style=\"color:#1E40AF; font-size:13px;\">Repositorios Oficiales del Sistema Base</strong>\n      <div style=\"font-size:12px; color:#1E3A8A; margin-top:4px; line-height:1.35;\">\n        Archivo de texto tradicional donde se configuran los servidores principales de Debian o Ubuntu, las actualizaciones de seguridad y los repositorios de código fuente (<code>deb-src</code>).\n      </div>\n    </div>\n\n    <!-- sources.list.d/ -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:8px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">DIRECTORIO MODULAR</span>\n        <code style=\"font-weight:800; color:#6B21A8; font-size:13px;\">/etc/apt/sources.list.d/*.list</code>\n      </div>\n      <strong style=\"color:#6B21A8; font-size:13px;\">Repositorios Independientes de Terceros</strong>\n      <div style=\"font-size:12px; color:#581C87; margin-top:4px; line-height:1.35;\">\n        Permite que aplicaciones de terceros (Docker, Google Chrome, VS Code, Nginx) añadan su propio archivo <code>.list</code> sin tocar el archivo maestro del sistema. Al desinstalar, solo se borra ese archivo.\n      </div>\n    </div>\n  </div>\n\n  <!-- Contenido Real y Fiel de un Fichero sources.list -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:12px 16px; font-family:monospace; font-size:12.5px; line-height:1.45; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:6px; margin-bottom:8px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">📄 Contenido Real de /etc/apt/sources.list (Debian 12 Bookworm)</span>\n      <span>sources.list</span>\n    </div>\n    <div style=\"color:#64748B;\"># Repositorio oficial base de Debian (Paquetes binarios precompilados)</div>\n    <div>\n      <span style=\"color:#38BDF8; font-weight:800;\">deb</span> \n      <span style=\"color:#A7F3D0;\">https://deb.debian.org/debian</span> \n      <span style=\"color:#FDE047; font-weight:700;\">bookworm</span> \n      <span style=\"color:#F472B6;\">main</span> <span style=\"color:#F472B6;\">contrib</span> <span style=\"color:#F472B6;\">non-free</span> <span style=\"color:#F472B6;\">non-free-firmware</span>\n    </div>\n    <div style=\"margin-top:4px; color:#64748B;\"># Repositorio oficial de código fuente (Para compilar con apt-get source)</div>\n    <div>\n      <span style=\"color:#FB923C; font-weight:800;\">deb-src</span> \n      <span style=\"color:#A7F3D0;\">https://deb.debian.org/debian</span> \n      <span style=\"color:#FDE047; font-weight:700;\">bookworm</span> \n      <span style=\"color:#F472B6;\">main</span> <span style=\"color:#F472B6;\">contrib</span>\n    </div>\n    <div style=\"margin-top:4px; color:#64748B;\"># Actualizaciones de seguridad críticas</div>\n    <div>\n      <span style=\"color:#38BDF8; font-weight:800;\">deb</span> \n      <span style=\"color:#A7F3D0;\">https://security.debian.org/debian-security</span> \n      <span style=\"color:#FDE047; font-weight:700;\">bookworm-security</span> \n      <span style=\"color:#F472B6;\">main</span>\n    </div>\n  </div>\n\n  <!-- ANATOMÍA GRÁFICA DE UNA LÍNEA DE REPOSITORIO -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px;\">\n    <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n      📋 Anatomía de una Línea de Repositorio (Los 4 Campos Evaluados en LPIC-1):\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1.1fr 1fr 1fr 1.35fr; gap:8px; font-size:12px;\">\n      <!-- 1. Tipo -->\n      <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:8px 10px; border-radius:8px;\">\n        <strong style=\"color:#0284C7; font-size:12.5px;\">1. Tipo de Paquete:</strong><br>\n        • <code style=\"color:#0284C7; font-weight:800;\">deb</code>: Binarios <code>.deb</code> compilados.<br>\n        • <code style=\"color:#EA580C; font-weight:800;\">deb-src</code>: Código fuente original para compilar con <code>apt-get source</code>.\n      </div>\n\n      <!-- 2. URI -->\n      <div style=\"background:#ECFDF5; border:1px solid #A7F3D0; padding:8px 10px; border-radius:8px;\">\n        <strong style=\"color:#059669; font-size:12.5px;\">2. URI / Espejo:</strong><br>\n        Dirección del servidor HTTP/HTTPS, FTP o medio local (<code>file:/</code>, <code>cdrom:</code>).\n      </div>\n\n      <!-- 3. Distribución -->\n      <div style=\"background:#FEFCE8; border:1px solid #FDE047; padding:8px 10px; border-radius:8px;\">\n        <strong style=\"color:#CA8A04; font-size:12.5px;\">3. Distribución / Suite:</strong><br>\n        Codename de versión (<code>bookworm</code>, <code>bullseye</code>) o suite (<code>stable</code>, <code>testing</code>).\n      </div>\n\n      <!-- 4. Componentes -->\n      <div style=\"background:#FDF2F8; border:1px solid #FBCFE8; padding:8px 10px; border-radius:8px;\">\n        <strong style=\"color:#DB2777; font-size:12.5px;\">4. Componentes (Licencias):</strong><br>\n        • <strong>Debian:</strong> <code>main</code> (Libre DFSG), <code>contrib</code>, <code>non-free</code>, <code>non-free-firmware</code>.<br>\n        • <strong>Ubuntu:</strong> <code>main</code>, <code>restricted</code>, <code>universe</code>, <code>multiverse</code>.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para descargar el código fuente con 'apt-get source', debe existir obligatoriamente al menos una línea que comience por 'deb-src' en sources.list."
+        }
+      ],
+      "notes": "Diferencia claramente los componentes de Debian (main, contrib, non-free, non-free-firmware) de los de Ubuntu (main, restricted, universe, multiverse)."
+    },
+    {
+      "id": "102.4-slide-7",
+      "slideNumber": 7,
+      "title": "apt-get: Ciclo de Vida, Dependencias y Actualizaciones",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "apt-get: Ciclo de Vida, Dependencias y Actualizaciones"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "update",
+              "Sincronizar índices",
+              "🎯 Sincroniza los catálogos locales en /var/lib/apt/lists/ desde sources.list. NO actualiza ningún software."
+            ],
+            [
+              "install [-y] <paquete>",
+              "Instalar con dependencias",
+              "Descarga e instala el paquete y todas sus dependencias. -y responde 'sí' a todo."
+            ],
+            [
+              "upgrade",
+              "Actualización conservadora",
+              "Actualiza todos los paquetes instalados a su última versión SIN desinstalar jamás ningún paquete existente."
+            ],
+            [
+              "dist-upgrade",
+              "Actualización agresiva",
+              "🎯 Resuelve dependencias complejas, teniendo permiso para INSTALAR nuevos paquetes o ELIMINAR paquetes obsoletos."
+            ],
+            [
+              "remove / purge <paquete>",
+              "Eliminar o purgar",
+              "remove borra ejecutables; purge destruye también todos los ficheros de configuración en /etc/."
+            ],
+            [
+              "install -f, --fix-broken",
+              "Reparar dependencias",
+              "🎯 Clave de Examen: Arregla dependencias rotas tras una instalación fallida con dpkg -i."
+            ],
+            [
+              "clean / autoclean",
+              "Limpiar caché .deb",
+              "🎯 clean borra el 100% de .deb en /var/cache/apt/archives/; autoclean solo paquetes viejos ya no descargables."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:4px 0;\">\n  <!-- Terminal Realista con Salida Real Compacta -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Sincronización e instalación inteligente de dependencias</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">sudo apt-get update</span></div>\n    <div style=\"color:#94A3B8;\">Hit:1 https://deb.debian.org/debian bookworm InRelease &nbsp;|&nbsp; Reading package lists... Done</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">sudo apt-get install -y nginx</span></div>\n    <div style=\"color:#38BDF8;\">The following additional packages will be installed: nginx-common nginx-core</div>\n    <div style=\"color:#4ADE80; font-weight:700;\">The following NEW packages will be installed: nginx nginx-common nginx-core</div>\n    <div style=\"color:#94A3B8;\">0 upgraded, 3 newly installed, 0 to remove and 0 not upgraded.</div>\n    <div style=\"color:#4ADE80;\">Setting up nginx (1.22.1-9) ...</div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">Hit:1 (sources.list):</strong><br>\n      El catálogo no cambió; ahorra ancho de banda refrescando <code>/var/lib/apt/lists/</code>.\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">additional packages:</strong><br>\n      APT calcula el árbol transitivo y descarga las dependencias automáticamente.\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">Setting up nginx:</strong><br>\n      APT descarga los <code>.deb</code> a la caché y llama a <code>dpkg</code> por debajo para instalar.\n    </div>\n  </div>\n\n  <!-- COMPARATIVA VISUAL: CONSERVADORA (upgrade) vs AGRESIVA (dist-upgrade) -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 14px;\">\n    <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      ⚖️ Comparativa de Examen: Política de Actualización Conservadora vs Agresiva\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n      <!-- CONSERVADORA: apt-get upgrade -->\n      <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:8px; padding:8px 10px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n          <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">CONSERVADORA</span>\n          <code style=\"font-size:12.5px; font-weight:800; color:#1E40AF;\">apt-get upgrade</code>\n        </div>\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">Actualiza paquetes SIN eliminar nunca nada</strong>\n        <div style=\"font-size:11.5px; color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n          • Actualiza paquetes instalados a la versión más moderna disponible.<br>\n          • 🛑 <strong>Regla sagrada:</strong> <strong>NUNCA elimina paquetes preexistentes</strong>.<br>\n          • Si un paquete requiere eliminar algo viejo para actualizarse, se retiene (<em>kept back</em>).\n        </div>\n      </div>\n\n      <!-- AGRESIVA: apt-get dist-upgrade -->\n      <div style=\"background:#FEF2F2; border:2px solid #DC2626; border-radius:8px; padding:8px 10px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n          <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">AGRESIVA (EXAMEN)</span>\n          <code style=\"font-size:12.5px; font-weight:800; color:#991B1B;\">apt-get dist-upgrade</code>\n        </div>\n        <strong style=\"color:#991B1B; font-size:12.5px;\">Actualización inteligente con resolución de conflictos</strong>\n        <div style=\"font-size:11.5px; color:#7F1D1D; margin-top:2px; line-height:1.35;\">\n          • Diseñado para saltos mayores de versión de la distribución (Debian 11 a 12).<br>\n          • ⚡ <strong>Tiene permiso para:</strong> instalar nuevas dependencias y <strong>ELIMINAR paquetes obsoletos o conflictivos</strong>.\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: apt-get upgrade nunca borra paquetes; apt-get dist-upgrade sí puede eliminar paquetes si las dependencias lo exigen."
+        }
+      ],
+      "notes": "Recuerda a los alumnos: nunca ejecutes apt-get upgrade sin haber ejecutado antes apt-get update para refrescar la lista de paquetes."
+    },
+    {
+      "id": "102.4-slide-8",
+      "slideNumber": 8,
+      "title": "apt-cache: Consultas en la Caché de Repositorios",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "apt-cache: Consultas en la Caché de Repositorios"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "search <término>",
+              "Buscar en catálogo",
+              "🎯 Busca en los nombres y descripciones de todos los paquetes disponibles en los repositorios."
+            ],
+            [
+              "show <paquete>",
+              "Ficha técnica completa",
+              "🎯 Muestra la ficha técnica completa del paquete: descripción, mantenedor, tamaño y dependencias."
+            ],
+            [
+              "depends <paquete>",
+              "Ver dependencias",
+              "Muestra la lista de paquetes o librerías de los cuales depende este paquete para funcionar."
+            ],
+            [
+              "rdepends <paquete>",
+              "Dependencias inversas",
+              "Lista qué otros paquetes del repositorio necesitan a este paquete para funcionar."
+            ],
+            [
+              "policy [paquete]",
+              "Prioridades y versiones",
+              "🎯 Muestra la versión instalada, la versión candidata y las prioridades de repositorios (APT Pinning)."
+            ],
+            [
+              "pkgnames [prefijo]",
+              "Listar nombres",
+              "Lista rápida de los nombres de todos los paquetes disponibles en el sistema."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin:6px 0;\">\n  <!-- Terminal Realista con Salida Real de policy y depends -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:12px 16px; font-family:monospace; font-size:12.5px; line-height:1.45; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:6px; margin-bottom:8px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Consultas sin privilegios de root con apt-cache</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">apt-cache policy nginx</span></div>\n    <div style=\"color:#F8FAFC;\">nginx:</div>\n    <div>  Installed: <span style=\"color:#4ADE80; font-weight:700;\">1.22.1-9</span></div>\n    <div>  Candidate: <span style=\"color:#38BDF8; font-weight:700;\">1.22.1-9</span></div>\n    <div style=\"color:#94A3B8;\">  Version table:</div>\n    <div style=\"color:#FCD34D; font-weight:700;\"> *** 1.22.1-9 500</div>\n    <div style=\"color:#94A3B8;\">        500 https://deb.debian.org/debian bookworm/main amd64 Packages</div>\n    <div style=\"color:#94A3B8;\">        100 /var/lib/dpkg/status</div>\n    <div style=\"margin-top:6px;\"><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">apt-cache depends nginx | head -n 4</span></div>\n    <div style=\"color:#F8FAFC;\">nginx</div>\n    <div>  <span style=\"color:#F87171; font-weight:700;\">Depends:</span> nginx-core (>= 1.22.1-9)</div>\n    <div>  <span style=\"color:#F87171; font-weight:700;\">Depends:</span> libc6 (>= 2.34)</div>\n    <div>  <span style=\"color:#FBBF24;\">Recommends:</span> logrotate</div>\n  </div>\n\n  <!-- DESGLOSE LÍNEA A LÍNEA DE LA SALIDA DE POLICY -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 16px;\">\n    <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n      🔍 ¿Cómo interpretar la salida de <code>apt-cache policy</code> en el examen LPIC-1?\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; font-size:12px;\">\n      <!-- Installed -->\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:8px 10px;\">\n        <strong style=\"color:#14532D; font-size:12.5px;\">Installed: 1.22.1-9</strong><br>\n        <span style=\"color:#14532D;\">Versión que actualmente reside instalada en tu disco local. Si no estuviera instalado, mostraría <code>(none)</code>.</span>\n      </div>\n\n      <!-- Candidate -->\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:8px 10px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">Candidate: 1.22.1-9</strong><br>\n        <span style=\"color:#1E3A8A;\">La versión exacta que <code>apt-get install</code> instalaría según la prioridad del repositorio.</span>\n      </div>\n\n      <!-- Version table y 500 -->\n      <div style=\"background:#FEFCE8; border:1px solid #FDE047; border-radius:8px; padding:8px 10px;\">\n        <strong style=\"color:#CA8A04; font-size:12.5px;\">*** y Prioridad 500:</strong><br>\n        <span style=\"color:#78350F;\">Los asteriscos <code>***</code> indican la versión activa. <code>500</code> es la prioridad estándar de los repositorios oficiales de APT.</span>\n      </div>\n\n      <!-- Depends vs Recommends -->\n      <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:8px; padding:8px 10px;\">\n        <strong style=\"color:#6B21A8; font-size:12.5px;\">Depends vs Recommends:</strong><br>\n        <span style=\"color:#581C87;\"><code>Depends</code> es obligatorio (no arranca sin él); <code>Recommends</code> es opcional pero se instala por defecto.</span>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: apt-cache es una herramienta de SOLO LECTURA. No requiere privilegios de superusuario (no necesita sudo)."
+        }
+      ],
+      "notes": "Muestra cómo apt-cache policy permite saber de qué repositorio específico vendrá un paquete cuando hay varias fuentes configuradas."
+    },
+    {
+      "id": "102.4-slide-9",
+      "slideNumber": 9,
+      "title": "apt-file: Búsqueda de Archivos en Paquetes No Instalados",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "apt-file: Búsqueda de Archivos en Paquetes No Instalados"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "apt-file update",
+              "Actualizar índice remoto",
+              "🎯 Descarga los metadatos Contents-*.gz de los repositorios para construir el índice de ficheros local (requiere sudo)."
+            ],
+            [
+              "apt-file search <fichero>",
+              "Buscar dueño en repos",
+              "🎯 Clave de Examen: Localiza qué paquete (instalado o NO instalado) contiene el archivo indicado."
+            ],
+            [
+              "apt-file list <paquete>",
+              "Listar ficheros en remoto",
+              "Muestra el listado de archivos de un paquete que reside en el repositorio sin descargarlo ni instalarlo."
+            ],
+            [
+              "apt-file search -l <fichero>",
+              "Solo nombres de paquete",
+              "Muestra únicamente el nombre del paquete omitiendo el listado repetido de rutas."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin:6px 0;\">\n  <!-- Terminal Realista con Salida Real de apt-file -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:12px 16px; font-family:monospace; font-size:12.5px; line-height:1.45; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:6px; margin-bottom:8px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Descarga de índices y búsqueda remota de ficheros</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">sudo apt-file update</span></div>\n    <div style=\"color:#94A3B8;\">Hit:1 https://deb.debian.org/debian bookworm InRelease</div>\n    <div style=\"color:#94A3B8;\">Get:2 https://deb.debian.org/debian bookworm/main amd64 Contents-amd64 [38.2 MB]</div>\n    <div style=\"color:#94A3B8;\">Fetched 38.2 MB in 4s (9,550 kB/s)</div>\n    <div style=\"color:#4ADE80;\">File list updated.</div>\n    <div style=\"margin-top:6px;\"><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">apt-file search /usr/include/stdio.h</span></div>\n    <div style=\"color:#38BDF8; font-weight:700;\">libc6-dev: /usr/include/stdio.h</div>\n    <div style=\"margin-top:6px;\"><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">apt-file search bin/dig</span></div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">bind9-dnsutils: /usr/bin/dig</div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; font-size:12px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:8px 10px;\">\n      <strong style=\"color:#1E40AF;\">Contents-amd64 [38.2 MB]:</strong><br>\n      Descarga la base de datos completa de ficheros de todos los paquetes de los repositorios.\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:8px 10px;\">\n      <strong style=\"color:#14532D;\">libc6-dev: stdio.h:</strong><br>\n      El compilador pedía <code>stdio.h</code> que no tenías; te indica que debes instalar <code>libc6-dev</code>.\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:8px 10px;\">\n      <strong style=\"color:#6B21A8;\">bind9-dnsutils: /usr/bin/dig:</strong><br>\n      Quieres ejecutar <code>dig</code> pero no existe; te dice qué paquete instalar de inmediato.\n    </div>\n  </div>\n\n  <!-- EL GRAN DUELO DE EXAMEN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 16px;\">\n    <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n      🎯 El Gran Duelo de Examen LPIC-1: ¿Qué comando uso para encontrar un archivo?\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12.5px;\">\n      <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:8px; padding:10px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">CASO 1: YA INSTALADO</span>\n        <div style=\"font-weight:800; color:#1E40AF; font-size:13.5px; margin-top:4px;\">dpkg -S /ruta/archivo</div>\n        <div style=\"color:#1E3A8A; margin-top:3px; line-height:1.4;\">\n          El archivo <strong>ya está presente físicamente en tu disco duro</strong>. dpkg busca en la base de datos local a qué paquete pertenece.\n        </div>\n      </div>\n\n      <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:8px; padding:10px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">CASO 2: NO INSTALADO</span>\n        <div style=\"font-weight:800; color:#6B21A8; font-size:13.5px; margin-top:4px;\">apt-file search fichero</div>\n        <div style=\"color:#581C87; margin-top:3px; line-height:1.4;\">\n          El archivo <strong>NO está instalado en tu máquina</strong> y necesitas saber qué paquete tienes que descargar e instalar para conseguirlo.\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 La Gran Comparativa de Examen: Si el archivo ya está en tu disco -> usa 'dpkg -S'. Si el archivo NO está instalado o no sabes qué paquete instalar -> usa 'apt-file search'."
+        }
+      ],
+      "notes": "Esta pregunta es fija en LPIC-1: '¿Qué comando permite saber qué paquete instalar para obtener un archivo que te falta?'. La respuesta siempre es apt-file search."
+    },
+    {
+      "id": "102.4-slide-10",
+      "slideNumber": 10,
+      "title": "Matriz Maestra: Duelo de Equivalencias dpkg vs APT",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Matriz Maestra: Duelo de Equivalencias dpkg vs APT"
+        },
+        {
+          "type": "paragraph",
+          "text": "Esquema visual de equivalencias directas entre el motor de bajo nivel (dpkg) y el gestor de alto nivel (apt / apt-get):"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin:6px 0;\">\n  <!-- GRID DE 6 TARJETAS VISUALES DE EQUIVALENCIAS -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;\">\n    <!-- 1. Instalar -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:10px; padding:12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">INSTALAR</span>\n        <span style=\"color:#15803D; font-weight:800; font-size:11px;\">Requiere root (sudo)</span>\n      </div>\n      <div style=\"font-size:12.5px; line-height:1.4;\">\n        <div><strong>dpkg (Local):</strong> <code style=\"color:#15803D; font-weight:800;\">dpkg -i pkg.deb</code></div>\n        <div style=\"color:#14532D; font-size:11px; margin-bottom:4px;\">Requiere fichero .deb local. Sin dependencias.</div>\n        <div><strong>APT (Red):</strong> <code style=\"color:#2563EB; font-weight:800;\">apt install pkg</code></div>\n        <div style=\"color:#1E3A8A; font-size:11px;\">Descarga y resuelve dependencias automáticamente.</div>\n      </div>\n    </div>\n\n    <!-- 2. Desinstalar (Remove) -->\n    <div style=\"background:#FFFBEB; border:1.5px solid #FCD34D; border-radius:10px; padding:12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">REMOVE</span>\n        <span style=\"color:#B45309; font-weight:800; font-size:11px;\">Guarda config en /etc/</span>\n      </div>\n      <div style=\"font-size:12.5px; line-height:1.4;\">\n        <div><strong>dpkg (Local):</strong> <code style=\"color:#B45309; font-weight:800;\">dpkg -r pkg</code></div>\n        <div style=\"color:#78350F; font-size:11px; margin-bottom:4px;\">Elimina binarios, mantiene ficheros en /etc/.</div>\n        <div><strong>APT (Red):</strong> <code style=\"color:#2563EB; font-weight:800;\">apt remove pkg</code></div>\n        <div style=\"color:#1E3A8A; font-size:11px;\">Equivalente de alto nivel conservando /etc/.</div>\n      </div>\n    </div>\n\n    <!-- 3. Purgar (Purge) -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-radius:10px; padding:12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">PURGE</span>\n        <span style=\"color:#991B1B; font-weight:800; font-size:11px;\">Borra TODO (/etc/)</span>\n      </div>\n      <div style=\"font-size:12.5px; line-height:1.4;\">\n        <div><strong>dpkg (Local):</strong> <code style=\"color:#DC2626; font-weight:800;\">dpkg -P pkg</code></div>\n        <div style=\"color:#7F1D1D; font-size:11px; margin-bottom:4px;\">Elimina binarios Y purga toda la config en /etc/.</div>\n        <div><strong>APT (Red):</strong> <code style=\"color:#2563EB; font-weight:800;\">apt purge pkg</code></div>\n        <div style=\"color:#1E3A8A; font-size:11px;\">Purgado total de paquetes y configuraciones.</div>\n      </div>\n    </div>\n\n    <!-- 4. Listar Archivos -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:10px; padding:12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">LISTAR FICHEROS</span>\n        <span style=\"color:#1E40AF; font-weight:800; font-size:11px;\">Sin root (Lectura)</span>\n      </div>\n      <div style=\"font-size:12.5px; line-height:1.4;\">\n        <div><strong>Instalado en disco:</strong> <code style=\"color:#1E40AF; font-weight:800;\">dpkg -L pkg</code></div>\n        <div style=\"color:#1E3A8A; font-size:11px; margin-bottom:4px;\">Lista archivos que el paquete instaló en el sistema.</div>\n        <div><strong>En repositorio:</strong> <code style=\"color:#7E22CE; font-weight:800;\">apt-file list pkg</code></div>\n        <div style=\"color:#581C87; font-size:11px;\">Lista archivos de un paquete remoto sin instalarlo.</div>\n      </div>\n    </div>\n\n    <!-- 5. Buscar Dueño -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:10px; padding:12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">BUSCAR DUEÑO</span>\n        <span style=\"color:#6B21A8; font-weight:800; font-size:11px;\">Sin root (Lectura)</span>\n      </div>\n      <div style=\"font-size:12.5px; line-height:1.4;\">\n        <div><strong>En disco local:</strong> <code style=\"color:#1E40AF; font-weight:800;\">dpkg -S /ruta</code></div>\n        <div style=\"color:#1E3A8A; font-size:11px; margin-bottom:4px;\">El fichero existe físicamente en tu máquina.</div>\n        <div><strong>En repositorios:</strong> <code style=\"color:#7E22CE; font-weight:800;\">apt-file search</code></div>\n        <div style=\"color:#581C87; font-size:11px;\">El fichero NO existe en tu disco; buscas qué instalar.</div>\n      </div>\n    </div>\n\n    <!-- 6. Metadatos / Ficha Técnica -->\n    <div style=\"background:#FFF7ED; border:1.5px solid #FDBA74; border-radius:10px; padding:12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#EA580C; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">METADATOS</span>\n        <span style=\"color:#C2410C; font-weight:800; font-size:11px;\">Sin root (Lectura)</span>\n      </div>\n      <div style=\"font-size:12.5px; line-height:1.4;\">\n        <div><strong>Instalado:</strong> <code style=\"color:#C2410C; font-weight:800;\">dpkg -s pkg</code> | <strong>.deb:</strong> <code>-I</code></div>\n        <div style=\"color:#9A3412; font-size:11px; margin-bottom:4px;\">Estado, dependencias y versión del paquete local.</div>\n        <div><strong>En repositorio:</strong> <code style=\"color:#2563EB; font-weight:800;\">apt-cache show pkg</code></div>\n        <div style=\"color:#1E3A8A; font-size:11px;\">Ficha técnica completa de la caché remota.</div>\n      </div>\n    </div>\n  </div>\n\n  <!-- Barra Mnemotécnica Inferior -->\n  <div style=\"background:#F8FAFC; border:1.5px solid #CBD5E1; border-radius:8px; padding:8px 16px; display:flex; justify-content:space-between; align-items:center; font-size:12.5px;\">\n    <span>🎯 <strong>Regla de Oro de Examen:</strong> ¿La operación <strong>modifica el sistema</strong> (instalar, borrar, purgar)? ➔ <span style=\"color:#DC2626; font-weight:800;\">SÍ requiere sudo</span>.</span>\n    <span>¿La operación solo <strong>lee o consulta datos</strong> (listar, buscar, show)? ➔ <span style=\"color:#16A34A; font-weight:800;\">NO requiere sudo</span>.</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Oro: Si la operación modifica el sistema (instalar, borrar, purgar), requiere root. Si es consulta (buscar, listar, ver metadatos), NO requiere root."
+        }
+      ],
+      "notes": "Utiliza esta diapositiva como mapa de consulta rápida durante las clases y repasos de examen."
+    },
+    {
+      "id": "102.4-slide-11",
+      "slideNumber": 11,
+      "title": "Mapa Visual: Directorios y Ficheros Críticos de Debian",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Mapa Visual: Directorios y Ficheros Críticos de Debian"
+        },
+        {
+          "type": "paragraph",
+          "text": "Estructura del sistema de ficheros donde Debian almacena repositorios, descargas y el estado de los paquetes:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:12px; margin:6px 0;\">\n  <!-- GRID DE 3 GRANDES BLOQUES TEMÁTICOS -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:14px;\">\n    <!-- BLOQUE 1: Fuentes y Repositorios (/etc/apt/) -->\n    <div style=\"background:#EFF6FF; border:2px solid #93C5FD; border-radius:10px; padding:12px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:6px; margin-bottom:8px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:11px; padding:2px 8px; border-radius:4px;\">FUENTES /etc/</span>\n        <strong style=\"color:#1E40AF; font-size:13.5px;\">Orígenes de Software</strong>\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:12px;\">\n        <div style=\"background:#FFFFFF; border:1px solid #BFDBFE; border-radius:6px; padding:6px 10px;\">\n          <code style=\"font-weight:800; color:#1E40AF; font-size:12.5px;\">/etc/apt/sources.list</code>\n          <div style=\"color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n            🎯 Lista principal de repositorios oficiales binarios y de código fuente (<code>deb</code> y <code>deb-src</code>).\n          </div>\n        </div>\n        <div style=\"background:#FFFFFF; border:1px solid #BFDBFE; border-radius:6px; padding:6px 10px;\">\n          <code style=\"font-weight:800; color:#1E40AF; font-size:12.5px;\">/etc/apt/sources.list.d/</code>\n          <div style=\"color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n            Directorio modular para archivos <code>*.list</code> de terceros (Docker, Chrome, Nginx) sin tocar el archivo maestro.\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- BLOQUE 2: Caché de Paquetes Descargados (/var/cache/) -->\n    <div style=\"background:#FFFBEB; border:2px solid #FCD34D; border-radius:10px; padding:12px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:6px; margin-bottom:8px;\">\n        <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:11px; padding:2px 8px; border-radius:4px;\">CACHÉ /var/cache/</span>\n        <strong style=\"color:#92400E; font-size:13.5px;\">Descargas Locales</strong>\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:12px;\">\n        <div style=\"background:#FFFFFF; border:1.5px solid #FDE68A; border-radius:6px; padding:6px 10px;\">\n          <code style=\"font-weight:800; color:#B45309; font-size:12.5px;\">/var/cache/apt/archives/</code>\n          <div style=\"color:#78350F; margin-top:2px; line-height:1.35;\">\n            🎯 <strong>¡Pregunta Fija!</strong> Directorio donde APT almacena los archivos <code>.deb</code> descargados antes de instalarlos.<br>\n            🧹 Se vacía al 100% con <code>apt-get clean</code>.\n          </div>\n        </div>\n        <div style=\"background:#FFFFFF; border:1px solid #FDE68A; border-radius:6px; padding:6px 10px;\">\n          <code style=\"font-weight:800; color:#B45309; font-size:12.5px;\">/var/cache/apt/archives/partial/</code>\n          <div style=\"color:#78350F; margin-top:2px; line-height:1.35;\">\n            Archivos <code>.deb</code> a medio descargar en caso de interrupción de red.\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- BLOQUE 3: Base de Datos y Estado (/var/lib/) -->\n    <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:10px; padding:12px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:6px; margin-bottom:8px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:11px; padding:2px 8px; border-radius:4px;\">ESTADO /var/lib/</span>\n        <strong style=\"color:#14532D; font-size:13.5px;\">Base de Datos Local</strong>\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:12px;\">\n        <div style=\"background:#FFFFFF; border:1.5px solid #BBF7D0; border-radius:6px; padding:6px 10px;\">\n          <code style=\"font-weight:800; color:#15803D; font-size:12.5px;\">/var/lib/dpkg/status</code>\n          <div style=\"color:#14532D; margin-top:2px; line-height:1.35;\">\n            🎯 <strong>El archivo más crítico:</strong> texto plano con el estado exacto de cada paquete instalado (<code>ii</code>, <code>rc</code>, <code>un</code>).\n          </div>\n        </div>\n        <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:6px; padding:6px 10px;\">\n          <code style=\"font-weight:800; color:#15803D; font-size:12.5px;\">/var/lib/dpkg/info/</code>\n          <div style=\"color:#14532D; margin-top:2px; line-height:1.35;\">\n            Scripts de control del paquete (<code>.postinst</code>, <code>.prerm</code>) y listas de ficheros instalados (<code>.list</code>).\n          </div>\n        </div>\n        <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:6px; padding:6px 10px;\">\n          <code style=\"font-weight:800; color:#15803D; font-size:12.5px;\">/var/lib/apt/lists/</code>\n          <div style=\"color:#14532D; margin-top:2px; line-height:1.35;\">\n            Índices de paquetes descargados de los repositorios tras ejecutar <code>apt-get update</code>.\n          </div>\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <!-- Resumen de Emergencia de Disco -->\n  <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-radius:8px; padding:8px 16px; font-size:12.5px; color:#991B1B; display:flex; justify-content:space-between; align-items:center;\">\n    <span>🚨 <strong>Caso de Examen:</strong> Si la partición <code>/var</code> se llena al 100%, ¿qué comando oficial libera espacio de inmediato?</span>\n    <code style=\"background:#FEE2E2; color:#991B1B; font-weight:800; padding:2px 8px; border-radius:4px; font-size:13px;\">sudo apt-get clean</code>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta de Examen: ¿Dónde se guardan los archivos .deb descargados por apt-get? En /var/cache/apt/archives/. ¿Qué comando los borra? apt-get clean."
+        }
+      ],
+      "notes": "Si una partición /var se llena al 100%, la primera medida de emergencia del administrador es ejecutar apt-get clean."
+    },
+    {
+      "id": "102.4-slide-12",
+      "slideNumber": 12,
+      "title": "Diferencias Clave: El Comando Moderno 'apt' vs apt-get / apt-cache",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Diferencias Clave: El Comando Moderno 'apt' vs apt-get / apt-cache"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué existe el comando unificado 'apt' y qué regla estricta de examen exige saber cuándo usarlo?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin:6px 0;\">\n  <!-- DUELO VISUAL: apt vs apt-get / apt-cache -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px;\">\n    <!-- COLUMNA 1: apt (Para Humanos) -->\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:12px; padding:12px 16px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:11px; padding:2px 8px; border-radius:4px;\">COMANDO MODERNO</span>\n        <code style=\"font-size:17px; font-weight:800; color:#1E40AF;\">apt</code>\n      </div>\n      <strong style=\"color:#1E40AF; font-size:14px;\">Diseñado para el usuario humano en terminal interactiva</strong>\n      <div style=\"font-size:12.5px; color:#1E3A8A; margin-top:6px; line-height:1.4;\">\n        • Unifica las operaciones más frecuentes de <code>apt-get</code> y <code>apt-cache</code> en un solo binario.<br>\n        • Incorpora barra de progreso coloreada en la parte inferior y mensajes amigables.<br>\n        • ⚠️ <strong>AVISO CRÍTICO DE EXAMEN:</strong><br>\n        Su formato de salida <strong>NO es estable</strong> y cambia entre versiones.<br>\n        Muestra una advertencia si se usa en tuberías o scripts:<br>\n        <code style=\"background:#DBEAFE; color:#1D4ED8; font-size:11.5px; padding:1px 4px; border-radius:3px;\">WARNING: apt does not have a stable CLI interface.</code><br>\n        🛑 <strong>NUNCA uses 'apt' en scripts de automatización.</strong>\n      </div>\n    </div>\n\n    <!-- COLUMNA 2: apt-get + apt-cache (Para Scripts) -->\n    <div style=\"background:#F0FDF4; border:2px solid #16A34A; border-radius:12px; padding:12px 16px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:11px; padding:2px 8px; border-radius:4px;\">ESTÁNDAR INMUTABLE</span>\n        <code style=\"font-size:17px; font-weight:800; color:#14532D;\">apt-get & apt-cache</code>\n      </div>\n      <strong style=\"color:#14532D; font-size:14px;\">El estándar obligatorio para scripts y automatización</strong>\n      <div style=\"font-size:12.5px; color:#14532D; margin-top:6px; line-height:1.4;\">\n        • Salida de texto plano 100% predecible, parseable y retrocompatible desde 1998.<br>\n        • <strong>Obligatorio en scripts bash, tareas cron, CI/CD y Ansible</strong>.<br>\n        • Separación limpia de permisos y responsabilidades:<br>\n        &nbsp;&nbsp;&nbsp;&nbsp;• <code>apt-get</code>: Modifica el sistema (requiere <code>sudo</code>).<br>\n        &nbsp;&nbsp;&nbsp;&nbsp;• <code>apt-cache</code>: Solo lectura e inspección (no requiere <code>sudo</code>).\n      </div>\n    </div>\n  </div>\n\n  <!-- TABLA DE EQUIVALENCIAS DE EXAMEN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px;\">\n    <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      🔄 Tabla Maestra de Equivalencias Directas (Evaluada en LPIC-1):\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; font-size:12px; text-align:center;\">\n      <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; padding:6px; border-radius:6px;\">\n        <strong style=\"color:#2563EB;\">apt update</strong><br>\n        ⬇️ equivale a<br>\n        <code style=\"color:#1E40AF; font-weight:700;\">apt-get update</code>\n      </div>\n      <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; padding:6px; border-radius:6px;\">\n        <strong style=\"color:#2563EB;\">apt install</strong><br>\n        ⬇️ equivale a<br>\n        <code style=\"color:#1E40AF; font-weight:700;\">apt-get install</code>\n      </div>\n      <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; padding:6px; border-radius:6px;\">\n        <strong style=\"color:#2563EB;\">apt search</strong><br>\n        ⬇️ equivale a<br>\n        <code style=\"color:#1E40AF; font-weight:700;\">apt-cache search</code>\n      </div>\n      <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; padding:6px; border-radius:6px;\">\n        <strong style=\"color:#2563EB;\">apt show</strong><br>\n        ⬇️ equivale a<br>\n        <code style=\"color:#1E40AF; font-weight:700;\">apt-cache show</code>\n      </div>\n      <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; padding:6px; border-radius:6px;\">\n        <strong style=\"color:#DC2626;\">apt full-upgrade</strong><br>\n        🎯 <strong>Pregunta Fija:</strong><br>\n        <code style=\"color:#991B1B; font-weight:800;\">apt-get dist-upgrade</code>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Usa 'apt' para uso interactivo en terminal; usa 'apt-get' dentro de scripts bash y automatizaciones desatendidas."
+        }
+      ],
+      "notes": "Explica a la clase que LPIC-1 evalúa prioritariamente apt-get y apt-cache debido a su estabilidad de interfaz histórica."
+    },
+    {
+      "id": "102.4-slide-13",
+      "slideNumber": 13,
+      "title": "Trampas Clásicas de Examen LPIC-1 en Paquetes Debian",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Trampas Clásicas de Examen LPIC-1 en Paquetes Debian"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 4 errores de sintaxis y conceptos engañosos más frecuentes en las preguntas de certificación:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin:6px 0;\">\n  <!-- GRID DE 4 GRANDES TRAMPAS DE EXAMEN -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px;\">\n    <!-- Trampa 1: El Falso Amigo apt update -->\n    <div style=\"background:#FEF2F2; border:2px solid #FCA5A5; border-radius:10px; padding:12px;\">\n      <div style=\"display:flex; align-items:center; gap:6px; margin-bottom:6px;\">\n        <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10.5px; padding:2px 8px; border-radius:4px;\">TRAMPA 1</span>\n        <strong style=\"color:#991B1B; font-size:13.5px;\">El Falso Amigo \"apt-get update\"</strong>\n      </div>\n      <div style=\"font-size:12px; line-height:1.4;\">\n        <div style=\"color:#991B1B; margin-bottom:4px;\">\n          ❌ <strong>La Trampa:</strong> Pregunta: <em>\"¿Qué comando actualiza el software del equipo?\"</em>. Muchos novatos eligen <code>apt-get update</code>.\n        </div>\n        <div style=\"color:#15803D; background:#DCFCE7; border:1px solid #86EFAC; border-radius:6px; padding:6px 8px;\">\n          ✅ <strong>La Realidad:</strong> <code>apt-get update</code> <strong>SOLO descarga las listas de paquetes</strong> de internet. El comando que instala las nuevas versiones es <code style=\"font-weight:800; color:#14532D;\">apt-get upgrade</code> (o <code>dist-upgrade</code>).\n        </div>\n      </div>\n    </div>\n\n    <!-- Trampa 2: Guerra de Mayúsculas en dpkg -->\n    <div style=\"background:#FFFBEB; border:2px solid #FCD34D; border-radius:10px; padding:12px;\">\n      <div style=\"display:flex; align-items:center; gap:6px; margin-bottom:6px;\">\n        <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:10.5px; padding:2px 8px; border-radius:4px;\">TRAMPA 2</span>\n        <strong style=\"color:#92400E; font-size:13.5px;\">La Guerra de Mayúsculas en dpkg</strong>\n      </div>\n      <div style=\"font-size:12px; line-height:1.4;\">\n        <div style=\"color:#78350F; margin-bottom:4px;\">\n          🎯 <strong>Mnemotecnia vital para no fallar flags:</strong>\n        </div>\n        <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:6px; font-size:11.5px;\">\n          <div style=\"background:#FFFFFF; border:1px solid #FDE68A; border-radius:4px; padding:4px 6px;\">\n            <strong>Minúscula = Paquetes:</strong><br>\n            • <code>dpkg -s pkg</code>: <strong>Status</strong> del paquete.<br>\n            • <code>dpkg -l</code>: <strong>Listar</strong> paquetes instalados.\n          </div>\n          <div style=\"background:#FFFFFF; border:1px solid #FDE68A; border-radius:4px; padding:4px 6px;\">\n            <strong>Mayúscula = Archivos:</strong><br>\n            • <code>dpkg -S /ruta</code>: <strong>Search</strong> dueño.<br>\n            • <code>dpkg -L pkg</code>: <strong>Listar</strong> archivos del pkg.\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- Trampa 3: ¿Fichero .deb o Nombre de Paquete? -->\n    <div style=\"background:#EFF6FF; border:2px solid #93C5FD; border-radius:10px; padding:12px;\">\n      <div style=\"display:flex; align-items:center; gap:6px; margin-bottom:6px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10.5px; padding:2px 8px; border-radius:4px;\">TRAMPA 3</span>\n        <strong style=\"color:#1E40AF; font-size:13.5px;\">¿Archivo .deb o Nombre Lógico?</strong>\n      </div>\n      <div style=\"font-size:12px; line-height:1.4;\">\n        <div style=\"color:#1E3A8A; margin-bottom:4px;\">\n          📦 <strong>Instalación local con dpkg:</strong><br>\n          Exige obligatoriamente el <strong>fichero completo terminado en .deb</strong>:<br>\n          <code style=\"background:#DBEAFE; color:#1E40AF; font-weight:800; padding:1px 6px; border-radius:4px;\">sudo dpkg -i tree_1.8.0-1_amd64.deb</code>\n        </div>\n        <div style=\"color:#1E3A8A;\">\n          🏷️ <strong>Desinstalar con dpkg o usar APT:</strong><br>\n          Exige únicamente el <strong>nombre lógico del paquete</strong> (¡sin .deb!):<br>\n          <code style=\"background:#DBEAFE; color:#1E40AF; font-weight:800; padding:1px 6px; border-radius:4px;\">sudo dpkg -r tree</code> &nbsp;|&nbsp; <code style=\"background:#DBEAFE; color:#1E40AF; font-weight:800; padding:1px 6px; border-radius:4px;\">sudo apt install tree</code>\n        </div>\n      </div>\n    </div>\n\n    <!-- Trampa 4: ¿El archivo ya está en disco o no? -->\n    <div style=\"background:#FAF5FF; border:2px solid #D8B4FE; border-radius:10px; padding:12px;\">\n      <div style=\"display:flex; align-items:center; gap:6px; margin-bottom:6px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:10.5px; padding:2px 8px; border-radius:4px;\">TRAMPA 4</span>\n        <strong style=\"color:#6B21A8; font-size:13.5px;\">dpkg-query -S frente a apt-file search</strong>\n      </div>\n      <div style=\"font-size:12px; line-height:1.4;\">\n        <div style=\"color:#581C87; margin-bottom:4px;\">\n          ❌ Si la pregunta dice: <em>\"¿Qué comando averigua qué paquete proporciona un archivo que AÚN NO ESTÁ INSTALADO?\"</em>, responder <code>dpkg -S</code> es fallo total.\n        </div>\n        <div style=\"color:#581C87; background:#F3E8FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 8px;\">\n          ✅ <strong>Regla mnemotécnica:</strong><br>\n          • <strong>En disco local:</strong> <code style=\"font-weight:800; color:#6B21A8;\">dpkg -S /bin/ls</code><br>\n          • <strong>No instalado (Remoto):</strong> <code style=\"font-weight:800; color:#6B21A8;\">apt-file search stdio.h</code>\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Mnemotecnia de Flags: -L = Listar ficheros de paquete; -S = Search dueño de fichero; -s = status; -l = listar paquetes instalados."
+        }
+      ],
+      "notes": "Pide a los alumnos que anoten en su cuaderno la diferencia entre -s / -S y -l / -L."
+    },
+    {
+      "id": "102.4-slide-14",
+      "slideNumber": 14,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: dpkg y Pertenencias)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: dpkg y Pertenencias)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 1 (Oficial Pág 122): ¿Cuál es el comando exacto para instalar un archivo de paquete binario llamado 'package.deb' usando dpkg? — Comando: `sudo dpkg -i package.deb` (La opción -i (--install) desempaqueta el archivo .deb, verifica pre-dependencias e instala los archivos en sus rutas de destino.)",
+            "Caso 2 (Oficial Pág 122): ¿Qué comando determina qué paquete del sistema instaló el archivo de configuración '/etc/host.conf'? — Comando: `dpkg-query -S /etc/host.conf (o dpkg -S /etc/host.conf)` (El parámetro -S (--search) busca en la base de datos de paquetes instalados (/var/lib/dpkg/info/*.list) el dueño de la ruta indicada (en Debian suele devolver 'base-files: /etc/host.conf').)",
+            "Caso 3 (Oficial Pág 122): Si un administrador ejecuta 'dpkg -r paqueteA' y falla porque 'paqueteB' depende de él, ¿cómo debe proceder? — Comando: `sudo apt-get remove paqueteA (o desinstalar ambos: sudo dpkg -r paqueteB paqueteA)` (dpkg se niega a desinstalar para no dejar dependencias rotas. apt-get remove advertirá al administrador y ofrecerá eliminar simultáneamente paqueteB para mantener la coherencia del sistema.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "dpkg garantiza la integridad local rechazando acciones que rompan dependencias, obligando al administrador a usar APT o resolver los conflictos manualmente."
+        }
+      ],
+      "notes": "Haz énfasis en el Caso 2: dpkg-query -S es una de las preguntas más recurrentes en el examen de certificación."
+    },
+    {
+      "id": "102.4-slide-15",
+      "slideNumber": 15,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: apt-file y apt-cache)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: apt-file y apt-cache)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 4 (Oficial Pág 122): Necesitas compilar un programa en C y el compilador da error porque falta la cabecera 'stdio.h'. El archivo no está en tu disco. ¿Qué comando te dice qué paquete instalar? — Comando: `apt-file search stdio.h (tras haber ejecutado sudo apt-file update)` (apt-file search consulta la base de datos de archivos de todos los paquetes de los repositorios sin requerir que estén instalados (devolverá 'libc6-dev: /usr/include/stdio.h').)",
+            "Caso 5 (Oficial Pág 122): ¿Qué comando de la familia APT permite ver la descripción completa, dependencias requeridas y tamaño de descarga del paquete 'vim' sin necesidad de instalarlo? — Comando: `apt-cache show vim` (apt-cache show lee la caché local de paquetes y muestra toda la ficha técnica de metadatos proporcionada por el mantenedor en el repositorio.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "apt-file y apt-cache son herramientas complementarias de consulta remota que operan sobre índices descargados sin modificar el sistema de archivos."
+        }
+      ],
+      "notes": "Recuerda que apt-cache show no requiere sudo, lo que permite a cualquier usuario consultar el catálogo de software."
+    },
+    {
+      "id": "102.4-slide-16",
+      "slideNumber": 16,
+      "title": "Retos de Exploración Oficiales (sources.list, forzado y dependencias)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Retos de Exploración Oficiales (sources.list, forzado y dependencias)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. Si necesitas descargar el código fuente de un programa para compilarlo con 'apt-get source nginx', ¿qué línea debe existir obligatoriamente en /etc/apt/sources.list?\n2. Si un administrador fuerza la instalación de un paquete ignorando dependencias con 'dpkg -i --force-depends paquete.deb', ¿en qué estado queda el gestor de paquetes y con qué comando oficial se repara?\n3. ¿Qué diferencia práctica existe entre ejecutar 'apt-get clean' y 'apt-get autoclean' cuando el disco está casi lleno?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Pista",
+          "content": "Recuerda: deb-src para código fuente; apt-get install -f para reparar; y paquetes vigentes frente a paquetes obsoletos en /var/cache/apt/archives/."
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Desafío",
+          "content": "1. Debe existir una línea que empiece por 'deb-src' apuntando a los repositorios (ej: deb-src http://deb.debian.org/debian bookworm main).\n2. El gestor queda en estado de dependencias rotas e impedirá nuevas instalaciones. Se repara automáticamente ejecutando: sudo apt-get install -f (o --fix-broken), que descargará e instalará las dependencias faltantes.\n3. 'apt-get clean' borra el 100% de los archivos .deb almacenados en /var/cache/apt/archives/. 'apt-get autoclean' solo borra los archivos .deb de paquetes que ya no están disponibles en los repositorios o han sido sustituidos por versiones más nuevas."
+        }
+      ],
+      "notes": "El uso de apt-get install -f para reparar instalaciones fallidas con dpkg es una competencia clave del administrador Linux."
+    },
+    {
+      "id": "102.4-slide-17",
+      "slideNumber": 17,
+      "title": "Pregunta de Examen LPIC-1: Búsqueda de Archivos No Instalados",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Búsqueda de Archivos No Instalados"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-102-4-17",
+          "question": "¿Qué comando permite averiguar qué paquete proporciona un archivo que actualmente NO está instalado en el sistema?",
+          "options": [
+            {
+              "key": "a",
+              "text": "dpkg -S /ruta/archivo"
+            },
+            {
+              "key": "b",
+              "text": "dpkg-query -S /ruta/archivo"
+            },
+            {
+              "key": "c",
+              "text": "apt-file search /ruta/archivo"
+            },
+            {
+              "key": "d",
+              "text": "apt-cache search /ruta/archivo"
+            }
+          ],
+          "correct": [
+            "c"
+          ],
+          "explanation": "apt-file search consulta los índices completos de ficheros de todos los paquetes del repositorio remoto, estén o no instalados en el equipo local. Por el contrario, tanto dpkg -S como dpkg-query -S solo pueden buscar en paquetes que ya se encuentran instalados en el sistema."
+        }
+      ],
+      "notes": "Pregunta clásica y directa de examen. Si el archivo no está instalado, la única opción válida es apt-file search."
+    },
+    {
+      "id": "102.4-slide-18",
+      "slideNumber": 18,
+      "title": "Tarjetas Nemotécnicas: Paquetes Debian 102.4",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tarjetas Nemotécnicas: Paquetes Debian 102.4"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto",
+            "Significado / Uso"
+          ],
+          "rows": [
+            [
+              "¿Qué diferencia hay entre 'dpkg -r' y 'dpkg -P'?",
+              "-r (remove) conserva los ficheros de configuración; -P (purge) elimina los ejecutables y purga los ficheros de configuración."
+            ],
+            [
+              "¿Qué comando busca qué paquete instalado contiene un archivo determinado?",
+              "dpkg -S /ruta/archivo o dpkg-query -S /ruta/archivo."
+            ],
+            [
+              "¿Qué comando busca qué paquete contiene un archivo que AÚN NO está instalado?",
+              "apt-file search /ruta/archivo (tras ejecutar apt-file update)."
+            ],
+            [
+              "¿Qué comando repara dependencias rotas tras un error con dpkg?",
+              "apt-get install -f (o apt-get install --fix-broken)."
+            ],
+            [
+              "¿Qué diferencia existe entre 'apt-get upgrade' y 'apt-get dist-upgrade'?",
+              "upgrade nunca elimina paquetes preexistentes; dist-upgrade puede desinstalar paquetes para resolver dependencias complejas."
+            ],
+            [
+              "¿Dónde almacena APT los archivos .deb descargados en disco?",
+              "En el directorio /var/cache/apt/archives/ (se vacía con apt-get clean)."
+            ],
+            [
+              "¿En qué archivo de texto se registra el estado de todos los paquetes instalados por dpkg?",
+              "En /var/lib/dpkg/status."
+            ],
+            [
+              "¿Qué comando relanza el asistente interactivo de configuración de un paquete?",
+              "dpkg-reconfigure <nombre_paquete>."
+            ]
+          ],
+          "caption": "Tarjetas de memorización"
+        }
+      ],
+      "notes": "Repasa estas 8 tarjetas para asegurar el 100% de aciertos en las preguntas de Debian en el examen."
+    },
+    {
+      "id": "102.4-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen y Claves de Examen: Subtema 102.4",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen y Claves de Examen: Subtema 102.4"
+        }
+      ],
+      "notes": "Concluimos el subtema 102.4. Los alumnos dominan ahora con absoluta soltura el empaquetado en distribuciones basadas en Debian."
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-102-4-1",
+      "title": "Ecosistema Debian: La Arquitectura de 2 Capas",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ecosistema Debian: La Arquitectura de 2 Capas"
+        },
+        {
+          "type": "paragraph",
+          "text": "Debian separa estrictamente la resolución inteligente en red del motor de instalación local:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**dpkg: El motor de bajo nivel para paquetes .deb locales** — Instala, borra y consulta archivos .deb que ya residen en el disco local. NO descarga paquetes de Internet ni resuelve dependencias automáticamente: si falta una librería requerida, la instalación se detiene con error.",
+            "**APT (Advanced Package Tool): Front-end de alto nivel** — Consulta repositorios remotos a través de la red, calcula el árbol de dependencias, descarga todos los paquetes necesarios e invoca internamente a dpkg para instalarlos en el orden correcto.",
+            "**Base de datos local de estado: /var/lib/dpkg/status** — 🎯 Clave de Examen: dpkg registra cada paquete instalado, su versión y su estado (Installed, Config-Files, Unpacked) en el archivo de texto plano /var/lib/dpkg/status."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:16px 0;\">\n  <!-- Capa Superior: APT -->\n  <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:14px; padding:16px 20px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:13px; padding:2px 8px; border-radius:6px;\">CAPA ALTO NIVEL</span>\n      <span style=\"font-size:13px; font-weight:700; color:#1E40AF;\">Red, Repositorios & Dependencias</span>\n    </div>\n    <div style=\"font-size:18px; font-weight:800; color:#1E40AF; margin-bottom:6px;\">APT (apt-get, apt-cache, apt)</div>\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:14px; color:#1E3A8A;\">\n      <div>• Consulta servidores remotos definidos en <code>/etc/apt/sources.list</code>.</div>\n      <div>• Calcula el árbol completo de dependencias transitivas.</div>\n      <div>• Descarga paquetes a <code>/var/cache/apt/archives/</code>.</div>\n      <div>• 🎯 Invoca a <code>dpkg</code> por debajo para instalar en el orden correcto.</div>\n    </div>\n  </div>\n\n  <!-- Flecha de invocación -->\n  <div style=\"display:flex; justify-content:center; align-items:center; gap:10px;\">\n    <span style=\"font-size:22px; color:#2563EB; font-weight:900;\">⬇️</span>\n    <span style=\"font-size:13px; font-weight:700; color:#475569; background:#F1F5F9; padding:3px 12px; border-radius:12px; border:1px solid #CBD5E1;\">\n      APT ejecuta internamente a dpkg\n    </span>\n    <span style=\"font-size:22px; color:#2563EB; font-weight:900;\">⬇️</span>\n  </div>\n\n  <!-- Capa Inferior: dpkg -->\n  <div style=\"background:#F0FDF4; border:2px solid #16A34A; border-radius:14px; padding:16px 20px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:13px; padding:2px 8px; border-radius:6px;\">CAPA BAJO NIVEL</span>\n      <span style=\"font-size:13px; font-weight:700; color:#15803D;\">Motor Local de Ficheros .deb</span>\n    </div>\n    <div style=\"font-size:18px; font-weight:800; color:#14532D; margin-bottom:6px;\">dpkg (Debian Package Manager)</div>\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:14px; color:#14532D;\">\n      <div>• Opera únicamente sobre archivos <code>.deb</code> locales en disco.</div>\n      <div>• <strong>NO tiene acceso a red</strong> ni descarga archivos de repositorios.</div>\n      <div>• 🎯 <strong>NO resuelve dependencias:</strong> si falta una librería, aborta con error.</div>\n      <div>• Mantiene el estado del sistema en <code>/var/lib/dpkg/status</code>.</div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA CLAVE DE EXAMEN: ¿Qué herramienta resuelve dependencias y descarga paquetes por red? APT. ¿Qué herramienta gestiona paquetes .deb a bajo nivel en local sin red? dpkg."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-4-2",
+      "title": "dpkg: Instalación, Eliminación y Ciclo de Vida de Paquetes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "dpkg: Instalación, Eliminación y Ciclo de Vida de Paquetes"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-i, --install",
+              "Instalar fichero .deb",
+              "Desempaqueta y configura un archivo .deb local en el disco."
+            ],
+            [
+              "-r, --remove",
+              "Eliminar (guarda config)",
+              "🎯 Elimina binarios y librerías, pero CONSERVA los ficheros de configuración en /etc/ (estado rc)."
+            ],
+            [
+              "-P, --purge",
+              "Purgar (borra todo)",
+              "🎯 Eliminación total: borra binarios Y destruye toda la configuración en /etc/ (estado un)."
+            ],
+            [
+              "--unpack",
+              "Solo desempaquetar",
+              "Extrae los ficheros en disco sin ejecutar los scripts de configuración debconf/postinst."
+            ],
+            [
+              "--configure",
+              "Configurar paquete",
+              "Configura un paquete previamente desempaquetado con --unpack ejecutando scripts postinst."
+            ],
+            [
+              "-C, --audit",
+              "Auditar paquetes rotos",
+              "Busca paquetes a medio instalar o con dependencias y configuraciones rotas en el sistema."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:4px 0;\">\n  <!-- Terminal Realista con Salida Real de Instalación y Eliminación -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Instalación y desinstalación a bajo nivel con dpkg</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">sudo dpkg -i tree_1.8.0-1_amd64.deb</span></div>\n    <div style=\"color:#94A3B8;\">Selecting previously unselected package tree ... Unpacking tree (1.8.0-1) ...</div>\n    <div style=\"color:#4ADE80;\">Setting up tree (1.8.0-1) ... <span style=\"color:#94A3B8;\">Processing triggers for man-db (2.11.2-2) ...</span></div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#F87171; font-weight:700;\">sudo dpkg -r tree</span></div>\n    <div style=\"color:#FCA5A5;\">Removing tree (1.8.0-1) ... <span style=\"color:#94A3B8;\">Processing triggers for man-db ...</span></div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">📦 1. Unpacking (Desempaquetar):</strong>\n      <div style=\"color:#1E3A8A; margin-top:2px; line-height:1.3;\">\n        Extrae binarios (<code>/usr/bin/tree</code>) y manuales en disco sin configurarlos todavía.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">⚙️ 2. Setting up (Configurar):</strong>\n      <div style=\"color:#14532D; margin-top:2px; line-height:1.3;\">\n        Ejecuta el script <code>postinst</code> para registrar servicios y configuración en <code>/etc/</code>.\n      </div>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">🔔 3. Processing triggers:</strong>\n      <div style=\"color:#581C87; margin-top:2px; line-height:1.3;\">\n        Actualiza cachés del sistema de forma diferida (índice de manpages con <code>man-db</code>).\n      </div>\n    </div>\n  </div>\n\n  <!-- DIAGRAMA ESQUEMÁTICO: CICLO DE VIDA Y ESTADOS (ii, rc, un) -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 14px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:var(--text);\">🔄 Ciclo de Vida y Estados Oficiales de Paquetes en Debian:</div>\n      <span style=\"background:#0F172A; color:#FFF; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;\">BASE DE DATOS /var/lib/dpkg/status</span>\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1fr 18px 1.15fr 18px 1.15fr; align-items:center; gap:4px; font-size:11.5px;\">\n      <!-- ESTADO 1: INSTALADO (ii) -->\n      <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:8px; padding:8px 10px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n          <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 5px; border-radius:3px;\">ESTADO ii</span>\n          <code style=\"font-weight:800; color:#15803D; font-size:11px;\">dpkg -i pkg.deb</code>\n        </div>\n        <strong style=\"color:#14532D; font-size:12.5px;\">Instalado Totalmente</strong>\n        <div style=\"margin-top:3px; color:#14532D; line-height:1.3;\">\n          ✅ Binarios en <code>/usr/bin/</code><br>\n          ✅ Librerías y manuales<br>\n          ✅ Configuración en <code>/etc/</code>\n        </div>\n      </div>\n\n      <div style=\"text-align:center; font-size:15px; color:#D97706; font-weight:900;\">➔</div>\n\n      <!-- ESTADO 2: REMOVE (rc) -->\n      <div style=\"background:#FFFBEB; border:1.5px solid #FCD34D; border-radius:8px; padding:8px 10px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n          <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 5px; border-radius:3px;\">ESTADO rc</span>\n          <code style=\"font-weight:800; color:#B45309; font-size:11px;\">dpkg -r pkg</code>\n        </div>\n        <strong style=\"color:#92400E; font-size:12.5px;\">Remove (Desinstalado)</strong>\n        <div style=\"margin-top:3px; color:#78350F; line-height:1.3;\">\n          ❌ Binarios eliminados<br>\n          ❌ Manuales eliminados<br>\n          ⚠️ <strong>Conserva configuración en <code>/etc/</code></strong>\n        </div>\n      </div>\n\n      <div style=\"text-align:center; font-size:15px; color:#DC2626; font-weight:900;\">➔</div>\n\n      <!-- ESTADO 3: PURGE (un) -->\n      <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-radius:8px; padding:8px 10px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n          <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 5px; border-radius:3px;\">ESTADO un</span>\n          <code style=\"font-weight:800; color:#DC2626; font-size:11px;\">dpkg -P pkg</code>\n        </div>\n        <strong style=\"color:#991B1B; font-size:12.5px;\">Purge (Purgado Total)</strong>\n        <div style=\"margin-top:3px; color:#7F1D1D; line-height:1.3;\">\n          ❌ Binarios eliminados<br>\n          ❌ Manuales eliminados<br>\n          💥 <strong>Destruye ficheros de <code>/etc/</code></strong>\n        </div>\n      </div>\n    </div>\n\n    <!-- Barra de rescate de dependencias -->\n    <div style=\"margin-top:8px; padding:5px 10px; background:#EFF6FF; border-left:4px solid #2563EB; border-radius:4px; font-size:11.5px; color:#1E40AF; display:flex; justify-content:space-between; align-items:center;\">\n      <span>💡 <strong>¿Qué hacer si dpkg -i falla por dependencias rotas?</strong> Ejecuta: <code style=\"background:#DBEAFE; color:#1E40AF; font-weight:800; padding:1px 6px; border-radius:4px;\">sudo apt-get install -f</code> (o <code>sudo apt --fix-broken install</code>).</span>\n      <span style=\"font-weight:700; color:#2563EB; font-size:11px;\">🎯 PREGUNTA CLAVE LPIC-1</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Examen: 'dpkg -r' conserva configuración en /etc/ (estado rc); 'dpkg -P' destruye ejecutables y configuración (estado un)."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-4-3",
+      "title": "dpkg y dpkg-query: Inspección de Paquetes y Pertenencias",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "dpkg y dpkg-query: Inspección de Paquetes y Pertenencias"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-L, --listfiles <paquete>",
+              "Listar ficheros instalados",
+              "🎯 Lista todos los archivos y directorios que el paquete ha instalado en el disco."
+            ],
+            [
+              "-S, --search <ruta>",
+              "Buscar dueño en disco",
+              "🎯 dpkg -S o dpkg-query -S: averigua qué paquete instalado proporcionó un archivo o ruta existente."
+            ],
+            [
+              "-l, --list [patrón]",
+              "Listar paquetes instalados",
+              "Muestra tabla de paquetes con su código de estado (ii = instalado OK, rc = borrado con config)."
+            ],
+            [
+              "-s, --status <paquete>",
+              "Ver ficha de paquete instalado",
+              "Muestra estado detallado, dependencias y versión de un paquete ya presente en el sistema."
+            ],
+            [
+              "-c, --contents <fichero.deb>",
+              "Ver ficheros de un .deb",
+              "🎯 Lista los archivos contenidos dentro de un archivo .deb sin necesidad de instalarlo."
+            ],
+            [
+              "-I, --info <fichero.deb>",
+              "Ver metadatos de un .deb",
+              "Muestra la ficha técnica de un paquete .deb almacenado en disco antes de instalarlo."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:4px 0;\">\n  <!-- Terminal Realista de Inspección con Salida Real Compacta -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Consultas en la base de datos de dpkg</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">dpkg-query -S /bin/ls</span></div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">coreutils: /bin/ls</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">dpkg -l bash</span></div>\n    <div style=\"color:#94A3B8;\">||/ Name      Version         Architecture Description</div>\n    <div style=\"color:#38BDF8; font-weight:700;\">+++-=========-===============-============-=======================================</div>\n    <div><span style=\"color:#4ADE80; font-weight:800;\">ii</span>  <span style=\"color:#F8FAFC; font-weight:700;\">bash</span>      <span style=\"color:#FCD34D;\">5.2.15-2+b7</span>     <span style=\"color:#C084FC;\">amd64</span>        <span style=\"color:#94A3B8;\">GNU Bourne Again SHell</span></div>\n  </div>\n\n  <!-- Desglose de las Columnas de dpkg -l -->\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:5px 8px;\">\n      <strong style=\"color:#14532D;\">1ª Letra (Deseado):</strong><br>\n      <code>i</code> = Install | <code>h</code> = Hold\n    </div>\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:5px 8px;\">\n      <strong style=\"color:#1E40AF;\">2ª Letra (Estado Real):</strong><br>\n      <code>i</code> = Installed | <code>c</code> = Config-files\n    </div>\n    <div style=\"background:#FFFBEB; border:1px solid #FDE047; border-radius:6px; padding:5px 8px;\">\n      <strong style=\"color:#92400E;\">Versión & Arquitectura:</strong><br>\n      <code>5.2.15-2+b7</code> | <code>amd64</code>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:5px 8px;\">\n      <strong style=\"color:#6B21A8;\">dpkg-query -S:</strong><br>\n      Busca en <code>info/*.list</code> el dueño de una ruta.\n    </div>\n  </div>\n\n  <!-- COMPARATIVA RADICAL DE EXAMEN: ¿EN DISCO O EN REPOSITORIO? -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 14px;\">\n    <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      ⚖️ La Gran Comparativa de Examen: ¿Dónde está el archivo que buscas?\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n      <!-- EN DISCO: dpkg -S -->\n      <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:8px; padding:8px 10px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">EN DISCO LOCAL</span>\n          <code style=\"font-size:12.5px; font-weight:800; color:#1E40AF;\">dpkg -S &lt;ruta&gt;</code>\n        </div>\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">El archivo FÍSICO ya existe en tu máquina</strong>\n        <div style=\"font-size:11.5px; color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n          • Busca en los índices locales <code>/var/lib/dpkg/info/*.list</code>.<br>\n          • Averigua qué paquete instalado colocó ese archivo (ej: <code>dpkg -S /bin/ls</code> devuelve <code>coreutils</code>).<br>\n          • ⚠️ <strong>Si el archivo no está en tu disco, da error.</strong>\n        </div>\n      </div>\n\n      <!-- EN REPOSITORIO: apt-file search -->\n      <div style=\"background:#FAF5FF; border:2px solid #9333EA; border-radius:8px; padding:8px 10px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">EN LA NUBE (REPOSITORIOS)</span>\n          <code style=\"font-size:12.5px; font-weight:800; color:#7E22CE;\">apt-file search &lt;fichero&gt;</code>\n        </div>\n        <strong style=\"color:#6B21A8; font-size:12.5px;\">El archivo NO está instalado en tu máquina</strong>\n        <div style=\"font-size:11.5px; color:#581C87; margin-top:2px; line-height:1.35;\">\n          • Descarga los metadatos globales <code>Contents-*.gz</code> de los repositorios.<br>\n          • Te dice qué paquete debes instalar para tener un archivo o cabecera que te falta (ej: <code>apt-file search stdio.h</code> devuelve <code>libc6-dev</code>).<br>\n          • 🎯 <strong>No requiere tener el paquete ni el archivo instalado.</strong>\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para buscar el dueño de un archivo que YA EXISTE en disco usa 'dpkg -S'. Si el archivo NO está instalado, usa 'apt-file search'."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-4-4",
+      "title": "dpkg-reconfigure y apt-mark: Reconfigurar y Proteger Paquetes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "dpkg-reconfigure y apt-mark: Reconfigurar y Proteger Paquetes"
+        },
+        {
+          "type": "paragraph",
+          "text": "Dos herramientas esenciales de post-instalación para administrar servicios y estabilidad en servidores Debian:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:16px; margin:12px 0;\">\n  <!-- GRID DE 2 COLUMNAS CLAVE: dpkg-reconfigure vs apt-mark -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:20px;\">\n    \n    <!-- COLUMNA 1: dpkg-reconfigure -->\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:12px; padding:18px 20px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n          <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:11px; padding:3px 8px; border-radius:4px;\">RECONFIGURAR SIN REINSTALAR</span>\n          <span style=\"font-size:12px; font-weight:700; color:#1E40AF;\">Asistente debconf</span>\n        </div>\n        <div style=\"font-size:20px; font-weight:800; color:#1E40AF; margin-bottom:8px;\">\n          sudo dpkg-reconfigure &lt;paquete&gt;\n        </div>\n        <div style=\"font-size:14px; color:#1E3A8A; line-height:1.45; margin-bottom:14px;\">\n          • Vuelve a abrir las pantallas interactivas de configuración de un paquete <strong>que ya está instalado</strong>.<br>\n          • <strong>Evita el error típico:</strong> no necesitas desinstalar y reinstalar el programa ni editar ficheros complejos a mano en <code>/etc/</code>.\n        </div>\n\n        <!-- Terminal Real -->\n        <div style=\"background:#0F172A; color:#F8FAFC; border-radius:8px; padding:12px 14px; font-family:monospace; font-size:12.5px; line-height:1.45; margin-bottom:12px;\">\n          <div><span style=\"color:#4ADE80;\">usuario@servidor:~$</span> <span style=\"color:#FDE047; font-weight:700;\">sudo dpkg-reconfigure tzdata</span></div>\n          <div style=\"color:#94A3B8;\"># Abre menú interactivo en consola para elegir continente y ciudad</div>\n          <div style=\"color:#A7F3D0; font-weight:700;\">Current default time zone: 'Europe/Madrid'</div>\n          <div style=\"color:#94A3B8;\">Local time is now: Sun Oct 25 22:45:00 CET 2026.</div>\n        </div>\n      </div>\n\n      <!-- Casos Reales y Opciones Clave -->\n      <div style=\"background:#FFFFFF; border:1px solid #BFDBFE; border-radius:8px; padding:10px 14px; font-size:12.5px; color:#1E40AF;\">\n        <strong>Casos reales frecuentes en examen:</strong><br>\n        • <code>tzdata</code> (Zona horaria) &nbsp;|&nbsp; • <code>locales</code> (Idiomas UTF-8) &nbsp;|&nbsp; • <code>keyboard-configuration</code><br>\n        • <strong>Opción útil:</strong> <code>-p critical</code> (solo hace las preguntas indispensables).\n      </div>\n    </div>\n\n    <!-- COLUMNA 2: apt-mark hold -->\n    <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:12px; padding:18px 20px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n          <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:11px; padding:3px 8px; border-radius:4px;\">BLOQUEAR / CONGELAR PAQUETE</span>\n          <span style=\"font-size:12px; font-weight:700; color:#92400E;\">Protección de Producción</span>\n        </div>\n        <div style=\"font-size:20px; font-weight:800; color:#92400E; margin-bottom:8px;\">\n          sudo apt-mark hold &lt;paquete&gt;\n        </div>\n        <div style=\"font-size:14px; color:#78350F; line-height:1.45; margin-bottom:14px;\">\n          • Pone un <strong>candado</strong> al paquete para que <code>apt-get upgrade</code> o <code>dist-upgrade</code> <strong>no lo actualicen jamás</strong>.<br>\n          • <strong>Caso real en servidores:</strong> congelar la versión del Kernel o de la base de datos para garantizar estabilidad absoluta en producción.\n        </div>\n\n        <!-- Terminal Real -->\n        <div style=\"background:#0F172A; color:#F8FAFC; border-radius:8px; padding:12px 14px; font-family:monospace; font-size:12.5px; line-height:1.45; margin-bottom:12px;\">\n          <div><span style=\"color:#4ADE80;\">usuario@servidor:~$</span> <span style=\"color:#FDE047; font-weight:700;\">sudo apt-mark hold linux-image-amd64</span></div>\n          <div style=\"color:#38BDF8; font-weight:700;\">linux-image-amd64 set on hold.</div>\n          <div><span style=\"color:#4ADE80;\">usuario@servidor:~$</span> <span style=\"color:#FDE047; font-weight:700;\">apt-mark showhold</span></div>\n          <div style=\"color:#FCD34D;\">linux-image-amd64</div>\n        </div>\n      </div>\n\n      <!-- Comandos de Gestión y Alternativa -->\n      <div style=\"background:#FFFFFF; border:1px solid #FDE68A; border-radius:8px; padding:10px 14px; font-size:12.5px; color:#78350F;\">\n        <strong>Comandos clave para gestionarlo:</strong><br>\n        • <code>apt-mark hold &lt;pkg&gt;</code> (Poner candado) &nbsp;|&nbsp; • <code>apt-mark unhold &lt;pkg&gt;</code> (Desbloquear)<br>\n        • <code>apt-mark showhold</code> (Ver lista) &nbsp;|&nbsp; • Clásico de tuberías: <code>dpkg --set-selections</code>.\n      </div>\n    </div>\n\n  </div>\n\n  <!-- BANNER RESUMEN DIRECTO DE EXAMEN -->\n  <div style=\"background:#F8FAFC; border:1.5px solid #CBD5E1; border-left:6px solid #2563EB; border-radius:8px; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; font-size:13.5px; color:#0F172A;\">\n    <div>\n      🎯 <strong>Resumen para el Examen LPIC-1:</strong><br>\n      • ¿Quieres cambiar la hora o el idioma sin reinstalar? ➔ <code style=\"background:#EFF6FF; color:#1E40AF; font-weight:800; padding:2px 8px; border-radius:4px; font-size:14px;\">sudo dpkg-reconfigure &lt;pkg&gt;</code>.<br>\n      • ¿Quieres evitar que una actualización masiva toque tu kernel? ➔ <code style=\"background:#FFFBEB; color:#92400E; font-weight:800; padding:2px 8px; border-radius:4px; font-size:14px;\">sudo apt-mark hold &lt;pkg&gt;</code>.\n    </div>\n    <span style=\"background:#0F172A; color:#FFF; font-weight:800; font-size:11px; padding:6px 12px; border-radius:6px; white-space:nowrap;\">PUNTOS CLAVE DE EXAMEN</span>\n  </div>\n</div>\n"
+        }
+      ]
+    },
+    {
+      "id": "sec-102-4-5",
+      "title": "Repositorios APT: sources.list y sources.list.d/",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Repositorios APT: sources.list y sources.list.d/"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "",
+          "title": "/etc/apt/sources.list y /etc/apt/sources.list.d/*.list"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin:6px 0;\">\n  <!-- Diferencia de Archivos: Archivo Maestro vs Directorio Modular -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px;\">\n    <!-- sources.list -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:8px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">FICHERO CENTRAL</span>\n        <code style=\"font-weight:800; color:#1E40AF; font-size:13px;\">/etc/apt/sources.list</code>\n      </div>\n      <strong style=\"color:#1E40AF; font-size:13px;\">Repositorios Oficiales del Sistema Base</strong>\n      <div style=\"font-size:12px; color:#1E3A8A; margin-top:4px; line-height:1.35;\">\n        Archivo de texto tradicional donde se configuran los servidores principales de Debian o Ubuntu, las actualizaciones de seguridad y los repositorios de código fuente (<code>deb-src</code>).\n      </div>\n    </div>\n\n    <!-- sources.list.d/ -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:8px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">DIRECTORIO MODULAR</span>\n        <code style=\"font-weight:800; color:#6B21A8; font-size:13px;\">/etc/apt/sources.list.d/*.list</code>\n      </div>\n      <strong style=\"color:#6B21A8; font-size:13px;\">Repositorios Independientes de Terceros</strong>\n      <div style=\"font-size:12px; color:#581C87; margin-top:4px; line-height:1.35;\">\n        Permite que aplicaciones de terceros (Docker, Google Chrome, VS Code, Nginx) añadan su propio archivo <code>.list</code> sin tocar el archivo maestro del sistema. Al desinstalar, solo se borra ese archivo.\n      </div>\n    </div>\n  </div>\n\n  <!-- Contenido Real y Fiel de un Fichero sources.list -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:12px 16px; font-family:monospace; font-size:12.5px; line-height:1.45; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:6px; margin-bottom:8px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">📄 Contenido Real de /etc/apt/sources.list (Debian 12 Bookworm)</span>\n      <span>sources.list</span>\n    </div>\n    <div style=\"color:#64748B;\"># Repositorio oficial base de Debian (Paquetes binarios precompilados)</div>\n    <div>\n      <span style=\"color:#38BDF8; font-weight:800;\">deb</span> \n      <span style=\"color:#A7F3D0;\">https://deb.debian.org/debian</span> \n      <span style=\"color:#FDE047; font-weight:700;\">bookworm</span> \n      <span style=\"color:#F472B6;\">main</span> <span style=\"color:#F472B6;\">contrib</span> <span style=\"color:#F472B6;\">non-free</span> <span style=\"color:#F472B6;\">non-free-firmware</span>\n    </div>\n    <div style=\"margin-top:4px; color:#64748B;\"># Repositorio oficial de código fuente (Para compilar con apt-get source)</div>\n    <div>\n      <span style=\"color:#FB923C; font-weight:800;\">deb-src</span> \n      <span style=\"color:#A7F3D0;\">https://deb.debian.org/debian</span> \n      <span style=\"color:#FDE047; font-weight:700;\">bookworm</span> \n      <span style=\"color:#F472B6;\">main</span> <span style=\"color:#F472B6;\">contrib</span>\n    </div>\n    <div style=\"margin-top:4px; color:#64748B;\"># Actualizaciones de seguridad críticas</div>\n    <div>\n      <span style=\"color:#38BDF8; font-weight:800;\">deb</span> \n      <span style=\"color:#A7F3D0;\">https://security.debian.org/debian-security</span> \n      <span style=\"color:#FDE047; font-weight:700;\">bookworm-security</span> \n      <span style=\"color:#F472B6;\">main</span>\n    </div>\n  </div>\n\n  <!-- ANATOMÍA GRÁFICA DE UNA LÍNEA DE REPOSITORIO -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px;\">\n    <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n      📋 Anatomía de una Línea de Repositorio (Los 4 Campos Evaluados en LPIC-1):\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1.1fr 1fr 1fr 1.35fr; gap:8px; font-size:12px;\">\n      <!-- 1. Tipo -->\n      <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:8px 10px; border-radius:8px;\">\n        <strong style=\"color:#0284C7; font-size:12.5px;\">1. Tipo de Paquete:</strong><br>\n        • <code style=\"color:#0284C7; font-weight:800;\">deb</code>: Binarios <code>.deb</code> compilados.<br>\n        • <code style=\"color:#EA580C; font-weight:800;\">deb-src</code>: Código fuente original para compilar con <code>apt-get source</code>.\n      </div>\n\n      <!-- 2. URI -->\n      <div style=\"background:#ECFDF5; border:1px solid #A7F3D0; padding:8px 10px; border-radius:8px;\">\n        <strong style=\"color:#059669; font-size:12.5px;\">2. URI / Espejo:</strong><br>\n        Dirección del servidor HTTP/HTTPS, FTP o medio local (<code>file:/</code>, <code>cdrom:</code>).\n      </div>\n\n      <!-- 3. Distribución -->\n      <div style=\"background:#FEFCE8; border:1px solid #FDE047; padding:8px 10px; border-radius:8px;\">\n        <strong style=\"color:#CA8A04; font-size:12.5px;\">3. Distribución / Suite:</strong><br>\n        Codename de versión (<code>bookworm</code>, <code>bullseye</code>) o suite (<code>stable</code>, <code>testing</code>).\n      </div>\n\n      <!-- 4. Componentes -->\n      <div style=\"background:#FDF2F8; border:1px solid #FBCFE8; padding:8px 10px; border-radius:8px;\">\n        <strong style=\"color:#DB2777; font-size:12.5px;\">4. Componentes (Licencias):</strong><br>\n        • <strong>Debian:</strong> <code>main</code> (Libre DFSG), <code>contrib</code>, <code>non-free</code>, <code>non-free-firmware</code>.<br>\n        • <strong>Ubuntu:</strong> <code>main</code>, <code>restricted</code>, <code>universe</code>, <code>multiverse</code>.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para descargar el código fuente con 'apt-get source', debe existir obligatoriamente al menos una línea que comience por 'deb-src' en sources.list."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-4-6",
+      "title": "apt-get: Ciclo de Vida, Dependencias y Actualizaciones",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "apt-get: Ciclo de Vida, Dependencias y Actualizaciones"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "update",
+              "Sincronizar índices",
+              "🎯 Sincroniza los catálogos locales en /var/lib/apt/lists/ desde sources.list. NO actualiza ningún software."
+            ],
+            [
+              "install [-y] <paquete>",
+              "Instalar con dependencias",
+              "Descarga e instala el paquete y todas sus dependencias. -y responde 'sí' a todo."
+            ],
+            [
+              "upgrade",
+              "Actualización conservadora",
+              "Actualiza todos los paquetes instalados a su última versión SIN desinstalar jamás ningún paquete existente."
+            ],
+            [
+              "dist-upgrade",
+              "Actualización agresiva",
+              "🎯 Resuelve dependencias complejas, teniendo permiso para INSTALAR nuevos paquetes o ELIMINAR paquetes obsoletos."
+            ],
+            [
+              "remove / purge <paquete>",
+              "Eliminar o purgar",
+              "remove borra ejecutables; purge destruye también todos los ficheros de configuración en /etc/."
+            ],
+            [
+              "install -f, --fix-broken",
+              "Reparar dependencias",
+              "🎯 Clave de Examen: Arregla dependencias rotas tras una instalación fallida con dpkg -i."
+            ],
+            [
+              "clean / autoclean",
+              "Limpiar caché .deb",
+              "🎯 clean borra el 100% de .deb en /var/cache/apt/archives/; autoclean solo paquetes viejos ya no descargables."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:4px 0;\">\n  <!-- Terminal Realista con Salida Real Compacta -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Sincronización e instalación inteligente de dependencias</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">sudo apt-get update</span></div>\n    <div style=\"color:#94A3B8;\">Hit:1 https://deb.debian.org/debian bookworm InRelease &nbsp;|&nbsp; Reading package lists... Done</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">sudo apt-get install -y nginx</span></div>\n    <div style=\"color:#38BDF8;\">The following additional packages will be installed: nginx-common nginx-core</div>\n    <div style=\"color:#4ADE80; font-weight:700;\">The following NEW packages will be installed: nginx nginx-common nginx-core</div>\n    <div style=\"color:#94A3B8;\">0 upgraded, 3 newly installed, 0 to remove and 0 not upgraded.</div>\n    <div style=\"color:#4ADE80;\">Setting up nginx (1.22.1-9) ...</div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">Hit:1 (sources.list):</strong><br>\n      El catálogo no cambió; ahorra ancho de banda refrescando <code>/var/lib/apt/lists/</code>.\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">additional packages:</strong><br>\n      APT calcula el árbol transitivo y descarga las dependencias automáticamente.\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">Setting up nginx:</strong><br>\n      APT descarga los <code>.deb</code> a la caché y llama a <code>dpkg</code> por debajo para instalar.\n    </div>\n  </div>\n\n  <!-- COMPARATIVA VISUAL: CONSERVADORA (upgrade) vs AGRESIVA (dist-upgrade) -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 14px;\">\n    <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      ⚖️ Comparativa de Examen: Política de Actualización Conservadora vs Agresiva\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n      <!-- CONSERVADORA: apt-get upgrade -->\n      <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:8px; padding:8px 10px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n          <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">CONSERVADORA</span>\n          <code style=\"font-size:12.5px; font-weight:800; color:#1E40AF;\">apt-get upgrade</code>\n        </div>\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">Actualiza paquetes SIN eliminar nunca nada</strong>\n        <div style=\"font-size:11.5px; color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n          • Actualiza paquetes instalados a la versión más moderna disponible.<br>\n          • 🛑 <strong>Regla sagrada:</strong> <strong>NUNCA elimina paquetes preexistentes</strong>.<br>\n          • Si un paquete requiere eliminar algo viejo para actualizarse, se retiene (<em>kept back</em>).\n        </div>\n      </div>\n\n      <!-- AGRESIVA: apt-get dist-upgrade -->\n      <div style=\"background:#FEF2F2; border:2px solid #DC2626; border-radius:8px; padding:8px 10px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n          <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">AGRESIVA (EXAMEN)</span>\n          <code style=\"font-size:12.5px; font-weight:800; color:#991B1B;\">apt-get dist-upgrade</code>\n        </div>\n        <strong style=\"color:#991B1B; font-size:12.5px;\">Actualización inteligente con resolución de conflictos</strong>\n        <div style=\"font-size:11.5px; color:#7F1D1D; margin-top:2px; line-height:1.35;\">\n          • Diseñado para saltos mayores de versión de la distribución (Debian 11 a 12).<br>\n          • ⚡ <strong>Tiene permiso para:</strong> instalar nuevas dependencias y <strong>ELIMINAR paquetes obsoletos o conflictivos</strong>.\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: apt-get upgrade nunca borra paquetes; apt-get dist-upgrade sí puede eliminar paquetes si las dependencias lo exigen."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-4-7",
+      "title": "apt-cache: Consultas en la Caché de Repositorios",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "apt-cache: Consultas en la Caché de Repositorios"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "search <término>",
+              "Buscar en catálogo",
+              "🎯 Busca en los nombres y descripciones de todos los paquetes disponibles en los repositorios."
+            ],
+            [
+              "show <paquete>",
+              "Ficha técnica completa",
+              "🎯 Muestra la ficha técnica completa del paquete: descripción, mantenedor, tamaño y dependencias."
+            ],
+            [
+              "depends <paquete>",
+              "Ver dependencias",
+              "Muestra la lista de paquetes o librerías de los cuales depende este paquete para funcionar."
+            ],
+            [
+              "rdepends <paquete>",
+              "Dependencias inversas",
+              "Lista qué otros paquetes del repositorio necesitan a este paquete para funcionar."
+            ],
+            [
+              "policy [paquete]",
+              "Prioridades y versiones",
+              "🎯 Muestra la versión instalada, la versión candidata y las prioridades de repositorios (APT Pinning)."
+            ],
+            [
+              "pkgnames [prefijo]",
+              "Listar nombres",
+              "Lista rápida de los nombres de todos los paquetes disponibles en el sistema."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin:6px 0;\">\n  <!-- Terminal Realista con Salida Real de policy y depends -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:12px 16px; font-family:monospace; font-size:12.5px; line-height:1.45; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:6px; margin-bottom:8px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Consultas sin privilegios de root con apt-cache</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">apt-cache policy nginx</span></div>\n    <div style=\"color:#F8FAFC;\">nginx:</div>\n    <div>  Installed: <span style=\"color:#4ADE80; font-weight:700;\">1.22.1-9</span></div>\n    <div>  Candidate: <span style=\"color:#38BDF8; font-weight:700;\">1.22.1-9</span></div>\n    <div style=\"color:#94A3B8;\">  Version table:</div>\n    <div style=\"color:#FCD34D; font-weight:700;\"> *** 1.22.1-9 500</div>\n    <div style=\"color:#94A3B8;\">        500 https://deb.debian.org/debian bookworm/main amd64 Packages</div>\n    <div style=\"color:#94A3B8;\">        100 /var/lib/dpkg/status</div>\n    <div style=\"margin-top:6px;\"><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">apt-cache depends nginx | head -n 4</span></div>\n    <div style=\"color:#F8FAFC;\">nginx</div>\n    <div>  <span style=\"color:#F87171; font-weight:700;\">Depends:</span> nginx-core (>= 1.22.1-9)</div>\n    <div>  <span style=\"color:#F87171; font-weight:700;\">Depends:</span> libc6 (>= 2.34)</div>\n    <div>  <span style=\"color:#FBBF24;\">Recommends:</span> logrotate</div>\n  </div>\n\n  <!-- DESGLOSE LÍNEA A LÍNEA DE LA SALIDA DE POLICY -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 16px;\">\n    <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n      🔍 ¿Cómo interpretar la salida de <code>apt-cache policy</code> en el examen LPIC-1?\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; font-size:12px;\">\n      <!-- Installed -->\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:8px 10px;\">\n        <strong style=\"color:#14532D; font-size:12.5px;\">Installed: 1.22.1-9</strong><br>\n        <span style=\"color:#14532D;\">Versión que actualmente reside instalada en tu disco local. Si no estuviera instalado, mostraría <code>(none)</code>.</span>\n      </div>\n\n      <!-- Candidate -->\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:8px 10px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">Candidate: 1.22.1-9</strong><br>\n        <span style=\"color:#1E3A8A;\">La versión exacta que <code>apt-get install</code> instalaría según la prioridad del repositorio.</span>\n      </div>\n\n      <!-- Version table y 500 -->\n      <div style=\"background:#FEFCE8; border:1px solid #FDE047; border-radius:8px; padding:8px 10px;\">\n        <strong style=\"color:#CA8A04; font-size:12.5px;\">*** y Prioridad 500:</strong><br>\n        <span style=\"color:#78350F;\">Los asteriscos <code>***</code> indican la versión activa. <code>500</code> es la prioridad estándar de los repositorios oficiales de APT.</span>\n      </div>\n\n      <!-- Depends vs Recommends -->\n      <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:8px; padding:8px 10px;\">\n        <strong style=\"color:#6B21A8; font-size:12.5px;\">Depends vs Recommends:</strong><br>\n        <span style=\"color:#581C87;\"><code>Depends</code> es obligatorio (no arranca sin él); <code>Recommends</code> es opcional pero se instala por defecto.</span>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: apt-cache es una herramienta de SOLO LECTURA. No requiere privilegios de superusuario (no necesita sudo)."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-4-8",
+      "title": "apt-file: Búsqueda de Archivos en Paquetes No Instalados",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "apt-file: Búsqueda de Archivos en Paquetes No Instalados"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "apt-file update",
+              "Actualizar índice remoto",
+              "🎯 Descarga los metadatos Contents-*.gz de los repositorios para construir el índice de ficheros local (requiere sudo)."
+            ],
+            [
+              "apt-file search <fichero>",
+              "Buscar dueño en repos",
+              "🎯 Clave de Examen: Localiza qué paquete (instalado o NO instalado) contiene el archivo indicado."
+            ],
+            [
+              "apt-file list <paquete>",
+              "Listar ficheros en remoto",
+              "Muestra el listado de archivos de un paquete que reside en el repositorio sin descargarlo ni instalarlo."
+            ],
+            [
+              "apt-file search -l <fichero>",
+              "Solo nombres de paquete",
+              "Muestra únicamente el nombre del paquete omitiendo el listado repetido de rutas."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin:6px 0;\">\n  <!-- Terminal Realista con Salida Real de apt-file -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:12px 16px; font-family:monospace; font-size:12.5px; line-height:1.45; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:6px; margin-bottom:8px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Descarga de índices y búsqueda remota de ficheros</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">sudo apt-file update</span></div>\n    <div style=\"color:#94A3B8;\">Hit:1 https://deb.debian.org/debian bookworm InRelease</div>\n    <div style=\"color:#94A3B8;\">Get:2 https://deb.debian.org/debian bookworm/main amd64 Contents-amd64 [38.2 MB]</div>\n    <div style=\"color:#94A3B8;\">Fetched 38.2 MB in 4s (9,550 kB/s)</div>\n    <div style=\"color:#4ADE80;\">File list updated.</div>\n    <div style=\"margin-top:6px;\"><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">apt-file search /usr/include/stdio.h</span></div>\n    <div style=\"color:#38BDF8; font-weight:700;\">libc6-dev: /usr/include/stdio.h</div>\n    <div style=\"margin-top:6px;\"><span style=\"color:#4ADE80;\">usuario@debian:~$</span> <span style=\"color:#FDE047; font-weight:700;\">apt-file search bin/dig</span></div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">bind9-dnsutils: /usr/bin/dig</div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; font-size:12px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:8px 10px;\">\n      <strong style=\"color:#1E40AF;\">Contents-amd64 [38.2 MB]:</strong><br>\n      Descarga la base de datos completa de ficheros de todos los paquetes de los repositorios.\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:8px 10px;\">\n      <strong style=\"color:#14532D;\">libc6-dev: stdio.h:</strong><br>\n      El compilador pedía <code>stdio.h</code> que no tenías; te indica que debes instalar <code>libc6-dev</code>.\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:8px 10px;\">\n      <strong style=\"color:#6B21A8;\">bind9-dnsutils: /usr/bin/dig:</strong><br>\n      Quieres ejecutar <code>dig</code> pero no existe; te dice qué paquete instalar de inmediato.\n    </div>\n  </div>\n\n  <!-- EL GRAN DUELO DE EXAMEN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 16px;\">\n    <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n      🎯 El Gran Duelo de Examen LPIC-1: ¿Qué comando uso para encontrar un archivo?\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12.5px;\">\n      <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:8px; padding:10px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">CASO 1: YA INSTALADO</span>\n        <div style=\"font-weight:800; color:#1E40AF; font-size:13.5px; margin-top:4px;\">dpkg -S /ruta/archivo</div>\n        <div style=\"color:#1E3A8A; margin-top:3px; line-height:1.4;\">\n          El archivo <strong>ya está presente físicamente en tu disco duro</strong>. dpkg busca en la base de datos local a qué paquete pertenece.\n        </div>\n      </div>\n\n      <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:8px; padding:10px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">CASO 2: NO INSTALADO</span>\n        <div style=\"font-weight:800; color:#6B21A8; font-size:13.5px; margin-top:4px;\">apt-file search fichero</div>\n        <div style=\"color:#581C87; margin-top:3px; line-height:1.4;\">\n          El archivo <strong>NO está instalado en tu máquina</strong> y necesitas saber qué paquete tienes que descargar e instalar para conseguirlo.\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 La Gran Comparativa de Examen: Si el archivo ya está en tu disco -> usa 'dpkg -S'. Si el archivo NO está instalado o no sabes qué paquete instalar -> usa 'apt-file search'."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-4-9",
+      "title": "Matriz Maestra: Duelo de Equivalencias dpkg vs APT",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Matriz Maestra: Duelo de Equivalencias dpkg vs APT"
+        },
+        {
+          "type": "paragraph",
+          "text": "Esquema visual de equivalencias directas entre el motor de bajo nivel (dpkg) y el gestor de alto nivel (apt / apt-get):"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin:6px 0;\">\n  <!-- GRID DE 6 TARJETAS VISUALES DE EQUIVALENCIAS -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;\">\n    <!-- 1. Instalar -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:10px; padding:12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">INSTALAR</span>\n        <span style=\"color:#15803D; font-weight:800; font-size:11px;\">Requiere root (sudo)</span>\n      </div>\n      <div style=\"font-size:12.5px; line-height:1.4;\">\n        <div><strong>dpkg (Local):</strong> <code style=\"color:#15803D; font-weight:800;\">dpkg -i pkg.deb</code></div>\n        <div style=\"color:#14532D; font-size:11px; margin-bottom:4px;\">Requiere fichero .deb local. Sin dependencias.</div>\n        <div><strong>APT (Red):</strong> <code style=\"color:#2563EB; font-weight:800;\">apt install pkg</code></div>\n        <div style=\"color:#1E3A8A; font-size:11px;\">Descarga y resuelve dependencias automáticamente.</div>\n      </div>\n    </div>\n\n    <!-- 2. Desinstalar (Remove) -->\n    <div style=\"background:#FFFBEB; border:1.5px solid #FCD34D; border-radius:10px; padding:12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">REMOVE</span>\n        <span style=\"color:#B45309; font-weight:800; font-size:11px;\">Guarda config en /etc/</span>\n      </div>\n      <div style=\"font-size:12.5px; line-height:1.4;\">\n        <div><strong>dpkg (Local):</strong> <code style=\"color:#B45309; font-weight:800;\">dpkg -r pkg</code></div>\n        <div style=\"color:#78350F; font-size:11px; margin-bottom:4px;\">Elimina binarios, mantiene ficheros en /etc/.</div>\n        <div><strong>APT (Red):</strong> <code style=\"color:#2563EB; font-weight:800;\">apt remove pkg</code></div>\n        <div style=\"color:#1E3A8A; font-size:11px;\">Equivalente de alto nivel conservando /etc/.</div>\n      </div>\n    </div>\n\n    <!-- 3. Purgar (Purge) -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-radius:10px; padding:12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">PURGE</span>\n        <span style=\"color:#991B1B; font-weight:800; font-size:11px;\">Borra TODO (/etc/)</span>\n      </div>\n      <div style=\"font-size:12.5px; line-height:1.4;\">\n        <div><strong>dpkg (Local):</strong> <code style=\"color:#DC2626; font-weight:800;\">dpkg -P pkg</code></div>\n        <div style=\"color:#7F1D1D; font-size:11px; margin-bottom:4px;\">Elimina binarios Y purga toda la config en /etc/.</div>\n        <div><strong>APT (Red):</strong> <code style=\"color:#2563EB; font-weight:800;\">apt purge pkg</code></div>\n        <div style=\"color:#1E3A8A; font-size:11px;\">Purgado total de paquetes y configuraciones.</div>\n      </div>\n    </div>\n\n    <!-- 4. Listar Archivos -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:10px; padding:12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">LISTAR FICHEROS</span>\n        <span style=\"color:#1E40AF; font-weight:800; font-size:11px;\">Sin root (Lectura)</span>\n      </div>\n      <div style=\"font-size:12.5px; line-height:1.4;\">\n        <div><strong>Instalado en disco:</strong> <code style=\"color:#1E40AF; font-weight:800;\">dpkg -L pkg</code></div>\n        <div style=\"color:#1E3A8A; font-size:11px; margin-bottom:4px;\">Lista archivos que el paquete instaló en el sistema.</div>\n        <div><strong>En repositorio:</strong> <code style=\"color:#7E22CE; font-weight:800;\">apt-file list pkg</code></div>\n        <div style=\"color:#581C87; font-size:11px;\">Lista archivos de un paquete remoto sin instalarlo.</div>\n      </div>\n    </div>\n\n    <!-- 5. Buscar Dueño -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:10px; padding:12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">BUSCAR DUEÑO</span>\n        <span style=\"color:#6B21A8; font-weight:800; font-size:11px;\">Sin root (Lectura)</span>\n      </div>\n      <div style=\"font-size:12.5px; line-height:1.4;\">\n        <div><strong>En disco local:</strong> <code style=\"color:#1E40AF; font-weight:800;\">dpkg -S /ruta</code></div>\n        <div style=\"color:#1E3A8A; font-size:11px; margin-bottom:4px;\">El fichero existe físicamente en tu máquina.</div>\n        <div><strong>En repositorios:</strong> <code style=\"color:#7E22CE; font-weight:800;\">apt-file search</code></div>\n        <div style=\"color:#581C87; font-size:11px;\">El fichero NO existe en tu disco; buscas qué instalar.</div>\n      </div>\n    </div>\n\n    <!-- 6. Metadatos / Ficha Técnica -->\n    <div style=\"background:#FFF7ED; border:1.5px solid #FDBA74; border-radius:10px; padding:12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#EA580C; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">METADATOS</span>\n        <span style=\"color:#C2410C; font-weight:800; font-size:11px;\">Sin root (Lectura)</span>\n      </div>\n      <div style=\"font-size:12.5px; line-height:1.4;\">\n        <div><strong>Instalado:</strong> <code style=\"color:#C2410C; font-weight:800;\">dpkg -s pkg</code> | <strong>.deb:</strong> <code>-I</code></div>\n        <div style=\"color:#9A3412; font-size:11px; margin-bottom:4px;\">Estado, dependencias y versión del paquete local.</div>\n        <div><strong>En repositorio:</strong> <code style=\"color:#2563EB; font-weight:800;\">apt-cache show pkg</code></div>\n        <div style=\"color:#1E3A8A; font-size:11px;\">Ficha técnica completa de la caché remota.</div>\n      </div>\n    </div>\n  </div>\n\n  <!-- Barra Mnemotécnica Inferior -->\n  <div style=\"background:#F8FAFC; border:1.5px solid #CBD5E1; border-radius:8px; padding:8px 16px; display:flex; justify-content:space-between; align-items:center; font-size:12.5px;\">\n    <span>🎯 <strong>Regla de Oro de Examen:</strong> ¿La operación <strong>modifica el sistema</strong> (instalar, borrar, purgar)? ➔ <span style=\"color:#DC2626; font-weight:800;\">SÍ requiere sudo</span>.</span>\n    <span>¿La operación solo <strong>lee o consulta datos</strong> (listar, buscar, show)? ➔ <span style=\"color:#16A34A; font-weight:800;\">NO requiere sudo</span>.</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Oro: Si la operación modifica el sistema (instalar, borrar, purgar), requiere root. Si es consulta (buscar, listar, ver metadatos), NO requiere root."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-4-10",
+      "title": "Mapa Visual: Directorios y Ficheros Críticos de Debian",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Mapa Visual: Directorios y Ficheros Críticos de Debian"
+        },
+        {
+          "type": "paragraph",
+          "text": "Estructura del sistema de ficheros donde Debian almacena repositorios, descargas y el estado de los paquetes:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:12px; margin:6px 0;\">\n  <!-- GRID DE 3 GRANDES BLOQUES TEMÁTICOS -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:14px;\">\n    <!-- BLOQUE 1: Fuentes y Repositorios (/etc/apt/) -->\n    <div style=\"background:#EFF6FF; border:2px solid #93C5FD; border-radius:10px; padding:12px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:6px; margin-bottom:8px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:11px; padding:2px 8px; border-radius:4px;\">FUENTES /etc/</span>\n        <strong style=\"color:#1E40AF; font-size:13.5px;\">Orígenes de Software</strong>\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:12px;\">\n        <div style=\"background:#FFFFFF; border:1px solid #BFDBFE; border-radius:6px; padding:6px 10px;\">\n          <code style=\"font-weight:800; color:#1E40AF; font-size:12.5px;\">/etc/apt/sources.list</code>\n          <div style=\"color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n            🎯 Lista principal de repositorios oficiales binarios y de código fuente (<code>deb</code> y <code>deb-src</code>).\n          </div>\n        </div>\n        <div style=\"background:#FFFFFF; border:1px solid #BFDBFE; border-radius:6px; padding:6px 10px;\">\n          <code style=\"font-weight:800; color:#1E40AF; font-size:12.5px;\">/etc/apt/sources.list.d/</code>\n          <div style=\"color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n            Directorio modular para archivos <code>*.list</code> de terceros (Docker, Chrome, Nginx) sin tocar el archivo maestro.\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- BLOQUE 2: Caché de Paquetes Descargados (/var/cache/) -->\n    <div style=\"background:#FFFBEB; border:2px solid #FCD34D; border-radius:10px; padding:12px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:6px; margin-bottom:8px;\">\n        <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:11px; padding:2px 8px; border-radius:4px;\">CACHÉ /var/cache/</span>\n        <strong style=\"color:#92400E; font-size:13.5px;\">Descargas Locales</strong>\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:12px;\">\n        <div style=\"background:#FFFFFF; border:1.5px solid #FDE68A; border-radius:6px; padding:6px 10px;\">\n          <code style=\"font-weight:800; color:#B45309; font-size:12.5px;\">/var/cache/apt/archives/</code>\n          <div style=\"color:#78350F; margin-top:2px; line-height:1.35;\">\n            🎯 <strong>¡Pregunta Fija!</strong> Directorio donde APT almacena los archivos <code>.deb</code> descargados antes de instalarlos.<br>\n            🧹 Se vacía al 100% con <code>apt-get clean</code>.\n          </div>\n        </div>\n        <div style=\"background:#FFFFFF; border:1px solid #FDE68A; border-radius:6px; padding:6px 10px;\">\n          <code style=\"font-weight:800; color:#B45309; font-size:12.5px;\">/var/cache/apt/archives/partial/</code>\n          <div style=\"color:#78350F; margin-top:2px; line-height:1.35;\">\n            Archivos <code>.deb</code> a medio descargar en caso de interrupción de red.\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- BLOQUE 3: Base de Datos y Estado (/var/lib/) -->\n    <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:10px; padding:12px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:6px; margin-bottom:8px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:11px; padding:2px 8px; border-radius:4px;\">ESTADO /var/lib/</span>\n        <strong style=\"color:#14532D; font-size:13.5px;\">Base de Datos Local</strong>\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:12px;\">\n        <div style=\"background:#FFFFFF; border:1.5px solid #BBF7D0; border-radius:6px; padding:6px 10px;\">\n          <code style=\"font-weight:800; color:#15803D; font-size:12.5px;\">/var/lib/dpkg/status</code>\n          <div style=\"color:#14532D; margin-top:2px; line-height:1.35;\">\n            🎯 <strong>El archivo más crítico:</strong> texto plano con el estado exacto de cada paquete instalado (<code>ii</code>, <code>rc</code>, <code>un</code>).\n          </div>\n        </div>\n        <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:6px; padding:6px 10px;\">\n          <code style=\"font-weight:800; color:#15803D; font-size:12.5px;\">/var/lib/dpkg/info/</code>\n          <div style=\"color:#14532D; margin-top:2px; line-height:1.35;\">\n            Scripts de control del paquete (<code>.postinst</code>, <code>.prerm</code>) y listas de ficheros instalados (<code>.list</code>).\n          </div>\n        </div>\n        <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:6px; padding:6px 10px;\">\n          <code style=\"font-weight:800; color:#15803D; font-size:12.5px;\">/var/lib/apt/lists/</code>\n          <div style=\"color:#14532D; margin-top:2px; line-height:1.35;\">\n            Índices de paquetes descargados de los repositorios tras ejecutar <code>apt-get update</code>.\n          </div>\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <!-- Resumen de Emergencia de Disco -->\n  <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-radius:8px; padding:8px 16px; font-size:12.5px; color:#991B1B; display:flex; justify-content:space-between; align-items:center;\">\n    <span>🚨 <strong>Caso de Examen:</strong> Si la partición <code>/var</code> se llena al 100%, ¿qué comando oficial libera espacio de inmediato?</span>\n    <code style=\"background:#FEE2E2; color:#991B1B; font-weight:800; padding:2px 8px; border-radius:4px; font-size:13px;\">sudo apt-get clean</code>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta de Examen: ¿Dónde se guardan los archivos .deb descargados por apt-get? En /var/cache/apt/archives/. ¿Qué comando los borra? apt-get clean."
+        }
+      ]
+    }
+  ]
+}

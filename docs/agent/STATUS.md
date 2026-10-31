@@ -2,16 +2,17 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0056
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0057
 
 ## Estado
-- **Fase actual**: Fase 10 (Herramientas complementarias, Progreso, Ajustes, Mapa mental, Erratas, Acerca de, 404) COMPLETADA.
+- **Fase actual**: Fase 11 (Importación completa del legacy) EN CURSO.
 - **Último gate superado**: Gate 10 (etiqueta `fase-10-ok`).
-- **Trabajo en curso**: ninguno (Fase 10 cerrada, esperando confirmación para Fase 11).
+- **Trabajo en curso**: Tarea 11.2 (Importación de laboratorios y prácticas guiadas desde `practicas-v2/`).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-1. Comenzar la Fase 11: Importación completa del contenido del Examen 102 (Temas 105 a 110, 18 subtemas restantes, validación de laboratorio y preguntas).
+1. Tarea 11.2: Implementar `scripts/import-legacy/import-labs.ts` para transformar las prácticas Markdown de `_legacy/Recurso Final Definitivo/practicas-v2/` a los 42 laboratorios oficiales en `content-src/labs/*.json`, validando cada uno con `LabSchema`.
+2. Ejecutar `npm run build:content` y verificar `totalLabsReal = 42`.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -27,7 +28,7 @@
 | 8 | Simulador | completada (Gate 8 OK) |
 | 9 | Comandos, Glosario y Flashcards | completada (Gate 9 OK) |
 | 10 | Herramientas complementarias, Ajustes, Progreso, Mapa mental | completada (Gate 10 OK) |
-| 11 | Importación completa del legacy | pendiente |
+| 11 | Importación completa del legacy | en curso (Tarea 11.1 lista · 42 lecciones reales) |
 | 12 | Pulido, accesibilidad, rendimiento y documentación | pendiente |
 
 ## Stubs (páginas aún no implementadas)
@@ -36,9 +37,9 @@
 | Ninguna (0 stubs pendientes · 23 de 23 rutas implementadas) | Todas completadas |
 
 ## Comandos útiles
-- `npm run verify`: pipeline completo de 9 etapas en verde (357 unitarios + 62 E2E).
-- `npm run test`: suite de tests unitarios (357 tests en verde: 341 Angular + 16 Vitest).
-- `npx playwright test e2e/fase-10.spec.ts`: suite E2E de Fase 10 (6 tests en verde).
+- `npm run build:content`: genera manifiesto y valida contenido (770 slides reales, 0 placeholder).
+- `npm run verify`: pipeline completo de 9 etapas en verde.
+- `npx tsx scripts/import-legacy/import-lessons.ts`: importa las 42 lecciones en ~9 segundos.
 - `npm run check:stubs`: comprobación de rutas (0 stubs pendientes, 23 implementadas).
 
 ## Deuda conocida

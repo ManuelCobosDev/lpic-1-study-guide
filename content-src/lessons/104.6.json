@@ -1,0 +1,1368 @@
+{
+  "id": "104.6",
+  "topicId": "104",
+  "examId": "101",
+  "title": "Crear y cambiar enlaces duros y simbólicos",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 30,
+  "objectives": [
+    "Inodos, ln, enlaces duros frente a simbólicos, contador de enlaces, readlink y symlinks rotos (Alta Densidad LPIC-1)",
+    "Dominio técnico de las herramientas y configuración del subtema 104.6"
+  ],
+  "keyTerms": [
+    "Crear y cambiar enlaces duros y simbólicos",
+    "Tema 104"
+  ],
+  "commands": [
+    "ln",
+    "readlink",
+    "find"
+  ],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "104.6-slide-1",
+      "slideNumber": 1,
+      "title": "Crear y cambiar enlaces duros y simbólicos",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Crear y cambiar enlaces duros y simbólicos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Inodos, ln, enlaces duros frente a simbólicos, contador de enlaces, readlink y symlinks rotos (Modo Examen)"
+        }
+      ],
+      "notes": "Iniciamos el subtema 104.6 (peso 2). Los enlaces son una de las características más elegantes y evaluadas del sistema de ficheros de Linux. Aprenderemos la arquitectura interna del inodo, las diferencias cruciales entre enlaces duros (hard links) y simbólicos (soft links), el contador de enlaces de archivos y carpetas, y el manejo de enlaces rotos."
+    },
+    {
+      "id": "104.6-slide-2",
+      "slideNumber": 2,
+      "title": "Arquitectura Interna: Entradas de Directorio e Inodos",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Arquitectura Interna: Entradas de Directorio e Inodos"
+        },
+        {
+          "type": "paragraph",
+          "text": "En Linux el nombre de un archivo nunca se guarda en el inodo. Esta separación permite la magia de los enlaces:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**El Inodo almacena los datos y metadatos** — El inodo contiene los permisos, el propietario, el tamaño, las fechas y los punteros a los bloques de disco físicos. Pero el inodo NO contiene el nombre del archivo.",
+            "**El Directorio es una tabla de correspondencias** — Un directorio en Linux es simplemente un archivo especial que contiene una lista de parejas: 'Nombre de Archivo -> Número de Inodo'.",
+            "**¿Qué es un Enlace Duro (Hard Link)?** — 🎯 Es sencillamente una SEGUNDA ENTRADA de directorio que apunta AL MISMO NÚMERO DE INODO exacto. No duplica los datos; dos nombres distintos apuntan al mismo archivo físico."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Diagrama de Arquitectura de Enlace Duro vs Simbólico -->\n  <div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:12px; padding:14px;\">\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px;\">\n      \n      <!-- Bloque Enlace Duro -->\n      <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:12px;\">\n        <div style=\"font-size:13.5px; font-weight:800; color:#1E40AF; margin-bottom:8px;\">\n          🔗 ENLACE DURO (HARD LINK)\n        </div>\n        <div style=\"display:flex; flex-direction:column; gap:6px; font-family:monospace; font-size:12px;\">\n          <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:4px; color:#1E3A8A;\">\n            Entrada dir: doc.txt &rarr; Inodo #184520\n          </div>\n          <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:4px; color:#1E3A8A;\">\n            Entrada dir: duro.txt &rarr; Inodo #184520\n          </div>\n          <div style=\"text-align:center; font-weight:bold; color:#2563EB;\">&darr; comparten el mismo inodo &darr;</div>\n          <div style=\"background:#BFDBFE; padding:6px 8px; border-radius:4px; font-weight:800; color:#1D4ED8; text-align:center;\">\n            Inodo #184520 (Link Count = 2) &rarr; Bloques de Datos\n          </div>\n        </div>\n        <div style=\"font-size:11.5px; color:#1E40AF; margin-top:8px;\">\n          Si borras <code>doc.txt</code>, los datos <strong>siguen vivos e intactos</strong> en <code>duro.txt</code>.\n        </div>\n      </div>\n\n      <!-- Bloque Enlace Simbólico -->\n      <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:12px;\">\n        <div style=\"font-size:13.5px; font-weight:800; color:#166534; margin-bottom:8px;\">\n          ✨ ENLACE SIMBÓLICO (SOFT / SYMLINK)\n        </div>\n        <div style=\"display:flex; flex-direction:column; gap:6px; font-family:monospace; font-size:12px;\">\n          <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:4px; color:#14532D;\">\n            Entrada: suave.txt &rarr; Inodo Propio #184525\n          </div>\n          <div style=\"text-align:center; font-weight:bold; color:#16A34A;\">&darr; contiene un puntero de texto &darr;</div>\n          <div style=\"background:#BBF7D0; padding:6px 8px; border-radius:4px; font-weight:700; color:#15803D; text-align:center;\">\n            Puntero: \"doc.txt\" &rarr; Busca inodo de doc.txt\n          </div>\n        </div>\n        <div style=\"font-size:11.5px; color:#166534; margin-top:8px;\">\n          Si borras <code>doc.txt</code>, el enlace queda <strong>roto (dangling)</strong> e inservible.\n        </div>\n      </div>\n\n    </div>\n  </div>\n\n  <!-- Alerta de examen: Inodo no tiene nombre -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:14px;\">\n    <span style=\"font-size:26px;\">💡</span>\n    <div style=\"font-size:13px; color:#92400E; line-height:1.45;\">\n      <strong>Regla de Oro del Examen:</strong> El inodo almacena permisos, tamaño, UID, GID y fechas, pero <strong>NUNCA almacena el nombre del archivo</strong>. El nombre reside exclusivamente en la entrada del directorio que asocia el texto con el número de inodo.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Un enlace duro comparte el mismo número de inodo que el archivo original. Se comprueba con 'ls -i'."
+        }
+      ]
+    },
+    {
+      "id": "104.6-slide-3",
+      "slideNumber": 3,
+      "title": "Matriz Comparativa: Enlace Duro frente a Enlace Simbólico",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Matriz Comparativa: Enlace Duro frente a Enlace Simbólico"
+        },
+        {
+          "type": "paragraph",
+          "text": "Las diferencias absolutas que debes memorizar para el examen LPIC-1:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Característica",
+            "Enlace Duro (Hard Link)",
+            "Enlace Simbólico (Soft / Symlink)"
+          ],
+          "rows": [
+            [
+              "Comando de Creación",
+              "ln origen enlace",
+              "🎯 ln -s origen enlace (con opción -s)"
+            ],
+            [
+              "Número de Inodo",
+              "🎯 IDÉNTICO al del archivo original (mismo inodo).",
+              "🎯 NUEVO inodo independiente exclusivo para el enlace."
+            ],
+            [
+              "¿Cruza Sistemas de Archivos?",
+              "⚠️ ¡NO! Falla con 'Invalid cross-device link'.",
+              "🎯 SÍ, puede apuntar a cualquier partición o recurso de red."
+            ],
+            [
+              "¿Puede apuntar a Directorios?",
+              "⚠️ ¡NO! Prohibido para evitar bucles infinitos en el árbol.",
+              "🎯 SÍ, puede enlazar carpetas libremente."
+            ],
+            [
+              "Si se BORRA el archivo original...",
+              "🎯 Los datos SIGUEN INTACTOS y accesibles por el enlace.",
+              "⚠️ El enlace queda ROTO e inservible (Dangling Symlink)."
+            ],
+            [
+              "Permisos en ls -l",
+              "Mismos permisos exactos del inodo original.",
+              "🎯 Aparece siempre como 'lrwxrwxrwx' (cosmético)."
+            ]
+          ],
+          "caption": "Matriz Comparativa: Enlace Duro frente a Enlace Simbólico"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #CBD5E1; border-radius:8px; padding:8px 14px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px;\">\n  <div>\n    <strong style=\"color:#2563EB;\">Hard Link (ln):</strong> Mismo inodo &bull; Misma partición &bull; No a directorios &bull; Inmune a borrado\n  </div>\n  <div style=\"background:#DCFCE7; color:#166534; padding:2px 8px; border-radius:4px; font-weight:700;\">\n    🎯 Soft Link (ln -s): Inodo nuevo &bull; Salta discos &bull; Sí a carpetas\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave Absoluta de Examen: Los enlaces duros NO pueden cruzar entre particiones ni apuntar a directorios. Los enlaces simbólicos (ln -s) pueden hacer ambas cosas."
+        }
+      ],
+      "notes": "Pide a los alumnos que repitan: 'Hard link = mismo inodo, misma partición. Soft link = ln -s, cualquier sitio'."
+    },
+    {
+      "id": "104.6-slide-4",
+      "slideNumber": 4,
+      "title": "Creación de Enlaces con ln: Duro y Simbólico (-s)",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Creación de Enlaces con ln: Duro y Simbólico (-s)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Sintaxis oficial y verificación de inodos en la consola:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "ln <origen> <enlace_duro> | ln -s <origen> <enlace_simbólico>",
+          "title": "Crear enlaces duros o simbólicos hacia archivos y directorios existentes"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "echo 'Linux' > doc.txt; ln doc.txt duro.txt; ln -s doc.txt suave.txt; ls -li doc.txt duro.txt suave.txt",
+              "output": "184520 -rw-r--r-- 2 alumno alumno 6 Oct 20 11:45 doc.txt\n184520 -rw-r--r-- 2 alumno alumno 6 Oct 20 11:45 duro.txt\n184525 lrwxrwxrwx 1 alumno alumno 7 Oct 20 11:45 suave.txt -> doc.txt"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "ln origen destino",
+              "ln (Duro)",
+              "🎯 Crea un enlace duro: ambos comparten el mismo número de inodo y el Link Count sube a 2."
+            ],
+            [
+              "ln -s origen destino",
+              "-s (Simbólico)",
+              "🎯 Clave de Examen: Crea un enlace simbólico con su propio inodo apuntando a la ruta de origen."
+            ],
+            [
+              "ln -f",
+              "-f (Force)",
+              "Force: elimina el archivo destino si ya existía antes de crear el nuevo enlace."
+            ],
+            [
+              "Ruta Absoluta",
+              "ln -s /ruta/abs",
+              "Enlace simbólico absoluto: funcionará siempre sin importar desde dónde se invoque."
+            ],
+            [
+              "Ruta Relativa",
+              "ln -s rel/path",
+              "Enlace simbólico relativo: depende de la ubicación del propio enlace (si se mueve de carpeta, se rompe)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px; display:flex; align-items:center; gap:14px;\">\n  <span style=\"font-size:26px;\">📐</span>\n  <div style=\"font-size:12.5px; color:#334155; line-height:1.45;\">\n    <strong>Orden Estricto de Argumentos en el Examen:</strong> En ambos comandos la sintaxis es <code>ln [-s] &lt;ORIGEN_EXISTENTE&gt; &lt;NOMBRE_NUEVO_ENLACE&gt;</code>. Si inviertes los argumentos, crearás un enlace apuntando a un destino vacío o provocarás un error.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Sintaxis de Examen: 'ln -s <archivo_existente_origen> <nombre_nuevo_enlace>'. ¡Siempre origen primero, destino después!"
+        }
+      ],
+      "notes": "Muestra que en 'ls -li', doc.txt y duro.txt tienen exactamente el mismo número de inodo (184520)."
+    },
+    {
+      "id": "104.6-slide-5",
+      "slideNumber": 5,
+      "title": "Límites Arquitectónicos de los Enlaces Duros",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Límites Arquitectónicos de los Enlaces Duros"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué el kernel de Linux prohíbe enlaces duros entre particiones distintas y sobre directorios?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Error: 'Invalid cross-device link'** — 🎯 Cada sistema de archivos (partición) tiene su propia tabla de inodos independiente. El inodo 1500 de /dev/sda1 no tiene nada que ver con el inodo 1500 de /dev/sdb1. Un enlace duro no puede apuntar a un inodo de otra partición.",
+            "**2. Prohibición estricta sobre directorios** — 🎯 Si el administrador pudiera crear enlaces duros a directorios, se crearían ciclos y bucles infinitos en el árbol que romperían comandos como 'find', 'du' o el propio kernel.",
+            "**La solución universal: Enlaces Simbólicos (ln -s)** — Como un enlace simbólico solo almacena una cadena de texto con la ruta de destino, puede saltar entre particiones distintas y apuntar a carpetas sin ninguna restricción."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px;\">\n    \n    <!-- Límite 1: Cross-Device -->\n    <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:#991B1B; margin-bottom:8px;\">\n        1. Falla entre Particiones Distintas\n      </div>\n      <div style=\"font-size:12.5px; color:#7F1D1D; line-height:1.45; margin-bottom:8px;\">\n        Cada partición tiene su propia tabla de inodos aislada. El inodo #4012 de <code>/dev/sda1</code> no tiene relación con el #4012 de <code>/dev/sdb1</code>.\n      </div>\n      <div style=\"background:#FEE2E2; padding:6px 8px; border-radius:4px; font-family:monospace; font-size:12px; color:#991B1B; font-weight:700;\">\n        ln: failed: Invalid cross-device link\n      </div>\n    </div>\n\n    <!-- Límite 2: No a Directorios -->\n    <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:#991B1B; margin-bottom:8px;\">\n        2. Prohibido en Directorios\n      </div>\n      <div style=\"font-size:12.5px; color:#7F1D1D; line-height:1.45; margin-bottom:8px;\">\n        Si se permitieran enlaces duros a carpetas, se generarían ciclos y bucles infinitos en el árbol que colapsarían comandos como <code>find</code>, <code>du</code> y el propio kernel.\n      </div>\n      <div style=\"background:#FEE2E2; padding:6px 8px; border-radius:4px; font-family:monospace; font-size:12px; color:#991B1B; font-weight:700;\">\n        ln: hard link not allowed for directory\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Solución con Enlaces Simbólicos -->\n  <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:14px;\">\n    <span style=\"font-size:26px;\">✅</span>\n    <div style=\"font-size:13px; color:#166534; line-height:1.45;\">\n      <strong>La Solución Universal de Examen:</strong> Para enlazar entre sistemas de archivos distintos o apuntar a carpetas, se debe usar obligatoriamente un <strong>enlace simbólico</strong>: <code style=\"background:#DCFCE7; padding:2px 6px; border-radius:4px; font-weight:700;\">ln -s /var/log /mnt/backup/log</code>.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Típica de Examen: Si ejecutas 'ln /var/log/syslog /mnt/backup/log' y falla con 'Invalid cross-device link', ¿cómo lo resuelves? -> Usando un enlace simbólico: 'ln -s'."
+        }
+      ]
+    },
+    {
+      "id": "104.6-slide-6",
+      "slideNumber": 6,
+      "title": "El Contador de Enlaces (Link Count) en Archivos",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Contador de Enlaces (Link Count) en Archivos"
+        },
+        {
+          "type": "paragraph",
+          "text": "El comando rm en realidad ejecuta unlink(). Los datos no se destruyen mientras el contador sea superior a 0:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**La columna del Link Count en ls -l** — En 'ls -l', el número que aparece justo después de los permisos (ej: '-rw-r--r-- 2 ...') es el contador de enlaces duros que apuntan a ese inodo.",
+            "**Incremento al crear enlaces duros** — Cuando se crea un archivo nuevo nace con Link Count = 1. Cada vez que creas un enlace duro con 'ln', el contador sube en 1 (pasa a 2, 3, etc.).",
+            "**rm en realidad hace 'unlink'** — 🎯 Clave de Examen: El comando 'rm' no borra los datos; decrementa el contador de enlaces en 1 ('unlink'). Los bloques de disco solo se liberan y marcan como espacio libre cuando el contador llega exactamente a 0 Y ningún proceso tiene el archivo abierto."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:12px; padding:14px; margin:14px 0;\">\n  <div style=\"font-size:12.5px; font-weight:800; color:#334155; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;\">\n    Ciclo de Vida de los Datos según el Contador de Enlaces\n  </div>\n  <div style=\"display:flex; align-items:center; justify-content:space-between; gap:8px; font-family:monospace; font-size:12px; text-align:center;\">\n    <div style=\"flex:1; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:8px 4px;\">\n      <div style=\"font-weight:800; color:#1E40AF;\">touch doc.txt</div>\n      <div style=\"font-size:14px; font-weight:800; color:#2563EB; margin:4px 0;\">Link Count = 1</div>\n      <div style=\"font-size:10.5px; color:#3B82F6;\">Archivo nace con 1</div>\n    </div>\n    <span style=\"color:#64748B; font-weight:bold;\">&rarr;</span>\n    <div style=\"flex:1; background:#FEF3C7; border:1px solid #FDE68A; border-radius:8px; padding:8px 4px;\">\n      <div style=\"font-weight:800; color:#92400E;\">ln doc.txt duro.txt</div>\n      <div style=\"font-size:14px; font-weight:800; color:#B45309; margin:4px 0;\">Link Count = 2</div>\n      <div style=\"font-size:10.5px; color:#D97706;\">Suma +1 al inodo</div>\n    </div>\n    <span style=\"color:#64748B; font-weight:bold;\">&rarr;</span>\n    <div style=\"flex:1; background:#DCFCE7; border:1px solid #BBF7D0; border-radius:8px; padding:8px 4px;\">\n      <div style=\"font-weight:800; color:#166534;\">rm doc.txt (unlink)</div>\n      <div style=\"font-size:14px; font-weight:800; color:#15803D; margin:4px 0;\">Link Count = 1</div>\n      <div style=\"font-size:10.5px; color:#22C55E;\">¡Datos intactos en duro.txt!</div>\n    </div>\n    <span style=\"color:#64748B; font-weight:bold;\">&rarr;</span>\n    <div style=\"flex:1; background:#FEE2E2; border:1px solid #FCA5A5; border-radius:8px; padding:8px 4px;\">\n      <div style=\"font-weight:800; color:#991B1B;\">rm duro.txt</div>\n      <div style=\"font-size:14px; font-weight:800; color:#DC2626; margin:4px 0;\">Link Count = 0</div>\n      <div style=\"font-size:10.5px; color:#EF4444;\">Bloques liberados en disco</div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Si tienes un archivo con 3 enlaces duros y borras el archivo original con 'rm', los datos NO se pierden: el contador baja a 2 y los otros dos enlaces siguen funcionando al 100%."
+        }
+      ]
+    },
+    {
+      "id": "104.6-slide-7",
+      "slideNumber": 7,
+      "title": "El Link Count en Directorios: Fórmula \"2 + Subdirectorios\"",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Link Count en Directorios: Fórmula \"2 + Subdirectorios\""
+        },
+        {
+          "type": "paragraph",
+          "text": "Todo directorio recién creado nace con Link Count = 2 debido a las referencias automáticas . y ..:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. El nombre del propio directorio en su carpeta padre** — Cuando creas '/home/alumno', la carpeta '/home' añade una entrada que apunta al inodo de 'alumno' (1ª referencia).",
+            "**2. El directorio punto (.) en su interior** — 🎯 Dentro de '/home/alumno' reside el enlace especial '.' que apunta a sí mismo (2ª referencia). Por eso todo directorio vacío nace con Link Count = 2.",
+            "**3. Los subdirectorios mediante el enlace doble punto (..)** — 🎯 Clave Matemática de Examen: Cada subcarpeta que creas dentro añade +1 al contador de la carpeta padre (por su enlace '..'). Fórmula: 'Total subdirectorios = Link Count - 2'."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Mosaico de Referencias -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-family:monospace; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:10px 4px;\">\n      <div style=\"font-size:12px; color:#1E40AF; font-weight:bold;\">Referencia 1</div>\n      <div style=\"font-size:16px; font-weight:800; color:#1D4ED8; margin:2px 0;\">Desde el Padre</div>\n      <div style=\"font-size:11px; color:#3B82F6;\">Entrada en /var/</div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:10px 4px;\">\n      <div style=\"font-size:12px; color:#166534; font-weight:bold;\">Referencia 2</div>\n      <div style=\"font-size:16px; font-weight:800; color:#15803D; margin:2px 0;\">El directorio .</div>\n      <div style=\"font-size:11px; color:#22C55E;\">Apunta a sí mismo</div>\n    </div>\n    <div style=\"background:#FEF3C7; border:1px solid #FDE68A; border-radius:8px; padding:10px 4px;\">\n      <div style=\"font-size:12px; color:#92400E; font-weight:bold;\">+1 por Subcarpeta</div>\n      <div style=\"font-size:16px; font-weight:800; color:#B45309; margin:2px 0;\">El directorio ..</div>\n      <div style=\"font-size:11px; color:#D97706;\">Subcarpeta apunta arriba</div>\n    </div>\n  </div>\n\n  <!-- Fórmula Matemática de Examen -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:12px 18px; display:flex; align-items:center; justify-content:space-between;\">\n    <div>\n      <div style=\"font-size:14px; font-weight:800; color:#92400E;\">🎯 FÓRMULA MATEMÁTICA OBLIGATORIA EN LPIC-1:</div>\n      <div style=\"font-family:monospace; font-size:18px; font-weight:800; color:#B45309; margin-top:2px;\">\n        Total Subdirectorios = Link Count - 2\n      </div>\n    </div>\n    <div style=\"font-size:12.5px; color:#78350F; background:#FEF3C7; padding:6px 12px; border-radius:6px;\">\n      Si <code>ls -ld /var/log</code> muestra <strong>14</strong> enlaces:<br>\n      <strong>14 - 2 = 12 subdirectorios directos</strong>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Matemática de Examen: Si 'ls -ld /var/log' muestra un contador de enlaces de 14, ¿cuántos subdirectorios directos contiene? -> Respuesta: 12 subdirectorios (14 - 2 = 12)."
+        }
+      ],
+      "notes": "Pide a los alumnos que graben la fórmula: Contador - 2 = número de subcarpetas."
+    },
+    {
+      "id": "104.6-slide-8",
+      "slideNumber": 8,
+      "title": "Herramientas Auxiliares: readlink, unlink y cp",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Herramientas Auxiliares: readlink, unlink y cp"
+        },
+        {
+          "type": "paragraph",
+          "text": "Inspeccionar el destino de enlaces simbólicos y manipularlos con seguridad:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "readlink [-f] <enlace> | unlink <enlace> | cp -d <enlace> <destino>",
+          "title": "Resolver rutas de symlinks, eliminar entradas de directorio y copiar enlaces sin desreferenciar"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "readlink -f /bin/sh; unlink /tmp/enlace_prueba",
+              "output": "/usr/bin/dash\n# Resuelve toda la cadena de enlaces simbólicos hasta el archivo binario real."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "readlink <enlace>",
+              "readlink",
+              "🎯 Clave de Examen: Imprime en la consola el valor exacto del texto al que apunta el enlace simbólico."
+            ],
+            [
+              "readlink -f <enlace>",
+              "-f (Canónica)",
+              "🎯 Resuelve recursivamente todos los symlinks intermedios devolviendo la ruta física final absoluta."
+            ],
+            [
+              "unlink <enlace>",
+              "unlink",
+              "Llama directamente a la llamada al sistema unlink() para eliminar la entrada de directorio."
+            ],
+            [
+              "cp -d <enlace>",
+              "cp -d (Sin duplicar)",
+              "🎯 Clave de Examen: Copia el enlace simbólico en sí mismo en lugar del archivo original al que apunta."
+            ],
+            [
+              "cp -a",
+              "cp -a",
+              "Modo archivo completo: incluye '-d' para preservar enlaces simbólicos sin expandirlos."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'readlink' revela a qué archivo apunta un enlace simbólico; 'cp -d' duplica el enlace sin desreferenciar los datos."
+        }
+      ],
+      "notes": "Muestra que en Debian /bin/sh apunta a dash, lo que se comprueba al instante con 'readlink /bin/sh'."
+    },
+    {
+      "id": "104.6-slide-9",
+      "slideNumber": 9,
+      "title": "Diagnóstico y Limpieza de Enlaces Rotos (Dangling)",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Diagnóstico y Limpieza de Enlaces Rotos (Dangling)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Un symlink cuyo archivo destino ha sido eliminado o renombrado queda huérfano (dangling):"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Naturaleza de un Enlace Huérfano** — El enlace simbólico sigue existiendo en el disco (su inodo no ha sufrido daños), pero la ruta de texto que tiene guardada dentro ya no existe en el sistema de ficheros.",
+            "**Comportamiento en la terminal** — En un 'ls --color', el enlace roto aparece parpadeando en rojo brillante. Si intentas hacer 'cat enlace', Linux devolverá: 'No such file or directory'.",
+            "**Búsqueda y limpieza con find** — 🎯 Clave de Examen: Para localizar todos los enlaces simbólicos rotos en una carpeta se utiliza: 'find . -xtype l' (o 'find . -type l ! -exec test -e {} \\; -print')."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Flujo de Enlace Roto -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px;\">\n    \n    <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:12px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:#991B1B; margin-bottom:6px;\">\n        ⚠️ Síntomas en Terminal\n      </div>\n      <div style=\"font-size:12.5px; color:#7F1D1D; line-height:1.45;\">\n        &bull; En <code>ls --color</code> aparece en <strong>rojo intermitente</strong>.<br>\n        &bull; <code>cat enlace_roto</code> devuelve: <em>No such file or directory</em>.<br>\n        &bull; El inodo del symlink sigue intacto, pero su puntero es inválido.\n      </div>\n    </div>\n\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:12px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:#1E40AF; margin-bottom:6px;\">\n        🔍 Detección con find\n      </div>\n      <div style=\"font-family:monospace; font-size:12px; color:#1D4ED8; background:#DBEAFE; padding:6px 8px; border-radius:4px; font-weight:700;\">\n        find . -xtype l\n      </div>\n      <div style=\"font-size:12px; color:#1E3A8A; margin-top:6px;\">\n        Localiza automáticamente todos los symlinks cuyo destino no existe en disco.\n      </div>\n    </div>\n\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Un enlace simbólico roto (dangling) apunta a una ruta inexistente. Se detecta con 'find -xtype l'."
+        }
+      ],
+      "notes": "Muestra a la clase el aspecto rojo intermitente de un enlace roto tras borrar el archivo original."
+    },
+    {
+      "id": "104.6-slide-10",
+      "slideNumber": 10,
+      "title": "Búsqueda de Enlaces con find: -inum y -samefile",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Búsqueda de Enlaces con find: -inum y -samefile"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo encontrar todos los enlaces duros que apuntan a un mismo archivo en todo el disco?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "find <ruta> -samefile <archivo> | find <ruta> -inum <número_inodo>",
+          "title": "Localizar todas las rutas y nombres de directorio que comparten el mismo inodo físico"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "find /etc -samefile /etc/hosts 2>/dev/null; find /home -type l | head -n 2",
+              "output": "/etc/hosts\n/etc/hosts_backup\n/home/alumno/web\n/home/alumno/.bashrc_link"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "find -samefile <archivo>",
+              "",
+              "🎯 Clave de Examen: Busca automáticamente el número de inodo del archivo y devuelve todas las demás rutas que enlazan con él."
+            ],
+            [
+              "find -inum <inodo>",
+              "",
+              "🎯 Busca todos los archivos que tengan asignado exactamente ese número de inodo en la partición actual."
+            ],
+            [
+              "find -type l",
+              "",
+              "🎯 Clave de Examen: Filtra y lista únicamente los enlaces simbólicos (archivos de tipo 'l')."
+            ],
+            [
+              "find -links +1 -type f",
+              "",
+              "Localiza todos los archivos regulares que tengan más de un enlace duro asignado (Link Count > 1)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para encontrar todos los nombres asociados a un inodo se usa 'find -samefile' o 'find -inum'."
+        }
+      ],
+      "notes": "Explica que 'find -samefile' es mucho más cómodo porque no requiere ejecutar previamente 'ls -i' para ver el número."
+    },
+    {
+      "id": "104.6-slide-11",
+      "slideNumber": 11,
+      "title": "Permisos y Metadatos en Enlaces Simbólicos",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Permisos y Metadatos en Enlaces Simbólicos"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué los enlaces simbólicos siempre muestran lrwxrwxrwx y qué permisos aplican?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Aspecto de Metadatos",
+            "Comportamiento del Enlace Simbólico",
+            "Efecto Real de Seguridad"
+          ],
+          "rows": [
+            [
+              "Permisos en ls -l",
+              "🎯 Aparece SIEMPRE como 'lrwxrwxrwx' (777).",
+              "🎯 Los permisos mostrados son puramente cosméticos. El kernel IGNORA los permisos del enlace y aplica estrictamente los permisos del archivo destino real."
+            ],
+            [
+              "Comando chmod sobre symlink",
+              "🎯 Si ejecutas 'chmod 700 enlace', vi NO modifica el enlace: ¡modifica los permisos del archivo destino!",
+              "Para cambiar permisos de un enlace simbólico en sí mismo se debe usar 'chmod -h' (en sistemas que lo soporten)."
+            ],
+            [
+              "Propietario del enlace",
+              "Tiene su propio usuario y grupo creador.",
+              "🎯 Se modifica exclusivamente con 'chown -h' (sin -h cambiaría el dueño del archivo destino)."
+            ],
+            [
+              "Tamaño del enlace",
+              "El tamaño en bytes en 'ls -l' equivale exactamente al NÚMERO DE CARACTERES de la ruta a la que apunta.",
+              "Ejemplo: si apunta a 'doc.txt', el enlace mide exactamente 7 bytes."
+            ]
+          ],
+          "caption": "Permisos y Metadatos en Enlaces Simbólicos"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Los permisos 'lrwxrwxrwx' de un enlace simbólico no significan que cualquiera pueda escribir: los permisos efectivos siempre son los del archivo destino."
+        }
+      ],
+      "notes": "Muestra que si el archivo destino es 600 de root, un usuario normal no puede leerlo aunque el symlink diga 'rwxrwxrwx'."
+    },
+    {
+      "id": "104.6-slide-12",
+      "slideNumber": 12,
+      "title": "Trampas Clásicas de Examen en Enlaces",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Trampas Clásicas de Examen en Enlaces"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 3 errores que hacen perder preguntas en el objetivo 104.6:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Invertir el orden de argumentos en 'ln -s'** — 🎯 El error más común: escribir 'ln -s enlace destino'. La sintaxis universal SIEMPRE es: 'ln -s archivo_existente_que_ya_tienes nombre_del_nuevo_enlace'.",
+            "**2. Creer que borrar el archivo original destruye el enlace duro** — En un enlace duro no hay 'original' ni 'copia': ambos son nombres gemelos del mismo inodo. Si borras uno, el otro conserva los datos al 100%.",
+            "**3. Olvidar que un symlink relativo se evalúa desde su propia carpeta** — Si estás en /home y haces 'ln -s archivo /tmp/enlace', el enlace en /tmp buscará '/tmp/archivo' y estará roto. Debes usar rutas absolutas ('ln -s /home/archivo /tmp/enlace')."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Mnemotecnia Rápida: Origen primero, enlace después. Hard link sobrevive a rm. Symlinks entre carpetas distintas siempre con ruta absoluta."
+        }
+      ],
+      "notes": "Repite estos tres axiomas antes de pasar al bloque de ejercicios."
+    },
+    {
+      "id": "104.6-slide-13",
+      "slideNumber": 13,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: ln e Inodos)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: ln e Inodos)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 1 (Oficial Pág 530): ¿Cuál es el comando exacto para crear un enlace duro llamado 'hosts.bak' que apunte al archivo '/etc/hosts' en el directorio actual? — Comando: `ln /etc/hosts hosts.bak` (El comando 'ln' sin modificadores crea un enlace duro compartiendo el mismo inodo en la misma partición.)",
+            "Caso 2 (Oficial Pág 530): ¿Qué comando permite verificar en la consola que dos archivos 'a.txt' y 'b.txt' son en realidad dos enlaces duros que apuntan al mismo inodo físico? — Comando: `ls -li a.txt b.txt` (La opción -i (--inode) muestra el número de inodo en la primera columna; si ambos números son idénticos, comparten los mismos datos.)",
+            "Caso 3 (Oficial Pág 530): ¿Qué comando crea un enlace simbólico llamado '/usr/local/bin/python' que apunte al binario '/usr/bin/python3'? — Comando: `sudo ln -s /usr/bin/python3 /usr/local/bin/python` (La opción -s (symbolic) crea el acceso directo enlazando la ruta destino.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "ln para hard link, ls -i para validar inodos idénticos, y ln -s para enlaces simbólicos."
+        }
+      ],
+      "notes": "Enseña a comprobar con 'ls -l' la flechita '->' en el enlace simbólico."
+    },
+    {
+      "id": "104.6-slide-14",
+      "slideNumber": 14,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: readlink y cp -d)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: readlink y cp -d)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 4 (Oficial Pág 530): ¿Qué comando de una sola línea imprime en la terminal la ruta real a la que apunta el enlace simbólico '/etc/systemd/system/default.target'? — Comando: `readlink /etc/systemd/system/default.target (o readlink -f)` (El comando 'readlink' lee el contenido de la cadena de texto del inodo del symlink y lo imprime en stdout.)",
+            "Caso 5 (Oficial Pág 530): Necesitas copiar un directorio que contiene múltiples enlaces simbólicos sin duplicar los archivos reales a los que apuntan. ¿Qué opción de 'cp' debes utilizar? — Comando: `cp -d (o cp -a)` (La opción -d (--no-dereference) copia los enlaces simbólicos tal cual en lugar de copiar el contenido de los archivos originales.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "readlink resuelve enlaces simbólicos; cp -d preserva la estructura de punteros sin multiplicar el uso de disco."
+        }
+      ],
+      "notes": "Recuerda que si usas cp normal sin -d, copiará el archivo completo llenando el disco."
+    },
+    {
+      "id": "104.6-slide-15",
+      "slideNumber": 15,
+      "title": "Retos de Exploración Oficiales (Cross-Device y Enlaces Rotos)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Retos de Exploración Oficiales (Cross-Device y Enlaces Rotos)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. Un administrador intenta ejecutar 'ln /mnt/usb/foto.jpg /home/alumno/foto.jpg' y la terminal devuelve 'ln: failed to create hard link: Invalid cross-device link'. ¿A qué se debe y cómo se soluciona?\n2. ¿Cómo puedes buscar con 'find' todos los enlaces simbólicos rotos (que apuntan a archivos eliminados) en el directorio '/var'?\n3. Un directorio recién creado con 'mkdir /tmp/prueba' tiene un Link Count de 2. Si creas 3 subdirectorios dentro de él con 'mkdir /tmp/prueba/sub{1,2,3}', ¿cuál será el nuevo contador de enlaces de '/tmp/prueba'?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Pista",
+          "content": "Recuerda: diferentes tablas de inodos en particiones distintas; find con -xtype l; y la regla del '..'."
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Desafío",
+          "content": "1. Se debe a que /mnt/usb y /home residen en particiones o sistemas de archivos diferentes, y los enlaces duros no pueden cruzar particiones. Se soluciona usando un enlace simbólico: 'ln -s /mnt/usb/foto.jpg /home/alumno/foto.jpg'.\n2. Se ejecuta: sudo find /var -xtype l\n3. El nuevo contador será exactamente 5 (2 iniciales + 3 subdirectorios que apuntan a él con su '..' respectivo)."
+        }
+      ],
+      "notes": "El cálculo del contador de enlaces en directorios es una pregunta matemática clásica de LPIC-1."
+    },
+    {
+      "id": "104.6-slide-16",
+      "slideNumber": 16,
+      "title": "Pregunta de Examen LPIC-1: Permisos de un Enlace Simbólico",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Permisos de un Enlace Simbólico"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-104-6-16",
+          "question": "Al ejecutar 'ls -l' sobre un enlace simbólico se observan los permisos 'lrwxrwxrwx'. Si el archivo original al que apunta tiene permisos '-rw-------' pertenecientes al usuario root, ¿puede un usuario ordinario leer el archivo a través del enlace?",
+          "options": [
+            {
+              "key": "a",
+              "text": "Sí, porque el enlace simbólico tiene permisos rwxrwxrwx (777)."
+            },
+            {
+              "key": "b",
+              "text": "No, porque el sistema operativo evalúa los permisos del archivo destino real y denegará el acceso."
+            },
+            {
+              "key": "c",
+              "text": "Sí, siempre que el usuario pertenezca al grupo del enlace simbólico."
+            },
+            {
+              "key": "d",
+              "text": "Depende de la máscara umask con la que se creó el enlace."
+            }
+          ],
+          "correct": [
+            "b"
+          ],
+          "explanation": "En Linux, los permisos 'lrwxrwxrwx' que muestra 'ls -l' para un enlace simbólico son puramente cosméticos e informativos. El kernel ignora por completo los permisos del enlace y aplica estrictamente los permisos del archivo destino original (-rw------- de root), denegando el acceso a cualquier usuario ordinario."
+        }
+      ],
+      "notes": "Pregunta de examen garantizada sobre la naturaleza de los permisos en enlaces simbólicos."
+    },
+    {
+      "id": "104.6-slide-17",
+      "slideNumber": 17,
+      "title": "Pregunta de Examen LPIC-1: Contador de Enlaces de un Directorio",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Contador de Enlaces de un Directorio"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-104-6-17",
+          "question": "Si un directorio en el sistema de archivos muestra un contador de enlaces (link count) de 8 en la salida del comando 'ls -ld', ¿cuántos subdirectorios directos contiene en su interior?",
+          "options": [
+            {
+              "key": "a",
+              "text": "8"
+            },
+            {
+              "key": "b",
+              "text": "7"
+            },
+            {
+              "key": "c",
+              "text": "6"
+            },
+            {
+              "key": "d",
+              "text": "10"
+            }
+          ],
+          "correct": [
+            "c"
+          ],
+          "explanation": "Todo directorio nace con un contador de enlaces de 2 (su nombre en el directorio padre y el enlace '.' que apunta a sí mismo). Cada subdirectorio que se crea dentro añade exactamente 1 al contador del padre a través de su entrada '..'. Por tanto: 8 - 2 = 6 subdirectorios."
+        }
+      ],
+      "notes": "Pregunta matemática recurrente en el examen 101-500."
+    },
+    {
+      "id": "104.6-slide-18",
+      "slideNumber": 18,
+      "title": "Tarjetas Nemotécnicas: Enlaces 104.6",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tarjetas Nemotécnicas: Enlaces 104.6"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto",
+            "Significado / Uso"
+          ],
+          "rows": [
+            [
+              "¿Qué comando crea un enlace duro y cuál uno simbólico?",
+              "ln origen enlace (duro); ln -s origen enlace (simbólico)."
+            ],
+            [
+              "¿Qué sucede con el inodo en un enlace duro?",
+              "Es idéntico al inodo del archivo original (comparten el mismo inodo)."
+            ],
+            [
+              "¿Puede un enlace duro apuntar a otra partición de disco?",
+              "NO (falla con 'Invalid cross-device link')."
+            ],
+            [
+              "¿Puede un enlace duro apuntar a un directorio?",
+              "NO (está prohibido por el kernel para evitar bucles)."
+            ],
+            [
+              "¿Qué sucede con los datos si borras el archivo original de un enlace duro?",
+              "Los datos siguen intactos y accesibles a través del enlace."
+            ],
+            [
+              "¿Qué comando revela a qué ruta apunta un enlace simbólico?",
+              "readlink <enlace> (o readlink -f)."
+            ],
+            [
+              "¿Por qué un directorio vacío tiene contador de enlaces = 2?",
+              "Por su nombre en el padre y el enlace '.' que apunta a sí mismo."
+            ],
+            [
+              "¿Qué opción de 'cp' copia el enlace simbólico sin duplicar datos?",
+              "cp -d (o cp -a)."
+            ]
+          ],
+          "caption": "Tarjetas de memorización"
+        }
+      ],
+      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 104.6."
+    },
+    {
+      "id": "104.6-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen y Claves de Examen: Subtema 104.6",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen y Claves de Examen: Subtema 104.6"
+        }
+      ],
+      "notes": "Concluimos el subtema 104.6. Los alumnos dominan ahora los enlaces en Linux."
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-104-6-1",
+      "title": "Arquitectura Interna: Entradas de Directorio e Inodos",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Arquitectura Interna: Entradas de Directorio e Inodos"
+        },
+        {
+          "type": "paragraph",
+          "text": "En Linux el nombre de un archivo nunca se guarda en el inodo. Esta separación permite la magia de los enlaces:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**El Inodo almacena los datos y metadatos** — El inodo contiene los permisos, el propietario, el tamaño, las fechas y los punteros a los bloques de disco físicos. Pero el inodo NO contiene el nombre del archivo.",
+            "**El Directorio es una tabla de correspondencias** — Un directorio en Linux es simplemente un archivo especial que contiene una lista de parejas: 'Nombre de Archivo -> Número de Inodo'.",
+            "**¿Qué es un Enlace Duro (Hard Link)?** — 🎯 Es sencillamente una SEGUNDA ENTRADA de directorio que apunta AL MISMO NÚMERO DE INODO exacto. No duplica los datos; dos nombres distintos apuntan al mismo archivo físico."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Diagrama de Arquitectura de Enlace Duro vs Simbólico -->\n  <div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:12px; padding:14px;\">\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px;\">\n      \n      <!-- Bloque Enlace Duro -->\n      <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:12px;\">\n        <div style=\"font-size:13.5px; font-weight:800; color:#1E40AF; margin-bottom:8px;\">\n          🔗 ENLACE DURO (HARD LINK)\n        </div>\n        <div style=\"display:flex; flex-direction:column; gap:6px; font-family:monospace; font-size:12px;\">\n          <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:4px; color:#1E3A8A;\">\n            Entrada dir: doc.txt &rarr; Inodo #184520\n          </div>\n          <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:4px; color:#1E3A8A;\">\n            Entrada dir: duro.txt &rarr; Inodo #184520\n          </div>\n          <div style=\"text-align:center; font-weight:bold; color:#2563EB;\">&darr; comparten el mismo inodo &darr;</div>\n          <div style=\"background:#BFDBFE; padding:6px 8px; border-radius:4px; font-weight:800; color:#1D4ED8; text-align:center;\">\n            Inodo #184520 (Link Count = 2) &rarr; Bloques de Datos\n          </div>\n        </div>\n        <div style=\"font-size:11.5px; color:#1E40AF; margin-top:8px;\">\n          Si borras <code>doc.txt</code>, los datos <strong>siguen vivos e intactos</strong> en <code>duro.txt</code>.\n        </div>\n      </div>\n\n      <!-- Bloque Enlace Simbólico -->\n      <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:12px;\">\n        <div style=\"font-size:13.5px; font-weight:800; color:#166534; margin-bottom:8px;\">\n          ✨ ENLACE SIMBÓLICO (SOFT / SYMLINK)\n        </div>\n        <div style=\"display:flex; flex-direction:column; gap:6px; font-family:monospace; font-size:12px;\">\n          <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:4px; color:#14532D;\">\n            Entrada: suave.txt &rarr; Inodo Propio #184525\n          </div>\n          <div style=\"text-align:center; font-weight:bold; color:#16A34A;\">&darr; contiene un puntero de texto &darr;</div>\n          <div style=\"background:#BBF7D0; padding:6px 8px; border-radius:4px; font-weight:700; color:#15803D; text-align:center;\">\n            Puntero: \"doc.txt\" &rarr; Busca inodo de doc.txt\n          </div>\n        </div>\n        <div style=\"font-size:11.5px; color:#166534; margin-top:8px;\">\n          Si borras <code>doc.txt</code>, el enlace queda <strong>roto (dangling)</strong> e inservible.\n        </div>\n      </div>\n\n    </div>\n  </div>\n\n  <!-- Alerta de examen: Inodo no tiene nombre -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:14px;\">\n    <span style=\"font-size:26px;\">💡</span>\n    <div style=\"font-size:13px; color:#92400E; line-height:1.45;\">\n      <strong>Regla de Oro del Examen:</strong> El inodo almacena permisos, tamaño, UID, GID y fechas, pero <strong>NUNCA almacena el nombre del archivo</strong>. El nombre reside exclusivamente en la entrada del directorio que asocia el texto con el número de inodo.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Un enlace duro comparte el mismo número de inodo que el archivo original. Se comprueba con 'ls -i'."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-6-2",
+      "title": "Matriz Comparativa: Enlace Duro frente a Enlace Simbólico",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Matriz Comparativa: Enlace Duro frente a Enlace Simbólico"
+        },
+        {
+          "type": "paragraph",
+          "text": "Las diferencias absolutas que debes memorizar para el examen LPIC-1:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Característica",
+            "Enlace Duro (Hard Link)",
+            "Enlace Simbólico (Soft / Symlink)"
+          ],
+          "rows": [
+            [
+              "Comando de Creación",
+              "ln origen enlace",
+              "🎯 ln -s origen enlace (con opción -s)"
+            ],
+            [
+              "Número de Inodo",
+              "🎯 IDÉNTICO al del archivo original (mismo inodo).",
+              "🎯 NUEVO inodo independiente exclusivo para el enlace."
+            ],
+            [
+              "¿Cruza Sistemas de Archivos?",
+              "⚠️ ¡NO! Falla con 'Invalid cross-device link'.",
+              "🎯 SÍ, puede apuntar a cualquier partición o recurso de red."
+            ],
+            [
+              "¿Puede apuntar a Directorios?",
+              "⚠️ ¡NO! Prohibido para evitar bucles infinitos en el árbol.",
+              "🎯 SÍ, puede enlazar carpetas libremente."
+            ],
+            [
+              "Si se BORRA el archivo original...",
+              "🎯 Los datos SIGUEN INTACTOS y accesibles por el enlace.",
+              "⚠️ El enlace queda ROTO e inservible (Dangling Symlink)."
+            ],
+            [
+              "Permisos en ls -l",
+              "Mismos permisos exactos del inodo original.",
+              "🎯 Aparece siempre como 'lrwxrwxrwx' (cosmético)."
+            ]
+          ],
+          "caption": "Matriz Comparativa: Enlace Duro frente a Enlace Simbólico"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #CBD5E1; border-radius:8px; padding:8px 14px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; font-size:12px;\">\n  <div>\n    <strong style=\"color:#2563EB;\">Hard Link (ln):</strong> Mismo inodo &bull; Misma partición &bull; No a directorios &bull; Inmune a borrado\n  </div>\n  <div style=\"background:#DCFCE7; color:#166534; padding:2px 8px; border-radius:4px; font-weight:700;\">\n    🎯 Soft Link (ln -s): Inodo nuevo &bull; Salta discos &bull; Sí a carpetas\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave Absoluta de Examen: Los enlaces duros NO pueden cruzar entre particiones ni apuntar a directorios. Los enlaces simbólicos (ln -s) pueden hacer ambas cosas."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-6-3",
+      "title": "Creación de Enlaces con ln: Duro y Simbólico (-s)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Creación de Enlaces con ln: Duro y Simbólico (-s)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Sintaxis oficial y verificación de inodos en la consola:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "ln <origen> <enlace_duro> | ln -s <origen> <enlace_simbólico>",
+          "title": "Crear enlaces duros o simbólicos hacia archivos y directorios existentes"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "echo 'Linux' > doc.txt; ln doc.txt duro.txt; ln -s doc.txt suave.txt; ls -li doc.txt duro.txt suave.txt",
+              "output": "184520 -rw-r--r-- 2 alumno alumno 6 Oct 20 11:45 doc.txt\n184520 -rw-r--r-- 2 alumno alumno 6 Oct 20 11:45 duro.txt\n184525 lrwxrwxrwx 1 alumno alumno 7 Oct 20 11:45 suave.txt -> doc.txt"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "ln origen destino",
+              "ln (Duro)",
+              "🎯 Crea un enlace duro: ambos comparten el mismo número de inodo y el Link Count sube a 2."
+            ],
+            [
+              "ln -s origen destino",
+              "-s (Simbólico)",
+              "🎯 Clave de Examen: Crea un enlace simbólico con su propio inodo apuntando a la ruta de origen."
+            ],
+            [
+              "ln -f",
+              "-f (Force)",
+              "Force: elimina el archivo destino si ya existía antes de crear el nuevo enlace."
+            ],
+            [
+              "Ruta Absoluta",
+              "ln -s /ruta/abs",
+              "Enlace simbólico absoluto: funcionará siempre sin importar desde dónde se invoque."
+            ],
+            [
+              "Ruta Relativa",
+              "ln -s rel/path",
+              "Enlace simbólico relativo: depende de la ubicación del propio enlace (si se mueve de carpeta, se rompe)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px; display:flex; align-items:center; gap:14px;\">\n  <span style=\"font-size:26px;\">📐</span>\n  <div style=\"font-size:12.5px; color:#334155; line-height:1.45;\">\n    <strong>Orden Estricto de Argumentos en el Examen:</strong> En ambos comandos la sintaxis es <code>ln [-s] &lt;ORIGEN_EXISTENTE&gt; &lt;NOMBRE_NUEVO_ENLACE&gt;</code>. Si inviertes los argumentos, crearás un enlace apuntando a un destino vacío o provocarás un error.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Sintaxis de Examen: 'ln -s <archivo_existente_origen> <nombre_nuevo_enlace>'. ¡Siempre origen primero, destino después!"
+        }
+      ]
+    },
+    {
+      "id": "sec-104-6-4",
+      "title": "Límites Arquitectónicos de los Enlaces Duros",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Límites Arquitectónicos de los Enlaces Duros"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué el kernel de Linux prohíbe enlaces duros entre particiones distintas y sobre directorios?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Error: 'Invalid cross-device link'** — 🎯 Cada sistema de archivos (partición) tiene su propia tabla de inodos independiente. El inodo 1500 de /dev/sda1 no tiene nada que ver con el inodo 1500 de /dev/sdb1. Un enlace duro no puede apuntar a un inodo de otra partición.",
+            "**2. Prohibición estricta sobre directorios** — 🎯 Si el administrador pudiera crear enlaces duros a directorios, se crearían ciclos y bucles infinitos en el árbol que romperían comandos como 'find', 'du' o el propio kernel.",
+            "**La solución universal: Enlaces Simbólicos (ln -s)** — Como un enlace simbólico solo almacena una cadena de texto con la ruta de destino, puede saltar entre particiones distintas y apuntar a carpetas sin ninguna restricción."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px;\">\n    \n    <!-- Límite 1: Cross-Device -->\n    <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:#991B1B; margin-bottom:8px;\">\n        1. Falla entre Particiones Distintas\n      </div>\n      <div style=\"font-size:12.5px; color:#7F1D1D; line-height:1.45; margin-bottom:8px;\">\n        Cada partición tiene su propia tabla de inodos aislada. El inodo #4012 de <code>/dev/sda1</code> no tiene relación con el #4012 de <code>/dev/sdb1</code>.\n      </div>\n      <div style=\"background:#FEE2E2; padding:6px 8px; border-radius:4px; font-family:monospace; font-size:12px; color:#991B1B; font-weight:700;\">\n        ln: failed: Invalid cross-device link\n      </div>\n    </div>\n\n    <!-- Límite 2: No a Directorios -->\n    <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:14px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:#991B1B; margin-bottom:8px;\">\n        2. Prohibido en Directorios\n      </div>\n      <div style=\"font-size:12.5px; color:#7F1D1D; line-height:1.45; margin-bottom:8px;\">\n        Si se permitieran enlaces duros a carpetas, se generarían ciclos y bucles infinitos en el árbol que colapsarían comandos como <code>find</code>, <code>du</code> y el propio kernel.\n      </div>\n      <div style=\"background:#FEE2E2; padding:6px 8px; border-radius:4px; font-family:monospace; font-size:12px; color:#991B1B; font-weight:700;\">\n        ln: hard link not allowed for directory\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Solución con Enlaces Simbólicos -->\n  <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:14px;\">\n    <span style=\"font-size:26px;\">✅</span>\n    <div style=\"font-size:13px; color:#166534; line-height:1.45;\">\n      <strong>La Solución Universal de Examen:</strong> Para enlazar entre sistemas de archivos distintos o apuntar a carpetas, se debe usar obligatoriamente un <strong>enlace simbólico</strong>: <code style=\"background:#DCFCE7; padding:2px 6px; border-radius:4px; font-weight:700;\">ln -s /var/log /mnt/backup/log</code>.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Típica de Examen: Si ejecutas 'ln /var/log/syslog /mnt/backup/log' y falla con 'Invalid cross-device link', ¿cómo lo resuelves? -> Usando un enlace simbólico: 'ln -s'."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-6-5",
+      "title": "El Contador de Enlaces (Link Count) en Archivos",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Contador de Enlaces (Link Count) en Archivos"
+        },
+        {
+          "type": "paragraph",
+          "text": "El comando rm en realidad ejecuta unlink(). Los datos no se destruyen mientras el contador sea superior a 0:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**La columna del Link Count en ls -l** — En 'ls -l', el número que aparece justo después de los permisos (ej: '-rw-r--r-- 2 ...') es el contador de enlaces duros que apuntan a ese inodo.",
+            "**Incremento al crear enlaces duros** — Cuando se crea un archivo nuevo nace con Link Count = 1. Cada vez que creas un enlace duro con 'ln', el contador sube en 1 (pasa a 2, 3, etc.).",
+            "**rm en realidad hace 'unlink'** — 🎯 Clave de Examen: El comando 'rm' no borra los datos; decrementa el contador de enlaces en 1 ('unlink'). Los bloques de disco solo se liberan y marcan como espacio libre cuando el contador llega exactamente a 0 Y ningún proceso tiene el archivo abierto."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:12px; padding:14px; margin:14px 0;\">\n  <div style=\"font-size:12.5px; font-weight:800; color:#334155; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;\">\n    Ciclo de Vida de los Datos según el Contador de Enlaces\n  </div>\n  <div style=\"display:flex; align-items:center; justify-content:space-between; gap:8px; font-family:monospace; font-size:12px; text-align:center;\">\n    <div style=\"flex:1; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:8px 4px;\">\n      <div style=\"font-weight:800; color:#1E40AF;\">touch doc.txt</div>\n      <div style=\"font-size:14px; font-weight:800; color:#2563EB; margin:4px 0;\">Link Count = 1</div>\n      <div style=\"font-size:10.5px; color:#3B82F6;\">Archivo nace con 1</div>\n    </div>\n    <span style=\"color:#64748B; font-weight:bold;\">&rarr;</span>\n    <div style=\"flex:1; background:#FEF3C7; border:1px solid #FDE68A; border-radius:8px; padding:8px 4px;\">\n      <div style=\"font-weight:800; color:#92400E;\">ln doc.txt duro.txt</div>\n      <div style=\"font-size:14px; font-weight:800; color:#B45309; margin:4px 0;\">Link Count = 2</div>\n      <div style=\"font-size:10.5px; color:#D97706;\">Suma +1 al inodo</div>\n    </div>\n    <span style=\"color:#64748B; font-weight:bold;\">&rarr;</span>\n    <div style=\"flex:1; background:#DCFCE7; border:1px solid #BBF7D0; border-radius:8px; padding:8px 4px;\">\n      <div style=\"font-weight:800; color:#166534;\">rm doc.txt (unlink)</div>\n      <div style=\"font-size:14px; font-weight:800; color:#15803D; margin:4px 0;\">Link Count = 1</div>\n      <div style=\"font-size:10.5px; color:#22C55E;\">¡Datos intactos en duro.txt!</div>\n    </div>\n    <span style=\"color:#64748B; font-weight:bold;\">&rarr;</span>\n    <div style=\"flex:1; background:#FEE2E2; border:1px solid #FCA5A5; border-radius:8px; padding:8px 4px;\">\n      <div style=\"font-weight:800; color:#991B1B;\">rm duro.txt</div>\n      <div style=\"font-size:14px; font-weight:800; color:#DC2626; margin:4px 0;\">Link Count = 0</div>\n      <div style=\"font-size:10.5px; color:#EF4444;\">Bloques liberados en disco</div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Si tienes un archivo con 3 enlaces duros y borras el archivo original con 'rm', los datos NO se pierden: el contador baja a 2 y los otros dos enlaces siguen funcionando al 100%."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-6-6",
+      "title": "El Link Count en Directorios: Fórmula \"2 + Subdirectorios\"",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Link Count en Directorios: Fórmula \"2 + Subdirectorios\""
+        },
+        {
+          "type": "paragraph",
+          "text": "Todo directorio recién creado nace con Link Count = 2 debido a las referencias automáticas . y ..:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. El nombre del propio directorio en su carpeta padre** — Cuando creas '/home/alumno', la carpeta '/home' añade una entrada que apunta al inodo de 'alumno' (1ª referencia).",
+            "**2. El directorio punto (.) en su interior** — 🎯 Dentro de '/home/alumno' reside el enlace especial '.' que apunta a sí mismo (2ª referencia). Por eso todo directorio vacío nace con Link Count = 2.",
+            "**3. Los subdirectorios mediante el enlace doble punto (..)** — 🎯 Clave Matemática de Examen: Cada subcarpeta que creas dentro añade +1 al contador de la carpeta padre (por su enlace '..'). Fórmula: 'Total subdirectorios = Link Count - 2'."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Mosaico de Referencias -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-family:monospace; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:10px 4px;\">\n      <div style=\"font-size:12px; color:#1E40AF; font-weight:bold;\">Referencia 1</div>\n      <div style=\"font-size:16px; font-weight:800; color:#1D4ED8; margin:2px 0;\">Desde el Padre</div>\n      <div style=\"font-size:11px; color:#3B82F6;\">Entrada en /var/</div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:10px 4px;\">\n      <div style=\"font-size:12px; color:#166534; font-weight:bold;\">Referencia 2</div>\n      <div style=\"font-size:16px; font-weight:800; color:#15803D; margin:2px 0;\">El directorio .</div>\n      <div style=\"font-size:11px; color:#22C55E;\">Apunta a sí mismo</div>\n    </div>\n    <div style=\"background:#FEF3C7; border:1px solid #FDE68A; border-radius:8px; padding:10px 4px;\">\n      <div style=\"font-size:12px; color:#92400E; font-weight:bold;\">+1 por Subcarpeta</div>\n      <div style=\"font-size:16px; font-weight:800; color:#B45309; margin:2px 0;\">El directorio ..</div>\n      <div style=\"font-size:11px; color:#D97706;\">Subcarpeta apunta arriba</div>\n    </div>\n  </div>\n\n  <!-- Fórmula Matemática de Examen -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:12px 18px; display:flex; align-items:center; justify-content:space-between;\">\n    <div>\n      <div style=\"font-size:14px; font-weight:800; color:#92400E;\">🎯 FÓRMULA MATEMÁTICA OBLIGATORIA EN LPIC-1:</div>\n      <div style=\"font-family:monospace; font-size:18px; font-weight:800; color:#B45309; margin-top:2px;\">\n        Total Subdirectorios = Link Count - 2\n      </div>\n    </div>\n    <div style=\"font-size:12.5px; color:#78350F; background:#FEF3C7; padding:6px 12px; border-radius:6px;\">\n      Si <code>ls -ld /var/log</code> muestra <strong>14</strong> enlaces:<br>\n      <strong>14 - 2 = 12 subdirectorios directos</strong>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Matemática de Examen: Si 'ls -ld /var/log' muestra un contador de enlaces de 14, ¿cuántos subdirectorios directos contiene? -> Respuesta: 12 subdirectorios (14 - 2 = 12)."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-6-7",
+      "title": "Herramientas Auxiliares: readlink, unlink y cp",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Herramientas Auxiliares: readlink, unlink y cp"
+        },
+        {
+          "type": "paragraph",
+          "text": "Inspeccionar el destino de enlaces simbólicos y manipularlos con seguridad:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "readlink [-f] <enlace> | unlink <enlace> | cp -d <enlace> <destino>",
+          "title": "Resolver rutas de symlinks, eliminar entradas de directorio y copiar enlaces sin desreferenciar"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "readlink -f /bin/sh; unlink /tmp/enlace_prueba",
+              "output": "/usr/bin/dash\n# Resuelve toda la cadena de enlaces simbólicos hasta el archivo binario real."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "readlink <enlace>",
+              "readlink",
+              "🎯 Clave de Examen: Imprime en la consola el valor exacto del texto al que apunta el enlace simbólico."
+            ],
+            [
+              "readlink -f <enlace>",
+              "-f (Canónica)",
+              "🎯 Resuelve recursivamente todos los symlinks intermedios devolviendo la ruta física final absoluta."
+            ],
+            [
+              "unlink <enlace>",
+              "unlink",
+              "Llama directamente a la llamada al sistema unlink() para eliminar la entrada de directorio."
+            ],
+            [
+              "cp -d <enlace>",
+              "cp -d (Sin duplicar)",
+              "🎯 Clave de Examen: Copia el enlace simbólico en sí mismo en lugar del archivo original al que apunta."
+            ],
+            [
+              "cp -a",
+              "cp -a",
+              "Modo archivo completo: incluye '-d' para preservar enlaces simbólicos sin expandirlos."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'readlink' revela a qué archivo apunta un enlace simbólico; 'cp -d' duplica el enlace sin desreferenciar los datos."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-6-8",
+      "title": "Diagnóstico y Limpieza de Enlaces Rotos (Dangling)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Diagnóstico y Limpieza de Enlaces Rotos (Dangling)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Un symlink cuyo archivo destino ha sido eliminado o renombrado queda huérfano (dangling):"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Naturaleza de un Enlace Huérfano** — El enlace simbólico sigue existiendo en el disco (su inodo no ha sufrido daños), pero la ruta de texto que tiene guardada dentro ya no existe en el sistema de ficheros.",
+            "**Comportamiento en la terminal** — En un 'ls --color', el enlace roto aparece parpadeando en rojo brillante. Si intentas hacer 'cat enlace', Linux devolverá: 'No such file or directory'.",
+            "**Búsqueda y limpieza con find** — 🎯 Clave de Examen: Para localizar todos los enlaces simbólicos rotos en una carpeta se utiliza: 'find . -xtype l' (o 'find . -type l ! -exec test -e {} \\; -print')."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Flujo de Enlace Roto -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px;\">\n    \n    <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:12px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:#991B1B; margin-bottom:6px;\">\n        ⚠️ Síntomas en Terminal\n      </div>\n      <div style=\"font-size:12.5px; color:#7F1D1D; line-height:1.45;\">\n        &bull; En <code>ls --color</code> aparece en <strong>rojo intermitente</strong>.<br>\n        &bull; <code>cat enlace_roto</code> devuelve: <em>No such file or directory</em>.<br>\n        &bull; El inodo del symlink sigue intacto, pero su puntero es inválido.\n      </div>\n    </div>\n\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:12px;\">\n      <div style=\"font-size:13.5px; font-weight:800; color:#1E40AF; margin-bottom:6px;\">\n        🔍 Detección con find\n      </div>\n      <div style=\"font-family:monospace; font-size:12px; color:#1D4ED8; background:#DBEAFE; padding:6px 8px; border-radius:4px; font-weight:700;\">\n        find . -xtype l\n      </div>\n      <div style=\"font-size:12px; color:#1E3A8A; margin-top:6px;\">\n        Localiza automáticamente todos los symlinks cuyo destino no existe en disco.\n      </div>\n    </div>\n\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Un enlace simbólico roto (dangling) apunta a una ruta inexistente. Se detecta con 'find -xtype l'."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-6-9",
+      "title": "Búsqueda de Enlaces con find: -inum y -samefile",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Búsqueda de Enlaces con find: -inum y -samefile"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo encontrar todos los enlaces duros que apuntan a un mismo archivo en todo el disco?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "find <ruta> -samefile <archivo> | find <ruta> -inum <número_inodo>",
+          "title": "Localizar todas las rutas y nombres de directorio que comparten el mismo inodo físico"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "find /etc -samefile /etc/hosts 2>/dev/null; find /home -type l | head -n 2",
+              "output": "/etc/hosts\n/etc/hosts_backup\n/home/alumno/web\n/home/alumno/.bashrc_link"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "find -samefile <archivo>",
+              "",
+              "🎯 Clave de Examen: Busca automáticamente el número de inodo del archivo y devuelve todas las demás rutas que enlazan con él."
+            ],
+            [
+              "find -inum <inodo>",
+              "",
+              "🎯 Busca todos los archivos que tengan asignado exactamente ese número de inodo en la partición actual."
+            ],
+            [
+              "find -type l",
+              "",
+              "🎯 Clave de Examen: Filtra y lista únicamente los enlaces simbólicos (archivos de tipo 'l')."
+            ],
+            [
+              "find -links +1 -type f",
+              "",
+              "Localiza todos los archivos regulares que tengan más de un enlace duro asignado (Link Count > 1)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para encontrar todos los nombres asociados a un inodo se usa 'find -samefile' o 'find -inum'."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-6-10",
+      "title": "Permisos y Metadatos en Enlaces Simbólicos",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Permisos y Metadatos en Enlaces Simbólicos"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué los enlaces simbólicos siempre muestran lrwxrwxrwx y qué permisos aplican?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Aspecto de Metadatos",
+            "Comportamiento del Enlace Simbólico",
+            "Efecto Real de Seguridad"
+          ],
+          "rows": [
+            [
+              "Permisos en ls -l",
+              "🎯 Aparece SIEMPRE como 'lrwxrwxrwx' (777).",
+              "🎯 Los permisos mostrados son puramente cosméticos. El kernel IGNORA los permisos del enlace y aplica estrictamente los permisos del archivo destino real."
+            ],
+            [
+              "Comando chmod sobre symlink",
+              "🎯 Si ejecutas 'chmod 700 enlace', vi NO modifica el enlace: ¡modifica los permisos del archivo destino!",
+              "Para cambiar permisos de un enlace simbólico en sí mismo se debe usar 'chmod -h' (en sistemas que lo soporten)."
+            ],
+            [
+              "Propietario del enlace",
+              "Tiene su propio usuario y grupo creador.",
+              "🎯 Se modifica exclusivamente con 'chown -h' (sin -h cambiaría el dueño del archivo destino)."
+            ],
+            [
+              "Tamaño del enlace",
+              "El tamaño en bytes en 'ls -l' equivale exactamente al NÚMERO DE CARACTERES de la ruta a la que apunta.",
+              "Ejemplo: si apunta a 'doc.txt', el enlace mide exactamente 7 bytes."
+            ]
+          ],
+          "caption": "Permisos y Metadatos en Enlaces Simbólicos"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Los permisos 'lrwxrwxrwx' de un enlace simbólico no significan que cualquiera pueda escribir: los permisos efectivos siempre son los del archivo destino."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1215 @@
+{
+  "id": "105.1",
+  "topicId": "105",
+  "examId": "102",
+  "title": "Personalizar y usar el entorno de shell",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 40,
+  "objectives": [
+    "Tipos de shells, archivos de inicio, variables locales y de entorno, esqueleto /etc/skel, alias, funciones y comando source.",
+    "Dominio técnico de las herramientas y configuración del subtema 105.1"
+  ],
+  "keyTerms": [
+    "Shell de login",
+    "Variable de entorno",
+    "/etc/skel",
+    "source (o punto '.')"
+  ],
+  "commands": [
+    "alias",
+    "source"
+  ],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "105.1-slide-1",
+      "slideNumber": 1,
+      "title": "Personalizar y usar el entorno de shell",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Personalizar y usar el entorno de shell"
+        },
+        {
+          "type": "paragraph",
+          "text": "Subtema 105.1 · Peso LPI: 4 · Examen LPIC-1 102-500"
+        }
+      ],
+      "notes": "Bienvenida al Tema 105 (el primero del Examen 102-500). Este subtema tiene peso 4 y trata sobre cómo personalizar Bash, sus archivos de configuración y variables."
+    },
+    {
+      "id": "105.1-slide-2",
+      "slideNumber": 2,
+      "title": "Tipos de Shell en Linux: Interactivos vs No Interactivos",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tipos de Shell en Linux: Interactivos vs No Interactivos"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué diferencia a un shell de login de uno interactivo o de un script automatizado?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🧭 Clasificación Fundamental de Shells en Bash</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Matriz 2×2</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:11.5px;\">\n    <!-- Interactivo con Login -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">1. Interactivo con Login</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">SSH / Consola / su -</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • <strong>Cómo surge:</strong> Entrar por SSH, consola virtual TTY (Ctrl+Alt+F3) o <code>su - usuario</code>.<br>\n        • <strong>Comportamiento:</strong> Pide usuario/password e inicializa el entorno completo.<br>\n        • <strong>Archivos que lee:</strong> <code>/etc/profile</code> ➔ <code>~/.bash_profile</code> (o <code>~/.profile</code>).\n      </div>\n    </div>\n\n    <!-- Interactivo sin Login -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:12.5px;\">2. Interactivo sin Login</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Terminal Gráfica / su</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • <strong>Cómo surge:</strong> Abrir GNOME Terminal, xterm, bash dentro de otra shell o <code>su usuario</code>.<br>\n        • <strong>Comportamiento:</strong> Hereda variables del escritorio pero no recarga perfiles globales.<br>\n        • <strong>Archivos que lee:</strong> <code>/etc/bash.bashrc</code> ➔ <code>~/.bashrc</code> directamente.\n      </div>\n    </div>\n\n    <!-- No Interactivo con Login -->\n    <div style=\"background:#FEF3C7; border:1.5px solid #F59E0B; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#92400E; font-size:12.5px;\">3. No Interactivo con Login</strong>\n        <span style=\"background:#D97706; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">ssh host 'comando'</span>\n      </div>\n      <div style=\"color:#78350F; line-height:1.4;\">\n        • <strong>Cómo surge:</strong> Ejecutar una orden remota mediante SSH sin abrir terminal interactiva.<br>\n        • <strong>Comportamiento:</strong> Autentica con login pero ejecuta el comando y sale al terminar.<br>\n        • <strong>Archivos que lee:</strong> <code>/etc/profile</code> y perfiles personales.\n      </div>\n    </div>\n\n    <!-- No Interactivo sin Login -->\n    <div style=\"background:#F1F5F9; border:1.5px solid #94A3B8; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#334155; font-size:12.5px;\">4. No Interactivo sin Login</strong>\n        <span style=\"background:#64748B; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Scripts / Cron</span>\n      </div>\n      <div style=\"color:#475569; line-height:1.4;\">\n        • <strong>Cómo surge:</strong> Al lanzar scripts ejecutables <code>./script.sh</code> o tareas de Cron.<br>\n        • <strong>Comportamiento:</strong> ⚠️ <strong>NO lee ningún archivo de inicio</strong> interactivo.<br>\n        • <strong>Variables:</strong> Solo hereda las variables del proceso padre si estaban con <code>export</code>.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Un shell de login pide autenticación (consola física, SSH o 'su -') y lee /etc/profile. Un shell interactivo sin login (abrir terminal gráfica o 'su') lee ~/.bashrc."
+        }
+      ],
+      "notes": "Enseña a los alumnos la matriz de 4 combinaciones: login interactivo, non-login interactivo, login no-interactivo y non-login no-interactivo (scripts)."
+    },
+    {
+      "id": "105.1-slide-3",
+      "slideNumber": 3,
+      "title": "Secuencia de Carga de Archivos en Shell con Login",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Secuencia de Carga de Archivos en Shell con Login"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿En qué orden estricto lee Bash los archivos de configuración al iniciar sesión?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔄 Ruta Lineal de Inicio: Shell con Login (SSH / Consola Virtual / su -)</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Orden de Ejecución</span>\n  </div>\n\n  <!-- Paso 1 Global -->\n  <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:10px;\">\n    <div style=\"width:26px; height:26px; border-radius:50%; background:#2563EB; color:#FFF; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; flex:none;\">1</div>\n    <div style=\"flex:1; background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:8px 12px; font-size:11.5px;\">\n      <strong style=\"color:#1E40AF;\">/etc/profile (Global para todo el sistema)</strong>\n      <div style=\"color:#1E3A8A; font-size:11px; margin-top:2px;\">\n        Establece variables globales (<code>PATH</code>, <code>UMASK</code>) y recorre todos los scripts secundarios en <code>/etc/profile.d/*.sh</code>.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"text-align:center; font-size:14px; font-weight:900; color:#64748B; margin:-4px 0 6px 0;\">⬇️ A continuación busca en el directorio HOME del usuario (~):</div>\n\n  <!-- Paso 2 Personal con descarte -->\n  <div style=\"display:flex; align-items:flex-start; gap:8px;\">\n    <div style=\"width:26px; height:26px; border-radius:50%; background:#16A34A; color:#FFF; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; flex:none; margin-top:4px;\">2</div>\n    <div style=\"flex:1; background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 14px; font-size:11.5px;\">\n      <strong style=\"color:#15803D; font-size:12.5px;\">Archivos Personales: Regla del \"Primer Coincidente\"</strong>\n      <div style=\"color:#14532D; margin:4px 0 8px 0; font-size:11px;\">\n        Bash prueba los 3 archivos en estricto orden de izquierda a derecha. <strong>En cuanto encuentra uno, lo ejecuta y SE DETIENE</strong> (no lee los siguientes):\n      </div>\n      <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; text-align:center; font-family:monospace; font-size:11px;\">\n        <div style=\"background:#DCFCE7; border:1.5px solid #16A34A; padding:6px; border-radius:6px; color:#166534; font-weight:800;\">\n          1º ~/.bash_profile<br><span style=\"font-weight:400; font-size:9.5px; font-family:sans-serif;\">(Máxima prioridad)</span>\n        </div>\n        <div style=\"background:#FEF3C7; border:1.5px solid #F59E0B; padding:6px; border-radius:6px; color:#92400E; font-weight:800;\">\n          2º ~/.bash_login<br><span style=\"font-weight:400; font-size:9.5px; font-family:sans-serif;\">(Si 1º no existe)</span>\n        </div>\n        <div style=\"background:#F1F5F9; border:1.5px solid #94A3B8; padding:6px; border-radius:6px; color:#334155; font-weight:800;\">\n          3º ~/.profile<br><span style=\"font-weight:400; font-size:9.5px; font-family:sans-serif;\">(Estándar POSIX/sh)</span>\n        </div>\n      </div>\n      <div style=\"margin-top:8px; font-size:10.5px; color:#14532D; font-style:italic;\">\n        💡 Nota didáctica: Normalmente <code>~/.bash_profile</code> incluye una línea con <code>source ~/.bashrc</code> para cargar también alias y funciones personales.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Estrella de Examen: Para el usuario personal, Bash busca ~/.bash_profile, luego ~/.bash_login y luego ~/.profile. ¡SOLO ejecuta el PRIMERO que exista y descarta los demás!"
+        }
+      ],
+      "notes": "Muestra el diagrama de flujo: 1) /etc/profile; 2) /etc/profile.d/*.sh; 3) el primer archivo personal disponible."
+    },
+    {
+      "id": "105.1-slide-4",
+      "slideNumber": 4,
+      "title": "Shell Sin Inicio de Sesión y Archivo de Cierre ~/.bash_logout",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Shell Sin Inicio de Sesión y Archivo de Cierre ~/.bash_logout"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué archivos se leen al abrir ventanas de terminal en el escritorio y qué ocurre al cerrar sesión?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- Shell interactivo sin login -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#15803D; font-size:13px;\">🖥️ Apertura de Terminal (Sin Login)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:700; padding:1px 5px; border-radius:3px;\">GNOME Terminal / xterm</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.45;\">\n        Cuando abres una ventana de terminal en tu escritorio gráfico (o lanzas <code>su usuario</code>):\n        <ol style=\"margin:6px 0 0 16px; padding:0;\">\n          <li>Lee <code>/etc/bash.bashrc</code> (configuración global de Bash).</li>\n          <li>Lee <code>~/.bashrc</code> (alias, colores, variables y funciones personales).</li>\n        </ol>\n        <span style=\"display:block; margin-top:6px; background:#DCFCE7; padding:4px 6px; border-radius:4px; font-size:10.5px;\">\n          ⚠️ <strong>Ojo de examen:</strong> No lee <code>/etc/profile</code> ni <code>~/.profile</code>.\n        </span>\n      </div>\n    </div>\n\n    <!-- Cierre de sesión -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#991B1B; font-size:13px;\">🚪 Cierre de Sesión (Logout)</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:9.5px; font-weight:700; padding:1px 5px; border-radius:3px;\">exit / logout</span>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.45;\">\n        Al terminar una shell de inicio de sesión con <code>exit</code>, <code>logout</code> o Ctrl+D:\n        <ul style=\"margin:6px 0 0 16px; padding:0;\">\n          <li>Bash ejecuta automáticamente el script <code>~/.bash_logout</code>.</li>\n        </ul>\n        <div style=\"background:#FEE2E2; padding:6px 8px; border-radius:4px; margin-top:8px; font-size:10.5px;\">\n          <strong>Usos habituales en producción:</strong><br>\n          • Limpiar la pantalla para evitar que otros vean tus datos (<code>clear</code>).<br>\n          • Eliminar claves SSH temporales en memoria con <code>ssh-add -D</code>.<br>\n          • Borrar ficheros temporales en <code>/tmp</code>.\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Las terminales gráficas NO leen /etc/profile ni ~/.bash_profile; leen directamente ~/.bashrc. Al salir con 'exit' o 'logout', se ejecuta automáticamente ~/.bash_logout."
+        }
+      ],
+      "notes": "Muestra que ~/.bash_logout se usa típicamente para limpiar la pantalla (clear), eliminar archivos temporales o registrar la hora de salida."
+    },
+    {
+      "id": "105.1-slide-5",
+      "slideNumber": 5,
+      "title": "El Esqueleto de Usuarios: /etc/skel y useradd",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Esqueleto de Usuarios: /etc/skel y useradd"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿De dónde salen los archivos ocultos (.bashrc, .profile) cuando creas una cuenta nueva?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔄 Mecánica de /etc/skel durante la creación de cuentas</span>\n    <span style=\"font-size:10.5px; background:#DCFCE7; color:#166534; padding:2px 7px; border-radius:10px; font-weight:700;\">Plantilla Automática</span>\n  </div>\n\n  <div style=\"display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:11.5px; text-align:center;\">\n    <div style=\"flex:1.2; background:#EFF6FF; border:1.5px solid #3B82F6; padding:8px 6px; border-radius:6px;\">\n      <strong style=\"color:#1E40AF; display:block;\">📁 Plantilla del Sistema</strong>\n      <code>/etc/skel/</code><br>\n      <span style=\"font-size:10px; color:#1E3A8A;\">(.bashrc, .profile, .bash_logout)</span>\n    </div>\n    <span style=\"color:#64748B; font-weight:900; font-size:14px;\">➔ useradd -m ana ➔</span>\n    <div style=\"flex:1.2; background:#F0FDF4; border:1.5px solid #22C55E; padding:8px 6px; border-radius:6px;\">\n      <strong style=\"color:#166534; display:block;\">🏠 Nuevo Directorio Home</strong>\n      <code>/home/ana/</code><br>\n      <span style=\"font-size:10px; color:#14532D;\">Copia exacta con dueño ana:ana</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: /etc/skel actúa como plantilla. Solo afecta a los NUEVOS usuarios creados a partir de ese momento con 'useradd -m'; los usuarios que ya existían previamente no se modifican."
+        }
+      ],
+      "notes": "Muestra que si un administrador quiere que todos los futuros empleados tengan un alias corporativo por defecto, lo agrega a /etc/skel/.bashrc."
+    },
+    {
+      "id": "105.1-slide-6",
+      "slideNumber": 6,
+      "title": "Variables Locales vs Variables de Entorno: export y unset",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Variables Locales vs Variables de Entorno: export y unset"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué un script o subproceso no puede ver las variables de tu shell a menos que uses export?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "VAR=valor | export VAR | env | set | unset VAR",
+          "title": "Controlar el ciclo de vida y la herencia de variables entre la shell actual y sus procesos hijos"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "CURSO='LPIC-1' && export SERVIDOR='SRV01' && bash -c 'echo Local: $CURSO | Entorno: $SERVIDOR'",
+              "output": "$ CURSO='LPIC-1'           # Variable local sin exportar\n$ export SERVIDOR='SRV01'   # Variable de entorno global\n$ bash -c 'echo Local: $CURSO | Entorno: $SERVIDOR'\nLocal:  | Entorno: SRV01\n# $CURSO está vacía en el subshell hijo porque no se exportó.\n$ unset SERVIDOR            # Elimina SERVIDOR del entorno"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "VAR=valor",
+              "",
+              "Variable Local"
+            ],
+            [
+              "export VAR",
+              "",
+              "Exportar al Entorno"
+            ],
+            [
+              "env",
+              "",
+              "Listar Entorno"
+            ],
+            [
+              "set",
+              "",
+              "Listar Todo"
+            ],
+            [
+              "unset VAR",
+              "",
+              "Eliminar Variable"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Diferencia Clave de Examen: 'env' lista solo variables exportadas al entorno; 'set' lista variables locales, de entorno y funciones de shell. 'unset' borra cualquier variable."
+        }
+      ],
+      "notes": "Prueba en vivo con los alumnos: declara una variable, entra a 'bash' y comprueba que desaparece. Sal con 'exit', expórtala y vuelve a entrar."
+    },
+    {
+      "id": "105.1-slide-7",
+      "slideNumber": 7,
+      "title": "Variables Canónicas Estándar de Linux",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Variables Canónicas Estándar de Linux"
+        },
+        {
+          "type": "paragraph",
+          "text": "Las variables de entorno más importantes evaluadas en la certificación LPIC-1:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Variable",
+            "Significado / Contenido",
+            "Ejemplo Típico",
+            "Impacto en el Sistema"
+          ],
+          "rows": [
+            [
+              "PATH",
+              "Lista de directorios separados por dos puntos (:) donde Bash busca los ejecutables.",
+              "/usr/local/bin:/usr/bin:/bin",
+              "Si un ejecutable no está en el PATH, requiere ruta absoluta (/ruta/cmd) o relativa (./cmd)."
+            ],
+            [
+              "HOME",
+              "Ruta absoluta del directorio personal del usuario activo.",
+              "/home/usuario (o /root)",
+              "El comando 'cd' sin argumentos te lleva directamente al valor guardado en $HOME."
+            ],
+            [
+              "USER (o LOGNAME)",
+              "Nombre de la cuenta de usuario que inició la sesión actual.",
+              "alumno",
+              "Utilizada por scripts para verificar privilegios o registrar acciones."
+            ],
+            [
+              "SHELL",
+              "Ruta absoluta del intérprete de comandos asignado en /etc/passwd.",
+              "/bin/bash",
+              "El shell por defecto que se lanza al abrir terminales o scripts."
+            ],
+            [
+              "HISTSIZE",
+              "Número máximo de comandos guardados en la memoria RAM durante la sesión.",
+              "1000",
+              "Controla cuántos comandos puedes recuperar con las flechas o con 'history'."
+            ],
+            [
+              "PS1",
+              "Prompt primario de la línea de comandos interactiva.",
+              "\\u@\\h:\\w\\$ ",
+              "Define el texto y colores que ves en pantalla antes de escribir cada orden."
+            ]
+          ],
+          "caption": "Variables Canónicas Estándar de Linux"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Fija de Examen: En la variable PATH los directorios se separan con DOS PUNTOS (:). Si el directorio actual no está en PATH, ejecutar un script en la misma carpeta requiere obligatoriamente escribir './script.sh'."
+        }
+      ],
+      "notes": "Pregunta a los alumnos qué pasa si borran el PATH: ningún comando funcionará sin su ruta completa como /bin/ls."
+    },
+    {
+      "id": "105.1-slide-8",
+      "slideNumber": 8,
+      "title": "Afinar el Historial y el Prompt: HISTCONTROL y PS2",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Afinar el Historial y el Prompt: HISTCONTROL y PS2"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo evitar comandos duplicados en el historial y qué significan PS1, PS2 y PROMPT_COMMAND?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**HISTCONTROL: Control de almacenamiento en el historial** — • <code>ignorespace</code>: Si pones un espacio en blanco antes de un comando, NO se guarda en el historial (ideal para contraseñas).<br>• <code>ignoredups</code>: No guarda comandos idénticos consecutivos.<br>• <code>ignoreboth</code>: Aplica ambas reglas a la vez.",
+            "**HISTFILE y HISTFILESIZE: Persistencia en disco** — • <code>HISTFILE</code>: Archivo de disco donde se vuelca el historial al salir (por defecto <code>~/.bash_history</code>).<br>• <code>HISTFILESIZE</code>: Número máximo de líneas que almacena el archivo en disco (suele ser 2000).",
+            "**Los Prompts de Bash: PS1, PS2 y PROMPT_COMMAND** — • <code>PS1</code>: Prompt principal normal (ej: <code>alumno@srv:~$</code>).<br>• <code>PS2</code>: Prompt secundario para comandos multilínea incompletos (por defecto es <code>></code>).<br>• <code>PROMPT_COMMAND</code>: Comando que Bash ejecuta justo antes de mostrar cada prompt."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Típica de Certificación: 'HISTCONTROL=ignoreboth' evita guardar comandos duplicados seguidos y cualquier comando que empiece con un espacio inicial. 'PS2' es el indicador de continuación multilínea (>)."
+        }
+      ],
+      "notes": "Muestra a los alumnos en terminal: escribe ' echo secreto' con espacio inicial y comprueba con 'history | tail -n 3' que no aparece."
+    },
+    {
+      "id": "105.1-slide-9",
+      "slideNumber": 9,
+      "title": "Atajos de Shell: alias, unalias y Funciones",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Atajos de Shell: alias, unalias y Funciones"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo crear abreviaturas de comandos y agrupar instrucciones complejas con funciones?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "alias nombre='comando' | unalias nombre | function mi_func() { ...; }",
+          "title": "Ahorrar pulsaciones creando atajos y definir funciones reutilizables con parámetros dentro del shell"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "alias ll='ls -la' && unalias ll && buscar() { grep -rn \"$1\" /etc/ 2>/dev/null; }",
+              "output": "$ alias ll='ls -la'          # Crea atajo 'll' para listar todo con detalles\n$ ll /tmp                   # Ejecuta ls -la /tmp\n$ unalias ll                # Borra el alias de la memoria\n$ buscar() { grep -rn \"$1\" /etc/ 2>/dev/null; } # Función con parámetro $1\n$ buscar 'UMASK'           # Busca 'UMASK' dentro de /etc/"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "alias",
+              "",
+              "Listar Alias"
+            ],
+            [
+              "alias n='cmd'",
+              "",
+              "Definir Alias"
+            ],
+            [
+              "unalias <nombre>",
+              "",
+              "Eliminar Alias"
+            ],
+            [
+              "unalias -a",
+              "",
+              "Eliminar Todos"
+            ],
+            [
+              "function f() {}",
+              "",
+              "Función de Shell"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Los alias NO aceptan argumentos o parámetros variables; para pasar argumentos dinámicos ($1, $2) se debe utilizar obligatoriamente una FUNCIÓN de Bash."
+        }
+      ],
+      "notes": "Recuerda a los alumnos: los alias creados en la terminal se pierden al salir. Para hacerlos permanentes deben guardarse en ~/.bashrc o ~/.bash_aliases."
+    },
+    {
+      "id": "105.1-slide-10",
+      "slideNumber": 10,
+      "title": "Ejecución en el Shell Actual: source y el Atajo '.'",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejecución en el Shell Actual: source y el Atajo '.'"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué ejecutar './script.sh' no mantiene las variables en tu terminal y 'source script.sh' sí?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "source archivo.sh | . archivo.sh",
+          "title": "Leer y ejecutar un archivo de comandos dentro del proceso actual de shell sin lanzar un subshell"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "echo 'MI_VAR=100' > test.sh && ./test.sh && echo $MI_VAR && source test.sh && echo $MI_VAR",
+              "output": "$ echo 'MI_VAR=100' > test.sh\n$ chmod +x test.sh\n$ ./test.sh              # Se ejecuta en un subshell hijo separado\n$ echo $MI_VAR           # Salida vacía (el subshell murió y no afectó al padre)\n\n$ source test.sh         # Se ejecuta directamente en el shell actual (o: . test.sh)\n$ echo $MI_VAR\n100                      # ¡La variable ahora sí está presente en tu sesión!"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "source <archivo>",
+              "",
+              "Comando source"
+            ],
+            [
+              ". <archivo>",
+              "",
+              "Atajo Punto (.)"
+            ],
+            [
+              "./archivo.sh",
+              "",
+              "Ejecución Normal"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Fija de Certificación: El comando 'source' y el comando '.' (punto seguido de espacio) son exactamente lo mismo. Se usan para recargar archivos como ~/.bashrc tras modificarlos sin cerrar sesión."
+        }
+      ],
+      "notes": "Compara ante los alumnos: 'source ~/.bashrc' vs cerrar y volver a abrir la terminal. Es la herramienta clave de administración."
+    },
+    {
+      "id": "105.1-slide-11",
+      "slideNumber": 11,
+      "title": "Caso Práctico: Añadir ~/bin al PATH y Persistencia en ~/.bashrc",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Caso Práctico: Añadir ~/bin al PATH y Persistencia en ~/.bashrc"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo configurar tu entorno de trabajo profesional para ejecutar tus propios scripts desde cualquier lugar?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Crear la carpeta personal de binarios** — Ejecuta <code>mkdir -p ~/bin</code>. Es la ubicación estándar para scripts y programas personales del usuario.",
+            "**2. Incorporar ~/bin a la variable PATH** — Añade a tu <code>~/.profile</code> o <code>~/.bashrc</code>:<br><code>export PATH=\"$HOME/bin:$PATH\"</code><br>Ponerlo al principio garantiza que tus scripts tengan prioridad sobre programas del sistema.",
+            "**3. Recargar la configuración al instante** — Aplica los cambios en tu sesión abierta sin reiniciar con:<br><code>source ~/.bashrc</code> (o <code>. ~/.profile</code>).",
+            "**4. Ejecutar tus scripts desde cualquier ruta** — Cualquier script con permisos de ejecución (<code>chmod +x</code>) colocado en <code>~/bin/</code> se podrá invocar escribiendo solo su nombre, sin poner <code>./</code> ni rutas absolutas."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Buenas Prácticas LPIC-1: El archivo ~/.profile se usa para variables de entorno de login como PATH; el archivo ~/.bashrc se usa para alias, funciones y opciones interactivas de la shell."
+        }
+      ],
+      "notes": "Guía a los alumnos en este procedimiento: es la base para el subtema 105.2 de scripts."
+    },
+    {
+      "id": "105.1-slide-12",
+      "slideNumber": 12,
+      "title": "Ejercicios Guiados Oficiales (Parte 1: Variables Locales vs Entorno)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales (Parte 1: Variables Locales vs Entorno)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "1) debian=mother es LOCAL porque no se usó export. 2) mint es de ENTORNO porque se exportó en el segundo comando. 3) suse es de ENTORNO directa en una sola orden. 4) 'env' lista solo las de entorno; 'set' lista tanto locales como de entorno."
+        }
+      ],
+      "notes": "Haz que los alumnos contesten oralmente antes de pulsar el botón de mostrar resolución."
+    },
+    {
+      "id": "105.1-slide-13",
+      "slideNumber": 13,
+      "title": "Ejercicios Guiados Oficiales (Parte 2: Modificar PATH y Funciones)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales (Parte 2: Modificar PATH y Funciones)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "1) mkdir -p ~/bin. 2) export PATH=\"$HOME/bin:$PATH\". 3) if [ -d \"$HOME/bin\" ] ; then PATH=\"$HOME/bin:$PATH\" ; fi. 4) alerta() { echo \"[ALERTA]: $1\" | tr '[:lower:]' '[:upper:]'; }"
+        }
+      ],
+      "notes": "Destaca la condición 'if [ -d $HOME/bin ]': evita añadir carpetas al PATH que no existen físicamente."
+    },
+    {
+      "id": "105.1-slide-14",
+      "slideNumber": 14,
+      "title": "Retos de Exploración del Manual Oficial (Funciones Read-Only)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Retos de Exploración del Manual Oficial (Funciones Read-Only)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Investigación avanzada planteada en la página 76 del manual oficial LPI:"
+        }
+      ],
+      "notes": "Pregunta de examen avanzada: ¿Qué comando hace una función de solo lectura? -> readonly -f."
+    },
+    {
+      "id": "105.1-slide-15",
+      "slideNumber": 15,
+      "title": "Pregunta de Examen LPIC-1: Archivos de Inicio en Bash Login",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Archivos de Inicio en Bash Login"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-105-1-15",
+          "question": "Un usuario inicia sesión mediante SSH en un servidor Linux. En su directorio personal existen los archivos ~/.bash_profile, ~/.bash_login y ~/.profile. ¿Cuál de ellos ejecutará Bash primero?",
+          "options": [
+            {
+              "key": "a",
+              "text": "~/.profile"
+            },
+            {
+              "key": "b",
+              "text": "~/.bash_profile"
+            },
+            {
+              "key": "c",
+              "text": "~/.bash_login"
+            },
+            {
+              "key": "d",
+              "text": "Ejecutará los tres en orden secuencial inverso"
+            }
+          ],
+          "correct": [
+            "b"
+          ],
+          "explanation": "Al iniciar una shell de login interactiva, Bash busca en el HOME del usuario en el siguiente orden estricto: 1º ~/.bash_profile, 2º ~/.bash_login y 3º ~/.profile. En cuanto encuentra el primero existente (~/.bash_profile), lo ejecuta y omite totalmente los otros dos."
+        }
+      ],
+      "notes": "Pregunta clásica con trampa. Muchos creen que ejecuta todos, pero solo lee el primero que encuentre."
+    },
+    {
+      "id": "105.1-slide-16",
+      "slideNumber": 16,
+      "title": "Pregunta de Examen LPIC-1: Variables y Herencia a Subprocesos",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Variables y Herencia a Subprocesos"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-105-1-16",
+          "question": "Un administrador ejecuta en su terminal: 'PUERTO=8080' y a continuación lanza un script de Python con './servidor.py'. Sin embargo, el script falla porque la variable PUERTO no está definida en su entorno. ¿Qué orden previa debería haber ejecutado?",
+          "options": [
+            {
+              "key": "a",
+              "text": "set PUERTO"
+            },
+            {
+              "key": "b",
+              "text": "source PUERTO=8080"
+            },
+            {
+              "key": "c",
+              "text": "export PUERTO"
+            },
+            {
+              "key": "d",
+              "text": "env PUERTO=8080"
+            }
+          ],
+          "correct": [
+            "c"
+          ],
+          "explanation": "Al asignar 'PUERTO=8080', la variable es local para la shell interactiva actual y los subprocesos hijos no la heredan. Para que esté disponible en los comandos y scripts derivados, se debe exportar al entorno con 'export PUERTO' (o 'export PUERTO=8080')."
+        }
+      ],
+      "notes": "Concepto nuclear de Linux: los hijos no heredan variables locales, solo las de entorno (exportadas)."
+    },
+    {
+      "id": "105.1-slide-17",
+      "slideNumber": 17,
+      "title": "Pregunta de Examen LPIC-1: El Comando source y el Punto (.)",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: El Comando source y el Punto (.)"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-105-1-17",
+          "question": "¿Cuál de los siguientes comandos permite recargar las modificaciones recién guardadas en el archivo ~/.bashrc dentro de la sesión de terminal actual sin tener que cerrarla y volverla a abrir?",
+          "options": [
+            {
+              "key": "a",
+              "text": "./~/.bashrc"
+            },
+            {
+              "key": "b",
+              "text": "exec bash ~/.bashrc"
+            },
+            {
+              "key": "c",
+              "text": "source ~/.bashrc"
+            },
+            {
+              "key": "d",
+              "text": "bash ~/.bashrc"
+            }
+          ],
+          "correct": [
+            "c"
+          ],
+          "explanation": "'source ~/.bashrc' (o su equivalente oficial '. ~/.bashrc') lee y ejecuta el archivo directamente dentro del proceso de shell actual, manteniendo todos los nuevos alias y variables en la ventana abierta. Ejecutar './~/.bashrc' o 'bash ~/.bashrc' crearía una subshell que se cerraría inmediatamente sin afectar a la sesión actual."
+        }
+      ],
+      "notes": "Enseña la diferencia entre ejecutar en subshell frente a ejecutar en el entorno actual."
+    },
+    {
+      "id": "105.1-slide-18",
+      "slideNumber": 18,
+      "title": "Tarjetas de Memorización: Entorno de Shell 105.1",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tarjetas de Memorización: Entorno de Shell 105.1"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto",
+            "Significado / Uso"
+          ],
+          "rows": [
+            [
+              "¿Qué archivo global lee Bash primero al iniciar una shell de login?",
+              "/etc/profile (y los scripts dentro de /etc/profile.d/*.sh)."
+            ],
+            [
+              "¿Cuál es el orden de búsqueda de los archivos de inicio personales en una shell con login?",
+              "1º ~/.bash_profile ➔ 2º ~/.bash_login ➔ 3º ~/.profile (ejecuta solo el primero que encuentre)."
+            ],
+            [
+              "¿Qué archivo lee una terminal interactiva gráfica que NO es de login?",
+              "~/.bashrc (tras leer /etc/bash.bashrc)."
+            ],
+            [
+              "¿Qué archivo se ejecuta automáticamente al salir de una sesión con login?",
+              "~/.bash_logout."
+            ],
+            [
+              "¿Qué directorio sirve de plantilla para los archivos ocultos de los nuevos usuarios?",
+              "/etc/skel (se copia con 'useradd -m')."
+            ],
+            [
+              "¿Qué comando convierte una variable local en variable de entorno heredable?",
+              "export VARIABLE (o export VARIABLE=valor)."
+            ],
+            [
+              "¿Qué diferencia hay entre el comando 'env' y el comando 'set'?",
+              "'env' muestra solo variables de entorno; 'set' muestra variables locales, de entorno y funciones."
+            ],
+            [
+              "¿Cuál es el sinónimo POSIX oficial de una sola letra del comando 'source'?",
+              "El comando punto '.' seguido de un espacio (ej: '. ~/.bashrc')."
+            ]
+          ],
+          "caption": "Tarjetas de memorización"
+        }
+      ],
+      "notes": "Repasa estas 8 tarjetas con los alumnos para fijar los conceptos evaluados en el Examen 102."
+    },
+    {
+      "id": "105.1-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen y Claves de Examen: Subtema 105.1",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen y Claves de Examen: Subtema 105.1"
+        }
+      ],
+      "notes": "Fin del subtema 105.1. Procedemos con 105.2 para completar el Tema 105."
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-105-1-1",
+      "title": "Tipos de Shell en Linux: Interactivos vs No Interactivos",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tipos de Shell en Linux: Interactivos vs No Interactivos"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué diferencia a un shell de login de uno interactivo o de un script automatizado?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🧭 Clasificación Fundamental de Shells en Bash</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Matriz 2×2</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:11.5px;\">\n    <!-- Interactivo con Login -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">1. Interactivo con Login</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">SSH / Consola / su -</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • <strong>Cómo surge:</strong> Entrar por SSH, consola virtual TTY (Ctrl+Alt+F3) o <code>su - usuario</code>.<br>\n        • <strong>Comportamiento:</strong> Pide usuario/password e inicializa el entorno completo.<br>\n        • <strong>Archivos que lee:</strong> <code>/etc/profile</code> ➔ <code>~/.bash_profile</code> (o <code>~/.profile</code>).\n      </div>\n    </div>\n\n    <!-- Interactivo sin Login -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:12.5px;\">2. Interactivo sin Login</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Terminal Gráfica / su</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • <strong>Cómo surge:</strong> Abrir GNOME Terminal, xterm, bash dentro de otra shell o <code>su usuario</code>.<br>\n        • <strong>Comportamiento:</strong> Hereda variables del escritorio pero no recarga perfiles globales.<br>\n        • <strong>Archivos que lee:</strong> <code>/etc/bash.bashrc</code> ➔ <code>~/.bashrc</code> directamente.\n      </div>\n    </div>\n\n    <!-- No Interactivo con Login -->\n    <div style=\"background:#FEF3C7; border:1.5px solid #F59E0B; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#92400E; font-size:12.5px;\">3. No Interactivo con Login</strong>\n        <span style=\"background:#D97706; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">ssh host 'comando'</span>\n      </div>\n      <div style=\"color:#78350F; line-height:1.4;\">\n        • <strong>Cómo surge:</strong> Ejecutar una orden remota mediante SSH sin abrir terminal interactiva.<br>\n        • <strong>Comportamiento:</strong> Autentica con login pero ejecuta el comando y sale al terminar.<br>\n        • <strong>Archivos que lee:</strong> <code>/etc/profile</code> y perfiles personales.\n      </div>\n    </div>\n\n    <!-- No Interactivo sin Login -->\n    <div style=\"background:#F1F5F9; border:1.5px solid #94A3B8; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#334155; font-size:12.5px;\">4. No Interactivo sin Login</strong>\n        <span style=\"background:#64748B; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Scripts / Cron</span>\n      </div>\n      <div style=\"color:#475569; line-height:1.4;\">\n        • <strong>Cómo surge:</strong> Al lanzar scripts ejecutables <code>./script.sh</code> o tareas de Cron.<br>\n        • <strong>Comportamiento:</strong> ⚠️ <strong>NO lee ningún archivo de inicio</strong> interactivo.<br>\n        • <strong>Variables:</strong> Solo hereda las variables del proceso padre si estaban con <code>export</code>.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Un shell de login pide autenticación (consola física, SSH o 'su -') y lee /etc/profile. Un shell interactivo sin login (abrir terminal gráfica o 'su') lee ~/.bashrc."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-1-2",
+      "title": "Secuencia de Carga de Archivos en Shell con Login",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Secuencia de Carga de Archivos en Shell con Login"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿En qué orden estricto lee Bash los archivos de configuración al iniciar sesión?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔄 Ruta Lineal de Inicio: Shell con Login (SSH / Consola Virtual / su -)</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Orden de Ejecución</span>\n  </div>\n\n  <!-- Paso 1 Global -->\n  <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:10px;\">\n    <div style=\"width:26px; height:26px; border-radius:50%; background:#2563EB; color:#FFF; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; flex:none;\">1</div>\n    <div style=\"flex:1; background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:8px 12px; font-size:11.5px;\">\n      <strong style=\"color:#1E40AF;\">/etc/profile (Global para todo el sistema)</strong>\n      <div style=\"color:#1E3A8A; font-size:11px; margin-top:2px;\">\n        Establece variables globales (<code>PATH</code>, <code>UMASK</code>) y recorre todos los scripts secundarios en <code>/etc/profile.d/*.sh</code>.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"text-align:center; font-size:14px; font-weight:900; color:#64748B; margin:-4px 0 6px 0;\">⬇️ A continuación busca en el directorio HOME del usuario (~):</div>\n\n  <!-- Paso 2 Personal con descarte -->\n  <div style=\"display:flex; align-items:flex-start; gap:8px;\">\n    <div style=\"width:26px; height:26px; border-radius:50%; background:#16A34A; color:#FFF; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; flex:none; margin-top:4px;\">2</div>\n    <div style=\"flex:1; background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 14px; font-size:11.5px;\">\n      <strong style=\"color:#15803D; font-size:12.5px;\">Archivos Personales: Regla del \"Primer Coincidente\"</strong>\n      <div style=\"color:#14532D; margin:4px 0 8px 0; font-size:11px;\">\n        Bash prueba los 3 archivos en estricto orden de izquierda a derecha. <strong>En cuanto encuentra uno, lo ejecuta y SE DETIENE</strong> (no lee los siguientes):\n      </div>\n      <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; text-align:center; font-family:monospace; font-size:11px;\">\n        <div style=\"background:#DCFCE7; border:1.5px solid #16A34A; padding:6px; border-radius:6px; color:#166534; font-weight:800;\">\n          1º ~/.bash_profile<br><span style=\"font-weight:400; font-size:9.5px; font-family:sans-serif;\">(Máxima prioridad)</span>\n        </div>\n        <div style=\"background:#FEF3C7; border:1.5px solid #F59E0B; padding:6px; border-radius:6px; color:#92400E; font-weight:800;\">\n          2º ~/.bash_login<br><span style=\"font-weight:400; font-size:9.5px; font-family:sans-serif;\">(Si 1º no existe)</span>\n        </div>\n        <div style=\"background:#F1F5F9; border:1.5px solid #94A3B8; padding:6px; border-radius:6px; color:#334155; font-weight:800;\">\n          3º ~/.profile<br><span style=\"font-weight:400; font-size:9.5px; font-family:sans-serif;\">(Estándar POSIX/sh)</span>\n        </div>\n      </div>\n      <div style=\"margin-top:8px; font-size:10.5px; color:#14532D; font-style:italic;\">\n        💡 Nota didáctica: Normalmente <code>~/.bash_profile</code> incluye una línea con <code>source ~/.bashrc</code> para cargar también alias y funciones personales.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Estrella de Examen: Para el usuario personal, Bash busca ~/.bash_profile, luego ~/.bash_login y luego ~/.profile. ¡SOLO ejecuta el PRIMERO que exista y descarta los demás!"
+        }
+      ]
+    },
+    {
+      "id": "sec-105-1-3",
+      "title": "Shell Sin Inicio de Sesión y Archivo de Cierre ~/.bash_logout",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Shell Sin Inicio de Sesión y Archivo de Cierre ~/.bash_logout"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué archivos se leen al abrir ventanas de terminal en el escritorio y qué ocurre al cerrar sesión?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- Shell interactivo sin login -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#15803D; font-size:13px;\">🖥️ Apertura de Terminal (Sin Login)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:700; padding:1px 5px; border-radius:3px;\">GNOME Terminal / xterm</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.45;\">\n        Cuando abres una ventana de terminal en tu escritorio gráfico (o lanzas <code>su usuario</code>):\n        <ol style=\"margin:6px 0 0 16px; padding:0;\">\n          <li>Lee <code>/etc/bash.bashrc</code> (configuración global de Bash).</li>\n          <li>Lee <code>~/.bashrc</code> (alias, colores, variables y funciones personales).</li>\n        </ol>\n        <span style=\"display:block; margin-top:6px; background:#DCFCE7; padding:4px 6px; border-radius:4px; font-size:10.5px;\">\n          ⚠️ <strong>Ojo de examen:</strong> No lee <code>/etc/profile</code> ni <code>~/.profile</code>.\n        </span>\n      </div>\n    </div>\n\n    <!-- Cierre de sesión -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#991B1B; font-size:13px;\">🚪 Cierre de Sesión (Logout)</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:9.5px; font-weight:700; padding:1px 5px; border-radius:3px;\">exit / logout</span>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.45;\">\n        Al terminar una shell de inicio de sesión con <code>exit</code>, <code>logout</code> o Ctrl+D:\n        <ul style=\"margin:6px 0 0 16px; padding:0;\">\n          <li>Bash ejecuta automáticamente el script <code>~/.bash_logout</code>.</li>\n        </ul>\n        <div style=\"background:#FEE2E2; padding:6px 8px; border-radius:4px; margin-top:8px; font-size:10.5px;\">\n          <strong>Usos habituales en producción:</strong><br>\n          • Limpiar la pantalla para evitar que otros vean tus datos (<code>clear</code>).<br>\n          • Eliminar claves SSH temporales en memoria con <code>ssh-add -D</code>.<br>\n          • Borrar ficheros temporales en <code>/tmp</code>.\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Las terminales gráficas NO leen /etc/profile ni ~/.bash_profile; leen directamente ~/.bashrc. Al salir con 'exit' o 'logout', se ejecuta automáticamente ~/.bash_logout."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-1-4",
+      "title": "El Esqueleto de Usuarios: /etc/skel y useradd",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Esqueleto de Usuarios: /etc/skel y useradd"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿De dónde salen los archivos ocultos (.bashrc, .profile) cuando creas una cuenta nueva?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔄 Mecánica de /etc/skel durante la creación de cuentas</span>\n    <span style=\"font-size:10.5px; background:#DCFCE7; color:#166534; padding:2px 7px; border-radius:10px; font-weight:700;\">Plantilla Automática</span>\n  </div>\n\n  <div style=\"display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:11.5px; text-align:center;\">\n    <div style=\"flex:1.2; background:#EFF6FF; border:1.5px solid #3B82F6; padding:8px 6px; border-radius:6px;\">\n      <strong style=\"color:#1E40AF; display:block;\">📁 Plantilla del Sistema</strong>\n      <code>/etc/skel/</code><br>\n      <span style=\"font-size:10px; color:#1E3A8A;\">(.bashrc, .profile, .bash_logout)</span>\n    </div>\n    <span style=\"color:#64748B; font-weight:900; font-size:14px;\">➔ useradd -m ana ➔</span>\n    <div style=\"flex:1.2; background:#F0FDF4; border:1.5px solid #22C55E; padding:8px 6px; border-radius:6px;\">\n      <strong style=\"color:#166534; display:block;\">🏠 Nuevo Directorio Home</strong>\n      <code>/home/ana/</code><br>\n      <span style=\"font-size:10px; color:#14532D;\">Copia exacta con dueño ana:ana</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: /etc/skel actúa como plantilla. Solo afecta a los NUEVOS usuarios creados a partir de ese momento con 'useradd -m'; los usuarios que ya existían previamente no se modifican."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-1-5",
+      "title": "Variables Locales vs Variables de Entorno: export y unset",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Variables Locales vs Variables de Entorno: export y unset"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué un script o subproceso no puede ver las variables de tu shell a menos que uses export?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "VAR=valor | export VAR | env | set | unset VAR",
+          "title": "Controlar el ciclo de vida y la herencia de variables entre la shell actual y sus procesos hijos"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "CURSO='LPIC-1' && export SERVIDOR='SRV01' && bash -c 'echo Local: $CURSO | Entorno: $SERVIDOR'",
+              "output": "$ CURSO='LPIC-1'           # Variable local sin exportar\n$ export SERVIDOR='SRV01'   # Variable de entorno global\n$ bash -c 'echo Local: $CURSO | Entorno: $SERVIDOR'\nLocal:  | Entorno: SRV01\n# $CURSO está vacía en el subshell hijo porque no se exportó.\n$ unset SERVIDOR            # Elimina SERVIDOR del entorno"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "VAR=valor",
+              "",
+              "Variable Local"
+            ],
+            [
+              "export VAR",
+              "",
+              "Exportar al Entorno"
+            ],
+            [
+              "env",
+              "",
+              "Listar Entorno"
+            ],
+            [
+              "set",
+              "",
+              "Listar Todo"
+            ],
+            [
+              "unset VAR",
+              "",
+              "Eliminar Variable"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Diferencia Clave de Examen: 'env' lista solo variables exportadas al entorno; 'set' lista variables locales, de entorno y funciones de shell. 'unset' borra cualquier variable."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-1-6",
+      "title": "Variables Canónicas Estándar de Linux",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Variables Canónicas Estándar de Linux"
+        },
+        {
+          "type": "paragraph",
+          "text": "Las variables de entorno más importantes evaluadas en la certificación LPIC-1:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Variable",
+            "Significado / Contenido",
+            "Ejemplo Típico",
+            "Impacto en el Sistema"
+          ],
+          "rows": [
+            [
+              "PATH",
+              "Lista de directorios separados por dos puntos (:) donde Bash busca los ejecutables.",
+              "/usr/local/bin:/usr/bin:/bin",
+              "Si un ejecutable no está en el PATH, requiere ruta absoluta (/ruta/cmd) o relativa (./cmd)."
+            ],
+            [
+              "HOME",
+              "Ruta absoluta del directorio personal del usuario activo.",
+              "/home/usuario (o /root)",
+              "El comando 'cd' sin argumentos te lleva directamente al valor guardado en $HOME."
+            ],
+            [
+              "USER (o LOGNAME)",
+              "Nombre de la cuenta de usuario que inició la sesión actual.",
+              "alumno",
+              "Utilizada por scripts para verificar privilegios o registrar acciones."
+            ],
+            [
+              "SHELL",
+              "Ruta absoluta del intérprete de comandos asignado en /etc/passwd.",
+              "/bin/bash",
+              "El shell por defecto que se lanza al abrir terminales o scripts."
+            ],
+            [
+              "HISTSIZE",
+              "Número máximo de comandos guardados en la memoria RAM durante la sesión.",
+              "1000",
+              "Controla cuántos comandos puedes recuperar con las flechas o con 'history'."
+            ],
+            [
+              "PS1",
+              "Prompt primario de la línea de comandos interactiva.",
+              "\\u@\\h:\\w\\$ ",
+              "Define el texto y colores que ves en pantalla antes de escribir cada orden."
+            ]
+          ],
+          "caption": "Variables Canónicas Estándar de Linux"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Fija de Examen: En la variable PATH los directorios se separan con DOS PUNTOS (:). Si el directorio actual no está en PATH, ejecutar un script en la misma carpeta requiere obligatoriamente escribir './script.sh'."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-1-7",
+      "title": "Afinar el Historial y el Prompt: HISTCONTROL y PS2",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Afinar el Historial y el Prompt: HISTCONTROL y PS2"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo evitar comandos duplicados en el historial y qué significan PS1, PS2 y PROMPT_COMMAND?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**HISTCONTROL: Control de almacenamiento en el historial** — • <code>ignorespace</code>: Si pones un espacio en blanco antes de un comando, NO se guarda en el historial (ideal para contraseñas).<br>• <code>ignoredups</code>: No guarda comandos idénticos consecutivos.<br>• <code>ignoreboth</code>: Aplica ambas reglas a la vez.",
+            "**HISTFILE y HISTFILESIZE: Persistencia en disco** — • <code>HISTFILE</code>: Archivo de disco donde se vuelca el historial al salir (por defecto <code>~/.bash_history</code>).<br>• <code>HISTFILESIZE</code>: Número máximo de líneas que almacena el archivo en disco (suele ser 2000).",
+            "**Los Prompts de Bash: PS1, PS2 y PROMPT_COMMAND** — • <code>PS1</code>: Prompt principal normal (ej: <code>alumno@srv:~$</code>).<br>• <code>PS2</code>: Prompt secundario para comandos multilínea incompletos (por defecto es <code>></code>).<br>• <code>PROMPT_COMMAND</code>: Comando que Bash ejecuta justo antes de mostrar cada prompt."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Típica de Certificación: 'HISTCONTROL=ignoreboth' evita guardar comandos duplicados seguidos y cualquier comando que empiece con un espacio inicial. 'PS2' es el indicador de continuación multilínea (>)."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-1-8",
+      "title": "Atajos de Shell: alias, unalias y Funciones",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Atajos de Shell: alias, unalias y Funciones"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo crear abreviaturas de comandos y agrupar instrucciones complejas con funciones?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "alias nombre='comando' | unalias nombre | function mi_func() { ...; }",
+          "title": "Ahorrar pulsaciones creando atajos y definir funciones reutilizables con parámetros dentro del shell"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "alias ll='ls -la' && unalias ll && buscar() { grep -rn \"$1\" /etc/ 2>/dev/null; }",
+              "output": "$ alias ll='ls -la'          # Crea atajo 'll' para listar todo con detalles\n$ ll /tmp                   # Ejecuta ls -la /tmp\n$ unalias ll                # Borra el alias de la memoria\n$ buscar() { grep -rn \"$1\" /etc/ 2>/dev/null; } # Función con parámetro $1\n$ buscar 'UMASK'           # Busca 'UMASK' dentro de /etc/"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "alias",
+              "",
+              "Listar Alias"
+            ],
+            [
+              "alias n='cmd'",
+              "",
+              "Definir Alias"
+            ],
+            [
+              "unalias <nombre>",
+              "",
+              "Eliminar Alias"
+            ],
+            [
+              "unalias -a",
+              "",
+              "Eliminar Todos"
+            ],
+            [
+              "function f() {}",
+              "",
+              "Función de Shell"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Los alias NO aceptan argumentos o parámetros variables; para pasar argumentos dinámicos ($1, $2) se debe utilizar obligatoriamente una FUNCIÓN de Bash."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-1-9",
+      "title": "Ejecución en el Shell Actual: source y el Atajo '.'",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejecución en el Shell Actual: source y el Atajo '.'"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué ejecutar './script.sh' no mantiene las variables en tu terminal y 'source script.sh' sí?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "source archivo.sh | . archivo.sh",
+          "title": "Leer y ejecutar un archivo de comandos dentro del proceso actual de shell sin lanzar un subshell"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "echo 'MI_VAR=100' > test.sh && ./test.sh && echo $MI_VAR && source test.sh && echo $MI_VAR",
+              "output": "$ echo 'MI_VAR=100' > test.sh\n$ chmod +x test.sh\n$ ./test.sh              # Se ejecuta en un subshell hijo separado\n$ echo $MI_VAR           # Salida vacía (el subshell murió y no afectó al padre)\n\n$ source test.sh         # Se ejecuta directamente en el shell actual (o: . test.sh)\n$ echo $MI_VAR\n100                      # ¡La variable ahora sí está presente en tu sesión!"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "source <archivo>",
+              "",
+              "Comando source"
+            ],
+            [
+              ". <archivo>",
+              "",
+              "Atajo Punto (.)"
+            ],
+            [
+              "./archivo.sh",
+              "",
+              "Ejecución Normal"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Fija de Certificación: El comando 'source' y el comando '.' (punto seguido de espacio) son exactamente lo mismo. Se usan para recargar archivos como ~/.bashrc tras modificarlos sin cerrar sesión."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-1-10",
+      "title": "Caso Práctico: Añadir ~/bin al PATH y Persistencia en ~/.bashrc",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Caso Práctico: Añadir ~/bin al PATH y Persistencia en ~/.bashrc"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo configurar tu entorno de trabajo profesional para ejecutar tus propios scripts desde cualquier lugar?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Crear la carpeta personal de binarios** — Ejecuta <code>mkdir -p ~/bin</code>. Es la ubicación estándar para scripts y programas personales del usuario.",
+            "**2. Incorporar ~/bin a la variable PATH** — Añade a tu <code>~/.profile</code> o <code>~/.bashrc</code>:<br><code>export PATH=\"$HOME/bin:$PATH\"</code><br>Ponerlo al principio garantiza que tus scripts tengan prioridad sobre programas del sistema.",
+            "**3. Recargar la configuración al instante** — Aplica los cambios en tu sesión abierta sin reiniciar con:<br><code>source ~/.bashrc</code> (o <code>. ~/.profile</code>).",
+            "**4. Ejecutar tus scripts desde cualquier ruta** — Cualquier script con permisos de ejecución (<code>chmod +x</code>) colocado en <code>~/bin/</code> se podrá invocar escribiendo solo su nombre, sin poner <code>./</code> ni rutas absolutas."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Buenas Prácticas LPIC-1: El archivo ~/.profile se usa para variables de entorno de login como PATH; el archivo ~/.bashrc se usa para alias, funciones y opciones interactivas de la shell."
+        }
+      ]
+    }
+  ]
+}

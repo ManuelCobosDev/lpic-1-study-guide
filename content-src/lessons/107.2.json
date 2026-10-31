@@ -1,0 +1,1153 @@
+{
+  "id": "107.2",
+  "topicId": "107",
+  "examId": "102",
+  "title": "Automatizar tareas mediante programación de trabajos",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 40,
+  "objectives": [
+    "Programación automatizada de tareas en Linux: servicio cron, archivos /etc/crontab y directorios cron.*, anacron, comando crontab, servicio at, atq, atrm, batch, control de acceso allow/deny y temporizadores modernos de systemd.",
+    "Dominio técnico de las herramientas y configuración del subtema 107.2"
+  ],
+  "keyTerms": [
+    "/etc/crontab",
+    "/var/spool/cron/",
+    "anacron",
+    "at",
+    "atq / atrm",
+    "batch",
+    "cron.allow / cron.deny",
+    "systemd-run"
+  ],
+  "commands": [],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "107.2-slide-1",
+      "slideNumber": 1,
+      "title": "Automatizar tareas mediante programación de trabajos",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Automatizar tareas mediante programación de trabajos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Subtema 107.2 · Peso LPI: 4 · Examen LPIC-1 102-500"
+        }
+      ],
+      "notes": "Bienvenido al Subtema 107.2. Cubre la automatización de mantenimiento con cron, la ejecución no continua con anacron, trabajos diferidos únicos con at/batch y los modernos timers de systemd."
+    },
+    {
+      "id": "107.2-slide-2",
+      "slideNumber": 2,
+      "title": "Herramientas de Programación en Linux: ¿Cuándo usar cada una?",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Herramientas de Programación en Linux: ¿Cuándo usar cada una?"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué mecanismo elegir según si la tarea es periódica, puntual o el equipo se apaga con frecuencia?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⏱️ Los Cuatro Pilares de la Automatización en LPIC-1</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Objetivo 107.2</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; font-size:11px;\">\n    <!-- cron -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <div style=\"color:#1D4ED8; font-weight:bold; font-size:12px; margin-bottom:4px;\">1. cron</div>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • <strong>Tipo:</strong> Recurrente periódico.<br>\n        • <strong>Frecuencia:</strong> Desde minutos hasta meses.<br>\n        • <strong>Requisito:</strong> Servidor encendido a la hora exacta (si está apagado, se pierde la ejecución).\n      </div>\n    </div>\n\n    <!-- anacron -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <div style=\"color:#15803D; font-weight:bold; font-size:12px; margin-bottom:4px;\">2. anacron</div>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • <strong>Tipo:</strong> Recurrente tolerante a apagados.<br>\n        • <strong>Frecuencia:</strong> Días (1, 7, 30 días).<br>\n        • <strong>Característica:</strong> Si el PC estaba apagado a la hora fijada, ejecuta la tarea pendiente al arrancar.\n      </div>\n    </div>\n\n    <!-- at / batch -->\n    <div style=\"background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:8px; padding:10px;\">\n      <div style=\"color:#B45309; font-weight:bold; font-size:12px; margin-bottom:4px;\">3. at & batch</div>\n      <div style=\"color:#78350F; line-height:1.4;\">\n        • <strong>Tipo:</strong> Una sola vez (one-shot).<br>\n        • <strong>at:</strong> A una hora y fecha exacta del futuro.<br>\n        • <strong>batch:</strong> Solo cuando el load average de la CPU desciende por debajo de 0.8.\n      </div>\n    </div>\n\n    <!-- systemd timers -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #A855F7; border-radius:8px; padding:10px;\">\n      <div style=\"color:#7E22CE; font-weight:bold; font-size:12px; margin-bottom:4px;\">4. systemd timers</div>\n      <div style=\"color:#581C87; line-height:1.4;\">\n        • <strong>Tipo:</strong> Reemplazo moderno.<br>\n        • <strong>Archivos:</strong> <code>.timer</code> activando <code>.service</code>.<br>\n        • <strong>Ventajas:</strong> Registro centralizado en journalctl y soporte de temporizadores monótonos (desde arranque).\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569; display:flex; justify-content:space-between; align-items:center;\">\n    <span>🔔 <strong>Notificaciones:</strong> Tanto cron como at envían la salida estándar (stdout) y de errores (stderr) por correo electrónico local al usuario mediante la variable <code>MAILTO</code>.</span>\n    <span style=\"font-weight:700; color:#1E40AF;\">MAILTO=root</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: cron = recurrente en servidores 24/7; anacron = recurrente en equipos que se apagan; at / batch = ejecución única diferida; systemd timers = alternativa moderna integrada en journald."
+        }
+      ],
+      "notes": "Cron y at dependen de demonios en segundo plano: cron (o crond) y atd."
+    },
+    {
+      "id": "107.2-slide-3",
+      "slideNumber": 3,
+      "title": "Anatomía de /etc/crontab: La Sintaxis de 7 Columnas del Sistema",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Anatomía de /etc/crontab: La Sintaxis de 7 Columnas del Sistema"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo se estructuran los trabajos periódicos de mantenimiento global en Linux?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>📄 Estructura de /etc/crontab (Tareas de Nivel de Sistema)</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">7 Columnas</span>\n  </div>\n\n  <div style=\"background:#0F172A; color:#E2E8F0; padding:10px 14px; border-radius:8px; font-family:monospace; font-size:13px; letter-spacing:0.5px; margin-bottom:10px;\">\n    <span style=\"color:#38BDF8;\">30</span> <span style=\"color:#F43F5E;\">04</span> <span style=\"color:#A855F7;\">*</span> <span style=\"color:#EAB308;\">*</span> <span style=\"color:#22C55E;\">1-5</span> <span style=\"color:#FB923C; font-weight:bold;\">root</span> <span style=\"color:#4ADE80;\">/usr/local/bin/backup-diario.sh</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(5, 1fr) 1.2fr 1.8fr; gap:6px; font-size:10.5px;\">\n    <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:6px; border-radius:6px; text-align:center;\">\n      <strong style=\"color:#0284C7;\">1. Minuto</strong><br>\n      <code>30</code><br>\n      0 - 59\n    </div>\n    <div style=\"background:#FFF1F2; border:1px solid #FECDD3; padding:6px; border-radius:6px; text-align:center;\">\n      <strong style=\"color:#E11D48;\">2. Hora</strong><br>\n      <code>04</code><br>\n      0 - 23\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #E9D5FF; padding:6px; border-radius:6px; text-align:center;\">\n      <strong style=\"color:#9333EA;\">3. Día Mes</strong><br>\n      <code>*</code><br>\n      1 - 31\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FEF08A; padding:6px; border-radius:6px; text-align:center;\">\n      <strong style=\"color:#CA8A04;\">4. Mes</strong><br>\n      <code>*</code><br>\n      1 - 12\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; padding:6px; border-radius:6px; text-align:center;\">\n      <strong style=\"color:#16A34A;\">5. Día Sem</strong><br>\n      <code>1-5</code><br>\n      0-7 (Dom=0/7)\n    </div>\n    <div style=\"background:#FFF7ED; border:1px solid #FFEDD5; padding:6px; border-radius:6px; text-align:center;\">\n      <strong style=\"color:#EA580C;\">6. Usuario</strong><br>\n      <code>root</code><br>\n      Identidad ejecutora\n    </div>\n    <div style=\"background:#ECFDF5; border:1px solid #A7F3D0; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#059669;\">7. Comando</strong><br>\n      <code>/usr/local/bin/backup...</code><br>\n      Ruta absoluta obligatoria\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569;\">\n    🗣️ <strong>Traducción humana:</strong> <em>\"Ejecutar como root de lunes a viernes (1-5) a las 04:30 de la madrugada el script backup-diario.sh\"</em>.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: En /etc/crontab el SEXTO campo es el USUARIO que ejecuta la orden (ej. root). El séptimo campo es el comando completo."
+        }
+      ],
+      "notes": "En Debian /etc/crontab define variables de entorno SHELL=/bin/sh, PATH=/usr/local/sbin:... y MAILTO=root."
+    },
+    {
+      "id": "107.2-slide-4",
+      "slideNumber": 4,
+      "title": "Operadores de Tiempo y Atajos Especiales (@)",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Operadores de Tiempo y Atajos Especiales (@)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Sintaxis para rangos, listas, intervalos de paso y alias predefinidos de crontab."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: '*/15 * * * *' ejecuta cada 15 minutos. El atajo '@reboot' ejecuta la tarea una sola vez al arrancar el demonio cron."
+        }
+      ],
+      "notes": "Los alias @daily, @hourly, etc., sustituyen por completo a las 5 primeras columnas temporales."
+    },
+    {
+      "id": "107.2-slide-5",
+      "slideNumber": 5,
+      "title": "Comando crontab: Tablas de Tareas Personales de Usuario",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando crontab: Tablas de Tareas Personales de Usuario"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo gestiona cada usuario sus tareas periódicas sin acceso a /etc/crontab?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "# Crontab personal de Frank (6 campos: m h dom mon dow cmd)\nMAILTO=frank@empresa.com\n0 2 * * * /home/frank/scripts/limpiar_temporales.sh\n*/30 * * * 1-5 /home/frank/scripts/sincronizar_git.sh"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-e",
+              "",
+              "Edita el archivo crontab del usuario actual con el editor configurado en $VISUAL o $EDITOR."
+            ],
+            [
+              "-l",
+              "",
+              "Muestra por la salida estándar el contenido actual del archivo crontab."
+            ],
+            [
+              "-r",
+              "",
+              "ELIMINA (remove) por completo el archivo crontab del usuario."
+            ],
+            [
+              "-i",
+              "",
+              "Pide confirmación interactiva antes de eliminar el crontab con la opción -r."
+            ],
+            [
+              "-u USUARIO",
+              "",
+              "Especifica el nombre del usuario cuyo crontab se quiere ver, editar o borrar (solo root)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: ¡CUIDADO CON 'crontab -r'! Borra TODO tu archivo crontab sin pedir confirmación. En el crontab de usuario hay 6 campos (NO lleva nombre de usuario)."
+        }
+      ],
+      "notes": "crontab tiene el bit SUID activo o SGID crontab para escribir con seguridad en /var/spool/cron/crontabs/."
+    },
+    {
+      "id": "107.2-slide-6",
+      "slideNumber": 6,
+      "title": "Estructura Modular de Cron: /etc/cron.* y run-parts",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Estructura Modular de Cron: /etc/cron.* y run-parts"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo ejecutan los paquetes de Linux sus tareas de mantenimiento sin tocar /etc/crontab?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: 1.2fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- Directorios Periódicos -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"color:#15803D; font-weight:bold; font-size:12.5px; margin-bottom:6px;\">\n        📁 Directorios de Scripts Periódicos (run-parts)\n      </div>\n      <div style=\"color:#14532D; line-height:1.4; font-size:11px;\">\n        • <code>/etc/cron.hourly/</code> : Se ejecutan cada hora.<br>\n        • <code>/etc/cron.daily/</code> : Se ejecutan una vez al día (06:25).<br>\n        • <code>/etc/cron.weekly/</code> : Se ejecutan una vez a la semana.<br>\n        • <code>/etc/cron.monthly/</code> : Se ejecutan el primer día de mes.<br>\n        <div style=\"margin-top:6px; background:#DCFCE7; padding:4px 6px; border-radius:4px; font-weight:600;\">\n          ⚠️ Requisitos: Permisos de ejecución (<code>chmod +x</code>) y NOMBRE SIN PUNTO NI EXTENSIÓN en Debian (ej. 'logrotate', NO 'logrotate.sh').\n        </div>\n      </div>\n    </div>\n\n    <!-- Directorio /etc/cron.d/ -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px 12px;\">\n      <div style=\"color:#1D4ED8; font-weight:bold; font-size:12.5px; margin-bottom:6px;\">\n        📄 Directorio Modular /etc/cron.d/\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.4; font-size:11px;\">\n        • Permite a los paquetes instalar tareas con su propia periodicidad personalizada sin editar el /etc/crontab central.<br>\n        • <strong>Formato idéntico a /etc/crontab:</strong> 7 columnas (incluye el nombre del usuario antes del comando).<br>\n        • Ejemplos habituales: <code>/etc/cron.d/certbot</code>, <code>/etc/cron.d/sysstat</code>.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#FFFBEB; border:1px solid #FCD34D; border-radius:6px; padding:6px 10px; font-size:11px; color:#92400E;\">\n    💡 <strong>Comprobación manual con run-parts:</strong> Puedes probar la ejecución de todos los scripts diarios ejecutando: <code>run-parts --report /etc/cron.daily</code>.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: /etc/cron.d/ admite archivos de formato /etc/crontab completo (7 campos). Los directorios /etc/cron.{hourly,daily,weekly,monthly} contienen scripts ejecutables sin extensión."
+        }
+      ],
+      "notes": "run-parts ejecuta todos los scripts ejecutables encontrados en un directorio por orden alfabético."
+    },
+    {
+      "id": "107.2-slide-7",
+      "slideNumber": 7,
+      "title": "anacron: Automatización para Equipos no Conectados 24/7",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "anacron: Automatización para Equipos no Conectados 24/7"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué pasa con las copias de seguridad de las 04:00 AM si tu portátil estaba suspendido o apagado?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>📄 Estructura de /etc/anacrontab</span>\n    <span style=\"font-size:10.5px; background:#F0FDF4; color:#16A34A; padding:2px 8px; border-radius:10px; font-weight:700;\">4 Campos</span>\n  </div>\n\n  <div style=\"background:#0F172A; color:#E2E8F0; padding:10px 14px; border-radius:8px; font-family:monospace; font-size:13.5px; letter-spacing:0.5px; margin-bottom:10px;\">\n    <span style=\"color:#38BDF8;\">1</span>    <span style=\"color:#F43F5E;\">5</span>    <span style=\"color:#EAB308;\">cron.daily</span>    <span style=\"color:#4ADE80;\">run-parts --report /etc/cron.daily</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr 1.5fr; gap:8px; font-size:11px;\">\n    <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#0284C7;\">1. Período en días</strong><br>\n      <code>1</code> (diario), <code>7</code> (semanal) o <code>@monthly</code>.<br>\n      Frecuencia mínima en días entre ejecuciones.\n    </div>\n\n    <div style=\"background:#FFF1F2; border:1px solid #FECDD3; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#E11D48;\">2. Retardo (minutos)</strong><br>\n      <code>5</code> minutos.<br>\n      Espera tras encender el PC para no saturar el arranque del sistema.\n    </div>\n\n    <div style=\"background:#FEFCE8; border:1px solid #FEF08A; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#CA8A04;\">3. Identificador</strong><br>\n      <code>cron.daily</code><br>\n      Nombre del fichero de marca en <code>/var/spool/anacron/</code>.\n    </div>\n\n    <div style=\"background:#ECFDF5; border:1px solid #A7F3D0; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#059669;\">4. Comando</strong><br>\n      <code>run-parts /etc/cron.daily</code><br>\n      Orden o script del sistema a ejecutar.\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569;\">\n    🔄 <strong>Funcionamiento:</strong> Al iniciar sesión, anacron compara la fecha actual con la fecha guardada en <code>/var/spool/anacron/cron.daily</code>. Si la diferencia es &gt;= 1 día, espera 5 minutos y ejecuta la tarea.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: anacron NO trabaja con horas ni minutos fijos del reloj; trabaja con INTERVALOS EN DÍAS y un RETARDO en minutos tras el arranque."
+        }
+      ],
+      "notes": "anacron guarda marcas de tiempo en /var/spool/anacron/ para saber cuándo se ejecutó cada trabajo por última vez."
+    },
+    {
+      "id": "107.2-slide-8",
+      "slideNumber": 8,
+      "title": "Control de Acceso a Cron: /etc/cron.allow y /etc/cron.deny",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Control de Acceso a Cron: /etc/cron.allow y /etc/cron.deny"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Quién tiene autorización para programar tareas periódicas en el servidor?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Estado de /etc/cron.allow",
+            "Estado de /etc/cron.deny",
+            "Resultado de Acceso al Servicio cron"
+          ],
+          "rows": [
+            [
+              "<strong>Existe</strong> y contiene usuarios",
+              "Ignorado (da igual si existe o no)",
+              "✅ <strong>SOLO</strong> los usuarios listados en <code>cron.allow</code> pueden programar tareas. El resto queda bloqueado."
+            ],
+            [
+              "<strong>Existe pero está VACÍO</strong>",
+              "Ignorado",
+              "❌ <strong>NADIE</strong> excepto el superusuario <code>root</code> puede programar tareas."
+            ],
+            [
+              "<strong>NO existe</strong>",
+              "<strong>Existe</strong> con usuarios listados",
+              "🚫 <strong>TODOS</strong> pueden programar tareas, <strong>EXCEPTO</strong> los usuarios listados en <code>cron.deny</code>."
+            ],
+            [
+              "<strong>NO existe</strong>",
+              "<strong>Existe pero está VACÍO</strong>",
+              "✅ <strong>TODOS los usuarios</strong> del sistema tienen permiso para programar tareas con crontab."
+            ],
+            [
+              "<strong>NO existe</strong>",
+              "<strong>NO existe</strong>",
+              "Depende de la distribución (en Debian/Ubuntu permite a todos; en RHEL solo root)."
+            ]
+          ],
+          "caption": "Control de Acceso a Cron: /etc/cron.allow y /etc/cron.deny"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Si existe /etc/cron.allow, /etc/cron.deny es COMPLETAMENTE IGNORADO. Si ambos faltan, la política predeterminada suele permitir a todos los usuarios o solo a root."
+        }
+      ]
+    },
+    {
+      "id": "107.2-slide-9",
+      "slideNumber": 9,
+      "title": "Comando at: Programación de Trabajos Únicos Diferidos",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando at: Programación de Trabajos Únicos Diferidos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Ejecución puntual en el futuro con un lenguaje natural extraordinariamente flexible."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "job 14 at Fri Oct 31 16:00:00 2026"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-f ARCHIVO",
+              "",
+              "Lee los comandos desde un archivo de script en lugar de la entrada interactiva de consola."
+            ],
+            [
+              "-m",
+              "",
+              "Envía un correo al usuario cuando la tarea finalice, incluso si no produjo ninguna salida."
+            ],
+            [
+              "-q COLA",
+              "",
+              "Asigna el trabajo a una cola específica (de 'a' a 'z'; las colas más altas tienen menor prioridad)."
+            ],
+            [
+              "-l",
+              "",
+              "Alias de atq: lista los trabajos en cola programados por el usuario."
+            ],
+            [
+              "-d",
+              "",
+              "Alias de atrm: borra uno o más trabajos especificados por su identificador."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'at' lee las órdenes de la entrada estándar y finaliza con 'Ctrl+D' (EOF). Utiliza '/bin/sh' para ejecutar las tareas, preservando las variables de entorno de la sesión actual."
+        }
+      ],
+      "notes": "Si se especifica una hora que ya pasó en el día de hoy (ej. las 08:00 cuando son las 14:00), at programa la tarea para el día siguiente."
+    },
+    {
+      "id": "107.2-slide-10",
+      "slideNumber": 10,
+      "title": "Especificaciones de Tiempo en at: Lenguaje y Palabras Clave",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Especificaciones de Tiempo en at: Lenguaje y Palabras Clave"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué expresiones temporales son válidas según las especificaciones evaluadas por LPI?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Palabras clave reservadas: 'now', 'noon' (12:00), 'midnight' (00:00), 'teatime' (16:00), 'today', 'tomorrow'. Los incrementos se expresan con '+' (ej. 'now + 30 minutes')."
+        }
+      ],
+      "notes": "El archivo de ayuda /usr/share/doc/at/timespec documenta la gramática completa aceptada por el analizador léxico de at."
+    },
+    {
+      "id": "107.2-slide-11",
+      "slideNumber": 11,
+      "title": "Supervisión y Control de at: atq, atrm y el comando batch",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Supervisión y Control de at: atq, atrm y el comando batch"
+        },
+        {
+          "type": "paragraph",
+          "text": "Gestión de la cola de espera, cancelación de trabajos y ejecución sujeta a carga de CPU."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "14      Fri Oct 31 16:00:00 2026 a frank\n13      Sat Nov  1 09:30:00 2026 a laura\n12      Sat Nov  1 11:15:00 2026 a root\nroot@debian12:~# atrm 13\nroot@debian12:~# atq\n14      Fri Oct 31 16:00:00 2026 a frank\n12      Sat Nov  1 11:15:00 2026 a root"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "atq (o at -l)",
+              "",
+              "Lista las tareas pendientes mostrando: ID, fecha/hora programada, letra de cola y propietario."
+            ],
+            [
+              "atrm (o at -d)",
+              "",
+              "Elimina una o más tareas de la cola mediante su ID (ej. 'atrm 12 14')."
+            ],
+            [
+              "batch",
+              "",
+              "Variante de at sin argumento de hora: ejecuta los comandos cuando la carga del sistema es inferior a 0.8."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'atq' como usuario normal solo muestra sus propias tareas; ejecutado como 'root' lista las tareas pendientes de TODOS los usuarios. 'batch' lanza trabajos solo si load average < 0.8."
+        }
+      ],
+      "notes": "Control de acceso idéntico a cron: /etc/at.allow y /etc/at.deny."
+    },
+    {
+      "id": "107.2-slide-12",
+      "slideNumber": 12,
+      "title": "Alternativa Moderna: systemd-run y Unidades .timer",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Alternativa Moderna: systemd-run y Unidades .timer"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo sustituye systemd a cron y at en las distribuciones contemporáneas?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "Running as unit: run-rb57a26f8d1e4e2fb165.timer\nWill run service as unit: run-rb57a26f8d1e4e2fb165.service\nNEXT                        LEFT        LAST                        PASSED    UNIT\nFri 2026-10-31 11:30:00 CET 1d 3h left  -                           -         run-rb57a...timer\nFri 2026-10-30 09:00:00 CET 45min left  Fri 2026-10-30 08:00:03 CET 14min ago logrotate.timer"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "--on-calendar='YYYY-MM-DD HH:MM'",
+              "",
+              "Crea un temporizador transitorio basado en fecha/hora absoluta o expresiones repetitivas."
+            ],
+            [
+              "--on-active=\"2m\"",
+              "",
+              "Ejecuta la orden transcurrido un intervalo de tiempo relativo (ej. 2 minutos, 1 hora)."
+            ],
+            [
+              "--unit=NOMBRE",
+              "",
+              "Asigna un nombre de unidad específico al servicio/temporizador transitorio generado."
+            ],
+            [
+              "systemctl list-timers",
+              "",
+              "Muestra todos los temporizadores activos, su próxima ejecución (NEXT), cuándo se ejecutaron (LAST) y el servicio que activan."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'systemd-run --on-calendar=...' programa tareas basadas en el calendario (estilo cron). 'systemd-run --on-active=...' programa retardos relativos (estilo at)."
+        }
+      ],
+      "notes": "systemctl list-timers muestra la próxima ejecución de todos los temporizadores del sistema."
+    },
+    {
+      "id": "107.2-slide-13",
+      "slideNumber": 13,
+      "title": "Expresiones Temporales OnCalendar en systemd",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Expresiones Temporales OnCalendar en systemd"
+        },
+        {
+          "type": "paragraph",
+          "text": "Formato normalizado de calendario: Día_Semana Año-Mes-Día Hora:Minuto:Segundo."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: En OnCalendar, los comodines se escriben con asterisco (*) o guiones dobles. 'hourly' = '*-*-* *:00:00'; 'daily' = '*-*-* 00:00:00'; 'weekly' = 'Mon *-*-* 00:00:00'."
+        }
+      ],
+      "notes": "Se puede verificar la sintaxis de una expresión de calendario con el comando 'systemd-analyze calendar EXPRESION'."
+    },
+    {
+      "id": "107.2-slide-14",
+      "slideNumber": 14,
+      "title": "Matriz Comparativa: cron vs anacron vs at vs systemd timers",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Matriz Comparativa: cron vs anacron vs at vs systemd timers"
+        },
+        {
+          "type": "paragraph",
+          "text": "Resumen técnico de características clave evaluadas en las preguntas de certificación LPIC-1."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Característica",
+            "cron",
+            "anacron",
+            "at / batch",
+            "systemd timers"
+          ],
+          "rows": [
+            [
+              "Tipo de Ejecución",
+              "Recurrente periódica",
+              "Recurrente periódica",
+              "Única (one-shot)",
+              "Ambas (única o periódica)"
+            ],
+            [
+              "Resolución Temporal",
+              "Minutos (minuto exacto)",
+              "Días (1, 7, 30 días)",
+              "Minutos (hora/día exacto)",
+              "Segundos y microsegundos"
+            ],
+            [
+              "Tolerancia a Apagados",
+              "❌ Si está apagado, se pierde",
+              "✅ Ejecuta tras el arranque",
+              "❌ Si pasó la hora, se pierde",
+              "✅ Con directiva <code>Persistent=true</code>"
+            ],
+            [
+              "Configuración",
+              "<code>/etc/crontab</code>, <code>crontab -e</code>",
+              "<code>/etc/anacrontab</code>",
+              "Comando interactivo <code>at</code>",
+              "Ficheros <code>.timer</code> o <code>systemd-run</code>"
+            ],
+            [
+              "Registro / Auditoría",
+              "Syslog / Correo local",
+              "Syslog / Correo local",
+              "Correo local al usuario",
+              "Journal estructurado (<code>journalctl</code>)"
+            ]
+          ],
+          "caption": "Matriz Comparativa: cron vs anacron vs at vs systemd timers"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pista rápida: ¿Se apagará el equipo? usa anacron. ¿Una sola vez? usa at. ¿Cada 10 minutos en servidor continuo? usa cron. ¿Arquitectura moderna con dependencias? usa systemd timer."
+        }
+      ]
+    },
+    {
+      "id": "107.2-slide-15",
+      "slideNumber": 15,
+      "title": "Ejercicio Guiado LPI: Descifrado de Especificaciones de Tiempo",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicio Guiado LPI: Descifrado de Especificaciones de Tiempo"
+        },
+        {
+          "type": "paragraph",
+          "text": "Interpreta y traduce las expresiones de tiempo oficiales planteadas en el manual."
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "\n<strong>1. <code>30 13 * * 1-5</code></strong>: A las 13:30 de lunes a viernes (días 1 al 5 de la semana).<br><br>\n<strong>2. <code>00 09-18 * * *</code></strong>: Cada hora en punto, desde las 09:00 hasta las 18:00 inclusive, todos los días.<br><br>\n<strong>3. <code>30 08 1 1 *</code></strong>: A las 08:30 de la mañana del día 1 de enero (año nuevo).<br><br>\n<strong>4. <code>0,20,40 11 * * Sun</code></strong>: A las 11:00, 11:20 y 11:40 todos los domingos.<br><br>\n<strong>5. <code>*/20 * * * *</code></strong>: Cada 20 minutos (en los minutos 0, 20 y 40 de cada hora de todos los días).\n",
+          "title": "Solución del ejercicio"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pista: Los campos de cron son: 1º Minuto, 2º Hora, 3º Día de mes, 4º Mes, 5º Día de la semana."
+        }
+      ]
+    },
+    {
+      "id": "107.2-slide-16",
+      "slideNumber": 16,
+      "title": "Ejercicio Guiado LPI: Sintaxis Válida vs Inválida en at",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicio Guiado LPI: Sintaxis Válida vs Inválida en at"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cuáles de las siguientes órdenes de at son válidas para el analizador sintáctico de Linux?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "\n• <code>at 08:30 AM next week</code> : ❌ <strong>INVÁLIDA</strong>. No se permite 'next week'; la sintaxis correcta es <code>at 08:30 AM next Monday</code> o <code>at 08:30 AM +1 week</code>.<br>\n• <code>at midday</code> : ❌ <strong>INVÁLIDA</strong>. La palabra oficial en inglés para el mediodía en at es <code>noon</code> (no existe 'midday').<br>\n• <code>at 01-01-2020 07:30 PM</code> : ❌ <strong>INVÁLIDA</strong>. La hora debe preceder a la fecha o usar los formatos admitidos (MMDDYY, MM/DD/YY o mes día).<br>\n• <code>at 21:50 01.01.20</code> : ✅ <strong>VÁLIDA</strong>. Formato hora seguido de día.mes.año.<br>\n• <code>at now +4 days</code> : ✅ <strong>VÁLIDA</strong>. Desplazamiento relativo respecto al momento presente.<br>\n• <code>at tomorrow 08:30 AM</code> : ❌ <strong>INVÁLIDA</strong>. La palabra 'tomorrow' debe ir DESPUÉS de la hora: <code>at 08:30 AM tomorrow</code>.\n",
+          "title": "Solución del ejercicio"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pista: at acepta 'midnight', 'noon' y 'teatime', pero NO acepta palabras inventadas como 'midday'. 'next week' requiere un incremento numérico como 'now + 1 week'."
+        }
+      ]
+    },
+    {
+      "id": "107.2-slide-17",
+      "slideNumber": 17,
+      "title": "Reto Práctico LPI: Despliegue de Mantenimiento Desatendido",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Reto Práctico LPI: Despliegue de Mantenimiento Desatendido"
+        },
+        {
+          "type": "paragraph",
+          "text": "Configura un cron de usuario, restringe accesos y programa una alerta con at."
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Eres administrador del servidor 'srv-backup'. Requerimientos:<br>1. Permitir que ÚNICAMENTE el usuario 'operador' y 'root' puedan programar trabajos con cron.<br>2. Crear una tarea en el crontab de 'operador' que ejecute '/opt/scripts/backup.sh' los domingos a las 02:30 AM redirigiendo la salida a '/var/log/backup.log'.<br>3. Programar con 'at' una tarea para hoy a las 16:00 (teatime) que compruebe si el disco tiene espacio libre."
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "\n<pre style=\"background:#0F172A; color:#E2E8F0; padding:10px; border-radius:6px; font-size:12px;\">\n# 1. Restringir acceso al servicio cron:\necho \"operador\" > /etc/cron.allow\necho \"root\" >> /etc/cron.allow\nrm -f /etc/cron.deny\n\n# 2. Instalar la tarea en el crontab de operador (6 campos):\n# Ejecutar como root: crontab -u operador -e\n# O inyectar directamente:\n(crontab -u operador -l 2>/dev/null; echo \"30 02 * * 0 /opt/scripts/backup.sh >> /var/log/backup.log 2>&1\") | crontab -u operador -\n\n# 3. Programar tarea puntual a las 16:00 (teatime):\necho \"df -h / > /tmp/espacio_disco.txt\" | at teatime\n</pre>\n",
+          "title": "Solución del desafío"
+        }
+      ]
+    },
+    {
+      "id": "107.2-slide-18",
+      "slideNumber": 18,
+      "title": "Checklist de Examen: Trampas Frecuentes en el Subtema 107.2",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Checklist de Examen: Trampas Frecuentes en el Subtema 107.2"
+        },
+        {
+          "type": "paragraph",
+          "text": "Puntos de fallo habituales detectados en las pruebas de certificación LPIC-1."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Oro: Si te piden borrar UNA tarea de at, usa 'atrm ID'. Si te piden borrar el crontab entero, es 'crontab -r'."
+        }
+      ]
+    },
+    {
+      "id": "107.2-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen del Subtema 107.2 y Preparación para el Laboratorio",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen del Subtema 107.2 y Preparación para el Laboratorio"
+        },
+        {
+          "type": "paragraph",
+          "text": "Automatización dominada, comandos clave y enlace a la práctica guiada."
+        }
+      ]
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-107-2-1",
+      "title": "Herramientas de Programación en Linux: ¿Cuándo usar cada una?",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Herramientas de Programación en Linux: ¿Cuándo usar cada una?"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué mecanismo elegir según si la tarea es periódica, puntual o el equipo se apaga con frecuencia?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⏱️ Los Cuatro Pilares de la Automatización en LPIC-1</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Objetivo 107.2</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; font-size:11px;\">\n    <!-- cron -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <div style=\"color:#1D4ED8; font-weight:bold; font-size:12px; margin-bottom:4px;\">1. cron</div>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • <strong>Tipo:</strong> Recurrente periódico.<br>\n        • <strong>Frecuencia:</strong> Desde minutos hasta meses.<br>\n        • <strong>Requisito:</strong> Servidor encendido a la hora exacta (si está apagado, se pierde la ejecución).\n      </div>\n    </div>\n\n    <!-- anacron -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <div style=\"color:#15803D; font-weight:bold; font-size:12px; margin-bottom:4px;\">2. anacron</div>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • <strong>Tipo:</strong> Recurrente tolerante a apagados.<br>\n        • <strong>Frecuencia:</strong> Días (1, 7, 30 días).<br>\n        • <strong>Característica:</strong> Si el PC estaba apagado a la hora fijada, ejecuta la tarea pendiente al arrancar.\n      </div>\n    </div>\n\n    <!-- at / batch -->\n    <div style=\"background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:8px; padding:10px;\">\n      <div style=\"color:#B45309; font-weight:bold; font-size:12px; margin-bottom:4px;\">3. at & batch</div>\n      <div style=\"color:#78350F; line-height:1.4;\">\n        • <strong>Tipo:</strong> Una sola vez (one-shot).<br>\n        • <strong>at:</strong> A una hora y fecha exacta del futuro.<br>\n        • <strong>batch:</strong> Solo cuando el load average de la CPU desciende por debajo de 0.8.\n      </div>\n    </div>\n\n    <!-- systemd timers -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #A855F7; border-radius:8px; padding:10px;\">\n      <div style=\"color:#7E22CE; font-weight:bold; font-size:12px; margin-bottom:4px;\">4. systemd timers</div>\n      <div style=\"color:#581C87; line-height:1.4;\">\n        • <strong>Tipo:</strong> Reemplazo moderno.<br>\n        • <strong>Archivos:</strong> <code>.timer</code> activando <code>.service</code>.<br>\n        • <strong>Ventajas:</strong> Registro centralizado en journalctl y soporte de temporizadores monótonos (desde arranque).\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569; display:flex; justify-content:space-between; align-items:center;\">\n    <span>🔔 <strong>Notificaciones:</strong> Tanto cron como at envían la salida estándar (stdout) y de errores (stderr) por correo electrónico local al usuario mediante la variable <code>MAILTO</code>.</span>\n    <span style=\"font-weight:700; color:#1E40AF;\">MAILTO=root</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: cron = recurrente en servidores 24/7; anacron = recurrente en equipos que se apagan; at / batch = ejecución única diferida; systemd timers = alternativa moderna integrada en journald."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-2-2",
+      "title": "Anatomía de /etc/crontab: La Sintaxis de 7 Columnas del Sistema",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Anatomía de /etc/crontab: La Sintaxis de 7 Columnas del Sistema"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo se estructuran los trabajos periódicos de mantenimiento global en Linux?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>📄 Estructura de /etc/crontab (Tareas de Nivel de Sistema)</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">7 Columnas</span>\n  </div>\n\n  <div style=\"background:#0F172A; color:#E2E8F0; padding:10px 14px; border-radius:8px; font-family:monospace; font-size:13px; letter-spacing:0.5px; margin-bottom:10px;\">\n    <span style=\"color:#38BDF8;\">30</span> <span style=\"color:#F43F5E;\">04</span> <span style=\"color:#A855F7;\">*</span> <span style=\"color:#EAB308;\">*</span> <span style=\"color:#22C55E;\">1-5</span> <span style=\"color:#FB923C; font-weight:bold;\">root</span> <span style=\"color:#4ADE80;\">/usr/local/bin/backup-diario.sh</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(5, 1fr) 1.2fr 1.8fr; gap:6px; font-size:10.5px;\">\n    <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:6px; border-radius:6px; text-align:center;\">\n      <strong style=\"color:#0284C7;\">1. Minuto</strong><br>\n      <code>30</code><br>\n      0 - 59\n    </div>\n    <div style=\"background:#FFF1F2; border:1px solid #FECDD3; padding:6px; border-radius:6px; text-align:center;\">\n      <strong style=\"color:#E11D48;\">2. Hora</strong><br>\n      <code>04</code><br>\n      0 - 23\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #E9D5FF; padding:6px; border-radius:6px; text-align:center;\">\n      <strong style=\"color:#9333EA;\">3. Día Mes</strong><br>\n      <code>*</code><br>\n      1 - 31\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FEF08A; padding:6px; border-radius:6px; text-align:center;\">\n      <strong style=\"color:#CA8A04;\">4. Mes</strong><br>\n      <code>*</code><br>\n      1 - 12\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; padding:6px; border-radius:6px; text-align:center;\">\n      <strong style=\"color:#16A34A;\">5. Día Sem</strong><br>\n      <code>1-5</code><br>\n      0-7 (Dom=0/7)\n    </div>\n    <div style=\"background:#FFF7ED; border:1px solid #FFEDD5; padding:6px; border-radius:6px; text-align:center;\">\n      <strong style=\"color:#EA580C;\">6. Usuario</strong><br>\n      <code>root</code><br>\n      Identidad ejecutora\n    </div>\n    <div style=\"background:#ECFDF5; border:1px solid #A7F3D0; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#059669;\">7. Comando</strong><br>\n      <code>/usr/local/bin/backup...</code><br>\n      Ruta absoluta obligatoria\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569;\">\n    🗣️ <strong>Traducción humana:</strong> <em>\"Ejecutar como root de lunes a viernes (1-5) a las 04:30 de la madrugada el script backup-diario.sh\"</em>.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: En /etc/crontab el SEXTO campo es el USUARIO que ejecuta la orden (ej. root). El séptimo campo es el comando completo."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-2-3",
+      "title": "Operadores de Tiempo y Atajos Especiales (@)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Operadores de Tiempo y Atajos Especiales (@)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Sintaxis para rangos, listas, intervalos de paso y alias predefinidos de crontab."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: '*/15 * * * *' ejecuta cada 15 minutos. El atajo '@reboot' ejecuta la tarea una sola vez al arrancar el demonio cron."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-2-4",
+      "title": "Comando crontab: Tablas de Tareas Personales de Usuario",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando crontab: Tablas de Tareas Personales de Usuario"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo gestiona cada usuario sus tareas periódicas sin acceso a /etc/crontab?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "# Crontab personal de Frank (6 campos: m h dom mon dow cmd)\nMAILTO=frank@empresa.com\n0 2 * * * /home/frank/scripts/limpiar_temporales.sh\n*/30 * * * 1-5 /home/frank/scripts/sincronizar_git.sh"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-e",
+              "",
+              "Edita el archivo crontab del usuario actual con el editor configurado en $VISUAL o $EDITOR."
+            ],
+            [
+              "-l",
+              "",
+              "Muestra por la salida estándar el contenido actual del archivo crontab."
+            ],
+            [
+              "-r",
+              "",
+              "ELIMINA (remove) por completo el archivo crontab del usuario."
+            ],
+            [
+              "-i",
+              "",
+              "Pide confirmación interactiva antes de eliminar el crontab con la opción -r."
+            ],
+            [
+              "-u USUARIO",
+              "",
+              "Especifica el nombre del usuario cuyo crontab se quiere ver, editar o borrar (solo root)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: ¡CUIDADO CON 'crontab -r'! Borra TODO tu archivo crontab sin pedir confirmación. En el crontab de usuario hay 6 campos (NO lleva nombre de usuario)."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-2-5",
+      "title": "Estructura Modular de Cron: /etc/cron.* y run-parts",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Estructura Modular de Cron: /etc/cron.* y run-parts"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo ejecutan los paquetes de Linux sus tareas de mantenimiento sin tocar /etc/crontab?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: 1.2fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- Directorios Periódicos -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"color:#15803D; font-weight:bold; font-size:12.5px; margin-bottom:6px;\">\n        📁 Directorios de Scripts Periódicos (run-parts)\n      </div>\n      <div style=\"color:#14532D; line-height:1.4; font-size:11px;\">\n        • <code>/etc/cron.hourly/</code> : Se ejecutan cada hora.<br>\n        • <code>/etc/cron.daily/</code> : Se ejecutan una vez al día (06:25).<br>\n        • <code>/etc/cron.weekly/</code> : Se ejecutan una vez a la semana.<br>\n        • <code>/etc/cron.monthly/</code> : Se ejecutan el primer día de mes.<br>\n        <div style=\"margin-top:6px; background:#DCFCE7; padding:4px 6px; border-radius:4px; font-weight:600;\">\n          ⚠️ Requisitos: Permisos de ejecución (<code>chmod +x</code>) y NOMBRE SIN PUNTO NI EXTENSIÓN en Debian (ej. 'logrotate', NO 'logrotate.sh').\n        </div>\n      </div>\n    </div>\n\n    <!-- Directorio /etc/cron.d/ -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px 12px;\">\n      <div style=\"color:#1D4ED8; font-weight:bold; font-size:12.5px; margin-bottom:6px;\">\n        📄 Directorio Modular /etc/cron.d/\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.4; font-size:11px;\">\n        • Permite a los paquetes instalar tareas con su propia periodicidad personalizada sin editar el /etc/crontab central.<br>\n        • <strong>Formato idéntico a /etc/crontab:</strong> 7 columnas (incluye el nombre del usuario antes del comando).<br>\n        • Ejemplos habituales: <code>/etc/cron.d/certbot</code>, <code>/etc/cron.d/sysstat</code>.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#FFFBEB; border:1px solid #FCD34D; border-radius:6px; padding:6px 10px; font-size:11px; color:#92400E;\">\n    💡 <strong>Comprobación manual con run-parts:</strong> Puedes probar la ejecución de todos los scripts diarios ejecutando: <code>run-parts --report /etc/cron.daily</code>.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: /etc/cron.d/ admite archivos de formato /etc/crontab completo (7 campos). Los directorios /etc/cron.{hourly,daily,weekly,monthly} contienen scripts ejecutables sin extensión."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-2-6",
+      "title": "anacron: Automatización para Equipos no Conectados 24/7",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "anacron: Automatización para Equipos no Conectados 24/7"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué pasa con las copias de seguridad de las 04:00 AM si tu portátil estaba suspendido o apagado?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>📄 Estructura de /etc/anacrontab</span>\n    <span style=\"font-size:10.5px; background:#F0FDF4; color:#16A34A; padding:2px 8px; border-radius:10px; font-weight:700;\">4 Campos</span>\n  </div>\n\n  <div style=\"background:#0F172A; color:#E2E8F0; padding:10px 14px; border-radius:8px; font-family:monospace; font-size:13.5px; letter-spacing:0.5px; margin-bottom:10px;\">\n    <span style=\"color:#38BDF8;\">1</span>    <span style=\"color:#F43F5E;\">5</span>    <span style=\"color:#EAB308;\">cron.daily</span>    <span style=\"color:#4ADE80;\">run-parts --report /etc/cron.daily</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr 1.5fr; gap:8px; font-size:11px;\">\n    <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#0284C7;\">1. Período en días</strong><br>\n      <code>1</code> (diario), <code>7</code> (semanal) o <code>@monthly</code>.<br>\n      Frecuencia mínima en días entre ejecuciones.\n    </div>\n\n    <div style=\"background:#FFF1F2; border:1px solid #FECDD3; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#E11D48;\">2. Retardo (minutos)</strong><br>\n      <code>5</code> minutos.<br>\n      Espera tras encender el PC para no saturar el arranque del sistema.\n    </div>\n\n    <div style=\"background:#FEFCE8; border:1px solid #FEF08A; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#CA8A04;\">3. Identificador</strong><br>\n      <code>cron.daily</code><br>\n      Nombre del fichero de marca en <code>/var/spool/anacron/</code>.\n    </div>\n\n    <div style=\"background:#ECFDF5; border:1px solid #A7F3D0; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#059669;\">4. Comando</strong><br>\n      <code>run-parts /etc/cron.daily</code><br>\n      Orden o script del sistema a ejecutar.\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569;\">\n    🔄 <strong>Funcionamiento:</strong> Al iniciar sesión, anacron compara la fecha actual con la fecha guardada en <code>/var/spool/anacron/cron.daily</code>. Si la diferencia es &gt;= 1 día, espera 5 minutos y ejecuta la tarea.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: anacron NO trabaja con horas ni minutos fijos del reloj; trabaja con INTERVALOS EN DÍAS y un RETARDO en minutos tras el arranque."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-2-7",
+      "title": "Control de Acceso a Cron: /etc/cron.allow y /etc/cron.deny",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Control de Acceso a Cron: /etc/cron.allow y /etc/cron.deny"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Quién tiene autorización para programar tareas periódicas en el servidor?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Estado de /etc/cron.allow",
+            "Estado de /etc/cron.deny",
+            "Resultado de Acceso al Servicio cron"
+          ],
+          "rows": [
+            [
+              "<strong>Existe</strong> y contiene usuarios",
+              "Ignorado (da igual si existe o no)",
+              "✅ <strong>SOLO</strong> los usuarios listados en <code>cron.allow</code> pueden programar tareas. El resto queda bloqueado."
+            ],
+            [
+              "<strong>Existe pero está VACÍO</strong>",
+              "Ignorado",
+              "❌ <strong>NADIE</strong> excepto el superusuario <code>root</code> puede programar tareas."
+            ],
+            [
+              "<strong>NO existe</strong>",
+              "<strong>Existe</strong> con usuarios listados",
+              "🚫 <strong>TODOS</strong> pueden programar tareas, <strong>EXCEPTO</strong> los usuarios listados en <code>cron.deny</code>."
+            ],
+            [
+              "<strong>NO existe</strong>",
+              "<strong>Existe pero está VACÍO</strong>",
+              "✅ <strong>TODOS los usuarios</strong> del sistema tienen permiso para programar tareas con crontab."
+            ],
+            [
+              "<strong>NO existe</strong>",
+              "<strong>NO existe</strong>",
+              "Depende de la distribución (en Debian/Ubuntu permite a todos; en RHEL solo root)."
+            ]
+          ],
+          "caption": "Control de Acceso a Cron: /etc/cron.allow y /etc/cron.deny"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Si existe /etc/cron.allow, /etc/cron.deny es COMPLETAMENTE IGNORADO. Si ambos faltan, la política predeterminada suele permitir a todos los usuarios o solo a root."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-2-8",
+      "title": "Comando at: Programación de Trabajos Únicos Diferidos",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando at: Programación de Trabajos Únicos Diferidos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Ejecución puntual en el futuro con un lenguaje natural extraordinariamente flexible."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "job 14 at Fri Oct 31 16:00:00 2026"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-f ARCHIVO",
+              "",
+              "Lee los comandos desde un archivo de script en lugar de la entrada interactiva de consola."
+            ],
+            [
+              "-m",
+              "",
+              "Envía un correo al usuario cuando la tarea finalice, incluso si no produjo ninguna salida."
+            ],
+            [
+              "-q COLA",
+              "",
+              "Asigna el trabajo a una cola específica (de 'a' a 'z'; las colas más altas tienen menor prioridad)."
+            ],
+            [
+              "-l",
+              "",
+              "Alias de atq: lista los trabajos en cola programados por el usuario."
+            ],
+            [
+              "-d",
+              "",
+              "Alias de atrm: borra uno o más trabajos especificados por su identificador."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'at' lee las órdenes de la entrada estándar y finaliza con 'Ctrl+D' (EOF). Utiliza '/bin/sh' para ejecutar las tareas, preservando las variables de entorno de la sesión actual."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-2-9",
+      "title": "Especificaciones de Tiempo en at: Lenguaje y Palabras Clave",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Especificaciones de Tiempo en at: Lenguaje y Palabras Clave"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué expresiones temporales son válidas según las especificaciones evaluadas por LPI?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Palabras clave reservadas: 'now', 'noon' (12:00), 'midnight' (00:00), 'teatime' (16:00), 'today', 'tomorrow'. Los incrementos se expresan con '+' (ej. 'now + 30 minutes')."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-2-10",
+      "title": "Supervisión y Control de at: atq, atrm y el comando batch",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Supervisión y Control de at: atq, atrm y el comando batch"
+        },
+        {
+          "type": "paragraph",
+          "text": "Gestión de la cola de espera, cancelación de trabajos y ejecución sujeta a carga de CPU."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "14      Fri Oct 31 16:00:00 2026 a frank\n13      Sat Nov  1 09:30:00 2026 a laura\n12      Sat Nov  1 11:15:00 2026 a root\nroot@debian12:~# atrm 13\nroot@debian12:~# atq\n14      Fri Oct 31 16:00:00 2026 a frank\n12      Sat Nov  1 11:15:00 2026 a root"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "atq (o at -l)",
+              "",
+              "Lista las tareas pendientes mostrando: ID, fecha/hora programada, letra de cola y propietario."
+            ],
+            [
+              "atrm (o at -d)",
+              "",
+              "Elimina una o más tareas de la cola mediante su ID (ej. 'atrm 12 14')."
+            ],
+            [
+              "batch",
+              "",
+              "Variante de at sin argumento de hora: ejecuta los comandos cuando la carga del sistema es inferior a 0.8."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'atq' como usuario normal solo muestra sus propias tareas; ejecutado como 'root' lista las tareas pendientes de TODOS los usuarios. 'batch' lanza trabajos solo si load average < 0.8."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1447 @@
+{
+  "id": "104.7",
+  "topicId": "104",
+  "examId": "101",
+  "title": "Encontrar archivos de sistema y ubicar archivos en el lugar correspondiente",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 30,
+  "objectives": [
+    "Estándar FHS, locate, updatedb, /etc/updatedb.conf, find, which, whereis y type (Alta Densidad LPIC-1)",
+    "Dominio técnico de las herramientas y configuración del subtema 104.7"
+  ],
+  "keyTerms": [
+    "Encontrar archivos de sistema y ubicar archivos en el lugar correspondiente",
+    "Tema 104"
+  ],
+  "commands": [
+    "locate",
+    "which",
+    "type"
+  ],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "104.7-slide-1",
+      "slideNumber": 1,
+      "title": "Encontrar archivos de sistema y ubicar archivos en el FHS",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Encontrar archivos de sistema y ubicar archivos en el FHS"
+        },
+        {
+          "type": "paragraph",
+          "text": "Estándar FHS, locate, updatedb, /etc/updatedb.conf, find, which, whereis y type (Modo Examen)"
+        }
+      ],
+      "notes": "Finalizamos el Tema 104 y todo el examen 101-500 con el subtema 104.7 (peso 2). Conocer el mapa de directorios estándar FHS (Filesystem Hierarchy Standard) y las utilidades para localizar programas y ficheros es indispensable. Aprenderemos dónde va cada archivo y las diferencias entre locate, find, which, whereis y type."
+    },
+    {
+      "id": "104.7-slide-2",
+      "slideNumber": 2,
+      "title": "La Matriz Bidimensional del Estándar FHS",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "La Matriz Bidimensional del Estándar FHS"
+        },
+        {
+          "type": "paragraph",
+          "text": "El estándar FHS (Filesystem Hierarchy Standard) clasifica todos los directorios en una cuadrícula de dos dimensiones:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Datos Compartibles (Shareable) vs No Compartibles** — Compartibles: pueden residir en un servidor NFS y montarse en múltiples máquinas clientes (ej: /usr, /opt). No compartibles: exclusivos de este host específico (ej: /etc, /boot).",
+            "**Datos Estáticos (Static) vs Variables (Variable)** — Estáticos: no cambian sin intervención manual del administrador (ej: binarios en /bin, librerías en /lib). Variables: crecen o se modifican continuamente por el sistema (ej: logs y colas en /var, temporales en /tmp).",
+            "**Interoperabilidad entre distribuciones** — 🎯 El estándar FHS garantiza que cualquier administrador o software sepa exactamente dónde encontrar los archivos de configuración (/etc) sin importar si es Debian, Red Hat, SUSE o Arch."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Matriz FHS 2x2 -->\n  <div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:12px; padding:14px;\">\n    <div style=\"display:grid; grid-template-columns: 120px 1fr 1fr; gap:10px; font-family:monospace;\">\n      \n      <!-- Cabeceras Columnas -->\n      <div></div>\n      <div style=\"background:#DBEAFE; color:#1E40AF; font-weight:800; font-size:13px; text-align:center; padding:8px; border-radius:6px;\">\n        COMPARTIBLE (Shareable)<br><span style=\"font-size:10.5px; font-weight:normal; color:#2563EB;\">Apto para montar vía red NFS</span>\n      </div>\n      <div style=\"background:#FEF3C7; color:#92400E; font-weight:800; font-size:13px; text-align:center; padding:8px; border-radius:6px;\">\n        NO COMPARTIBLE (Unshareable)<br><span style=\"font-size:10.5px; font-weight:normal; color:#B45309;\">Exclusivo de este host físico</span>\n      </div>\n\n      <!-- Fila 1: Estático -->\n      <div style=\"background:#E0E7FF; color:#3730A3; font-weight:800; font-size:12.5px; display:flex; align-items:center; justify-content:center; text-align:center; border-radius:6px; padding:6px;\">\n        ESTÁTICO<br><span style=\"font-size:10px; font-weight:normal;\">No cambia sin admin</span>\n      </div>\n      <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:10px; font-size:12.5px; color:#1E3A8A;\">\n        <div style=\"font-weight:800; color:#1D4ED8; font-size:14px; margin-bottom:4px;\">/usr &bull; /opt</div>\n        Binarios de aplicaciones, bibliotecas compartidas, documentación (/usr/share).\n      </div>\n      <div style=\"background:#FFFBEB; border:1px solid #FDE68A; border-radius:6px; padding:10px; font-size:12.5px; color:#78350F;\">\n        <div style=\"font-weight:800; color:#B45309; font-size:14px; margin-bottom:4px;\">/etc &bull; /boot</div>\n        Configuración de este equipo (/etc) y archivos del kernel/GRUB de arranque (/boot).\n      </div>\n\n      <!-- Fila 2: Variable -->\n      <div style=\"background:#DCFCE7; color:#166534; font-weight:800; font-size:12.5px; display:flex; align-items:center; justify-content:center; text-align:center; border-radius:6px; padding:6px;\">\n        VARIABLE<br><span style=\"font-size:10px; font-weight:normal;\">Crece por el SO</span>\n      </div>\n      <div style=\"background:#ECFDF5; border:1px solid #BBF7D0; border-radius:6px; padding:10px; font-size:12.5px; color:#064E3B;\">\n        <div style=\"font-weight:800; color:#15803D; font-size:14px; margin-bottom:4px;\">/var/mail &bull; /var/spool/news</div>\n        Buzones de correo electrónico de red y colas de mensajes compartidas.\n      </div>\n      <div style=\"background:#FEF2F2; border:1px solid #FCA5A5; border-radius:6px; padding:10px; font-size:12.5px; color:#7F1D1D;\">\n        <div style=\"font-weight:800; color:#991B1B; font-size:14px; margin-bottom:4px;\">/var/log &bull; /run &bull; /tmp</div>\n        Logs locales del sistema, PIDs y sockets volátiles (/run), archivos temporales.\n      </div>\n\n    </div>\n  </div>\n\n  <!-- Alerta de examen: FHS -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:8px 16px; display:flex; align-items:center; gap:12px;\">\n    <span style=\"font-size:24px;\">🎯</span>\n    <div style=\"font-size:12.5px; color:#92400E; line-height:1.45;\">\n      <strong>Clave de Examen:</strong> El estándar FHS garantiza la <strong>interoperabilidad</strong> entre todas las distribuciones Linux. Un administrador sabe que en Debian, Red Hat o SUSE la configuración de host estará siempre en <code>/etc</code> y nunca habrá binarios ejecutables allí.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: El FHS clasifica los datos en dos ejes: Compartibles frente a No compartibles, y Estáticos frente a Variables."
+        }
+      ],
+      "notes": "Muestra que /etc es estático y no compartible, mientras que /usr es estático y compartible."
+    },
+    {
+      "id": "104.7-slide-3",
+      "slideNumber": 3,
+      "title": "Mapa Maestro de Directorios Esenciales de la Raíz (/)",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Mapa Maestro de Directorios Esenciales de la Raíz (/)"
+        },
+        {
+          "type": "paragraph",
+          "text": "El propósito exacto de cada directorio de primer nivel evaluado en LPIC-1:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Directorio",
+            "Contenido y Propósito en el Estándar FHS",
+            "Reglas y Advertencias Críticas de Examen"
+          ],
+          "rows": [
+            [
+              "/etc",
+              "🎯 Archivos de configuración estáticos específicos de este equipo.",
+              "Solo archivos de texto de configuración; ¡prohibido almacenar binarios ejecutables!"
+            ],
+            [
+              "/bin / /sbin",
+              "🎯 Comandos binarios esenciales (/bin usuario general, /sbin administración root).",
+              "Necesarios para arrancar el sistema y en modo monousuario de rescate."
+            ],
+            [
+              "/dev",
+              "🎯 Archivos de dispositivo especiales (bloque y carácter).",
+              "Gestionados dinámicamente por udev en memoria RAM (devtmpfs)."
+            ],
+            [
+              "/lib / /lib64",
+              "🎯 Bibliotecas compartidas esenciales del SO y módulos del kernel (/lib/modules).",
+              "Librerías dinámicas necesarias para arrancar los binarios de /bin y /sbin."
+            ],
+            [
+              "/boot / /root",
+              "🎯 /boot: kernel (vmlinuz), initramfs y GRUB. /root: inicio de superusuario.",
+              "/boot accesible por firmware BIOS/UEFI. /root siempre en raíz física (/)."
+            ]
+          ],
+          "caption": "Mapa Maestro de Directorios Esenciales de la Raíz (/)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: /etc almacena SOLO configuración; /bin ejecutables de usuario; /sbin ejecutables de administración; /lib bibliotecas y módulos del kernel."
+        }
+      ],
+      "notes": "Pregunta de examen: '¿Qué tipo de archivos residen en /etc?'. Respuesta: Archivos de configuración de host."
+    },
+    {
+      "id": "104.7-slide-4",
+      "slideNumber": 4,
+      "title": "Directorios de Datos Variables y Aplicaciones: /var, /usr, /opt y /srv",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Directorios de Datos Variables y Aplicaciones: /var, /usr, /opt y /srv"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Dónde se guardan los datos servidos, los paquetes externos y los logs?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Directorio",
+            "Propósito en el Examen LPIC-1",
+            "Subdirectorios Esenciales Evaluados"
+          ],
+          "rows": [
+            [
+              "/var",
+              "🎯 Datos variables que cambian continuamente durante la operación del sistema.",
+              "🎯 /var/log (archivos de log), /var/spool (colas de impresión y correo), /var/mail, /var/cache (caché APT/DNF)."
+            ],
+            [
+              "/usr",
+              "🎯 Jerarquía secundaria de solo lectura compartible por red.",
+              "/usr/bin (la mayoría de comandos de usuario), /usr/sbin, /usr/lib, /usr/share (datos independientes de arquitectura)."
+            ],
+            [
+              "/opt",
+              "🎯 Paquetes de software adicionales de terceros (Add-on applications).",
+              "Aplicaciones propietarias o comerciales independientes (ej: /opt/google/chrome)."
+            ],
+            [
+              "/srv",
+              "🎯 Datos de servicios servidos por este sistema hacia la red.",
+              "Datos de servidores web (/srv/www), FTP (/srv/ftp) o repositorios de software."
+            ],
+            [
+              "/tmp frente a /var/tmp",
+              "🎯 /tmp se usa para archivos temporales que pueden vaciarse en cada reinicio; /var/tmp almacena temporales que deben PERSISTIR entre reinicios.",
+              "Ambos disponen de Sticky Bit (1777)."
+            ]
+          ],
+          "caption": "Directorios de Datos Variables y Aplicaciones: /var, /usr, /opt y /srv"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Diferencias Clave de Examen: /opt = software adicional empaquetado por terceros; /srv = datos de servicios de red; /var/tmp = temporales que sobreviven al reinicio."
+        }
+      ],
+      "notes": "Muestra que en distribuciones modernas /bin y /sbin son enlaces simbólicos a /usr/bin y /usr/sbin (el movimiento UsrMerge)."
+    },
+    {
+      "id": "104.7-slide-5",
+      "slideNumber": 5,
+      "title": "La Jerarquía /usr/local: Software Compilado a Mano",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "La Jerarquía /usr/local: Software Compilado a Mano"
+        },
+        {
+          "type": "paragraph",
+          "text": "El estándar FHS reserva /usr/local para aislar el software del administrador y evitar colisiones con el gestor de paquetes:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Aislamiento total del gestor de paquetes (dpkg / rpm)** — 🎯 El gestor de paquetes oficial de la distribución NUNCA toca ni sobreescribe nada dentro de '/usr/local/'. Es el feudo exclusivo del administrador del sistema.",
+            "**Estructura idéntica en miniatura** — Contiene su propio árbol: '/usr/local/bin' (ejecutables compilados), '/usr/local/etc' (sus configs), '/usr/local/lib' (sus librerías) y '/usr/local/share/man'.",
+            "**Prioridad en la variable PATH** — 🎯 En la variable $PATH, '/usr/local/bin' aparece ANTES que '/usr/bin'. Si compilas una versión más nueva de un programa, el sistema ejecutará la tuya con preferencia sobre la de la distribución."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Diagrama de Separación de Responsabilidad -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px;\">\n    \n    <!-- Gestor de Paquetes -->\n    <div style=\"background:#F8FAFC; border:2px solid #3B82F6; border-radius:10px; padding:12px;\">\n      <div style=\"font-size:13px; font-weight:800; color:#1E40AF; margin-bottom:6px;\">\n        📦 Gestor de Paquetes (dpkg / apt / rpm)\n      </div>\n      <div style=\"font-size:12px; color:#334155; line-height:1.45; margin-bottom:6px;\">\n        Instala binarios en <code>/usr/bin</code> y librerías en <code>/usr/lib</code>. Al actualizar un paquete, estos archivos se sobreescriben automáticamente.\n      </div>\n      <div style=\"background:#EFF6FF; padding:4px 8px; border-radius:4px; font-family:monospace; font-size:11.5px; color:#1E40AF;\">\n        NUNCA toca nada en /usr/local/\n      </div>\n    </div>\n\n    <!-- Administrador Local -->\n    <div style=\"background:#F8FAFC; border:2px solid #10B981; border-radius:10px; padding:12px;\">\n      <div style=\"font-size:13px; font-weight:800; color:#065F46; margin-bottom:6px;\">\n        🛠️ Administrador Local (make install)\n      </div>\n      <div style=\"font-size:12px; color:#334155; line-height:1.45; margin-bottom:6px;\">\n        Instala código compilado a mano en <code>/usr/local/bin</code> y sus configs en <code>/usr/local/etc</code>. Inmune a las actualizaciones del sistema.\n      </div>\n      <div style=\"background:#ECFDF5; padding:4px 8px; border-radius:4px; font-family:monospace; font-size:11.5px; color:#065F46;\">\n        Destino por defecto de código fuente\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Prioridad en $PATH -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:10px 16px; display:flex; align-items:center; justify-content:space-between;\">\n    <div>\n      <div style=\"font-size:13px; font-weight:800; color:#92400E;\">🎯 REGLA DE ORO EN VARIABLE $PATH:</div>\n      <div style=\"font-family:monospace; font-size:14px; font-weight:800; color:#B45309; margin-top:2px;\">\n        PATH=/usr/local/bin:/usr/bin:/bin\n      </div>\n    </div>\n    <div style=\"font-size:12px; color:#78350F; background:#FEF3C7; padding:6px 10px; border-radius:6px;\">\n      <code>/usr/local/bin</code> tiene <strong>mayor prioridad</strong> que <code>/usr/bin</code>.<br>\n      El sistema ejecuta la versión compilada por el admin antes que la de la distro.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: El software compilado localmente por el administrador debe instalarse en '/usr/local/' para no interferir con las actualizaciones del gestor de paquetes."
+        }
+      ],
+      "notes": "Explica que cuando haces './configure && make && sudo make install', el destino por defecto siempre es /usr/local."
+    },
+    {
+      "id": "104.7-slide-6",
+      "slideNumber": 6,
+      "title": "Búsqueda Indexada Ultrarrápida con locate",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Búsqueda Indexada Ultrarrápida con locate"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo encontrar cualquier archivo en milisegundos sin hacer sufrir al disco duro?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "locate [-i|-b|-c|-r] <patrón>",
+          "title": "Consultar la base de datos indexada local para localizar nombres de archivo al instante"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "locate -b '\\sshd_config'; locate -c '*.conf'",
+              "output": "/etc/ssh/sshd_config\n482"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "locate <patrón>",
+              "locate",
+              "Busca el patrón en cualquier parte de la ruta completa dentro de la base de datos indexada."
+            ],
+            [
+              "-i, --ignore-case",
+              "-i (Case insensitive)",
+              "🎯 Ignora mayúsculas y minúsculas en la búsqueda."
+            ],
+            [
+              "-b, --basename",
+              "-b (Solo nombre)",
+              "🎯 Clave de Examen: Busca coincidencias ÚNICAMENTE en el nombre final del archivo, ignorando carpetas padre."
+            ],
+            [
+              "-c, --count",
+              "-c (Conteo)",
+              "🎯 Muestra únicamente el número total de archivos encontrados."
+            ],
+            [
+              "-e, --existing",
+              "-e (Solo existentes)",
+              "Comprueba si el archivo existe realmente en disco antes de imprimirlo (omite archivos borrados)."
+            ],
+            [
+              "updatedb previo",
+              "⚠️ Limitación BD",
+              "🎯 No ve archivos creados después de la última ejecución de updatedb."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; gap:12px; margin-top:10px;\">\n  <div style=\"flex:1; background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:10px 14px;\">\n    <div style=\"font-size:12px; font-weight:800; color:#1E40AF; margin-bottom:4px; text-transform:uppercase;\">\n      locate (Búsqueda Indexada en RAM)\n    </div>\n    <div style=\"font-size:12px; color:#1E3A8A; line-height:1.4;\">\n      Consulta el archivo <code>/var/lib/mlocate/mlocate.db</code>. Devuelve resultados en <strong>milisegundos</strong> con cero carga de I/O en disco.\n    </div>\n  </div>\n  <div style=\"flex:1; background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:10px 14px;\">\n    <div style=\"font-size:12px; font-weight:800; color:#166534; margin-bottom:4px; text-transform:uppercase;\">\n      find (Rastreo en Vivo en Disco)\n    </div>\n    <div style=\"font-size:12px; color:#14532D; line-height:1.4;\">\n      Recorre la estructura de directorios en el <strong>disco físico en tiempo real</strong>. Es más lento pero detecta ficheros creados hace un segundo.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'locate' no busca en el disco duro en tiempo real; consulta una base de datos indexada (/var/lib/mlocate/mlocate.db). Para buscar lo recién creado se debe usar 'updatedb' o 'find'."
+        }
+      ],
+      "notes": "Muestra a la clase: haz touch nuevo.txt, corre locate nuevo.txt (no sale), corre sudo updatedb y luego locate (¡ahora sí sale!)."
+    },
+    {
+      "id": "104.7-slide-7",
+      "slideNumber": 7,
+      "title": "Actualización y Exclusiones: updatedb y /etc/updatedb.conf",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Actualización y Exclusiones: updatedb y /etc/updatedb.conf"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo se construye el índice de locate y cómo se configuran las exclusiones de carpetas?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px; display:flex; justify-content:space-between; gap:12px; font-size:12px;\">\n  <div style=\"flex:1; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:8px 10px;\">\n    <strong style=\"color:#1E40AF;\">PRUNEPATHS (Exclusión de Rutas):</strong><br>\n    <code>/tmp /var/spool /media /mnt</code> &rarr; No indexa temporales ni pendrives extraíbles.\n  </div>\n  <div style=\"flex:1; background:#FEF3C7; border:1px solid #FDE68A; border-radius:6px; padding:8px 10px;\">\n    <strong style=\"color:#92400E;\">PRUNEFS (Exclusión de Sistemas):</strong><br>\n    <code>NFS cifs proc sysfs</code> &rarr; No satura la red indexando recursos compartidos.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'PRUNEPATHS' excluye rutas en /etc/updatedb.conf; 'PRUNEFS' excluye tipos de sistemas de archivos (como NFS) para evitar colapsar la red."
+        }
+      ],
+      "notes": "Explica que si updatedb indexara NFS, saturaría la red de la empresa todas las noches."
+    },
+    {
+      "id": "104.7-slide-8",
+      "slideNumber": 8,
+      "title": "Localización de Programas y Documentación: which y whereis",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Localización de Programas y Documentación: which y whereis"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Dónde reside el binario ejecutable y dónde están sus páginas de manual oficial?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "which <comando> | whereis [-b|-m|-s] <comando>",
+          "title": "Localizar rutas de ejecutables en PATH o encontrar código fuente y manuales"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "which passwd; whereis passwd",
+              "output": "/usr/bin/passwd\npasswd: /usr/bin/passwd /etc/passwd /usr/share/man/man1/passwd.1.gz /usr/share/man/man5/passwd.5.gz"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "which <cmd>",
+              "which ($PATH)",
+              "🎯 Clave de Examen: Busca ÚNICAMENTE en las carpetas de la variable $PATH y devuelve el primer ejecutable."
+            ],
+            [
+              "which -a <cmd>",
+              "-a (Todas)",
+              "Muestra todas las coincidencias en $PATH, no solo la primera."
+            ],
+            [
+              "whereis <cmd>",
+              "whereis (Completo)",
+              "🎯 Busca en un conjunto fijo de rutas estándar del sistema binarios, manuales y fuentes."
+            ],
+            [
+              "whereis -b",
+              "-b (Binary)",
+              "🎯 Clave de Examen: Muestra ÚNICAMENTE las rutas de archivos binarios ejecutables."
+            ],
+            [
+              "whereis -m",
+              "-m (Manual)",
+              "🎯 Clave de Examen: Muestra ÚNICAMENTE las rutas de páginas del manual man."
+            ],
+            [
+              "whereis -s",
+              "-s (Source)",
+              "Muestra únicamente el código fuente del comando si está presente."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; gap:12px; margin-top:10px; font-family:monospace; text-align:center;\">\n  <div style=\"flex:1; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:8px 4px;\">\n    <div style=\"font-size:11px; color:#1E40AF; font-weight:bold;\">Solo binarios en $PATH</div>\n    <div style=\"font-size:15px; font-weight:800; color:#1D4ED8; margin:2px 0;\">which grep</div>\n    <div style=\"font-size:10.5px; color:#3B82F6;\">/usr/bin/grep</div>\n  </div>\n  <div style=\"flex:1; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:8px 4px;\">\n    <div style=\"font-size:11px; color:#166534; font-weight:bold;\">Binarios y Manuales</div>\n    <div style=\"font-size:15px; font-weight:800; color:#15803D; margin:2px 0;\">whereis grep</div>\n    <div style=\"font-size:10.5px; color:#22C55E;\">/usr/bin/grep /usr/share/man/...</div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Diferencia Vital: 'which' solo busca ejecutables en $PATH; 'whereis' busca binarios (-b) y manuales (-m) en rutas estándar del sistema."
+        }
+      ],
+      "notes": "Muestra que 'whereis -m passwd' devuelve exactamente /usr/share/man/man1/passwd.1.gz y man5/passwd.5.gz."
+    },
+    {
+      "id": "104.7-slide-9",
+      "slideNumber": 9,
+      "title": "Clasificación con type: Comandos Internos (Builtins)",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Clasificación con type: Comandos Internos (Builtins)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué 'which cd' o 'which history' no devuelve nada y qué herramienta resuelve el misterio?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "type [-a|-t] <comando>",
+          "title": "Averiguar si una orden es un comando interno de Bash, un alias, una función o un archivo en disco"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "type cd; type -t cd; type -t ls; type -t grep",
+              "output": "cd is a shell builtin\nbuiltin\nalias\nfile"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "type <cmd>",
+              "type (Descriptivo)",
+              "🎯 Clave de Examen: Describe detalladamente la naturaleza del comando en lenguaje natural."
+            ],
+            [
+              "type -t <cmd>",
+              "-t (Clasificador)",
+              "🎯 Clave de Examen: Devuelve una sola palabra: builtin, alias, file o function."
+            ],
+            [
+              "type -a <cmd>",
+              "-a (Todas)",
+              "Muestra todas las definiciones del comando en orden de prioridad de resolución de Bash."
+            ],
+            [
+              "¿Por qué which falla?",
+              "Fallo de which",
+              "🎯 which solo busca archivos en disco en $PATH; falla ante builtins como 'cd', 'export' o 'history'."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px;\">\n  <div style=\"font-size:12px; font-weight:800; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;\">\n    Las 4 Categorías que devuelve type -t\n  </div>\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-family:monospace; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:6px 2px;\">\n      <div style=\"font-size:13px; font-weight:800; color:#1E40AF;\">builtin</div>\n      <div style=\"font-size:10px; color:#2563EB;\">cd, export, history</div>\n    </div>\n    <div style=\"background:#FEF3C7; border:1px solid #FDE68A; border-radius:6px; padding:6px 2px;\">\n      <div style=\"font-size:13px; font-weight:800; color:#92400E;\">alias</div>\n      <div style=\"font-size:10px; color:#B45309;\">ls='ls --color=auto'</div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:6px 2px;\">\n      <div style=\"font-size:13px; font-weight:800; color:#166534;\">file</div>\n      <div style=\"font-size:10px; color:#15803D;\">/usr/bin/find (disco)</div>\n    </div>\n    <div style=\"background:#F5F3FF; border:1px solid #DDD6FE; border-radius:6px; padding:6px 2px;\">\n      <div style=\"font-size:13px; font-weight:800; color:#5B21B6;\">function</div>\n      <div style=\"font-size:10px; color:#6D28D9;\">Función bash en memoria</div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Fija de Certificación: 'which cd' no encuentra nada porque 'cd' es un comando interno de la shell (shell builtin). Para identificarlo se debe usar 'type cd'."
+        }
+      ],
+      "notes": "Pide a los alumnos que comprueben la salida de 'type -t' para cada tipo de comando."
+    },
+    {
+      "id": "104.7-slide-10",
+      "slideNumber": 10,
+      "title": "Gran Matriz Comparativa de Búsqueda de Archivos",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Gran Matriz Comparativa de Búsqueda de Archivos"
+        },
+        {
+          "type": "paragraph",
+          "text": "El mapa de decisión definitivo: qué herramienta usar según el objetivo:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Herramienta",
+            "¿Dónde busca?",
+            "¿En tiempo real o en BD?",
+            "¿Qué encuentra?"
+          ],
+          "rows": [
+            [
+              "find",
+              "🎯 En el disco duro recorriendo el árbol recursivamente.",
+              "🎯 Tiempo real (100% actualizado al instante).",
+              "Cualquier archivo, directorio o enlace según atributos, fechas, tamaños y tipos."
+            ],
+            [
+              "locate",
+              "🎯 En la base de datos local (/var/lib/mlocate/mlocate.db).",
+              "Caché indexada (no ve archivos recién creados).",
+              "Nombres de archivo y rutas completas a velocidad instantánea."
+            ],
+            [
+              "which",
+              "🎯 Exclusivamente en las rutas listadas en la variable $PATH.",
+              "Tiempo real sobre las carpetas de $PATH.",
+              "🎯 Solo archivos binarios ejecutables."
+            ],
+            [
+              "whereis",
+              "En directorios estándar fijos (/bin, /sbin, /usr/share/man).",
+              "Tiempo real sobre rutas estándar.",
+              "🎯 Binarios (-b), páginas de manual man (-m) y código fuente (-s)."
+            ],
+            [
+              "type",
+              "🎯 En la memoria de la shell Bash activa.",
+              "Tiempo real en la sesión de shell.",
+              "🎯 Clasifica si es builtin, alias, función o archivo en disco."
+            ]
+          ],
+          "caption": "Gran Matriz Comparativa de Búsqueda de Archivos"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Decisión de Examen: Para buscar por metadatos (tamaño, fecha) -> find. Para buscar por nombre al instante -> locate. Para ver ejecutables en PATH -> which. Para manuales -> whereis -m. Para builtins -> type."
+        }
+      ],
+      "notes": "Esta diapositiva resume todos los motores de búsqueda de Linux en una sola tabla."
+    },
+    {
+      "id": "104.7-slide-11",
+      "slideNumber": 11,
+      "title": "Trampas Clásicas de Examen en el FHS y Búsquedas",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Trampas Clásicas de Examen en el FHS y Búsquedas"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 3 descuidos más habituales en las preguntas de localización de ficheros:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Confundir /opt con /srv y /usr/local** — 🎯 /opt es para aplicaciones empaquetadas por terceros (ej: Google Chrome); /srv es para datos servidos hacia la red (ej: páginas web o FTP); /usr/local es para software compilado a mano localmente con make install.",
+            "**2. Creer que locate sabe si un archivo fue borrado** — Si borraste un archivo hace 10 minutos, locate seguirá mostrándolo en la lista porque sigue anotado en la base de datos hasta que root ejecute 'updatedb'.",
+            "**3. Olvidar que /tmp se limpia y /var/tmp no** — Si un programa necesita guardar un archivo temporal grande que debe sobrevivir al reinicio del servidor, NO debe guardarlo en /tmp (que suele vaciarse o ser tmpfs en RAM), sino en /var/tmp."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Mnemotecnia Rápida: /opt = paquetes de terceros; /srv = servicios de red; /usr/local = compilado local; locate necesita updatedb; /var/tmp sobrevive a reboots."
+        }
+      ],
+      "notes": "Repasa estos tres conceptos antes de los ejercicios oficiales."
+    },
+    {
+      "id": "104.7-slide-12",
+      "slideNumber": 12,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: FHS y locate)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: FHS y locate)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Aplica las directrices del estándar FHS y la indexación de locate para resolver casos de examen."
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 1 (Oficial Pág 550): Según el estándar FHS, ¿en qué directorio exacto deben almacenarse los archivos de configuración estáticos de los servicios instalados en el equipo local? — Comando: `/etc (o /etc/<nombre_servicio>/)` (El estándar FHS reserva /etc exclusivamente para archivos de configuración específicos del host y prohíbe alojar ejecutables en él.)",
+            "Caso 2 (Oficial Pág 550): Acabas de instalar un paquete y necesitas buscar inmediatamente un archivo llamado 'apache2.conf' con locate pero no aparece en los resultados. ¿Qué comando previo debes ejecutar como root? — Comando: `sudo updatedb` (updatedb lee el árbol de directorios y reconstruye la base de datos indexada (/var/lib/mlocate/mlocate.db) para que locate pueda encontrar los nuevos ficheros.)",
+            "Caso 3 (Oficial Pág 550): ¿En qué directorio del estándar FHS deben residir los datos que un servidor web ofrece hacia los clientes de red externa? — Comando: `/srv (ej: /srv/www o /srv/http)` (/srv (Service Data) está destinado a contener los datos específicos del sitio que los servicios del sistema sirven a los usuarios.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "/etc para configs; updatedb para regenerar la caché de locate; y /srv para datos servidos en red."
+        }
+      ],
+      "notes": "Muestra que muchas distros usan /var/www por tradición histórica, pero el estándar estricto FHS es /srv."
+    },
+    {
+      "id": "104.7-slide-13",
+      "slideNumber": 13,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: whereis y which)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: whereis y which)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Identifica comandos internos de Bash y localiza documentación oficial del sistema."
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 4 (Oficial Pág 550): ¿Cuál es el comando exacto con 'whereis' para localizar ÚNICAMENTE las páginas del manual oficial de la orden 'tar' ignorando sus binarios? — Comando: `whereis -m tar` (La opción -m (manuals) restringe la salida exclusivamente a las rutas de las páginas de documentación man.)",
+            "Caso 5 (Oficial Pág 550): ¿Qué comando determina si la orden 'export' es una función interna de la shell o un archivo binario ubicado en el disco duro? — Comando: `type export (o type -t export)` (El comando 'type' inspecciona la memoria de la shell y devolverá 'export is a shell builtin'.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "whereis -m filtra documentación man; type identifica comandos internos integrados en la propia shell."
+        }
+      ],
+      "notes": "Recuerda que 'which export' fallaría porque export no existe en el disco."
+    },
+    {
+      "id": "104.7-slide-14",
+      "slideNumber": 14,
+      "title": "Retos de Exploración Oficiales (updatedb.conf y Binarios SUID)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Retos de Exploración Oficiales (updatedb.conf y Binarios SUID)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. En '/etc/updatedb.conf', ¿qué parámetro debes editar para evitar que la base de datos de 'locate' indexe el directorio '/opt/datos_gigantes'?\n2. ¿Cuál es la diferencia fundamental entre el ciclo de vida de los archivos almacenados en '/tmp' frente a los almacenados en '/var/tmp'?\n3. ¿Por qué ejecutar 'which cd' devuelve código de error o no produce ninguna salida en una terminal Bash estándar?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Pista",
+          "content": "Recuerda: directiva PRUNEPATHS; persistencia tras reinicios; y la naturaleza de los builtins."
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Desafío",
+          "content": "1. Se añade la ruta a la directiva: PRUNEPATHS=\"... /opt/datos_gigantes\"\n2. Los archivos en '/tmp' son de corta duración y habitualmente se vacían automáticamente durante el reinicio del sistema (o residen en memoria tmpfs); los archivos en '/var/tmp' deben conservarse y persistir entre reinicios del sistema.\n3. Porque 'cd' es un comando interno de la shell (shell builtin) integrado en el ejecutable de Bash. 'which' solo busca archivos ejecutables independientes en el disco dentro de las rutas de $PATH."
+        }
+      ],
+      "notes": "El reto 2 evalúa una distinción fundamental del estándar FHS muy repetida en los exámenes oficiales."
+    },
+    {
+      "id": "104.7-slide-15",
+      "slideNumber": 15,
+      "title": "Pregunta de Examen LPIC-1: Propósito de /etc en el FHS",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Propósito de /etc en el FHS"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-104-7-15",
+          "question": "De acuerdo con el estándar de jerarquía de sistemas de archivos FHS (Filesystem Hierarchy Standard), ¿cuál es el propósito exclusivo del directorio '/etc'?",
+          "options": [
+            {
+              "key": "a",
+              "text": "Almacenar ejecutables y comandos de administración del sistema."
+            },
+            {
+              "key": "b",
+              "text": "Contener archivos de configuración estáticos específicos del equipo local."
+            },
+            {
+              "key": "c",
+              "text": "Servir de punto de montaje para dispositivos extraíbles temporales."
+            },
+            {
+              "key": "d",
+              "text": "Almacenar archivos de registro y colas de impresión de datos variables."
+            }
+          ],
+          "correct": [
+            "b"
+          ],
+          "explanation": "El estándar FHS define estrictamente que '/etc' está reservado para archivos de configuración estáticos propios y específicos del host. En /etc no deben almacenarse binarios ejecutables (que van en /bin o /sbin) ni datos variables como logs (que van en /var/log)."
+        }
+      ],
+      "notes": "Pregunta clásica y fundamental de examen."
+    },
+    {
+      "id": "104.7-slide-16",
+      "slideNumber": 16,
+      "title": "Pregunta de Examen LPIC-1: Base de Datos de locate",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Base de Datos de locate"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-104-7-16",
+          "question": "Un administrador ejecuta 'locate' para buscar un archivo de configuración que acaba de crear hace dos minutos, pero el comando no devuelve ningún resultado. ¿Cuál es la causa más probable?",
+          "options": [
+            {
+              "key": "a",
+              "text": "El archivo no tiene permisos de ejecución para el usuario."
+            },
+            {
+              "key": "b",
+              "text": "La base de datos indexada de locate aún no ha sido actualizada con updatedb."
+            },
+            {
+              "key": "c",
+              "text": "El comando locate solo busca archivos binarios en las carpetas de $PATH."
+            },
+            {
+              "key": "d",
+              "text": "El archivo debe estar ubicado obligatoriamente en /usr/bin para ser visible."
+            }
+          ],
+          "correct": [
+            "b"
+          ],
+          "explanation": "El comando 'locate' no realiza una búsqueda en tiempo real sobre el disco físico, sino que consulta una base de datos indexada (típicamente /var/lib/mlocate/mlocate.db). Si se crea un archivo nuevo, no será visible para locate hasta que se ejecute la herramienta 'updatedb' (bien manualmente por root o mediante una tarea programada de cron/systemd)."
+        }
+      ],
+      "notes": "Pregunta fija de examen para comprobar el conocimiento de locate vs updatedb."
+    },
+    {
+      "id": "104.7-slide-17",
+      "slideNumber": 17,
+      "title": "Pregunta de Examen LPIC-1: Búsqueda de Manuales con whereis",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Búsqueda de Manuales con whereis"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-104-7-17",
+          "question": "¿Qué opción del comando 'whereis' restringe la búsqueda exclusivamente a las páginas del manual man del comando consultado?",
+          "options": [
+            {
+              "key": "a",
+              "text": "-b"
+            },
+            {
+              "key": "b",
+              "text": "-m"
+            },
+            {
+              "key": "c",
+              "text": "-s"
+            },
+            {
+              "key": "d",
+              "text": "-u"
+            }
+          ],
+          "correct": [
+            "b"
+          ],
+          "explanation": "En el comando 'whereis', la opción '-m' (manuals) restringe la búsqueda a las rutas de documentación de páginas man. La opción '-b' busca binarios y '-s' busca código fuente."
+        }
+      ],
+      "notes": "Pregunta directa sobre los modificadores de whereis."
+    },
+    {
+      "id": "104.7-slide-18",
+      "slideNumber": 18,
+      "title": "Tarjetas Nemotécnicas: FHS y Búsquedas 104.7",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tarjetas Nemotécnicas: FHS y Búsquedas 104.7"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto",
+            "Significado / Uso"
+          ],
+          "rows": [
+            [
+              "¿Qué tipo de archivos residen exclusivamente en /etc según el FHS?",
+              "Archivos de configuración estáticos específicos del host."
+            ],
+            [
+              "¿En qué directorio del FHS se almacenan los datos de servicios de red?",
+              "En /srv (Service Data, ej: /srv/www, /srv/ftp)."
+            ],
+            [
+              "¿Dónde debe instalarse el software compilado a mano por el admin?",
+              "En /usr/local/ (aislado del gestor de paquetes)."
+            ],
+            [
+              "¿Qué diferencia hay entre /tmp y /var/tmp?",
+              "/tmp se puede limpiar al reiniciar; /var/tmp debe persistir entre reinicios."
+            ],
+            [
+              "¿Qué comando actualiza la base de datos de 'locate'?",
+              "sudo updatedb."
+            ],
+            [
+              "¿En qué archivo se configuran las exclusiones de updatedb?",
+              "/etc/updatedb.conf (parámetros PRUNEPATHS y PRUNEFS)."
+            ],
+            [
+              "¿Qué opción de 'whereis' busca únicamente páginas de manual?",
+              "whereis -m <comando>."
+            ],
+            [
+              "¿Por qué 'which cd' falla y qué comando debe usarse?",
+              "Porque 'cd' es un comando interno de la shell (builtin); debe usarse 'type cd'."
+            ]
+          ],
+          "caption": "Tarjetas de memorización"
+        }
+      ],
+      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 104.7."
+    },
+    {
+      "id": "104.7-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen y Claves de Examen: Subtema 104.7",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen y Claves de Examen: Subtema 104.7"
+        }
+      ],
+      "notes": "Concluimos el subtema 104.7 y con él finalizamos completamente la refactorización integral del Tema 104 y de los temas 101 a 104 al 100%."
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-104-7-1",
+      "title": "La Matriz Bidimensional del Estándar FHS",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "La Matriz Bidimensional del Estándar FHS"
+        },
+        {
+          "type": "paragraph",
+          "text": "El estándar FHS (Filesystem Hierarchy Standard) clasifica todos los directorios en una cuadrícula de dos dimensiones:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Datos Compartibles (Shareable) vs No Compartibles** — Compartibles: pueden residir en un servidor NFS y montarse en múltiples máquinas clientes (ej: /usr, /opt). No compartibles: exclusivos de este host específico (ej: /etc, /boot).",
+            "**Datos Estáticos (Static) vs Variables (Variable)** — Estáticos: no cambian sin intervención manual del administrador (ej: binarios en /bin, librerías en /lib). Variables: crecen o se modifican continuamente por el sistema (ej: logs y colas en /var, temporales en /tmp).",
+            "**Interoperabilidad entre distribuciones** — 🎯 El estándar FHS garantiza que cualquier administrador o software sepa exactamente dónde encontrar los archivos de configuración (/etc) sin importar si es Debian, Red Hat, SUSE o Arch."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Matriz FHS 2x2 -->\n  <div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:12px; padding:14px;\">\n    <div style=\"display:grid; grid-template-columns: 120px 1fr 1fr; gap:10px; font-family:monospace;\">\n      \n      <!-- Cabeceras Columnas -->\n      <div></div>\n      <div style=\"background:#DBEAFE; color:#1E40AF; font-weight:800; font-size:13px; text-align:center; padding:8px; border-radius:6px;\">\n        COMPARTIBLE (Shareable)<br><span style=\"font-size:10.5px; font-weight:normal; color:#2563EB;\">Apto para montar vía red NFS</span>\n      </div>\n      <div style=\"background:#FEF3C7; color:#92400E; font-weight:800; font-size:13px; text-align:center; padding:8px; border-radius:6px;\">\n        NO COMPARTIBLE (Unshareable)<br><span style=\"font-size:10.5px; font-weight:normal; color:#B45309;\">Exclusivo de este host físico</span>\n      </div>\n\n      <!-- Fila 1: Estático -->\n      <div style=\"background:#E0E7FF; color:#3730A3; font-weight:800; font-size:12.5px; display:flex; align-items:center; justify-content:center; text-align:center; border-radius:6px; padding:6px;\">\n        ESTÁTICO<br><span style=\"font-size:10px; font-weight:normal;\">No cambia sin admin</span>\n      </div>\n      <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:10px; font-size:12.5px; color:#1E3A8A;\">\n        <div style=\"font-weight:800; color:#1D4ED8; font-size:14px; margin-bottom:4px;\">/usr &bull; /opt</div>\n        Binarios de aplicaciones, bibliotecas compartidas, documentación (/usr/share).\n      </div>\n      <div style=\"background:#FFFBEB; border:1px solid #FDE68A; border-radius:6px; padding:10px; font-size:12.5px; color:#78350F;\">\n        <div style=\"font-weight:800; color:#B45309; font-size:14px; margin-bottom:4px;\">/etc &bull; /boot</div>\n        Configuración de este equipo (/etc) y archivos del kernel/GRUB de arranque (/boot).\n      </div>\n\n      <!-- Fila 2: Variable -->\n      <div style=\"background:#DCFCE7; color:#166534; font-weight:800; font-size:12.5px; display:flex; align-items:center; justify-content:center; text-align:center; border-radius:6px; padding:6px;\">\n        VARIABLE<br><span style=\"font-size:10px; font-weight:normal;\">Crece por el SO</span>\n      </div>\n      <div style=\"background:#ECFDF5; border:1px solid #BBF7D0; border-radius:6px; padding:10px; font-size:12.5px; color:#064E3B;\">\n        <div style=\"font-weight:800; color:#15803D; font-size:14px; margin-bottom:4px;\">/var/mail &bull; /var/spool/news</div>\n        Buzones de correo electrónico de red y colas de mensajes compartidas.\n      </div>\n      <div style=\"background:#FEF2F2; border:1px solid #FCA5A5; border-radius:6px; padding:10px; font-size:12.5px; color:#7F1D1D;\">\n        <div style=\"font-weight:800; color:#991B1B; font-size:14px; margin-bottom:4px;\">/var/log &bull; /run &bull; /tmp</div>\n        Logs locales del sistema, PIDs y sockets volátiles (/run), archivos temporales.\n      </div>\n\n    </div>\n  </div>\n\n  <!-- Alerta de examen: FHS -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:8px 16px; display:flex; align-items:center; gap:12px;\">\n    <span style=\"font-size:24px;\">🎯</span>\n    <div style=\"font-size:12.5px; color:#92400E; line-height:1.45;\">\n      <strong>Clave de Examen:</strong> El estándar FHS garantiza la <strong>interoperabilidad</strong> entre todas las distribuciones Linux. Un administrador sabe que en Debian, Red Hat o SUSE la configuración de host estará siempre en <code>/etc</code> y nunca habrá binarios ejecutables allí.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: El FHS clasifica los datos en dos ejes: Compartibles frente a No compartibles, y Estáticos frente a Variables."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-7-2",
+      "title": "Mapa Maestro de Directorios Esenciales de la Raíz (/)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Mapa Maestro de Directorios Esenciales de la Raíz (/)"
+        },
+        {
+          "type": "paragraph",
+          "text": "El propósito exacto de cada directorio de primer nivel evaluado en LPIC-1:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Directorio",
+            "Contenido y Propósito en el Estándar FHS",
+            "Reglas y Advertencias Críticas de Examen"
+          ],
+          "rows": [
+            [
+              "/etc",
+              "🎯 Archivos de configuración estáticos específicos de este equipo.",
+              "Solo archivos de texto de configuración; ¡prohibido almacenar binarios ejecutables!"
+            ],
+            [
+              "/bin / /sbin",
+              "🎯 Comandos binarios esenciales (/bin usuario general, /sbin administración root).",
+              "Necesarios para arrancar el sistema y en modo monousuario de rescate."
+            ],
+            [
+              "/dev",
+              "🎯 Archivos de dispositivo especiales (bloque y carácter).",
+              "Gestionados dinámicamente por udev en memoria RAM (devtmpfs)."
+            ],
+            [
+              "/lib / /lib64",
+              "🎯 Bibliotecas compartidas esenciales del SO y módulos del kernel (/lib/modules).",
+              "Librerías dinámicas necesarias para arrancar los binarios de /bin y /sbin."
+            ],
+            [
+              "/boot / /root",
+              "🎯 /boot: kernel (vmlinuz), initramfs y GRUB. /root: inicio de superusuario.",
+              "/boot accesible por firmware BIOS/UEFI. /root siempre en raíz física (/)."
+            ]
+          ],
+          "caption": "Mapa Maestro de Directorios Esenciales de la Raíz (/)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: /etc almacena SOLO configuración; /bin ejecutables de usuario; /sbin ejecutables de administración; /lib bibliotecas y módulos del kernel."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-7-3",
+      "title": "Directorios de Datos Variables y Aplicaciones: /var, /usr, /opt y /srv",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Directorios de Datos Variables y Aplicaciones: /var, /usr, /opt y /srv"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Dónde se guardan los datos servidos, los paquetes externos y los logs?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Directorio",
+            "Propósito en el Examen LPIC-1",
+            "Subdirectorios Esenciales Evaluados"
+          ],
+          "rows": [
+            [
+              "/var",
+              "🎯 Datos variables que cambian continuamente durante la operación del sistema.",
+              "🎯 /var/log (archivos de log), /var/spool (colas de impresión y correo), /var/mail, /var/cache (caché APT/DNF)."
+            ],
+            [
+              "/usr",
+              "🎯 Jerarquía secundaria de solo lectura compartible por red.",
+              "/usr/bin (la mayoría de comandos de usuario), /usr/sbin, /usr/lib, /usr/share (datos independientes de arquitectura)."
+            ],
+            [
+              "/opt",
+              "🎯 Paquetes de software adicionales de terceros (Add-on applications).",
+              "Aplicaciones propietarias o comerciales independientes (ej: /opt/google/chrome)."
+            ],
+            [
+              "/srv",
+              "🎯 Datos de servicios servidos por este sistema hacia la red.",
+              "Datos de servidores web (/srv/www), FTP (/srv/ftp) o repositorios de software."
+            ],
+            [
+              "/tmp frente a /var/tmp",
+              "🎯 /tmp se usa para archivos temporales que pueden vaciarse en cada reinicio; /var/tmp almacena temporales que deben PERSISTIR entre reinicios.",
+              "Ambos disponen de Sticky Bit (1777)."
+            ]
+          ],
+          "caption": "Directorios de Datos Variables y Aplicaciones: /var, /usr, /opt y /srv"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Diferencias Clave de Examen: /opt = software adicional empaquetado por terceros; /srv = datos de servicios de red; /var/tmp = temporales que sobreviven al reinicio."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-7-4",
+      "title": "La Jerarquía /usr/local: Software Compilado a Mano",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "La Jerarquía /usr/local: Software Compilado a Mano"
+        },
+        {
+          "type": "paragraph",
+          "text": "El estándar FHS reserva /usr/local para aislar el software del administrador y evitar colisiones con el gestor de paquetes:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Aislamiento total del gestor de paquetes (dpkg / rpm)** — 🎯 El gestor de paquetes oficial de la distribución NUNCA toca ni sobreescribe nada dentro de '/usr/local/'. Es el feudo exclusivo del administrador del sistema.",
+            "**Estructura idéntica en miniatura** — Contiene su propio árbol: '/usr/local/bin' (ejecutables compilados), '/usr/local/etc' (sus configs), '/usr/local/lib' (sus librerías) y '/usr/local/share/man'.",
+            "**Prioridad en la variable PATH** — 🎯 En la variable $PATH, '/usr/local/bin' aparece ANTES que '/usr/bin'. Si compilas una versión más nueva de un programa, el sistema ejecutará la tuya con preferencia sobre la de la distribución."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Diagrama de Separación de Responsabilidad -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px;\">\n    \n    <!-- Gestor de Paquetes -->\n    <div style=\"background:#F8FAFC; border:2px solid #3B82F6; border-radius:10px; padding:12px;\">\n      <div style=\"font-size:13px; font-weight:800; color:#1E40AF; margin-bottom:6px;\">\n        📦 Gestor de Paquetes (dpkg / apt / rpm)\n      </div>\n      <div style=\"font-size:12px; color:#334155; line-height:1.45; margin-bottom:6px;\">\n        Instala binarios en <code>/usr/bin</code> y librerías en <code>/usr/lib</code>. Al actualizar un paquete, estos archivos se sobreescriben automáticamente.\n      </div>\n      <div style=\"background:#EFF6FF; padding:4px 8px; border-radius:4px; font-family:monospace; font-size:11.5px; color:#1E40AF;\">\n        NUNCA toca nada en /usr/local/\n      </div>\n    </div>\n\n    <!-- Administrador Local -->\n    <div style=\"background:#F8FAFC; border:2px solid #10B981; border-radius:10px; padding:12px;\">\n      <div style=\"font-size:13px; font-weight:800; color:#065F46; margin-bottom:6px;\">\n        🛠️ Administrador Local (make install)\n      </div>\n      <div style=\"font-size:12px; color:#334155; line-height:1.45; margin-bottom:6px;\">\n        Instala código compilado a mano en <code>/usr/local/bin</code> y sus configs en <code>/usr/local/etc</code>. Inmune a las actualizaciones del sistema.\n      </div>\n      <div style=\"background:#ECFDF5; padding:4px 8px; border-radius:4px; font-family:monospace; font-size:11.5px; color:#065F46;\">\n        Destino por defecto de código fuente\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Prioridad en $PATH -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:10px 16px; display:flex; align-items:center; justify-content:space-between;\">\n    <div>\n      <div style=\"font-size:13px; font-weight:800; color:#92400E;\">🎯 REGLA DE ORO EN VARIABLE $PATH:</div>\n      <div style=\"font-family:monospace; font-size:14px; font-weight:800; color:#B45309; margin-top:2px;\">\n        PATH=/usr/local/bin:/usr/bin:/bin\n      </div>\n    </div>\n    <div style=\"font-size:12px; color:#78350F; background:#FEF3C7; padding:6px 10px; border-radius:6px;\">\n      <code>/usr/local/bin</code> tiene <strong>mayor prioridad</strong> que <code>/usr/bin</code>.<br>\n      El sistema ejecuta la versión compilada por el admin antes que la de la distro.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: El software compilado localmente por el administrador debe instalarse en '/usr/local/' para no interferir con las actualizaciones del gestor de paquetes."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-7-5",
+      "title": "Búsqueda Indexada Ultrarrápida con locate",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Búsqueda Indexada Ultrarrápida con locate"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo encontrar cualquier archivo en milisegundos sin hacer sufrir al disco duro?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "locate [-i|-b|-c|-r] <patrón>",
+          "title": "Consultar la base de datos indexada local para localizar nombres de archivo al instante"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "locate -b '\\sshd_config'; locate -c '*.conf'",
+              "output": "/etc/ssh/sshd_config\n482"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "locate <patrón>",
+              "locate",
+              "Busca el patrón en cualquier parte de la ruta completa dentro de la base de datos indexada."
+            ],
+            [
+              "-i, --ignore-case",
+              "-i (Case insensitive)",
+              "🎯 Ignora mayúsculas y minúsculas en la búsqueda."
+            ],
+            [
+              "-b, --basename",
+              "-b (Solo nombre)",
+              "🎯 Clave de Examen: Busca coincidencias ÚNICAMENTE en el nombre final del archivo, ignorando carpetas padre."
+            ],
+            [
+              "-c, --count",
+              "-c (Conteo)",
+              "🎯 Muestra únicamente el número total de archivos encontrados."
+            ],
+            [
+              "-e, --existing",
+              "-e (Solo existentes)",
+              "Comprueba si el archivo existe realmente en disco antes de imprimirlo (omite archivos borrados)."
+            ],
+            [
+              "updatedb previo",
+              "⚠️ Limitación BD",
+              "🎯 No ve archivos creados después de la última ejecución de updatedb."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; gap:12px; margin-top:10px;\">\n  <div style=\"flex:1; background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:10px 14px;\">\n    <div style=\"font-size:12px; font-weight:800; color:#1E40AF; margin-bottom:4px; text-transform:uppercase;\">\n      locate (Búsqueda Indexada en RAM)\n    </div>\n    <div style=\"font-size:12px; color:#1E3A8A; line-height:1.4;\">\n      Consulta el archivo <code>/var/lib/mlocate/mlocate.db</code>. Devuelve resultados en <strong>milisegundos</strong> con cero carga de I/O en disco.\n    </div>\n  </div>\n  <div style=\"flex:1; background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:10px 14px;\">\n    <div style=\"font-size:12px; font-weight:800; color:#166534; margin-bottom:4px; text-transform:uppercase;\">\n      find (Rastreo en Vivo en Disco)\n    </div>\n    <div style=\"font-size:12px; color:#14532D; line-height:1.4;\">\n      Recorre la estructura de directorios en el <strong>disco físico en tiempo real</strong>. Es más lento pero detecta ficheros creados hace un segundo.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'locate' no busca en el disco duro en tiempo real; consulta una base de datos indexada (/var/lib/mlocate/mlocate.db). Para buscar lo recién creado se debe usar 'updatedb' o 'find'."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-7-6",
+      "title": "Actualización y Exclusiones: updatedb y /etc/updatedb.conf",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Actualización y Exclusiones: updatedb y /etc/updatedb.conf"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo se construye el índice de locate y cómo se configuran las exclusiones de carpetas?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px; display:flex; justify-content:space-between; gap:12px; font-size:12px;\">\n  <div style=\"flex:1; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:8px 10px;\">\n    <strong style=\"color:#1E40AF;\">PRUNEPATHS (Exclusión de Rutas):</strong><br>\n    <code>/tmp /var/spool /media /mnt</code> &rarr; No indexa temporales ni pendrives extraíbles.\n  </div>\n  <div style=\"flex:1; background:#FEF3C7; border:1px solid #FDE68A; border-radius:6px; padding:8px 10px;\">\n    <strong style=\"color:#92400E;\">PRUNEFS (Exclusión de Sistemas):</strong><br>\n    <code>NFS cifs proc sysfs</code> &rarr; No satura la red indexando recursos compartidos.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'PRUNEPATHS' excluye rutas en /etc/updatedb.conf; 'PRUNEFS' excluye tipos de sistemas de archivos (como NFS) para evitar colapsar la red."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-7-7",
+      "title": "Localización de Programas y Documentación: which y whereis",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Localización de Programas y Documentación: which y whereis"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Dónde reside el binario ejecutable y dónde están sus páginas de manual oficial?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "which <comando> | whereis [-b|-m|-s] <comando>",
+          "title": "Localizar rutas de ejecutables en PATH o encontrar código fuente y manuales"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "which passwd; whereis passwd",
+              "output": "/usr/bin/passwd\npasswd: /usr/bin/passwd /etc/passwd /usr/share/man/man1/passwd.1.gz /usr/share/man/man5/passwd.5.gz"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "which <cmd>",
+              "which ($PATH)",
+              "🎯 Clave de Examen: Busca ÚNICAMENTE en las carpetas de la variable $PATH y devuelve el primer ejecutable."
+            ],
+            [
+              "which -a <cmd>",
+              "-a (Todas)",
+              "Muestra todas las coincidencias en $PATH, no solo la primera."
+            ],
+            [
+              "whereis <cmd>",
+              "whereis (Completo)",
+              "🎯 Busca en un conjunto fijo de rutas estándar del sistema binarios, manuales y fuentes."
+            ],
+            [
+              "whereis -b",
+              "-b (Binary)",
+              "🎯 Clave de Examen: Muestra ÚNICAMENTE las rutas de archivos binarios ejecutables."
+            ],
+            [
+              "whereis -m",
+              "-m (Manual)",
+              "🎯 Clave de Examen: Muestra ÚNICAMENTE las rutas de páginas del manual man."
+            ],
+            [
+              "whereis -s",
+              "-s (Source)",
+              "Muestra únicamente el código fuente del comando si está presente."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; gap:12px; margin-top:10px; font-family:monospace; text-align:center;\">\n  <div style=\"flex:1; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:8px 4px;\">\n    <div style=\"font-size:11px; color:#1E40AF; font-weight:bold;\">Solo binarios en $PATH</div>\n    <div style=\"font-size:15px; font-weight:800; color:#1D4ED8; margin:2px 0;\">which grep</div>\n    <div style=\"font-size:10.5px; color:#3B82F6;\">/usr/bin/grep</div>\n  </div>\n  <div style=\"flex:1; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:8px 4px;\">\n    <div style=\"font-size:11px; color:#166534; font-weight:bold;\">Binarios y Manuales</div>\n    <div style=\"font-size:15px; font-weight:800; color:#15803D; margin:2px 0;\">whereis grep</div>\n    <div style=\"font-size:10.5px; color:#22C55E;\">/usr/bin/grep /usr/share/man/...</div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Diferencia Vital: 'which' solo busca ejecutables en $PATH; 'whereis' busca binarios (-b) y manuales (-m) en rutas estándar del sistema."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-7-8",
+      "title": "Clasificación con type: Comandos Internos (Builtins)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Clasificación con type: Comandos Internos (Builtins)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué 'which cd' o 'which history' no devuelve nada y qué herramienta resuelve el misterio?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "type [-a|-t] <comando>",
+          "title": "Averiguar si una orden es un comando interno de Bash, un alias, una función o un archivo en disco"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "type cd; type -t cd; type -t ls; type -t grep",
+              "output": "cd is a shell builtin\nbuiltin\nalias\nfile"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "type <cmd>",
+              "type (Descriptivo)",
+              "🎯 Clave de Examen: Describe detalladamente la naturaleza del comando en lenguaje natural."
+            ],
+            [
+              "type -t <cmd>",
+              "-t (Clasificador)",
+              "🎯 Clave de Examen: Devuelve una sola palabra: builtin, alias, file o function."
+            ],
+            [
+              "type -a <cmd>",
+              "-a (Todas)",
+              "Muestra todas las definiciones del comando en orden de prioridad de resolución de Bash."
+            ],
+            [
+              "¿Por qué which falla?",
+              "Fallo de which",
+              "🎯 which solo busca archivos en disco en $PATH; falla ante builtins como 'cd', 'export' o 'history'."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px;\">\n  <div style=\"font-size:12px; font-weight:800; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;\">\n    Las 4 Categorías que devuelve type -t\n  </div>\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-family:monospace; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:6px 2px;\">\n      <div style=\"font-size:13px; font-weight:800; color:#1E40AF;\">builtin</div>\n      <div style=\"font-size:10px; color:#2563EB;\">cd, export, history</div>\n    </div>\n    <div style=\"background:#FEF3C7; border:1px solid #FDE68A; border-radius:6px; padding:6px 2px;\">\n      <div style=\"font-size:13px; font-weight:800; color:#92400E;\">alias</div>\n      <div style=\"font-size:10px; color:#B45309;\">ls='ls --color=auto'</div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:6px 2px;\">\n      <div style=\"font-size:13px; font-weight:800; color:#166534;\">file</div>\n      <div style=\"font-size:10px; color:#15803D;\">/usr/bin/find (disco)</div>\n    </div>\n    <div style=\"background:#F5F3FF; border:1px solid #DDD6FE; border-radius:6px; padding:6px 2px;\">\n      <div style=\"font-size:13px; font-weight:800; color:#5B21B6;\">function</div>\n      <div style=\"font-size:10px; color:#6D28D9;\">Función bash en memoria</div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Fija de Certificación: 'which cd' no encuentra nada porque 'cd' es un comando interno de la shell (shell builtin). Para identificarlo se debe usar 'type cd'."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-7-9",
+      "title": "Gran Matriz Comparativa de Búsqueda de Archivos",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Gran Matriz Comparativa de Búsqueda de Archivos"
+        },
+        {
+          "type": "paragraph",
+          "text": "El mapa de decisión definitivo: qué herramienta usar según el objetivo:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Herramienta",
+            "¿Dónde busca?",
+            "¿En tiempo real o en BD?",
+            "¿Qué encuentra?"
+          ],
+          "rows": [
+            [
+              "find",
+              "🎯 En el disco duro recorriendo el árbol recursivamente.",
+              "🎯 Tiempo real (100% actualizado al instante).",
+              "Cualquier archivo, directorio o enlace según atributos, fechas, tamaños y tipos."
+            ],
+            [
+              "locate",
+              "🎯 En la base de datos local (/var/lib/mlocate/mlocate.db).",
+              "Caché indexada (no ve archivos recién creados).",
+              "Nombres de archivo y rutas completas a velocidad instantánea."
+            ],
+            [
+              "which",
+              "🎯 Exclusivamente en las rutas listadas en la variable $PATH.",
+              "Tiempo real sobre las carpetas de $PATH.",
+              "🎯 Solo archivos binarios ejecutables."
+            ],
+            [
+              "whereis",
+              "En directorios estándar fijos (/bin, /sbin, /usr/share/man).",
+              "Tiempo real sobre rutas estándar.",
+              "🎯 Binarios (-b), páginas de manual man (-m) y código fuente (-s)."
+            ],
+            [
+              "type",
+              "🎯 En la memoria de la shell Bash activa.",
+              "Tiempo real en la sesión de shell.",
+              "🎯 Clasifica si es builtin, alias, función o archivo en disco."
+            ]
+          ],
+          "caption": "Gran Matriz Comparativa de Búsqueda de Archivos"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Decisión de Examen: Para buscar por metadatos (tamaño, fecha) -> find. Para buscar por nombre al instante -> locate. Para ver ejecutables en PATH -> which. Para manuales -> whereis -m. Para builtins -> type."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-7-10",
+      "title": "Trampas Clásicas de Examen en el FHS y Búsquedas",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Trampas Clásicas de Examen en el FHS y Búsquedas"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 3 descuidos más habituales en las preguntas de localización de ficheros:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Confundir /opt con /srv y /usr/local** — 🎯 /opt es para aplicaciones empaquetadas por terceros (ej: Google Chrome); /srv es para datos servidos hacia la red (ej: páginas web o FTP); /usr/local es para software compilado a mano localmente con make install.",
+            "**2. Creer que locate sabe si un archivo fue borrado** — Si borraste un archivo hace 10 minutos, locate seguirá mostrándolo en la lista porque sigue anotado en la base de datos hasta que root ejecute 'updatedb'.",
+            "**3. Olvidar que /tmp se limpia y /var/tmp no** — Si un programa necesita guardar un archivo temporal grande que debe sobrevivir al reinicio del servidor, NO debe guardarlo en /tmp (que suele vaciarse o ser tmpfs en RAM), sino en /var/tmp."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Mnemotecnia Rápida: /opt = paquetes de terceros; /srv = servicios de red; /usr/local = compilado local; locate necesita updatedb; /var/tmp sobrevive a reboots."
+        }
+      ]
+    }
+  ]
+}

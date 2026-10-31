@@ -1,0 +1,1427 @@
+{
+  "id": "102.5",
+  "topicId": "102",
+  "examId": "101",
+  "title": "Gestión de paquetes RPM y YUM",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 30,
+  "objectives": [
+    "rpm, rpm2cpio, yum, dnf, zypper, repositorios y firmas GPG (Alta Densidad LPIC-1)",
+    "Dominio técnico de las herramientas y configuración del subtema 102.5"
+  ],
+  "keyTerms": [
+    "Gestión de paquetes RPM y YUM",
+    "Tema 102"
+  ],
+  "commands": [
+    "rpm",
+    "rpm2cpio",
+    "yum",
+    "zypper"
+  ],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "102.5-slide-1",
+      "slideNumber": 1,
+      "title": "Gestión de paquetes RPM, YUM, DNF y Zypper",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Gestión de paquetes RPM, YUM, DNF y Zypper"
+        },
+        {
+          "type": "paragraph",
+          "text": "rpm, rpm2cpio, yum, dnf, zypper, repositorios y firmas GPG (Modo Examen)"
+        }
+      ],
+      "notes": "Iniciamos el subtema 102.5 (peso 3 en el examen LPIC-1 101-500). Cubre la otra gran familia de distribuciones Linux: Red Hat, Fedora, CentOS, Rocky Linux y openSUSE. Analizaremos rpm a bajo nivel y sus tres front-ends oficiales: YUM, DNF y Zypper."
+    },
+    {
+      "id": "102.5-slide-2",
+      "slideNumber": 2,
+      "title": "Ecosistema RPM: El Motor Común y sus Front-Ends",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ecosistema RPM: El Motor Común y sus Front-Ends"
+        },
+        {
+          "type": "paragraph",
+          "text": "El formato de empaquetado RPM alimenta dos grandes familias con gestores de alto nivel diferenciados:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**rpm: El motor de bajo nivel para paquetes .rpm locales** — Instala, borra y consulta archivos .rpm locales. Al igual que dpkg, NO resuelve dependencias de red: si faltan librerías, aborta la instalación con error.",
+            "**YUM y DNF: Los front-ends inteligentes de Red Hat y Fedora** — YUM (Yellowdog Updater, Modified) y su sucesor moderno DNF (Dandified YUM) gestionan repositorios remotos, calculan dependencias y las instalan automáticamente.",
+            "**Zypper: El potente front-end de openSUSE y SUSE Linux** — Basado en la librería libzypp, utiliza algoritmos de satisfacción booleana (SAT solver) para resolver dependencias complejas y gestionar patrones de software (patterns)."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:16px 0;\">\n  <!-- Capa Superior: Front-Ends Inteligentes -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px;\">\n    <!-- Rama Red Hat / Fedora -->\n    <div style=\"background:#FEF2F2; border:2px solid #F87171; border-radius:12px; padding:16px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#EF4444; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">RED HAT / FEDORA / CENTOS</span>\n        <span style=\"font-weight:700; color:#B91C1C; font-size:13px;\">RHEL, Rocky, Alma</span>\n      </div>\n      <h3 style=\"margin:4px 0 8px 0; font-size:20px; font-weight:800; color:#991B1B;\">YUM y DNF</h3>\n      <div style=\"font-size:13.5px; color:#7F1D1D; line-height:1.4;\">\n        • Repositorios en <code>/etc/yum.repos.d/*.repo</code><br>\n        • Resolución automática de dependencias remotas.<br>\n        • 🎯 Comando estrella de búsqueda: <code>yum provides &lt;archivo&gt;</code>.\n      </div>\n    </div>\n\n    <!-- Rama openSUSE / SLES -->\n    <div style=\"background:#F0FDF4; border:2px solid #4ADE80; border-radius:12px; padding:16px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">OPENSUSE / SUSE LINUX</span>\n        <span style=\"font-weight:700; color:#15803D; font-size:13px;\">SLES, Leap, Tumbleweed</span>\n      </div>\n      <h3 style=\"margin:4px 0 8px 0; font-size:20px; font-weight:800; color:#14532D;\">Zypper (libzypp)</h3>\n      <div style=\"font-size:13.5px; color:#14532D; line-height:1.4;\">\n        • Repositorios en <code>/etc/zypp/repos.d/*.repo</code><br>\n        • Motor SAT Solver ultra-rápido para dependencias.<br>\n        • 🎯 Comandos cortos: <code>ref</code>, <code>in</code>, <code>rm</code>, <code>up</code>, <code>lr</code>, <code>mr</code>.\n      </div>\n    </div>\n  </div>\n\n  <!-- Flecha de invocación -->\n  <div style=\"display:flex; justify-content:center; align-items:center; gap:10px;\">\n    <span style=\"font-size:20px; color:#64748B;\">⬇️</span>\n    <span style=\"font-size:13px; font-weight:700; color:#475569; background:#F1F5F9; padding:2px 14px; border-radius:10px; border:1px solid #CBD5E1;\">\n      Ambos front-ends invocan por debajo al motor RPM\n    </span>\n    <span style=\"font-size:20px; color:#64748B;\">⬇️</span>\n  </div>\n\n  <!-- Capa Base Común: rpm -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:14px 20px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n      <span style=\"background:#334155; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">MOTOR COMÚN DE BAJO NIVEL</span>\n      <span style=\"font-weight:700; color:var(--text-muted); font-size:13px;\">Archivos locales .rpm</span>\n    </div>\n    <div style=\"font-size:18px; font-weight:800; color:var(--text); margin-bottom:4px;\">Comando rpm (RPM Package Manager)</div>\n    <div style=\"font-size:13.5px; color:var(--text-muted); line-height:1.4;\">\n      Opera exclusivamente sobre archivos <code>.rpm</code> locales o la base de datos local <code>/var/lib/rpm/</code>. <strong>NO tiene acceso a red</strong> ni descarga paquetes de repositorios. Si falta una dependencia, aborta con error.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA CLAVE DE EXAMEN: 'rpm' es el gestor local de bajo nivel. YUM/DNF operan en Red Hat/Fedora/CentOS; Zypper opera en openSUSE/SLES."
+        }
+      ],
+      "notes": "Explica que DNF sustituyó a YUM en Fedora y RHEL 8+, pero en el examen LPIC-1 ambos comandos se evalúan como equivalentes."
+    },
+    {
+      "id": "102.5-slide-3",
+      "slideNumber": 3,
+      "title": "rpm: La Gran Diferencia de Examen entre -U (Upgrade) y -F (Freshen)",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "rpm: La Gran Diferencia de Examen entre -U (Upgrade) y -F (Freshen)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Ambas opciones actualizan paquetes, pero su comportamiento ante un paquete no instalado es radicalmente opuesto:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "rpm -i | -U | -F | -e [--nodeps] [--force] [--test]",
+          "title": "Instalar, actualizar o desinstalar paquetes .rpm en el sistema local"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo rpm -ivh tree-1.8.0-1.el8.x86_64.rpm; sudo rpm -e tree",
+              "output": "Verifying...                          ################################# [100%]\nPreparing...                          ################################# [100%]\nUpdating / installing...\n   1:tree-1.8.0-1.el8                 ################################# [100%]\n# Eliminación completada sin salida (código 0)."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-i, --install <archivo.rpm>",
+              "",
+              "Instala un paquete nuevo en el sistema (habitualmente combinado como -ivh: install, verbose, hash bars)."
+            ],
+            [
+              "-U, --upgrade <archivo.rpm>",
+              "",
+              "🎯 Clave de Examen: Actualiza un paquete existente; SI NO ESTÁ INSTALADO, LO INSTALA por primera vez."
+            ],
+            [
+              "-F, --freshen <archivo.rpm>",
+              "",
+              "🎯 Clave de Examen: Actualiza un paquete ÚNICAMENTE SI YA ESTÁ INSTALADO. Si no existe previamente, NO hace nada."
+            ],
+            [
+              "-e, --erase <paquete>",
+              "",
+              "Desinstala un paquete del sistema por su nombre lógico (sin extensión .rpm)."
+            ],
+            [
+              "--test",
+              "",
+              "🎯 Simula la operación (comprueba conflictos y dependencias) sin llegar a escribir nada en el disco."
+            ],
+            [
+              "--nodeps",
+              "",
+              "⚠️ ¡Peligro de Examen! Ignora la comprobación de dependencias e instala o borra el paquete a la fuerza."
+            ],
+            [
+              "--force",
+              "",
+              "Equivale a --replacepkgs y --replacefiles: sobrescribe ficheros existentes de otros paquetes."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin:16px 0;\">\n  <!-- Opción -U -->\n  <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:14px; padding:18px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:13px; padding:2px 8px; border-radius:6px;\">UPGRADE</span>\n      <code style=\"font-size:16px; font-weight:800; color:#1E40AF;\">rpm -Uvh pkg.rpm</code>\n    </div>\n    <div style=\"font-size:16px; font-weight:800; color:#1E40AF; margin-bottom:8px;\">Actualiza O Instala si no existe</div>\n    <div style=\"display:flex; flex-direction:column; gap:8px; font-size:14px; color:#1E3A8A;\">\n      <div>• <strong>Si el paquete ya existe:</strong> Lo actualiza a la nueva versión borrando los binarios antiguos.</div>\n      <div>• 🎯 <strong>Si el paquete NO existe:</strong> <strong>¡LO INSTALA POR PRIMERA VEZ!</strong></div>\n      <div>• 💡 <strong>Uso recomendado:</strong> Es la opción estándar empleada por los administradores para casi todo.</div>\n    </div>\n  </div>\n\n  <!-- Opción -F -->\n  <div style=\"background:#FEF3C7; border:2px solid #F59E0B; border-radius:14px; padding:18px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:13px; padding:2px 8px; border-radius:6px;\">FRESHEN (EXAMEN)</span>\n      <code style=\"font-size:16px; font-weight:800; color:#B45309;\">rpm -Fvh pkg.rpm</code>\n    </div>\n    <div style=\"font-size:16px; font-weight:800; color:#92400E; margin-bottom:8px;\">Actualiza ÚNICAMENTE si ya existe</div>\n    <div style=\"display:flex; flex-direction:column; gap:8px; font-size:14px; color:#78350F;\">\n      <div>• <strong>Si el paquete ya existe:</strong> Lo actualiza a la nueva versión.</div>\n      <div>• 🎯 <strong>Si el paquete NO existe:</strong> <strong>¡NO HACE NADA!</strong> Lo ignora silenciosamente.</div>\n      <div>• 💡 <strong>Uso recomendado:</strong> Aplicar parches de seguridad masivos (<code>rpm -Fvh *.rpm</code>) sin instalar software nuevo indeseado.</div>\n    </div>\n  </div>\n</div>\n\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:12px 18px; display:flex; justify-content:space-around; align-items:center; font-size:13.5px;\">\n  <div><code>-i, --install</code>: Instala solo si NO existe (falla si ya existe)</div>\n  <div><code>-e, --erase</code>: Desinstala por nombre (ej: <code>rpm -e tree</code>)</div>\n  <div><code>--test</code>: Simula la operación sin escribir en disco</div>\n  <div><code>--nodeps</code>: Fuerza ignorando dependencias rotas</div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA NÚMERO 1 DE EXAMEN LPIC-1: '¿Qué opción de rpm actualiza un paquete solo si una versión anterior ya se encuentra instalada?'. Respuesta: -F (o --freshen)."
+        }
+      ],
+      "notes": "Esta distinción entre -U y -F es una de las preguntas fijas más repetidas en toda la historia de los exámenes LPIC-1."
+    },
+    {
+      "id": "102.5-slide-4",
+      "slideNumber": 4,
+      "title": "rpm: Consultas en Paquetes Instalados vs Archivos en Disco",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "rpm: Consultas en Paquetes Instalados vs Archivos en Disco"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo inspeccionar paquetes instalados o analizar un .rpm que te acabas de descargar?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "rpm -q[a|i|l|f|c|d] [-p archivo.rpm]",
+          "title": "Inspeccionar la base de datos local (/var/lib/rpm/) o examinar metadatos y ficheros de un paquete .rpm descargado antes de instalarlo."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-qa",
+              "Listar todos",
+              "Lista todos los paquetes instalados en el sistema consultando /var/lib/rpm/."
+            ],
+            [
+              "-ql <paquete>",
+              "Listar ficheros",
+              "Lista todos los archivos instalados por el paquete en el sistema."
+            ],
+            [
+              "-qc <paquete>",
+              "Ficheros config",
+              "🎯 Lista ÚNICAMENTE los archivos de configuración (/etc/) del paquete."
+            ],
+            [
+              "-qf <ruta>",
+              "Dueño de archivo",
+              "🎯 Averigua a qué paquete instalado pertenece un archivo o ejecutable en disco."
+            ],
+            [
+              "-qp <archivo.rpm>",
+              "Consultar .rpm en disco",
+              "🎯 Clave de Examen: Aplica cualquier consulta sobre un paquete .rpm NO instalado en disco."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-left:5px solid #16A34A; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#14532D; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#166534; font-size:12px;\">Auditoría, migración y verificación preventiva</span>\n    </div>\n    <div style=\"line-height:1.35; color:#14532D; font-size:11px;\">\n      <strong>• Situación:</strong> Vas a migrar un servidor crítico y no puedes buscar ficheros a ciegas ni arriesgarte con paquetes descargados de procedencia dudosa.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Usas <code>rpm -qc</code> para obtener solo los ficheros de <code>/etc/</code> a respaldar, <code>rpm -qf</code> para saber qué paquete instaló un binario sospechoso, y <code>rpm -qp</code> para inspeccionar qué creará un <code>.rpm</code> antes de instalarlo en producción.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de Consultas RPM -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Consultas sobre la base de datos local y ficheros .rpm</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">rpm -qf /etc/redhat-release</span></div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">rocky-release-9.3-1.4.el9.noarch</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">rpm -qc openssh-server | head -n 3</span></div>\n    <div style=\"color:#94A3B8;\">/etc/pam.d/sshd<br>/etc/ssh/sshd_config<br>/etc/sysconfig/sshd</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">rpm -qip tree-1.8.2-1.el9.x86_64.rpm</span></div>\n    <div><span style=\"color:#94A3B8;\">Name &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</span> <span style=\"color:#F8FAFC; font-weight:700;\">tree</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style=\"color:#94A3B8;\">Version :</span> <span style=\"color:#FCD34D;\">1.8.2</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style=\"color:#94A3B8;\">Architecture:</span> <span style=\"color:#C084FC;\">x86_64</span></div>\n    <div><span style=\"color:#94A3B8;\">Install Date:</span> <span style=\"color:#F87171; font-weight:700;\">(not installed)</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style=\"color:#94A3B8;\">Size &nbsp;&nbsp;&nbsp;:</span> 114582</div>\n    <div><span style=\"color:#94A3B8;\">Summary &nbsp;&nbsp;&nbsp;&nbsp;:</span> <span style=\"color:#38BDF8;\">File system tree viewer</span></div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">🏷️ rpm -qf /etc/redhat-release:</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        Busca en <code>/var/lib/rpm/</code> y revela qué paquete instaló ese fichero existente en disco.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">⚙️ rpm -qc openssh-server:</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        Filtra <strong>exclusivamente</strong> los ficheros de configuración en <code>/etc/</code>, descartando binarios y manuales.\n      </div>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">📦 Install Date: (not installed):</strong>\n      <div style=\"color:#581C87; line-height:1.35; display:block; margin-top:2px;\">\n        Al añadir la opción <code>-p</code>, lee las cabeceras del archivo <code>.rpm</code> en disco sin instalarlo en el sistema.\n      </div>\n    </div>\n  </div>\n\n  <!-- COMPARATIVA RADICAL: INSTALADOS vs FICHERO EN DISCO -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      ⚖️ La Gran Comparativa de Examen: ¿Sobre qué objeto estás ejecutando la consulta?\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n      <!-- INSTALADOS: rpm -q -->\n      <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:8px 12px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n          <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">BASE DE DATOS LOCAL</span>\n          <code style=\"font-size:12px; font-weight:800; color:#1E40AF;\">rpm -q[a|i|l|c|f]</code>\n        </div>\n        <strong style=\"color:#1E40AF; font-size:12px;\">El software YA ESTÁ instalado en el sistema</strong>\n        <div style=\"font-size:11px; color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n          • <code>rpm -qa</code>: Lista absolutamente todos los paquetes instalados.<br>\n          • <code>rpm -ql nginx</code>: Lista los ficheros que instaló <code>nginx</code>.<br>\n          • <code>rpm -qc nginx</code>: Muestra los ficheros de configuración.<br>\n          • 🎯 <code>rpm -qf /bin/ls</code>: Averigua qué paquete es dueño de <code>/bin/ls</code>.\n        </div>\n      </div>\n\n      <!-- EN DISCO: rpm -qp -->\n      <div style=\"background:#FEF3C7; border:1.5px solid #F59E0B; border-radius:8px; padding:8px 12px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n          <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">FICHERO .RPM EN DISCO</span>\n          <code style=\"font-size:12px; font-weight:800; color:#B45309;\">rpm -qp[i|l|c] &lt;pkg.rpm&gt;</code>\n        </div>\n        <strong style=\"color:#92400E; font-size:12px;\">El software NO está instalado (archivo descargado)</strong>\n        <div style=\"font-size:11px; color:#78350F; margin-top:2px; line-height:1.35;\">\n          • 🎯 <strong>La 'p' activa el modo Package:</strong> lee el archivo directamente.<br>\n          • <code>rpm -qpi /tmp/tree.rpm</code>: Lee metadatos antes de instalar.<br>\n          • <code>rpm -qpl /tmp/tree.rpm</code>: Ve dónde instalaría cada fichero.<br>\n          • <code>rpm -qpc /tmp/tree.rpm</code>: Ve qué ficheros de <code>/etc/</code> creará.\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 REGLA DE ORO DE EXAMEN: Para consultar paquetes YA instalados se usa 'rpm -q...'. Para consultar un archivo '.rpm' que te has descargado y todavía NO has instalado, debes añadir la letra 'p' (package): 'rpm -qp...'."
+        }
+      ],
+      "notes": "Muestra a los alumnos cómo 'rpm -qip paquete.rpm' permite leer la descripción de un instalador antes de ejecutar nada en el servidor."
+    },
+    {
+      "id": "102.5-slide-5",
+      "slideNumber": 5,
+      "title": "rpm2cpio y cpio: Extracción Quirúrgica sin Instalar",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "rpm2cpio y cpio: Extracción Quirúrgica sin Instalar"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo recuperar un archivo borrado por error si el comando rpm no funciona?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "rpm2cpio <archivo.rpm> | cpio -idmv [archivo]",
+          "title": "Recuperar binarios o librerías críticas de un archivo .rpm en situaciones de emergencia sin usar el comando rpm ni tocar la base de datos del sistema."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "rpm2cpio pkg.rpm",
+              "Convertir a cpio",
+              "Lee el archivo .rpm y vuelca por la salida estándar (stdout) el flujo de datos en formato de archivador cpio."
+            ],
+            [
+              "cpio -i",
+              "Extract",
+              "Modo extracción de ficheros desde el flujo recibido por la tubería (|)."
+            ],
+            [
+              "cpio -d",
+              "Make directories",
+              "🎯 Crea automáticamente los directorios padre necesarios según la estructura del paquete."
+            ],
+            [
+              "cpio -m",
+              "Preserve mtime",
+              "Conserva la fecha y hora original de modificación de los ficheros extraídos."
+            ],
+            [
+              "cpio -v",
+              "Verbose",
+              "Muestra por pantalla en tiempo real los ficheros extraídos."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL: CATÁSTROFE Y RESCATE -->\n  <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-left:5px solid #DC2626; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#991B1B; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🚨 CATÁSTROFE EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#991B1B; font-size:12px;\">Recuperar binarios cuando RPM está totalmente inoperativo</span>\n    </div>\n    <div style=\"line-height:1.35; color:#991B1B; font-size:11px;\">\n      <strong>• Situación:</strong> Un fallo o borrado accidental destruye <code>/bin/rpm</code> o corrompe <code>libc.so.6</code>. Como RPM y DNF no arrancan, ¡el servidor no puede autoinstalar nada!<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Ejecutas <code>rpm2cpio &lt;pkg&gt; | cpio -idmv \"./usr/bin/...\"</code> para convertir el paquete en un flujo cpio en memoria y extraer quirúrgicamente el ejecutable sano sin tocar la base de datos ni requerir root, salvando el servidor.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de Extracción cpio -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Rescate quirúrgico de un binario sin instalar el paquete</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">rpm2cpio coreutils-8.32-34.el9.x86_64.rpm | cpio -idmv \"./usr/bin/ls\"</span></div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">./usr/bin/ls</div>\n    <div style=\"color:#94A3B8;\">36248 blocks</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">ls -l ./usr/bin/ls</span></div>\n    <div style=\"color:#F8FAFC;\">-rwxr-xr-x. 1 usuario usuario 146440 Oct 26 08:30 <span style=\"color:#4ADE80; font-weight:700;\">./usr/bin/ls</span></div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">⚡ rpm2cpio ... | cpio:</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        La tubería envía el payload del .rpm como stream cpio en memoria; no requiere root ni toca <code>/var/lib/rpm/</code>.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">🎯 ./usr/bin/ls (¡con punto!):</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        Clave de examen: cpio almacena rutas relativas que inician por <code>./</code>. Si omites el punto, ¡no encontrará el archivo!\n      </div>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">📦 36248 blocks:</strong>\n      <div style=\"color:#581C87; line-height:1.35; margin-top:2px;\">\n        Confirmación de cpio (bloques de 512 bytes procesados). El ejecutable queda restaurado en tu directorio de trabajo.\n      </div>\n    </div>\n  </div>\n\n  <!-- FLUJO VISUAL DE RESCATE -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n      <div style=\"font-size:13px; font-weight:800; color:var(--text);\">\n        🚑 Flujo de Emergencia: Recuperar un ejecutable cuando RPM está roto\n      </div>\n      <span style=\"background:#DC2626; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:3px;\">ESCENARIO REAL LPIC-1</span>\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1fr 24px 1.25fr 24px 1.25fr; align-items:center; text-align:center; font-size:11.5px; gap:4px;\">\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px;\">\n        <strong style=\"color:#1E40AF;\">1. Archivo .rpm</strong><br>\n        <code>coreutils.rpm</code>\n      </div>\n      <span style=\"font-size:16px; color:var(--primary); font-weight:900;\">➔</span>\n      <div style=\"background:#FEF3C7; border:1px solid #F59E0B; border-radius:6px; padding:6px;\">\n        <strong style=\"color:#B45309;\">2. rpm2cpio</strong><br>\n        <code>rpm2cpio pkg |</code>\n      </div>\n      <span style=\"font-size:16px; color:var(--primary); font-weight:900;\">➔</span>\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px;\">\n        <strong style=\"color:#15803D;\">3. cpio -idmv</strong><br>\n        <code>cpio -idmv './bin/ls'</code>\n      </div>\n    </div>\n\n    <div style=\"margin-top:6px; padding:4px 10px; background:#EFF6FF; border-left:4px solid #2563EB; border-radius:4px; font-size:11px; color:#1E40AF; display:flex; justify-content:space-between; align-items:center;\">\n      <span>💡 <strong>Las 4 letras de cpio:</strong> <code>-i</code> (extract), <code>-d</code> (make directories), <code>-m</code> (preserve mtime), <code>-v</code> (verbose).</span>\n      <span style=\"font-weight:700; color:#2563EB;\">🎯 PREGUNTA CLAVE</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA CLÁSICA DE EXAMEN: 'rpm2cpio paquete.rpm | cpio -idmv' permite extraer archivos de un .rpm sin instalarlo, sin privilegios de root y sin alterar /var/lib/rpm/."
+        }
+      ],
+      "notes": "Este comando es vital para rescates: si un administrador borra por accidente /bin/rpm o /lib64/libc.so.6, puede recuperar el ejecutable extrayéndolo directamente con cpio."
+    },
+    {
+      "id": "102.5-slide-6",
+      "slideNumber": 6,
+      "title": "Configuración de Repositorios YUM y DNF",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Configuración de Repositorios YUM y DNF"
+        },
+        {
+          "type": "paragraph",
+          "text": "Estructura de configuración central (/etc/dnf/dnf.conf) y repositorios modulares (/etc/yum.repos.d/*.repo):"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-left:5px solid #2563EB; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#1E40AF; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#1E40AF; font-size:12px;\">Red aislada empresarial (DMZ) sin conexión directa a internet</span>\n    </div>\n    <div style=\"line-height:1.35; color:#1E3A8A; font-size:11px;\">\n      <strong>• Situación:</strong> Servidores en entornos seguros (banca, sanidad) no tienen salida a internet, pero deben instalar paquetes y recibir parches de Rocky Linux.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Creas un archivo en <code>/etc/yum.repos.d/interno.repo</code> que apunta al espejo Nexus local (<code>baseurl</code>), activado con <code>enabled=1</code> y exigiendo <code>gpgcheck=1</code> para que el sistema actualice seguro sin depender de la red exterior.\n    </div>\n  </div>\n\n  <!-- Comparativa Centralizado vs Modular -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n    <!-- Fichero Central -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:8px; padding:8px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:1px 6px; border-radius:4px;\">FICHERO CENTRAL</span>\n        <code style=\"font-weight:800; color:#1E40AF; font-size:12px;\">/etc/dnf/dnf.conf (o /etc/yum.conf)</code>\n      </div>\n      <strong style=\"color:#1E40AF; font-size:12px;\">Opciones Globales del Cliente YUM / DNF</strong>\n      <div style=\"font-size:11px; color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n        Contiene la sección <code>[main]</code> con directivas para todo el sistema: límite de kernels antiguos (<code>installonly_limit=3</code>), ruta de caché y seguridad global.\n      </div>\n    </div>\n\n    <!-- Directorio Modular -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:8px; padding:8px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:10px; padding:1px 6px; border-radius:4px;\">DIRECTORIO MODULAR</span>\n        <code style=\"font-weight:800; color:#6B21A8; font-size:12px;\">/etc/yum.repos.d/*.repo</code>\n      </div>\n      <strong style=\"color:#6B21A8; font-size:12px;\">Definiciones Individuales de Repositorios</strong>\n      <div style=\"font-size:11px; color:#581C87; margin-top:2px; line-height:1.35;\">\n        Permite que cada canal de software (BaseOS, AppStream, EPEL, Docker) resida en su propio archivo <code>.repo</code> independiente sin tocar la configuración central.\n      </div>\n    </div>\n  </div>\n\n  <!-- Contenido Real y Fiel de un Fichero .repo -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 16px; font-family:monospace; font-size:12px; line-height:1.45; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">📄 Contenido Real de /etc/yum.repos.d/rocky.repo (Rocky Linux 9 / RHEL)</span>\n      <span>rocky.repo</span>\n    </div>\n    <div><span style=\"color:#38BDF8; font-weight:800;\">[baseos]</span> <span style=\"color:#64748B;\"># Identificador único de repositorio (obligatorio entre corchetes)</span></div>\n    <div><span style=\"color:#FDE047; font-weight:700;\">name</span>=<span style=\"color:#A7F3D0;\">Rocky Linux $releasever - BaseOS</span></div>\n    <div><span style=\"color:#FDE047; font-weight:700;\">mirrorlist</span>=<span style=\"color:#93C5FD;\">https://mirrors.rockylinux.org/mirrorlist?arch=$basearch&repo=BaseOS-$releasever</span></div>\n    <div><span style=\"color:#FDE047; font-weight:700;\">baseurl</span>=<span style=\"color:#93C5FD;\">http://dl.rockylinux.org/$contentdir/$releasever/BaseOS/$basearch/os/</span></div>\n    <div><span style=\"color:#FDE047; font-weight:700;\">enabled</span>=<span style=\"color:#4ADE80; font-weight:800;\">1</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># 1 = repositorio activo; 0 = deshabilitado</span></div>\n    <div><span style=\"color:#FDE047; font-weight:700;\">gpgcheck</span>=<span style=\"color:#4ADE80; font-weight:800;\">1</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># 1 = verifica firmas digitales GPG obligatorias</span></div>\n    <div><span style=\"color:#FDE047; font-weight:700;\">gpgkey</span>=<span style=\"color:#F472B6;\">file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-9</span> <span style=\"color:#64748B;\"># Clave pública para validar paquetes</span></div>\n  </div>\n\n  <!-- ANATOMÍA GRÁFICA DE UN FICHERO .REPO -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      📋 Anatomía de las 6 Directivas Evaluadas en el Examen LPIC-1:\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n      <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#0284C7;\">[id_repositorio]</strong><br>\n        Identificador único entre corchetes sin espacios (ej: <code>[baseos]</code> o <code>[epel]</code>).\n      </div>\n      <div style=\"background:#ECFDF5; border:1px solid #A7F3D0; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#059669;\">name=...</strong><br>\n        Nombre legible que se muestra al usuario en los listados de paquetes y repositorios.\n      </div>\n      <div style=\"background:#FEFCE8; border:1px solid #FDE047; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#CA8A04;\">baseurl / mirrorlist</strong><br>\n        URL del servidor (HTTP, HTTPS, FTP o <code>file:///</code>) donde residen paquetes y metadatos <code>repodata/</code>.\n      </div>\n      <div style=\"background:#FDF4FF; border:1px solid #F0ABFC; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#A21CAF;\">enabled=0 o 1</strong><br>\n        🎯 <code>1</code> = repositorio activo; <code>0</code> = deshabilitado (ignorado en búsquedas e instalaciones).\n      </div>\n      <div style=\"background:#FFF1F2; border:1px solid #FDA4AF; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#BE123C;\">gpgcheck=0 o 1</strong><br>\n        🎯 <code>1</code> = valida la firma digital GPG de cada paquete antes de instalarlo; <code>0</code> = no verifica.\n      </div>\n      <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#334155;\">Variables YUM</strong><br>\n        <code>$releasever</code> (versión del sistema operativo) y <code>$basearch</code> (arquitectura del procesador, ej: x86_64).\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE DE EXAMEN: Los repositorios de YUM y DNF se definen como archivos con extensión '.repo' dentro del directorio '/etc/yum.repos.d/'."
+        }
+      ],
+      "notes": "Destaca la variable $releasever (versión de distribución) y $basearch (arquitectura CPU), que YUM sustituye automáticamente."
+    },
+    {
+      "id": "102.5-slide-7",
+      "slideNumber": 7,
+      "title": "YUM y DNF: Operaciones de Paquetes con Dependencias",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "YUM y DNF: Operaciones de Paquetes con Dependencias"
+        },
+        {
+          "type": "paragraph",
+          "text": "Gestión automatizada de ciclo de vida en servidores Red Hat y Fedora:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "yum / dnf install | update | remove | clean all",
+          "title": "Ciclo de vida automatizado en Red Hat/Fedora: instalación resolviendo librerías, actualización transaccional y limpieza de caché."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "install [-y] <paquete>",
+              "Instalar con dependencias",
+              "Descarga e instala el paquete resolviendo automáticamente todo el árbol de librerías."
+            ],
+            [
+              "update [paquete]",
+              "Actualizar sistema/paquete",
+              "Actualiza el paquete indicado o todo el sistema si no se especifica nombre."
+            ],
+            [
+              "check-update",
+              "Comprobar actualizaciones",
+              "🎯 Clave de Examen: Comprueba si existen actualizaciones sin instalar nada (devuelve código 100 si las hay)."
+            ],
+            [
+              "remove <paquete>",
+              "Desinstalar software",
+              "Desinstala el paquete y retira las dependencias no utilizadas que quedaron huérfanas."
+            ],
+            [
+              "clean all",
+              "Vaciar caché local",
+              "🎯 Borra todos los paquetes descargados y vacía los metadatos de /var/cache/dnf/."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-left:5px solid #16A34A; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#14532D; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#166534; font-size:12px;\">Ventana de mantenimiento nocturno y monitorización de parches</span>\n    </div>\n    <div style=\"line-height:1.35; color:#14532D; font-size:11px;\">\n      <strong>• Situación:</strong> Administras 40 servidores web y no puedes reiniciar servicios en horas de trabajo ni dejar que <code>/var</code> colapse de paquetes viejos.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Un script de cron corre <code>dnf check-update</code> (código 100 = notifica parches a Slack). En la ventana nocturna se lanza <code>dnf update -y</code> para aplicar parches resolviendo dependencias, y <code>dnf clean all</code> para purgar gigabytes de caché.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de Instalación Transaccional DNF -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Resolución de dependencias y transacción atómica con DNF</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">root@rocky:~#</span> <span style=\"color:#FDE047; font-weight:700;\">dnf install -y htop</span></div>\n    <div style=\"color:#94A3B8;\">Dependencies resolved.</div>\n    <div style=\"color:#38BDF8; font-weight:700;\">================================================================================</div>\n    <div style=\"color:#94A3B8;\"> Package &nbsp;&nbsp;&nbsp;&nbsp;Arch &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Version &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Repository &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Size</div>\n    <div style=\"color:#38BDF8; font-weight:700;\">================================================================================</div>\n    <div><span style=\"color:#4ADE80; font-weight:700;\">Installing:</span> &nbsp;&nbsp;htop &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x86_64 &nbsp;&nbsp;&nbsp;&nbsp;3.2.2-1.el9 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;epel &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.7 M</div>\n    <div><span style=\"color:#FCD34D;\">Installing dependencies:</span> libnl3 x86_64 3.5.0-10.el9 baseos &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;320 k</div>\n    <div style=\"margin-top:2px; color:#94A3B8;\">Transaction Summary: Install 2 Packages &nbsp;|&nbsp; Downloading Packages...</div>\n    <div style=\"color:#4ADE80;\">Running transaction ... Installing : libnl3-3.5.0-10.el9 &nbsp;|&nbsp; Installing : htop-3.2.2-1.el9</div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">Complete!</div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">🔍 Dependencies resolved:</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        DNF calcula el grafo de dependencias y añade automáticamente <code>libnl3</code> para evitar dependencias rotas.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">📋 Transaction Summary:</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        Muestra la tabla de paquetes que se instalarán, actualizarán o borrarán antes de aplicar cambios en disco.\n      </div>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">⚙️ Complete! (código 0):</strong>\n      <div style=\"color:#581C87; line-height:1.35; margin-top:2px;\">\n        Descarga los <code>.rpm</code> a <code>/var/cache/dnf/</code> e invoca a <code>rpm</code> por debajo para instalar y registrar.\n      </div>\n    </div>\n  </div>\n\n  <!-- GRID DE 4 OPERACIONES CLAVE DE EXAMEN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      ⚡ Las 4 Operaciones Imprescindibles de YUM y DNF en el Examen LPIC-1:\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:8px; font-size:11.5px;\">\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n        <strong style=\"color:#15803D;\">dnf install [-y] &lt;paquete&gt;</strong><br>\n        Instala el paquete solicitado y todas sus dependencias transitivas. El parámetro <code>-y</code> responde afirmativamente sin pausar.\n      </div>\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n        <strong style=\"color:#1E40AF;\">dnf update [paquete]</strong><br>\n        Actualiza el paquete indicado a la última versión disponible, o actualiza el sistema entero si no se proporciona nombre.\n      </div>\n      <div style=\"background:#FEF3C7; border:1px solid #FCD34D; border-radius:6px; padding:6px 10px;\">\n        <strong style=\"color:#92400E;\">dnf check-update 🎯</strong><br>\n        Comprueba parches de seguridad y versiones nuevas sin tocar el disco. Devuelve código <code>100</code> si hay actualizaciones pendientes.\n      </div>\n      <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n        <strong style=\"color:#6B21A8;\">dnf clean all 🎯</strong><br>\n        Vacía completamente la caché local en <code>/var/cache/dnf/</code>, liberando gigabytes de paquetes descargados y metadatos viejos.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE DE EXAMEN LPIC-1: 'yum check-update' comprueba si hay paquetes actualizables sin tocarlos. Si encuentra actualizaciones devuelve código de salida 100, ideal para scripts de monitorización."
+        }
+      ],
+      "notes": "Muestra a la clase la tabla de transacción de DNF, que resume los paquetes que se instalarán, actualizarán o eliminarán antes de pedir confirmación."
+    },
+    {
+      "id": "102.5-slide-8",
+      "slideNumber": 8,
+      "title": "YUM y DNF: Búsquedas, Consultas y Repositorios",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "YUM y DNF: Búsquedas, Consultas y Repositorios"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo encontrar qué paquete instalar para obtener un comando determinado?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "yum / dnf search | info | provides | repolist",
+          "title": "Explorar el catálogo remoto: encontrar qué paquete proporciona un comando desconocido e inspeccionar repositorios."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "provides <archivo>",
+              "Búsqueda inversa (whatprovides)",
+              "🎯 Clave Absoluta de Examen: Averigua qué paquete de los repositorios proporciona un comando o archivo."
+            ],
+            [
+              "search <término>",
+              "Búsqueda por texto",
+              "Busca coincidencias en el nombre, resumen y descripción de todos los paquetes disponibles."
+            ],
+            [
+              "info <paquete>",
+              "Metadatos detallados",
+              "Muestra versión, licencia, tamaño y repositorio de un paquete remoto sin necesidad de descargarlo."
+            ],
+            [
+              "repolist [all|enabled]",
+              "Listar repositorios",
+              "🎯 Muestra la lista de repositorios configurados y su estado actual en /etc/yum.repos.d/."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-left:5px solid #9333EA; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#581C87; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#6B21A8; font-size:12px;\">Comandos ausentes y dependencias ocultas en despliegues</span>\n    </div>\n    <div style=\"line-height:1.35; color:#581C87; font-size:11px;\">\n      <strong>• Situación:</strong> Una guía te pide ejecutar <code>semanage</code> para abrir un puerto en SELinux, pero bash da <code>command not found</code> y no existe ningún paquete con ese nombre exacto.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Ejecutas <code>dnf provides */semanage</code> para que escanee los repositorios remotos; te revela al instante que debes instalar <code>policycoreutils-python-utils</code>, ahorrando horas de ensayo y error.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de provides y repolist -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Búsqueda inversa de ficheros y estado de repositorios</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">dnf provides */semanage</span></div>\n    <div><span style=\"color:#4ADE80; font-weight:800;\">policycoreutils-python-utils-3.3-6.el9.noarch</span> : SELinux management Python utilities</div>\n    <div style=\"color:#94A3B8;\">Repo &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span style=\"color:#38BDF8;\">appstream</span></div>\n    <div>Matched from: Filename : <span style=\"color:#FCD34D;\">/usr/sbin/semanage</span></div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">dnf repolist</span></div>\n    <div style=\"color:#94A3B8;\">repo id &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repo name &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;status</div>\n    <div><span style=\"color:#38BDF8; font-weight:700;\">appstream</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rocky Linux 9 - AppStream &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#4ADE80;\">enabled</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:700;\">baseos</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rocky Linux 9 - BaseOS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#4ADE80;\">enabled</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:700;\">epel</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Extra Packages for Enterprise Linux 9 - x86_64 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#4ADE80;\">enabled</span></div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">🎯 dnf provides */semanage:</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        Busca en todos los repositorios remotos qué paquete contiene la herramienta <code>semanage</code> aunque no esté instalada.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">📦 policycoreutils-python-utils:</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        Te indica con precisión milimétrica el paquete que debes instalar con <code>dnf install</code> para obtener el comando deseado.\n      </div>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">🌐 dnf repolist:</strong>\n      <div style=\"color:#581C87; line-height:1.35; margin-top:2px;\">\n        Lista los repositorios activos (<code>enabled=1</code>) configurados en el directorio modular <code>/etc/yum.repos.d/</code>.\n      </div>\n    </div>\n  </div>\n\n  <!-- DUELO DE EXAMEN: SEARCH vs PROVIDES -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      ⚖️ Duelo de Examen LPIC-1: ¿Cuándo usar 'search' y cuándo usar 'provides'?\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n      <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:8px 12px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">dnf search &lt;texto&gt;</span>\n        <div style=\"font-weight:800; color:#1E40AF; font-size:12.5px; margin-top:2px;\">Búsqueda por Palabras Clave</div>\n        <div style=\"font-size:11px; color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n          • Busca el término únicamente en el <strong>nombre y resumen</strong> del paquete.<br>\n          • ⚠️ Si el paquete se llama <code>policycoreutils-python-utils</code> pero tú buscas <code>semanage</code>, ¡puede no encontrar nada!\n        </div>\n      </div>\n\n      <div style=\"background:#FAF5FF; border:1.5px solid #9333EA; border-radius:8px; padding:8px 12px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">dnf provides &lt;ruta&gt; 🎯</span>\n        <div style=\"font-weight:800; color:#6B21A8; font-size:12.5px; margin-top:2px;\">Búsqueda Inversa de Ficheros (whatprovides)</div>\n        <div style=\"font-size:11px; color:#581C87; margin-top:2px; line-height:1.35;\">\n          • Escanea el listado de <strong>todos los archivos internos</strong> de todos los paquetes.<br>\n          • 🎯 Te dice qué paquete instalar cuando falta un comando (ej: <code>dnf provides */semanage</code>).\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA NÚMERO 1 DE CERTIFICACIÓN: ¿Qué comando de YUM averigua qué paquete proporciona un archivo? Respuesta: 'yum provides' o 'yum whatprovides' (ambos son sinónimos exactos)."
+        }
+      ],
+      "notes": "Recuerda a los alumnos que 'whatprovides' es un alias de 'provides'. Ambas formas son aceptadas en el examen."
+    },
+    {
+      "id": "102.5-slide-9",
+      "slideNumber": 9,
+      "title": "Zypper en openSUSE: Gestión de Paquetes y Repositorios",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Zypper en openSUSE: Gestión de Paquetes y Repositorios"
+        },
+        {
+          "type": "paragraph",
+          "text": "El gestor de alta velocidad para la familia SUSE Linux y openSUSE:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "zypper refresh | install | remove | update | lr | ar | mr",
+          "title": "El gestor nativo de SUSE Linux y openSUSE: resolución SAT ultra-rápida (libzypp) y comandos cortos de 2 letras."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "refresh, ref",
+              "Actualizar índices",
+              "🎯 Descarga los metadatos frescos de todos los repositorios remotos (equivalente a apt-get update)."
+            ],
+            [
+              "install, in <paquete>",
+              "Instalar software",
+              "Instala paquetes y resuelve dependencias automáticamente con algoritmo SAT."
+            ],
+            [
+              "remove, rm <paquete>",
+              "Desinstalar software",
+              "Desinstala un paquete del sistema."
+            ],
+            [
+              "update, up [paquete]",
+              "Actualizar sistema",
+              "Actualiza los paquetes a su versión más reciente disponible."
+            ],
+            [
+              "repos, lr",
+              "Listar repositorios",
+              "🎯 Clave de Examen: Lista todos los repositorios configurados en /etc/zypp/repos.d/."
+            ],
+            [
+              "modifyrepo, mr -d/-e",
+              "Modificar repositorio",
+              "🎯 Clave de Examen: Deshabilita (-d) o habilita (-e) un repositorio existente sin borrar el fichero."
+            ],
+            [
+              "what-provides, wp <archivo>",
+              "Búsqueda inversa",
+              "Averigua qué paquete proporciona un archivo o comando en openSUSE."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-left:5px solid #16A34A; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#14532D; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#166534; font-size:12px;\">Desconexión exprés de repositorios caídos en openSUSE / SLES</span>\n    </div>\n    <div style=\"line-height:1.35; color:#14532D; font-size:11px;\">\n      <strong>• Situación:</strong> Un repositorio externo de monitorización se cae o caduca, provocando que cualquier instalación en openSUSE se quede colgada por timeout.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Ejecutas <code>zypper lr -u</code> para ver las URLs y <code>zypper mr -d &lt;alias&gt;</code> para deshabilitarlo al instante sin abrir ficheros. Tras ello, <code>zypper ref</code> y <code>zypper up</code> completan el mantenimiento sin bloqueos.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de Zypper lr, mr y ref -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Gestión de repositorios y refresco de metadatos en openSUSE</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">root@opensuse:~#</span> <span style=\"color:#FDE047; font-weight:700;\">zypper lr -u</span></div>\n    <div style=\"color:#94A3B8;\"># | Alias &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| Name &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| Enabled | GPG Check | URI</div>\n    <div style=\"color:#38BDF8; font-weight:700;\">--+-------------+------------------+---------+-----------+-------------------------------------</div>\n    <div>1 | <span style=\"color:#F8FAFC; font-weight:700;\">openSUSE-Oss</span> &nbsp;| openSUSE-Oss &nbsp;&nbsp;&nbsp;&nbsp;| <span style=\"color:#4ADE80; font-weight:700;\">Yes</span> &nbsp;&nbsp;&nbsp;&nbsp;| (r ) Yes &nbsp;| http://download.opensuse.org/distribution/...</div>\n    <div>2 | <span style=\"color:#F8FAFC; font-weight:700;\">repo-update</span> &nbsp;&nbsp;| openSUSE-Update &nbsp;| <span style=\"color:#4ADE80; font-weight:700;\">Yes</span> &nbsp;&nbsp;&nbsp;&nbsp;| (r ) Yes &nbsp;| http://download.opensuse.org/update/...</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">root@opensuse:~#</span> <span style=\"color:#FDE047; font-weight:700;\">zypper mr -d repo-update</span></div>\n    <div style=\"color:#FCA5A5;\">Repository 'repo-update' has been successfully disabled.</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">root@opensuse:~#</span> <span style=\"color:#FDE047; font-weight:700;\">zypper ref</span></div>\n    <div style=\"color:#94A3B8;\">Repository 'openSUSE-Oss' is up to date. &nbsp;|&nbsp; <span style=\"color:#A7F3D0; font-weight:700;\">All repositories have been refreshed.</span></div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">📋 zypper lr -u (List Repos):</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        Muestra alias, estado activo (<code>Enabled: Yes</code>) y la URL (<code>-u</code>) de los repositorios en <code>/etc/zypp/repos.d/</code>.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">⚙️ zypper mr -d repo-update:</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        🎯 Modifica el repositorio para deshabilitarlo (<code>-d</code> = disable; <code>-e</code> = enable) sin borrar el archivo de disco.\n      </div>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">🔄 zypper ref (Refresh):</strong>\n      <div style=\"color:#581C87; line-height:1.35; margin-top:2px;\">\n        Descarga los índices y metadatos actualizados de los repositorios activos (equivalente a <code>apt-get update</code>).\n      </div>\n    </div>\n  </div>\n\n  <!-- TABLA DE FORMATO CORTO VS LARGO -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      ⌨️ Mnemotecnia de Zypper: Los Comandos Cortos de 2 Letras para el Examen LPIC-1:\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11.5px;\">\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 8px;\">\n        <code style=\"font-weight:800; color:#15803D; font-size:12.5px;\">zypper in &lt;pkg&gt;</code><br>\n        <strong>install:</strong> Instala paquetes.\n      </div>\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 8px;\">\n        <code style=\"font-weight:800; color:#1E40AF; font-size:12.5px;\">zypper rm &lt;pkg&gt;</code><br>\n        <strong>remove:</strong> Desinstala paquetes.\n      </div>\n      <div style=\"background:#FEF3C7; border:1px solid #FCD34D; border-radius:6px; padding:6px 8px;\">\n        <code style=\"font-weight:800; color:#92400E; font-size:12.5px;\">zypper ref</code><br>\n        <strong>refresh:</strong> Refresca catálogos.\n      </div>\n      <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 8px;\">\n        <code style=\"font-weight:800; color:#6B21A8; font-size:12.5px;\">zypper lr</code><br>\n        <strong>repos:</strong> Lista repositorios.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVES DE EXAMEN ZYPPER: 'zypper ref' actualiza índices; 'zypper lr' lista repositorios; 'zypper mr -d <repo>' deshabilita un repositorio; 'zypper in' instala."
+        }
+      ],
+      "notes": "Zypper admite comandos en formato largo o abreviado de dos letras (ref, in, rm, up, se, lr, ar, mr). Explica ambos formatos."
+    },
+    {
+      "id": "102.5-slide-10",
+      "slideNumber": 10,
+      "title": "Gran Matriz Visual: RPM frente a YUM/DNF y Zypper",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Gran Matriz Visual: RPM frente a YUM/DNF y Zypper"
+        },
+        {
+          "type": "paragraph",
+          "text": "Diferencias funcionales clave entre el motor de bajo nivel y los front-ends inteligentes evaluados por LPIC-1:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:12px; margin:4px 0;\">\n  <!-- GRID DE 3 COLUMNAS: ARQUITECTURA DE ECOSISTEMAS -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1.15fr 1fr; gap:12px;\">\n    <!-- rpm -->\n    <div style=\"background:#F8FAFC; border:2px solid #64748B; border-radius:12px; padding:12px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;\">\n        <span style=\"background:#475569; color:#FFF; font-weight:800; font-size:11px; padding:2px 7px; border-radius:4px;\">BAJO NIVEL</span>\n        <code style=\"font-weight:800; color:#0F172A; font-size:14px;\">rpm</code>\n      </div>\n      <strong style=\"color:#1E293B; font-size:13px;\">Archivos .rpm Locales</strong>\n      <div style=\"font-size:12px; color:#475569; margin-top:4px; line-height:1.4;\">\n        • ❌ <strong>Sin acceso a red</strong> ni repositorios.<br>\n        • ❌ <strong>NO resuelve dependencias</strong> (aborta).<br>\n        • 🎯 Registra el sistema en <code>/var/lib/rpm/</code>.\n      </div>\n    </div>\n\n    <!-- YUM / DNF -->\n    <div style=\"background:#FEF2F2; border:2px solid #F87171; border-radius:12px; padding:12px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;\">\n        <span style=\"background:#EF4444; color:#FFF; font-weight:800; font-size:11px; padding:2px 7px; border-radius:4px;\">RED HAT / FEDORA</span>\n        <code style=\"font-weight:800; color:#991B1B; font-size:14px;\">yum / dnf</code>\n      </div>\n      <strong style=\"color:#991B1B; font-size:13px;\">Repositorios /etc/yum.repos.d/</strong>\n      <div style=\"font-size:12px; color:#7F1D1D; margin-top:4px; line-height:1.4;\">\n        • ✅ Descarga paquetes por red automáticamente.<br>\n        • ✅ Resuelve árbol completo de dependencias.<br>\n        • 🎯 Búsqueda inversa: <code>yum provides &lt;fichero&gt;</code>.\n      </div>\n    </div>\n\n    <!-- Zypper -->\n    <div style=\"background:#F0FDF4; border:2px solid #4ADE80; border-radius:12px; padding:12px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:11px; padding:2px 7px; border-radius:4px;\">OPENSUSE / SUSE</span>\n        <code style=\"font-weight:800; color:#14532D; font-size:14px;\">zypper</code>\n      </div>\n      <strong style=\"color:#14532D; font-size:13px;\">Repositorios /etc/zypp/repos.d/</strong>\n      <div style=\"font-size:12px; color:#14532D; margin-top:4px; line-height:1.4;\">\n        • ✅ Motor SAT Solver ultra-rápido (libzypp).<br>\n        • ✅ Comandos cortos de 2 letras (<code>ref, in, lr</code>).<br>\n        • 🎯 Modifica repos: <code>zypper mr -d &lt;alias&gt;</code>.\n      </div>\n    </div>\n  </div>\n\n  <!-- GRID DE 6 TARJETAS VISUALES DE EQUIVALENCIAS -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;\">\n    <!-- 1. Instalar -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:10px; padding:10px 12px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">INSTALAR</span>\n      <div style=\"font-size:12px; margin-top:5px; line-height:1.45;\">\n        <div><strong>rpm:</strong> <code>rpm -ivh pkg.rpm</code></div>\n        <div><strong>YUM/DNF:</strong> <code>dnf install pkg</code></div>\n        <div><strong>Zypper:</strong> <code>zypper in pkg</code></div>\n      </div>\n    </div>\n\n    <!-- 2. Actualizar -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:10px; padding:10px 12px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">ACTUALIZAR</span>\n      <div style=\"font-size:12px; margin-top:5px; line-height:1.45;\">\n        <div><strong>rpm:</strong> <code>rpm -Uvh</code> / <code>-Fvh</code> 🎯</div>\n        <div><strong>YUM/DNF:</strong> <code>dnf update</code></div>\n        <div><strong>Zypper:</strong> <code>zypper up</code></div>\n      </div>\n    </div>\n\n    <!-- 3. Desinstalar -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-radius:10px; padding:10px 12px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">DESINSTALAR</span>\n      <div style=\"font-size:12px; margin-top:5px; line-height:1.45;\">\n        <div><strong>rpm:</strong> <code>rpm -e pkg</code> (sin .rpm)</div>\n        <div><strong>YUM/DNF:</strong> <code>dnf remove pkg</code></div>\n        <div><strong>Zypper:</strong> <code>zypper rm pkg</code></div>\n      </div>\n    </div>\n\n    <!-- 4. Buscar Proveedor -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:10px; padding:10px 12px;\">\n      <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">DUEÑO / PROVIDES 🎯</span>\n      <div style=\"font-size:12px; margin-top:5px; line-height:1.45;\">\n        <div><strong>rpm:</strong> <code>rpm -qf /ruta</code> (local)</div>\n        <div><strong>YUM/DNF:</strong> <code>dnf provides /ruta</code></div>\n        <div><strong>Zypper:</strong> <code>zypper wp /ruta</code></div>\n      </div>\n    </div>\n\n    <!-- 5. Repositorios -->\n    <div style=\"background:#FEFCE8; border:1.5px solid #FDE047; border-radius:10px; padding:10px 12px;\">\n      <span style=\"background:#CA8A04; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">REPOSITORIOS</span>\n      <div style=\"font-size:12px; margin-top:5px; line-height:1.45;\">\n        <div><strong>rpm:</strong> <em>No gestiona repos</em></div>\n        <div><strong>YUM/DNF:</strong> <code>dnf repolist</code></div>\n        <div><strong>Zypper:</strong> <code>zypper lr</code> | <code>zypper mr -d</code></div>\n      </div>\n    </div>\n\n    <!-- 6. Caché -->\n    <div style=\"background:#F8FAFC; border:1.5px solid #CBD5E1; border-radius:10px; padding:10px 12px;\">\n      <span style=\"background:#475569; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">LIMPIAR CACHÉ</span>\n      <div style=\"font-size:12px; margin-top:5px; line-height:1.45;\">\n        <div><strong>rpm:</strong> <em>No tiene caché</em></div>\n        <div><strong>YUM/DNF:</strong> <code>dnf clean all</code></div>\n        <div><strong>Zypper:</strong> <code>zypper clean --all</code></div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA CLAVE DE EXAMEN: Para buscar qué paquete proporciona un archivo en Red Hat se usa 'rpm -qf' (si ya está instalado en disco) o 'yum provides' (en repositorios remotos)."
+        }
+      ],
+      "notes": "Pide a los alumnos que memoricen esta matriz. Representa al menos 2 o 3 preguntas garantizadas en el examen 101-500."
+    },
+    {
+      "id": "102.5-slide-11",
+      "slideNumber": 11,
+      "title": "Firmas Digitales GPG e Integridad en RPM",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Firmas Digitales GPG e Integridad en RPM"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué son indispensables las firmas? Autenticidad del origen, verificación previa y auditoría tras la instalación:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL DE SEGURIDAD Y FORENSE -->\n  <div style=\"background:#FFF1F2; border:1.5px solid #FDA4AF; border-left:5px solid #BE123C; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#9F1239; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#BE123C; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🕵️ CASO FORENSE / SEGURIDAD</span>\n      <span style=\"font-weight:700; color:#9F1239; font-size:12px;\">Auditoría tras intrusión y prevención de paquetes troyanizados</span>\n    </div>\n    <div style=\"line-height:1.35; color:#9F1239; font-size:11px;\">\n      <strong>• Situación:</strong> El equipo de ciberseguridad detecta actividad anómala en SSH y sospecha que un atacante reemplazó <code>/usr/sbin/sshd</code> con un binario malicioso.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Ejecutas <code>rpm -V openssh-server</code> para auditar la integridad: los flags <code>S.5....T.</code> confirman que el binario fue adulterado. En descargas, <code>rpm -K</code> comprueba la firma GPG antes de instalar para evitar software troyano.\n    </div>\n  </div>\n\n  <!-- Explicación Conceptual: ¿Por qué Firmas Digitales? -->\n  <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:8px; padding:8px 12px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n      <strong style=\"color:#1E40AF; font-size:12.5px;\">🔐 ¿Por qué son indispensables las Firmas Digitales GPG?</strong>\n      <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:3px;\">CRIPTOGRAFÍA ASIMÉTRICA</span>\n    </div>\n    <div style=\"font-size:11.5px; color:#1E3A8A; line-height:1.35;\">\n      Cualquiera puede alojar un archivo <code>.rpm</code> en la red y alterar binarios con código malicioso. La firma digital garantiza <strong>Autenticidad</strong> (proviene del fabricante legítimo Red Hat/Rocky) e <strong>Integridad</strong> (si 1 solo byte fue modificado en el camino, la firma criptográfica se invalida y la instalación se bloquea).\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de rpm -K y rpm -V -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Comprobación de firma previa y auditoría de integridad en disco</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">rpm -K tree-1.8.2-1.el9.x86_64.rpm</span></div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">tree-1.8.2-1.el9.x86_64.rpm: digests signatures OK</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">rpm -V openssh-server</span></div>\n    <div><span style=\"color:#F87171; font-weight:700;\">S.5....T.</span> &nbsp;<span style=\"color:#38BDF8; font-weight:700;\">c</span> <span style=\"color:#F8FAFC;\">/etc/ssh/sshd_config</span></div>\n  </div>\n\n  <!-- LAS 3 FASES DE SEGURIDAD EN EL EXAMEN LPIC-1 -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <!-- 1. rpm --import -->\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:8px 10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 5px; border-radius:3px;\">PASO 1</span>\n        <code style=\"font-weight:800; color:#15803D; font-size:11px;\">rpm --import &lt;key&gt;</code>\n      </div>\n      <strong style=\"color:#14532D; font-size:12px;\">Importar Clave Pública</strong>\n      <div style=\"color:#14532D; margin-top:2px; line-height:1.35;\">\n        Instala la clave oficial del distribuidor (ej: <code>RPM-GPG-KEY-Rocky-9</code>) en <code>/var/lib/rpm/</code> para validar firmas futuras.\n      </div>\n    </div>\n\n    <!-- 2. rpm -K -->\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:8px 10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 5px; border-radius:3px;\">PASO 2 🎯</span>\n        <code style=\"font-weight:800; color:#1E40AF; font-size:11px;\">rpm -K (--checksig)</code>\n      </div>\n      <strong style=\"color:#1E40AF; font-size:12px;\">Verificar ANTES de Instalar</strong>\n      <div style=\"color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n        Comprueba el hash SHA256 (<code>digests OK</code>) y la firma GPG (<code>signatures OK</code>) del archivo <code>.rpm</code> antes de instalar.\n      </div>\n    </div>\n\n    <!-- 3. rpm -V -->\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:8px; padding:8px 10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 5px; border-radius:3px;\">PASO 3 🎯</span>\n        <code style=\"font-weight:800; color:#6B21A8; font-size:11px;\">rpm -V (--verify)</code>\n      </div>\n      <strong style=\"color:#6B21A8; font-size:12px;\">Auditar YA INSTALADOS</strong>\n      <div style=\"color:#581C87; margin-top:2px; line-height:1.35;\">\n        Compara los ficheros de disco con la BD. Letras clave: <code>S</code> (Size), <code>5</code> (MD5 hash), <code>T</code> (mTime), <code>c</code> (config file).\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE DE EXAMEN LPIC-1: 'rpm -K' (--checksig) verifica la firma de un archivo .rpm en disco ANTES de instalarlo; 'rpm -V' (--verify) audita la integridad de archivos YA INSTALADOS en el sistema."
+        }
+      ],
+      "notes": "Muestra cómo la directiva gpgcheck=1 en /etc/yum.conf automatiza esta comprobación antes de cada instalación en YUM."
+    },
+    {
+      "id": "102.5-slide-12",
+      "slideNumber": 12,
+      "title": "Trampas Clásicas de Examen en el Ecosistema RPM",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Trampas Clásicas de Examen en el Ecosistema RPM"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 4 errores conceptuales más frecuentes que hacen perder puntos en la certificación LPIC-1:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:12px; margin:6px 0;\">\n  <!-- GRID DE 4 GRANDES TRAMPAS DE EXAMEN -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px;\">\n    <!-- Trampa 1: rpm -U vs rpm -F -->\n    <div style=\"background:#FEF2F2; border:2px solid #FCA5A5; border-radius:12px; padding:14px 16px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n        <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:11px; padding:2px 8px; border-radius:4px;\">TRAMPA 1 🎯</span>\n        <strong style=\"color:#991B1B; font-size:14px;\">rpm -U frente a rpm -F (Freshen)</strong>\n      </div>\n      <div style=\"font-size:12.5px; line-height:1.45;\">\n        <div style=\"color:#991B1B; margin-bottom:5px;\">\n          ❌ <strong>La Trampa:</strong> Creer que <code>rpm -F</code> instala el paquete si no está presente en el sistema.\n        </div>\n        <div style=\"color:#15803D; background:#DCFCE7; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n          ✅ <strong>La Realidad:</strong> <code>-F</code> <strong>SOLO actualiza si ya está instalado</strong>; si no existe, ¡no hace absolutamente nada! <code>-U</code> (Upgrade) actualiza si existe <strong>O LO INSTALA POR PRIMERA VEZ</strong> si no existía.\n        </div>\n      </div>\n    </div>\n\n    <!-- Trampa 2: Olvidar la opción -p -->\n    <div style=\"background:#FFFBEB; border:2px solid #FCD34D; border-radius:12px; padding:14px 16px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n        <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:11px; padding:2px 8px; border-radius:4px;\">TRAMPA 2 🎯</span>\n        <strong style=\"color:#92400E; font-size:14px;\">Olvidar la opción '-p' al consultar ficheros .rpm</strong>\n      </div>\n      <div style=\"font-size:12.5px; line-height:1.45;\">\n        <div style=\"color:#78350F; margin-bottom:5px;\">\n          ❌ <strong>La Trampa:</strong> Ejecutar <code>rpm -ql tree.rpm</code> creyendo que listará el contenido del fichero descargado.\n        </div>\n        <div style=\"color:#15803D; background:#DCFCE7; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n          ✅ <strong>La Realidad:</strong> <code>rpm -ql</code> solo busca en paquetes <em>ya instalados</em>. Para inspeccionar un archivo <code>.rpm</code> sin instalar, <strong>DEBES poner '-p' (package)</strong>: <code style=\"font-weight:800; color:#14532D;\">rpm -qpl tree.rpm</code>.\n        </div>\n      </div>\n    </div>\n\n    <!-- Trampa 3: Nombre lógico vs nombre de fichero en rpm -e -->\n    <div style=\"background:#EFF6FF; border:2px solid #93C5FD; border-radius:12px; padding:14px 16px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:11px; padding:2px 8px; border-radius:4px;\">TRAMPA 3</span>\n        <strong style=\"color:#1E40AF; font-size:14px;\">Poner extensión .rpm al desinstalar con 'rpm -e'</strong>\n      </div>\n      <div style=\"font-size:12.5px; line-height:1.45;\">\n        <div style=\"color:#1E3A8A; margin-bottom:5px;\">\n          ❌ <strong>La Trampa:</strong> Ejecutar <code>sudo rpm -e tree-1.8.2.rpm</code> para borrar un paquete.\n        </div>\n        <div style=\"color:#15803D; background:#DCFCE7; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n          ✅ <strong>La Realidad:</strong> <code>rpm -e</code> exige únicamente el <strong>nombre lógico</strong> registrado en la base de datos: <code style=\"font-weight:800; color:#14532D;\">rpm -e tree</code>. Al poner <code>.rpm</code>, fallará diciendo que el paquete no está instalado.\n        </div>\n      </div>\n    </div>\n\n    <!-- Trampa 4: rpm -qf frente a yum provides -->\n    <div style=\"background:#FAF5FF; border:2px solid #D8B4FE; border-radius:12px; padding:14px 16px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:11px; padding:2px 8px; border-radius:4px;\">TRAMPA 4 🎯</span>\n        <strong style=\"color:#6B21A8; font-size:14px;\">rpm -qf frente a yum provides (whatprovides)</strong>\n      </div>\n      <div style=\"font-size:12.5px; line-height:1.45;\">\n        <div style=\"color:#581C87; margin-bottom:5px;\">\n          ❌ <strong>La Trampa:</strong> Responder <code>rpm -qf</code> cuando te preguntan qué comando averigua qué paquete debes instalar para tener un comando que te falta.\n        </div>\n        <div style=\"color:#15803D; background:#DCFCE7; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n          ✅ <strong>La Realidad:</strong> <code>rpm -qf /ruta</code> <strong>SOLO funciona si el archivo YA reside físicamente en tu disco</strong>. Si no lo tienes instalado, debes buscar en los repositorios con <code style=\"font-weight:800; color:#14532D;\">yum provides /ruta</code> (o <code>zypper wp</code>).\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 MNEMOTECNIA SALVAVIDAS: '-F' = Freshen (solo si existe) | '-p' = Package en disco | 'rpm -e' = Nombre lógico sin .rpm | 'provides' = Busca en toda la nube."
+        }
+      ],
+      "notes": "Insiste a los alumnos: nunca pongas la extensión .rpm al ejecutar rpm -e."
+    },
+    {
+      "id": "102.5-slide-13",
+      "slideNumber": 13,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: rpm y YUM)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: rpm y YUM)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 1 (Oficial Pág 158): ¿Cuál es el comando exacto para instalar el paquete 'file-roller-3.28.1.rpm' mostrando barras de progreso y mensajes detallados? — Comando: `sudo rpm -ivh file-roller-3.28.1.rpm` (La opción -i instala, -v activa el modo detallado (verbose) y -h imprime 50 marcas de almohadilla (#) que representan el progreso de la instalación.)",
+            "Caso 2 (Oficial Pág 158): ¿Qué comando determina qué paquete del sistema instaló el archivo '/etc/redhat-release'? — Comando: `rpm -qf /etc/redhat-release` (La opción -qf (--query --file) consulta la base de datos local de RPM y devuelve el paquete propietario del archivo indicado.)",
+            "Caso 3 (Oficial Pág 158): ¿Qué comando de YUM comprueba si hay actualizaciones pendientes y qué comando localiza qué paquete proporciona el archivo '/etc/chrony.conf'? — Comando: `yum check-update; yum whatprovides /etc/chrony.conf (o yum provides)` (check-update examina las versiones sin instalar nada; whatprovides busca en los metadatos de los repositorios remotos.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "rpm -ivh y rpm -qf son las utilidades maestras locales; yum check-update y provides permiten la interacción con repositorios remotos."
+        }
+      ],
+      "notes": "Recuerda a los alumnos que 'rpm -qf' es el equivalente directo en Red Hat de 'dpkg -S' en Debian."
+    },
+    {
+      "id": "102.5-slide-14",
+      "slideNumber": 14,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: Zypper y Repositorios)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: Zypper y Repositorios)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 4 (Oficial Pág 158): En un sistema openSUSE, ¿qué comando de Zypper permite deshabilitar temporalmente un repositorio llamado 'repo-oss'? — Comando: `sudo zypper modifyrepo -d repo-oss (o zypper mr -d repo-oss)` (El subcomando modifyrepo (o mr) con el modificador -d (--disable) cambia el estado del repositorio a enabled=0 en /etc/zypp/repos.d/.)",
+            "Caso 5 (Oficial Pág 158): ¿En qué directorio exacto almacena DNF y YUM los archivos de definición de repositorios (.repo) en CentOS/Fedora? — Comando: `/etc/yum.repos.d/` (Es la ruta modular estándar donde cada archivo .repo define las URLs y parámetros de los repositorios de software.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "openSUSE gestiona repositorios con zypper modifyrepo; Red Hat almacena sus archivos modulares en /etc/yum.repos.d/."
+        }
+      ],
+      "notes": "Subraya que en Zypper '-d' es disable y '-e' es enable."
+    },
+    {
+      "id": "102.5-slide-15",
+      "slideNumber": 15,
+      "title": "Retos de Exploración Oficiales (rpm2cpio, swapon y DNF)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Retos de Exploración Oficiales (rpm2cpio, swapon y DNF)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. Un administrador necesita extraer el ejecutable '/usr/bin/find' del paquete 'findutils-4.6.0.rpm' sin instalarlo en el sistema. ¿Qué línea de comandos completa debe utilizar?\n2. En openSUSE necesitas saber qué paquete proporciona el comando 'swapon'. ¿Qué comando ejecutas con Zypper?\n3. ¿Qué herramienta de línea de comandos de YUM/DNF permite activar o desactivar repositorios sin editar manualmente los archivos .repo a mano?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Pista",
+          "content": "Recuerda: tubería rpm2cpio con cpio -idmv; zypper what-provides; y la utilidad yum-config-manager o dnf config-manager."
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Desafío",
+          "content": "1. Se ejecuta: rpm2cpio findutils-4.6.0.rpm | cpio -idmv './usr/bin/find'\n2. Se ejecuta: zypper what-provides swapon (devolverá el paquete util-linux).\n3. Se utiliza: dnf config-manager --enable <repo> (o --disable <repo>), herramienta del paquete dnf-plugins-core."
+        }
+      ],
+      "notes": "La extracción de un binario suelto con rpm2cpio es el ejercicio práctico por excelencia de rescate en sistemas basados en RPM."
+    },
+    {
+      "id": "102.5-slide-16",
+      "slideNumber": 16,
+      "title": "Pregunta de Examen LPIC-1: Actualización con RPM (-U frente a -F)",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Actualización con RPM (-U frente a -F)"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-102-5-16",
+          "question": "¿Qué opción del comando 'rpm' actualiza un paquete de software SOLO si una versión anterior del mismo ya se encuentra instalada en el sistema, sin hacer nada si no existe?",
+          "options": [
+            {
+              "key": "a",
+              "text": "-u (--update)"
+            },
+            {
+              "key": "b",
+              "text": "-U (--upgrade)"
+            },
+            {
+              "key": "c",
+              "text": "-F (--freshen)"
+            },
+            {
+              "key": "d",
+              "text": "-e (--erase)"
+            }
+          ],
+          "correct": [
+            "c"
+          ],
+          "explanation": "La opción -F (--freshen) actualiza el paquete únicamente si ya existe instalado en el sistema. Si el paquete no estaba instalado, -F no realiza ninguna acción. Por el contrario, -U (--upgrade) actualizaría el paquete existente o lo instalaría desde cero si no existiera previamente."
+        }
+      ],
+      "notes": "Pregunta clásica e indispensable de certificación. Ningún alumno debe dudar entre -U y -F."
+    },
+    {
+      "id": "102.5-slide-17",
+      "slideNumber": 17,
+      "title": "Pregunta de Examen LPIC-1: Búsqueda Inversa con YUM",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Búsqueda Inversa con YUM"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-102-5-17",
+          "question": "Un administrador necesita configurar SELinux pero el comando 'semanage' no está instalado. ¿Qué comando de YUM le indicará qué paquete debe instalar?",
+          "options": [
+            {
+              "key": "a",
+              "text": "yum search semanage"
+            },
+            {
+              "key": "b",
+              "text": "yum whatprovides */semanage"
+            },
+            {
+              "key": "c",
+              "text": "yum info semanage"
+            },
+            {
+              "key": "d",
+              "text": "rpm -qf semanage"
+            }
+          ],
+          "correct": [
+            "b"
+          ],
+          "explanation": "'yum whatprovides */semanage' (o 'yum provides') busca en las bases de datos de todos los repositorios remotos para localizar qué paquete contiene ese ejecutable (en este caso policycoreutils-python-utils). 'yum search' solo busca en nombres y descripciones de paquetes; 'rpm -qf' fallaría porque el archivo no está presente en el disco."
+        }
+      ],
+      "notes": "Pregunta muy habitual en el examen 101-500 sobre administración de paquetes."
+    },
+    {
+      "id": "102.5-slide-18",
+      "slideNumber": 18,
+      "title": "Tarjetas Nemotécnicas: Paquetes RPM, YUM y Zypper 102.5",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tarjetas Nemotécnicas: Paquetes RPM, YUM y Zypper 102.5"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto",
+            "Significado / Uso"
+          ],
+          "rows": [
+            [
+              "¿Qué diferencia hay entre 'rpm -U' y 'rpm -F'?",
+              "-U actualiza o instala si no existe; -F (freshen) SOLO actualiza si el paquete ya está presente en el sistema."
+            ],
+            [
+              "¿Qué comando consulta a qué paquete instalado pertenece un archivo en disco?",
+              "rpm -qf /ruta/al/archivo."
+            ],
+            [
+              "¿Qué comando examina los archivos de un paquete .rpm en disco AÚN NO instalado?",
+              "rpm -qpl paquete.rpm (añadiendo la opción -p)."
+            ],
+            [
+              "¿Qué comando extrae ficheros de un paquete .rpm sin instalarlo?",
+              "rpm2cpio paquete.rpm | cpio -idmv."
+            ],
+            [
+              "¿Dónde se guardan los archivos de repositorios .repo en Red Hat y CentOS?",
+              "En el directorio /etc/yum.repos.d/."
+            ],
+            [
+              "¿Qué comando de YUM/DNF busca qué paquete proporciona un archivo concreto?",
+              "yum provides <archivo> o yum whatprovides <archivo>."
+            ],
+            [
+              "¿Qué comando de Zypper lista todos los repositorios en openSUSE?",
+              "zypper repos (o zypper lr)."
+            ],
+            [
+              "¿Qué comando de Zypper deshabilita un repositorio llamado 'repo-extra'?",
+              "zypper modifyrepo -d repo-extra (o zypper mr -d repo-extra)."
+            ]
+          ],
+          "caption": "Tarjetas de memorización"
+        }
+      ],
+      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el tema RPM."
+    },
+    {
+      "id": "102.5-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen y Claves de Examen: Subtema 102.5",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen y Claves de Examen: Subtema 102.5"
+        }
+      ],
+      "notes": "Concluimos el subtema 102.5. Los alumnos dominan ahora el empaquetado en toda la familia RPM."
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-102-5-1",
+      "title": "Ecosistema RPM: El Motor Común y sus Front-Ends",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ecosistema RPM: El Motor Común y sus Front-Ends"
+        },
+        {
+          "type": "paragraph",
+          "text": "El formato de empaquetado RPM alimenta dos grandes familias con gestores de alto nivel diferenciados:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**rpm: El motor de bajo nivel para paquetes .rpm locales** — Instala, borra y consulta archivos .rpm locales. Al igual que dpkg, NO resuelve dependencias de red: si faltan librerías, aborta la instalación con error.",
+            "**YUM y DNF: Los front-ends inteligentes de Red Hat y Fedora** — YUM (Yellowdog Updater, Modified) y su sucesor moderno DNF (Dandified YUM) gestionan repositorios remotos, calculan dependencias y las instalan automáticamente.",
+            "**Zypper: El potente front-end de openSUSE y SUSE Linux** — Basado en la librería libzypp, utiliza algoritmos de satisfacción booleana (SAT solver) para resolver dependencias complejas y gestionar patrones de software (patterns)."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:16px 0;\">\n  <!-- Capa Superior: Front-Ends Inteligentes -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px;\">\n    <!-- Rama Red Hat / Fedora -->\n    <div style=\"background:#FEF2F2; border:2px solid #F87171; border-radius:12px; padding:16px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#EF4444; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">RED HAT / FEDORA / CENTOS</span>\n        <span style=\"font-weight:700; color:#B91C1C; font-size:13px;\">RHEL, Rocky, Alma</span>\n      </div>\n      <h3 style=\"margin:4px 0 8px 0; font-size:20px; font-weight:800; color:#991B1B;\">YUM y DNF</h3>\n      <div style=\"font-size:13.5px; color:#7F1D1D; line-height:1.4;\">\n        • Repositorios en <code>/etc/yum.repos.d/*.repo</code><br>\n        • Resolución automática de dependencias remotas.<br>\n        • 🎯 Comando estrella de búsqueda: <code>yum provides &lt;archivo&gt;</code>.\n      </div>\n    </div>\n\n    <!-- Rama openSUSE / SLES -->\n    <div style=\"background:#F0FDF4; border:2px solid #4ADE80; border-radius:12px; padding:16px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">OPENSUSE / SUSE LINUX</span>\n        <span style=\"font-weight:700; color:#15803D; font-size:13px;\">SLES, Leap, Tumbleweed</span>\n      </div>\n      <h3 style=\"margin:4px 0 8px 0; font-size:20px; font-weight:800; color:#14532D;\">Zypper (libzypp)</h3>\n      <div style=\"font-size:13.5px; color:#14532D; line-height:1.4;\">\n        • Repositorios en <code>/etc/zypp/repos.d/*.repo</code><br>\n        • Motor SAT Solver ultra-rápido para dependencias.<br>\n        • 🎯 Comandos cortos: <code>ref</code>, <code>in</code>, <code>rm</code>, <code>up</code>, <code>lr</code>, <code>mr</code>.\n      </div>\n    </div>\n  </div>\n\n  <!-- Flecha de invocación -->\n  <div style=\"display:flex; justify-content:center; align-items:center; gap:10px;\">\n    <span style=\"font-size:20px; color:#64748B;\">⬇️</span>\n    <span style=\"font-size:13px; font-weight:700; color:#475569; background:#F1F5F9; padding:2px 14px; border-radius:10px; border:1px solid #CBD5E1;\">\n      Ambos front-ends invocan por debajo al motor RPM\n    </span>\n    <span style=\"font-size:20px; color:#64748B;\">⬇️</span>\n  </div>\n\n  <!-- Capa Base Común: rpm -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:14px 20px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n      <span style=\"background:#334155; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">MOTOR COMÚN DE BAJO NIVEL</span>\n      <span style=\"font-weight:700; color:var(--text-muted); font-size:13px;\">Archivos locales .rpm</span>\n    </div>\n    <div style=\"font-size:18px; font-weight:800; color:var(--text); margin-bottom:4px;\">Comando rpm (RPM Package Manager)</div>\n    <div style=\"font-size:13.5px; color:var(--text-muted); line-height:1.4;\">\n      Opera exclusivamente sobre archivos <code>.rpm</code> locales o la base de datos local <code>/var/lib/rpm/</code>. <strong>NO tiene acceso a red</strong> ni descarga paquetes de repositorios. Si falta una dependencia, aborta con error.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA CLAVE DE EXAMEN: 'rpm' es el gestor local de bajo nivel. YUM/DNF operan en Red Hat/Fedora/CentOS; Zypper opera en openSUSE/SLES."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-5-2",
+      "title": "rpm: La Gran Diferencia de Examen entre -U (Upgrade) y -F (Freshen)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "rpm: La Gran Diferencia de Examen entre -U (Upgrade) y -F (Freshen)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Ambas opciones actualizan paquetes, pero su comportamiento ante un paquete no instalado es radicalmente opuesto:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "rpm -i | -U | -F | -e [--nodeps] [--force] [--test]",
+          "title": "Instalar, actualizar o desinstalar paquetes .rpm en el sistema local"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo rpm -ivh tree-1.8.0-1.el8.x86_64.rpm; sudo rpm -e tree",
+              "output": "Verifying...                          ################################# [100%]\nPreparing...                          ################################# [100%]\nUpdating / installing...\n   1:tree-1.8.0-1.el8                 ################################# [100%]\n# Eliminación completada sin salida (código 0)."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-i, --install <archivo.rpm>",
+              "",
+              "Instala un paquete nuevo en el sistema (habitualmente combinado como -ivh: install, verbose, hash bars)."
+            ],
+            [
+              "-U, --upgrade <archivo.rpm>",
+              "",
+              "🎯 Clave de Examen: Actualiza un paquete existente; SI NO ESTÁ INSTALADO, LO INSTALA por primera vez."
+            ],
+            [
+              "-F, --freshen <archivo.rpm>",
+              "",
+              "🎯 Clave de Examen: Actualiza un paquete ÚNICAMENTE SI YA ESTÁ INSTALADO. Si no existe previamente, NO hace nada."
+            ],
+            [
+              "-e, --erase <paquete>",
+              "",
+              "Desinstala un paquete del sistema por su nombre lógico (sin extensión .rpm)."
+            ],
+            [
+              "--test",
+              "",
+              "🎯 Simula la operación (comprueba conflictos y dependencias) sin llegar a escribir nada en el disco."
+            ],
+            [
+              "--nodeps",
+              "",
+              "⚠️ ¡Peligro de Examen! Ignora la comprobación de dependencias e instala o borra el paquete a la fuerza."
+            ],
+            [
+              "--force",
+              "",
+              "Equivale a --replacepkgs y --replacefiles: sobrescribe ficheros existentes de otros paquetes."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin:16px 0;\">\n  <!-- Opción -U -->\n  <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:14px; padding:18px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:13px; padding:2px 8px; border-radius:6px;\">UPGRADE</span>\n      <code style=\"font-size:16px; font-weight:800; color:#1E40AF;\">rpm -Uvh pkg.rpm</code>\n    </div>\n    <div style=\"font-size:16px; font-weight:800; color:#1E40AF; margin-bottom:8px;\">Actualiza O Instala si no existe</div>\n    <div style=\"display:flex; flex-direction:column; gap:8px; font-size:14px; color:#1E3A8A;\">\n      <div>• <strong>Si el paquete ya existe:</strong> Lo actualiza a la nueva versión borrando los binarios antiguos.</div>\n      <div>• 🎯 <strong>Si el paquete NO existe:</strong> <strong>¡LO INSTALA POR PRIMERA VEZ!</strong></div>\n      <div>• 💡 <strong>Uso recomendado:</strong> Es la opción estándar empleada por los administradores para casi todo.</div>\n    </div>\n  </div>\n\n  <!-- Opción -F -->\n  <div style=\"background:#FEF3C7; border:2px solid #F59E0B; border-radius:14px; padding:18px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:13px; padding:2px 8px; border-radius:6px;\">FRESHEN (EXAMEN)</span>\n      <code style=\"font-size:16px; font-weight:800; color:#B45309;\">rpm -Fvh pkg.rpm</code>\n    </div>\n    <div style=\"font-size:16px; font-weight:800; color:#92400E; margin-bottom:8px;\">Actualiza ÚNICAMENTE si ya existe</div>\n    <div style=\"display:flex; flex-direction:column; gap:8px; font-size:14px; color:#78350F;\">\n      <div>• <strong>Si el paquete ya existe:</strong> Lo actualiza a la nueva versión.</div>\n      <div>• 🎯 <strong>Si el paquete NO existe:</strong> <strong>¡NO HACE NADA!</strong> Lo ignora silenciosamente.</div>\n      <div>• 💡 <strong>Uso recomendado:</strong> Aplicar parches de seguridad masivos (<code>rpm -Fvh *.rpm</code>) sin instalar software nuevo indeseado.</div>\n    </div>\n  </div>\n</div>\n\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:12px 18px; display:flex; justify-content:space-around; align-items:center; font-size:13.5px;\">\n  <div><code>-i, --install</code>: Instala solo si NO existe (falla si ya existe)</div>\n  <div><code>-e, --erase</code>: Desinstala por nombre (ej: <code>rpm -e tree</code>)</div>\n  <div><code>--test</code>: Simula la operación sin escribir en disco</div>\n  <div><code>--nodeps</code>: Fuerza ignorando dependencias rotas</div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA NÚMERO 1 DE EXAMEN LPIC-1: '¿Qué opción de rpm actualiza un paquete solo si una versión anterior ya se encuentra instalada?'. Respuesta: -F (o --freshen)."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-5-3",
+      "title": "rpm: Consultas en Paquetes Instalados vs Archivos en Disco",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "rpm: Consultas en Paquetes Instalados vs Archivos en Disco"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo inspeccionar paquetes instalados o analizar un .rpm que te acabas de descargar?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "rpm -q[a|i|l|f|c|d] [-p archivo.rpm]",
+          "title": "Inspeccionar la base de datos local (/var/lib/rpm/) o examinar metadatos y ficheros de un paquete .rpm descargado antes de instalarlo."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-qa",
+              "Listar todos",
+              "Lista todos los paquetes instalados en el sistema consultando /var/lib/rpm/."
+            ],
+            [
+              "-ql <paquete>",
+              "Listar ficheros",
+              "Lista todos los archivos instalados por el paquete en el sistema."
+            ],
+            [
+              "-qc <paquete>",
+              "Ficheros config",
+              "🎯 Lista ÚNICAMENTE los archivos de configuración (/etc/) del paquete."
+            ],
+            [
+              "-qf <ruta>",
+              "Dueño de archivo",
+              "🎯 Averigua a qué paquete instalado pertenece un archivo o ejecutable en disco."
+            ],
+            [
+              "-qp <archivo.rpm>",
+              "Consultar .rpm en disco",
+              "🎯 Clave de Examen: Aplica cualquier consulta sobre un paquete .rpm NO instalado en disco."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-left:5px solid #16A34A; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#14532D; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#166534; font-size:12px;\">Auditoría, migración y verificación preventiva</span>\n    </div>\n    <div style=\"line-height:1.35; color:#14532D; font-size:11px;\">\n      <strong>• Situación:</strong> Vas a migrar un servidor crítico y no puedes buscar ficheros a ciegas ni arriesgarte con paquetes descargados de procedencia dudosa.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Usas <code>rpm -qc</code> para obtener solo los ficheros de <code>/etc/</code> a respaldar, <code>rpm -qf</code> para saber qué paquete instaló un binario sospechoso, y <code>rpm -qp</code> para inspeccionar qué creará un <code>.rpm</code> antes de instalarlo en producción.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de Consultas RPM -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Consultas sobre la base de datos local y ficheros .rpm</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">rpm -qf /etc/redhat-release</span></div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">rocky-release-9.3-1.4.el9.noarch</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">rpm -qc openssh-server | head -n 3</span></div>\n    <div style=\"color:#94A3B8;\">/etc/pam.d/sshd<br>/etc/ssh/sshd_config<br>/etc/sysconfig/sshd</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">rpm -qip tree-1.8.2-1.el9.x86_64.rpm</span></div>\n    <div><span style=\"color:#94A3B8;\">Name &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:</span> <span style=\"color:#F8FAFC; font-weight:700;\">tree</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style=\"color:#94A3B8;\">Version :</span> <span style=\"color:#FCD34D;\">1.8.2</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style=\"color:#94A3B8;\">Architecture:</span> <span style=\"color:#C084FC;\">x86_64</span></div>\n    <div><span style=\"color:#94A3B8;\">Install Date:</span> <span style=\"color:#F87171; font-weight:700;\">(not installed)</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style=\"color:#94A3B8;\">Size &nbsp;&nbsp;&nbsp;:</span> 114582</div>\n    <div><span style=\"color:#94A3B8;\">Summary &nbsp;&nbsp;&nbsp;&nbsp;:</span> <span style=\"color:#38BDF8;\">File system tree viewer</span></div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">🏷️ rpm -qf /etc/redhat-release:</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        Busca en <code>/var/lib/rpm/</code> y revela qué paquete instaló ese fichero existente en disco.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">⚙️ rpm -qc openssh-server:</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        Filtra <strong>exclusivamente</strong> los ficheros de configuración en <code>/etc/</code>, descartando binarios y manuales.\n      </div>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">📦 Install Date: (not installed):</strong>\n      <div style=\"color:#581C87; line-height:1.35; display:block; margin-top:2px;\">\n        Al añadir la opción <code>-p</code>, lee las cabeceras del archivo <code>.rpm</code> en disco sin instalarlo en el sistema.\n      </div>\n    </div>\n  </div>\n\n  <!-- COMPARATIVA RADICAL: INSTALADOS vs FICHERO EN DISCO -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      ⚖️ La Gran Comparativa de Examen: ¿Sobre qué objeto estás ejecutando la consulta?\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n      <!-- INSTALADOS: rpm -q -->\n      <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:8px 12px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n          <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">BASE DE DATOS LOCAL</span>\n          <code style=\"font-size:12px; font-weight:800; color:#1E40AF;\">rpm -q[a|i|l|c|f]</code>\n        </div>\n        <strong style=\"color:#1E40AF; font-size:12px;\">El software YA ESTÁ instalado en el sistema</strong>\n        <div style=\"font-size:11px; color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n          • <code>rpm -qa</code>: Lista absolutamente todos los paquetes instalados.<br>\n          • <code>rpm -ql nginx</code>: Lista los ficheros que instaló <code>nginx</code>.<br>\n          • <code>rpm -qc nginx</code>: Muestra los ficheros de configuración.<br>\n          • 🎯 <code>rpm -qf /bin/ls</code>: Averigua qué paquete es dueño de <code>/bin/ls</code>.\n        </div>\n      </div>\n\n      <!-- EN DISCO: rpm -qp -->\n      <div style=\"background:#FEF3C7; border:1.5px solid #F59E0B; border-radius:8px; padding:8px 12px;\">\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n          <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">FICHERO .RPM EN DISCO</span>\n          <code style=\"font-size:12px; font-weight:800; color:#B45309;\">rpm -qp[i|l|c] &lt;pkg.rpm&gt;</code>\n        </div>\n        <strong style=\"color:#92400E; font-size:12px;\">El software NO está instalado (archivo descargado)</strong>\n        <div style=\"font-size:11px; color:#78350F; margin-top:2px; line-height:1.35;\">\n          • 🎯 <strong>La 'p' activa el modo Package:</strong> lee el archivo directamente.<br>\n          • <code>rpm -qpi /tmp/tree.rpm</code>: Lee metadatos antes de instalar.<br>\n          • <code>rpm -qpl /tmp/tree.rpm</code>: Ve dónde instalaría cada fichero.<br>\n          • <code>rpm -qpc /tmp/tree.rpm</code>: Ve qué ficheros de <code>/etc/</code> creará.\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 REGLA DE ORO DE EXAMEN: Para consultar paquetes YA instalados se usa 'rpm -q...'. Para consultar un archivo '.rpm' que te has descargado y todavía NO has instalado, debes añadir la letra 'p' (package): 'rpm -qp...'."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-5-4",
+      "title": "rpm2cpio y cpio: Extracción Quirúrgica sin Instalar",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "rpm2cpio y cpio: Extracción Quirúrgica sin Instalar"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo recuperar un archivo borrado por error si el comando rpm no funciona?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "rpm2cpio <archivo.rpm> | cpio -idmv [archivo]",
+          "title": "Recuperar binarios o librerías críticas de un archivo .rpm en situaciones de emergencia sin usar el comando rpm ni tocar la base de datos del sistema."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "rpm2cpio pkg.rpm",
+              "Convertir a cpio",
+              "Lee el archivo .rpm y vuelca por la salida estándar (stdout) el flujo de datos en formato de archivador cpio."
+            ],
+            [
+              "cpio -i",
+              "Extract",
+              "Modo extracción de ficheros desde el flujo recibido por la tubería (|)."
+            ],
+            [
+              "cpio -d",
+              "Make directories",
+              "🎯 Crea automáticamente los directorios padre necesarios según la estructura del paquete."
+            ],
+            [
+              "cpio -m",
+              "Preserve mtime",
+              "Conserva la fecha y hora original de modificación de los ficheros extraídos."
+            ],
+            [
+              "cpio -v",
+              "Verbose",
+              "Muestra por pantalla en tiempo real los ficheros extraídos."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL: CATÁSTROFE Y RESCATE -->\n  <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-left:5px solid #DC2626; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#991B1B; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🚨 CATÁSTROFE EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#991B1B; font-size:12px;\">Recuperar binarios cuando RPM está totalmente inoperativo</span>\n    </div>\n    <div style=\"line-height:1.35; color:#991B1B; font-size:11px;\">\n      <strong>• Situación:</strong> Un fallo o borrado accidental destruye <code>/bin/rpm</code> o corrompe <code>libc.so.6</code>. Como RPM y DNF no arrancan, ¡el servidor no puede autoinstalar nada!<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Ejecutas <code>rpm2cpio &lt;pkg&gt; | cpio -idmv \"./usr/bin/...\"</code> para convertir el paquete en un flujo cpio en memoria y extraer quirúrgicamente el ejecutable sano sin tocar la base de datos ni requerir root, salvando el servidor.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de Extracción cpio -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Rescate quirúrgico de un binario sin instalar el paquete</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">rpm2cpio coreutils-8.32-34.el9.x86_64.rpm | cpio -idmv \"./usr/bin/ls\"</span></div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">./usr/bin/ls</div>\n    <div style=\"color:#94A3B8;\">36248 blocks</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">ls -l ./usr/bin/ls</span></div>\n    <div style=\"color:#F8FAFC;\">-rwxr-xr-x. 1 usuario usuario 146440 Oct 26 08:30 <span style=\"color:#4ADE80; font-weight:700;\">./usr/bin/ls</span></div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">⚡ rpm2cpio ... | cpio:</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        La tubería envía el payload del .rpm como stream cpio en memoria; no requiere root ni toca <code>/var/lib/rpm/</code>.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">🎯 ./usr/bin/ls (¡con punto!):</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        Clave de examen: cpio almacena rutas relativas que inician por <code>./</code>. Si omites el punto, ¡no encontrará el archivo!\n      </div>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">📦 36248 blocks:</strong>\n      <div style=\"color:#581C87; line-height:1.35; margin-top:2px;\">\n        Confirmación de cpio (bloques de 512 bytes procesados). El ejecutable queda restaurado en tu directorio de trabajo.\n      </div>\n    </div>\n  </div>\n\n  <!-- FLUJO VISUAL DE RESCATE -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n      <div style=\"font-size:13px; font-weight:800; color:var(--text);\">\n        🚑 Flujo de Emergencia: Recuperar un ejecutable cuando RPM está roto\n      </div>\n      <span style=\"background:#DC2626; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:3px;\">ESCENARIO REAL LPIC-1</span>\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1fr 24px 1.25fr 24px 1.25fr; align-items:center; text-align:center; font-size:11.5px; gap:4px;\">\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px;\">\n        <strong style=\"color:#1E40AF;\">1. Archivo .rpm</strong><br>\n        <code>coreutils.rpm</code>\n      </div>\n      <span style=\"font-size:16px; color:var(--primary); font-weight:900;\">➔</span>\n      <div style=\"background:#FEF3C7; border:1px solid #F59E0B; border-radius:6px; padding:6px;\">\n        <strong style=\"color:#B45309;\">2. rpm2cpio</strong><br>\n        <code>rpm2cpio pkg |</code>\n      </div>\n      <span style=\"font-size:16px; color:var(--primary); font-weight:900;\">➔</span>\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px;\">\n        <strong style=\"color:#15803D;\">3. cpio -idmv</strong><br>\n        <code>cpio -idmv './bin/ls'</code>\n      </div>\n    </div>\n\n    <div style=\"margin-top:6px; padding:4px 10px; background:#EFF6FF; border-left:4px solid #2563EB; border-radius:4px; font-size:11px; color:#1E40AF; display:flex; justify-content:space-between; align-items:center;\">\n      <span>💡 <strong>Las 4 letras de cpio:</strong> <code>-i</code> (extract), <code>-d</code> (make directories), <code>-m</code> (preserve mtime), <code>-v</code> (verbose).</span>\n      <span style=\"font-weight:700; color:#2563EB;\">🎯 PREGUNTA CLAVE</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA CLÁSICA DE EXAMEN: 'rpm2cpio paquete.rpm | cpio -idmv' permite extraer archivos de un .rpm sin instalarlo, sin privilegios de root y sin alterar /var/lib/rpm/."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-5-5",
+      "title": "Configuración de Repositorios YUM y DNF",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Configuración de Repositorios YUM y DNF"
+        },
+        {
+          "type": "paragraph",
+          "text": "Estructura de configuración central (/etc/dnf/dnf.conf) y repositorios modulares (/etc/yum.repos.d/*.repo):"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-left:5px solid #2563EB; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#1E40AF; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#1E40AF; font-size:12px;\">Red aislada empresarial (DMZ) sin conexión directa a internet</span>\n    </div>\n    <div style=\"line-height:1.35; color:#1E3A8A; font-size:11px;\">\n      <strong>• Situación:</strong> Servidores en entornos seguros (banca, sanidad) no tienen salida a internet, pero deben instalar paquetes y recibir parches de Rocky Linux.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Creas un archivo en <code>/etc/yum.repos.d/interno.repo</code> que apunta al espejo Nexus local (<code>baseurl</code>), activado con <code>enabled=1</code> y exigiendo <code>gpgcheck=1</code> para que el sistema actualice seguro sin depender de la red exterior.\n    </div>\n  </div>\n\n  <!-- Comparativa Centralizado vs Modular -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n    <!-- Fichero Central -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:8px; padding:8px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:1px 6px; border-radius:4px;\">FICHERO CENTRAL</span>\n        <code style=\"font-weight:800; color:#1E40AF; font-size:12px;\">/etc/dnf/dnf.conf (o /etc/yum.conf)</code>\n      </div>\n      <strong style=\"color:#1E40AF; font-size:12px;\">Opciones Globales del Cliente YUM / DNF</strong>\n      <div style=\"font-size:11px; color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n        Contiene la sección <code>[main]</code> con directivas para todo el sistema: límite de kernels antiguos (<code>installonly_limit=3</code>), ruta de caché y seguridad global.\n      </div>\n    </div>\n\n    <!-- Directorio Modular -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:8px; padding:8px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:10px; padding:1px 6px; border-radius:4px;\">DIRECTORIO MODULAR</span>\n        <code style=\"font-weight:800; color:#6B21A8; font-size:12px;\">/etc/yum.repos.d/*.repo</code>\n      </div>\n      <strong style=\"color:#6B21A8; font-size:12px;\">Definiciones Individuales de Repositorios</strong>\n      <div style=\"font-size:11px; color:#581C87; margin-top:2px; line-height:1.35;\">\n        Permite que cada canal de software (BaseOS, AppStream, EPEL, Docker) resida en su propio archivo <code>.repo</code> independiente sin tocar la configuración central.\n      </div>\n    </div>\n  </div>\n\n  <!-- Contenido Real y Fiel de un Fichero .repo -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 16px; font-family:monospace; font-size:12px; line-height:1.45; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">📄 Contenido Real de /etc/yum.repos.d/rocky.repo (Rocky Linux 9 / RHEL)</span>\n      <span>rocky.repo</span>\n    </div>\n    <div><span style=\"color:#38BDF8; font-weight:800;\">[baseos]</span> <span style=\"color:#64748B;\"># Identificador único de repositorio (obligatorio entre corchetes)</span></div>\n    <div><span style=\"color:#FDE047; font-weight:700;\">name</span>=<span style=\"color:#A7F3D0;\">Rocky Linux $releasever - BaseOS</span></div>\n    <div><span style=\"color:#FDE047; font-weight:700;\">mirrorlist</span>=<span style=\"color:#93C5FD;\">https://mirrors.rockylinux.org/mirrorlist?arch=$basearch&repo=BaseOS-$releasever</span></div>\n    <div><span style=\"color:#FDE047; font-weight:700;\">baseurl</span>=<span style=\"color:#93C5FD;\">http://dl.rockylinux.org/$contentdir/$releasever/BaseOS/$basearch/os/</span></div>\n    <div><span style=\"color:#FDE047; font-weight:700;\">enabled</span>=<span style=\"color:#4ADE80; font-weight:800;\">1</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># 1 = repositorio activo; 0 = deshabilitado</span></div>\n    <div><span style=\"color:#FDE047; font-weight:700;\">gpgcheck</span>=<span style=\"color:#4ADE80; font-weight:800;\">1</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#64748B;\"># 1 = verifica firmas digitales GPG obligatorias</span></div>\n    <div><span style=\"color:#FDE047; font-weight:700;\">gpgkey</span>=<span style=\"color:#F472B6;\">file:///etc/pki/rpm-gpg/RPM-GPG-KEY-Rocky-9</span> <span style=\"color:#64748B;\"># Clave pública para validar paquetes</span></div>\n  </div>\n\n  <!-- ANATOMÍA GRÁFICA DE UN FICHERO .REPO -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      📋 Anatomía de las 6 Directivas Evaluadas en el Examen LPIC-1:\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n      <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#0284C7;\">[id_repositorio]</strong><br>\n        Identificador único entre corchetes sin espacios (ej: <code>[baseos]</code> o <code>[epel]</code>).\n      </div>\n      <div style=\"background:#ECFDF5; border:1px solid #A7F3D0; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#059669;\">name=...</strong><br>\n        Nombre legible que se muestra al usuario en los listados de paquetes y repositorios.\n      </div>\n      <div style=\"background:#FEFCE8; border:1px solid #FDE047; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#CA8A04;\">baseurl / mirrorlist</strong><br>\n        URL del servidor (HTTP, HTTPS, FTP o <code>file:///</code>) donde residen paquetes y metadatos <code>repodata/</code>.\n      </div>\n      <div style=\"background:#FDF4FF; border:1px solid #F0ABFC; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#A21CAF;\">enabled=0 o 1</strong><br>\n        🎯 <code>1</code> = repositorio activo; <code>0</code> = deshabilitado (ignorado en búsquedas e instalaciones).\n      </div>\n      <div style=\"background:#FFF1F2; border:1px solid #FDA4AF; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#BE123C;\">gpgcheck=0 o 1</strong><br>\n        🎯 <code>1</code> = valida la firma digital GPG de cada paquete antes de instalarlo; <code>0</code> = no verifica.\n      </div>\n      <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; padding:6px 10px; border-radius:6px;\">\n        <strong style=\"color:#334155;\">Variables YUM</strong><br>\n        <code>$releasever</code> (versión del sistema operativo) y <code>$basearch</code> (arquitectura del procesador, ej: x86_64).\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE DE EXAMEN: Los repositorios de YUM y DNF se definen como archivos con extensión '.repo' dentro del directorio '/etc/yum.repos.d/'."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-5-6",
+      "title": "YUM y DNF: Operaciones de Paquetes con Dependencias",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "YUM y DNF: Operaciones de Paquetes con Dependencias"
+        },
+        {
+          "type": "paragraph",
+          "text": "Gestión automatizada de ciclo de vida en servidores Red Hat y Fedora:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "yum / dnf install | update | remove | clean all",
+          "title": "Ciclo de vida automatizado en Red Hat/Fedora: instalación resolviendo librerías, actualización transaccional y limpieza de caché."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "install [-y] <paquete>",
+              "Instalar con dependencias",
+              "Descarga e instala el paquete resolviendo automáticamente todo el árbol de librerías."
+            ],
+            [
+              "update [paquete]",
+              "Actualizar sistema/paquete",
+              "Actualiza el paquete indicado o todo el sistema si no se especifica nombre."
+            ],
+            [
+              "check-update",
+              "Comprobar actualizaciones",
+              "🎯 Clave de Examen: Comprueba si existen actualizaciones sin instalar nada (devuelve código 100 si las hay)."
+            ],
+            [
+              "remove <paquete>",
+              "Desinstalar software",
+              "Desinstala el paquete y retira las dependencias no utilizadas que quedaron huérfanas."
+            ],
+            [
+              "clean all",
+              "Vaciar caché local",
+              "🎯 Borra todos los paquetes descargados y vacía los metadatos de /var/cache/dnf/."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-left:5px solid #16A34A; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#14532D; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#166534; font-size:12px;\">Ventana de mantenimiento nocturno y monitorización de parches</span>\n    </div>\n    <div style=\"line-height:1.35; color:#14532D; font-size:11px;\">\n      <strong>• Situación:</strong> Administras 40 servidores web y no puedes reiniciar servicios en horas de trabajo ni dejar que <code>/var</code> colapse de paquetes viejos.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Un script de cron corre <code>dnf check-update</code> (código 100 = notifica parches a Slack). En la ventana nocturna se lanza <code>dnf update -y</code> para aplicar parches resolviendo dependencias, y <code>dnf clean all</code> para purgar gigabytes de caché.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de Instalación Transaccional DNF -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Resolución de dependencias y transacción atómica con DNF</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">root@rocky:~#</span> <span style=\"color:#FDE047; font-weight:700;\">dnf install -y htop</span></div>\n    <div style=\"color:#94A3B8;\">Dependencies resolved.</div>\n    <div style=\"color:#38BDF8; font-weight:700;\">================================================================================</div>\n    <div style=\"color:#94A3B8;\"> Package &nbsp;&nbsp;&nbsp;&nbsp;Arch &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Version &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Repository &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Size</div>\n    <div style=\"color:#38BDF8; font-weight:700;\">================================================================================</div>\n    <div><span style=\"color:#4ADE80; font-weight:700;\">Installing:</span> &nbsp;&nbsp;htop &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x86_64 &nbsp;&nbsp;&nbsp;&nbsp;3.2.2-1.el9 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;epel &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.7 M</div>\n    <div><span style=\"color:#FCD34D;\">Installing dependencies:</span> libnl3 x86_64 3.5.0-10.el9 baseos &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;320 k</div>\n    <div style=\"margin-top:2px; color:#94A3B8;\">Transaction Summary: Install 2 Packages &nbsp;|&nbsp; Downloading Packages...</div>\n    <div style=\"color:#4ADE80;\">Running transaction ... Installing : libnl3-3.5.0-10.el9 &nbsp;|&nbsp; Installing : htop-3.2.2-1.el9</div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">Complete!</div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">🔍 Dependencies resolved:</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        DNF calcula el grafo de dependencias y añade automáticamente <code>libnl3</code> para evitar dependencias rotas.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">📋 Transaction Summary:</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        Muestra la tabla de paquetes que se instalarán, actualizarán o borrarán antes de aplicar cambios en disco.\n      </div>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">⚙️ Complete! (código 0):</strong>\n      <div style=\"color:#581C87; line-height:1.35; margin-top:2px;\">\n        Descarga los <code>.rpm</code> a <code>/var/cache/dnf/</code> e invoca a <code>rpm</code> por debajo para instalar y registrar.\n      </div>\n    </div>\n  </div>\n\n  <!-- GRID DE 4 OPERACIONES CLAVE DE EXAMEN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      ⚡ Las 4 Operaciones Imprescindibles de YUM y DNF en el Examen LPIC-1:\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:8px; font-size:11.5px;\">\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n        <strong style=\"color:#15803D;\">dnf install [-y] &lt;paquete&gt;</strong><br>\n        Instala el paquete solicitado y todas sus dependencias transitivas. El parámetro <code>-y</code> responde afirmativamente sin pausar.\n      </div>\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n        <strong style=\"color:#1E40AF;\">dnf update [paquete]</strong><br>\n        Actualiza el paquete indicado a la última versión disponible, o actualiza el sistema entero si no se proporciona nombre.\n      </div>\n      <div style=\"background:#FEF3C7; border:1px solid #FCD34D; border-radius:6px; padding:6px 10px;\">\n        <strong style=\"color:#92400E;\">dnf check-update 🎯</strong><br>\n        Comprueba parches de seguridad y versiones nuevas sin tocar el disco. Devuelve código <code>100</code> si hay actualizaciones pendientes.\n      </div>\n      <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n        <strong style=\"color:#6B21A8;\">dnf clean all 🎯</strong><br>\n        Vacía completamente la caché local en <code>/var/cache/dnf/</code>, liberando gigabytes de paquetes descargados y metadatos viejos.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE DE EXAMEN LPIC-1: 'yum check-update' comprueba si hay paquetes actualizables sin tocarlos. Si encuentra actualizaciones devuelve código de salida 100, ideal para scripts de monitorización."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-5-7",
+      "title": "YUM y DNF: Búsquedas, Consultas y Repositorios",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "YUM y DNF: Búsquedas, Consultas y Repositorios"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo encontrar qué paquete instalar para obtener un comando determinado?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "yum / dnf search | info | provides | repolist",
+          "title": "Explorar el catálogo remoto: encontrar qué paquete proporciona un comando desconocido e inspeccionar repositorios."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "provides <archivo>",
+              "Búsqueda inversa (whatprovides)",
+              "🎯 Clave Absoluta de Examen: Averigua qué paquete de los repositorios proporciona un comando o archivo."
+            ],
+            [
+              "search <término>",
+              "Búsqueda por texto",
+              "Busca coincidencias en el nombre, resumen y descripción de todos los paquetes disponibles."
+            ],
+            [
+              "info <paquete>",
+              "Metadatos detallados",
+              "Muestra versión, licencia, tamaño y repositorio de un paquete remoto sin necesidad de descargarlo."
+            ],
+            [
+              "repolist [all|enabled]",
+              "Listar repositorios",
+              "🎯 Muestra la lista de repositorios configurados y su estado actual en /etc/yum.repos.d/."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-left:5px solid #9333EA; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#581C87; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#6B21A8; font-size:12px;\">Comandos ausentes y dependencias ocultas en despliegues</span>\n    </div>\n    <div style=\"line-height:1.35; color:#581C87; font-size:11px;\">\n      <strong>• Situación:</strong> Una guía te pide ejecutar <code>semanage</code> para abrir un puerto en SELinux, pero bash da <code>command not found</code> y no existe ningún paquete con ese nombre exacto.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Ejecutas <code>dnf provides */semanage</code> para que escanee los repositorios remotos; te revela al instante que debes instalar <code>policycoreutils-python-utils</code>, ahorrando horas de ensayo y error.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de provides y repolist -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Búsqueda inversa de ficheros y estado de repositorios</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">dnf provides */semanage</span></div>\n    <div><span style=\"color:#4ADE80; font-weight:800;\">policycoreutils-python-utils-3.3-6.el9.noarch</span> : SELinux management Python utilities</div>\n    <div style=\"color:#94A3B8;\">Repo &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span style=\"color:#38BDF8;\">appstream</span></div>\n    <div>Matched from: Filename : <span style=\"color:#FCD34D;\">/usr/sbin/semanage</span></div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">dnf repolist</span></div>\n    <div style=\"color:#94A3B8;\">repo id &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;repo name &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;status</div>\n    <div><span style=\"color:#38BDF8; font-weight:700;\">appstream</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rocky Linux 9 - AppStream &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#4ADE80;\">enabled</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:700;\">baseos</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Rocky Linux 9 - BaseOS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#4ADE80;\">enabled</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:700;\">epel</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Extra Packages for Enterprise Linux 9 - x86_64 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#4ADE80;\">enabled</span></div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">🎯 dnf provides */semanage:</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        Busca en todos los repositorios remotos qué paquete contiene la herramienta <code>semanage</code> aunque no esté instalada.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">📦 policycoreutils-python-utils:</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        Te indica con precisión milimétrica el paquete que debes instalar con <code>dnf install</code> para obtener el comando deseado.\n      </div>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">🌐 dnf repolist:</strong>\n      <div style=\"color:#581C87; line-height:1.35; margin-top:2px;\">\n        Lista los repositorios activos (<code>enabled=1</code>) configurados en el directorio modular <code>/etc/yum.repos.d/</code>.\n      </div>\n    </div>\n  </div>\n\n  <!-- DUELO DE EXAMEN: SEARCH vs PROVIDES -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      ⚖️ Duelo de Examen LPIC-1: ¿Cuándo usar 'search' y cuándo usar 'provides'?\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n      <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:8px 12px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">dnf search &lt;texto&gt;</span>\n        <div style=\"font-weight:800; color:#1E40AF; font-size:12.5px; margin-top:2px;\">Búsqueda por Palabras Clave</div>\n        <div style=\"font-size:11px; color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n          • Busca el término únicamente en el <strong>nombre y resumen</strong> del paquete.<br>\n          • ⚠️ Si el paquete se llama <code>policycoreutils-python-utils</code> pero tú buscas <code>semanage</code>, ¡puede no encontrar nada!\n        </div>\n      </div>\n\n      <div style=\"background:#FAF5FF; border:1.5px solid #9333EA; border-radius:8px; padding:8px 12px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">dnf provides &lt;ruta&gt; 🎯</span>\n        <div style=\"font-weight:800; color:#6B21A8; font-size:12.5px; margin-top:2px;\">Búsqueda Inversa de Ficheros (whatprovides)</div>\n        <div style=\"font-size:11px; color:#581C87; margin-top:2px; line-height:1.35;\">\n          • Escanea el listado de <strong>todos los archivos internos</strong> de todos los paquetes.<br>\n          • 🎯 Te dice qué paquete instalar cuando falta un comando (ej: <code>dnf provides */semanage</code>).\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA NÚMERO 1 DE CERTIFICACIÓN: ¿Qué comando de YUM averigua qué paquete proporciona un archivo? Respuesta: 'yum provides' o 'yum whatprovides' (ambos son sinónimos exactos)."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-5-8",
+      "title": "Zypper en openSUSE: Gestión de Paquetes y Repositorios",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Zypper en openSUSE: Gestión de Paquetes y Repositorios"
+        },
+        {
+          "type": "paragraph",
+          "text": "El gestor de alta velocidad para la familia SUSE Linux y openSUSE:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "zypper refresh | install | remove | update | lr | ar | mr",
+          "title": "El gestor nativo de SUSE Linux y openSUSE: resolución SAT ultra-rápida (libzypp) y comandos cortos de 2 letras."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "refresh, ref",
+              "Actualizar índices",
+              "🎯 Descarga los metadatos frescos de todos los repositorios remotos (equivalente a apt-get update)."
+            ],
+            [
+              "install, in <paquete>",
+              "Instalar software",
+              "Instala paquetes y resuelve dependencias automáticamente con algoritmo SAT."
+            ],
+            [
+              "remove, rm <paquete>",
+              "Desinstalar software",
+              "Desinstala un paquete del sistema."
+            ],
+            [
+              "update, up [paquete]",
+              "Actualizar sistema",
+              "Actualiza los paquetes a su versión más reciente disponible."
+            ],
+            [
+              "repos, lr",
+              "Listar repositorios",
+              "🎯 Clave de Examen: Lista todos los repositorios configurados en /etc/zypp/repos.d/."
+            ],
+            [
+              "modifyrepo, mr -d/-e",
+              "Modificar repositorio",
+              "🎯 Clave de Examen: Deshabilita (-d) o habilita (-e) un repositorio existente sin borrar el fichero."
+            ],
+            [
+              "what-provides, wp <archivo>",
+              "Búsqueda inversa",
+              "Averigua qué paquete proporciona un archivo o comando en openSUSE."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-left:5px solid #16A34A; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#14532D; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#166534; font-size:12px;\">Desconexión exprés de repositorios caídos en openSUSE / SLES</span>\n    </div>\n    <div style=\"line-height:1.35; color:#14532D; font-size:11px;\">\n      <strong>• Situación:</strong> Un repositorio externo de monitorización se cae o caduca, provocando que cualquier instalación en openSUSE se quede colgada por timeout.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Ejecutas <code>zypper lr -u</code> para ver las URLs y <code>zypper mr -d &lt;alias&gt;</code> para deshabilitarlo al instante sin abrir ficheros. Tras ello, <code>zypper ref</code> y <code>zypper up</code> completan el mantenimiento sin bloqueos.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de Zypper lr, mr y ref -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Gestión de repositorios y refresco de metadatos en openSUSE</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">root@opensuse:~#</span> <span style=\"color:#FDE047; font-weight:700;\">zypper lr -u</span></div>\n    <div style=\"color:#94A3B8;\"># | Alias &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| Name &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| Enabled | GPG Check | URI</div>\n    <div style=\"color:#38BDF8; font-weight:700;\">--+-------------+------------------+---------+-----------+-------------------------------------</div>\n    <div>1 | <span style=\"color:#F8FAFC; font-weight:700;\">openSUSE-Oss</span> &nbsp;| openSUSE-Oss &nbsp;&nbsp;&nbsp;&nbsp;| <span style=\"color:#4ADE80; font-weight:700;\">Yes</span> &nbsp;&nbsp;&nbsp;&nbsp;| (r ) Yes &nbsp;| http://download.opensuse.org/distribution/...</div>\n    <div>2 | <span style=\"color:#F8FAFC; font-weight:700;\">repo-update</span> &nbsp;&nbsp;| openSUSE-Update &nbsp;| <span style=\"color:#4ADE80; font-weight:700;\">Yes</span> &nbsp;&nbsp;&nbsp;&nbsp;| (r ) Yes &nbsp;| http://download.opensuse.org/update/...</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">root@opensuse:~#</span> <span style=\"color:#FDE047; font-weight:700;\">zypper mr -d repo-update</span></div>\n    <div style=\"color:#FCA5A5;\">Repository 'repo-update' has been successfully disabled.</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">root@opensuse:~#</span> <span style=\"color:#FDE047; font-weight:700;\">zypper ref</span></div>\n    <div style=\"color:#94A3B8;\">Repository 'openSUSE-Oss' is up to date. &nbsp;|&nbsp; <span style=\"color:#A7F3D0; font-weight:700;\">All repositories have been refreshed.</span></div>\n  </div>\n\n  <!-- Desglose Línea a Línea del Terminal -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#1E40AF;\">📋 zypper lr -u (List Repos):</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35; margin-top:2px;\">\n        Muestra alias, estado activo (<code>Enabled: Yes</code>) y la URL (<code>-u</code>) de los repositorios en <code>/etc/zypp/repos.d/</code>.\n      </div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#14532D;\">⚙️ zypper mr -d repo-update:</strong>\n      <div style=\"color:#14532D; line-height:1.35; margin-top:2px;\">\n        🎯 Modifica el repositorio para deshabilitarlo (<code>-d</code> = disable; <code>-e</code> = enable) sin borrar el archivo de disco.\n      </div>\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 10px;\">\n      <strong style=\"color:#6B21A8;\">🔄 zypper ref (Refresh):</strong>\n      <div style=\"color:#581C87; line-height:1.35; margin-top:2px;\">\n        Descarga los índices y metadatos actualizados de los repositorios activos (equivalente a <code>apt-get update</code>).\n      </div>\n    </div>\n  </div>\n\n  <!-- TABLA DE FORMATO CORTO VS LARGO -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:8px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      ⌨️ Mnemotecnia de Zypper: Los Comandos Cortos de 2 Letras para el Examen LPIC-1:\n    </div>\n\n    <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11.5px;\">\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:6px 8px;\">\n        <code style=\"font-weight:800; color:#15803D; font-size:12.5px;\">zypper in &lt;pkg&gt;</code><br>\n        <strong>install:</strong> Instala paquetes.\n      </div>\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:6px 8px;\">\n        <code style=\"font-weight:800; color:#1E40AF; font-size:12.5px;\">zypper rm &lt;pkg&gt;</code><br>\n        <strong>remove:</strong> Desinstala paquetes.\n      </div>\n      <div style=\"background:#FEF3C7; border:1px solid #FCD34D; border-radius:6px; padding:6px 8px;\">\n        <code style=\"font-weight:800; color:#92400E; font-size:12.5px;\">zypper ref</code><br>\n        <strong>refresh:</strong> Refresca catálogos.\n      </div>\n      <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:6px; padding:6px 8px;\">\n        <code style=\"font-weight:800; color:#6B21A8; font-size:12.5px;\">zypper lr</code><br>\n        <strong>repos:</strong> Lista repositorios.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVES DE EXAMEN ZYPPER: 'zypper ref' actualiza índices; 'zypper lr' lista repositorios; 'zypper mr -d <repo>' deshabilita un repositorio; 'zypper in' instala."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-5-9",
+      "title": "Gran Matriz Visual: RPM frente a YUM/DNF y Zypper",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Gran Matriz Visual: RPM frente a YUM/DNF y Zypper"
+        },
+        {
+          "type": "paragraph",
+          "text": "Diferencias funcionales clave entre el motor de bajo nivel y los front-ends inteligentes evaluados por LPIC-1:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:12px; margin:4px 0;\">\n  <!-- GRID DE 3 COLUMNAS: ARQUITECTURA DE ECOSISTEMAS -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1.15fr 1fr; gap:12px;\">\n    <!-- rpm -->\n    <div style=\"background:#F8FAFC; border:2px solid #64748B; border-radius:12px; padding:12px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;\">\n        <span style=\"background:#475569; color:#FFF; font-weight:800; font-size:11px; padding:2px 7px; border-radius:4px;\">BAJO NIVEL</span>\n        <code style=\"font-weight:800; color:#0F172A; font-size:14px;\">rpm</code>\n      </div>\n      <strong style=\"color:#1E293B; font-size:13px;\">Archivos .rpm Locales</strong>\n      <div style=\"font-size:12px; color:#475569; margin-top:4px; line-height:1.4;\">\n        • ❌ <strong>Sin acceso a red</strong> ni repositorios.<br>\n        • ❌ <strong>NO resuelve dependencias</strong> (aborta).<br>\n        • 🎯 Registra el sistema en <code>/var/lib/rpm/</code>.\n      </div>\n    </div>\n\n    <!-- YUM / DNF -->\n    <div style=\"background:#FEF2F2; border:2px solid #F87171; border-radius:12px; padding:12px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;\">\n        <span style=\"background:#EF4444; color:#FFF; font-weight:800; font-size:11px; padding:2px 7px; border-radius:4px;\">RED HAT / FEDORA</span>\n        <code style=\"font-weight:800; color:#991B1B; font-size:14px;\">yum / dnf</code>\n      </div>\n      <strong style=\"color:#991B1B; font-size:13px;\">Repositorios /etc/yum.repos.d/</strong>\n      <div style=\"font-size:12px; color:#7F1D1D; margin-top:4px; line-height:1.4;\">\n        • ✅ Descarga paquetes por red automáticamente.<br>\n        • ✅ Resuelve árbol completo de dependencias.<br>\n        • 🎯 Búsqueda inversa: <code>yum provides &lt;fichero&gt;</code>.\n      </div>\n    </div>\n\n    <!-- Zypper -->\n    <div style=\"background:#F0FDF4; border:2px solid #4ADE80; border-radius:12px; padding:12px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:11px; padding:2px 7px; border-radius:4px;\">OPENSUSE / SUSE</span>\n        <code style=\"font-weight:800; color:#14532D; font-size:14px;\">zypper</code>\n      </div>\n      <strong style=\"color:#14532D; font-size:13px;\">Repositorios /etc/zypp/repos.d/</strong>\n      <div style=\"font-size:12px; color:#14532D; margin-top:4px; line-height:1.4;\">\n        • ✅ Motor SAT Solver ultra-rápido (libzypp).<br>\n        • ✅ Comandos cortos de 2 letras (<code>ref, in, lr</code>).<br>\n        • 🎯 Modifica repos: <code>zypper mr -d &lt;alias&gt;</code>.\n      </div>\n    </div>\n  </div>\n\n  <!-- GRID DE 6 TARJETAS VISUALES DE EQUIVALENCIAS -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;\">\n    <!-- 1. Instalar -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:10px; padding:10px 12px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">INSTALAR</span>\n      <div style=\"font-size:12px; margin-top:5px; line-height:1.45;\">\n        <div><strong>rpm:</strong> <code>rpm -ivh pkg.rpm</code></div>\n        <div><strong>YUM/DNF:</strong> <code>dnf install pkg</code></div>\n        <div><strong>Zypper:</strong> <code>zypper in pkg</code></div>\n      </div>\n    </div>\n\n    <!-- 2. Actualizar -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:10px; padding:10px 12px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">ACTUALIZAR</span>\n      <div style=\"font-size:12px; margin-top:5px; line-height:1.45;\">\n        <div><strong>rpm:</strong> <code>rpm -Uvh</code> / <code>-Fvh</code> 🎯</div>\n        <div><strong>YUM/DNF:</strong> <code>dnf update</code></div>\n        <div><strong>Zypper:</strong> <code>zypper up</code></div>\n      </div>\n    </div>\n\n    <!-- 3. Desinstalar -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-radius:10px; padding:10px 12px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">DESINSTALAR</span>\n      <div style=\"font-size:12px; margin-top:5px; line-height:1.45;\">\n        <div><strong>rpm:</strong> <code>rpm -e pkg</code> (sin .rpm)</div>\n        <div><strong>YUM/DNF:</strong> <code>dnf remove pkg</code></div>\n        <div><strong>Zypper:</strong> <code>zypper rm pkg</code></div>\n      </div>\n    </div>\n\n    <!-- 4. Buscar Proveedor -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:10px; padding:10px 12px;\">\n      <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">DUEÑO / PROVIDES 🎯</span>\n      <div style=\"font-size:12px; margin-top:5px; line-height:1.45;\">\n        <div><strong>rpm:</strong> <code>rpm -qf /ruta</code> (local)</div>\n        <div><strong>YUM/DNF:</strong> <code>dnf provides /ruta</code></div>\n        <div><strong>Zypper:</strong> <code>zypper wp /ruta</code></div>\n      </div>\n    </div>\n\n    <!-- 5. Repositorios -->\n    <div style=\"background:#FEFCE8; border:1.5px solid #FDE047; border-radius:10px; padding:10px 12px;\">\n      <span style=\"background:#CA8A04; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">REPOSITORIOS</span>\n      <div style=\"font-size:12px; margin-top:5px; line-height:1.45;\">\n        <div><strong>rpm:</strong> <em>No gestiona repos</em></div>\n        <div><strong>YUM/DNF:</strong> <code>dnf repolist</code></div>\n        <div><strong>Zypper:</strong> <code>zypper lr</code> | <code>zypper mr -d</code></div>\n      </div>\n    </div>\n\n    <!-- 6. Caché -->\n    <div style=\"background:#F8FAFC; border:1.5px solid #CBD5E1; border-radius:10px; padding:10px 12px;\">\n      <span style=\"background:#475569; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">LIMPIAR CACHÉ</span>\n      <div style=\"font-size:12px; margin-top:5px; line-height:1.45;\">\n        <div><strong>rpm:</strong> <em>No tiene caché</em></div>\n        <div><strong>YUM/DNF:</strong> <code>dnf clean all</code></div>\n        <div><strong>Zypper:</strong> <code>zypper clean --all</code></div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA CLAVE DE EXAMEN: Para buscar qué paquete proporciona un archivo en Red Hat se usa 'rpm -qf' (si ya está instalado en disco) o 'yum provides' (en repositorios remotos)."
+        }
+      ]
+    },
+    {
+      "id": "sec-102-5-10",
+      "title": "Firmas Digitales GPG e Integridad en RPM",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Firmas Digitales GPG e Integridad en RPM"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué son indispensables las firmas? Autenticidad del origen, verificación previa y auditoría tras la instalación:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL DE SEGURIDAD Y FORENSE -->\n  <div style=\"background:#FFF1F2; border:1.5px solid #FDA4AF; border-left:5px solid #BE123C; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#9F1239; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#BE123C; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🕵️ CASO FORENSE / SEGURIDAD</span>\n      <span style=\"font-weight:700; color:#9F1239; font-size:12px;\">Auditoría tras intrusión y prevención de paquetes troyanizados</span>\n    </div>\n    <div style=\"line-height:1.35; color:#9F1239; font-size:11px;\">\n      <strong>• Situación:</strong> El equipo de ciberseguridad detecta actividad anómala en SSH y sospecha que un atacante reemplazó <code>/usr/sbin/sshd</code> con un binario malicioso.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Ejecutas <code>rpm -V openssh-server</code> para auditar la integridad: los flags <code>S.5....T.</code> confirman que el binario fue adulterado. En descargas, <code>rpm -K</code> comprueba la firma GPG antes de instalar para evitar software troyano.\n    </div>\n  </div>\n\n  <!-- Explicación Conceptual: ¿Por qué Firmas Digitales? -->\n  <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:8px; padding:8px 12px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n      <strong style=\"color:#1E40AF; font-size:12.5px;\">🔐 ¿Por qué son indispensables las Firmas Digitales GPG?</strong>\n      <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 6px; border-radius:3px;\">CRIPTOGRAFÍA ASIMÉTRICA</span>\n    </div>\n    <div style=\"font-size:11.5px; color:#1E3A8A; line-height:1.35;\">\n      Cualquiera puede alojar un archivo <code>.rpm</code> en la red y alterar binarios con código malicioso. La firma digital garantiza <strong>Autenticidad</strong> (proviene del fabricante legítimo Red Hat/Rocky) e <strong>Integridad</strong> (si 1 solo byte fue modificado en el camino, la firma criptográfica se invalida y la instalación se bloquea).\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de rpm -K y rpm -V -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Comprobación de firma previa y auditoría de integridad en disco</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">rpm -K tree-1.8.2-1.el9.x86_64.rpm</span></div>\n    <div style=\"color:#A7F3D0; font-weight:700;\">tree-1.8.2-1.el9.x86_64.rpm: digests signatures OK</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">usuario@rocky:~$</span> <span style=\"color:#FDE047; font-weight:700;\">rpm -V openssh-server</span></div>\n    <div><span style=\"color:#F87171; font-weight:700;\">S.5....T.</span> &nbsp;<span style=\"color:#38BDF8; font-weight:700;\">c</span> <span style=\"color:#F8FAFC;\">/etc/ssh/sshd_config</span></div>\n  </div>\n\n  <!-- LAS 3 FASES DE SEGURIDAD EN EL EXAMEN LPIC-1 -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11.5px;\">\n    <!-- 1. rpm --import -->\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:8px 10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 5px; border-radius:3px;\">PASO 1</span>\n        <code style=\"font-weight:800; color:#15803D; font-size:11px;\">rpm --import &lt;key&gt;</code>\n      </div>\n      <strong style=\"color:#14532D; font-size:12px;\">Importar Clave Pública</strong>\n      <div style=\"color:#14532D; margin-top:2px; line-height:1.35;\">\n        Instala la clave oficial del distribuidor (ej: <code>RPM-GPG-KEY-Rocky-9</code>) en <code>/var/lib/rpm/</code> para validar firmas futuras.\n      </div>\n    </div>\n\n    <!-- 2. rpm -K -->\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:8px 10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 5px; border-radius:3px;\">PASO 2 🎯</span>\n        <code style=\"font-weight:800; color:#1E40AF; font-size:11px;\">rpm -K (--checksig)</code>\n      </div>\n      <strong style=\"color:#1E40AF; font-size:12px;\">Verificar ANTES de Instalar</strong>\n      <div style=\"color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n        Comprueba el hash SHA256 (<code>digests OK</code>) y la firma GPG (<code>signatures OK</code>) del archivo <code>.rpm</code> antes de instalar.\n      </div>\n    </div>\n\n    <!-- 3. rpm -V -->\n    <div style=\"background:#FAF5FF; border:1px solid #D8B4FE; border-radius:8px; padding:8px 10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 5px; border-radius:3px;\">PASO 3 🎯</span>\n        <code style=\"font-weight:800; color:#6B21A8; font-size:11px;\">rpm -V (--verify)</code>\n      </div>\n      <strong style=\"color:#6B21A8; font-size:12px;\">Auditar YA INSTALADOS</strong>\n      <div style=\"color:#581C87; margin-top:2px; line-height:1.35;\">\n        Compara los ficheros de disco con la BD. Letras clave: <code>S</code> (Size), <code>5</code> (MD5 hash), <code>T</code> (mTime), <code>c</code> (config file).\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 CLAVE DE EXAMEN LPIC-1: 'rpm -K' (--checksig) verifica la firma de un archivo .rpm en disco ANTES de instalarlo; 'rpm -V' (--verify) audita la integridad de archivos YA INSTALADOS en el sistema."
+        }
+      ]
+    }
+  ]
+}

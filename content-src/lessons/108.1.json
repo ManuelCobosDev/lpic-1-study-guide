@@ -1,0 +1,1157 @@
+{
+  "id": "108.1",
+  "topicId": "108",
+  "examId": "102",
+  "title": "Mantener la hora del sistema",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 35,
+  "objectives": [
+    "Gestión y sincronización del tiempo en Linux: reloj de software del kernel frente al reloj de hardware (RTC), comando hwclock, timedatectl, protocolo NTP, jerarquía de estratos, pool.ntp.org, configuración y comandos de ntpd (ntpq) y chronyd (chronyc).",
+    "Dominio técnico de las herramientas y configuración del subtema 108.1"
+  ],
+  "keyTerms": [
+    "RTC (Real-Time Clock)",
+    "hwclock",
+    "NTP (Network Time Protocol)",
+    "pool.ntp.org",
+    "chrony",
+    "ntpd",
+    "ntpq",
+    "timedatectl"
+  ],
+  "commands": [],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "108.1-slide-1",
+      "slideNumber": 1,
+      "title": "Mantener la hora del sistema",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Mantener la hora del sistema"
+        },
+        {
+          "type": "paragraph",
+          "text": "Subtema 108.1 · Peso LPI: 3 · Examen LPIC-1 102-500"
+        }
+      ],
+      "notes": "Bienvenido al Tema 108 (Servicios esenciales del sistema). El subtema 108.1 cubre el mantenimiento del tiempo: reloj de software vs hardware, hwclock, timedatectl, NTP, pool.ntp.org, ntpd/ntpq y chronyd/chronyc."
+    },
+    {
+      "id": "108.1-slide-2",
+      "slideNumber": 2,
+      "title": "Los Dos Relojes de Linux: Sistema (Kernel) vs Hardware (RTC)",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Los Dos Relojes de Linux: Sistema (Kernel) vs Hardware (RTC)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué un servidor Linux tiene dos relojes completamente independientes?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⏱️ Reloj de Software (Kernel) frente a Reloj de Hardware (RTC)</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Linux Timekeeping</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- Reloj de Sistema -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">1. Reloj del Sistema (System Clock)</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Software / RAM</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • Mantenido por el kernel en memoria RAM mediante interrupciones del temporizador.<br>\n        • Cuenta segundos desde el 01/01/1970 00:00:00 (Epoch Unix) en <strong>UTC estricto</strong>.<br>\n        • Se consulta con <code>date</code> y desaparece al apagar la máquina.\n      </div>\n    </div>\n\n    <!-- Reloj de Hardware -->\n    <div style=\"background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#B45309; font-size:12.5px;\">2. Reloj de Hardware (RTC / CMOS)</strong>\n        <span style=\"background:#D97706; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Chip Físico</span>\n      </div>\n      <div style=\"color:#78350F; line-height:1.4;\">\n        • Chip en la placa base alimentado por batería de botón (CR2032).<br>\n        • Corre permanentemente con el PC apagado.<br>\n        • Al arrancar el equipo, el kernel lee este reloj para inicializar el reloj del sistema.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569; display:flex; justify-content:space-between; align-items:center;\">\n    <span>🔄 <strong>Sincronización mutua:</strong> Se gestiona con la herramienta <code>hwclock</code> o con <code>timedatectl</code>.</span>\n    <span style=\"font-weight:700; color:#1E40AF;\">hwclock --systohc</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: El kernel Linux SIEMPRE mantiene su reloj de software en UTC. En Linux, la recomendación estándar es que el reloj de hardware (RTC) también almacene la hora en UTC."
+        }
+      ],
+      "notes": "Windows suele asumir que el RTC está en hora local, lo que causa desajustes de horas en arranques duales."
+    },
+    {
+      "id": "108.1-slide-3",
+      "slideNumber": 3,
+      "title": "Comando hwclock: Sincronización del Reloj Hardware",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando hwclock: Sincronización del Reloj Hardware"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo transferir la hora precisa entre el chip físico RTC y el kernel?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "2026-10-30 08:15:20.142385+01:00\nFri Oct 30 08:15:20 CET 2026\n(La hora del sistema se sincronizó y escribió en el RTC de la placa base)"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-r, --show",
+              "",
+              "Lee y muestra por pantalla la hora actual del reloj de hardware (RTC)."
+            ],
+            [
+              "-w, --systohc",
+              "",
+              "Copia la hora del sistema hacia el reloj de hardware (System TO Hardware Clock)."
+            ],
+            [
+              "-s, --hctosys",
+              "",
+              "Copia la hora del reloj de hardware hacia el sistema operativo (Hardware Clock TO System)."
+            ],
+            [
+              "--set --date='FECHA'",
+              "",
+              "Fija manualmente la hora del reloj de hardware a la fecha especificada."
+            ],
+            [
+              "-u, --utc",
+              "",
+              "Indica que el reloj de hardware almacena la hora en formato UTC (estándar Linux)."
+            ],
+            [
+              "--localtime",
+              "",
+              "Indica que el reloj de hardware está configurado en hora local (típico en arranque dual Windows)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'hwclock -w' (--systohc) guarda la hora del sistema en el RTC. 'hwclock -s' (--hctosys) carga la hora del RTC en el sistema."
+        }
+      ],
+      "notes": "Requiere privilegios de root para modificar el RTC. hwclock guarda la calibración de deriva en /etc/adjtime."
+    },
+    {
+      "id": "108.1-slide-4",
+      "slideNumber": 4,
+      "title": "Comando timedatectl: Control Unificado en systemd",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando timedatectl: Control Unificado en systemd"
+        },
+        {
+          "type": "paragraph",
+          "text": "Gestión moderna del reloj de software, RTC, zona horaria y sincronización NTP."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "               Local time: Fri 2026-10-30 08:16:10 CET\n           Universal time: Fri 2026-10-30 07:16:10 UTC\n                 RTC time: Fri 2026-10-30 07:16:10\n                Time zone: Europe/Madrid (CET, +0100)\nSystem clock synchronized: yes\n              NTP service: active\n          RTC in local TZ: no"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "status",
+              "",
+              "Muestra Local time, Universal time, RTC time, Time zone y estado de sincronización NTP."
+            ],
+            [
+              "set-time 'YYYY-MM-DD HH:MM:SS'",
+              "",
+              "Ajusta la hora del sistema y actualiza el RTC al mismo tiempo (requiere NTP desactivado)."
+            ],
+            [
+              "set-timezone ZONA",
+              "",
+              "Cambia permanentemente la zona horaria del sistema (actualiza /etc/localtime)."
+            ],
+            [
+              "set-ntp true|false",
+              "",
+              "Activa o desactiva la sincronización horaria automática por protocolo NTP."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'timedatectl set-ntp true' activa la sincronización automática de red (mediante systemd-timesyncd o chrony/ntp). Para cambiar la hora con set-time, set-ntp debe estar en false."
+        }
+      ],
+      "notes": "timedatectl reemplaza tanto a date como a hwclock en la administración moderna de systemd."
+    },
+    {
+      "id": "108.1-slide-5",
+      "slideNumber": 5,
+      "title": "El Protocolo NTP: Jerarquía y Niveles de Estrato (Strata)",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Protocolo NTP: Jerarquía y Niveles de Estrato (Strata)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo viaja la precisión atómica a través de Internet hasta nuestros servidores?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>📡 Jerarquía de Estratos NTP (Network Time Protocol · UDP 123)</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Stratum 0 a 16</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11px;\">\n    <!-- Stratum 0 -->\n    <div style=\"background:#FEF2F2; border:1px solid #FECDD3; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#B91C1C;\">Stratum 0 (Físico)</strong><br>\n      • Relojes atómicos de cesio, rubidio y satélites GPS.<br>\n      • ❌ <strong>Sin conexión IP</strong>.<br>\n      • Conectados por puerto serie/PPS a un equipo.\n    </div>\n\n    <!-- Stratum 1 -->\n    <div style=\"background:#FFFBEB; border:1px solid #FDE68A; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#B45309;\">Stratum 1 (Primario)</strong><br>\n      • Servidores directamente conectados a Stratum 0.<br>\n      • Servidores de referencia nacionales (NIST, ROA).<br>\n      • Máxima precisión en red.\n    </div>\n\n    <!-- Stratum 2 -->\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#15803D;\">Stratum 2 (Secundario)</strong><br>\n      • Servidores que sincronizan vía red con servidores Stratum 1.<br>\n      • Distribuyen la hora a empresas y proveedores de ISP.\n    </div>\n\n    <!-- Stratum 3+ / 16 -->\n    <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#0284C7;\">Stratum 3+ y 16</strong><br>\n      • Clientes corporativos y servidores locales.<br>\n      • ⚠️ <strong>Stratum 16:</strong> Indica que el reloj NO está sincronizado (inválido).\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569;\">\n    🌊 <strong>Ajuste Suave (Slew) frente a Salto (Step):</strong> Para discrepancias pequeñas (&lt; 128 ms), NTP acelera o ralentiza el reloj suavemente (slew) para que el tiempo nunca retroceda, protegiendo logs y bases de datos.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Estrato 0 = Reloj Atómico/GPS físico (no IP). Estrato 1 = Servidor conectado directamente al Stratum 0. Cada salto de red incrementa el estrato en 1. Estrato 16 = No sincronizado."
+        }
+      ],
+      "notes": "NTP utiliza el puerto UDP 123. Corrige la hora suavemente (slew) para no provocar saltos hacia atrás en bases de datos."
+    },
+    {
+      "id": "108.1-slide-6",
+      "slideNumber": 6,
+      "title": "El Proyecto pool.ntp.org: Servidores Públicos en Clúster",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Proyecto pool.ntp.org: Servidores Públicos en Clúster"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo evitan los desarrolladores de Linux saturar los servidores atómicos oficiales?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: pool.ntp.org utiliza balanceo DNS Round Robin. Se configura con directivas 'server' o 'pool' en /etc/ntp.conf o /etc/chrony/chrony.conf."
+        }
+      ],
+      "notes": "Se recomienda usar zonas regionales como 0.es.pool.ntp.org o 2.debian.pool.ntp.org para minimizar latencias."
+    },
+    {
+      "id": "108.1-slide-7",
+      "slideNumber": 7,
+      "title": "El Demonio Clásico: ntpd y su Archivo /etc/ntp.conf",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Demonio Clásico: ntpd y su Archivo /etc/ntp.conf"
+        },
+        {
+          "type": "paragraph",
+          "text": "Estructura del archivo de configuración del servicio NTP tradicional."
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>📄 Directivas Principales en /etc/ntp.conf</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">ntpd Server/Client</span>\n  </div>\n\n  <div style=\"background:#0F172A; color:#E2E8F0; padding:10px 14px; border-radius:8px; font-family:monospace; font-size:12px; line-height:1.5; margin-bottom:10px;\">\n    <span style=\"color:#94A3B8;\"># Servidores y pools de tiempo externos</span><br>\n    <span style=\"color:#38BDF8;\">pool</span> 2.debian.pool.ntp.org <span style=\"color:#F59E0B;\">iburst</span><br>\n    <span style=\"color:#38BDF8;\">server</span> ntp.rediris.es <span style=\"color:#F59E0B;\">iburst</span><br><br>\n    <span style=\"color:#94A3B8;\"># Archivo para compensar la deriva de frecuencia del hardware</span><br>\n    <span style=\"color:#A855F7;\">driftfile</span> /var/lib/ntp/ntp.drift<br><br>\n    <span style=\"color:#94A3B8;\"># Restricciones de seguridad por defecto (bloquea consultas externas)</span><br>\n    <span style=\"color:#F43F5E;\">restrict</span> -4 default nomodify nopeer noquery notrap<br>\n    <span style=\"color:#F43F5E;\">restrict</span> 127.0.0.1\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; font-size:10.5px;\">\n    <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#0284C7;\">server / pool</strong><br>\n      Define fuentes NTP remotas. <code>iburst</code> acelera la sincronización inicial.\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #E9D5FF; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#9333EA;\">driftfile</strong><br>\n      Almacena las partes por millón (PPM) que se desvía el reloj local.\n    </div>\n    <div style=\"background:#FFF1F2; border:1px solid #FECDD3; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#E11D48;\">restrict</strong><br>\n      Directiva de control de acceso para evitar abusos o ataques DDoS NTP.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'driftfile /var/lib/ntp/ntp.drift' guarda la deriva de frecuencia del oscilador de la CPU. La directiva 'restrict' protege contra accesos no autorizados."
+        }
+      ],
+      "notes": "ntpd corre como servicio de fondo continuo y abre el puerto UDP 123."
+    },
+    {
+      "id": "108.1-slide-8",
+      "slideNumber": 8,
+      "title": "Supervisión de ntpd: ntpq y la Utilidad ntpdate",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Supervisión de ntpd: ntpq y la Utilidad ntpdate"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo interpretar los símbolos y métricas de estado de los pares NTP?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "     remote           refid      st t when poll reach   delay   offset  jitter\n==============================================================================\n*hora.roa.es     .GPS.            1 u   42   64  377   18.234   -0.412   0.098\n+ntp.rediris.es  130.206.3.166    2 u   12   64  377   12.110    0.155   0.140\n+pool.ntp.org    193.145.15.15    2 u    8   64  377   15.420   -0.120   0.115"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "ntpq -p",
+              "",
+              "Imprime en formato de tabla el estado de todos los pares NTP (peers), retraso, offset y jitter."
+            ],
+            [
+              "Símbolo * (asterisco)",
+              "",
+              "Par actualmente sincronizado y utilizado como fuente principal de tiempo."
+            ],
+            [
+              "Símbolo + (más)",
+              "",
+              "Candidato válido de respaldo listo para reemplazar al principal si falla."
+            ],
+            [
+              "Símbolo - (menos)",
+              "",
+              "Par descartado por el algoritmo de agrupamiento (cluster)."
+            ],
+            [
+              "ntpdate servidor",
+              "",
+              "(Obsoleto) Realiza un salto instantáneo hacia la hora del servidor (falla si ntpd está corriendo)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: En la salida de 'ntpq -p': el asterisco (*) marca el par actualmente seleccionado como fuente primaria; el signo más (+) marca candidatos de respaldo aceptables."
+        }
+      ],
+      "notes": "ntpdate ajusta la hora de golpe (step) y está oficialmente en desuso (obsoleto). No puede ejecutarse si ntpd ya tiene ocupado el puerto UDP 123."
+    },
+    {
+      "id": "108.1-slide-9",
+      "slideNumber": 9,
+      "title": "Chrony en Profundidad: chronyd y /etc/chrony/chrony.conf",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Chrony en Profundidad: chronyd y /etc/chrony/chrony.conf"
+        },
+        {
+          "type": "paragraph",
+          "text": "La solución moderna diseñada para servidores, portátiles y entornos de nube."
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>📄 Configuración Clave en /etc/chrony/chrony.conf (o /etc/chrony.conf)</span>\n    <span style=\"font-size:10.5px; background:#F0FDF4; color:#16A34A; padding:2px 8px; border-radius:10px; font-weight:700;\">chronyd Suite</span>\n  </div>\n\n  <div style=\"background:#0F172A; color:#E2E8F0; padding:10px 14px; border-radius:8px; font-family:monospace; font-size:12px; line-height:1.5; margin-bottom:10px;\">\n    <span style=\"color:#94A3B8;\"># Pool de servidores con arranque rápido</span><br>\n    <span style=\"color:#38BDF8;\">pool</span> 2.debian.pool.ntp.org <span style=\"color:#F59E0B;\">iburst</span><br><br>\n    <span style=\"color:#94A3B8;\"># Saltar hora si el error > 1 seg durante los primeros 3 sondeos</span><br>\n    <span style=\"color:#EAB308;\">makestep</span> 1.0 3<br><br>\n    <span style=\"color:#94A3B8;\"># Sincronizar automáticamente el reloj de hardware (RTC) cada 11 minutos</span><br>\n    <span style=\"color:#22C55E;\">rtcsync</span><br><br>\n    <span style=\"color:#94A3B8;\"># Registro de deriva de frecuencia</span><br>\n    <span style=\"color:#A855F7;\">driftfile</span> /var/lib/chrony/chrony.drift\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:10.5px;\">\n    <div style=\"background:#FEFCE8; border:1px solid #FEF08A; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#CA8A04;\">makestep</strong><br>\n      Evita esperar horas para corregir un reloj muy desfasado al arrancar.\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#16A34A;\">rtcsync</strong><br>\n      Permite al kernel copiar la hora del sistema al RTC automáticamente.\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #E9D5FF; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#9333EA;\">driftfile</strong><br>\n      Mantiene el cálculo de error incluso sin conexión a Internet.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'makestep 1.0 3' permite a chrony saltar la hora si el desfase es mayor de 1 segundo, pero SOLO durante las 3 primeras actualizaciones tras el arranque."
+        }
+      ],
+      "notes": "Chrony sincroniza el reloj mucho más rápido que ntpd y tolera que el equipo se suspenda o pierda red."
+    },
+    {
+      "id": "108.1-slide-10",
+      "slideNumber": 10,
+      "title": "Comando chronyc: Control y Diagnóstico de chronyd",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando chronyc: Control y Diagnóstico de chronyd"
+        },
+        {
+          "type": "paragraph",
+          "text": "Comandos de diagnóstico en tiempo real de fuentes, seguimiento y actividad."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "  .-- Source mode  '^' = server, '=' = peer, '#' = local clock.\n / .- Source state '*' = current best, '+' = combined, '-' = not combined,\n| /             'x' = may be in error, '~' = too variable, '?' = unusable.\n||                                                 .- xxxx [ - autonets ]\nMS Name/IP address         Stratum Poll Reach LastRx Last sample               \n===============================================================================\n^* hora.roa.es                   1   6   377    22   -120us[ -140us] +/-   14ms\n^+ ntp.rediris.es                2   6   377    24   +310us[ +290us] +/-   18ms"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "sources [-v]",
+              "",
+              "Muestra las fuentes NTP configuradas y su estado (* actual, + candidato, ? inalcanzable)."
+            ],
+            [
+              "sourcestats [-v]",
+              "",
+              "Muestra estadísticas de deriva y fluctuación de frecuencia de cada fuente."
+            ],
+            [
+              "tracking",
+              "",
+              "Vuelca los parámetros actuales del reloj local: Stratum, Reference ID, System time offset y Drift."
+            ],
+            [
+              "activity",
+              "",
+              "Informa de cuántas fuentes están online, offline o pendientes de resolución."
+            ],
+            [
+              "makestep",
+              "",
+              "Ordena a chronyd realizar un salto manual instantáneo para eliminar cualquier desfase."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'chronyc sources -v' muestra la lista de servidores NTP y su estado. 'chronyc tracking' muestra los parámetros del reloj local (estrato, offset, frecuencia)."
+        }
+      ],
+      "notes": "chronyc makestep fuerza un salto inmediato del reloj si no se desea esperar al slew."
+    },
+    {
+      "id": "108.1-slide-11",
+      "slideNumber": 11,
+      "title": "Matriz Comparativa: ntpd vs chronyd vs systemd-timesyncd",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Matriz Comparativa: ntpd vs chronyd vs systemd-timesyncd"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué solución de sincronización horaria elegir según los requerimientos?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Característica",
+            "ntpd Clásico",
+            "chrony (chronyd)",
+            "systemd-timesyncd"
+          ],
+          "rows": [
+            [
+              "Función Servidor NTP",
+              "✅ Sí (completo)",
+              "✅ Sí (completo)",
+              "❌ No (solo cliente SNTP)"
+            ],
+            [
+              "Velocidad de Sincronización",
+              "Lenta (requiere minutos)",
+              "Ultra-rápida (en segundos)",
+              "Media (al arrancar y periódica)"
+            ],
+            [
+              "Máquinas Virtuales y Portátiles",
+              "Deficiente ante congelaciones",
+              "✅ Excelente (diseñado para ello)",
+              "Aceptable"
+            ],
+            [
+              "Soporte de Stratum 0 (Hardware PPS)",
+              "✅ Sí",
+              "✅ Sí",
+              "❌ No"
+            ],
+            [
+              "Comando de Control",
+              "<code>ntpq -p</code>",
+              "<code>chronyc sources</code>",
+              "<code>timedatectl timesync-status</code>"
+            ]
+          ],
+          "caption": "Matriz Comparativa: ntpd vs chronyd vs systemd-timesyncd"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Resumen LPIC-1: systemd-timesyncd es SOLO CLIENTE básico (SNTP); ntpd es el clásico universal; chronyd es el estándar moderno rápido para clientes y servidores."
+        }
+      ]
+    },
+    {
+      "id": "108.1-slide-12",
+      "slideNumber": 12,
+      "title": "Cheatsheet de Comandos: Gestión y Sincronización del Tiempo",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Cheatsheet de Comandos: Gestión y Sincronización del Tiempo"
+        },
+        {
+          "type": "paragraph",
+          "text": "Guía rápida de sintaxis para memorizar de cara al examen."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Comando",
+            "Propósito en el Examen LPIC-1",
+            "Archivo / Servicio Relacionado"
+          ],
+          "rows": [
+            [
+              "<code>hwclock -w</code> (--systohc)",
+              "Vuelca la hora del sistema al reloj hardware RTC",
+              "Chip CMOS / <code>/etc/adjtime</code>"
+            ],
+            [
+              "<code>hwclock -s</code> (--hctosys)",
+              "Carga la hora del RTC en el reloj de software del kernel",
+              "Chip CMOS"
+            ],
+            [
+              "<code>timedatectl set-ntp true</code>",
+              "Habilita la sincronización automática de tiempo por red",
+              "systemd-timesyncd / chronyd"
+            ],
+            [
+              "<code>ntpq -p</code>",
+              "Supervisa los pares y estado del demonio clásico ntpd",
+              "<code>/etc/ntp.conf</code> (ntpd)"
+            ],
+            [
+              "<code>chronyc sources -v</code>",
+              "Muestra servidores y fuentes de sincronización activas",
+              "<code>/etc/chrony/chrony.conf</code>"
+            ],
+            [
+              "<code>chronyc tracking</code>",
+              "Vuelca el estado del reloj local (estrato, offset, jitter)",
+              "chronyd"
+            ],
+            [
+              "<code>pool.ntp.org</code>",
+              "Clúster público de servidores de tiempo equilibrado por DNS",
+              "UDP puerto 123"
+            ]
+          ],
+          "caption": "Cheatsheet de Comandos: Gestión y Sincronización del Tiempo"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla: El reloj de software lo miras con 'date' o 'timedatectl'; el RTC lo miras con 'hwclock -r'."
+        }
+      ]
+    },
+    {
+      "id": "108.1-slide-13",
+      "slideNumber": 13,
+      "title": "Ejercicio Guiado LPI: Interpretación de Salidas y Comandos",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicio Guiado LPI: Interpretación de Salidas y Comandos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Resuelve cuestiones oficiales sobre hwclock, ntpq y chronyc extraídas del temario."
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "\n<strong>1. Respuesta:</strong> Debe ejecutarse <strong><code>hwclock -s</code></strong> (o <code>hwclock --hctosys</code>).<br>\n<em>Razón:</em> La opción '-s' lee la hora del reloj de hardware (RTC) y la establece en el sistema operativo.<br><br>\n<strong>2. Respuesta:</strong> El asterisco (*) indica que ese servidor es la <strong>fuente de sincronización primaria activa actual</strong> (current best / synchronized peer) utilizada en ese momento para disciplinar el reloj del sistema.<br><br>\n<strong>3. Respuesta:</strong> Porque <strong>Stratum 0</strong> son únicamente los dispositivos físicos de referencia de tiempo (reloj atómico, satélite GPS) que no tienen tarjeta de red ni IP. Un servidor con interfaz de red que se conecta físicamente a esa fuente atómica se convierte automáticamente en <strong>Stratum 1</strong>.\n",
+          "title": "Solución del ejercicio"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pista: El asterisco (*) siempre señala a la fuente de tiempo activa y preferida."
+        }
+      ]
+    },
+    {
+      "id": "108.1-slide-14",
+      "slideNumber": 14,
+      "title": "Reto Práctico LPI: Despliegue de Sincronización con Chrony",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Reto Práctico LPI: Despliegue de Sincronización con Chrony"
+        },
+        {
+          "type": "paragraph",
+          "text": "Configura fuentes horarias corporativas, fuerza una sincronización y sincroniza el RTC."
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Eres administrador de un hipervisor de virtualización Debian. El reloj se desajusta al suspender máquinas virtuales:<br>1. Configurar chrony para usar el pool 'es.pool.ntp.org' con la opción iburst.<br>2. Configurar chrony para que sincronice automáticamente el reloj hardware RTC con la directiva 'rtcsync'.<br>3. Forzar manualmente un salto de tiempo inmediato con chronyc y copiar la hora precisa al RTC."
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "\n<pre style=\"background:#0F172A; color:#E2E8F0; padding:10px; border-radius:6px; font-size:12px;\">\n# 1. En /etc/chrony/chrony.conf añadir las directivas:\npool es.pool.ntp.org iburst\nrtcsync\nmakestep 1.0 3\n\n# 2. Reiniciar el servicio chrony:\nsudo systemctl restart chrony\n\n# 3. Forzar el salto y verificar las fuentes:\nsudo chronyc makestep\nchronyc sources -v\n\n# 4. Volcar la hora del sistema al RTC de la placa base:\nsudo hwclock --systohc\nsudo hwclock -r\n</pre>\n",
+          "title": "Solución del desafío"
+        }
+      ]
+    },
+    {
+      "id": "108.1-slide-15",
+      "slideNumber": 15,
+      "title": "Checklist de Examen: Trampas Críticas en el Subtema 108.1",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Checklist de Examen: Trampas Críticas en el Subtema 108.1"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los errores más recurrentes en las preguntas de mantenimiento del tiempo."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Oro: --systohc escribe en el RTC; --hctosys lee del RTC."
+        }
+      ]
+    },
+    {
+      "id": "108.1-slide-16",
+      "slideNumber": 16,
+      "title": "Resumen del Subtema 108.1 y Preparación para el Laboratorio",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen del Subtema 108.1 y Preparación para el Laboratorio"
+        },
+        {
+          "type": "paragraph",
+          "text": "Sincronización horaria dominada, comandos clave y enlace a la práctica guiada."
+        }
+      ]
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-108-1-1",
+      "title": "Los Dos Relojes de Linux: Sistema (Kernel) vs Hardware (RTC)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Los Dos Relojes de Linux: Sistema (Kernel) vs Hardware (RTC)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué un servidor Linux tiene dos relojes completamente independientes?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⏱️ Reloj de Software (Kernel) frente a Reloj de Hardware (RTC)</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Linux Timekeeping</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- Reloj de Sistema -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">1. Reloj del Sistema (System Clock)</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Software / RAM</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • Mantenido por el kernel en memoria RAM mediante interrupciones del temporizador.<br>\n        • Cuenta segundos desde el 01/01/1970 00:00:00 (Epoch Unix) en <strong>UTC estricto</strong>.<br>\n        • Se consulta con <code>date</code> y desaparece al apagar la máquina.\n      </div>\n    </div>\n\n    <!-- Reloj de Hardware -->\n    <div style=\"background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#B45309; font-size:12.5px;\">2. Reloj de Hardware (RTC / CMOS)</strong>\n        <span style=\"background:#D97706; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Chip Físico</span>\n      </div>\n      <div style=\"color:#78350F; line-height:1.4;\">\n        • Chip en la placa base alimentado por batería de botón (CR2032).<br>\n        • Corre permanentemente con el PC apagado.<br>\n        • Al arrancar el equipo, el kernel lee este reloj para inicializar el reloj del sistema.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569; display:flex; justify-content:space-between; align-items:center;\">\n    <span>🔄 <strong>Sincronización mutua:</strong> Se gestiona con la herramienta <code>hwclock</code> o con <code>timedatectl</code>.</span>\n    <span style=\"font-weight:700; color:#1E40AF;\">hwclock --systohc</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: El kernel Linux SIEMPRE mantiene su reloj de software en UTC. En Linux, la recomendación estándar es que el reloj de hardware (RTC) también almacene la hora en UTC."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-1-2",
+      "title": "Comando hwclock: Sincronización del Reloj Hardware",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando hwclock: Sincronización del Reloj Hardware"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo transferir la hora precisa entre el chip físico RTC y el kernel?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "2026-10-30 08:15:20.142385+01:00\nFri Oct 30 08:15:20 CET 2026\n(La hora del sistema se sincronizó y escribió en el RTC de la placa base)"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-r, --show",
+              "",
+              "Lee y muestra por pantalla la hora actual del reloj de hardware (RTC)."
+            ],
+            [
+              "-w, --systohc",
+              "",
+              "Copia la hora del sistema hacia el reloj de hardware (System TO Hardware Clock)."
+            ],
+            [
+              "-s, --hctosys",
+              "",
+              "Copia la hora del reloj de hardware hacia el sistema operativo (Hardware Clock TO System)."
+            ],
+            [
+              "--set --date='FECHA'",
+              "",
+              "Fija manualmente la hora del reloj de hardware a la fecha especificada."
+            ],
+            [
+              "-u, --utc",
+              "",
+              "Indica que el reloj de hardware almacena la hora en formato UTC (estándar Linux)."
+            ],
+            [
+              "--localtime",
+              "",
+              "Indica que el reloj de hardware está configurado en hora local (típico en arranque dual Windows)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'hwclock -w' (--systohc) guarda la hora del sistema en el RTC. 'hwclock -s' (--hctosys) carga la hora del RTC en el sistema."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-1-3",
+      "title": "Comando timedatectl: Control Unificado en systemd",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando timedatectl: Control Unificado en systemd"
+        },
+        {
+          "type": "paragraph",
+          "text": "Gestión moderna del reloj de software, RTC, zona horaria y sincronización NTP."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "               Local time: Fri 2026-10-30 08:16:10 CET\n           Universal time: Fri 2026-10-30 07:16:10 UTC\n                 RTC time: Fri 2026-10-30 07:16:10\n                Time zone: Europe/Madrid (CET, +0100)\nSystem clock synchronized: yes\n              NTP service: active\n          RTC in local TZ: no"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "status",
+              "",
+              "Muestra Local time, Universal time, RTC time, Time zone y estado de sincronización NTP."
+            ],
+            [
+              "set-time 'YYYY-MM-DD HH:MM:SS'",
+              "",
+              "Ajusta la hora del sistema y actualiza el RTC al mismo tiempo (requiere NTP desactivado)."
+            ],
+            [
+              "set-timezone ZONA",
+              "",
+              "Cambia permanentemente la zona horaria del sistema (actualiza /etc/localtime)."
+            ],
+            [
+              "set-ntp true|false",
+              "",
+              "Activa o desactiva la sincronización horaria automática por protocolo NTP."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'timedatectl set-ntp true' activa la sincronización automática de red (mediante systemd-timesyncd o chrony/ntp). Para cambiar la hora con set-time, set-ntp debe estar en false."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-1-4",
+      "title": "El Protocolo NTP: Jerarquía y Niveles de Estrato (Strata)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Protocolo NTP: Jerarquía y Niveles de Estrato (Strata)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo viaja la precisión atómica a través de Internet hasta nuestros servidores?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>📡 Jerarquía de Estratos NTP (Network Time Protocol · UDP 123)</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Stratum 0 a 16</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11px;\">\n    <!-- Stratum 0 -->\n    <div style=\"background:#FEF2F2; border:1px solid #FECDD3; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#B91C1C;\">Stratum 0 (Físico)</strong><br>\n      • Relojes atómicos de cesio, rubidio y satélites GPS.<br>\n      • ❌ <strong>Sin conexión IP</strong>.<br>\n      • Conectados por puerto serie/PPS a un equipo.\n    </div>\n\n    <!-- Stratum 1 -->\n    <div style=\"background:#FFFBEB; border:1px solid #FDE68A; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#B45309;\">Stratum 1 (Primario)</strong><br>\n      • Servidores directamente conectados a Stratum 0.<br>\n      • Servidores de referencia nacionales (NIST, ROA).<br>\n      • Máxima precisión en red.\n    </div>\n\n    <!-- Stratum 2 -->\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#15803D;\">Stratum 2 (Secundario)</strong><br>\n      • Servidores que sincronizan vía red con servidores Stratum 1.<br>\n      • Distribuyen la hora a empresas y proveedores de ISP.\n    </div>\n\n    <!-- Stratum 3+ / 16 -->\n    <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#0284C7;\">Stratum 3+ y 16</strong><br>\n      • Clientes corporativos y servidores locales.<br>\n      • ⚠️ <strong>Stratum 16:</strong> Indica que el reloj NO está sincronizado (inválido).\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569;\">\n    🌊 <strong>Ajuste Suave (Slew) frente a Salto (Step):</strong> Para discrepancias pequeñas (&lt; 128 ms), NTP acelera o ralentiza el reloj suavemente (slew) para que el tiempo nunca retroceda, protegiendo logs y bases de datos.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Estrato 0 = Reloj Atómico/GPS físico (no IP). Estrato 1 = Servidor conectado directamente al Stratum 0. Cada salto de red incrementa el estrato en 1. Estrato 16 = No sincronizado."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-1-5",
+      "title": "El Proyecto pool.ntp.org: Servidores Públicos en Clúster",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Proyecto pool.ntp.org: Servidores Públicos en Clúster"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo evitan los desarrolladores de Linux saturar los servidores atómicos oficiales?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: pool.ntp.org utiliza balanceo DNS Round Robin. Se configura con directivas 'server' o 'pool' en /etc/ntp.conf o /etc/chrony/chrony.conf."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-1-6",
+      "title": "El Demonio Clásico: ntpd y su Archivo /etc/ntp.conf",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Demonio Clásico: ntpd y su Archivo /etc/ntp.conf"
+        },
+        {
+          "type": "paragraph",
+          "text": "Estructura del archivo de configuración del servicio NTP tradicional."
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>📄 Directivas Principales en /etc/ntp.conf</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">ntpd Server/Client</span>\n  </div>\n\n  <div style=\"background:#0F172A; color:#E2E8F0; padding:10px 14px; border-radius:8px; font-family:monospace; font-size:12px; line-height:1.5; margin-bottom:10px;\">\n    <span style=\"color:#94A3B8;\"># Servidores y pools de tiempo externos</span><br>\n    <span style=\"color:#38BDF8;\">pool</span> 2.debian.pool.ntp.org <span style=\"color:#F59E0B;\">iburst</span><br>\n    <span style=\"color:#38BDF8;\">server</span> ntp.rediris.es <span style=\"color:#F59E0B;\">iburst</span><br><br>\n    <span style=\"color:#94A3B8;\"># Archivo para compensar la deriva de frecuencia del hardware</span><br>\n    <span style=\"color:#A855F7;\">driftfile</span> /var/lib/ntp/ntp.drift<br><br>\n    <span style=\"color:#94A3B8;\"># Restricciones de seguridad por defecto (bloquea consultas externas)</span><br>\n    <span style=\"color:#F43F5E;\">restrict</span> -4 default nomodify nopeer noquery notrap<br>\n    <span style=\"color:#F43F5E;\">restrict</span> 127.0.0.1\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; font-size:10.5px;\">\n    <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#0284C7;\">server / pool</strong><br>\n      Define fuentes NTP remotas. <code>iburst</code> acelera la sincronización inicial.\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #E9D5FF; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#9333EA;\">driftfile</strong><br>\n      Almacena las partes por millón (PPM) que se desvía el reloj local.\n    </div>\n    <div style=\"background:#FFF1F2; border:1px solid #FECDD3; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#E11D48;\">restrict</strong><br>\n      Directiva de control de acceso para evitar abusos o ataques DDoS NTP.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'driftfile /var/lib/ntp/ntp.drift' guarda la deriva de frecuencia del oscilador de la CPU. La directiva 'restrict' protege contra accesos no autorizados."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-1-7",
+      "title": "Supervisión de ntpd: ntpq y la Utilidad ntpdate",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Supervisión de ntpd: ntpq y la Utilidad ntpdate"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo interpretar los símbolos y métricas de estado de los pares NTP?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "     remote           refid      st t when poll reach   delay   offset  jitter\n==============================================================================\n*hora.roa.es     .GPS.            1 u   42   64  377   18.234   -0.412   0.098\n+ntp.rediris.es  130.206.3.166    2 u   12   64  377   12.110    0.155   0.140\n+pool.ntp.org    193.145.15.15    2 u    8   64  377   15.420   -0.120   0.115"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "ntpq -p",
+              "",
+              "Imprime en formato de tabla el estado de todos los pares NTP (peers), retraso, offset y jitter."
+            ],
+            [
+              "Símbolo * (asterisco)",
+              "",
+              "Par actualmente sincronizado y utilizado como fuente principal de tiempo."
+            ],
+            [
+              "Símbolo + (más)",
+              "",
+              "Candidato válido de respaldo listo para reemplazar al principal si falla."
+            ],
+            [
+              "Símbolo - (menos)",
+              "",
+              "Par descartado por el algoritmo de agrupamiento (cluster)."
+            ],
+            [
+              "ntpdate servidor",
+              "",
+              "(Obsoleto) Realiza un salto instantáneo hacia la hora del servidor (falla si ntpd está corriendo)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: En la salida de 'ntpq -p': el asterisco (*) marca el par actualmente seleccionado como fuente primaria; el signo más (+) marca candidatos de respaldo aceptables."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-1-8",
+      "title": "Chrony en Profundidad: chronyd y /etc/chrony/chrony.conf",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Chrony en Profundidad: chronyd y /etc/chrony/chrony.conf"
+        },
+        {
+          "type": "paragraph",
+          "text": "La solución moderna diseñada para servidores, portátiles y entornos de nube."
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>📄 Configuración Clave en /etc/chrony/chrony.conf (o /etc/chrony.conf)</span>\n    <span style=\"font-size:10.5px; background:#F0FDF4; color:#16A34A; padding:2px 8px; border-radius:10px; font-weight:700;\">chronyd Suite</span>\n  </div>\n\n  <div style=\"background:#0F172A; color:#E2E8F0; padding:10px 14px; border-radius:8px; font-family:monospace; font-size:12px; line-height:1.5; margin-bottom:10px;\">\n    <span style=\"color:#94A3B8;\"># Pool de servidores con arranque rápido</span><br>\n    <span style=\"color:#38BDF8;\">pool</span> 2.debian.pool.ntp.org <span style=\"color:#F59E0B;\">iburst</span><br><br>\n    <span style=\"color:#94A3B8;\"># Saltar hora si el error > 1 seg durante los primeros 3 sondeos</span><br>\n    <span style=\"color:#EAB308;\">makestep</span> 1.0 3<br><br>\n    <span style=\"color:#94A3B8;\"># Sincronizar automáticamente el reloj de hardware (RTC) cada 11 minutos</span><br>\n    <span style=\"color:#22C55E;\">rtcsync</span><br><br>\n    <span style=\"color:#94A3B8;\"># Registro de deriva de frecuencia</span><br>\n    <span style=\"color:#A855F7;\">driftfile</span> /var/lib/chrony/chrony.drift\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:10.5px;\">\n    <div style=\"background:#FEFCE8; border:1px solid #FEF08A; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#CA8A04;\">makestep</strong><br>\n      Evita esperar horas para corregir un reloj muy desfasado al arrancar.\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#16A34A;\">rtcsync</strong><br>\n      Permite al kernel copiar la hora del sistema al RTC automáticamente.\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #E9D5FF; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#9333EA;\">driftfile</strong><br>\n      Mantiene el cálculo de error incluso sin conexión a Internet.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'makestep 1.0 3' permite a chrony saltar la hora si el desfase es mayor de 1 segundo, pero SOLO durante las 3 primeras actualizaciones tras el arranque."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-1-9",
+      "title": "Comando chronyc: Control y Diagnóstico de chronyd",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando chronyc: Control y Diagnóstico de chronyd"
+        },
+        {
+          "type": "paragraph",
+          "text": "Comandos de diagnóstico en tiempo real de fuentes, seguimiento y actividad."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "  .-- Source mode  '^' = server, '=' = peer, '#' = local clock.\n / .- Source state '*' = current best, '+' = combined, '-' = not combined,\n| /             'x' = may be in error, '~' = too variable, '?' = unusable.\n||                                                 .- xxxx [ - autonets ]\nMS Name/IP address         Stratum Poll Reach LastRx Last sample               \n===============================================================================\n^* hora.roa.es                   1   6   377    22   -120us[ -140us] +/-   14ms\n^+ ntp.rediris.es                2   6   377    24   +310us[ +290us] +/-   18ms"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "sources [-v]",
+              "",
+              "Muestra las fuentes NTP configuradas y su estado (* actual, + candidato, ? inalcanzable)."
+            ],
+            [
+              "sourcestats [-v]",
+              "",
+              "Muestra estadísticas de deriva y fluctuación de frecuencia de cada fuente."
+            ],
+            [
+              "tracking",
+              "",
+              "Vuelca los parámetros actuales del reloj local: Stratum, Reference ID, System time offset y Drift."
+            ],
+            [
+              "activity",
+              "",
+              "Informa de cuántas fuentes están online, offline o pendientes de resolución."
+            ],
+            [
+              "makestep",
+              "",
+              "Ordena a chronyd realizar un salto manual instantáneo para eliminar cualquier desfase."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'chronyc sources -v' muestra la lista de servidores NTP y su estado. 'chronyc tracking' muestra los parámetros del reloj local (estrato, offset, frecuencia)."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-1-10",
+      "title": "Matriz Comparativa: ntpd vs chronyd vs systemd-timesyncd",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Matriz Comparativa: ntpd vs chronyd vs systemd-timesyncd"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué solución de sincronización horaria elegir según los requerimientos?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Característica",
+            "ntpd Clásico",
+            "chrony (chronyd)",
+            "systemd-timesyncd"
+          ],
+          "rows": [
+            [
+              "Función Servidor NTP",
+              "✅ Sí (completo)",
+              "✅ Sí (completo)",
+              "❌ No (solo cliente SNTP)"
+            ],
+            [
+              "Velocidad de Sincronización",
+              "Lenta (requiere minutos)",
+              "Ultra-rápida (en segundos)",
+              "Media (al arrancar y periódica)"
+            ],
+            [
+              "Máquinas Virtuales y Portátiles",
+              "Deficiente ante congelaciones",
+              "✅ Excelente (diseñado para ello)",
+              "Aceptable"
+            ],
+            [
+              "Soporte de Stratum 0 (Hardware PPS)",
+              "✅ Sí",
+              "✅ Sí",
+              "❌ No"
+            ],
+            [
+              "Comando de Control",
+              "<code>ntpq -p</code>",
+              "<code>chronyc sources</code>",
+              "<code>timedatectl timesync-status</code>"
+            ]
+          ],
+          "caption": "Matriz Comparativa: ntpd vs chronyd vs systemd-timesyncd"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Resumen LPIC-1: systemd-timesyncd es SOLO CLIENTE básico (SNTP); ntpd es el clásico universal; chronyd es el estándar moderno rápido para clientes y servidores."
+        }
+      ]
+    }
+  ]
+}

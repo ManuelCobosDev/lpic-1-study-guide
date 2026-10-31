@@ -1,0 +1,1700 @@
+{
+  "id": "103.2",
+  "topicId": "103",
+  "examId": "101",
+  "title": "Procesar flujos de texto usando filtros",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 30,
+  "objectives": [
+    "cat, head, tail, wc, cut, paste, sort, uniq, tr, sed, split, od y sumas hash (Alta Densidad LPIC-1)",
+    "Dominio técnico de las herramientas y configuración del subtema 103.2"
+  ],
+  "keyTerms": [
+    "Procesar flujos de texto usando filtros",
+    "Tema 103"
+  ],
+  "commands": [
+    "cat",
+    "wc",
+    "cut",
+    "sort",
+    "tr",
+    "sed",
+    "sha256sum",
+    "od"
+  ],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "103.2-slide-1",
+      "slideNumber": 1,
+      "title": "Procesar flujos de texto usando filtros",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Procesar flujos de texto usando filtros"
+        },
+        {
+          "type": "paragraph",
+          "text": "cat, head, tail, wc, cut, paste, sort, uniq, tr, sed, split, od y sumas hash (Modo Examen)"
+        }
+      ],
+      "notes": "Iniciamos el subtema 103.2 (peso 3). En Linux 'todo es texto'. Los administradores automatizan auditorías y tareas combinando herramientas GNU textutils para transformar, filtrar, recortar y verificar datos."
+    },
+    {
+      "id": "103.2-slide-2",
+      "slideNumber": 2,
+      "title": "La Filosofía de Filtros en Unix: Tuberías y Flujos en Cadena",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "La Filosofía de Filtros en Unix: Tuberías y Flujos en Cadena"
+        },
+        {
+          "type": "paragraph",
+          "text": "Analogía cotidiana: Una planta embotelladora donde cada máquina hace un solo trabajo perfecto"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:20px 24px; margin-top:10px;\">\n  <div style=\"font-size:17px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; gap:8px;\">\n    <span>🏭</span> Analogía de la Vida Cotidiana: La Cinta Transportadora Modular\n  </div>\n\n  <div style=\"font-size:14.5px; color:var(--text-muted); line-height:1.5; margin-bottom:16px; background:#F8FAFC; border-left:4px solid #3B82F6; padding:10px 16px; border-radius:0 8px 8px 0;\">\n    Imagina una <strong>fábrica de zumos</strong>: El camión descarga manzanas crudas (<em>archivo en disco</em>). La máquina 1 quita las hojas (<code>cut</code>), la máquina 2 las ordena por tamaño (<code>sort</code>), la máquina 3 cuenta las cajas (<code>uniq -c</code>) y las coloca en el expositor (<em>stdout en pantalla</em>). <strong>El huerto de manzanos original jamás se modifica</strong>.\n  </div>\n\n  <!-- Diagrama de flujo de tubería -->\n  <div style=\"display:flex; justify-content:space-between; align-items:center; font-size:13.5px; text-align:center; gap:8px;\">\n    <!-- Entrada -->\n    <div style=\"background:#F1F5F9; border:2px dashed #94A3B8; border-radius:10px; padding:12px; flex:1;\">\n      <span style=\"font-size:11px; font-weight:800; background:#64748B; color:#FFF; padding:2px 6px; border-radius:4px;\">DISCO INTACTO</span>\n      <div style=\"font-size:15px; font-weight:800; color:#0F172A; margin:4px 0;\">/etc/passwd</div>\n      <span style=\"color:#64748B; font-size:12px;\">Texto crudo original</span>\n    </div>\n\n    <span style=\"font-size:24px; color:#2563EB; font-weight:900;\">➔</span>\n\n    <!-- Filtro 1: cut -->\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:12px; flex:1.2;\">\n      <span style=\"font-size:11px; font-weight:800; background:#2563EB; color:#FFF; padding:2px 6px; border-radius:4px;\">1. SELECCIONAR</span>\n      <div style=\"font-size:15px; font-weight:800; color:#1E40AF; margin:4px 0;\">cut -d: -f7</div>\n      <span style=\"color:#1E3A8A; font-size:12px;\">Extrae solo la shell</span>\n    </div>\n\n    <span style=\"font-size:24px; color:#2563EB; font-weight:900;\">|</span>\n\n    <!-- Filtro 2: sort -->\n    <div style=\"background:#FEFCE8; border:2px solid #EAB308; border-radius:10px; padding:12px; flex:1.2;\">\n      <span style=\"font-size:11px; font-weight:800; background:#CA8A04; color:#FFF; padding:2px 6px; border-radius:4px;\">2. ORDENAR</span>\n      <div style=\"font-size:15px; font-weight:800; color:#854D0E; margin:4px 0;\">sort</div>\n      <span style=\"color:#713F12; font-size:12px;\">Junta shells idénticas</span>\n    </div>\n\n    <span style=\"font-size:24px; color:#2563EB; font-weight:900;\">|</span>\n\n    <!-- Filtro 3: uniq -->\n    <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:12px; flex:1.2;\">\n      <span style=\"font-size:11px; font-weight:800; background:#16A34A; color:#FFF; padding:2px 6px; border-radius:4px;\">3. CONTAR</span>\n      <div style=\"font-size:15px; font-weight:800; color:#14532D; margin:4px 0;\">uniq -c</div>\n      <span style=\"color:#14532D; font-size:12px;\">Calcula frecuencias</span>\n    </div>\n\n    <span style=\"font-size:24px; color:#2563EB; font-weight:900;\">➔</span>\n\n    <!-- Salida -->\n    <div style=\"background:#FAF5FF; border:2px solid #A855F7; border-radius:10px; padding:12px; flex:1;\">\n      <span style=\"font-size:11px; font-weight:800; background:#9333EA; color:#FFF; padding:2px 6px; border-radius:4px;\">PANTALLA</span>\n      <div style=\"font-size:15px; font-weight:800; color:#6B21A8; margin:4px 0;\">stdout</div>\n      <span style=\"color:#581C87; font-size:12px;\">Informe final en RAM</span>\n    </div>\n  </div>\n\n  <div style=\"margin-top:16px; background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:10px 16px; font-size:13.5px; color:#14532D;\">\n    🛡️ <strong>Regla de Oro Unix:</strong> Ningún filtro almacena datos de forma permanente ni altera el archivo. Cada herramienta hace una única tarea especializada de forma ultrarrápida en memoria.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PRINCIPIO DE EXAMEN: Los filtros de texto NUNCA modifican el archivo original en disco; leen desde stdin o archivo, procesan en la memoria RAM y expulsan el flujo por stdout."
+        }
+      ],
+      "notes": "Explica la metáfora de la tubería de fontanería o la cinta transportadora: el agua del lago (/etc/passwd) no cambia; solo se limpia y clasifica mientras fluye por los tubos."
+    },
+    {
+      "id": "103.2-slide-3",
+      "slideNumber": 3,
+      "title": "Visualización y Paginación: cat, tac, head y tail",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Visualización y Paginación: cat, tac, head y tail"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "cat [-n] | tac | head [-n] | tail [-n|-f]",
+          "title": "Inspeccionar archivos completos, invertidos o solo sus cabeceras y colas"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "cat -n srv.txt; tac srv.txt | head -n 1; head -n 1 srv.txt; tail -n 1 srv.txt",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "cat -n",
+              "Numerar líneas",
+              "🎯 Numera todas las líneas de salida de la primera a la última."
+            ],
+            [
+              "cat -s",
+              "Comprimir vacías",
+              "Reduce múltiples líneas consecutivas en blanco a una sola."
+            ],
+            [
+              "tac <fichero>",
+              "Orden inverso",
+              "🎯 Invierte las líneas: muestra el archivo empezando por el final."
+            ],
+            [
+              "head -n <N>",
+              "Primeras N líneas",
+              "🎯 Muestra las primeras N líneas (por defecto 10 si no indicas número)."
+            ],
+            [
+              "tail -n <N>",
+              "Últimas N líneas",
+              "🎯 Muestra las últimas N líneas del fichero (por defecto 10)."
+            ],
+            [
+              "tail -f",
+              "Seguimiento en vivo",
+              "🎯 Modo follow: no se cierra, monitoriza nuevas líneas añadidas al log en tiempo real."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-top:8px; font-size:13px;\">\n  <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n    <div style=\"font-weight:800; color:#1E40AF; font-size:14px; margin-bottom:2px;\">cat (Completo)</div>\n    <div style=\"color:#1E3A8A; line-height:1.35;\">\n      Muestra todo de la 1 a la final. Usa <code>cat -n</code> para ver números de línea al revisar código.\n    </div>\n  </div>\n\n  <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:14px; margin-bottom:2px;\">tac (Espejo Inverso)</div>\n    <div style=\"color:#7F1D1D; line-height:1.35;\">\n      <em>cat</em> al revés: imprime de última a primera (ideal para logs cronológicos inversos).\n    </div>\n  </div>\n\n  <div style=\"background:#FEFCE8; border:1.5px solid #EAB308; border-radius:8px; padding:10px;\">\n    <div style=\"font-weight:800; color:#854D0E; font-size:14px; margin-bottom:2px;\">head (La Cabeza)</div>\n    <div style=\"color:#713F12; line-height:1.35;\">\n      Extrae el inicio. <code>head -n 5</code> extrae las 5 primeras líneas (por defecto 10).\n    </div>\n  </div>\n\n  <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n    <div style=\"font-weight:800; color:#14532D; font-size:14px; margin-bottom:2px;\">tail -f (En Vivo)</div>\n    <div style=\"color:#14532D; line-height:1.35;\">\n      La cola. Con <code>-f</code> queda a la espera de nuevas líneas (monitor de logs en directo).\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'tail -f /var/log/syslog' monitoriza logs en tiempo real; 'tac' es 'cat' al revés (invierte líneas de abajo a arriba)."
+        }
+      ],
+      "notes": "Enseña a los alumnos que head y tail leen por defecto 10 líneas si se omite -n. tail -f es el comando de cabecera de cualquier sysadmin durante incidencias."
+    },
+    {
+      "id": "103.2-slide-4",
+      "slideNumber": 4,
+      "title": "Estadísticas y Numeración: wc y nl",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Estadísticas y Numeración: wc y nl"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "wc [-l|-w|-c|-m] | nl [-ba]",
+          "title": "Contar elementos de texto y formatear números de línea profesionales"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "wc /etc/issue; wc -l /etc/passwd; nl -ba /etc/issue",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "wc (sin flags)",
+              "Líneas, palabras, bytes",
+              "Imprime 3 cifras: total líneas, total palabras y total bytes."
+            ],
+            [
+              "wc -l",
+              "Solo líneas",
+              "🎯 Cuenta únicamente los saltos de línea. El comodín en tuberías: 'cat arch | wc -l'."
+            ],
+            [
+              "wc -w",
+              "Solo palabras",
+              "Cuenta palabras delimitadas por espacios en blanco o tabuladores."
+            ],
+            [
+              "wc -c",
+              "Solo bytes",
+              "🎯 Cuenta el tamaño total del archivo medido en bytes."
+            ],
+            [
+              "wc -m",
+              "Caracteres UTF-8",
+              "Cuenta caracteres lógicos (diferencia caracteres acentuados o emojis de sus bytes)."
+            ],
+            [
+              "nl -ba",
+              "Numerar todo",
+              "🎯 Numera absolutamente todas las líneas (incluso las líneas vacías)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin-top:10px;\">\n  <div style=\"font-size:16px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    📊 Anatomía de la salida por defecto de <code>wc</code>:\n  </div>\n\n  <div style=\"background:#0F172A; color:#F8FAFC; padding:12px 20px; border-radius:10px; font-family:monospace; font-size:18px; margin-bottom:14px; display:flex; gap:24px;\">\n    <div><span style=\"color:#38BDF8; font-weight:800;\">2</span> <span style=\"font-size:12px; color:#94A3B8;\">(líneas)</span></div>\n    <div><span style=\"color:#4ADE80; font-weight:800;\">6</span> <span style=\"font-size:12px; color:#94A3B8;\">(palabras)</span></div>\n    <div><span style=\"color:#FDE047; font-weight:800;\">40</span> <span style=\"font-size:12px; color:#94A3B8;\">(bytes)</span></div>\n    <div style=\"color:#CBD5E1;\">/etc/issue</div>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:13.5px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:10px; padding:12px;\">\n      <strong style=\"color:#1E40AF; font-size:14.5px;\">wc -l en Auditoría de Sistemas</strong><br>\n      <span style=\"color:#1E3A8A; line-height:1.45;\">¿Cuántas cuentas de usuario existen? <code>cut -d: -f1 /etc/passwd | wc -l</code>.<br>¿Cuántos paquetes instalados? <code>dpkg -l | grep '^ii' | wc -l</code>.</span>\n    </div>\n\n    <div style=\"background:#FEFCE8; border:1.5px solid #FDE047; border-radius:10px; padding:12px;\">\n      <strong style=\"color:#854D0E; font-size:14.5px;\">nl frente a cat -n</strong><br>\n      <span style=\"color:#713F12; line-height:1.45;\"><code>cat -n</code> numera ciegamente todas las líneas. <code>nl</code> es más inteligente: por defecto <strong>no numera líneas vacías</strong> para mantener párrafos limpios, salvo que uses <code>nl -ba</code>.</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'wc -l' es el contador universal de LPIC-1 para responder preguntas de '¿Cuántos elementos hay?'. Por defecto, 'nl' omite líneas en blanco salvo con '-ba'."
+        }
+      ],
+      "notes": "Muestra la diferencia entre bytes (-c) y caracteres (-m) en un fichero que contenga la palabra 'año' o 'camión'."
+    },
+    {
+      "id": "103.2-slide-5",
+      "slideNumber": 5,
+      "title": "Extracción y Fusión de Columnas: cut y paste",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Extracción y Fusión de Columnas: cut y paste"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "cut -d<delim> -f<campos> | paste -d<delim> [-s]",
+          "title": "Recortar campos verticales de texto o unir archivos horizontalmente en columnas"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "cut -d: -f1,7 /etc/passwd | head -n 3; paste -d',' users.txt shells.txt",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "cut -d<delim>",
+              "Delimitador de campo",
+              "🎯 Define el carácter separador de columnas (por defecto tabulador). En /etc/passwd es ':'."
+            ],
+            [
+              "cut -f<campos>",
+              "Campos a extraer",
+              "🎯 Número de columnas a recortar: '-f1' (primera), '-f1,7' (primera y séptima), '-f1-3' (rango)."
+            ],
+            [
+              "cut -c<rango>",
+              "Corte por caracteres",
+              "🎯 Extrae por posición fija de caracteres: 'cut -c 1-8' (de la letra 1 a la 8)."
+            ],
+            [
+              "paste arch1 arch2",
+              "Unión horizontal",
+              "🎯 Junta archivos lado a lado, línea 1 con línea 1, línea 2 con línea 2."
+            ],
+            [
+              "paste -s",
+              "Modo serie/secuencial",
+              "Convierte todas las líneas verticales de un mismo archivo en una sola línea horizontal."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:10px; font-size:13.5px;\">\n  <!-- cut: Corte Vertical -->\n  <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:12px; padding:16px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">CORTE VERTICAL (TIJERAS)</span>\n      <code style=\"font-size:15px; font-weight:800; color:#1E40AF;\">cut -d: -f1,7</code>\n    </div>\n    <div style=\"font-size:16px; font-weight:800; color:#1E40AF; margin-bottom:4px;\">Extrae columnas específicas</div>\n    <div style=\"color:#1E3A8A; line-height:1.45;\">\n      Piensa en una <strong>guillotina que baja en vertical</strong> y descarta las columnas sobrantes.<br>\n      • <code>-d:</code> define que las columnas están separadas por <code>:</code>.<br>\n      • <code>-f1,7</code> se queda solo con el nombre de usuario y su shell.\n    </div>\n  </div>\n\n  <!-- paste: Unión Horizontal -->\n  <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:12px; padding:16px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">UNIÓN HORIZONTAL (PEGAMENTO)</span>\n      <code style=\"font-size:15px; font-weight:800; color:#15803D;\">paste -d, a.txt b.txt</code>\n    </div>\n    <div style=\"font-size:16px; font-weight:800; color:#15803D; margin-bottom:4px;\">Pega archivos en paralelo</div>\n    <div style=\"color:#14532D; line-height:1.45;\">\n      Piensa en <strong>cinta adhesiva</strong> que coloca dos hojas lado a lado:<br>\n      • La línea 1 de <code>a.txt</code> se junta con la línea 1 de <code>b.txt</code>.<br>\n      • Muy útil para crear archivos CSV uniendo nombres e IPs.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'cut' hace un CORTE VERTICAL (extrae columnas); 'paste' hace una UNIÓN HORIZONTAL (pega columnas lado a lado con delimitador)."
+        }
+      ],
+      "notes": "Enseña el caso clásico de /etc/passwd: el campo 1 es el username y el campo 7 es la shell por defecto. Si el delimitador tiene espacios, usa cut -d' ' -f2."
+    },
+    {
+      "id": "103.2-slide-6",
+      "slideNumber": 6,
+      "title": "Ordenación de Líneas con sort",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ordenación de Líneas con sort"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sort [-n|-r|-k|-t|-u]",
+          "title": "Reorganizar registros alfabética o numéricamente por columnas"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sort numeros.txt; sort -n numeros.txt",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "sort (sin flags)",
+              "Alfabético ASCII",
+              "Ordena alfabéticamente. ⚠️ Atención: '10' va antes que '2'."
+            ],
+            [
+              "sort -n",
+              "Orden numérico real",
+              "🎯 Clave de Examen: Compara los valores como números reales (2 antes que 10)."
+            ],
+            [
+              "sort -r",
+              "Invertir orden (Reverse)",
+              "🎯 Invierte el criterio de ordenación (de mayor a menor o de Z a A)."
+            ],
+            [
+              "sort -k <N>",
+              "Ordenar por columna N",
+              "🎯 Key: selecciona la columna N por la que se ordenará la tabla."
+            ],
+            [
+              "sort -t <delim>",
+              "Delimitador de campos",
+              "🎯 Define el separador de campos para usar con '-k' (ej: '-t:' en /etc/passwd)."
+            ],
+            [
+              "sort -u",
+              "Ordenar y deduplicar",
+              "Elimina líneas duplicadas durante la propia ordenación."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:14px 20px; margin-top:8px;\">\n  <div style=\"font-size:15px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n    🎯 La Fórmula Maestra de Examen: Ordenar por Columnas Específicas\n  </div>\n\n  <div style=\"background:#0F172A; color:#F8FAFC; padding:10px 16px; border-radius:8px; font-family:monospace; font-size:16px; margin-bottom:10px;\">\n    <span style=\"color:#F43F5E; font-weight:800;\">sort</span>\n    <span style=\"color:#38BDF8; font-weight:800;\"> -t:</span>\n    <span style=\"color:#FDE047; font-weight:800;\"> -k3</span>\n    <span style=\"color:#4ADE80; font-weight:800;\"> -n</span>\n    <span style=\"color:#CBD5E1;\"> /etc/passwd</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; font-size:13px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:8px 10px;\">\n      <strong style=\"color:#1E40AF;\">-t: (Delimitador)</strong><br>\n      Indica que las columnas se separan por dos puntos <code>:</code>.\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FDE047; border-radius:8px; padding:8px 10px;\">\n      <strong style=\"color:#854D0E;\">-k3 (Columna 3)</strong><br>\n      Elige la 3ª columna (el UID de usuario en <code>/etc/passwd</code>).\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:8px 10px;\">\n      <strong style=\"color:#15803D;\">-n (Numérico)</strong><br>\n      Garantiza que el UID <code>1000</code> quede detrás de <code>0</code>, <code>1</code> y <code>2</code>.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para ordenar números (como UIDs o tamaños de disco), es OBLIGATORIO usar '-n'. Si quieres ordenar por la columna 3 de /etc/passwd: 'sort -t: -k3 -n /etc/passwd'."
+        }
+      ],
+      "notes": "Explica a los alumnos por qué 10 va antes que 2 en orden alfabético: el carácter '1' tiene un código ASCII menor que '2'. Por eso sort -n es indispensable."
+    },
+    {
+      "id": "103.2-slide-7",
+      "slideNumber": 7,
+      "title": "Deduplicación con uniq: Recuento y Repetidos",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Deduplicación con uniq: Recuento y Repetidos"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sort <file> | uniq [-c|-d|-u]",
+          "title": "Eliminar líneas duplicadas consecutivas o contar sus apariciones"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "uniq frutas.txt; sort frutas.txt | uniq -c",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "uniq (sin flags)",
+              "Eliminar duplicados",
+              "🎯 Suprime líneas duplicadas que sean adyacentes (una detrás de otra)."
+            ],
+            [
+              "uniq -c",
+              "Contar frecuencias",
+              "🎯 Clave de Examen: Prefija cada línea con el número de veces que aparece en el texto."
+            ],
+            [
+              "uniq -d",
+              "Solo repetidas",
+              "🎯 Muestra exclusivamente las líneas que aparecen duplicadas (descarta las únicas)."
+            ],
+            [
+              "uniq -u",
+              "Solo únicas",
+              "🎯 Muestra exclusivamente las líneas que NO se repiten nunca (descarta duplicadas)."
+            ],
+            [
+              "uniq -i",
+              "Ignorar mayúsculas",
+              "Ignora la diferencia entre mayúsculas y minúsculas al comparar."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:14px 20px; margin-top:8px;\">\n  <div style=\"font-size:15px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🔍 ¿Qué hacen las opciones de filtrado de <code>uniq</code>?\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:13px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:8px; padding:12px;\">\n      <strong style=\"color:#1E40AF; font-size:14.5px;\">uniq -c (Count)</strong><br>\n      <span style=\"color:#1E3A8A; line-height:1.4;\">Cuenta cuántas veces se repite cada línea. Clave para saber cuántas peticiones hizo cada IP en un log.</span>\n    </div>\n\n    <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-radius:8px; padding:12px;\">\n      <strong style=\"color:#991B1B; font-size:14.5px;\">uniq -d (Duplicated)</strong><br>\n      <span style=\"color:#7F1D1D; line-height:1.4;\">Imprime <strong>solo los repetidos</strong>. Útil para detectar anomalías, como si dos cuentas comparten UID.</span>\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:8px; padding:12px;\">\n      <strong style=\"color:#15803D; font-size:14.5px;\">uniq -u (Unique)</strong><br>\n      <span style=\"color:#14532D; line-height:1.4;\">Imprime <strong>solo los que aparecen 1 vez</strong>. Descarta cualquier elemento con copias.</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 LA TRAMPA NÚMERO 1 DE LPIC-1: 'uniq' SOLO detecta duplicados si están en líneas CONSECUTIVAS. Por eso, en el 99% de las preguntas de examen, la respuesta correcta es la tubería 'sort | uniq'."
+        }
+      ],
+      "notes": "Haz que todos los alumnos repitan: 'uniq siempre va detrás de sort'. Si no ordenas, uniq es completamente ciego a duplicados distantes."
+    },
+    {
+      "id": "103.2-slide-8",
+      "slideNumber": 8,
+      "title": "Transformación de Caracteres con tr",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Transformación de Caracteres con tr"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "tr [-d|-s|-c] <conjunto1> [conjunto2]",
+          "title": "Traducir, sustituir, exprimir o borrar caracteres individuales mediante stdin"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "echo 'lpic 103' | tr 'a-z' 'A-Z'; echo 'tel: 123-456' | tr -d '0-9'; echo 'hola    mundo' | tr -s ' '",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "tr 'a-z' 'A-Z'",
+              "Mapeo 1 a 1",
+              "🎯 Reemplaza cada carácter del conjunto 1 por el correspondiente del conjunto 2."
+            ],
+            [
+              "tr -d <SET>",
+              "Borrar caracteres",
+              "🎯 Delete: elimina de la salida todos los caracteres especificados en SET."
+            ],
+            [
+              "tr -s <SET>",
+              "Squeeze (Exprimir)",
+              "🎯 Comprime secuencias consecutivas repetidas del mismo carácter en uno solo."
+            ],
+            [
+              "tr -c <SET>",
+              "Complemento",
+              "Aplica la operación sobre todos los caracteres que NO están en SET."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin-top:10px;\">\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; font-size:14px;\">\n    <!-- El Mapeador -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:10px; padding:14px;\">\n      <strong style=\"color:#1E40AF; font-size:15px;\">🔤 Mapeo Letra por Letra (Translate)</strong><br>\n      <div style=\"color:#1E3A8A; line-height:1.45; margin-top:6px;\">\n        No busca palabras enteras; compara carácter por carácter:<br>\n        <code>tr 'abc' '123'</code> &rarr; todas las <code>a</code> pasan a ser <code>1</code>, las <code>b</code> a <code>2</code> y las <code>c</code> a <code>3</code>.\n      </div>\n    </div>\n\n    <!-- La Trampa de stdin -->\n    <div style=\"background:#FFF1F2; border:2px solid #F43F5E; border-radius:10px; padding:14px;\">\n      <strong style=\"color:#9F1239; font-size:15px;\">⚠️ ¡Cero Archivos como Parámetro!</strong><br>\n      <div style=\"color:#881337; line-height:1.45; margin-top:6px;\">\n        ❌ <code>tr 'a-z' 'A-Z' datos.txt</code> &rarr; <span style=\"font-weight:700;\">Error fatal</span>.<br>\n        ✅ <code>tr 'a-z' 'A-Z' &lt; datos.txt</code> &nbsp;|&nbsp; <code>cat datos.txt | tr ...</code>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 LA TRAMPA MORTAL DE EXAMEN: 'tr' NUNCA acepta nombres de archivo como argumento ('tr a-z A-Z archivo.txt' da error). 'tr' SOLO lee desde la entrada estándar (stdin); debes usar tubería o redirección '<'."
+        }
+      ],
+      "notes": "Insiste: tr viene de 'translate'. Solo lee caracteres de byte único de stdin. Jamás se le pasa un archivo directo."
+    },
+    {
+      "id": "103.2-slide-9",
+      "slideNumber": 9,
+      "title": "Editor de Flujo sed: Sustitución y Filtrado",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Editor de Flujo sed: Sustitución y Filtrado"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sed [-e|-n|-i] 's/buscar/reemplazo/[g]'",
+          "title": "Transformar, sustituir y filtrar flujos de texto de forma no interactiva"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "echo 'v1:v1:v1' | sed 's/v1/v2/'; echo 'v1:v1:v1' | sed 's/v1/v2/g'; sed -n '3p' /etc/passwd",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "s/antiguo/nuevo/g",
+              "Sustitución global",
+              "🎯 's' (substitute), busca 'antiguo' y lo cambia por 'nuevo'. 'g' lo hace en toda la línea."
+            ],
+            [
+              "sed -n 'Np'",
+              "Imprimir solo línea N",
+              "🎯 '-n' suprime la salida por defecto; 'Np' le ordena imprimir exclusivamente la línea N."
+            ],
+            [
+              "sed -i 's/.../'",
+              "In-Place (Disco)",
+              "🎯 Peligro: Modifica el archivo físico directamente en el disco en lugar de solo mostrarlo."
+            ],
+            [
+              "sed '/patrón/d'",
+              "Borrar líneas",
+              "Elimina de la salida todas las líneas que coincidan con la expresión regular."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin-top:10px;\">\n  <div style=\"font-size:16px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🎯 Anatomía de la Expresión Maestra de <code>sed</code>:\n  </div>\n\n  <div style=\"background:#0F172A; color:#F8FAFC; padding:12px 20px; border-radius:10px; font-family:monospace; font-size:18px; margin-bottom:12px; display:flex; align-items:center; gap:8px;\">\n    <span style=\"color:#F43F5E; font-weight:800;\">sed </span>\n    <span style=\"color:#CBD5E1;\">'</span>\n    <span style=\"color:#38BDF8; font-weight:800;\">s</span>\n    <span style=\"color:#94A3B8;\">/</span>\n    <span style=\"color:#FDE047; font-weight:800;\">puerto 80</span>\n    <span style=\"color:#94A3B8;\">/</span>\n    <span style=\"color:#4ADE80; font-weight:800;\">puerto 443</span>\n    <span style=\"color:#94A3B8;\">/</span>\n    <span style=\"color:#FB923C; font-weight:800;\">g</span>\n    <span style=\"color:#CBD5E1;\">'</span>\n    <span style=\"color:#CBD5E1;\"> nginx.conf</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:13.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF;\">s (Substitute)</strong><br>\n      Le ordena a sed entrar en modo de sustitución de texto.\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FDE047; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#854D0E;\">/origen/destino/</strong><br>\n      Texto a buscar y texto nuevo que lo reemplazará.\n    </div>\n    <div style=\"background:#FFF1F2; border:1.5px solid #FCA5A5; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#991B1B;\">g (Global)</strong><br>\n      Sustituye <strong>todas</strong> las veces que aparezca en la línea, no solo la primera.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Si olvidas la 'g' final en 's/foo/bar/', sed solo sustituirá la primera coincidencia de cada línea; para cambiar todas las apariciones es obligatorio 's/foo/bar/g'."
+        }
+      ],
+      "notes": "Muestra la diferencia entre la salida en pantalla y sed -i (que escribe a disco). Advierte del peligro de usar sed -i sin copia de seguridad previa."
+    },
+    {
+      "id": "103.2-slide-10",
+      "slideNumber": 10,
+      "title": "Integridad y Sumas Criptográficas: md5sum y sha256sum",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Integridad y Sumas Criptográficas: md5sum y sha256sum"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sha256sum | md5sum | sha512sum [-c fichero]",
+          "title": "Garantizar que un archivo no ha sido corrompido ni alterado maliciosamente"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sha256sum debian.iso > HASHES.txt; sha256sum -c HASHES.txt",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "sha256sum <file>",
+              "Huella SHA-256",
+              "🎯 Calcula un hash de 256 bits (64 caracteres hex). El estándar moderno oficial."
+            ],
+            [
+              "md5sum <file>",
+              "Huella MD5",
+              "Calcula un hash de 128 bits (32 caracteres hex). Rápido pero inseguro criptográficamente."
+            ],
+            [
+              "-c, --check",
+              "Verificación desatendida",
+              "🎯 Clave de Examen: Lee el archivo de hashes y comprueba los ficheros devolviendo 'OK' o 'FAILED'."
+            ],
+            [
+              "--status",
+              "Silencioso para scripts",
+              "No imprime nada; solo devuelve código de salida 0 si todos los hashes son válidos."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin-top:10px;\">\n  <div style=\"font-size:16px; font-weight:800; color:var(--text); margin-bottom:10px;\">\n    🔐 El Concepto de Huella Digital Matemática (Hash):\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; font-size:14px;\">\n    <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:14px;\">\n      <strong style=\"color:#15803D; font-size:15px;\">✅ Verificación con Éxito (OK)</strong><br>\n      <div style=\"color:#14532D; line-height:1.45; margin-top:4px;\">\n        El comando <code>sha256sum -c SHA256SUMS</code> lee cada archivo del disco, calcula su hash y lo compara con el del archivo de texto. Si coincide al 100%, imprime <strong>OK</strong>.\n      </div>\n    </div>\n\n    <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:14px;\">\n      <strong style=\"color:#991B1B; font-size:15px;\">❌ Detección de Falsificación (FAILED)</strong><br>\n      <div style=\"color:#7F1D1D; line-height:1.45; margin-top:4px;\">\n        Si un atacante inyectó malware o la descarga se cortó por la mitad, el hash resultante será radicalmente distinto y <code>-c</code> alertará con <strong>FAILED</strong>.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para verificar automáticamente que una descarga coincide con su suma oficial, se usa siempre la opción '-c' (ej: sha256sum -c SHA256SUMS)."
+        }
+      ],
+      "notes": "Explica el 'efecto avalancha': si cambias un solo espacio en una ISO de 4 GB, la huella SHA-256 resultante cambia al 100%."
+    },
+    {
+      "id": "103.2-slide-11",
+      "slideNumber": 11,
+      "title": "Inspección Binaria y Fragmentación: od y split",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Inspección Binaria y Fragmentación: od y split"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "od [-c|-x] <file> | split [-b|-l|-d] <file> [prefijo]",
+          "title": "Examinar bytes ocultos en archivos y dividir ficheros gigantescos en trozos"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "printf 'A\\r\\n' | od -c; split -b 10M -d backup.tar.gz part_",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "od -c",
+              "Caracteres ASCII/Escape",
+              "🎯 Octal Dump: revela caracteres no imprimibles (saltos de línea \\n, retornos \\r, tabuladores \\t)."
+            ],
+            [
+              "split -b <tamaño>",
+              "Dividir por tamaño",
+              "🎯 Fragmenta el archivo por tamaño en bytes (ej: '-b 50M', '-b 1G', '-b 700M')."
+            ],
+            [
+              "split -l <líneas>",
+              "Dividir por líneas",
+              "🎯 Divide un archivo de texto en trozos de N líneas (ej: '-l 1000')."
+            ],
+            [
+              "split -d",
+              "Sufijos numéricos",
+              "🎯 Utiliza números (00, 01, 02) en vez de letras alfabéticas (aa, ab, ac)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin-top:10px;\">\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; font-size:14px;\">\n    <!-- od -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:10px; padding:14px;\">\n      <strong style=\"color:#1E40AF; font-size:15px;\">🔍 od -c: El Rayo X de Archivos</strong><br>\n      <div style=\"color:#1E3A8A; line-height:1.45; margin-top:4px;\">\n        Descubre bytes invisibles. Si un script en Linux dice <code>/bin/bash^M: bad interpreter</code>, <code>od -c</code> te revelará que Windows insertó un retorno de carro <code>\\r</code> oculto.\n      </div>\n    </div>\n\n    <!-- split -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:10px; padding:14px;\">\n      <strong style=\"color:#15803D; font-size:15px;\">✂️ split: Troceado y Reconstrucción</strong><br>\n      <div style=\"color:#14532D; line-height:1.45; margin-top:4px;\">\n        <code>split -b 50M -d iso part_</code> corta en partes manejables para enviar por email. Para recomponerlo basta con unirlas: <code>cat part_* &gt; original.iso</code>.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'od -c' detecta saltos de línea Windows (\\r\\n) que impiden ejecutar scripts en Linux; 'split -b' divide por tamaño y se recompone con 'cat'."
+        }
+      ],
+      "notes": "Enseña el caso clásico de un script editado en Windows que falla con 'command not found': con 'od -c script.sh' se ve el '\\r\\n'."
+    },
+    {
+      "id": "103.2-slide-12",
+      "slideNumber": 12,
+      "title": "Formateo e Impresión de Texto: pr, expand y unexpand",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Formateo e Impresión de Texto: pr, expand y unexpand"
+        },
+        {
+          "type": "paragraph",
+          "text": "Preparar documentos para imprimir en papel o convertir entre tabuladores y espacios"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin-top:14px; font-size:14px;\">\n  <!-- pr -->\n  <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:12px; padding:16px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:12px; padding:3px 8px; border-radius:4px;\">IMPRESIÓN FÍSICA</span>\n      <code style=\"font-size:16px; font-weight:800; color:#1E40AF;\">pr -l 60 -2</code>\n    </div>\n    <div style=\"font-size:17px; font-weight:800; color:#1E40AF; margin-bottom:6px;\">pr (Print Formatter)</div>\n    <div style=\"color:#1E3A8A; line-height:1.45;\">\n      • <strong>Función:</strong> Pagina archivos para imprimir en papel con cabeceras de fecha, hora y número de página.<br>\n      • <strong>Opciones:</strong> <code>-l 60</code> (fija la longitud a 60 líneas por página), <code>-2</code> o <code>-3</code> (divide el texto en 2 o 3 columnas).\n    </div>\n  </div>\n\n  <!-- expand -->\n  <div style=\"background:#FEFCE8; border:2px solid #EAB308; border-radius:12px; padding:16px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#CA8A04; color:#FFF; font-weight:800; font-size:12px; padding:3px 8px; border-radius:4px;\">TABS &rarr; ESPACIOS</span>\n      <code style=\"font-size:16px; font-weight:800; color:#854D0E;\">expand -t 4</code>\n    </div>\n    <div style=\"font-size:17px; font-weight:800; color:#854D0E; margin-bottom:6px;\">expand (Expandir)</div>\n    <div style=\"color:#713F12; line-height:1.45;\">\n      • <strong>Función:</strong> Convierte caracteres de tabulación <code>\\t</code> en secuencias de espacios en blanco equivalentes.<br>\n      • <strong>Opciones:</strong> <code>-t 4</code> convierte cada tabulador en exactamente 4 espacios (ideal para código fuente).\n    </div>\n  </div>\n\n  <!-- unexpand -->\n  <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:12px; padding:16px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:3px 8px; border-radius:4px;\">ESPACIOS &rarr; TABS</span>\n      <code style=\"font-size:16px; font-weight:800; color:#14532D;\">unexpand -a</code>\n    </div>\n    <div style=\"font-size:17px; font-weight:800; color:#14532D; margin-bottom:6px;\">unexpand (Condensar)</div>\n    <div style=\"color:#14532D; line-height:1.45;\">\n      • <strong>Función:</strong> La operación inversa: convierte secuencias consecutivas de espacios en blanco en caracteres de tabulación <code>\\t</code>.<br>\n      • <strong>Opciones:</strong> <code>-a</code> convierte todos los espacios posibles, no solo los del inicio de línea.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave Mnemotécnica: 'expand' expande tabs a espacios; 'unexpand' condensa espacios a tabs; 'pr' pagina el texto para impresión física."
+        }
+      ],
+      "notes": "expand es fundamental para programadores de Python para solucionar errores de mezcla de tabs y espacios."
+    },
+    {
+      "id": "103.2-slide-13",
+      "slideNumber": 13,
+      "title": "Trampas Clásicas de Examen en Filtros de Texto",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Trampas Clásicas de Examen en Filtros de Texto"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 4 errores que hacen perder puntos en las preguntas de procesamiento de texto"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: repeat(2, 1fr); gap:16px; margin-top:14px; font-size:14px;\">\n  <!-- Trampa 1 -->\n  <div style=\"background:#FFFFFF; border:2px solid #EF4444; border-radius:12px; padding:14px 18px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">TRAMPA 1</span>\n      <strong style=\"color:#991B1B; font-size:16px;\">Usar uniq sin sort previo</strong>\n    </div>\n    <div style=\"background:#FEF2F2; color:#991B1B; padding:8px 12px; border-radius:6px; font-family:monospace; margin-bottom:8px; font-size:14.5px;\">\n      ❌ cut -d: -f7 /etc/passwd | uniq -c\n    </div>\n    <div style=\"background:#F0FDF4; color:#14532D; padding:8px 12px; border-radius:6px; font-family:monospace; margin-bottom:8px; font-size:14.5px;\">\n      ✅ cut -d: -f7 /etc/passwd | sort | uniq -c\n    </div>\n    <div style=\"color:var(--text-muted); font-size:13px; line-height:1.4;\">\n      💡 <strong>¿Por qué?:</strong> <code>uniq</code> solo compara líneas consecutivas. Si la misma shell aparece en la línea 1 y en la línea 10, no la agrupa si no usas <code>sort</code> antes.\n    </div>\n  </div>\n\n  <!-- Trampa 2 -->\n  <div style=\"background:#FFFFFF; border:2px solid #EF4444; border-radius:12px; padding:14px 18px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">TRAMPA 2</span>\n      <strong style=\"color:#991B1B; font-size:16px;\">Pasar un archivo directo a tr</strong>\n    </div>\n    <div style=\"background:#FEF2F2; color:#991B1B; padding:8px 12px; border-radius:6px; font-family:monospace; margin-bottom:8px; font-size:14.5px;\">\n      ❌ tr 'a-z' 'A-Z' archivo.txt\n    </div>\n    <div style=\"background:#F0FDF4; color:#14532D; padding:8px 12px; border-radius:6px; font-family:monospace; margin-bottom:8px; font-size:14.5px;\">\n      ✅ tr 'a-z' 'A-Z' &lt; archivo.txt &nbsp;|&nbsp; cat archivo | tr ...\n    </div>\n    <div style=\"color:var(--text-muted); font-size:13px; line-height:1.4;\">\n      💡 <strong>¿Por qué?:</strong> <code>tr</code> no sabe abrir ficheros por nombre; solo lee datos que le lleguen por la entrada estándar (stdin).\n    </div>\n  </div>\n\n  <!-- Trampa 3 -->\n  <div style=\"background:#FFFFFF; border:2px solid #EF4444; border-radius:12px; padding:14px 18px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">TRAMPA 3</span>\n      <strong style=\"color:#991B1B; font-size:16px;\">Olvidar la 'g' final en sed</strong>\n    </div>\n    <div style=\"background:#FEF2F2; color:#991B1B; padding:8px 12px; border-radius:6px; font-family:monospace; margin-bottom:8px; font-size:14.5px;\">\n      ❌ sed 's/http/https/' archivo\n    </div>\n    <div style=\"background:#F0FDF4; color:#14532D; padding:8px 12px; border-radius:6px; font-family:monospace; margin-bottom:8px; font-size:14.5px;\">\n      ✅ sed 's/http/https/g' archivo (Global)\n    </div>\n    <div style=\"color:var(--text-muted); font-size:13px; line-height:1.4;\">\n      💡 <strong>¿Por qué?:</strong> Sin el modificador <code>g</code>, <code>sed</code> solo cambiará la 1ª coincidencia que encuentre en cada línea, dejando las siguientes intactas.\n    </div>\n  </div>\n\n  <!-- Trampa 4 -->\n  <div style=\"background:#FFFFFF; border:2px solid #EF4444; border-radius:12px; padding:14px 18px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">TRAMPA 4</span>\n      <strong style=\"color:#991B1B; font-size:16px;\">Confundir cut -f con cut -c</strong>\n    </div>\n    <div style=\"background:#FEF2F2; color:#991B1B; padding:8px 12px; border-radius:6px; font-family:monospace; margin-bottom:8px; font-size:14.5px;\">\n      ❌ cut -d: -c 1,7 /etc/passwd\n    </div>\n    <div style=\"background:#F0FDF4; color:#14532D; padding:8px 12px; border-radius:6px; font-family:monospace; margin-bottom:8px; font-size:14.5px;\">\n      ✅ cut -d: -f 1,7 /etc/passwd (Fields/Columnas)\n    </div>\n    <div style=\"color:var(--text-muted); font-size:13px; line-height:1.4;\">\n      💡 <strong>¿Por qué?:</strong> <code>-f</code> (fields) trabaja con columnas delimitadas por caracteres; <code>-c</code> (characters) corta por posición fija de letras.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Mnemotecnia Rápida: uniq siempre detrás de sort; tr solo por stdin; sed necesita /g para todo; y cut -f para delimitadores."
+        }
+      ],
+      "notes": "Estos 4 puntos son los que marcan la diferencia entre aprobar o suspender la sección de filtros."
+    },
+    {
+      "id": "103.2-slide-14",
+      "slideNumber": 14,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: cut, wc y sort)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: cut, wc y sort)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 1 (Oficial Pág 246): ¿Qué pipeline de comandos cuenta cuántos procesadores o cores tiene el sistema leyendo el archivo '/proc/cpuinfo'? — Comando: `grep -c '^processor' /proc/cpuinfo (o grep '^processor' /proc/cpuinfo | wc -l)` (Cada línea que comienza por 'processor' representa un núcleo lógico; 'wc -l' o 'grep -c' cuenta los saltos de línea coincidentes.)",
+            "Caso 2 (Oficial Pág 246): ¿Qué comando extrae únicamente el nombre de usuario y el identificador UID del archivo '/etc/passwd' ordenando el resultado de menor a mayor UID numérico? — Comando: `sort -t: -k3 -n /etc/passwd | cut -d: -f1,3` (sort -t: -k3 -n ordena las líneas numéricamente por el tercer campo (UID), y cut -d: -f1,3 recorta los campos deseados.)",
+            "Caso 3 (Oficial Pág 246): ¿Cómo contar cuántos usuarios del sistema tienen asignada la shell '/bin/bash' en /etc/passwd? — Comando: `grep -c '/bin/bash$' /etc/passwd (o grep '/bin/bash' /etc/passwd | wc -l)` (Filtra las líneas que terminan en /bin/bash y cuenta el total de ocurrencias.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "La combinación de grep, sort -n y cut permite extraer y normalizar datos del sistema de ficheros virtual y administrativo."
+        }
+      ],
+      "notes": "Muestra a los alumnos cómo el orden de los comandos en la tubería altera el resultado (ordenar antes de cortar vs cortar antes de ordenar)."
+    },
+    {
+      "id": "103.2-slide-15",
+      "slideNumber": 15,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: sed, tr y sha256sum)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: sed, tr y sha256sum)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 4 (Oficial Pág 246): Un archivo de texto 'datos.txt' contiene caracteres de retorno de carro de Windows (^M o \\r). ¿Qué comando con 'tr' los elimina por completo? — Comando: `tr -d '\\r' < datos.txt > limpio.txt` (La opción -d (delete) de tr suprime todos los caracteres indicados leyendo desde stdin.)",
+            "Caso 5 (Oficial Pág 246): Tienes un archivo 'SHA256SUMS' descargado de un servidor de Debian junto con una imagen ISO. ¿Qué comando verifica automáticamente que la ISO no esté corrupta? — Comando: `sha256sum -c SHA256SUMS` (La opción -c (--check) lee los nombres de archivo y sus sumas en el documento y calcula el hash de los ficheros locales para validar coincidencias.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "tr -d limpia caracteres de control indeseados; sha256sum -c verifica la firma de integridad de descargas."
+        }
+      ],
+      "notes": "Recuerda que sha256sum -c busca los archivos en el mismo directorio donde se ejecuta el comando."
+    },
+    {
+      "id": "103.2-slide-16",
+      "slideNumber": 16,
+      "title": "Retos de Exploración Oficiales (Pipelines de Auditoría y Logs)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Retos de Exploración Oficiales (Pipelines de Auditoría y Logs)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. Un administrador necesita listar las 5 direcciones IP que más peticiones han realizado leyendo un archivo de log web 'access.log' donde la IP es la primera columna.\n2. ¿Qué comando con 'sed' sustituye directamente en el archivo '/etc/default/grub' el valor 'GRUB_TIMEOUT=5' por 'GRUB_TIMEOUT=0' sin necesidad de usar un editor interactivo?\n3. ¿Cómo dividirías un archivo de base de datos de 5 GB llamado 'dump.sql' en trozos de 500 MB con nombres 'backup_00', 'backup_01', etc.?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Pista",
+          "content": "Recuerda: cut -> sort -> uniq -c -> sort -nr -> head; sed -i; y split -b con sufijos numéricos (-d)."
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Desafío",
+          "content": "1. Se ejecuta: cut -d' ' -f1 access.log | sort | uniq -c | sort -nr | head -n 5\n2. Se ejecuta: sudo sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/' /etc/default/grub\n3. Se ejecuta: split -b 500M -d dump.sql backup_"
+        }
+      ],
+      "notes": "El pipeline del Reto 1 es la secuencia de análisis de logs más utilizada en el mundo real por administradores y analistas de ciberseguridad."
+    },
+    {
+      "id": "103.2-slide-17",
+      "slideNumber": 17,
+      "title": "Pregunta de Examen LPIC-1: Extracción de Campos con cut",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Extracción de Campos con cut"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-103-2-17",
+          "question": "¿Cuál de los siguientes comandos mostrará en pantalla únicamente los nombres de las cuentas de usuario definidas en '/etc/passwd'?",
+          "options": [
+            {
+              "key": "a",
+              "text": "cut -c 1 /etc/passwd"
+            },
+            {
+              "key": "b",
+              "text": "cut -d: -f1 /etc/passwd"
+            },
+            {
+              "key": "c",
+              "text": "cut -f: -d1 /etc/passwd"
+            },
+            {
+              "key": "d",
+              "text": "paste -d: -f1 /etc/passwd"
+            }
+          ],
+          "correct": [
+            "b"
+          ],
+          "explanation": "En el comando 'cut', la opción '-d' define el delimitador de campos (en este caso dos puntos ':') y la opción '-f1' selecciona el primer campo (field), que en la estructura estándar de /etc/passwd corresponde al nombre de usuario (login name)."
+        }
+      ],
+      "notes": "Pregunta directa y fija de certificación."
+    },
+    {
+      "id": "103.2-slide-18",
+      "slideNumber": 18,
+      "title": "Tarjetas Nemotécnicas: Filtros de Texto 103.2",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tarjetas Nemotécnicas: Filtros de Texto 103.2"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto",
+            "Significado / Uso"
+          ],
+          "rows": [
+            [
+              "¿Qué comando monitoriza un archivo de registro en tiempo real mientras crece?",
+              "tail -f <archivo>."
+            ],
+            [
+              "¿Qué opción de 'wc' cuenta únicamente el número de líneas?",
+              "wc -l."
+            ],
+            [
+              "¿Qué comando recorta columnas de texto delimitadas por un separador?",
+              "cut -d<separador> -f<campo> (ej: cut -d: -f1)."
+            ],
+            [
+              "¿Por qué es obligatorio ordenar con 'sort' antes de usar 'uniq'?",
+              "Porque 'uniq' solo detecta líneas duplicadas consecutivas."
+            ],
+            [
+              "¿Qué opción de 'sort' ordena numéricamente y no alfabéticamente?",
+              "sort -n."
+            ],
+            [
+              "¿Qué limitación crítica tiene el comando 'tr'?",
+              "No acepta nombres de archivos; solo lee datos desde la entrada estándar (stdin)."
+            ],
+            [
+              "¿Qué opción de 'sed' modifica el archivo original en disco?",
+              "sed -i (edición in-place)."
+            ],
+            [
+              "¿Qué comando y opción verifica una lista de sumas hash?",
+              "sha256sum -c <archivo_hashes> (o md5sum -c)."
+            ]
+          ],
+          "caption": "Tarjetas de memorización"
+        }
+      ],
+      "notes": "Repasa estas 8 tarjetas para fijar los filtros de texto de examen."
+    },
+    {
+      "id": "103.2-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen y Claves de Examen: Subtema 103.2",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen y Claves de Examen: Subtema 103.2"
+        }
+      ],
+      "notes": "Concluimos el subtema 103.2. Los alumnos dominan ahora los filtros de texto GNU para el examen."
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-103-2-1",
+      "title": "La Filosofía de Filtros en Unix: Tuberías y Flujos en Cadena",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "La Filosofía de Filtros en Unix: Tuberías y Flujos en Cadena"
+        },
+        {
+          "type": "paragraph",
+          "text": "Analogía cotidiana: Una planta embotelladora donde cada máquina hace un solo trabajo perfecto"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:20px 24px; margin-top:10px;\">\n  <div style=\"font-size:17px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; gap:8px;\">\n    <span>🏭</span> Analogía de la Vida Cotidiana: La Cinta Transportadora Modular\n  </div>\n\n  <div style=\"font-size:14.5px; color:var(--text-muted); line-height:1.5; margin-bottom:16px; background:#F8FAFC; border-left:4px solid #3B82F6; padding:10px 16px; border-radius:0 8px 8px 0;\">\n    Imagina una <strong>fábrica de zumos</strong>: El camión descarga manzanas crudas (<em>archivo en disco</em>). La máquina 1 quita las hojas (<code>cut</code>), la máquina 2 las ordena por tamaño (<code>sort</code>), la máquina 3 cuenta las cajas (<code>uniq -c</code>) y las coloca en el expositor (<em>stdout en pantalla</em>). <strong>El huerto de manzanos original jamás se modifica</strong>.\n  </div>\n\n  <!-- Diagrama de flujo de tubería -->\n  <div style=\"display:flex; justify-content:space-between; align-items:center; font-size:13.5px; text-align:center; gap:8px;\">\n    <!-- Entrada -->\n    <div style=\"background:#F1F5F9; border:2px dashed #94A3B8; border-radius:10px; padding:12px; flex:1;\">\n      <span style=\"font-size:11px; font-weight:800; background:#64748B; color:#FFF; padding:2px 6px; border-radius:4px;\">DISCO INTACTO</span>\n      <div style=\"font-size:15px; font-weight:800; color:#0F172A; margin:4px 0;\">/etc/passwd</div>\n      <span style=\"color:#64748B; font-size:12px;\">Texto crudo original</span>\n    </div>\n\n    <span style=\"font-size:24px; color:#2563EB; font-weight:900;\">➔</span>\n\n    <!-- Filtro 1: cut -->\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:12px; flex:1.2;\">\n      <span style=\"font-size:11px; font-weight:800; background:#2563EB; color:#FFF; padding:2px 6px; border-radius:4px;\">1. SELECCIONAR</span>\n      <div style=\"font-size:15px; font-weight:800; color:#1E40AF; margin:4px 0;\">cut -d: -f7</div>\n      <span style=\"color:#1E3A8A; font-size:12px;\">Extrae solo la shell</span>\n    </div>\n\n    <span style=\"font-size:24px; color:#2563EB; font-weight:900;\">|</span>\n\n    <!-- Filtro 2: sort -->\n    <div style=\"background:#FEFCE8; border:2px solid #EAB308; border-radius:10px; padding:12px; flex:1.2;\">\n      <span style=\"font-size:11px; font-weight:800; background:#CA8A04; color:#FFF; padding:2px 6px; border-radius:4px;\">2. ORDENAR</span>\n      <div style=\"font-size:15px; font-weight:800; color:#854D0E; margin:4px 0;\">sort</div>\n      <span style=\"color:#713F12; font-size:12px;\">Junta shells idénticas</span>\n    </div>\n\n    <span style=\"font-size:24px; color:#2563EB; font-weight:900;\">|</span>\n\n    <!-- Filtro 3: uniq -->\n    <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:12px; flex:1.2;\">\n      <span style=\"font-size:11px; font-weight:800; background:#16A34A; color:#FFF; padding:2px 6px; border-radius:4px;\">3. CONTAR</span>\n      <div style=\"font-size:15px; font-weight:800; color:#14532D; margin:4px 0;\">uniq -c</div>\n      <span style=\"color:#14532D; font-size:12px;\">Calcula frecuencias</span>\n    </div>\n\n    <span style=\"font-size:24px; color:#2563EB; font-weight:900;\">➔</span>\n\n    <!-- Salida -->\n    <div style=\"background:#FAF5FF; border:2px solid #A855F7; border-radius:10px; padding:12px; flex:1;\">\n      <span style=\"font-size:11px; font-weight:800; background:#9333EA; color:#FFF; padding:2px 6px; border-radius:4px;\">PANTALLA</span>\n      <div style=\"font-size:15px; font-weight:800; color:#6B21A8; margin:4px 0;\">stdout</div>\n      <span style=\"color:#581C87; font-size:12px;\">Informe final en RAM</span>\n    </div>\n  </div>\n\n  <div style=\"margin-top:16px; background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:10px 16px; font-size:13.5px; color:#14532D;\">\n    🛡️ <strong>Regla de Oro Unix:</strong> Ningún filtro almacena datos de forma permanente ni altera el archivo. Cada herramienta hace una única tarea especializada de forma ultrarrápida en memoria.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PRINCIPIO DE EXAMEN: Los filtros de texto NUNCA modifican el archivo original en disco; leen desde stdin o archivo, procesan en la memoria RAM y expulsan el flujo por stdout."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-2-2",
+      "title": "Visualización y Paginación: cat, tac, head y tail",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Visualización y Paginación: cat, tac, head y tail"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "cat [-n] | tac | head [-n] | tail [-n|-f]",
+          "title": "Inspeccionar archivos completos, invertidos o solo sus cabeceras y colas"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "cat -n srv.txt; tac srv.txt | head -n 1; head -n 1 srv.txt; tail -n 1 srv.txt",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "cat -n",
+              "Numerar líneas",
+              "🎯 Numera todas las líneas de salida de la primera a la última."
+            ],
+            [
+              "cat -s",
+              "Comprimir vacías",
+              "Reduce múltiples líneas consecutivas en blanco a una sola."
+            ],
+            [
+              "tac <fichero>",
+              "Orden inverso",
+              "🎯 Invierte las líneas: muestra el archivo empezando por el final."
+            ],
+            [
+              "head -n <N>",
+              "Primeras N líneas",
+              "🎯 Muestra las primeras N líneas (por defecto 10 si no indicas número)."
+            ],
+            [
+              "tail -n <N>",
+              "Últimas N líneas",
+              "🎯 Muestra las últimas N líneas del fichero (por defecto 10)."
+            ],
+            [
+              "tail -f",
+              "Seguimiento en vivo",
+              "🎯 Modo follow: no se cierra, monitoriza nuevas líneas añadidas al log en tiempo real."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-top:8px; font-size:13px;\">\n  <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n    <div style=\"font-weight:800; color:#1E40AF; font-size:14px; margin-bottom:2px;\">cat (Completo)</div>\n    <div style=\"color:#1E3A8A; line-height:1.35;\">\n      Muestra todo de la 1 a la final. Usa <code>cat -n</code> para ver números de línea al revisar código.\n    </div>\n  </div>\n\n  <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:14px; margin-bottom:2px;\">tac (Espejo Inverso)</div>\n    <div style=\"color:#7F1D1D; line-height:1.35;\">\n      <em>cat</em> al revés: imprime de última a primera (ideal para logs cronológicos inversos).\n    </div>\n  </div>\n\n  <div style=\"background:#FEFCE8; border:1.5px solid #EAB308; border-radius:8px; padding:10px;\">\n    <div style=\"font-weight:800; color:#854D0E; font-size:14px; margin-bottom:2px;\">head (La Cabeza)</div>\n    <div style=\"color:#713F12; line-height:1.35;\">\n      Extrae el inicio. <code>head -n 5</code> extrae las 5 primeras líneas (por defecto 10).\n    </div>\n  </div>\n\n  <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n    <div style=\"font-weight:800; color:#14532D; font-size:14px; margin-bottom:2px;\">tail -f (En Vivo)</div>\n    <div style=\"color:#14532D; line-height:1.35;\">\n      La cola. Con <code>-f</code> queda a la espera de nuevas líneas (monitor de logs en directo).\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'tail -f /var/log/syslog' monitoriza logs en tiempo real; 'tac' es 'cat' al revés (invierte líneas de abajo a arriba)."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-2-3",
+      "title": "Estadísticas y Numeración: wc y nl",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Estadísticas y Numeración: wc y nl"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "wc [-l|-w|-c|-m] | nl [-ba]",
+          "title": "Contar elementos de texto y formatear números de línea profesionales"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "wc /etc/issue; wc -l /etc/passwd; nl -ba /etc/issue",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "wc (sin flags)",
+              "Líneas, palabras, bytes",
+              "Imprime 3 cifras: total líneas, total palabras y total bytes."
+            ],
+            [
+              "wc -l",
+              "Solo líneas",
+              "🎯 Cuenta únicamente los saltos de línea. El comodín en tuberías: 'cat arch | wc -l'."
+            ],
+            [
+              "wc -w",
+              "Solo palabras",
+              "Cuenta palabras delimitadas por espacios en blanco o tabuladores."
+            ],
+            [
+              "wc -c",
+              "Solo bytes",
+              "🎯 Cuenta el tamaño total del archivo medido en bytes."
+            ],
+            [
+              "wc -m",
+              "Caracteres UTF-8",
+              "Cuenta caracteres lógicos (diferencia caracteres acentuados o emojis de sus bytes)."
+            ],
+            [
+              "nl -ba",
+              "Numerar todo",
+              "🎯 Numera absolutamente todas las líneas (incluso las líneas vacías)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin-top:10px;\">\n  <div style=\"font-size:16px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    📊 Anatomía de la salida por defecto de <code>wc</code>:\n  </div>\n\n  <div style=\"background:#0F172A; color:#F8FAFC; padding:12px 20px; border-radius:10px; font-family:monospace; font-size:18px; margin-bottom:14px; display:flex; gap:24px;\">\n    <div><span style=\"color:#38BDF8; font-weight:800;\">2</span> <span style=\"font-size:12px; color:#94A3B8;\">(líneas)</span></div>\n    <div><span style=\"color:#4ADE80; font-weight:800;\">6</span> <span style=\"font-size:12px; color:#94A3B8;\">(palabras)</span></div>\n    <div><span style=\"color:#FDE047; font-weight:800;\">40</span> <span style=\"font-size:12px; color:#94A3B8;\">(bytes)</span></div>\n    <div style=\"color:#CBD5E1;\">/etc/issue</div>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:13.5px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:10px; padding:12px;\">\n      <strong style=\"color:#1E40AF; font-size:14.5px;\">wc -l en Auditoría de Sistemas</strong><br>\n      <span style=\"color:#1E3A8A; line-height:1.45;\">¿Cuántas cuentas de usuario existen? <code>cut -d: -f1 /etc/passwd | wc -l</code>.<br>¿Cuántos paquetes instalados? <code>dpkg -l | grep '^ii' | wc -l</code>.</span>\n    </div>\n\n    <div style=\"background:#FEFCE8; border:1.5px solid #FDE047; border-radius:10px; padding:12px;\">\n      <strong style=\"color:#854D0E; font-size:14.5px;\">nl frente a cat -n</strong><br>\n      <span style=\"color:#713F12; line-height:1.45;\"><code>cat -n</code> numera ciegamente todas las líneas. <code>nl</code> es más inteligente: por defecto <strong>no numera líneas vacías</strong> para mantener párrafos limpios, salvo que uses <code>nl -ba</code>.</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'wc -l' es el contador universal de LPIC-1 para responder preguntas de '¿Cuántos elementos hay?'. Por defecto, 'nl' omite líneas en blanco salvo con '-ba'."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-2-4",
+      "title": "Extracción y Fusión de Columnas: cut y paste",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Extracción y Fusión de Columnas: cut y paste"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "cut -d<delim> -f<campos> | paste -d<delim> [-s]",
+          "title": "Recortar campos verticales de texto o unir archivos horizontalmente en columnas"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "cut -d: -f1,7 /etc/passwd | head -n 3; paste -d',' users.txt shells.txt",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "cut -d<delim>",
+              "Delimitador de campo",
+              "🎯 Define el carácter separador de columnas (por defecto tabulador). En /etc/passwd es ':'."
+            ],
+            [
+              "cut -f<campos>",
+              "Campos a extraer",
+              "🎯 Número de columnas a recortar: '-f1' (primera), '-f1,7' (primera y séptima), '-f1-3' (rango)."
+            ],
+            [
+              "cut -c<rango>",
+              "Corte por caracteres",
+              "🎯 Extrae por posición fija de caracteres: 'cut -c 1-8' (de la letra 1 a la 8)."
+            ],
+            [
+              "paste arch1 arch2",
+              "Unión horizontal",
+              "🎯 Junta archivos lado a lado, línea 1 con línea 1, línea 2 con línea 2."
+            ],
+            [
+              "paste -s",
+              "Modo serie/secuencial",
+              "Convierte todas las líneas verticales de un mismo archivo en una sola línea horizontal."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:10px; font-size:13.5px;\">\n  <!-- cut: Corte Vertical -->\n  <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:12px; padding:16px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">CORTE VERTICAL (TIJERAS)</span>\n      <code style=\"font-size:15px; font-weight:800; color:#1E40AF;\">cut -d: -f1,7</code>\n    </div>\n    <div style=\"font-size:16px; font-weight:800; color:#1E40AF; margin-bottom:4px;\">Extrae columnas específicas</div>\n    <div style=\"color:#1E3A8A; line-height:1.45;\">\n      Piensa en una <strong>guillotina que baja en vertical</strong> y descarta las columnas sobrantes.<br>\n      • <code>-d:</code> define que las columnas están separadas por <code>:</code>.<br>\n      • <code>-f1,7</code> se queda solo con el nombre de usuario y su shell.\n    </div>\n  </div>\n\n  <!-- paste: Unión Horizontal -->\n  <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:12px; padding:16px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">UNIÓN HORIZONTAL (PEGAMENTO)</span>\n      <code style=\"font-size:15px; font-weight:800; color:#15803D;\">paste -d, a.txt b.txt</code>\n    </div>\n    <div style=\"font-size:16px; font-weight:800; color:#15803D; margin-bottom:4px;\">Pega archivos en paralelo</div>\n    <div style=\"color:#14532D; line-height:1.45;\">\n      Piensa en <strong>cinta adhesiva</strong> que coloca dos hojas lado a lado:<br>\n      • La línea 1 de <code>a.txt</code> se junta con la línea 1 de <code>b.txt</code>.<br>\n      • Muy útil para crear archivos CSV uniendo nombres e IPs.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'cut' hace un CORTE VERTICAL (extrae columnas); 'paste' hace una UNIÓN HORIZONTAL (pega columnas lado a lado con delimitador)."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-2-5",
+      "title": "Ordenación de Líneas con sort",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ordenación de Líneas con sort"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sort [-n|-r|-k|-t|-u]",
+          "title": "Reorganizar registros alfabética o numéricamente por columnas"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sort numeros.txt; sort -n numeros.txt",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "sort (sin flags)",
+              "Alfabético ASCII",
+              "Ordena alfabéticamente. ⚠️ Atención: '10' va antes que '2'."
+            ],
+            [
+              "sort -n",
+              "Orden numérico real",
+              "🎯 Clave de Examen: Compara los valores como números reales (2 antes que 10)."
+            ],
+            [
+              "sort -r",
+              "Invertir orden (Reverse)",
+              "🎯 Invierte el criterio de ordenación (de mayor a menor o de Z a A)."
+            ],
+            [
+              "sort -k <N>",
+              "Ordenar por columna N",
+              "🎯 Key: selecciona la columna N por la que se ordenará la tabla."
+            ],
+            [
+              "sort -t <delim>",
+              "Delimitador de campos",
+              "🎯 Define el separador de campos para usar con '-k' (ej: '-t:' en /etc/passwd)."
+            ],
+            [
+              "sort -u",
+              "Ordenar y deduplicar",
+              "Elimina líneas duplicadas durante la propia ordenación."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:14px 20px; margin-top:8px;\">\n  <div style=\"font-size:15px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n    🎯 La Fórmula Maestra de Examen: Ordenar por Columnas Específicas\n  </div>\n\n  <div style=\"background:#0F172A; color:#F8FAFC; padding:10px 16px; border-radius:8px; font-family:monospace; font-size:16px; margin-bottom:10px;\">\n    <span style=\"color:#F43F5E; font-weight:800;\">sort</span>\n    <span style=\"color:#38BDF8; font-weight:800;\"> -t:</span>\n    <span style=\"color:#FDE047; font-weight:800;\"> -k3</span>\n    <span style=\"color:#4ADE80; font-weight:800;\"> -n</span>\n    <span style=\"color:#CBD5E1;\"> /etc/passwd</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; font-size:13px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:8px 10px;\">\n      <strong style=\"color:#1E40AF;\">-t: (Delimitador)</strong><br>\n      Indica que las columnas se separan por dos puntos <code>:</code>.\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FDE047; border-radius:8px; padding:8px 10px;\">\n      <strong style=\"color:#854D0E;\">-k3 (Columna 3)</strong><br>\n      Elige la 3ª columna (el UID de usuario en <code>/etc/passwd</code>).\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:8px 10px;\">\n      <strong style=\"color:#15803D;\">-n (Numérico)</strong><br>\n      Garantiza que el UID <code>1000</code> quede detrás de <code>0</code>, <code>1</code> y <code>2</code>.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para ordenar números (como UIDs o tamaños de disco), es OBLIGATORIO usar '-n'. Si quieres ordenar por la columna 3 de /etc/passwd: 'sort -t: -k3 -n /etc/passwd'."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-2-6",
+      "title": "Deduplicación con uniq: Recuento y Repetidos",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Deduplicación con uniq: Recuento y Repetidos"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sort <file> | uniq [-c|-d|-u]",
+          "title": "Eliminar líneas duplicadas consecutivas o contar sus apariciones"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "uniq frutas.txt; sort frutas.txt | uniq -c",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "uniq (sin flags)",
+              "Eliminar duplicados",
+              "🎯 Suprime líneas duplicadas que sean adyacentes (una detrás de otra)."
+            ],
+            [
+              "uniq -c",
+              "Contar frecuencias",
+              "🎯 Clave de Examen: Prefija cada línea con el número de veces que aparece en el texto."
+            ],
+            [
+              "uniq -d",
+              "Solo repetidas",
+              "🎯 Muestra exclusivamente las líneas que aparecen duplicadas (descarta las únicas)."
+            ],
+            [
+              "uniq -u",
+              "Solo únicas",
+              "🎯 Muestra exclusivamente las líneas que NO se repiten nunca (descarta duplicadas)."
+            ],
+            [
+              "uniq -i",
+              "Ignorar mayúsculas",
+              "Ignora la diferencia entre mayúsculas y minúsculas al comparar."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:14px 20px; margin-top:8px;\">\n  <div style=\"font-size:15px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🔍 ¿Qué hacen las opciones de filtrado de <code>uniq</code>?\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:13px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:8px; padding:12px;\">\n      <strong style=\"color:#1E40AF; font-size:14.5px;\">uniq -c (Count)</strong><br>\n      <span style=\"color:#1E3A8A; line-height:1.4;\">Cuenta cuántas veces se repite cada línea. Clave para saber cuántas peticiones hizo cada IP en un log.</span>\n    </div>\n\n    <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-radius:8px; padding:12px;\">\n      <strong style=\"color:#991B1B; font-size:14.5px;\">uniq -d (Duplicated)</strong><br>\n      <span style=\"color:#7F1D1D; line-height:1.4;\">Imprime <strong>solo los repetidos</strong>. Útil para detectar anomalías, como si dos cuentas comparten UID.</span>\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:8px; padding:12px;\">\n      <strong style=\"color:#15803D; font-size:14.5px;\">uniq -u (Unique)</strong><br>\n      <span style=\"color:#14532D; line-height:1.4;\">Imprime <strong>solo los que aparecen 1 vez</strong>. Descarta cualquier elemento con copias.</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 LA TRAMPA NÚMERO 1 DE LPIC-1: 'uniq' SOLO detecta duplicados si están en líneas CONSECUTIVAS. Por eso, en el 99% de las preguntas de examen, la respuesta correcta es la tubería 'sort | uniq'."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-2-7",
+      "title": "Transformación de Caracteres con tr",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Transformación de Caracteres con tr"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "tr [-d|-s|-c] <conjunto1> [conjunto2]",
+          "title": "Traducir, sustituir, exprimir o borrar caracteres individuales mediante stdin"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "echo 'lpic 103' | tr 'a-z' 'A-Z'; echo 'tel: 123-456' | tr -d '0-9'; echo 'hola    mundo' | tr -s ' '",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "tr 'a-z' 'A-Z'",
+              "Mapeo 1 a 1",
+              "🎯 Reemplaza cada carácter del conjunto 1 por el correspondiente del conjunto 2."
+            ],
+            [
+              "tr -d <SET>",
+              "Borrar caracteres",
+              "🎯 Delete: elimina de la salida todos los caracteres especificados en SET."
+            ],
+            [
+              "tr -s <SET>",
+              "Squeeze (Exprimir)",
+              "🎯 Comprime secuencias consecutivas repetidas del mismo carácter en uno solo."
+            ],
+            [
+              "tr -c <SET>",
+              "Complemento",
+              "Aplica la operación sobre todos los caracteres que NO están en SET."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin-top:10px;\">\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; font-size:14px;\">\n    <!-- El Mapeador -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:10px; padding:14px;\">\n      <strong style=\"color:#1E40AF; font-size:15px;\">🔤 Mapeo Letra por Letra (Translate)</strong><br>\n      <div style=\"color:#1E3A8A; line-height:1.45; margin-top:6px;\">\n        No busca palabras enteras; compara carácter por carácter:<br>\n        <code>tr 'abc' '123'</code> &rarr; todas las <code>a</code> pasan a ser <code>1</code>, las <code>b</code> a <code>2</code> y las <code>c</code> a <code>3</code>.\n      </div>\n    </div>\n\n    <!-- La Trampa de stdin -->\n    <div style=\"background:#FFF1F2; border:2px solid #F43F5E; border-radius:10px; padding:14px;\">\n      <strong style=\"color:#9F1239; font-size:15px;\">⚠️ ¡Cero Archivos como Parámetro!</strong><br>\n      <div style=\"color:#881337; line-height:1.45; margin-top:6px;\">\n        ❌ <code>tr 'a-z' 'A-Z' datos.txt</code> &rarr; <span style=\"font-weight:700;\">Error fatal</span>.<br>\n        ✅ <code>tr 'a-z' 'A-Z' &lt; datos.txt</code> &nbsp;|&nbsp; <code>cat datos.txt | tr ...</code>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 LA TRAMPA MORTAL DE EXAMEN: 'tr' NUNCA acepta nombres de archivo como argumento ('tr a-z A-Z archivo.txt' da error). 'tr' SOLO lee desde la entrada estándar (stdin); debes usar tubería o redirección '<'."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-2-8",
+      "title": "Editor de Flujo sed: Sustitución y Filtrado",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Editor de Flujo sed: Sustitución y Filtrado"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sed [-e|-n|-i] 's/buscar/reemplazo/[g]'",
+          "title": "Transformar, sustituir y filtrar flujos de texto de forma no interactiva"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "echo 'v1:v1:v1' | sed 's/v1/v2/'; echo 'v1:v1:v1' | sed 's/v1/v2/g'; sed -n '3p' /etc/passwd",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "s/antiguo/nuevo/g",
+              "Sustitución global",
+              "🎯 's' (substitute), busca 'antiguo' y lo cambia por 'nuevo'. 'g' lo hace en toda la línea."
+            ],
+            [
+              "sed -n 'Np'",
+              "Imprimir solo línea N",
+              "🎯 '-n' suprime la salida por defecto; 'Np' le ordena imprimir exclusivamente la línea N."
+            ],
+            [
+              "sed -i 's/.../'",
+              "In-Place (Disco)",
+              "🎯 Peligro: Modifica el archivo físico directamente en el disco en lugar de solo mostrarlo."
+            ],
+            [
+              "sed '/patrón/d'",
+              "Borrar líneas",
+              "Elimina de la salida todas las líneas que coincidan con la expresión regular."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin-top:10px;\">\n  <div style=\"font-size:16px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🎯 Anatomía de la Expresión Maestra de <code>sed</code>:\n  </div>\n\n  <div style=\"background:#0F172A; color:#F8FAFC; padding:12px 20px; border-radius:10px; font-family:monospace; font-size:18px; margin-bottom:12px; display:flex; align-items:center; gap:8px;\">\n    <span style=\"color:#F43F5E; font-weight:800;\">sed </span>\n    <span style=\"color:#CBD5E1;\">'</span>\n    <span style=\"color:#38BDF8; font-weight:800;\">s</span>\n    <span style=\"color:#94A3B8;\">/</span>\n    <span style=\"color:#FDE047; font-weight:800;\">puerto 80</span>\n    <span style=\"color:#94A3B8;\">/</span>\n    <span style=\"color:#4ADE80; font-weight:800;\">puerto 443</span>\n    <span style=\"color:#94A3B8;\">/</span>\n    <span style=\"color:#FB923C; font-weight:800;\">g</span>\n    <span style=\"color:#CBD5E1;\">'</span>\n    <span style=\"color:#CBD5E1;\"> nginx.conf</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:13.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF;\">s (Substitute)</strong><br>\n      Le ordena a sed entrar en modo de sustitución de texto.\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FDE047; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#854D0E;\">/origen/destino/</strong><br>\n      Texto a buscar y texto nuevo que lo reemplazará.\n    </div>\n    <div style=\"background:#FFF1F2; border:1.5px solid #FCA5A5; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#991B1B;\">g (Global)</strong><br>\n      Sustituye <strong>todas</strong> las veces que aparezca en la línea, no solo la primera.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Si olvidas la 'g' final en 's/foo/bar/', sed solo sustituirá la primera coincidencia de cada línea; para cambiar todas las apariciones es obligatorio 's/foo/bar/g'."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-2-9",
+      "title": "Integridad y Sumas Criptográficas: md5sum y sha256sum",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Integridad y Sumas Criptográficas: md5sum y sha256sum"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sha256sum | md5sum | sha512sum [-c fichero]",
+          "title": "Garantizar que un archivo no ha sido corrompido ni alterado maliciosamente"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sha256sum debian.iso > HASHES.txt; sha256sum -c HASHES.txt",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "sha256sum <file>",
+              "Huella SHA-256",
+              "🎯 Calcula un hash de 256 bits (64 caracteres hex). El estándar moderno oficial."
+            ],
+            [
+              "md5sum <file>",
+              "Huella MD5",
+              "Calcula un hash de 128 bits (32 caracteres hex). Rápido pero inseguro criptográficamente."
+            ],
+            [
+              "-c, --check",
+              "Verificación desatendida",
+              "🎯 Clave de Examen: Lee el archivo de hashes y comprueba los ficheros devolviendo 'OK' o 'FAILED'."
+            ],
+            [
+              "--status",
+              "Silencioso para scripts",
+              "No imprime nada; solo devuelve código de salida 0 si todos los hashes son válidos."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin-top:10px;\">\n  <div style=\"font-size:16px; font-weight:800; color:var(--text); margin-bottom:10px;\">\n    🔐 El Concepto de Huella Digital Matemática (Hash):\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; font-size:14px;\">\n    <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:14px;\">\n      <strong style=\"color:#15803D; font-size:15px;\">✅ Verificación con Éxito (OK)</strong><br>\n      <div style=\"color:#14532D; line-height:1.45; margin-top:4px;\">\n        El comando <code>sha256sum -c SHA256SUMS</code> lee cada archivo del disco, calcula su hash y lo compara con el del archivo de texto. Si coincide al 100%, imprime <strong>OK</strong>.\n      </div>\n    </div>\n\n    <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:14px;\">\n      <strong style=\"color:#991B1B; font-size:15px;\">❌ Detección de Falsificación (FAILED)</strong><br>\n      <div style=\"color:#7F1D1D; line-height:1.45; margin-top:4px;\">\n        Si un atacante inyectó malware o la descarga se cortó por la mitad, el hash resultante será radicalmente distinto y <code>-c</code> alertará con <strong>FAILED</strong>.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para verificar automáticamente que una descarga coincide con su suma oficial, se usa siempre la opción '-c' (ej: sha256sum -c SHA256SUMS)."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-2-10",
+      "title": "Inspección Binaria y Fragmentación: od y split",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Inspección Binaria y Fragmentación: od y split"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "od [-c|-x] <file> | split [-b|-l|-d] <file> [prefijo]",
+          "title": "Examinar bytes ocultos en archivos y dividir ficheros gigantescos en trozos"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "printf 'A\\r\\n' | od -c; split -b 10M -d backup.tar.gz part_",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "od -c",
+              "Caracteres ASCII/Escape",
+              "🎯 Octal Dump: revela caracteres no imprimibles (saltos de línea \\n, retornos \\r, tabuladores \\t)."
+            ],
+            [
+              "split -b <tamaño>",
+              "Dividir por tamaño",
+              "🎯 Fragmenta el archivo por tamaño en bytes (ej: '-b 50M', '-b 1G', '-b 700M')."
+            ],
+            [
+              "split -l <líneas>",
+              "Dividir por líneas",
+              "🎯 Divide un archivo de texto en trozos de N líneas (ej: '-l 1000')."
+            ],
+            [
+              "split -d",
+              "Sufijos numéricos",
+              "🎯 Utiliza números (00, 01, 02) en vez de letras alfabéticas (aa, ab, ac)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin-top:10px;\">\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; font-size:14px;\">\n    <!-- od -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:10px; padding:14px;\">\n      <strong style=\"color:#1E40AF; font-size:15px;\">🔍 od -c: El Rayo X de Archivos</strong><br>\n      <div style=\"color:#1E3A8A; line-height:1.45; margin-top:4px;\">\n        Descubre bytes invisibles. Si un script en Linux dice <code>/bin/bash^M: bad interpreter</code>, <code>od -c</code> te revelará que Windows insertó un retorno de carro <code>\\r</code> oculto.\n      </div>\n    </div>\n\n    <!-- split -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:10px; padding:14px;\">\n      <strong style=\"color:#15803D; font-size:15px;\">✂️ split: Troceado y Reconstrucción</strong><br>\n      <div style=\"color:#14532D; line-height:1.45; margin-top:4px;\">\n        <code>split -b 50M -d iso part_</code> corta en partes manejables para enviar por email. Para recomponerlo basta con unirlas: <code>cat part_* &gt; original.iso</code>.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'od -c' detecta saltos de línea Windows (\\r\\n) que impiden ejecutar scripts en Linux; 'split -b' divide por tamaño y se recompone con 'cat'."
+        }
+      ]
+    }
+  ]
+}
