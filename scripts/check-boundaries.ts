@@ -85,11 +85,20 @@ export function checkBoundaries(appDir = path.resolve(process.cwd(), 'src/app'))
     if (featureMatch) {
       const currentFeature = featureMatch[1];
       lines.forEach((line, idx) => {
-        const importMatch = line.match(/from\s+['"](?:.*\/features\/([^/]+)|(\.\.\/)+([^/]+))/);
-        if (importMatch) {
-          const importedFeature = importMatch[1] || importMatch[3];
-          if (importedFeature && importedFeature !== currentFeature && !importedFeature.startsWith('.')) {
-            errors.push(`${rel}:${idx + 1} - Feature "${currentFeature}" no debe importar de feature "${importedFeature}"`);
+        const importMatch = line.match(/from\s+['"]([^'"]+)['"]/);
+        if (importMatch && importMatch[1]) {
+          const importPath = importMatch[1];
+          if (importPath.startsWith('.')) {
+            const resolvedPath = path.resolve(path.dirname(file), importPath).replace(/\\/g, '/');
+            const targetFeatureMatch = resolvedPath.match(/\/features\/([^/]+)/);
+            if (targetFeatureMatch && targetFeatureMatch[1] && targetFeatureMatch[1] !== currentFeature) {
+              errors.push(`${rel}:${idx + 1} - Feature "${currentFeature}" no debe importar de feature "${targetFeatureMatch[1]}"`);
+            }
+          } else {
+            const targetFeatureMatch = importPath.match(/(?:^|\/)features\/([^/]+)/);
+            if (targetFeatureMatch && targetFeatureMatch[1] && targetFeatureMatch[1] !== currentFeature) {
+              errors.push(`${rel}:${idx + 1} - Feature "${currentFeature}" no debe importar de feature "${targetFeatureMatch[1]}"`);
+            }
           }
         }
       });

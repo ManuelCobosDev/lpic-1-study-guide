@@ -154,8 +154,11 @@ export const routes: Routes = [
   },
   {
     path: 'guia-estilos',
-    loadComponent: loadStub,
-    title: 'Guía de Estilos y Componentes',
+    loadComponent: () =>
+      import('./features/style-guide/pages/style-guide-page.component').then(
+        (m) => m.StyleGuidePageComponent
+      ),
+    title: 'Guía de Estilos y Componentes · LPIC-1',
     data: { title: 'Guía de Estilos', breadcrumb: 'Guía de Estilos', phase: 'Fase 3' }
   },
   {
