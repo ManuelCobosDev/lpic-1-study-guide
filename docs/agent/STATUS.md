@@ -2,16 +2,16 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0015
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0016
 
 ## Estado
 - **Fase actual**: Fase 3 (Sistema de diseño) en curso.
 - **Último gate superado**: Gate 2 (etiqueta `fase-2-ok`).
-- **Trabajo en curso**: Fase 3 · Tarea 3.4 (Página /guia-estilos y reemplazo del stub).
+- **Trabajo en curso**: Fase 3 · Tarea 3.5 (Suite E2E e2e/fase-3.spec.ts, capturas, auditoría Axe y Gate 3).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Implementar Tarea 3.4 (C-0016): crear `StyleGuidePageComponent` en `src/app/features/style-guide/pages/style-guide-page.component.ts`, conectar la ruta en `src/app/app.routes.ts`, actualizar `scripts/check-stubs.ts` y marcar `/guia-estilos` como implementado (los stubs bajan de 23 a 22).
+Implementar Tarea 3.5 (C-0017): suite E2E `e2e/fase-3.spec.ts` verificando botones (6x4), altura exacta de 24 px en badges, capturas en claro/oscuro en `e2e/screenshots/fase-3/`, auditoría Axe de accesibilidad y verificación de Gate 3 con `/verificar-gate 3`.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -19,7 +19,7 @@ Implementar Tarea 3.4 (C-0016): crear `StyleGuidePageComponent` en `src/app/feat
 | 0 | Andamiaje Angular (esqueleto limpio) | completada (Gate 0 OK) |
 | 1 | Inventario del legacy (solo lectura) + decisión D-004 | completada (Gate 1 OK) |
 | 2 | Currículo, pipeline de contenido, dominio + tajada vertical 103.4 | completada (Gate 2 OK) |
-| 3 | Sistema de diseño | en curso (Tareas 3.1, 3.2 y 3.3 OK) |
+| 3 | Sistema de diseño | en curso (Tareas 3.1, 3.2, 3.3 y 3.4 OK) |
 | 4 | Home y Temario | pendiente |
 | 5 | Lecciones y Estudiar | pendiente |
 | 6 | Buscador | pendiente |
@@ -39,13 +39,13 @@ Implementar Tarea 3.4 (C-0016): crear `StyleGuidePageComponent` en `src/app/feat
 | `/laboratorios` · `/laboratorios/:id` | Fase 7 |
 | `/simulador` · `/simulador/examen` · `/simulador/practica` · `/simulador/resultados` | Fase 8 |
 | `/comandos` · `/glosario` · `/flashcards` | Fase 9 |
-| `/guia-estilos` | Fase 3 |
+| `/guia-estilos` | Fase 3 (¡implementada!) |
 | `/mapa-mental` · `/progreso` · `/erratas` · `/ajustes` · `/acerca-de` · `**` (404) | Fase 10 |
 
 ## Comandos útiles
 - `npm run verify`: pipeline completo en verde (9 etapas).
-- `npm run test`: suite de tests unitarios (59 tests en verde).
-- `npm run check:stubs`: lista de stubs pendientes (23 rutas).
+- `npm run test`: suite de tests unitarios (62 tests en verde).
+- `npm run check:stubs`: lista de stubs pendientes (22 rutas).
 
 ## Deuda conocida
 Ninguna.
