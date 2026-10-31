@@ -2,20 +2,19 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0045
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0046
 
 ## Estado
 - **Fase actual**: Fase 9 (Comandos, Glosario y Flashcards) EN CURSO.
 - **Último gate superado**: Gate 8 (etiqueta `fase-8-ok`).
-- **Trabajo en curso**: Tarea 9.2 (Servicios de dominio `CommandService`, `GlossaryService` y `FlashcardsService`).
+- **Trabajo en curso**: Tarea 9.3 (Pantalla `/comandos` con vista tabla/tarjetas, filtros en URL y comandos copiables).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-1. Tarea 9.2: Implementar los servicios de dominio `CommandService`, `GlossaryService` y `FlashcardsService` con persistencia del progreso de tarjetas en `StorageService` (`flashcards_progress`) y tests unitarios.
-2. Tarea 9.3: Página `/comandos` con tabla/tarjetas, búsqueda textual y filtros reflejados en la URL, vista detallada expandible y comandos copiables.
-3. Tarea 9.4: Página `/glosario` con AlphaIndex sticky A-Z accesible y deep links a lecciones.
-4. Tarea 9.5: Página `/flashcards` con giro animado, interacción por teclado y feedback Leitner.
-5. Tarea 9.6: Suite E2E de Gate 9, capturas visuales, `npm run verify` completo y etiqueta `fase-9-ok`.
+1. Tarea 9.3: Implementar la página `CommandsPageComponent` en `/comandos` (`src/app/features/commands/pages/commands-page.component.ts`) con vista tabla/tarjetas, filtros reflejados en URL (`?q=&cat=&tema=`), contador dinámico "N de M", fila expandible con flags, ejemplos y botón de copiado de comando con feedback visual.
+2. Tarea 9.4: Página `/glosario` con AlphaIndex sticky A-Z accesible y deep links a lecciones.
+3. Tarea 9.5: Página `/flashcards` con giro animado, interacción por teclado y feedback Leitner.
+4. Tarea 9.6: Suite E2E de Gate 9, capturas visuales, `npm run verify` completo y etiqueta `fase-9-ok`.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -29,7 +28,7 @@
 | 6 | Buscador | completada (Gate 6 OK) |
 | 7 | Laboratorios | completada (Gate 7 OK) |
 | 8 | Simulador | completada (Gate 8 OK) |
-| 9 | Comandos, Glosario y Flashcards | en curso (Tarea 9.1 lista) |
+| 9 | Comandos, Glosario y Flashcards | en curso (Tareas 9.1 y 9.2 listas) |
 | 10 | Mapa mental, Progreso, Ajustes, Erratas, Acerca de, 404 | pendiente |
 | 11 | Importación completa del legacy | pendiente |
 | 12 | Pulido, accesibilidad, rendimiento y documentación | pendiente |
@@ -41,8 +40,8 @@
 | `/mapa-mental` · `/progreso` · `/erratas` · `/ajustes` · `/acerca-de` · `**` (404) | Fase 10 |
 
 ## Comandos útiles
-- `npm run verify`: pipeline completo de 9 etapas en verde (277 unitarios + 50 E2E).
-- `npm run test`: suite de tests unitarios (277 tests en verde: 261 Angular + 16 Vitest).
+- `npm run verify`: pipeline completo de 9 etapas en verde (295 unitarios + 50 E2E).
+- `npm run test`: suite de tests unitarios (295 tests en verde: 279 Angular + 16 Vitest).
 - `npm run check:stubs`: lista de stubs pendientes (9 rutas pendientes, 14 implementadas).
 
 ## Deuda conocida

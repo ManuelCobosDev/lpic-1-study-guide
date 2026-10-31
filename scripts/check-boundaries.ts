@@ -13,6 +13,8 @@ const DOMAIN_SERVICES = [
   'SimulatorService',
   'ExamService',
   'FlashcardsService',
+  'CommandService',
+  'GlossaryService',
   'ActivityService',
   'NotesService',
   'BackupService'
