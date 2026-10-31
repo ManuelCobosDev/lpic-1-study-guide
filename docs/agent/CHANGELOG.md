@@ -432,3 +432,11 @@
 - Archivos: scripts/import-legacy/import-commands-glossary.ts, content-src/commands.yaml, content-src/glossary.yaml, public/content/**, docs/agent/COBERTURA_IMPORT.md.
 - Verificación: npm run typecheck (0 errores), npm run build:content (código 0, 146 comandos, 230 términos), scripts/import-legacy/import-commands-glossary.ts (validados con Zod).
 - Pendiente / deuda: Tarea 11.5 (C-0061: Orquestador global `npm run import:legacy`, MAPEO_LEGACY.md y prueba de idempotencia).
+
+
+## C-0061 · 2026-10-31 · Fase 11 · Orquestador global npm run import:legacy, MAPEO_LEGACY y verificación de idempotencia
+- Qué: actualización de `scripts/import-legacy/index.ts` para orquestar la importación completa (lecciones, laboratorios, preguntas, comandos y glosario) y sincronización del manifiesto en `public/content/`. Documentación exhaustiva en `docs/agent/MAPEO_LEGACY.md` de los 42 subtemas, 42 labs, 240 preguntas de examen, 146 comandos y 230 términos de glosario. Actualización del test de idempotencia `scripts/import-idempotent.spec.ts` verificando que múltiples ejecuciones consecutivas producen archivos 100% idénticos en `content-src/` y `public/content/`.
+- Por qué: requisito de la Tarea 11.5 de la Fase 11 (08-fases.md, Gate 11).
+- Archivos: scripts/import-legacy/index.ts, docs/agent/MAPEO_LEGACY.md, scripts/import-idempotent.spec.ts.
+- Verificación: npm run typecheck (0 errores), npx vitest run scripts/import-idempotent.spec.ts (1 test pasando), npm run import:legacy (doble ejecución con código 0 y 0 diferencias en git status).
+- Pendiente / deuda: Tarea 11.6 (C-0062: Gate 11: Suite E2E de verificación de contenido real, capturas visuales, npm run verify completo y git tag fase-11-ok).

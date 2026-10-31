@@ -13,8 +13,8 @@ describe('Idempotencia del Importador Legacy (Gate 2)', () => {
   const rootDir = process.cwd();
   const filesToCheck = [
     path.resolve(rootDir, 'content-src/lessons/103.4.json'),
-    path.resolve(rootDir, 'content-src/labs/103.4.yaml'),
-    path.resolve(rootDir, 'content-src/questions/103.yaml'),
+    path.resolve(rootDir, 'content-src/labs/103.4.json'),
+    path.resolve(rootDir, 'content-src/questions/103.json'),
     path.resolve(rootDir, 'content-src/commands.yaml'),
     path.resolve(rootDir, 'content-src/glossary.yaml')
   ];
