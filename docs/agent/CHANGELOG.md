@@ -424,3 +424,11 @@
 - Archivos: scripts/import-legacy/import-questions.ts, content-src/questions/*.json, public/content/**, docs/agent/COBERTURA_IMPORT.md.
 - Verificación: npm run typecheck (0 errores), npm run build:content (código 0, 240 preguntas reales, 0 placeholder), scripts/import-legacy/import-questions.ts (240 preguntas validadas).
 - Pendiente / deuda: Tarea 11.4 (C-0060: Importación del catálogo completo de comandos y glosario oficial).
+
+
+## C-0060 · 2026-10-31 · Fase 11 · Importación completa de 146 comandos y 230 términos de glosario
+- Qué: implementación de `scripts/import-legacy/import-commands-glossary.ts` y extracción sistemática del catálogo oficial de comandos y glosario técnico desde `_legacy/lpic1-slides-publico/` y los 42 archivos JSON de lecciones: (1) 146 comandos únicos con sintaxis, sinopsis, ejemplos, banderas y asociación a subtemas en `content-src/commands.yaml`; (2) 230 términos técnicos con definiciones oficiales, enlaces cruzados y asociación a subtemas en `content-src/glossary.yaml`; (3) validación estricta con `CommandsListSchema` y `GlossaryListSchema` (Zod); (4) actualización del manifiesto con `totalCommands = 146` y `totalTerms = 230`. Actualización de `COBERTURA_IMPORT.md` (100% de cobertura en comandos y glosario).
+- Por qué: requisito de la Tarea 11.4 de la Fase 11 y decisión D-004 (08-fases.md).
+- Archivos: scripts/import-legacy/import-commands-glossary.ts, content-src/commands.yaml, content-src/glossary.yaml, public/content/**, docs/agent/COBERTURA_IMPORT.md.
+- Verificación: npm run typecheck (0 errores), npm run build:content (código 0, 146 comandos, 230 términos), scripts/import-legacy/import-commands-glossary.ts (validados con Zod).
+- Pendiente / deuda: Tarea 11.5 (C-0061: Orquestador global `npm run import:legacy`, MAPEO_LEGACY.md y prueba de idempotencia).

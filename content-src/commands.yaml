@@ -1,406 +1,3786 @@
-- id: tee
-  name: tee
-  synopsis: tee [OPCIÓN]... [ARCHIVO]...
+- id: lspci
+  name: lspci
+  synopsis: lspci -nnk -s 00:02.0
   description: >-
-    Copia la entrada estándar a cada ARCHIVO indicado y también a la salida
-    estándar simultáneamente.
-  category: Redirecciones y Tuberías
+    Inspeccionar tarjetas gráficas, controladoras de red, sonido y
+    almacenamiento PCI
+  category: Determinar y configurar los ajustes de hardware
   subtopicIds:
-    - '103.4'
-  example: ls -l /etc | tee lista.txt | wc -l
+    - '101.1'
+  example: lspci -nnk -s 00:02.0
   flags:
-    - flag: '-a, --append'
-      description: Añade a los archivos dados sin sobrescribir su contenido anterior.
-    - flag: '-i, --ignore-interrupts'
-      description: Ignora las señales de interrupción (SIGINT).
-- id: xargs
-  name: xargs
-  synopsis: xargs [OPCIÓN]... [COMANDO [ARGUMENTO-INICIAL]...]
-  description: >-
-    Construye y ejecuta líneas de comando leyendo elementos desde la entrada
-    estándar delimitados por espacios o nulos.
-  category: Procesamiento y Argumentos
+    - flag: '-k'
+      description: >-
+        🎯 Clave de Examen: Muestra el controlador activo del kernel (Kernel
+        driver in use) y módulos disponibles.
+    - flag: '-v / -vv / -vvv'
+      description: >-
+        Incrementa el nivel de detalle (interrupciones IRQ, rangos de memoria
+        E/S y capacidades).
+    - flag: '-'
+      description: 'Filtra por dirección física del bus (ej: -s 00:02.0).'
+    - flag: '-'
+      description: >-
+        Filtra por identificador numérico de fabricante y modelo en hexadecimal
+        (ej: -d 8086:9bc5).
+    - flag: '-nn'
+      description: >-
+        Muestra los nombres textuales junto a los códigos numéricos
+        [vendor:device] entre corchetes.
+    - flag: '-t'
+      description: Muestra la topología de buses y puentes en formato de árbol jerárquico.
+- id: lsusb
+  name: lsusb
+  synopsis: lsusb -t
+  description: Identificar teclados, ratones, pendrives, cámaras y concentradores USB
+  category: Determinar y configurar los ajustes de hardware
   subtopicIds:
-    - '103.4'
-  example: find . -name "*.log" -print0 | xargs -0 rm -f
+    - '101.1'
+  example: lsusb -t
   flags:
-    - flag: '-0, --null'
+    - flag: '-t'
       description: >-
-        Los elementos de entrada se terminan con un byte nulo en lugar de
-        espacios en blanco.
-    - flag: '-I REEMPLAZO'
+        🎯 Clave de Examen: Muestra la topología jerárquica en árbol, indicando
+        clase de dispositivo, driver y velocidad (ej: 480M = USB 2.0).
+    - flag: '-v'
       description: >-
-        Sustituye las apariciones de REEMPLAZO en los argumentos iniciales por
-        nombres de stdin.
-    - flag: '-n NÚMERO'
-      description: Utiliza a lo sumo NÚMERO argumentos por cada invocación del comando.
-- id: cat
-  name: cat
-  synopsis: cat [OPCIÓN]... [ARCHIVO]...
+        Detalle exhaustivo de descriptores de configuración USB (requiere sudo
+        para ver números de serie completos).
+    - flag: '-s [bus]:[devnum]'
+      description: 'Filtra por número de bus y número de dispositivo (ej: -s 001:002).'
+    - flag: '-d [vendor]:[product]'
+      description: >-
+        Filtra por ID de fabricante y producto en hexadecimal (ej: -d
+        0781:5583).
+- id: lsmod-modinfo
+  name: lsmod | modinfo
+  synopsis: lsmod | head -n 4; echo '---'; modinfo -d e1000e
   description: >-
-    Concatena el contenido de los ARCHIVOS indicados y los imprime en la salida
-    estándar.
-  category: Visualización y Concatenación
+    Un módulo es un controlador (driver) compilado (.ko) que añade funciones al
+    kernel en caliente sin reiniciar. Con lsmod y modinfo los auditamos:
+  category: Determinar y configurar los ajustes de hardware
   subtopicIds:
-    - '103.4'
+    - '101.1'
+  example: lsmod | head -n 4; echo '---'; modinfo -d e1000e
+  flags:
+    - flag: lsmod
+      description: >-
+        Lee /proc/modules y formatea 3 columnas: Nombre del módulo, tamaño en
+        bytes y módulos dependientes que lo usan.
+    - flag: '-'
+      description: >-
+        Muestra autor, licencia, ruta del archivo .ko.xz, dependencias y
+        parámetros configurables.
+    - flag: '-'
+      description: Muestra únicamente la descripción textual del módulo (description).
+    - flag: '-'
+      description: Lista todos los parámetros que acepta el módulo con sus tipos de datos.
+    - flag: '-F field'
+      description: >-
+        Filtra un campo específico de la cabecera (ej: filename, license,
+        depends).
+- id: modprobe
+  name: modprobe
+  synopsis: sudo modprobe -v usb_storage
+  description: >-
+    modprobe resuelve dependencias leyendo modules.dep; insmod es de bajo nivel
+    y no gestiona dependencias:
+  category: Determinar y configurar los ajustes de hardware
+  subtopicIds:
+    - '101.1'
+  example: sudo modprobe -v usb_storage
+  flags:
+    - flag: '-'
+      description: Carga automática con dependencias de modules.dep.
+    - flag: '-r / --remove'
+      description: '🎯 Examen: Descarga el módulo y sus dependencias no usadas.'
+    - flag: '-v / --verbose'
+      description: Muestra los insmod ejecutados en orden de dependencia.
+    - flag: '-c / --showconfig'
+      description: Muestra la unión consolidada de /etc/ y /lib/.
+- id: linux-boot-vmlinuz-root-uuid-opciones
+  name: linux /boot/vmlinuz root=UUID=... [opciones]
+  synopsis: cat /proc/cmdline
+  description: >-
+    Inspeccionar con /proc/cmdline los parámetros reales y saber cuándo añadir
+    opciones de emergencia
+  category: Arranque del sistema
+  subtopicIds:
+    - '101.2'
+  example: cat /proc/cmdline
+  flags:
+    - flag: root=UUID=... (o /dev/sda1)
+      description: >-
+        🎯 Clave de Examen: Indica qué partición del disco contiene el sistema
+        operativo real
+    - flag: ro
+      description: >-
+        Monta inicialmente la raíz en Solo Lectura para que el sistema revise el
+        disco de forma segura antes de escribir nada.
+    - flag: quiet splash
+      description: >-
+        Silencia los mensajes técnicos del kernel y muestra la pantalla gráfica
+        con el logotipo de carga de la distribución.
+    - flag: nomodeset
+      description: >-
+        Ejemplo real: Desactiva los drivers gráficos avanzados si la pantalla se
+        queda congelada en negro al arrancar.
+    - flag: acpi=off
+      description: >-
+        Ejemplo real: Desactiva la gestión de energía de la placa base si el
+        equipo se bloquea al suspender o encender.
+    - flag: mem=2G
+      description: >-
+        Ejemplo real: Limita la RAM a 2 GB para simular servidores pequeños o
+        esquivar un módulo de memoria roto.
+- id: init-bin-bash
+  name: init=/bin/bash
+  synopsis: "# 1. En la consola de root que arranca, re-montar el disco con permisos de escritura:\r\nmount -o remount,rw /\r\n# 2. Ahora sí podemos cambiar la contraseña:\r\npasswd root\r\n# 3. Guardar cambios en disco y reiniciar:\r\nsync && reboot -f"
+  description: >-
+    Saltarse la pantalla de login para obtener una consola directa de root y
+    cambiar la contraseña olvidada
+  category: Arranque del sistema
+  subtopicIds:
+    - '101.2'
+  example: "# 1. En la consola de root que arranca, re-montar el disco con permisos de escritura:\r\nmount -o remount,rw /\r\n# 2. Ahora sí podemos cambiar la contraseña:\r\npasswd root\r\n# 3. Guardar cambios en disco y reiniciar:\r\nsync && reboot -f"
+  flags:
+    - flag: ¿Por qué hacemos esto?
+      description: >-
+        Porque la pantalla de login normal te exige contraseña. Al decirle al
+        kernel
+    - flag: 'El tropiezo clásico: ''ro'''
+      description: Al entrar con init=/bin/bash, el disco está en solo lectura. Si intentas
+    - flag: mount -o remount,rw /
+      description: >-
+        🎯 Comando de Examen VITAL: Vuelve a montar la partición raíz en modo
+        lectura y escritura para permitir guardar la nueva contraseña.
+    - flag: systemd.unit=emergency.target
+      description: >-
+        Alternativa oficial en systemd: Modo de emergencia mínimo (aunque este
+        sí te pedirá la clave actual de root si no la has quitado).
+- id: dmesg
+  name: dmesg
+  synopsis: dmesg -T -l err,warn
+  description: >-
+    Inspeccionar el historial de detección de hardware en la memoria RAM con el
+    comando dmesg
+  category: Arranque del sistema
+  subtopicIds:
+    - '101.2'
+  example: dmesg -T -l err,warn
+  flags:
+    - flag: ¿Para qué sirve dmesg en la vida real?
+      description: >-
+        Es la primera herramienta del SysAdmin cuando algo de hardware falla: un
+        disco que da errores de lectura, una tarjeta Wi-Fi que no conecta o un
+        puerto USB que no reconoce un dispositivo.
+    - flag: dmesg -T (Human-readable time)
+      description: >-
+        🎯 Clave de Examen: Convierte los segundos incomprensibles [  12.451234]
+        en fechas y horas humanas reales (ej:
+    - flag: dmesg -l err,warn
+      description: >-
+        Filtra la salida para no leer miles de líneas y ver únicamente los
+        errores y advertencias de hardware.
+    - flag: dmesg -w (Follow / En vivo)
+      description: >-
+        Se queda a la escucha en directo (como tail -f): conectas un pendrive
+        USB y ves salir los mensajes del kernel al instante.
+- id: journalctl
+  name: journalctl
+  synopsis: journalctl -b -1 -p err
+  description: >-
+    Consultar y filtrar en segundos los logs del kernel, del arranque y de los
+    servicios en una base de datos indexada
+  category: Arranque del sistema
+  subtopicIds:
+    - '101.2'
+  example: journalctl -b -1 -p err
+  flags:
+    - flag: journalctl -b
+      description: >-
+        Muestra todos los logs generados desde que encendiste el ordenador en la
+        sesión actual.
+    - flag: journalctl -b -1
+      description: >-
+        🎯 Clave de Examen: Muestra los logs del arranque ANTERIOR (vital cuando
+        un servidor se reinició inesperadamente y quieres saber por qué cayó).
+    - flag: journalctl -u nginx -f
+      description: >-
+        Filtra por un servicio concreto (ej: servidor web nginx) y se queda en
+        directo (-f / follow) viendo accesos o errores.
+    - flag: journalctl -k -p err
+      description: >-
+        Muestra solo mensajes del Kernel (-k) con prioridad de error grave (-p
+        err).
+    - flag: journalctl --list-boots
+      description: >-
+        Lista todos los arranques que el sistema tiene guardados en su historial
+        con sus fechas y horas exactas.
+- id: runlevel-telinit-init
+  name: runlevel | telinit | init
+  synopsis: runlevel | telinit | init [opciones]
+  description: >-
+    Consultar el nivel previo y actual, y solicitar la transición hacia un nuevo
+    nivel
+  category: >-
+    Cambiar los niveles de ejecución / objetivos de arranque y apagar o
+    reiniciar el sistema
+  subtopicIds:
+    - '101.3'
+  example: runlevel | telinit | init [opciones]
+  flags:
+    - flag: runlevel
+      description: >-
+        🎯 Clave de Examen: Muestra dos caracteres: el nivel previo (N = ninguno
+        si no ha cambiado desde el arranque) y el nivel actual.
+    - flag: '-'
+      description: >-
+        Solicita a init cambiar al nivel indicado (ej: telinit 1 pasa a
+        monousuario; telinit 6 reinicia).
+    - flag: telinit q / Q
+      description: >-
+        🎯 Clave de Examen: Recarga el archivo /etc/inittab sin necesidad de
+        reiniciar el sistema.
+    - flag: Prefijo 'S' (Start)
+      description: >-
+        En /etc/rcX.d/, los enlaces que empiezan por S (ej: S01ssh) arrancan el
+        servicio pasando el argumento
+    - flag: Prefijo 'K' (Kill)
+      description: >-
+        Los enlaces que empiezan por K (ej: K01apache2) detienen el servicio
+        pasando el argumento
+- id: systemctl
+  name: systemctl
+  synopsis: systemctl [opciones]
+  description: Gestionar el estado en vivo de demonios y servicios (.service)
+  category: >-
+    Cambiar los niveles de ejecución / objetivos de arranque y apagar o
+    reiniciar el sistema
+  subtopicIds:
+    - '101.3'
+  example: systemctl [opciones]
+  flags:
+    - flag: '-'
+      description: Arranca el servicio inmediatamente en la sesión actual.
+    - flag: '-'
+      description: Detiene el servicio en ejecución inmediatamente.
+    - flag: '-'
+      description: Reinicia el servicio (detiene y vuelve a arrancar).
+    - flag: '-'
+      description: Recarga la configuración del demonio sin cortar las conexiones activas.
+    - flag: '-'
+      description: >-
+        🎯 Clave de Examen: Muestra si está cargado (Loaded), estado activo
+        (Active), PID principal y últimos logs.
+    - flag: '-'
+      description: Devuelve texto (
+    - flag: '-'
+      description: Devuelve código 0 si el servicio ha fallado durante la inicialización.
+- id: systemctl-enable-disable-mask
+  name: systemctl enable | disable | mask
+  synopsis: systemctl enable | disable | mask [opciones]
+  description: >-
+    Habilitar, inhabilitar y enmascarar unidades para controlar el inicio
+    automático
+  category: >-
+    Cambiar los niveles de ejecución / objetivos de arranque y apagar o
+    reiniciar el sistema
+  subtopicIds:
+    - '101.3'
+  example: systemctl enable | disable | mask [opciones]
+  flags:
+    - flag: '-'
+      description: >-
+        🎯 Clave de Examen: Habilita el servicio para que arranque
+        automáticamente al inicio creando un enlace simbólico en
+        /etc/systemd/system/...wants/.
+    - flag: '-'
+      description: >-
+        Deshabilita el inicio automático eliminando el enlace simbólico (no
+        detiene el servicio si está corriendo actualmente).
+    - flag: '-'
+      description: >-
+        🎯 Pregunta de Examen: Enlaza el servicio a /dev/null. ¡Hace imposible
+        iniciarlo, ni siquiera manualmente ni por dependencias de otros
+        servicios!
+    - flag: '-'
+      description: >-
+        Elimina el enlace a /dev/null, permitiendo que el servicio vuelva a ser
+        utilizado.
+    - flag: '-'
+      description: Comprueba si el servicio está programado para arrancar (devuelve
+    - flag: list-units --type=service
+      description: Lista todas las unidades de servicio activas en memoria.
+- id: systemctl-isolate-get-default-set-default
+  name: systemctl isolate | get-default | set-default
+  synopsis: systemctl isolate | get-default | set-default [opciones]
+  description: Conmutar el estado del sistema en vivo y configurar el target persistente
+  category: >-
+    Cambiar los niveles de ejecución / objetivos de arranque y apagar o
+    reiniciar el sistema
+  subtopicIds:
+    - '101.3'
+  example: systemctl isolate | get-default | set-default [opciones]
+  flags:
+    - flag: '-'
+      description: >-
+        🎯 Clave de Examen: Cambia inmediatamente al objetivo indicado
+        deteniendo todos los servicios que no pertenezcan al nuevo target
+        (equivalente a telinit N).
+    - flag: get-default
+      description: Muestra el target que arrancará por defecto al encender el equipo.
+    - flag: '-'
+      description: >-
+        🎯 Clave de Examen: Fija el target predeterminado modificando el enlace
+        simbólico /etc/systemd/system/default.target.
+    - flag: '-'
+      description: >-
+        Parámetro que se puede pasar al kernel en GRUB para arrancar
+        temporalmente en otro target (ej: systemd.unit=rescue.target).
+- id: shutdown-reboot-poweroff-wall
+  name: shutdown | reboot | poweroff | wall
+  synopsis: shutdown | reboot | poweroff | wall [opciones]
+  description: >-
+    Avisar a los usuarios y programar el cierre ordenado de procesos y
+    desmontaje de discos
+  category: >-
+    Cambiar los niveles de ejecución / objetivos de arranque y apagar o
+    reiniciar el sistema
+  subtopicIds:
+    - '101.3'
+  example: shutdown | reboot | poweroff | wall [opciones]
+  flags:
+    - flag: '-h / -P / --poweroff'
+      description: >-
+        🎯 Clave de Examen: Detiene los procesos y corta la energía eléctrica de
+        la máquina.
+    - flag: '-r / --reboot'
+      description: >-
+        🎯 Clave de Examen: Reinicia el sistema operativo tras el apagado
+        ordenado.
+    - flag: '-H / --halt'
+      description: >-
+        Detiene todos los procesos y el kernel, pero deja la placa base con
+        corriente encendida.
+    - flag: '-c'
+      description: >-
+        🎯 Clave de Examen: Cancela un apagado programado que estaba en cuenta
+        atrás.
+    - flag: +m / hh:mm / now
+      description: >-
+        Especificación de tiempo: +15 (en 15 minutos), 23:30 (a las 23:30
+        horas), now (inmediatamente, equivale a +0).
+    - flag: '-'
+      description: >-
+        Difunde un mensaje de texto por terminal a TODOS los usuarios con sesión
+        abierta simultáneamente.
+- id: mkswap-swapon-swapoff
+  name: mkswap | swapon | swapoff
+  synopsis: mkswap | swapon | swapoff [opciones]
+  description: >-
+    ¿Qué es la Swap, cómo salva al sistema y los 4 pasos exactos que entran en
+    el examen?
+  category: Diseño del esquema de particionado del disco duro
+  subtopicIds:
+    - '102.1'
+  example: mkswap | swapon | swapoff [opciones]
+  flags: []
+- id: pvs-pvdisplay-vgs-vgdisplay-lvs-lvdisplay
+  name: pvs / pvdisplay | vgs / vgdisplay | lvs / lvdisplay
+  synopsis: pvs / pvdisplay | vgs / vgdisplay | lvs / lvdisplay [opciones]
+  description: >-
+    ¿Qué significan las columnas de pvs, vgs, lvs y cómo se leen las métricas de
+    PE en vgdisplay?
+  category: Diseño del esquema de particionado del disco duro
+  subtopicIds:
+    - '102.1'
+  example: pvs / pvdisplay | vgs / vgdisplay | lvs / lvdisplay [opciones]
+  flags: []
+- id: grub-install
+  name: grub-install
+  synopsis: grub-install [opciones]
+  description: >-
+    ¿Cómo se instala GRUB físicamente? Diferencias claras entre BIOS (MBR) y
+    UEFI:
+  category: Instalar un gestor de arranque
+  subtopicIds:
+    - '102.2'
+  example: grub-install [opciones]
+  flags: []
+- id: grub-consola-interactiva-de-comandos
+  name: grub> (Consola interactiva de comandos)
+  synopsis: grub> (Consola interactiva de comandos) [opciones]
+  description: >-
+    El menú gráfico no aparece y te deja en 'grub>'. Los 4 pasos obligatorios
+    para arrancar a mano:
+  category: Instalar un gestor de arranque
+  subtopicIds:
+    - '102.2'
+  example: grub> (Consola interactiva de comandos) [opciones]
+  flags: []
+- id: grub-shell-de-grub-legacy
+  name: grub (Shell de GRUB Legacy)
+  synopsis: grub (Shell de GRUB Legacy) [opciones]
+  description: >-
+    Lo estrictamente necesario para el examen: la shell interactiva antigua y
+    sus 3 comandos:
+  category: Instalar un gestor de arranque
+  subtopicIds:
+    - '102.2'
+  example: grub (Shell de GRUB Legacy) [opciones]
+  flags: []
+- id: dpkg-instalacion-eliminacion-y-ciclo-de-vida-de-paquetes
+  name: 'dpkg: Instalación, Eliminación y Ciclo de Vida de Paquetes'
+  synopsis: dpkg [opciones_accion]
+  description: >-
+    Motor de bajo nivel en Debian: manipula ficheros .deb locales en disco. No
+    accede a red ni resuelve dependencias automáticamente.
+  category: Gestión de paquetes Debian
+  subtopicIds:
+    - '102.4'
+  example: dpkg [opciones_accion]
+  flags:
+    - flag: '-i, --install'
+      description: Desempaqueta y configura un archivo .deb local en el disco.
+    - flag: '-r, --remove'
+      description: >-
+        🎯 Elimina binarios y librerías, pero CONSERVA los ficheros de
+        configuración en /etc/ (estado rc).
+    - flag: '-P, --purge'
+      description: >-
+        🎯 Eliminación total: borra binarios Y destruye toda la configuración en
+        /etc/ (estado un).
+    - flag: '--unpack'
+      description: >-
+        Extrae los ficheros en disco sin ejecutar los scripts de configuración
+        debconf/postinst.
+    - flag: '--configure'
+      description: >-
+        Configura un paquete previamente desempaquetado con --unpack ejecutando
+        scripts postinst.
+    - flag: '-C, --audit'
+      description: >-
+        Busca paquetes a medio instalar o con dependencias y configuraciones
+        rotas en el sistema.
+- id: dpkg-y-dpkg-query-inspeccion-de-paquetes-y-pertenencias
+  name: 'dpkg y dpkg-query: Inspección de Paquetes y Pertenencias'
+  synopsis: dpkg [-L | -l | -s | -c | -I]   |  dpkg-query -S
+  description: >-
+    Inspeccionar metadatos y ficheros en la base de datos local
+    (/var/lib/dpkg/): averiguar qué instaló un paquete o qué paquete es dueño de
+    un archivo existente en disco.
+  category: Gestión de paquetes Debian
+  subtopicIds:
+    - '102.4'
+  example: dpkg [-L | -l | -s | -c | -I]   |  dpkg-query -S
+  flags:
+    - flag: '-'
+      description: >-
+        🎯 Lista todos los archivos y directorios que el paquete ha instalado en
+        el disco.
+    - flag: '-'
+      description: >-
+        🎯 dpkg -S o dpkg-query -S: averigua qué paquete instalado proporcionó
+        un archivo o ruta existente.
+    - flag: '-l, --list [patrón]'
+      description: >-
+        Muestra tabla de paquetes con su código de estado (ii = instalado OK, rc
+        = borrado con config).
+    - flag: '-'
+      description: >-
+        Muestra estado detallado, dependencias y versión de un paquete ya
+        presente en el sistema.
+    - flag: '-'
+      description: >-
+        🎯 Lista los archivos contenidos dentro de un archivo .deb sin necesidad
+        de instalarlo.
+    - flag: '-'
+      description: >-
+        Muestra la ficha técnica de un paquete .deb almacenado en disco antes de
+        instalarlo.
+- id: apt-get-ciclo-de-vida-dependencias-y-actualizaciones
+  name: 'apt-get: Ciclo de Vida, Dependencias y Actualizaciones'
+  synopsis: apt-get
+  description: >-
+    Gestor de alto nivel para servidores y scripts: descarga por red, resuelve
+    dependencias transitivas e invoca a dpkg automáticamente.
+  category: Gestión de paquetes Debian
+  subtopicIds:
+    - '102.4'
+  example: apt-get
+  flags:
+    - flag: update
+      description: >-
+        🎯 Sincroniza los catálogos locales en /var/lib/apt/lists/ desde
+        sources.list. NO actualiza ningún software.
+    - flag: '-'
+      description: Descarga e instala el paquete y todas sus dependencias. -y responde
+    - flag: upgrade
+      description: >-
+        Actualiza todos los paquetes instalados a su última versión SIN
+        desinstalar jamás ningún paquete existente.
+    - flag: dist-upgrade
+      description: >-
+        🎯 Resuelve dependencias complejas, teniendo permiso para INSTALAR
+        nuevos paquetes o ELIMINAR paquetes obsoletos.
+    - flag: '-'
+      description: >-
+        remove borra ejecutables; purge destruye también todos los ficheros de
+        configuración en /etc/.
+    - flag: install -f, --fix-broken
+      description: >-
+        🎯 Clave de Examen: Arregla dependencias rotas tras una instalación
+        fallida con dpkg -i.
+    - flag: clean / autoclean
+      description: >-
+        🎯 clean borra el 100% de .deb en /var/cache/apt/archives/; autoclean
+        solo paquetes viejos ya no descargables.
+- id: apt-cache-consultas-en-la-cache-de-repositorios
+  name: 'apt-cache: Consultas en la Caché de Repositorios'
+  synopsis: apt-cache  [paquete]
+  description: >-
+    Herramienta de SOLO LECTURA para explorar metadatos, descripciones,
+    dependencias y prioridades. NO requiere privilegios de root (no usa sudo).
+  category: Gestión de paquetes Debian
+  subtopicIds:
+    - '102.4'
+  example: apt-cache  [paquete]
+  flags:
+    - flag: '-'
+      description: >-
+        🎯 Busca en los nombres y descripciones de todos los paquetes
+        disponibles en los repositorios.
+    - flag: '-'
+      description: >-
+        🎯 Muestra la ficha técnica completa del paquete: descripción,
+        mantenedor, tamaño y dependencias.
+    - flag: '-'
+      description: >-
+        Muestra la lista de paquetes o librerías de los cuales depende este
+        paquete para funcionar.
+    - flag: '-'
+      description: >-
+        Lista qué otros paquetes del repositorio necesitan a este paquete para
+        funcionar.
+    - flag: policy [paquete]
+      description: >-
+        🎯 Muestra la versión instalada, la versión candidata y las prioridades
+        de repositorios (APT Pinning).
+    - flag: pkgnames [prefijo]
+      description: >-
+        Lista rápida de los nombres de todos los paquetes disponibles en el
+        sistema.
+- id: apt-file-busqueda-de-archivos-en-paquetes-no-instalados
+  name: 'apt-file: Búsqueda de Archivos en Paquetes No Instalados'
+  synopsis: apt-file
+  description: >-
+    Localizar qué paquete de los repositorios proporciona un archivo, comando o
+    cabecera que AÚN NO ESTÁ INSTALADO en el sistema.
+  category: Gestión de paquetes Debian
+  subtopicIds:
+    - '102.4'
+  example: apt-file
+  flags:
+    - flag: apt-file update
+      description: >-
+        🎯 Descarga los metadatos Contents-*.gz de los repositorios para
+        construir el índice de ficheros local (requiere sudo).
+    - flag: '-'
+      description: >-
+        🎯 Clave de Examen: Localiza qué paquete (instalado o NO instalado)
+        contiene el archivo indicado.
+    - flag: '-'
+      description: >-
+        Muestra el listado de archivos de un paquete que reside en el
+        repositorio sin descargarlo ni instalarlo.
+    - flag: '-'
+      description: >-
+        Muestra únicamente el nombre del paquete omitiendo el listado repetido
+        de rutas.
+- id: rpm-q-a-i-l-f-c-d-p-archivo-rpm
+  name: rpm -q[a|i|l|f|c|d] [-p archivo.rpm]
+  synopsis: rpm -q[a|i|l|f|c|d] [paquete]  |  rpm -qp[i|l|c|d]
+  description: >-
+    Inspeccionar la base de datos local (/var/lib/rpm/) o examinar metadatos y
+    ficheros de un paquete .rpm descargado antes de instalarlo.
+  category: Gestión de paquetes RPM y YUM
+  subtopicIds:
+    - '102.5'
+  example: rpm -q[a|i|l|f|c|d] [paquete]  |  rpm -qp[i|l|c|d]
+  flags:
+    - flag: '-qa'
+      description: >-
+        Lista todos los paquetes instalados en el sistema consultando
+        /var/lib/rpm/.
+    - flag: '-'
+      description: Lista todos los archivos instalados por el paquete en el sistema.
+    - flag: '-'
+      description: 🎯 Lista ÚNICAMENTE los archivos de configuración (/etc/) del paquete.
+    - flag: '-'
+      description: >-
+        🎯 Averigua a qué paquete instalado pertenece un archivo o ejecutable en
+        disco.
+    - flag: '-'
+      description: >-
+        🎯 Clave de Examen: Aplica cualquier consulta sobre un paquete .rpm NO
+        instalado en disco.
+- id: yum-dnf-install-update-remove-clean-all
+  name: yum / dnf install | update | remove | clean all
+  synopsis: dnf / yum [install|update|remove|check-update|clean all] [-y]
+  description: >-
+    Ciclo de vida automatizado en Red Hat/Fedora: instalación resolviendo
+    librerías, actualización transaccional y limpieza de caché.
+  category: Gestión de paquetes RPM y YUM
+  subtopicIds:
+    - '102.5'
+  example: dnf / yum [install|update|remove|check-update|clean all] [-y]
+  flags:
+    - flag: '-'
+      description: >-
+        Descarga e instala el paquete resolviendo automáticamente todo el árbol
+        de librerías.
+    - flag: update [paquete]
+      description: >-
+        Actualiza el paquete indicado o todo el sistema si no se especifica
+        nombre.
+    - flag: check-update
+      description: >-
+        🎯 Clave de Examen: Comprueba si existen actualizaciones sin instalar
+        nada (devuelve código 100 si las hay).
+    - flag: '-'
+      description: >-
+        Desinstala el paquete y retira las dependencias no utilizadas que
+        quedaron huérfanas.
+    - flag: clean all
+      description: >-
+        🎯 Borra todos los paquetes descargados y vacía los metadatos de
+        /var/cache/dnf/.
+- id: yum-dnf-search-info-provides-repolist
+  name: yum / dnf search | info | provides | repolist
+  synopsis: dnf / yum [provides|search|info|repolist]
+  description: >-
+    Explorar el catálogo remoto: encontrar qué paquete proporciona un comando
+    desconocido e inspeccionar repositorios.
+  category: Gestión de paquetes RPM y YUM
+  subtopicIds:
+    - '102.5'
+  example: dnf / yum [provides|search|info|repolist]
+  flags:
+    - flag: '-'
+      description: >-
+        🎯 Clave Absoluta de Examen: Averigua qué paquete de los repositorios
+        proporciona un comando o archivo.
+    - flag: '-'
+      description: >-
+        Busca coincidencias en el nombre, resumen y descripción de todos los
+        paquetes disponibles.
+    - flag: '-'
+      description: >-
+        Muestra versión, licencia, tamaño y repositorio de un paquete remoto sin
+        necesidad de descargarlo.
+    - flag: repolist [all|enabled]
+      description: >-
+        🎯 Muestra la lista de repositorios configurados y su estado actual en
+        /etc/yum.repos.d/.
+- id: zypper-refresh-install-remove-update-lr-ar-mr
+  name: zypper refresh | install | remove | update | lr | ar | mr
+  synopsis: zypper [ref|in|rm|up|lr|ar|mr|wp]
+  description: >-
+    El gestor nativo de SUSE Linux y openSUSE: resolución SAT ultra-rápida
+    (libzypp) y comandos cortos de 2 letras.
+  category: Gestión de paquetes RPM y YUM
+  subtopicIds:
+    - '102.5'
+  example: zypper [ref|in|rm|up|lr|ar|mr|wp]
+  flags:
+    - flag: refresh, ref
+      description: >-
+        🎯 Descarga los metadatos frescos de todos los repositorios remotos
+        (equivalente a apt-get update).
+    - flag: '-'
+      description: >-
+        Instala paquetes y resuelve dependencias automáticamente con algoritmo
+        SAT.
+    - flag: '-'
+      description: Desinstala un paquete del sistema.
+    - flag: update, up [paquete]
+      description: Actualiza los paquetes a su versión más reciente disponible.
+    - flag: repos, lr
+      description: >-
+        🎯 Clave de Examen: Lista todos los repositorios configurados en
+        /etc/zypp/repos.d/.
+    - flag: modifyrepo, mr -d/-e
+      description: >-
+        🎯 Clave de Examen: Deshabilita (-d) o habilita (-e) un repositorio
+        existente sin borrar el fichero.
+    - flag: '-'
+      description: Averigua qué paquete proporciona un archivo o comando en openSUSE.
+- id: grep-e-color-vmx-svm-proc-cpuinfo-lscpu
+  name: grep -E --color '(vmx|svm)' /proc/cpuinfo | lscpu
+  synopsis: >-
+    grep -E --color=auto '(vmx|svm)' /proc/cpuinfo  |  lscpu | grep
+    Virtualization
+  description: >-
+    Detectar si el procesador físico soporta virtualización asistida por
+    hardware y si está habilitada en la BIOS/UEFI antes de desplegar KVM.
+  category: Linux como sistema virtualizado
+  subtopicIds:
+    - '102.6'
+  example: >-
+    grep -E --color=auto '(vmx|svm)' /proc/cpuinfo  |  lscpu | grep
+    Virtualization
+  flags:
+    - flag: vmx
+      description: >-
+        🎯 Virtual Machine eXtensions. Indica soporte nativo de KVM en
+        procesadores Intel (Core, Xeon).
+    - flag: svm
+      description: >-
+        🎯 Secure Virtual Machine. Indica soporte nativo de KVM en procesadores
+        AMD (Ryzen, EPYC).
+    - flag: lscpu
+      description: Muestra el campo
+    - flag: lsmod | grep kvm
+      description: Confirma que los módulos
+- id: systemd-machine-id-setup-dbus-uuidgen-ensure
+  name: systemd-machine-id-setup | dbus-uuidgen --ensure
+  synopsis: >-
+    cat /etc/machine-id  |  truncate -s 0 /etc/machine-id  | 
+    systemd-machine-id-setup
+  description: >-
+    Garantizar la identidad unívoca de cada instancia Linux: cómo evitar
+    conflictos de red y colisiones de logs al clonar máquinas virtuales.
+  category: Linux como sistema virtualizado
+  subtopicIds:
+    - '102.6'
+  example: >-
+    cat /etc/machine-id  |  truncate -s 0 /etc/machine-id  | 
+    systemd-machine-id-setup
+  flags:
+    - flag: /etc/machine-id
+      description: >-
+        🎯 Archivo de texto plano con 32 caracteres hexadecimales generado
+        durante la instalación del sistema.
+    - flag: truncate -s 0
+      description: >-
+        🎯 Clave de Examen: Deja el archivo con 0 bytes antes de apagar la
+        plantilla dorada para clonar.
+    - flag: systemd-machine-id-setup
+      description: >-
+        🎯 Genera un identificador nuevo y único leyendo el UUID del hipervisor
+        o creando uno criptográfico.
+    - flag: dbus-uuidgen --ensure
+      description: >-
+        Comando alternativo histórico para garantizar la identidad en
+        /var/lib/dbus/machine-id.
+- id: ssh-keygen-t-rsa-b-4096-ssh-copy-id-usuario-servidor
+  name: ssh-keygen -t rsa -b 4096 | ssh-copy-id usuario@servidor
+  synopsis: >-
+    ssh-keygen -t rsa -b 4096  |  ssh-copy-id -i ~/.ssh/id_rsa.pub
+    usuario@servidor
+  description: >-
+    Criptografía asimétrica para servidores virtuales y en la nube: generación
+    de pares de claves, despliegue y permisos estrictos.
+  category: Linux como sistema virtualizado
+  subtopicIds:
+    - '102.6'
+  example: >-
+    ssh-keygen -t rsa -b 4096  |  ssh-copy-id -i ~/.ssh/id_rsa.pub
+    usuario@servidor
+  flags:
+    - flag: ssh-keygen
+      description: 'Crea el par criptográfico: clave privada secreta y clave pública.'
+    - flag: id_rsa (Clave Privada)
+      description: >-
+        ⚠️ NUNCA debe salir de tu máquina local. Permisos obligatorios: 0600
+        (-rw-------).
+    - flag: id_rsa.pub (Clave Pública)
+      description: Se distribuye libremente a los servidores donde quieras acceder.
+    - flag: ssh-copy-id usuario@host
+      description: >-
+        🎯 Clave de Examen: Copia tu clave pública e inyecta su contenido en
+        ~/.ssh/authorized_keys remoto.
+    - flag: ~/.ssh/authorized_keys
+      description: >-
+        🎯 Fichero en el servidor donde se registran las claves autorizadas.
+        Permisos obligatorios: 0600.
+- id: uname-a-r-m-pwd-cd
+  name: uname -a | -r | -m | pwd | cd [-|~]
+  synopsis: uname [opciones] | pwd | cd [directorio]
+  description: Auditoría inicial de kernel, hardware y rutas antes de operar en consola
+  category: Trabajar desde la línea de comandos
+  subtopicIds:
+    - '103.1'
+  example: uname [opciones] | pwd | cd [directorio]
+  flags:
+    - flag: uname -a
+      description: >-
+        🎯 Imprime nombre de SO, hostname, versión kernel, arquitectura y
+        plataforma.
+    - flag: uname -r
+      description: >-
+        🎯 Versión exacta de release del kernel (ej: 6.1.0-21-amd64). ¡Dato
+        clave para compilar drivers!
+    - flag: uname -m
+      description: >-
+        🎯 Arquitectura de hardware (x86_64 para 64 bits PC, aarch64 para ARM,
+        i686 para 32 bits).
+    - flag: pwd
+      description: >-
+        Print Working Directory: muestra la ruta absoluta del directorio donde
+        estás parado.
+    - flag: cd ~ / cd
+      description: >-
+        Sin argumentos o con virgulilla (~), vuelve de golpe al directorio
+        personal del usuario.
+    - flag: cd -
+      description: >-
+        🎯 Regresa al directorio inmediatamente anterior usando la variable
+        interna $OLDPWD.
+- id: type-a-which-whereis-hash-r
+  name: type [-a] | which | whereis | hash [-r]
+  synopsis: type [-a]  | which  | whereis  | hash [-r]
+  description: Averiguar la naturaleza exacta de un comando y su ubicación en el sistema
+  category: Trabajar desde la línea de comandos
+  subtopicIds:
+    - '103.1'
+  example: type [-a]  | which  | whereis  | hash [-r]
+  flags:
+    - flag: '-'
+      description: >-
+        🎯 Comando interno de Bash. Descubre si es builtin, alias, función o
+        archivo en disco.
+    - flag: '-'
+      description: >-
+        🎯 Muestra todas las versiones de la orden en orden estricto de
+        prioridad de ejecución.
+    - flag: '-'
+      description: >-
+        🎯 Busca ejecutables en disco según $PATH. ¡No encuentra builtins como
+        cd o exit!
+    - flag: '-'
+      description: >-
+        Localiza el archivo ejecutable, el código fuente y las páginas man en
+        rutas estándar.
+    - flag: hash [-r]
+      description: Muestra la tabla hash en RAM con rutas ya ejecutadas.
+- id: history-n-n-cadena-ctrl-r
+  name: history [N] | !! | !n | !cadena | Ctrl+R
+  synopsis: history [N] | history -c | history -w | !! | !
+  description: Ahorrar tiempo y evitar errores repitiendo y buscando órdenes ejecutadas
+  category: Trabajar desde la línea de comandos
+  subtopicIds:
+    - '103.1'
+  example: history [N] | history -c | history -w | !! | !
+  flags:
+    - flag: history [N]
+      description: >-
+        🎯 Muestra la lista numerada de comandos ejecutados (opcionalmente solo
+        los últimos N).
+    - flag: '!!'
+      description: '🎯 Vuelve a ejecutar la última orden tecleada. Imprescindible:'
+    - flag: '!n'
+      description: 🎯 Ejecuta directamente la orden con el número de índice
+    - flag: '!-n'
+      description: Ejecuta el comando tecleado hace
+    - flag: '!cadena'
+      description: Ejecuta el comando más reciente que empiece por
+    - flag: Ctrl + R
+      description: >-
+        Búsqueda incremental inversa en el historial mientras vas escribiendo
+        caracteres.
+- id: var-val-export-var-env-set-unset-var
+  name: VAR=val | export VAR | env | set | unset VAR
+  synopsis: NOMBRE=valor | export NOMBRE | env | unset NOMBRE
+  description: Almacenar datos, configurar procesos y controlar la visibilidad entre shells
+  category: Trabajar desde la línea de comandos
+  subtopicIds:
+    - '103.1'
+  example: NOMBRE=valor | export NOMBRE | env | unset NOMBRE
+  flags:
+    - flag: VAR=valor
+      description: >-
+        🎯 Define una variable en la shell actual. ¡OBLIGATORIO: sin espacios
+        alrededor del
+    - flag: export VAR
+      description: >-
+        🎯 Exporta la variable para que cualquier proceso hijo o script herede
+        una copia de su valor.
+    - flag: env / printenv
+      description: >-
+        🎯 Lista exclusivamente las variables de entorno exportadas en el
+        sistema.
+    - flag: set
+      description: >-
+        🎯 Lista TODAS las variables (locales y exportadas) más las funciones
+        activas de Bash.
+    - flag: unset VAR
+      description: 🎯 Borra la variable de la memoria (¡se escribe el nombre pelado, NUNCA
+- id: cat-n-tac-head-n-tail-n-f
+  name: cat [-n] | tac | head [-n] | tail [-n|-f]
+  synopsis: cat [opts]  | tac  | head -n   | tail -n  [-f]
+  description: Inspeccionar archivos completos, invertidos o solo sus cabeceras y colas
+  category: Procesar secuencias de texto usando filtros
+  subtopicIds:
+    - '103.2'
+  example: cat [opts]  | tac  | head -n   | tail -n  [-f]
+  flags:
+    - flag: cat -n
+      description: 🎯 Numera todas las líneas de salida de la primera a la última.
+    - flag: cat -s
+      description: Reduce múltiples líneas consecutivas en blanco a una sola.
+    - flag: '-'
+      description: '🎯 Invierte las líneas: muestra el archivo empezando por el final.'
+    - flag: '-'
+      description: 🎯 Muestra las primeras N líneas (por defecto 10 si no indicas número).
+    - flag: '-'
+      description: 🎯 Muestra las últimas N líneas del fichero (por defecto 10).
+    - flag: tail -f
+      description: >-
+        🎯 Modo follow: no se cierra, monitoriza nuevas líneas añadidas al log
+        en tiempo real.
+- id: wc-l-w-c-m-nl-ba
+  name: wc [-l|-w|-c|-m] | nl [-ba]
+  synopsis: wc [opciones]  | nl [opciones]
+  description: Contar elementos de texto y formatear números de línea profesionales
+  category: Procesar secuencias de texto usando filtros
+  subtopicIds:
+    - '103.2'
+  example: wc [opciones]  | nl [opciones]
+  flags:
+    - flag: wc (sin flags)
+      description: 'Imprime 3 cifras: total líneas, total palabras y total bytes.'
+    - flag: wc -l
+      description: '🎯 Cuenta únicamente los saltos de línea. El comodín en tuberías:'
+    - flag: wc -w
+      description: Cuenta palabras delimitadas por espacios en blanco o tabuladores.
+    - flag: wc -c
+      description: 🎯 Cuenta el tamaño total del archivo medido en bytes.
+    - flag: wc -m
+      description: >-
+        Cuenta caracteres lógicos (diferencia caracteres acentuados o emojis de
+        sus bytes).
+    - flag: nl -ba
+      description: 🎯 Numera absolutamente todas las líneas (incluso las líneas vacías).
+- id: sort-n-r-k-t-u
+  name: sort [-n|-r|-k|-t|-u]
+  synopsis: sort [-n] [-r] [-t] [-k]
+  description: Reorganizar registros alfabética o numéricamente por columnas
+  category: Procesar secuencias de texto usando filtros
+  subtopicIds:
+    - '103.2'
+  example: sort [-n] [-r] [-t] [-k]
+  flags:
+    - flag: sort (sin flags)
+      description: 'Ordena alfabéticamente. ⚠️ Atención:'
+    - flag: sort -n
+      description: >-
+        🎯 Clave de Examen: Compara los valores como números reales (2 antes que
+        10).
+    - flag: sort -r
+      description: 🎯 Invierte el criterio de ordenación (de mayor a menor o de Z a A).
+    - flag: '-'
+      description: '🎯 Key: selecciona la columna N por la que se ordenará la tabla.'
+    - flag: '-'
+      description: 🎯 Define el separador de campos para usar con
+    - flag: sort -u
+      description: Elimina líneas duplicadas durante la propia ordenación.
+- id: sed-e-n-i-s-buscar-reemplazo-g
+  name: sed [-e|-n|-i] 's/buscar/reemplazo/[g]'
+  synopsis: sed 's/origen/destino/g'  | sed -n '5p'
+  description: Transformar, sustituir y filtrar flujos de texto de forma no interactiva
+  category: Procesar secuencias de texto usando filtros
+  subtopicIds:
+    - '103.2'
+  example: sed 's/origen/destino/g'  | sed -n '5p'
+  flags:
+    - flag: s/antiguo/nuevo/g
+      description: 🎯
+    - flag: sed -n 'Np'
+      description: 🎯
+    - flag: sed -i 's/.../'
+      description: >-
+        🎯 Peligro: Modifica el archivo físico directamente en el disco en lugar
+        de solo mostrarlo.
+    - flag: sed '/patrón/d'
+      description: >-
+        Elimina de la salida todas las líneas que coincidan con la expresión
+        regular.
+- id: sha256sum-md5sum-sha512sum-c-fichero
+  name: sha256sum | md5sum | sha512sum [-c fichero]
+  synopsis: sha256sum  | sha256sum -c SHA256SUMS
+  description: Garantizar que un archivo no ha sido corrompido ni alterado maliciosamente
+  category: Procesar secuencias de texto usando filtros
+  subtopicIds:
+    - '103.2'
+  example: sha256sum  | sha256sum -c SHA256SUMS
+  flags:
+    - flag: '-'
+      description: >-
+        🎯 Calcula un hash de 256 bits (64 caracteres hex). El estándar moderno
+        oficial.
+    - flag: '-'
+      description: >-
+        Calcula un hash de 128 bits (32 caracteres hex). Rápido pero inseguro
+        criptográficamente.
+    - flag: '-c, --check'
+      description: >-
+        🎯 Clave de Examen: Lee el archivo de hashes y comprueba los ficheros
+        devolviendo
+    - flag: '--status'
+      description: >-
+        No imprime nada; solo devuelve código de salida 0 si todos los hashes
+        son válidos.
+- id: ls-l-a-h-d-i-r-t-s-ruta
+  name: ls [-l|-a|-h|-d|-i|-R|-t|-S] [ruta]
+  synopsis: ls -lhd  | ls -lai
+  description: >-
+    Consultar permisos, propietarios, tamaños reales y metadatos de archivos y
+    carpetas
+  category: Administración básica de archivos
+  subtopicIds:
     - '103.3'
-  example: cat /etc/os-release
+  example: ls -lhd  | ls -lai
   flags:
-    - flag: '-n, --number'
-      description: Enumera todas las líneas de la salida comenzando en 1.
-    - flag: '-b, --number-nonblank'
-      description: Enumera solo las líneas de salida no vacías.
-    - flag: '-E, --show-ends'
-      description: Muestra un símbolo $ al final de cada línea.
-- id: head
-  name: head
-  synopsis: head [OPCIÓN]... [ARCHIVO]...
-  description: Imprime las primeras 10 líneas de cada ARCHIVO en la salida estándar.
-  category: Filtros de Texto
-  subtopicIds:
-    - '103.4'
-    - '103.2'
-  example: head -n 5 /etc/passwd
-  flags:
-    - flag: '-n, --lines=K'
-      description: Imprime las primeras K líneas en lugar de las 10 habituales.
-    - flag: '-c, --bytes=K'
-      description: Imprime los primeros K bytes de cada archivo.
-- id: tail
-  name: tail
-  synopsis: tail [OPCIÓN]... [ARCHIVO]...
-  description: Imprime las últimas 10 líneas de cada ARCHIVO en la salida estándar.
-  category: Filtros de Texto
-  subtopicIds:
-    - '103.4'
-    - '103.2'
-  example: tail -f /var/log/syslog
-  flags:
-    - flag: '-f, --follow'
-      description: Sigue la adición de datos al archivo a medida que crece en tiempo real.
-    - flag: '-n, --lines=K'
-      description: Muestra las últimas K líneas del archivo.
-- id: wc
-  name: wc
-  synopsis: wc [OPCIÓN]... [ARCHIVO]...
+    - flag: ls -l
+      description: >-
+        🎯 Imprime 8 columnas: tipo, 9 permisos, enlaces, dueño UID, grupo GID,
+        tamaño, fecha y nombre.
+    - flag: ls -a
+      description: >-
+        🎯 Clave de Examen: Muestra todos los ficheros, incluidos los ocultos
+        que inician por punto (.) y
+    - flag: ls -d
+      description: >-
+        🎯 Clave de Examen: Lista las propiedades de la carpeta en sí, sin
+        entrar a listar su contenido.
+    - flag: ls -h
+      description: >-
+        🎯 Convierte los bytes en unidades entendibles (K, M, G, T) junto con la
+        opción -l.
+    - flag: ls -i
+      description: 🎯 Muestra el identificador numérico de inodo en la primera columna.
+    - flag: ls -t / -S
+      description: '''-t'' ordena cronológicamente (más recientes pri...'
+- id: mkdir-p-touch-t-mmddhhmm-rmdir
+  name: mkdir -p | touch [-t MMDDhhmm] | rmdir
+  synopsis: mkdir -p dir1/dir2/dir3 | touch -t 202610251200 file.c | rmdir dir
   description: >-
-    Imprime el número de saltos de línea, palabras y bytes para cada archivo
-    especificado.
-  category: Conteo y Estadísticas
+    Crear ficheros vacíos, modificar fechas de acceso/modificación y construir
+    árboles de carpetas
+  category: Administración básica de archivos
   subtopicIds:
-    - '103.4'
-    - '103.2'
-  example: wc -l < /etc/passwd
+    - '103.3'
+  example: mkdir -p dir1/dir2/dir3 | touch -t 202610251200 file.c | rmdir dir
   flags:
-    - flag: '-l, --lines'
-      description: Imprime únicamente el conteo total de líneas.
-    - flag: '-w, --words'
-      description: Imprime el conteo de palabras.
-    - flag: '-c, --bytes'
-      description: Imprime el conteo total de bytes.
-- id: grep
-  name: grep
-  synopsis: grep [OPCIÓN]... PATRÓN [ARCHIVO]...
+    - flag: mkdir -p
+      description: >-
+        🎯 Clave de Examen: Crea directorios padre intermedios automáticamente
+        sin error si ya existían.
+    - flag: '-'
+      description: 'Define permisos octales al crear la carpeta (ej:'
+    - flag: '-'
+      description: >-
+        🎯 Si el archivo no existe lo crea vacío (0 bytes); si ya existe,
+        actualiza su fecha al segundo actual.
+    - flag: touch -t YYYYMMDDhhmm
+      description: >-
+        🎯 Clave de Examen: Sobrescribe la marca temporal con una fecha y hora
+        exacta arbitraria.
+    - flag: '-'
+      description: >-
+        🎯 Comando defensivo: borra la carpeta ÚNICAMENTE si está 100% vacía.
+        Falla si contiene archivos.
+- id: cp-a-r-p-mv-i-rm-rf
+  name: cp [-a|-r|-p] | mv [-i] | rm [-rf]
+  synopsis: cp -a /origen /destino | mv origen nuevo_nombre | rm -rf /tmp/basura
   description: >-
-    Busca el PATRÓN indicado en cada ARCHIVO o entrada estándar e imprime las
-    líneas coincidentes.
-  category: Búsqueda y Filtros
+    Duplicar árboles preservando permisos de seguridad, renombrar y purgar
+    ficheros
+  category: Administración básica de archivos
+  subtopicIds:
+    - '103.3'
+  example: cp -a /origen /destino | mv origen nuevo_nombre | rm -rf /tmp/basura
+  flags:
+    - flag: cp -a
+      description: '🎯 Clave Absoluta de Examen: Equivale a'
+    - flag: cp -r, -R
+      description: >-
+        🎯 Copia carpetas pero cambia el dueño al usuario que ejecuta el comando
+        y actualiza las fechas al momento actual.
+    - flag: cp -p
+      description: >-
+        🎯 Preserva permisos originales, dueño y sellos de tiempo (incluido
+        dentro de -a).
+    - flag: mv origen dest
+      description: >-
+        🎯 Si el destino es la misma carpeta, renombra. Si es otra carpeta,
+        traslada el archivo.
+    - flag: '-'
+      description: 🎯
+- id: find-ruta-name-type-size-maxdepth
+  name: find [ruta] [-name|-type|-size|-maxdepth]
+  synopsis: find /var/log -type f -name '*.log' -size +10M
+  description: >-
+    Rastrear recursivamente el árbol de archivos en tiempo real según criterios
+    precisos
+  category: Administración básica de archivos
+  subtopicIds:
+    - '103.3'
+  example: find /var/log -type f -name '*.log' -size +10M
+  flags:
+    - flag: '-'
+      description: Punto de partida recursivo (por defecto
+    - flag: '-'
+      description: 🎯 Sensible a mayúsculas. ¡OBLIGATORIO entrecomillar los comodines (
+    - flag: '-'
+      description: 'Case-insensitive: coincide tanto con'
+    - flag: '-type [f|d|l]'
+      description: '🎯 Clave de Examen:'
+    - flag: '-size [+|-]N[k|M|G]'
+      description: '🎯 Clave de Examen:'
+    - flag: '-maxdepth N'
+      description: >-
+        🎯 Limita el rastreo a N niveles de subcarpetas (evita búsquedas
+        infinitas).
+- id: tar-c-x-t-v-f-archivo-tar-z-j-j-rutas
+  name: tar -[c|x|t][v][f archivo.tar] [-z|-j|-J] [rutas]
+  synopsis: >-
+    tar -czvf bkp.tar.gz /etc | tar -tvf bkp.tar.gz | tar -xvf bkp.tar.gz -C
+    /opt
+  description: >-
+    Crear, listar y restaurar archivos empaquetados preservando permisos y
+    directorios
+  category: Administración básica de archivos
+  subtopicIds:
+    - '103.3'
+  example: >-
+    tar -czvf bkp.tar.gz /etc | tar -tvf bkp.tar.gz | tar -xvf bkp.tar.gz -C
+    /opt
+  flags:
+    - flag: tar -c / -x / -t
+      description: '🎯 Operaciones:'
+    - flag: '-'
+      description: >-
+        🎯 ¡OBLIGATORIO! Especifica el fichero contenedor. Debe ir siempre
+        inmediatamente pegado al nombre del archivo.
+    - flag: tar -z
+      description: '🎯 Compresión gzip estándar: rápida y ultracompatible en todos los Unix.'
+    - flag: tar -j
+      description: '🎯 Compresión bzip2: archivos más pequeños a costa de mayor uso de CPU.'
+    - flag: tar -J (Mayúscula)
+      description: '🎯 Compresión xz: máxima tasa de compresión moderna con algoritmo LZMA2.'
+    - flag: '-'
+      description: '🎯 Cambia a la carpeta indicada antes de extraer (ej:'
+- id: cpio-o-cpio-i-cpio-p
+  name: cpio -o | cpio -i | cpio -p
+  synopsis: find . | cpio -ov > bkp.cpio | cpio -idv < bkp.cpio
+  description: >-
+    Archivar, restaurar o migrar árboles de archivos leídos desde la entrada
+    estándar (stdin)
+  category: Administración básica de archivos
+  subtopicIds:
+    - '103.3'
+  example: find . | cpio -ov > bkp.cpio | cpio -idv < bkp.cpio
+  flags:
+    - flag: cpio -o, --create
+      description: 🎯 Lee la lista de rutas por
+    - flag: cpio -i, --extract
+      description: 🎯 Lee el archivo empaquetado por
+    - flag: cpio -p
+      description: >-
+        🎯 Copia un árbol de directorios directamente a otra carpeta sin crear
+        fichero intermedio.
+    - flag: cpio -d
+      description: >-
+        🎯 Crea automáticamente las carpetas intermedias necesarias al restaurar
+        los ficheros.
+    - flag: cpio -t
+      description: >-
+        Muestra la lista de ficheros contenidos en el archivo sin extraerlos en
+        disco.
+- id: cmd-archivo-cmd-archivo-cmd-dev-null
+  name: cmd > archivo | cmd >> archivo | cmd > /dev/null
+  synopsis: uname -r > kernel.txt; uptime >> kernel.txt; cat kernel.txt
+  description: >-
+    Sobreescribir o concatenar el flujo de salida estándar (stdout / 1) en
+    archivos
+  category: Uso de secuencias de texto, tuberías y redireccionamientos
   subtopicIds:
     - '103.4'
+  example: uname -r > kernel.txt; uptime >> kernel.txt; cat kernel.txt
+  flags:
+    - flag: '> archivo (o 1>)'
+      description: >-
+        🎯 Sobreescribe el archivo por completo. Si ya existía, trunca y borra
+        todo su contenido.
+    - flag: '>> archivo (o 1>>)'
+      description: 🎯 Añade datos al final del fichero existente sin borrar lo anterior.
+    - flag: '> /dev/null'
+      description: '🎯 El agujero negro: descarta los datos de forma silenciosa e inmediata.'
+- id: cmd-2-errores-log-cmd-salida-log-2-1-cmd-todo-log
+  name: cmd 2> errores.log | cmd > salida.log 2>&1 | cmd &> todo.log
+  synopsis: >-
+    tar -czf bkp.tar.gz /var/www /root > bkp.log 2>&1 | find / -name '*.conf' 2>
+    /dev/null
+  description: >-
+    Separar fallos de diagnósticos o fusionar ambos canales para auditoría de
+    scripts y cron
+  category: Uso de secuencias de texto, tuberías y redireccionamientos
+  subtopicIds:
+    - '103.4'
+  example: >-
+    tar -czf bkp.tar.gz /var/www /root > bkp.log 2>&1 | find / -name '*.conf' 2>
+    /dev/null
+  flags:
+    - flag: 2> archivo
+      description: >-
+        🎯 Desvía únicamente los mensajes de fallo a un archivo; la salida
+        exitosa sigue mostrándose en pantalla.
+    - flag: 2> /dev/null
+      description: '🎯 Clave de Examen: Oculta avisos de fallo como'
+    - flag: '> archivo 2>&1'
+      description: >-
+        🎯 Clave Absoluta de Examen: Redirige stdout (1) al archivo y luego
+        envía stderr (2) al mismo destino. Válido en cualquier Unix.
+    - flag: '&> archivo'
+      description: Sintaxis rápida de Bash equivalente a
+- id: set-o-noclobber-set-o-noclobber-cmd-archivo
+  name: set -o noclobber | set +o noclobber | cmd >| archivo
+  synopsis: >-
+    set -o noclobber; echo 'test' > kernel.txt; echo 'forzado' >| kernel.txt;
+    cat kernel.txt
+  description: >-
+    Activar la protección de shell que impide sobreescribir archivos existentes
+    con el operador >
+  category: Uso de secuencias de texto, tuberías y redireccionamientos
+  subtopicIds:
+    - '103.4'
+  example: >-
+    set -o noclobber; echo 'test' > kernel.txt; echo 'forzado' >| kernel.txt;
+    cat kernel.txt
+  flags:
+    - flag: set -o noclobber
+      description: 🎯 Activa la protección contra sobreescritura accidental con
+    - flag: '>| archivo'
+      description: '🎯 Clave de Examen: Operador'
+    - flag: set +o noclobber
+      description: 🎯 Desactiva la protección permitiendo de nuevo
+    - flag: '>> (concatenar)'
+      description: La concatenación
+- id: comando1-comando2-comando3
+  name: comando1 | comando2 | comando3
+  synopsis: ps aux --sort=-%mem | awk '{print $1, $4, $11}' | head -n 4
+  description: >-
+    Procesar datos en streaming mediante memoria RAM sin crear molestos archivos
+    temporales en disco
+  category: Uso de secuencias de texto, tuberías y redireccionamientos
+  subtopicIds:
+    - '103.4'
+  example: ps aux --sort=-%mem | awk '{print $1, $4, $11}' | head -n 4
+  flags:
+    - flag: Operador tubería (|)
+      description: >-
+        🎯 Conecta directamente la salida del comando izquierdo a la entrada del
+        derecho mediante un búfer circular en RAM (64 KB). Cero I/O en disco.
+    - flag: Streaming Concurrente
+      description: >-
+        Los comandos no esperan a que el anterior termine: el segundo va
+        procesando líneas según el primero las va emitiendo.
+    - flag: ⚠️ Exclusión de stderr
+      description: '🎯 Clave Absoluta de Examen: La tubería'
+    - flag: '|& (Pipe de error Bash)'
+      description: 🎯 Atajo moderno de Bash equivalente a
+- id: comando-subcomando-comando-subcomando
+  name: comando $(subcomando) | comando `subcomando`
+  synopsis: tar -czf bkp-$(date +%F).tar.gz /var/www | kill -9 $(pgrep nginx)
+  description: >-
+    Inyectar dinámicamente fechas, rutas, PIDs o parámetros calculados dentro de
+    una orden de terminal
+  category: Uso de secuencias de texto, tuberías y redireccionamientos
+  subtopicIds:
+    - '103.4'
+  example: tar -czf bkp-$(date +%F).tar.gz /var/www | kill -9 $(pgrep nginx)
+  flags:
+    - flag: $(comando)
+      description: >-
+        🎯 Recomendada por LPI y administradores: legible, limpia y permite
+        anidar comandos infinitamente sin errores.
+    - flag: '`comando` (Backticks)'
+      description: >-
+        Heredada de la shell Bourne original. Se confunde fácilmente con
+        comillas simples (
+    - flag: Anidamiento limpio
+      description: '🎯 Con $(...) se anida directo:'
+    - flag: Ejecución en Subshell
+      description: >-
+        El comando interno se ejecuta en un proceso hijo independiente; las
+        variables creadas dentro se destruyen al terminar.
+- id: cmd-jobs-l-ctrl-z-bg-n-fg-n
+  name: cmd & | jobs [-l] | Ctrl+Z | bg [%n] | fg [%n]
+  synopsis: tar -czf bkp.tar.gz /var/www & | jobs -l | fg %1
+  description: >-
+    Liberar la consola de comandos largos, pausar tareas y alternar su ejecución
+    entre fondo y primer plano
+  category: Crear, supervisar y matar procesos
+  subtopicIds:
+    - '103.5'
+  example: tar -czf bkp.tar.gz /var/www & | jobs -l | fg %1
+  flags:
+    - flag: cmd &
+      description: >-
+        🎯 Inicia el comando directamente en background, devolviendo el prompt
+        de inmediato.
+    - flag: jobs -l
+      description: 🎯 Lista los jobs de la shell actual. La opción
+    - flag: Ctrl + Z
+      description: >-
+        🎯 Detiene y congela temporalmente el proceso de primer plano sin
+        matarlo.
+    - flag: bg [%n]
+      description: >-
+        🎯 Clave de Examen: Reanuda un trabajo detenido para que continúe
+        trabajando en segundo plano.
+    - flag: fg [%n]
+      description: >-
+        🎯 Trae el trabajo al frente de la consola para interactuar con él
+        (bloquea el prompt).
+- id: ps-aux-bsd-sin-guion-ps-ef-unix-con-guion
+  name: ps aux (BSD sin guión) | ps -ef (Unix con guión)
+  synopsis: ps aux | head -n 5 | ps -ef | grep nginx | ps --sort=-%mem
+  description: >-
+    Consultar la lista completa de procesos, consumo de CPU/RAM, usuarios y
+    estados en un microsegundo
+  category: Crear, supervisar y matar procesos
+  subtopicIds:
+    - '103.5'
+  example: ps aux | head -n 5 | ps -ef | grep nginx | ps --sort=-%mem
+  flags:
+    - flag: ps aux
+      description: '🎯 Clave de Examen:'
+    - flag: ps -ef
+      description: '🎯 Clave de Examen:'
+    - flag: VSZ frente a RSS
+      description: >-
+        🎯 VSZ = memoria virtual total reservada; RSS = memoria RAM física real
+        ocupada en chips.
+    - flag: ps --sort=-%cpu
+      description: Ordena de mayor a menor uso de procesador (-%cpu) o de memoria (-%mem).
+- id: uptime-free-h-m-g
+  name: uptime | free [-h|-m|-g]
+  synopsis: uptime | free -h | free -m
+  description: >-
+    Evaluar la saturación de los procesadores y diagnosticar el espacio real
+    disponible en RAM
+  category: Crear, supervisar y matar procesos
+  subtopicIds:
+    - '103.5'
+  example: uptime | free -h | free -m
+  flags:
+    - flag: load average (1, 5, 15)
+      description: >-
+        🎯 Promedio de procesos ejecutándose o en cola esperando CPU/disco en 1,
+        5 y 15 minutos.
+    - flag: free -h
+      description: >-
+        Muestra cifras en GiB, MiB o KiB en lugar de bytes planos difíciles de
+        leer.
+    - flag: Columna available
+      description: >-
+        🎯 Clave de Examen: Memoria real que pueden solicitar nuevas
+        aplicaciones sin recurrir a swap.
+    - flag: buff/cache
+      description: >-
+        Memoria usada para acelerar lecturas de disco que se cede
+        automáticamente si las apps la necesitan.
+- id: ps-l-ps-el-ps-o-pid-user-ni-pri-stat-cmd
+  name: ps -l | ps -el | ps -o pid,user,ni,pri,stat,cmd
+  synopsis: ps -l | ps -el | ps -o pid,ni,pri,cmd -C nginx
+  description: >-
+    Comprobar las columnas NI (Niceness) y PRI (Prioridad del kernel) y los
+    indicadores de STAT
+  category: Modificar la prioridad de ejecución de los procesos
+  subtopicIds:
+    - '103.6'
+  example: ps -l | ps -el | ps -o pid,ni,pri,cmd -C nginx
+  flags:
+    - flag: ps -l (o ps -el)
+      description: '🎯 Clave de Examen: Añade obligatoriamente las columnas'
+    - flag: '-'
+      description: '🎯 Permite seleccionar solo los campos que te interesan (ej:'
+    - flag: '-'
+      description: >-
+        🎯 Clave de Examen: El proceso tiene niceness negativo (not nice,
+        acapara CPU).
+    - flag: 'STAT: ''N'''
+      description: >-
+        🎯 Clave de Examen: El proceso tiene niceness positivo (nice, cortés con
+        la CPU).
+- id: top-dentro-de-top-pulsar-la-tecla-r
+  name: top (dentro de top pulsar la tecla 'r')
+  synopsis: top | dentro de top pulsar 'r' -> teclear PID -> teclear nuevo nice
+  description: >-
+    Supervisar las columnas PR y NI en vivo y modificar la prioridad de un
+    proceso sin salir del monitor
+  category: Modificar la prioridad de ejecución de los procesos
+  subtopicIds:
+    - '103.6'
+  example: top | dentro de top pulsar 'r' -> teclear PID -> teclear nuevo nice
+  flags:
+    - flag: Columna PR
+      description: >-
+        🎯 Valor de 0 a 39 que el kernel usa para el reparto de CPU (PR = 20 +
+        NI).
+    - flag: Columna NI
+      description: 🎯 Valor de -20 a +19 fijado por el usuario o administrador.
+    - flag: Tecla 'r' (Renice)
+      description: >-
+        🎯 Clave de Examen: Solicita el PID y el nuevo valor de nice para
+        aplicarlo al vuelo.
+    - flag: Tecla 'q'
+      description: Cierra el monitor interactivo y devuelve el control a la terminal.
+- id: grep-a-z-grep-0-9-grep-alnum
+  name: grep '[a-z]' | grep '[^0-9]' | grep '[[:alnum:]]'
+  synopsis: >-
+    ss -tuln | grep -E ':[[:digit:]]+' | head -n 2; grep -E
+    '^[[:alpha:]]+:[^:]+:[[:digit:]]+:' /etc/passwd | head -n 2
+  description: >-
+    Definir conjuntos de caracteres y clases POSIX portables entre diferentes
+    configuraciones regionales
+  category: Realizar búsquedas en archivos de texto usando expresiones regulares
+  subtopicIds:
     - '103.7'
-  example: grep -i "root" /etc/passwd
+  example: >-
+    ss -tuln | grep -E ':[[:digit:]]+' | head -n 2; grep -E
+    '^[[:alpha:]]+:[^:]+:[[:digit:]]+:' /etc/passwd | head -n 2
+  flags:
+    - flag: '[abc] / [a-z]'
+      description: >-
+        Coincide con exactamente UN carácter de los listados o dentro del rango
+        alfabético especificado.
+    - flag: '[^0-9] / [^abc]'
+      description: >-
+        🎯 Negación de conjunto: coincide con cualquier carácter que NO sea uno
+        de los indicados dentro del corchete.
+    - flag: '[[:digit:]]'
+      description: >-
+        🎯 Solo dígitos numéricos [0-9]. Totalmente portable ante cualquier
+        configuración de idioma del servidor.
+    - flag: '[[:alpha:]]'
+      description: 🎯 Solo letras alfabéticas [a-zA-Z], respetando caracteres del idioma.
+    - flag: '[[:alnum:]]'
+      description: '🎯 Caracteres alfanuméricos: unión de letras y dígitos ([a-zA-Z0-9]).'
+    - flag: '[[:space:]]'
+      description: Espacios en blanco, tabulaciones (\t) y saltos de línea (\n).
+    - flag: ⚠️ Doble Corchete
+      description: '🎯 ¡Regla de Examen!:'
+- id: grep-e-colou-r-grep-e-0-9-1-3-grep-ab-c
+  name: grep -E 'colou?r' | grep -E '[0-9]{1,3}\.' | grep 'ab*c'
+  synopsis: >-
+    echo -e 'color\ncolour\ncolouur' | grep -E 'colou?r'; grep -E 'HTTP/1\.[01]"
+    [2-5][0-9]{2}' /var/log/nginx/access.log 2>/dev/null | head -n 2
+  description: >-
+    Definir multiplicidades: opcionalidad, repeticiones mínimas y rangos
+    numéricos acotados
+  category: Realizar búsquedas en archivos de texto usando expresiones regulares
+  subtopicIds:
+    - '103.7'
+  example: >-
+    echo -e 'color\ncolour\ncolouur' | grep -E 'colou?r'; grep -E 'HTTP/1\.[01]"
+    [2-5][0-9]{2}' /var/log/nginx/access.log 2>/dev/null | head -n 2
+  flags:
+    - flag: '* (Cero o más)'
+      description: >-
+        El elemento previo puede no aparecer o repetirse infinitas veces.
+        Disponible de serie tanto en BRE como en ERE.
+    - flag: + (Uno o más - ERE)
+      description: >-
+        🎯 El elemento previo DEBE aparecer al menos una vez (obligatorio). En
+        BRE requiere escape:
+    - flag: '? (Cero o uno - ERE)'
+      description: >-
+        🎯 Elemento opcional: aparece una sola vez o ninguna. Ideal para
+        variantes gramaticales. En BRE requiere:
+    - flag: '{n} (Exactamente n - ERE)'
+      description: 'Coincide exactamente n repeticiones (ej:'
+    - flag: '{n,m} (Entre n y m - ERE)'
+      description: 'Rango cerrado: mínimo n repeticiones y máximo m repeticiones (ej:'
+    - flag: '{n,} (Al menos n - ERE)'
+      description: 'Rango abierto superior: mínimo n repeticiones sin límite máximo.'
+- id: grep-e-patrona-patronb-grep-e-gr-a-e-y
+  name: grep -E '(patronA|patronB)' | grep -E 'gr(a|e)y'
+  synopsis: >-
+    grep -E '(Failed|Accepted) password for' /var/log/auth.log 2>/dev/null |
+    head -n 3
+  description: >-
+    Evaluar condiciones OR entre múltiples subpatrones y delimitar el alcance
+    con paréntesis
+  category: Realizar búsquedas en archivos de texto usando expresiones regulares
+  subtopicIds:
+    - '103.7'
+  example: >-
+    grep -E '(Failed|Accepted) password for' /var/log/auth.log 2>/dev/null |
+    head -n 3
+  flags:
+    - flag: '| (Alternancia OR)'
+      description: 🎯 Operador lógico
+    - flag: ( ) (Agrupamiento)
+      description: '🎯 Delimita el alcance de la alternancia o cuantificador:'
+    - flag: \1, \2 (Backreferences)
+      description: >-
+        🎯 Referencias hacia atrás: reutiliza el texto exacto capturado por el
+        grupo 1 o grupo 2. Ej:
+    - flag: ⚠️ Trampa en BRE
+      description: En
+- id: grep-bre-egrep-grep-e-ere-fgrep-grep-f-fixed
+  name: grep (BRE) | egrep / grep -E (ERE) | fgrep / grep -F (Fixed)
+  synopsis: >-
+    fgrep '192.168.1.1' /etc/hosts; grep -F '*.tar.gz' /var/log/dpkg.log
+    2>/dev/null | head -n 2
+  description: >-
+    Diferenciar los tres motores de búsqueda históricos y su equivalencia
+    moderna con flags
+  category: Realizar búsquedas en archivos de texto usando expresiones regulares
+  subtopicIds:
+    - '103.7'
+  example: >-
+    fgrep '192.168.1.1' /etc/hosts; grep -F '*.tar.gz' /var/log/dpkg.log
+    2>/dev/null | head -n 2
+  flags:
+    - flag: grep (Global Regexp Print)
+      description: >-
+        🎯 Motor estándar BRE por defecto. Los operadores avanzados (+, ?, |,
+        ()) requieren barra invertida.
+    - flag: egrep (grep -E)
+      description: >-
+        🎯 Extended grep: motor ERE. Soporta toda la sintaxis moderna (+, ?, |,
+        ()) de forma directa y nativa.
+    - flag: fgrep (grep -F)
+      description: >-
+        🎯 Fixed grep: ¡CERO expresiones regulares! Busca cadenas de texto
+        literal puro a máxima velocidad.
+    - flag: ⚡ Ventaja de fgrep
+      description: '🎯 Inmunidad a metacaracteres: Si buscas'
+- id: grep-i-error-grep-v-nologin-grep-c-failed-grep-n-root
+  name: grep -i 'error' | grep -v 'nologin' | grep -c 'failed' | grep -n 'root'
+  synopsis: >-
+    grep -vn 'nologin' /etc/passwd | head -n 3; grep -ci 'failed password'
+    /var/log/auth.log 2>/dev/null || echo '42'
+  description: >-
+    Filtrar por insensibilidad a mayúsculas, inversión de coincidencia, conteo y
+    numeración de líneas
+  category: Realizar búsquedas en archivos de texto usando expresiones regulares
+  subtopicIds:
+    - '103.7'
+  example: >-
+    grep -vn 'nologin' /etc/passwd | head -n 3; grep -ci 'failed password'
+    /var/log/auth.log 2>/dev/null || echo '42'
   flags:
     - flag: '-i, --ignore-case'
-      description: Ignora diferencias entre mayúsculas y minúsculas.
+      description: '🎯 Ignora diferencias entre mayúsculas y minúsculas:'
     - flag: '-v, --invert-match'
-      description: Invierte el sentido del filtro para seleccionar líneas no coincidentes.
-    - flag: '-n, --line-number'
-      description: Muestra el número de línea de cada coincidencia.
-- id: sort
-  name: sort
-  synopsis: sort [OPCIÓN]... [ARCHIVO]...
-  description: >-
-    Ordena las líneas de todos los ARCHIVOS indicados en orden alfabético o
-    numérico.
-  category: Ordenación y Filtros
-  subtopicIds:
-    - '103.4'
-    - '103.2'
-  example: 'sort -k 3 -n -t: /etc/passwd'
-  flags:
-    - flag: '-n, --numeric-sort'
-      description: Compara según el valor numérico de la cadena.
-    - flag: '-r, --reverse'
-      description: Invierte el orden de la comparación.
-    - flag: '-t, --field-separator=SEP'
-      description: Utiliza SEP en lugar de espacios como delimitador de campos.
-- id: uniq
-  name: uniq
-  synopsis: uniq [OPCIÓN]... [ENTRADA [SALIDA]]
-  description: >-
-    Filtra las líneas repetidas y consecutivas de la entrada, escribiendo en la
-    salida.
-  category: Filtros de Duplicados
-  subtopicIds:
-    - '103.4'
-    - '103.2'
-  example: sort lista.txt | uniq -c
-  flags:
+      description: >-
+        🎯 Invierte el filtro: muestra ÚNICAMENTE las líneas que NO contienen el
+        patrón indicado (vital para filtrar ruido).
     - flag: '-c, --count'
-      description: Prefija las líneas con el número de apariciones detectadas.
-    - flag: '-d, --repeated'
-      description: Imprime solo las líneas duplicadas.
-    - flag: '-u, --unique'
-      description: Imprime solo las líneas únicas que no tienen duplicados.
-- id: tr
-  name: tr
-  synopsis: tr [OPCIÓN]... CONJUNTO1 [CONJUNTO2]
+      description: >-
+        🎯 Conteo de coincidencias: en lugar de imprimir las líneas de texto,
+        imprime solo el número total de coincidencias.
+    - flag: '-n, --line-number'
+      description: >-
+        🎯 Número de línea: antepone el número de línea original del fichero a
+        cada coincidencia (ideal para abrir con vim +N).
+- id: grep-lw-port-etc-ssh-grep-oe-0-9-0-9-0-9-0-9-grep-x-admin
+  name: >-
+    grep -lw 'Port' /etc/ssh/* | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' |
+    grep -x 'admin'
+  synopsis: >-
+    grep -lw 'PermitRootLogin' /etc/ssh/*; grep -oE
+    '[0-9]{1,3}(\.[0-9]{1,3}){3}' /etc/hosts | head -n 2
   description: >-
-    Traduce, comprime y/o elimina caracteres leídos de la entrada estándar,
-    escribiendo en la salida estándar.
-  category: Transformación de Caracteres
+    Listar ficheros coincidentes (-l), acotar por límite de palabra (-w), línea
+    exacta (-x) y extraer datos (-o)
+  category: Realizar búsquedas en archivos de texto usando expresiones regulares
   subtopicIds:
-    - '103.4'
-    - '103.2'
-  example: cat archivo.txt | tr "a-z" "A-Z"
+    - '103.7'
+  example: >-
+    grep -lw 'PermitRootLogin' /etc/ssh/*; grep -oE
+    '[0-9]{1,3}(\.[0-9]{1,3}){3}' /etc/hosts | head -n 2
   flags:
-    - flag: '-d, --delete'
-      description: Elimina los caracteres indicados en CONJUNTO1.
-    - flag: '-s, --squeeze-repeats'
-      description: Reemplaza secuencias repetidas de un carácter por una sola aparición.
-- id: sed
-  name: sed
-  synopsis: sed [OPCIÓN]... {script} [archivo-entrada]...
+    - flag: '-l, --files-with-matches'
+      description: >-
+        🎯 Clave de Examen: Imprime SOLO los nombres de los ficheros que
+        contienen coincidencias, sin imprimir su contenido.
+    - flag: '-w, --word-regexp'
+      description: >-
+        🎯 Palabra completa: solo coincide si el patrón está rodeado por límites
+        de palabra (evita que
+    - flag: '-x, --line-regexp'
+      description: >-
+        Coincidencia de línea completa estricta: toda la línea debe ser
+        exactamente idéntica al patrón (equivale a
+    - flag: '-o, --only-matching'
+      description: >-
+        🎯 La Navaja Suiza: Imprime ÚNICAMENTE el trozo de texto coincidente con
+        la regex en lugar de la línea entera (ideal para extraer IPs/tokens).
+- id: grep-rn-serverroot-etc-apache2-grep-b-1-a-2-fatal-var-log-app-log
+  name: >-
+    grep -rn 'ServerRoot' /etc/apache2/ | grep -B 1 -A 2 'FATAL'
+    /var/log/app.log
+  synopsis: >-
+    grep -rn -C 1 'ServerRoot' /etc/apache2/ 2>/dev/null || grep -B 1 -A 1
+    '127.0.0.1' /etc/hosts
   description: >-
-    Editor de flujo de texto programable para filtrar y transformar texto de
-    entrada.
-  category: Edición de Flujos de Texto
+    Rastrear directorios (-r) y extraer líneas de contexto previo (Before),
+    posterior (After) o combinado (Context)
+  category: Realizar búsquedas en archivos de texto usando expresiones regulares
   subtopicIds:
-    - '103.4'
-    - '103.2'
-  example: sed "s/antiguo/nuevo/g" archivo.txt
+    - '103.7'
+  example: >-
+    grep -rn -C 1 'ServerRoot' /etc/apache2/ 2>/dev/null || grep -B 1 -A 1
+    '127.0.0.1' /etc/hosts
   flags:
-    - flag: '-i, --in-place'
-      description: Edita los archivos directamente en disco sin volcarlos a la salida.
-    - flag: '-e script'
-      description: Añade el script a los comandos que se van a ejecutar.
-- id: cut
-  name: cut
-  synopsis: cut OPCIÓN... [ARCHIVO]...
+    - flag: '-r, --recursive'
+      description: >-
+        🎯 Clave de Examen: Busca de forma recursiva en todos los subdirectorios
+        y ficheros del directorio indicado.
+    - flag: '-R, --dereference-recursive'
+      description: >-
+        Búsqueda recursiva que además sigue y desreferencia todos los enlaces
+        simbólicos (symlinks).
+    - flag: '-'
+      description: >-
+        🎯 Imprime N líneas de contexto POSTERIORES (After) a la línea
+        coincidente (para ver el mensaje de error).
+    - flag: '-'
+      description: >-
+        🎯 Imprime N líneas de contexto ANTERIORES (Before) a la línea
+        coincidente (para ver el comando causante).
+    - flag: '-'
+      description: >-
+        🎯 Imprime N líneas de contexto tanto anteriores como posteriores
+        simultáneamente (Before + After).
+- id: less-var-log-syslog-dentro-de-less-usar-o
+  name: less /var/log/syslog (dentro de less usar '/' o '?')
+  synopsis: "# Al abrir un log masivo con 'less /var/log/syslog':\r\n/kernel.*error\r\n# Salta instantáneamente a la primera coincidencia hacia adelante."
   description: >-
-    Elimina secciones seleccionadas de cada línea de los archivos y las envía a
-    stdout.
-  category: Extracción de Campos
+    Ejecutar búsquedas interactivas con soporte nativo de expresiones regulares
+    en el visor less
+  category: Realizar búsquedas en archivos de texto usando expresiones regulares
   subtopicIds:
-    - '103.4'
-    - '103.2'
-  example: 'cut -d: -f1,7 /etc/passwd'
+    - '103.7'
+  example: "# Al abrir un log masivo con 'less /var/log/syslog':\r\n/kernel.*error\r\n# Salta instantáneamente a la primera coincidencia hacia adelante."
   flags:
-    - flag: '-d, --delimiter=DELIM'
-      description: Usa DELIM en lugar de tabulador para delimitar campos.
-    - flag: '-f, --fields=LISTA'
-      description: Selecciona solo los campos indicados en LISTA.
-- id: paste
-  name: paste
-  synopsis: paste [OPCIÓN]... [ARCHIVO]...
+    - flag: '-'
+      description: >-
+        🎯 Clave de Examen: Busca hacia ADELANTE (hacia el final del fichero) el
+        patrón de expresión regular indicado.
+    - flag: '-'
+      description: >-
+        🎯 Clave de Examen: Busca hacia ATRÁS (hacia el inicio del fichero) el
+        patrón de expresión regular indicado.
+    - flag: 'n'
+      description: >-
+        🎯 Siguiente coincidencia: salta al siguiente resultado en la misma
+        dirección de la búsqueda.
+    - flag: 'N'
+      description: >-
+        🎯 Coincidencia anterior: salta al resultado anterior en dirección
+        opuesta.
+    - flag: q
+      description: 🎯 Salir inmediatamente de less regresando al prompt de la shell.
+- id: i-i-a-a-o-o-desde-modo-normal
+  name: i | I | a | A | o | O (desde Modo Normal)
+  synopsis: "# En modo normal pulsas 'o' y vi abre una línea en blanco debajo:\r\n-- INSERT --"
   description: >-
-    Escribe líneas consistentes en las líneas secuenciales correspondientes de
-    cada ARCHIVO, separadas por tabuladores.
-  category: Unión de Flujos
+    Entrar en Modo Inserción para escribir texto en diferentes posiciones
+    relativas al cursor
+  category: Edición básica de archivos
   subtopicIds:
-    - '103.4'
-    - '103.2'
-  example: paste -d, nombres.txt apellidos.txt
+    - '103.8'
+  example: "# En modo normal pulsas 'o' y vi abre una línea en blanco debajo:\r\n-- INSERT --"
   flags:
-    - flag: '-d, --delimiters=LISTA'
-      description: Reutiliza los caracteres de LISTA como delimitadores.
-    - flag: '-s, --serial'
-      description: Pega un archivo cada vez en lugar de hacerlo en paralelo.
-- id: split
-  name: split
-  synopsis: split [OPCIÓN]... [ARCHIVO [PREFIJO]]
-  description: Divide un ARCHIVO en piezas de tamaño fijo con un prefijo designado.
-  category: División de Archivos
-  subtopicIds:
-    - '103.4'
-    - '103.2'
-  example: split -b 100M archivo_grande.iso parte_
-  flags:
-    - flag: '-b, --bytes=TAMAÑO'
-      description: Pone TAMAÑO bytes por cada archivo de salida generado.
-    - flag: '-l, --lines=NÚMERO'
-      description: Pone NÚMERO líneas por cada archivo de salida.
-- id: od
-  name: od
-  synopsis: od [OPCIÓN]... [ARCHIVO]...
+    - flag: i / I
+      description: 🎯
+    - flag: a / A
+      description: 🎯
+    - flag: o (Open below)
+      description: >-
+        🎯 Clave de Examen: Abre una nueva línea en blanco DEBAJO de la actual y
+        entra en inserción.
+    - flag: O (Open above)
+      description: >-
+        🎯 Clave de Examen: Abre una nueva línea en blanco ENCIMA de la actual y
+        entra en inserción.
+- id: w-q-q-wq-x-zz-zq
+  name: ':w | :q | :q! | :wq | :x | ZZ | ZQ'
+  synopsis: ":wq /tmp/nuevo.txt\r\n# Guarda los cambios y cierra el editor saliendo a la shell de Linux."
   description: >-
-    Vuelca los archivos en formatos octal, hexadecimal o con caracteres
-    legibles.
-  category: Volcado Octal y Binario
+    Escribir cambios en disco, salir del editor o forzar el cierre descartando
+    modificaciones
+  category: Edición básica de archivos
   subtopicIds:
-    - '103.4'
-    - '103.2'
-  example: od -c archivo.bin
+    - '103.8'
+  example: ":wq /tmp/nuevo.txt\r\n# Guarda los cambios y cierra el editor saliendo a la shell de Linux."
   flags:
+    - flag: ':w [archivo]'
+      description: Escribe los cambios en el disco sin salir de vi.
+    - flag: ':q'
+      description: Sale de vi; falla si hay modificaciones pendientes de guardar.
+    - flag: ':q!'
+      description: '🎯 Clave Absoluta de Examen: Descarta cambios y huye inmediatamente.'
+    - flag: ':wq (o :x)'
+      description: 🎯 Guarda el documento y cierra vi.
+    - flag: ZZ / ZQ
+      description: '🎯 En Modo Normal:'
+- id: export-visual-vim-export-editor-nano-sudo-update-alternatives-config-editor
+  name: >-
+    export VISUAL=vim | export EDITOR=nano | sudo update-alternatives --config
+    editor
+  synopsis: export EDITOR=nano; export VISUAL=vim; crontab -e
+  description: >-
+    Definir el editor predeterminado a nivel de sesión ($VISUAL, $EDITOR) o para
+    todo el sistema (update-alternatives)
+  category: Edición básica de archivos
+  subtopicIds:
+    - '103.8'
+  example: export EDITOR=nano; export VISUAL=vim; crontab -e
+  flags:
+    - flag: $VISUAL
+      description: >-
+        🎯 Máxima Prioridad: Variable pensada para terminales de pantalla
+        completa. Si está definida, los programas interactivos (crontab, visudo,
+        git) la usan ANTES que $EDITOR.
+    - flag: $EDITOR
+      description: >-
+        🎯 Estándar POSIX: Variable histórica para editores de texto. Se utiliza
+        si $VISUAL no está definida o en utilidades en línea de comandos.
+    - flag: update-alternatives
+      description: >-
+        🎯 Configuración Global del Sistema: Comando de Debian/Ubuntu para
+        cambiar el enlace simbólico maestro /usr/bin/editor entre nano,
+        vim.basic o vim.tiny.
+    - flag: select-editor
+      description: >-
+        Comando interactivo para usuarios sin privilegios de root que guarda la
+        preferencia personal en ~/.selected_editor.
+- id: sudo-fdisk-dev-sdb-sudo-fdisk-l-dev-sdb
+  name: sudo fdisk /dev/sdb | sudo fdisk -l /dev/sdb
+  synopsis: sudo fdisk -l /dev/sdb
+  description: >-
+    Gestionar particiones en discos MBR de forma interactiva con confirmación
+    obligatoria al guardar
+  category: Creación de particiones y sistemas de archivos
+  subtopicIds:
+    - '104.1'
+  example: sudo fdisk -l /dev/sdb
+  flags:
+    - flag: m
+      description: Ayuda
+    - flag: p
+      description: Imprimir
+    - flag: 'n'
+      description: Nueva
+    - flag: t
+      description: Tipo
+    - flag: d
+      description: Borrar
+    - flag: w
+      description: Guardar
+    - flag: q
+      description: Salir
+- id: sudo-gdisk-dev-sdc-sudo-gdisk-l-dev-sdc
+  name: sudo gdisk /dev/sdc | sudo gdisk -l /dev/sdc
+  synopsis: sudo gdisk -l /dev/sdc
+  description: >-
+    Particionar discos modernos GPT con identificadores simplificados de 4
+    dígitos
+  category: Creación de particiones y sistemas de archivos
+  subtopicIds:
+    - '104.1'
+  example: sudo gdisk -l /dev/sdc
+  flags:
+    - flag: '?'
+      description: Ayuda
+    - flag: p
+      description: Imprimir
+    - flag: 'n'
+      description: Nueva
+    - flag: t
+      description: Tipo (4 dígitos)
+    - flag: w
+      description: Escribir
+    - flag: q
+      description: Salir
+- id: sudo-mkfs-t-ext4-dev-sdb1-sudo-mke2fs-t-ext4-m-1-dev-sdb1
+  name: sudo mkfs -t ext4 /dev/sdb1 | sudo mke2fs -t ext4 -m 1 /dev/sdb1
+  synopsis: sudo mke2fs -t ext4 -L 'DATOS' -m 1 /dev/sdb1
+  description: >-
+    Amueblar la partición con la estructura de archivos necesaria para guardar
+    datos
+  category: Creación de particiones y sistemas de archivos
+  subtopicIds:
+    - '104.1'
+  example: sudo mke2fs -t ext4 -L 'DATOS' -m 1 /dev/sdb1
+  flags:
+    - flag: '-'
+      description: Comando Atajo
+    - flag: mke2fs
+      description: Herramienta Nativa
+    - flag: '-'
+      description: Etiqueta (Label)
+    - flag: '-'
+      description: Reserva Root
+    - flag: '-j'
+      description: Añadir Journal
+- id: sudo-mkfs-xfs-f-dev-sdb2-sudo-mkfs-btrfs-dev-sdb3
+  name: sudo mkfs.xfs [-f] /dev/sdb2 | sudo mkfs.btrfs /dev/sdb3
+  synopsis: sudo mkfs.xfs -f -L 'BD_PROD' /dev/sdb2
+  description: >-
+    Elegir entre rendimiento masivo en bases de datos (XFS) o instantáneas
+    avanzadas (Btrfs)
+  category: Creación de particiones y sistemas de archivos
+  subtopicIds:
+    - '104.1'
+  example: sudo mkfs.xfs -f -L 'BD_PROD' /dev/sdb2
+  flags:
+    - flag: mkfs.xfs [-f]
+      description: Formatear XFS
+    - flag: '-'
+      description: Agrandar XFS
+    - flag: mkfs.btrfs
+      description: Formatear Btrfs
+    - flag: btrfs fi resize
+      description: Redimensionar Btrfs
+- id: sudo-mkswap-dev-sdb2-sudo-swapon-show-sudo-swapoff-dev-sdb2
+  name: sudo mkswap /dev/sdb2 | sudo swapon --show | sudo swapoff /dev/sdb2
+  synopsis: sudo mkswap /dev/sdb2 && sudo swapon /dev/sdb2 && swapon --show
+  description: >-
+    Gestionar espacio de disco para auxiliar a la memoria RAM física ante
+    saturaciones
+  category: Creación de particiones y sistemas de archivos
+  subtopicIds:
+    - '104.1'
+  example: sudo mkswap /dev/sdb2 && sudo swapon /dev/sdb2 && swapon --show
+  flags:
+    - flag: '-'
+      description: Formatear Swap
+    - flag: '-'
+      description: Activar Swap
+    - flag: swapon --show
+      description: Ver Estado (-s)
+    - flag: swapon -a
+      description: Activar Todo
+    - flag: '-'
+      description: Desactivar Swap
+- id: chmod-4755-chmod-2775-chmod-1777-chmod-u-s-chmod-g-s-chmod-t
+  name: chmod 4755 | chmod 2775 | chmod 1777 | chmod u+s | chmod g+s | chmod +t
+  synopsis: >-
+    mkdir /tmp/colaborativo; chmod 2775 /tmp/colaborativo; ls -ld
+    /tmp/colaborativo /tmp
+  description: >-
+    Activar o desactivar bits de permisos especiales sobre binarios y
+    directorios
+  category: Administración de los permisos y los propietarios de los archivos
+  subtopicIds:
+    - '104.5'
+  example: >-
+    mkdir /tmp/colaborativo; chmod 2775 /tmp/colaborativo; ls -ld
+    /tmp/colaborativo /tmp
+  flags:
+    - flag: chmod 4755
+      description: '🎯 Asigna SUID: el primer dígito octal'
+    - flag: chmod 2775
+      description: '🎯 Asigna SGID en directorio: el primer dígito'
+    - flag: chmod 1777
+      description: '🎯 Asigna Sticky Bit: el primer dígito'
+    - flag: chmod u+s / g+s / +t
+      description: >-
+        🎯 Activa permisos especiales en modo simbólico (u+s SUID, g+s SGID, +t
+        Sticky).
+    - flag: chmod 0755
+      description: El cero
+- id: lsmod
+  name: lsmod
+  synopsis: lsmod | modinfo
+  description: >-
+    Un módulo es un controlador (driver) compilado (.ko) que añade funciones al
+    kernel en caliente sin reiniciar. Con lsmod y modinfo los auditamos:
+  category: Ajustes de hardware del sistema
+  subtopicIds:
+    - '101.1'
+  example: lsmod | modinfo
+  flags:
+    - flag: lsmod
+      description: >-
+        Lee /proc/modules y formatea 3 columnas: Nombre del módulo, tamaño en
+        bytes y módulos dependientes que lo usan.
+    - flag: modinfo <módulo>
+      description: >-
+        Muestra autor, licencia, ruta del archivo .ko.xz, dependencias y
+        parámetros configurables.
+    - flag: '-d <módulo>'
+      description: Muestra únicamente la descripción textual del módulo (description).
+    - flag: '-p <módulo>'
+      description: Lista todos los parámetros que acepta el módulo con sus tipos de datos.
+    - flag: '-F field'
+      description: >-
+        Filtra un campo específico de la cabecera (ej: filename, license,
+        depends).
+- id: linux
+  name: linux
+  synopsis: linux /boot/vmlinuz root=UUID=... [opciones]
+  description: >-
+    Inspeccionar con /proc/cmdline los parámetros reales y saber cuándo añadir
+    opciones de emergencia
+  category: Arranque del sistema
+  subtopicIds:
+    - '101.2'
+  example: linux /boot/vmlinuz root=UUID=... [opciones]
+  flags:
+    - flag: root=UUID=... (o /dev/sda1)
+      description: >-
+        🎯 Clave de Examen: Indica qué partición del disco contiene el sistema
+        operativo real '/'. Se prefiere UUID porque nunca cambia.
+    - flag: ro
+      description: >-
+        Monta inicialmente la raíz en Solo Lectura para que el sistema revise el
+        disco de forma segura antes de escribir nada.
+    - flag: quiet splash
+      description: >-
+        Silencia los mensajes técnicos del kernel y muestra la pantalla gráfica
+        con el logotipo de carga de la distribución.
+    - flag: nomodeset
+      description: >-
+        Ejemplo real: Desactiva los drivers gráficos avanzados si la pantalla se
+        queda congelada en negro al arrancar.
+    - flag: acpi=off
+      description: >-
+        Ejemplo real: Desactiva la gestión de energía de la placa base si el
+        equipo se bloquea al suspender o encender.
+    - flag: mem=2G
+      description: >-
+        Ejemplo real: Limita la RAM a 2 GB para simular servidores pequeños o
+        esquivar un módulo de memoria roto.
+- id: runlevel
+  name: runlevel
+  synopsis: runlevel | telinit | init
+  description: >-
+    Consultar el nivel previo y actual, y solicitar la transición hacia un nuevo
+    nivel
+  category: Niveles de ejecución, objetivos y apagado
+  subtopicIds:
+    - '101.3'
+  example: runlevel | telinit | init
+  flags:
+    - flag: runlevel
+      description: >-
+        🎯 Clave de Examen: Muestra dos caracteres: el nivel previo (N = ninguno
+        si no ha cambiado desde el arranque) y el nivel actual.
+    - flag: telinit <0-6>
+      description: >-
+        Solicita a init cambiar al nivel indicado (ej: telinit 1 pasa a
+        monousuario; telinit 6 reinicia).
+    - flag: telinit q / Q
+      description: >-
+        🎯 Clave de Examen: Recarga el archivo /etc/inittab sin necesidad de
+        reiniciar el sistema.
+    - flag: Prefijo 'S' (Start)
+      description: >-
+        En /etc/rcX.d/, los enlaces que empiezan por S (ej: S01ssh) arrancan el
+        servicio pasando el argumento 'start'.
+    - flag: Prefijo 'K' (Kill)
+      description: >-
+        Los enlaces que empiezan por K (ej: K01apache2) detienen el servicio
+        pasando el argumento 'stop'.
+- id: shutdown
+  name: shutdown
+  synopsis: shutdown | reboot | poweroff | wall
+  description: >-
+    Avisar a los usuarios y programar el cierre ordenado de procesos y
+    desmontaje de discos
+  category: Niveles de ejecución, objetivos y apagado
+  subtopicIds:
+    - '101.3'
+  example: shutdown | reboot | poweroff | wall
+  flags:
+    - flag: '-h / -P / --poweroff'
+      description: >-
+        🎯 Clave de Examen: Detiene los procesos y corta la energía eléctrica de
+        la máquina.
+    - flag: '-r / --reboot'
+      description: >-
+        🎯 Clave de Examen: Reinicia el sistema operativo tras el apagado
+        ordenado.
+    - flag: '-H / --halt'
+      description: >-
+        Detiene todos los procesos y el kernel, pero deja la placa base con
+        corriente encendida.
     - flag: '-c'
-      description: Muestra caracteres ASCII legibles o secuencias de escape.
-    - flag: '-t, --format=TIPO'
-      description: Selecciona el formato de volcado de salida (ej. x1, o2).
-- id: pr
-  name: pr
-  synopsis: pr [OPCIÓN]... [ARCHIVO]...
-  description: >-
-    Pagina o formatea archivos de texto plano para su impresión o visualización
-    en columnas.
-  category: Paginación y Formato
-  subtopicIds:
-    - '103.4'
-    - '103.2'
-  example: pr -2 -h "Reporte de Usuarios" usuarios.txt
-  flags:
-    - flag: '-COLUMN, --columns=COLUMN'
-      description: Produce una salida formateada en tantas columnas como se indique.
-    - flag: '-h CABECERA'
       description: >-
-        Utiliza CABECERA en lugar del nombre del archivo en la cabecera de
-        página.
-- id: tac
-  name: tac
-  synopsis: tac [OPCIÓN]... [ARCHIVO]...
-  description: >-
-    Concatena e imprime los archivos en orden inverso línea por línea (última
-    línea primero).
-  category: Inversión de Líneas
-  subtopicIds:
-    - '103.4'
-    - '103.3'
-  example: tac /var/log/auth.log | head -n 20
-  flags:
-    - flag: '-b, --before'
-      description: Coloca el separador antes de la cadena en lugar de después.
-    - flag: '-r, --regex'
-      description: Interpreta el separador como una expresión regular.
-- id: find
-  name: find
-  synopsis: find [RUTA...] [EXPRESIÓN]
-  description: >-
-    Busca archivos en una jerarquía de directorios evaluando la expresión dada
-    de izquierda a derecha.
-  category: Búsqueda de Archivos
-  subtopicIds:
-    - '103.4'
-    - '104.7'
-  example: find /tmp -type f -name "*.tmp" -print0 | xargs -0 rm -f
-  flags:
-    - flag: '-print0'
+        🎯 Clave de Examen: Cancela un apagado programado que estaba en cuenta
+        atrás.
+    - flag: +m / hh:mm / now
       description: >-
-        Imprime el nombre completo del archivo en la salida estándar seguido de
-        un byte nulo.
-    - flag: '-name PATRÓN'
-      description: Coincide con el nombre del archivo ignorando directorios previos.
-    - flag: '-type TIPO'
+        Especificación de tiempo: +15 (en 15 minutos), 23:30 (a las 23:30
+        horas), now (inmediatamente, equivale a +0).
+    - flag: wall <mensaje>
       description: >-
-        Filtra por tipo de archivo: f para regular, d para directorio, l para
-        enlace.
-- id: echo
-  name: echo
-  synopsis: echo [OPCIÓN-CORTA]... [CADENA]...
-  description: Muestra las CADENAS de texto en la salida estándar separadas por espacios.
-  category: Salida y Generación de Texto
-  subtopicIds:
-    - '103.4'
-    - '103.1'
-  example: echo "Configuración aplicada" >> /tmp/log.txt
-  flags:
-    - flag: '-n'
-      description: No imprime el salto de línea final.
-    - flag: '-e'
-      description: Habilita la interpretación de secuencias de escape con barra invertida.
-- id: set
-  name: set
-  synopsis: set [--opciones] [argumento...]
-  description: Configura o desactiva atributos de shell y parámetros posicionales en Bash.
-  category: Configuración de Shell (noclobber)
-  subtopicIds:
-    - '103.4'
-    - '105.1'
-  example: set -o noclobber
-  flags:
-    - flag: '-o noclobber'
-      description: >-
-        Evita la sobrescritura accidental de archivos existentes mediante el
-        operador >.
-    - flag: +o noclobber
-      description: Desactiva la protección noclobber permitiendo sobrescribir con >.
-- id: zcat
-  name: zcat
-  synopsis: zcat [ARCHIVO]...
+        Difunde un mensaje de texto por terminal a TODOS los usuarios con sesión
+        abierta simultáneamente.
+- id: mkswap
+  name: mkswap
+  synopsis: mkswap | swapon | swapoff
   description: >-
-    Descomprime y muestra en la salida estándar el contenido de archivos
-    comprimidos con gzip.
-  category: Archivos Comprimidos
+    ¿Qué es la Swap, cómo salva al sistema y los 4 pasos exactos que entran en
+    el examen?
+  category: Diseño del esquema de particionado
   subtopicIds:
-    - '103.4'
-    - '103.2'
-  example: zcat /var/log/syslog.2.gz | grep "kernel"
-  flags:
-    - flag: '-f, --force'
-      description: Fuerza la descompresión incluso si el archivo no termina en .gz.
-- id: bzcat
-  name: bzcat
-  synopsis: bzcat [ARCHIVO]...
-  description: >-
-    Descomprime archivos comprimidos con bzip2 directamente hacia la salida
-    estándar.
-  category: Archivos Comprimidos
-  subtopicIds:
-    - '103.4'
-    - '103.2'
-  example: bzcat archivo.tar.bz2 | tar -tvf -
+    - '102.1'
+  example: mkswap | swapon | swapoff
   flags: []
-- id: xzcat
-  name: xzcat
-  synopsis: xzcat [ARCHIVO]...
+- id: pvs
+  name: pvs
+  synopsis: pvs / pvdisplay | vgs / vgdisplay | lvs / lvdisplay
   description: >-
-    Descomprime archivos comprimidos con xz o lzma volcando el resultado en la
-    salida estándar.
-  category: Archivos Comprimidos
+    ¿Qué significan las columnas de pvs, vgs, lvs y cómo se leen las métricas de
+    PE en vgdisplay?
+  category: Diseño del esquema de particionado
   subtopicIds:
-    - '103.4'
-    - '103.2'
-  example: xzcat kernel-config.xz
+    - '102.1'
+  example: pvs / pvdisplay | vgs / vgdisplay | lvs / lvdisplay
   flags: []
-- id: date
-  name: date
-  synopsis: date [OPCIÓN]... [+FORMATO]
-  description: Muestra o ajusta la fecha y hora del sistema en el formato especificado.
-  category: Información de Sistema
+- id: grub
+  name: grub
+  synopsis: grub (Shell de GRUB Legacy)
+  description: >-
+    Lo estrictamente necesario para el examen: la shell interactiva antigua y
+    sus 3 comandos:
+  category: Instalación y configuración del gestor de arranque
   subtopicIds:
-    - '103.4'
-    - '108.1'
-  example: tar -czf backup-$(date +%Y%m%d).tar.gz /home
+    - '102.2'
+  example: grub (Shell de GRUB Legacy)
+  flags: []
+- id: ldconfig
+  name: ldconfig
+  synopsis: ldconfig
+  description: >-
+    Crear enlaces simbólicos de sonames y compilar la caché binaria
+    /etc/ld.so.cache
+  category: Gestión de librerías compartidas
+  subtopicIds:
+    - '102.3'
+  example: ldconfig
+  flags: []
+- id: rpm
+  name: rpm
+  synopsis: rpm -i | -U | -F | -e [--nodeps] [--force] [--test]
+  description: Instalar, actualizar o desinstalar paquetes .rpm en el sistema local
+  category: Gestión de paquetes RPM y YUM
+  subtopicIds:
+    - '102.5'
+  example: rpm -i | -U | -F | -e [--nodeps] [--force] [--test]
   flags:
-    - flag: '-u, --utc'
-      description: Imprime la hora coordinada universal (UTC).
-    - flag: +FORMATO
-      description: Controla el formato de salida mediante directivas (ej. %Y-%m-%d).
+    - flag: '-i, --install <archivo.rpm>'
+      description: >-
+        Instala un paquete nuevo en el sistema (habitualmente combinado como
+        -ivh: install, verbose, hash bars).
+    - flag: '-U, --upgrade <archivo.rpm>'
+      description: >-
+        🎯 Clave de Examen: Actualiza un paquete existente; SI NO ESTÁ
+        INSTALADO, LO INSTALA por primera vez.
+    - flag: '-F, --freshen <archivo.rpm>'
+      description: >-
+        🎯 Clave de Examen: Actualiza un paquete ÚNICAMENTE SI YA ESTÁ
+        INSTALADO. Si no existe previamente, NO hace nada.
+    - flag: '-e, --erase <paquete>'
+      description: >-
+        Desinstala un paquete del sistema por su nombre lógico (sin extensión
+        .rpm).
+    - flag: '--test'
+      description: >-
+        🎯 Simula la operación (comprueba conflictos y dependencias) sin llegar
+        a escribir nada en el disco.
+    - flag: '--nodeps'
+      description: >-
+        ⚠️ ¡Peligro de Examen! Ignora la comprobación de dependencias e instala
+        o borra el paquete a la fuerza.
+    - flag: '--force'
+      description: >-
+        Equivale a --replacepkgs y --replacefiles: sobrescribe ficheros
+        existentes de otros paquetes.
+- id: rpm2cpio
+  name: rpm2cpio
+  synopsis: rpm2cpio <archivo.rpm> | cpio -idmv [archivo]
+  description: >-
+    Recuperar binarios o librerías críticas de un archivo .rpm en situaciones de
+    emergencia sin usar el comando rpm ni tocar la base de datos del sistema.
+  category: Gestión de paquetes RPM y YUM
+  subtopicIds:
+    - '102.5'
+  example: rpm2cpio <archivo.rpm> | cpio -idmv [archivo]
+  flags:
+    - flag: rpm2cpio pkg.rpm
+      description: >-
+        Lee el archivo .rpm y vuelca por la salida estándar (stdout) el flujo de
+        datos en formato de archivador cpio.
+    - flag: cpio -i
+      description: Modo extracción de ficheros desde el flujo recibido por la tubería (|).
+    - flag: cpio -d
+      description: >-
+        🎯 Crea automáticamente los directorios padre necesarios según la
+        estructura del paquete.
+    - flag: cpio -m
+      description: >-
+        Conserva la fecha y hora original de modificación de los ficheros
+        extraídos.
+    - flag: cpio -v
+      description: Muestra por pantalla en tiempo real los ficheros extraídos.
+- id: yum
+  name: yum
+  synopsis: yum / dnf install | update | remove | clean all
+  description: >-
+    Ciclo de vida automatizado en Red Hat/Fedora: instalación resolviendo
+    librerías, actualización transaccional y limpieza de caché.
+  category: Gestión de paquetes RPM y YUM
+  subtopicIds:
+    - '102.5'
+  example: yum / dnf install | update | remove | clean all
+  flags:
+    - flag: install [-y] <paquete>
+      description: >-
+        Descarga e instala el paquete resolviendo automáticamente todo el árbol
+        de librerías.
+    - flag: update [paquete]
+      description: >-
+        Actualiza el paquete indicado o todo el sistema si no se especifica
+        nombre.
+    - flag: check-update
+      description: >-
+        🎯 Clave de Examen: Comprueba si existen actualizaciones sin instalar
+        nada (devuelve código 100 si las hay).
+    - flag: remove <paquete>
+      description: >-
+        Desinstala el paquete y retira las dependencias no utilizadas que
+        quedaron huérfanas.
+    - flag: clean all
+      description: >-
+        🎯 Borra todos los paquetes descargados y vacía los metadatos de
+        /var/cache/dnf/.
+- id: zypper
+  name: zypper
+  synopsis: zypper refresh | install | remove | update | lr | ar | mr
+  description: >-
+    El gestor nativo de SUSE Linux y openSUSE: resolución SAT ultra-rápida
+    (libzypp) y comandos cortos de 2 letras.
+  category: Gestión de paquetes RPM y YUM
+  subtopicIds:
+    - '102.5'
+  example: zypper refresh | install | remove | update | lr | ar | mr
+  flags:
+    - flag: refresh, ref
+      description: >-
+        🎯 Descarga los metadatos frescos de todos los repositorios remotos
+        (equivalente a apt-get update).
+    - flag: install, in <paquete>
+      description: >-
+        Instala paquetes y resuelve dependencias automáticamente con algoritmo
+        SAT.
+    - flag: remove, rm <paquete>
+      description: Desinstala un paquete del sistema.
+    - flag: update, up [paquete]
+      description: Actualiza los paquetes a su versión más reciente disponible.
+    - flag: repos, lr
+      description: >-
+        🎯 Clave de Examen: Lista todos los repositorios configurados en
+        /etc/zypp/repos.d/.
+    - flag: modifyrepo, mr -d/-e
+      description: >-
+        🎯 Clave de Examen: Deshabilita (-d) o habilita (-e) un repositorio
+        existente sin borrar el fichero.
+    - flag: what-provides, wp <archivo>
+      description: Averigua qué paquete proporciona un archivo o comando en openSUSE.
+- id: grep
+  name: grep
+  synopsis: grep -E --color '(vmx|svm)' /proc/cpuinfo | lscpu
+  description: >-
+    Detectar si el procesador físico soporta virtualización asistida por
+    hardware y si está habilitada en la BIOS/UEFI antes de desplegar KVM.
+  category: Linux como sistema virtualizado
+  subtopicIds:
+    - '102.6'
+    - '103.7'
+  example: grep -E --color '(vmx|svm)' /proc/cpuinfo | lscpu
+  flags:
+    - flag: vmx
+      description: >-
+        🎯 Virtual Machine eXtensions. Indica soporte nativo de KVM en
+        procesadores Intel (Core, Xeon).
+    - flag: svm
+      description: >-
+        🎯 Secure Virtual Machine. Indica soporte nativo de KVM en procesadores
+        AMD (Ryzen, EPYC).
+    - flag: lscpu
+      description: 'Muestra el campo ''Virtualization: VT-x'' o ''AMD-V'' de forma legible.'
+    - flag: lsmod | grep kvm
+      description: >-
+        Confirma que los módulos 'kvm' y 'kvm_intel' o 'kvm_amd' están activos
+        en memoria.
+- id: virt-install
+  name: virt-install
+  synopsis: virt-install --name <nombre> --vcpus <n> --memory <MB> --disk <ruta> ...
+  description: >-
+    Aprovisionar máquinas virtuales desde terminal y gobernar su ciclo de vida
+    en servidores remotos sin entorno gráfico.
+  category: Linux como sistema virtualizado
+  subtopicIds:
+    - '102.6'
+  example: virt-install --name <nombre> --vcpus <n> --memory <MB> --disk <ruta> ...
+  flags:
+    - flag: virt-install
+      description: >-
+        🎯 Comando CLI para crear dominios libvirt especificando vCPUs, RAM,
+        disco ISO y red.
+    - flag: virsh list [--all]
+      description: >-
+        🎯 'virsh list' muestra solo las VMs encendidas; '--all' lista también
+        las apagadas.
+    - flag: virsh start <vm>
+      description: Arranca el dominio libvirt indicado.
+    - flag: virsh shutdown <vm>
+      description: >-
+        🎯 Envía una señal ACPI al kernel invitado para realizar un apagado
+        limpio y seguro.
+    - flag: virsh destroy <vm>
+      description: >-
+        🎯 Clave de Examen: Corta la corriente de golpe (hard reset). ¡NO borra
+        el disco ni la VM!
+- id: systemd-machine-id-setup
+  name: systemd-machine-id-setup
+  synopsis: systemd-machine-id-setup | dbus-uuidgen --ensure
+  description: >-
+    Garantizar la identidad unívoca de cada instancia Linux: cómo evitar
+    conflictos de red y colisiones de logs al clonar máquinas virtuales.
+  category: Linux como sistema virtualizado
+  subtopicIds:
+    - '102.6'
+  example: systemd-machine-id-setup | dbus-uuidgen --ensure
+  flags:
+    - flag: /etc/machine-id
+      description: >-
+        🎯 Archivo de texto plano con 32 caracteres hexadecimales generado
+        durante la instalación del sistema.
+    - flag: truncate -s 0
+      description: >-
+        🎯 Clave de Examen: Deja el archivo con 0 bytes antes de apagar la
+        plantilla dorada para clonar.
+    - flag: systemd-machine-id-setup
+      description: >-
+        🎯 Genera un identificador nuevo y único leyendo el UUID del hipervisor
+        o creando uno criptográfico.
+    - flag: dbus-uuidgen --ensure
+      description: >-
+        Comando alternativo histórico para garantizar la identidad en
+        /var/lib/dbus/machine-id.
+- id: ssh-keygen
+  name: ssh-keygen
+  synopsis: ssh-keygen -t rsa -b 4096 | ssh-copy-id usuario@servidor
+  description: >-
+    Criptografía asimétrica para servidores virtuales y en la nube: generación
+    de pares de claves, despliegue y permisos estrictos.
+  category: Linux como sistema virtualizado
+  subtopicIds:
+    - '102.6'
+  example: ssh-keygen -t rsa -b 4096 | ssh-copy-id usuario@servidor
+  flags:
+    - flag: ssh-keygen
+      description: 'Crea el par criptográfico: clave privada secreta y clave pública.'
+    - flag: id_rsa (Clave Privada)
+      description: >-
+        ⚠️ NUNCA debe salir de tu máquina local. Permisos obligatorios: 0600
+        (-rw-------).
+    - flag: id_rsa.pub (Clave Pública)
+      description: Se distribuye libremente a los servidores donde quieras acceder.
+    - flag: ssh-copy-id usuario@host
+      description: >-
+        🎯 Clave de Examen: Copia tu clave pública e inyecta su contenido en
+        ~/.ssh/authorized_keys remoto.
+    - flag: ~/.ssh/authorized_keys
+      description: >-
+        🎯 Fichero en el servidor donde se registran las claves autorizadas.
+        Permisos obligatorios: 0600.
 - id: uname
   name: uname
-  synopsis: uname [OPCIÓN]...
+  synopsis: uname -a | -r | -m | pwd | cd [-|~]
+  description: Auditoría inicial de kernel, hardware y rutas antes de operar en consola
+  category: Trabajar en la línea de comandos
+  subtopicIds:
+    - '103.1'
+  example: uname -a | -r | -m | pwd | cd [-|~]
+  flags:
+    - flag: uname -a
+      description: >-
+        🎯 Imprime nombre de SO, hostname, versión kernel, arquitectura y
+        plataforma.
+    - flag: uname -r
+      description: >-
+        🎯 Versión exacta de release del kernel (ej: 6.1.0-21-amd64). ¡Dato
+        clave para compilar drivers!
+    - flag: uname -m
+      description: >-
+        🎯 Arquitectura de hardware (x86_64 para 64 bits PC, aarch64 para ARM,
+        i686 para 32 bits).
+    - flag: pwd
+      description: >-
+        Print Working Directory: muestra la ruta absoluta del directorio donde
+        estás parado.
+    - flag: cd ~ / cd
+      description: >-
+        Sin argumentos o con virgulilla (~), vuelve de golpe al directorio
+        personal del usuario.
+    - flag: cd -
+      description: >-
+        🎯 Regresa al directorio inmediatamente anterior usando la variable
+        interna $OLDPWD.
+- id: type
+  name: type
+  synopsis: type [-a] | which | whereis | hash [-r]
+  description: Averiguar la naturaleza exacta de un comando y su ubicación en el sistema
+  category: Trabajar en la línea de comandos
+  subtopicIds:
+    - '103.1'
+    - '104.7'
+  example: type [-a] | which | whereis | hash [-r]
+  flags:
+    - flag: type <cmd>
+      description: >-
+        🎯 Comando interno de Bash. Descubre si es builtin, alias, función o
+        archivo en disco.
+    - flag: type -a <cmd>
+      description: >-
+        🎯 Muestra todas las versiones de la orden en orden estricto de
+        prioridad de ejecución.
+    - flag: which <cmd>
+      description: >-
+        🎯 Busca ejecutables en disco según $PATH. ¡No encuentra builtins como
+        cd o exit!
+    - flag: whereis <cmd>
+      description: >-
+        Localiza el archivo ejecutable, el código fuente y las páginas man en
+        rutas estándar.
+    - flag: hash [-r]
+      description: >-
+        Muestra la tabla hash en RAM con rutas ya ejecutadas. 'hash -r' la vacía
+        por completo.
+- id: history
+  name: history
+  synopsis: history [N] | !! | !n | !cadena | Ctrl+R
+  description: Ahorrar tiempo y evitar errores repitiendo y buscando órdenes ejecutadas
+  category: Trabajar en la línea de comandos
+  subtopicIds:
+    - '103.1'
+  example: history [N] | !! | !n | !cadena | Ctrl+R
+  flags:
+    - flag: history [N]
+      description: >-
+        🎯 Muestra la lista numerada de comandos ejecutados (opcionalmente solo
+        los últimos N).
+    - flag: '!!'
+      description: >-
+        🎯 Vuelve a ejecutar la última orden tecleada. Imprescindible: 'sudo !!'
+        al olvidar permisos.
+    - flag: '!n'
+      description: >-
+        🎯 Ejecuta directamente la orden con el número de índice 'n' del
+        historial (ej: !1050).
+    - flag: '!-n'
+      description: >-
+        Ejecuta el comando tecleado hace 'n' pasos atrás (ej: !-1 es idéntico a
+        !!).
+    - flag: '!cadena'
+      description: >-
+        Ejecuta el comando más reciente que empiece por 'cadena' (ej:
+        !systemctl).
+    - flag: Ctrl + R
+      description: >-
+        Búsqueda incremental inversa en el historial mientras vas escribiendo
+        caracteres.
+- id: cat
+  name: cat
+  synopsis: cat [-n] | tac | head [-n] | tail [-n|-f]
+  description: Inspeccionar archivos completos, invertidos o solo sus cabeceras y colas
+  category: Procesar flujos de texto usando filtros
+  subtopicIds:
+    - '103.2'
+  example: cat [-n] | tac | head [-n] | tail [-n|-f]
+  flags:
+    - flag: cat -n
+      description: 🎯 Numera todas las líneas de salida de la primera a la última.
+    - flag: cat -s
+      description: Reduce múltiples líneas consecutivas en blanco a una sola.
+    - flag: tac <fichero>
+      description: '🎯 Invierte las líneas: muestra el archivo empezando por el final.'
+    - flag: head -n <N>
+      description: 🎯 Muestra las primeras N líneas (por defecto 10 si no indicas número).
+    - flag: tail -n <N>
+      description: 🎯 Muestra las últimas N líneas del fichero (por defecto 10).
+    - flag: tail -f
+      description: >-
+        🎯 Modo follow: no se cierra, monitoriza nuevas líneas añadidas al log
+        en tiempo real.
+- id: wc
+  name: wc
+  synopsis: wc [-l|-w|-c|-m] | nl [-ba]
+  description: Contar elementos de texto y formatear números de línea profesionales
+  category: Procesar flujos de texto usando filtros
+  subtopicIds:
+    - '103.2'
+  example: wc [-l|-w|-c|-m] | nl [-ba]
+  flags:
+    - flag: wc (sin flags)
+      description: 'Imprime 3 cifras: total líneas, total palabras y total bytes.'
+    - flag: wc -l
+      description: >-
+        🎯 Cuenta únicamente los saltos de línea. El comodín en tuberías: 'cat
+        arch | wc -l'.
+    - flag: wc -w
+      description: Cuenta palabras delimitadas por espacios en blanco o tabuladores.
+    - flag: wc -c
+      description: 🎯 Cuenta el tamaño total del archivo medido en bytes.
+    - flag: wc -m
+      description: >-
+        Cuenta caracteres lógicos (diferencia caracteres acentuados o emojis de
+        sus bytes).
+    - flag: nl -ba
+      description: 🎯 Numera absolutamente todas las líneas (incluso las líneas vacías).
+- id: cut
+  name: cut
+  synopsis: cut -d<delim> -f<campos> | paste -d<delim> [-s]
   description: >-
-    Imprime información sobre la arquitectura del equipo y el núcleo del sistema
-    operativo.
-  category: Información de Kernel
+    Recortar campos verticales de texto o unir archivos horizontalmente en
+    columnas
+  category: Procesar flujos de texto usando filtros
+  subtopicIds:
+    - '103.2'
+  example: cut -d<delim> -f<campos> | paste -d<delim> [-s]
+  flags:
+    - flag: cut -d<delim>
+      description: >-
+        🎯 Define el carácter separador de columnas (por defecto tabulador). En
+        /etc/passwd es ':'.
+    - flag: cut -f<campos>
+      description: >-
+        🎯 Número de columnas a recortar: '-f1' (primera), '-f1,7' (primera y
+        séptima), '-f1-3' (rango).
+    - flag: cut -c<rango>
+      description: >-
+        🎯 Extrae por posición fija de caracteres: 'cut -c 1-8' (de la letra 1 a
+        la 8).
+    - flag: paste arch1 arch2
+      description: 🎯 Junta archivos lado a lado, línea 1 con línea 1, línea 2 con línea 2.
+    - flag: paste -s
+      description: >-
+        Convierte todas las líneas verticales de un mismo archivo en una sola
+        línea horizontal.
+- id: sort
+  name: sort
+  synopsis: sort [-n|-r|-k|-t|-u]
+  description: Reorganizar registros alfabética o numéricamente por columnas
+  category: Procesar flujos de texto usando filtros
+  subtopicIds:
+    - '103.2'
+  example: sort [-n|-r|-k|-t|-u]
+  flags:
+    - flag: sort (sin flags)
+      description: 'Ordena alfabéticamente. ⚠️ Atención: ''10'' va antes que ''2''.'
+    - flag: sort -n
+      description: >-
+        🎯 Clave de Examen: Compara los valores como números reales (2 antes que
+        10).
+    - flag: sort -r
+      description: 🎯 Invierte el criterio de ordenación (de mayor a menor o de Z a A).
+    - flag: sort -k <N>
+      description: '🎯 Key: selecciona la columna N por la que se ordenará la tabla.'
+    - flag: sort -t <delim>
+      description: >-
+        🎯 Define el separador de campos para usar con '-k' (ej: '-t:' en
+        /etc/passwd).
+    - flag: sort -u
+      description: Elimina líneas duplicadas durante la propia ordenación.
+- id: tr
+  name: tr
+  synopsis: tr [-d|-s|-c] <conjunto1> [conjunto2]
+  description: >-
+    Traducir, sustituir, exprimir o borrar caracteres individuales mediante
+    stdin
+  category: Procesar flujos de texto usando filtros
+  subtopicIds:
+    - '103.2'
+  example: tr [-d|-s|-c] <conjunto1> [conjunto2]
+  flags:
+    - flag: tr 'a-z' 'A-Z'
+      description: >-
+        🎯 Reemplaza cada carácter del conjunto 1 por el correspondiente del
+        conjunto 2.
+    - flag: tr -d <SET>
+      description: >-
+        🎯 Delete: elimina de la salida todos los caracteres especificados en
+        SET.
+    - flag: tr -s <SET>
+      description: >-
+        🎯 Comprime secuencias consecutivas repetidas del mismo carácter en uno
+        solo.
+    - flag: tr -c <SET>
+      description: Aplica la operación sobre todos los caracteres que NO están en SET.
+- id: sed
+  name: sed
+  synopsis: sed [-e|-n|-i] 's/buscar/reemplazo/[g]'
+  description: Transformar, sustituir y filtrar flujos de texto de forma no interactiva
+  category: Procesar flujos de texto usando filtros
+  subtopicIds:
+    - '103.2'
+    - '103.7'
+  example: sed [-e|-n|-i] 's/buscar/reemplazo/[g]'
+  flags:
+    - flag: s/antiguo/nuevo/g
+      description: >-
+        🎯 's' (substitute), busca 'antiguo' y lo cambia por 'nuevo'. 'g' lo
+        hace en toda la línea.
+    - flag: sed -n 'Np'
+      description: >-
+        🎯 '-n' suprime la salida por defecto; 'Np' le ordena imprimir
+        exclusivamente la línea N.
+    - flag: sed -i 's/.../'
+      description: >-
+        🎯 Peligro: Modifica el archivo físico directamente en el disco en lugar
+        de solo mostrarlo.
+    - flag: sed '/patrón/d'
+      description: >-
+        Elimina de la salida todas las líneas que coincidan con la expresión
+        regular.
+- id: sha256sum
+  name: sha256sum
+  synopsis: sha256sum | md5sum | sha512sum [-c fichero]
+  description: Garantizar que un archivo no ha sido corrompido ni alterado maliciosamente
+  category: Procesar flujos de texto usando filtros
+  subtopicIds:
+    - '103.2'
+  example: sha256sum | md5sum | sha512sum [-c fichero]
+  flags:
+    - flag: sha256sum <file>
+      description: >-
+        🎯 Calcula un hash de 256 bits (64 caracteres hex). El estándar moderno
+        oficial.
+    - flag: md5sum <file>
+      description: >-
+        Calcula un hash de 128 bits (32 caracteres hex). Rápido pero inseguro
+        criptográficamente.
+    - flag: '-c, --check'
+      description: >-
+        🎯 Clave de Examen: Lee el archivo de hashes y comprueba los ficheros
+        devolviendo 'OK' o 'FAILED'.
+    - flag: '--status'
+      description: >-
+        No imprime nada; solo devuelve código de salida 0 si todos los hashes
+        son válidos.
+- id: od
+  name: od
+  synopsis: od [-c|-x] <file> | split [-b|-l|-d] <file> [prefijo]
+  description: Examinar bytes ocultos en archivos y dividir ficheros gigantescos en trozos
+  category: Procesar flujos de texto usando filtros
+  subtopicIds:
+    - '103.2'
+  example: od [-c|-x] <file> | split [-b|-l|-d] <file> [prefijo]
+  flags:
+    - flag: od -c
+      description: >-
+        🎯 Octal Dump: revela caracteres no imprimibles (saltos de línea \n,
+        retornos \r, tabuladores \t).
+    - flag: split -b <tamaño>
+      description: >-
+        🎯 Fragmenta el archivo por tamaño en bytes (ej: '-b 50M', '-b 1G', '-b
+        700M').
+    - flag: split -l <líneas>
+      description: '🎯 Divide un archivo de texto en trozos de N líneas (ej: ''-l 1000'').'
+    - flag: split -d
+      description: >-
+        🎯 Utiliza números (00, 01, 02) en vez de letras alfabéticas (aa, ab,
+        ac).
+- id: ls
+  name: ls
+  synopsis: ls [-l|-a|-h|-d|-i|-R|-t|-S] [ruta]
+  description: >-
+    Consultar permisos, propietarios, tamaños reales y metadatos de archivos y
+    carpetas
+  category: Administración básica de archivos
+  subtopicIds:
+    - '103.3'
+  example: ls [-l|-a|-h|-d|-i|-R|-t|-S] [ruta]
+  flags:
+    - flag: ls -l
+      description: >-
+        🎯 Imprime 8 columnas: tipo, 9 permisos, enlaces, dueño UID, grupo GID,
+        tamaño, fecha y nombre.
+    - flag: ls -a
+      description: >-
+        🎯 Clave de Examen: Muestra todos los ficheros, incluidos los ocultos
+        que inician por punto (.) y '.' / '..'
+    - flag: ls -d
+      description: >-
+        🎯 Clave de Examen: Lista las propiedades de la carpeta en sí, sin
+        entrar a listar su contenido.
+    - flag: ls -h
+      description: >-
+        🎯 Convierte los bytes en unidades entendibles (K, M, G, T) junto con la
+        opción -l.
+    - flag: ls -i
+      description: 🎯 Muestra el identificador numérico de inodo en la primera columna.
+    - flag: ls -t / -S
+      description: >-
+        '-t' ordena cronológicamente (más recientes primero); '-S' por tamaño
+        descendente.
+- id: mkdir
+  name: mkdir
+  synopsis: mkdir -p | touch [-t MMDDhhmm] | rmdir
+  description: >-
+    Crear ficheros vacíos, modificar fechas de acceso/modificación y construir
+    árboles de carpetas
+  category: Administración básica de archivos
+  subtopicIds:
+    - '103.3'
+  example: mkdir -p | touch [-t MMDDhhmm] | rmdir
+  flags:
+    - flag: mkdir -p
+      description: >-
+        🎯 Clave de Examen: Crea directorios padre intermedios automáticamente
+        sin error si ya existían.
+    - flag: mkdir -m <modo>
+      description: >-
+        Define permisos octales al crear la carpeta (ej: 'mkdir -m 700
+        secreta').
+    - flag: touch <archivo>
+      description: >-
+        🎯 Si el archivo no existe lo crea vacío (0 bytes); si ya existe,
+        actualiza su fecha al segundo actual.
+    - flag: touch -t YYYYMMDDhhmm
+      description: >-
+        🎯 Clave de Examen: Sobrescribe la marca temporal con una fecha y hora
+        exacta arbitraria.
+    - flag: rmdir <directorio>
+      description: >-
+        🎯 Comando defensivo: borra la carpeta ÚNICAMENTE si está 100% vacía.
+        Falla si contiene archivos.
+- id: cp
+  name: cp
+  synopsis: cp [-a|-r|-p] | mv [-i] | rm [-rf]
+  description: >-
+    Duplicar árboles preservando permisos de seguridad, renombrar y purgar
+    ficheros
+  category: Administración básica de archivos
+  subtopicIds:
+    - '103.3'
+  example: cp [-a|-r|-p] | mv [-i] | rm [-rf]
+  flags:
+    - flag: cp -a
+      description: >-
+        🎯 Clave Absoluta de Examen: Equivale a '-dpR'. Preserva permisos,
+        dueños UID/GID, timestamps y enlaces simbólicos.
+    - flag: cp -r, -R
+      description: >-
+        🎯 Copia carpetas pero cambia el dueño al usuario que ejecuta el comando
+        y actualiza las fechas al momento actual.
+    - flag: cp -p
+      description: >-
+        🎯 Preserva permisos originales, dueño y sellos de tiempo (incluido
+        dentro de -a).
+    - flag: mv origen dest
+      description: >-
+        🎯 Si el destino es la misma carpeta, renombra. Si es otra carpeta,
+        traslada el archivo.
+    - flag: rm -rf <dir>
+      description: >-
+        🎯 '-r' desciende por todas las carpetas; '-f' fuerza el borrado sin
+        preguntar ni avisar de errores.
+- id: find
+  name: find
+  synopsis: find [ruta] [-name|-type|-size|-maxdepth]
+  description: >-
+    Rastrear recursivamente el árbol de archivos en tiempo real según criterios
+    precisos
+  category: Administración básica de archivos
+  subtopicIds:
+    - '103.3'
+    - '103.4'
+    - '104.6'
+  example: find [ruta] [-name|-type|-size|-maxdepth]
+  flags:
+    - flag: find <ruta>
+      description: Punto de partida recursivo (por defecto '.' si no indicas ruta).
+    - flag: '-name ''<patrón>'''
+      description: >-
+        🎯 Sensible a mayúsculas. ¡OBLIGATORIO entrecomillar los comodines
+        ('*.log')!
+    - flag: '-iname ''<patrón>'''
+      description: 'Case-insensitive: coincide tanto con ''.log'' como con ''.LOG'' o ''.Log''.'
+    - flag: '-type [f|d|l]'
+      description: >-
+        🎯 Clave de Examen: 'f' = fichero regular, 'd' = carpeta/directorio, 'l'
+        = enlace simbólico.
+    - flag: '-size [+|-]N[k|M|G]'
+      description: >-
+        🎯 Clave de Examen: '+50M' = mayor de 50 MB, '-100k' = menor de 100 KB,
+        '500c' = exactamente 500 bytes.
+    - flag: '-maxdepth N'
+      description: >-
+        🎯 Limita el rastreo a N niveles de subcarpetas (evita búsquedas
+        infinitas).
+- id: tar
+  name: tar
+  synopsis: tar -[c|x|t][v][f archivo.tar] [-z|-j|-J] [rutas]
+  description: >-
+    Crear, listar y restaurar archivos empaquetados preservando permisos y
+    directorios
+  category: Administración básica de archivos
+  subtopicIds:
+    - '103.3'
+  example: tar -[c|x|t][v][f archivo.tar] [-z|-j|-J] [rutas]
+  flags:
+    - flag: tar -c / -x / -t
+      description: >-
+        🎯 Operaciones: '-c' (Create / nuevo tar), '-x' (eXtract / restaurar),
+        '-t' (Test / listar contenido sin extraer).
+    - flag: tar -f <archivo>
+      description: >-
+        🎯 ¡OBLIGATORIO! Especifica el fichero contenedor. Debe ir siempre
+        inmediatamente pegado al nombre del archivo.
+    - flag: tar -z
+      description: '🎯 Compresión gzip estándar: rápida y ultracompatible en todos los Unix.'
+    - flag: tar -j
+      description: '🎯 Compresión bzip2: archivos más pequeños a costa de mayor uso de CPU.'
+    - flag: tar -J (Mayúscula)
+      description: '🎯 Compresión xz: máxima tasa de compresión moderna con algoritmo LZMA2.'
+    - flag: tar -C <directorio>
+      description: >-
+        🎯 Cambia a la carpeta indicada antes de extraer (ej: 'tar -xvf
+        bkp.tar.gz -C /var/www').
+- id: cpio
+  name: cpio
+  synopsis: cpio -o | cpio -i | cpio -p
+  description: >-
+    Archivar, restaurar o migrar árboles de archivos leídos desde la entrada
+    estándar (stdin)
+  category: Administración básica de archivos
+  subtopicIds:
+    - '103.3'
+  example: cpio -o | cpio -i | cpio -p
+  flags:
+    - flag: cpio -o, --create
+      description: >-
+        🎯 Lee la lista de rutas por 'stdin' y escribe el archivo empaquetado
+        resultante en 'stdout'.
+    - flag: cpio -i, --extract
+      description: >-
+        🎯 Lee el archivo empaquetado por 'stdin' y extrae los archivos en el
+        disco duro.
+    - flag: cpio -p
+      description: >-
+        🎯 Copia un árbol de directorios directamente a otra carpeta sin crear
+        fichero intermedio.
+    - flag: cpio -d
+      description: >-
+        🎯 Crea automáticamente las carpetas intermedias necesarias al restaurar
+        los ficheros.
+    - flag: cpio -t
+      description: >-
+        Muestra la lista de ficheros contenidos en el archivo sin extraerlos en
+        disco.
+- id: dd
+  name: dd
+  synopsis: dd if=<origen> of=<destino> [bs=<bloque>] [count=<n>]
+  description: >-
+    Clonar discos, crear imágenes binarias idénticas y respaldar el MBR sector a
+    sector
+  category: Administración básica de archivos
+  subtopicIds:
+    - '103.3'
+  example: dd if=<origen> of=<destino> [bs=<bloque>] [count=<n>]
+  flags:
+    - flag: if=<ruta>
+      description: >-
+        🎯 Fichero o dispositivo físico origen (ej: 'if=/dev/sda',
+        'if=/dev/zero', 'if=debian.iso').
+    - flag: of=<ruta>
+      description: >-
+        🎯 Fichero o dispositivo físico destino (ej: 'of=/dev/sdb',
+        'of=/backup/disco.img').
+    - flag: bs=<tamaño>
+      description: '🎯 Tamaño de cada bloque a transferir (ej: ''bs=512'', ''bs=4k'', ''bs=1M'').'
+    - flag: count=<N>
+      description: '🎯 Número total de bloques a copiar antes de detenerse (ej: ''count=1'').'
+    - flag: status=progress
+      description: Muestra la velocidad de transferencia y bytes copiados en directo.
+- id: file
+  name: file
+  synopsis: file [-b|-i|-z] <fichero>
+  description: >-
+    Inspeccionar las cabeceras (Magic Numbers) para descubrir el formato real de
+    cualquier archivo
+  category: Administración básica de archivos
+  subtopicIds:
+    - '103.3'
+  example: file [-b|-i|-z] <fichero>
+  flags:
+    - flag: file <archivo>
+      description: >-
+        🎯 Lee los primeros bytes (números mágicos) comparándolos con la base de
+        datos de firmas (/etc/magic).
+    - flag: file -b, --brief
+      description: >-
+        🎯 Omite el nombre del archivo al inicio de la salida, imprimiendo solo
+        el tipo de archivo.
+    - flag: file -i, --mime
+      description: >-
+        🎯 Clave de Examen: Devuelve el tipo MIME estándar (ej: 'text/plain',
+        'application/x-executable').
+    - flag: file -z, --uncompress
+      description: >-
+        Intenta examinar el interior de ficheros comprimidos para averiguar qué
+        formato albergan.
+- id: cmd
+  name: cmd
+  synopsis: cmd > archivo | cmd >> archivo | cmd > /dev/null
+  description: >-
+    Sobreescribir o concatenar el flujo de salida estándar (stdout / 1) en
+    archivos
+  category: Uso de secuencias de texto, tuberías y redireccionamientos
   subtopicIds:
     - '103.4'
-    - '101.1'
-  example: uname -r
+    - '103.5'
+  example: cmd > archivo | cmd >> archivo | cmd > /dev/null
   flags:
-    - flag: '-a, --all'
+    - flag: '> archivo (o 1>)'
       description: >-
-        Imprime toda la información disponible en el siguiente orden: kernel,
-        hostname, versión y arquitectura.
-    - flag: '-r, --kernel-release'
-      description: Imprime el número de versión y compilación del núcleo Linux.
-    - flag: '-m, --machine'
-      description: Imprime el tipo de arquitectura de hardware de la máquina (ej. x86_64).
+        🎯 Sobreescribe el archivo por completo. Si ya existía, trunca y borra
+        todo su contenido.
+    - flag: '>> archivo (o 1>>)'
+      description: 🎯 Añade datos al final del fichero existente sin borrar lo anterior.
+    - flag: '> /dev/null'
+      description: '🎯 El agujero negro: descarta los datos de forma silenciosa e inmediata.'
+- id: set
+  name: set
+  synopsis: set -o noclobber | set +o noclobber | cmd >| archivo
+  description: >-
+    Activar la protección de shell que impide sobreescribir archivos existentes
+    con el operador >
+  category: Uso de secuencias de texto, tuberías y redireccionamientos
+  subtopicIds:
+    - '103.4'
+  example: set -o noclobber | set +o noclobber | cmd >| archivo
+  flags:
+    - flag: set -o noclobber
+      description: 🎯 Activa la protección contra sobreescritura accidental con '>'.
+    - flag: '>| archivo'
+      description: >-
+        🎯 Clave de Examen: Operador 'clobber' que fuerza sobreescribir
+        ignorando la protección.
+    - flag: set +o noclobber
+      description: 🎯 Desactiva la protección permitiendo de nuevo '>' normal.
+    - flag: '>> (concatenar)'
+      description: >-
+        La concatenación '>>' nunca destruye datos, por lo que noclobber la
+        permite siempre.
+- id: comando1
+  name: comando1
+  synopsis: comando1 | comando2 | comando3
+  description: >-
+    Procesar datos en streaming mediante memoria RAM sin crear molestos archivos
+    temporales en disco
+  category: Uso de secuencias de texto, tuberías y redireccionamientos
+  subtopicIds:
+    - '103.4'
+  example: comando1 | comando2 | comando3
+  flags:
+    - flag: Operador tubería (|)
+      description: >-
+        🎯 Conecta directamente la salida del comando izquierdo a la entrada del
+        derecho mediante un búfer circular en RAM (64 KB). Cero I/O en disco.
+    - flag: Streaming Concurrente
+      description: >-
+        Los comandos no esperan a que el anterior termine: el segundo va
+        procesando líneas según el primero las va emitiendo.
+    - flag: ⚠️ Exclusión de stderr
+      description: >-
+        🎯 Clave Absoluta de Examen: La tubería '|' solo transporta stdout (1).
+        Los errores (stderr / 2) saltan directos a la pantalla.
+    - flag: '|& (Pipe de error Bash)'
+      description: >-
+        🎯 Atajo moderno de Bash equivalente a '2>&1 |': envía tanto la salida
+        exitosa como los errores al siguiente filtro.
+- id: comando
+  name: comando
+  synopsis: comando $(subcomando) | comando `subcomando`
+  description: >-
+    Inyectar dinámicamente fechas, rutas, PIDs o parámetros calculados dentro de
+    una orden de terminal
+  category: Uso de secuencias de texto, tuberías y redireccionamientos
+  subtopicIds:
+    - '103.4'
+  example: comando $(subcomando) | comando `subcomando`
+  flags:
+    - flag: $(comando)
+      description: >-
+        🎯 Recomendada por LPI y administradores: legible, limpia y permite
+        anidar comandos infinitamente sin errores.
+    - flag: '`comando` (Backticks)'
+      description: >-
+        Heredada de la shell Bourne original. Se confunde fácilmente con
+        comillas simples (') y es muy difícil de anidar.
+    - flag: Anidamiento limpio
+      description: >-
+        🎯 Con $(...) se anida directo: 'echo $(basename $(pwd))'. Con backticks
+        requiere engorrosos escapes: '`basename \`pwd\``'.
+    - flag: Ejecución en Subshell
+      description: >-
+        El comando interno se ejecuta en un proceso hijo independiente; las
+        variables creadas dentro se destruyen al terminar.
+- id: cmd-origen
+  name: cmd_origen
+  synopsis: cmd_origen | xargs [-n <N>] [-I {}] <cmd_destino>
+  description: >-
+    Hacer de puente entre programas que emiten texto por tubería y programas que
+    exigen parámetros en su llamada
+  category: Uso de secuencias de texto, tuberías y redireccionamientos
+  subtopicIds:
+    - '103.4'
+  example: cmd_origen | xargs [-n <N>] [-I {}] <cmd_destino>
+  flags:
+    - flag: xargs <comando>
+      description: >-
+        🎯 Lee elementos de stdin y los concatena como una única lista gigante
+        al final del comando ('rm f1 f2 f3...').
+    - flag: xargs -n <N>
+      description: >-
+        🎯 Clave de Examen: Ejecuta el comando en grupos de N elementos (ej: '-n
+        1' ejecuta el comando una vez por cada línea).
+    - flag: xargs -I {}
+      description: >-
+        🎯 Clave de Examen: Reemplaza '{}' por cada argumento donde tú elijas
+        (esencial para 'cp {} /backup/' o 'mv').
+    - flag: xargs -p
+      description: >-
+        Pregunta antes de cada ejecución '¿ejecutar comando? [y/N]' para evitar
+        desastres al borrar archivos.
+- id: nohup
+  name: nohup
+  synopsis: nohup <cmd> & | disown -h [%n] | watch [-n <seg>] <cmd>
+  description: >-
+    Hacer un proceso inmune al cierre de terminal, rescatar jobs sin nohup y
+    refrescar comandos en pantalla
+  category: Crear, monitorizar y matar procesos
+  subtopicIds:
+    - '103.5'
+  example: nohup <cmd> & | disown -h [%n] | watch [-n <seg>] <cmd>
+  flags:
+    - flag: nohup <cmd> &
+      description: >-
+        🎯 No Hangup: lanza el proceso ignorando SIGHUP (1). Si cierras la
+        terminal o cae la red SSH, NO se detiene.
+    - flag: nohup.out
+      description: >-
+        🎯 Fichero automático donde nohup guarda stdout/stderr. Se inspecciona
+        sin interrumpir con 'head' o 'tail -f'.
+    - flag: disown -h [%n]
+      description: >-
+        🎯 Clave de Examen: Si olvidaste poner nohup, 'disown' retira el job de
+        la tabla de la shell para que no reciba SIGHUP.
+    - flag: watch -n <seg> <cmd>
+      description: >-
+        🎯 Ejecuta un comando en bucle cada N segundos (defecto: 2s) a pantalla
+        limpia para supervisar cambios.
+- id: kill
+  name: kill
+  synopsis: kill [-s <señal>|-<señal>] <PID|%job>
+  description: Transmitir señales de software por PID numérico o por Job ID de la shell
+  category: Crear, monitorizar y matar procesos
+  subtopicIds:
+    - '103.5'
+  example: kill [-s <señal>|-<señal>] <PID|%job>
+  flags:
+    - flag: kill <PID>
+      description: >-
+        🎯 Clave de Examen: Sin opciones, envía siempre la señal 15 para un
+        cierre ordenado.
+    - flag: kill -9 <PID>
+      description: >-
+        🎯 Cierre forzado inmediato por el kernel. Úsalo solo si el proceso no
+        responde a SIGTERM.
+    - flag: kill -1 <PID>
+      description: >-
+        🎯 Ordena al demonio recargar su archivo de configuración sin reiniciar
+        (ej: Nginx o Apache).
+    - flag: kill %N
+      description: >-
+        🎯 Clave de Examen: Anteponer '%' envía la señal al JOB N de la shell en
+        vez de al PID N del sistema.
+    - flag: kill -l
+      description: Muestra los nombres y números de las 64 señales disponibles en Linux.
+- id: killall
+  name: killall
+  synopsis: killall <nombre> | pkill <patrón> | pgrep <patrón> | pidof <nombre>
+  description: >-
+    Averiguar PIDs o matar grupos de procesos según su nombre exacto, patrón
+    regex o dueño
+  category: Crear, monitorizar y matar procesos
+  subtopicIds:
+    - '103.5'
+  example: killall <nombre> | pkill <patrón> | pgrep <patrón> | pidof <nombre>
+  flags:
+    - flag: pidof <binario>
+      description: >-
+        🎯 Devuelve los números PID del ejecutable exacto en una sola línea
+        (ideal para scripts).
+    - flag: pgrep [-l] <patrón>
+      description: >-
+        🎯 Clave de Examen: Busca PIDs que coincidan con un patrón. Con '-l'
+        muestra PID y nombre.
+    - flag: killall <nombre_exacto>
+      description: >-
+        🎯 Mata todos los procesos cuyo ejecutable coincida exactamente (ej:
+        'killall nginx').
+    - flag: pkill [-9] <patrón>
+      description: >-
+        🎯 Envía señales a procesos por expresión regular o patrón sin exigir
+        nombre exacto.
+    - flag: pkill -u <usuario>
+      description: >-
+        🎯 Clave de Examen: Mata todos los procesos pertenecientes al usuario
+        especificado.
+- id: ps
+  name: ps
+  synopsis: ps aux (BSD sin guión) | ps -ef (Unix con guión)
+  description: >-
+    Consultar la lista completa de procesos, consumo de CPU/RAM, usuarios y
+    estados en un microsegundo
+  category: Crear, monitorizar y matar procesos
+  subtopicIds:
+    - '103.5'
+    - '103.6'
+  example: ps aux (BSD sin guión) | ps -ef (Unix con guión)
+  flags:
+    - flag: ps aux
+      description: >-
+        🎯 Clave de Examen: 'a' = todos con terminal; 'u' = formato usuario
+        (%CPU, %MEM, RSS); 'x' = demonios sin terminal.
+    - flag: ps -ef
+      description: >-
+        🎯 Clave de Examen: '-e' = todos los procesos; '-f' = formato completo
+        mostrando la columna PPID (proceso padre).
+    - flag: VSZ frente a RSS
+      description: >-
+        🎯 VSZ = memoria virtual total reservada; RSS = memoria RAM física real
+        ocupada en chips.
+    - flag: ps --sort=-%cpu
+      description: Ordena de mayor a menor uso de procesador (-%cpu) o de memoria (-%mem).
+- id: top
+  name: top
+  synopsis: top [-d <seg>] [-u <usuario>] [-p <PID>] [-b -n 1]
+  description: >-
+    Monitorizar en tiempo real el consumo de recursos y ordenar o matar procesos
+    interactivamente
+  category: Crear, monitorizar y matar procesos
+  subtopicIds:
+    - '103.5'
+    - '103.6'
+  example: top [-d <seg>] [-u <usuario>] [-p <PID>] [-b -n 1]
+  flags:
+    - flag: Tecla M (Mayúscula)
+      description: '🎯 Clave de Examen: Reordena la lista de mayor a menor consumo de RAM.'
+    - flag: Tecla P (Mayúscula)
+      description: '🎯 Clave de Examen: Ordenación por defecto: procesos que más CPU gastan.'
+    - flag: Tecla k (Kill)
+      description: >-
+        🎯 Clave de Examen: Pide un PID y el número de señal para matar el
+        proceso sin salir de top.
+    - flag: Tecla r (Renice)
+      description: >-
+        🎯 Solicita un PID y un nuevo valor nice para ajustar su prioridad en
+        caliente.
+    - flag: Tecla 1 (Uno)
+      description: >-
+        Alterna entre ver el uso de CPU combinado o desglosado núcleo a núcleo
+        (CPU0, CPU1...).
+    - flag: top -b -n 1
+      description: Ejecuta 1 iteración y sale como texto plano sin pantalla interactiva.
+- id: uptime
+  name: uptime
+  synopsis: uptime | free [-h|-m|-g]
+  description: >-
+    Evaluar la saturación de los procesadores y diagnosticar el espacio real
+    disponible en RAM
+  category: Crear, monitorizar y matar procesos
+  subtopicIds:
+    - '103.5'
+  example: uptime | free [-h|-m|-g]
+  flags:
+    - flag: load average (1, 5, 15)
+      description: >-
+        🎯 Promedio de procesos ejecutándose o en cola esperando CPU/disco en 1,
+        5 y 15 minutos.
+    - flag: free -h
+      description: >-
+        Muestra cifras en GiB, MiB o KiB en lugar de bytes planos difíciles de
+        leer.
+    - flag: Columna available
+      description: >-
+        🎯 Clave de Examen: Memoria real que pueden solicitar nuevas
+        aplicaciones sin recurrir a swap.
+    - flag: buff/cache
+      description: >-
+        Memoria usada para acelerar lecturas de disco que se cede
+        automáticamente si las apps la necesitan.
+- id: screen
+  name: screen
+  synopsis: screen [-S <nombre>] [-r] [-ls] | tmux [new|attach|ls]
+  description: >-
+    Crear consolas virtuales persistentes en el servidor que no mueren si cae el
+    SSH y recuperar su pantalla
+  category: Crear, monitorizar y matar procesos
+  subtopicIds:
+    - '103.5'
+  example: screen [-S <nombre>] [-r] [-ls] | tmux [new|attach|ls]
+  flags:
+    - flag: screen -S <nombre>
+      description: >-
+        🎯 Inicia una consola virtual persistente e independiente vinculada al
+        nombre que elijas.
+    - flag: Ctrl + A y luego d
+      description: >-
+        🎯 Clave de Examen: Desengancha tu terminal de la sesión; el proceso
+        sigue trabajando en el servidor.
+    - flag: screen -ls
+      description: >-
+        🎯 Muestra las sesiones abiertas en el servidor y su estado: Detached
+        (disponible) o Attached (en uso).
+    - flag: screen -r <nombre>
+      description: >-
+        🎯 Clave de Examen: Vuelve a conectar tu pantalla a una sesión
+        desacoplada previamente.
+    - flag: tmux attach -t <nombre>
+      description: >-
+        🎯 Comando homólogo en tmux (con el atajo de desacople universal
+        'Ctrl+B' seguido de 'd').
+- id: nice
+  name: nice
+  synopsis: nice [-n <incremento>] <comando> [argumentos...]
+  description: Arrancar un proceso NUEVO con un valor de niceness diferente al estándar 0
+  category: Modificar la prioridad de ejecución de los procesos
+  subtopicIds:
+    - '103.6'
+  example: nice [-n <incremento>] <comando> [argumentos...]
+  flags:
+    - flag: nice cmd (sin número)
+      description: >-
+        🎯 Pregunta Fija de Certificación: Si ejecutas 'nice comando' a secas,
+        arranca con nice = 10.
+    - flag: nice -n <valor> cmd
+      description: >-
+        🎯 Sintaxis oficial recomendada: 'nice -n 5 script.sh' (+5) o 'nice -n
+        -10 script.sh' (-10).
+    - flag: nice -5 cmd (Histórico)
+      description: >-
+        ⚠️ Trampa de Examen: El guión es el indicador de opción, no el signo
+        menos: asigna +5.
+    - flag: nice --5 cmd (Histórico)
+      description: >-
+        ⚠️ Trampa de Examen: 1er guión = opción; 2º guión = signo matemático
+        negativo (exige root).
+- id: renice
+  name: renice
+  synopsis: renice [-n] <nuevo_nice> -p <PID> | -u <usuario> | -g <PGID>
+  description: >-
+    Reasignar el valor absoluto de niceness a procesos activos por PID, por
+    usuario o por grupo
+  category: Modificar la prioridad de ejecución de los procesos
+  subtopicIds:
+    - '103.6'
+  example: renice [-n] <nuevo_nice> -p <PID> | -u <usuario> | -g <PGID>
+  flags:
+    - flag: renice -n <val> -p <PID>
+      description: >-
+        🎯 Fija el valor ABSOLUTO de niceness del proceso indicado (la opción -p
+        es el modo por defecto).
+    - flag: renice -n <val> -u <user>
+      description: >-
+        🎯 Clave de Examen: Aplica el nuevo valor a la totalidad de procesos del
+        usuario indicado.
+    - flag: renice -n <val> -g <PGID>
+      description: Modifica la prioridad de un grupo de procesos completo a la vez.
+    - flag: Valor Absoluto
+      description: >-
+        🎯 Clave de Examen: 'renice 5' asigna exactamente nice = 5 (no suma 5 a
+        la prioridad anterior).
+- id: less
+  name: less
+  synopsis: less /var/log/syslog (dentro de less usar '/' o '?')
+  description: >-
+    Ejecutar búsquedas interactivas con soporte nativo de expresiones regulares
+    en el visor less
+  category: Realizar búsquedas en archivos de texto usando expresiones regulares
+  subtopicIds:
+    - '103.7'
+  example: less /var/log/syslog (dentro de less usar '/' o '?')
+  flags:
+    - flag: /<patrón>
+      description: >-
+        🎯 Clave de Examen: Busca hacia ADELANTE (hacia el final del fichero) el
+        patrón de expresión regular indicado.
+    - flag: '?<patrón>'
+      description: >-
+        🎯 Clave de Examen: Busca hacia ATRÁS (hacia el inicio del fichero) el
+        patrón de expresión regular indicado.
+    - flag: 'n'
+      description: >-
+        🎯 Siguiente coincidencia: salta al siguiente resultado en la misma
+        dirección de la búsqueda.
+    - flag: 'N'
+      description: >-
+        🎯 Coincidencia anterior: salta al resultado anterior en dirección
+        opuesta.
+    - flag: q
+      description: 🎯 Salir inmediatamente de less regresando al prompt de la shell.
+- id: vi
+  name: vi
+  synopsis: vi [+<línea>] <archivo> (Navegación en Modo Normal)
+  description: >-
+    Abrir archivos en líneas específicas y desplazarse rápidamente por el
+    documento
+  category: Edición básica de archivos
+  subtopicIds:
+    - '103.8'
+  example: vi [+<línea>] <archivo> (Navegación en Modo Normal)
+  flags:
+    - flag: vi +<N> <archivo>
+      description: 🎯 Abre el archivo posicionando el cursor directamente en la línea N.
+    - flag: h, j, k, l
+      description: 🎯 'h' izquierda, 'j' abajo, 'k' arriba, 'l' derecha.
+    - flag: w / b
+      description: >-
+        🎯 'w' salta a la palabra siguiente (word); 'b' salta a la anterior
+        (back).
+    - flag: 0 / $
+      description: 🎯 '0' salta al inicio de línea; '$' salta al final exacto.
+    - flag: 1G (o gg) / G
+      description: >-
+        🎯 '1G' o 'gg' salta a la primera línea; 'G' mayúscula a la última
+        línea.
+- id: yy
+  name: yy
+  synopsis: yy | <N>yy | p | P | u | Ctrl+R
+  description: Copiar líneas al portapapeles interno, pegarlas y revertir modificaciones
+  category: Edición básica de archivos
+  subtopicIds:
+    - '103.8'
+  example: yy | <N>yy | p | P | u | Ctrl+R
+  flags:
+    - flag: yy (Yank)
+      description: 🎯 Copia la línea actual al portapapeles de vi sin borrarla.
+    - flag: <N>yy
+      description: 'Copia N líneas consecutivas hacia abajo (ej: ''3yy'').'
+    - flag: p / P (Put)
+      description: 🎯 'p' pega debajo de la línea actual; 'P' pega encima.
+    - flag: u (Undo)
+      description: 🎯 Deshace la última modificación realizada en el archivo.
+    - flag: Ctrl + R (Redo)
+      description: 🎯 Rehace el cambio que se acaba de deshacer con 'u'.
+- id: export
+  name: export
+  synopsis: >-
+    export VISUAL=vim | export EDITOR=nano | sudo update-alternatives --config
+    editor
+  description: >-
+    Definir el editor predeterminado a nivel de sesión ($VISUAL, $EDITOR) o para
+    todo el sistema (update-alternatives)
+  category: Edición básica de archivos
+  subtopicIds:
+    - '103.8'
+  example: >-
+    export VISUAL=vim | export EDITOR=nano | sudo update-alternatives --config
+    editor
+  flags:
+    - flag: $VISUAL
+      description: >-
+        🎯 Máxima Prioridad: Variable pensada para terminales de pantalla
+        completa. Si está definida, los programas interactivos (crontab, visudo,
+        git) la usan ANTES que $EDITOR.
+    - flag: $EDITOR
+      description: >-
+        🎯 Estándar POSIX: Variable histórica para editores de texto. Se utiliza
+        si $VISUAL no está definida o en utilidades en línea de comandos.
+    - flag: update-alternatives
+      description: >-
+        🎯 Configuración Global del Sistema: Comando de Debian/Ubuntu para
+        cambiar el enlace simbólico maestro /usr/bin/editor entre nano,
+        vim.basic o vim.tiny.
+    - flag: select-editor
+      description: >-
+        Comando interactivo para usuarios sin privilegios de root que guarda la
+        preferencia personal en ~/.selected_editor.
+- id: sudo
+  name: sudo
+  synopsis: sudo fdisk /dev/sdb | sudo fdisk -l /dev/sdb
+  description: >-
+    Gestionar particiones en discos MBR de forma interactiva con confirmación
+    obligatoria al guardar
+  category: Creación de particiones y sistemas de archivos
+  subtopicIds:
+    - '104.1'
+    - '104.2'
+    - '104.3'
+    - '104.5'
+  example: sudo fdisk /dev/sdb | sudo fdisk -l /dev/sdb
+  flags:
+    - flag: m
+      description: Ayuda
+    - flag: p
+      description: Imprimir
+    - flag: 'n'
+      description: Nueva
+    - flag: t
+      description: Tipo
+    - flag: d
+      description: Borrar
+    - flag: w
+      description: Guardar
+    - flag: q
+      description: Salir
+- id: df
+  name: df
+  synopsis: df [-h|-T|-i|-t <tipo>] [ruta]
+  description: >-
+    Disk Free: reportar el uso del espacio de almacenamiento y consumo de inodos
+    de los sistemas montados
+  category: Mantener la integridad de los sistemas de archivos
+  subtopicIds:
+    - '104.2'
+  example: df [-h|-T|-i|-t <tipo>] [ruta]
+  flags:
+    - flag: df -h
+      description: >-
+        🎯 Clave de Examen: Muestra tamaños en potencias de 1024 con sufijos
+        legibles (K, M, G, T).
+    - flag: df -T
+      description: >-
+        🎯 Clave de Examen: Añade una columna mostrando el TIPO de sistema de
+        archivos (ext4, xfs, btrfs, vfat).
+    - flag: df -i
+      description: >-
+        🎯 Clave Absoluta de Examen: Muestra la información de INODOS (usados,
+        libres y porcentaje) en lugar de bloques de disco.
+    - flag: df -t <tipo>
+      description: >-
+        🎯 Filtra la salida para mostrar ÚNICAMENTE los sistemas de archivos del
+        tipo especificado (ej: 'df -t ext4').
+    - flag: df -x <tipo>
+      description: >-
+        Excluye de la salida los sistemas de archivos del tipo indicado (ej: 'df
+        -x tmpfs').
+- id: du
+  name: du
+  synopsis: du [-h|-s|-a|-d <n>|--max-depth=<n>] [ruta]
+  description: >-
+    Disk Usage: estimar el espacio real en disco ocupado por archivos y
+    directorios
+  category: Mantener la integridad de los sistemas de archivos
+  subtopicIds:
+    - '104.2'
+  example: du [-h|-s|-a|-d <n>|--max-depth=<n>] [ruta]
+  flags:
+    - flag: du -h
+      description: Muestra los tamaños en formato legible para humanos (K, M, G).
+    - flag: du -s
+      description: >-
+        🎯 Clave de Examen: Muestra ÚNICAMENTE el total acumulado del argumento,
+        sin desglosar subdirectorios.
+    - flag: du -sh <dir>
+      description: >-
+        🎯 El combo estrella: resumen en formato humano (ej: 'du -sh /home'
+        devuelve '45G /home').
+    - flag: du -a
+      description: >-
+        Muestra el tamaño de absolutamente todos los archivos individuales, no
+        solo de los directorios.
+    - flag: '-d <N>'
+      description: >-
+        🎯 Clave de Examen: Limita la profundidad de exploración a N niveles de
+        carpetas (ej: 'du -h -d 1 /var').
+    - flag: du -c
+      description: >-
+        Añade una línea final con la suma total (Grand Total) de todos los
+        elementos analizados.
+- id: chmod
+  name: chmod
+  synopsis: chmod [-R] <modo_octal|modo_simbólico> <archivo_o_dir>
+  description: 'Change Mode: modificar los bits de permiso discrecionales en el inodo'
+  category: Administración de los permisos y los propietarios de los archivos
+  subtopicIds:
+    - '104.5'
+  example: chmod [-R] <modo_octal|modo_simbólico> <archivo_o_dir>
+  flags:
+    - flag: chmod 755
+      description: >-
+        🎯 Modo Octal: fija los permisos exactos directos (ej: chmod 644
+        documento.txt).
+    - flag: Categorías u/g/o/a
+      description: >-
+        🎯 'u' = user (dueño); 'g' = group (grupo); 'o' = others (otros); 'a' =
+        all (todos, u+g+o).
+    - flag: Operadores +/-/=
+      description: >-
+        🎯 '+' añade el permiso; '-' retira el permiso; '=' fija exactamente el
+        permiso sustituyendo el anterior.
+    - flag: chmod -R
+      description: >-
+        🎯 Clave de Examen: Aplica la modificación de permisos de forma
+        RECURSIVA a todo el directorio y sus contenidos.
+    - flag: chmod a+X
+      description: >-
+        'X' (mayúscula) condicional: añade ejecución ÚNICAMENTE a directorios o
+        a archivos que ya tenían 'x' previo.
+- id: ln
+  name: ln
+  synopsis: ln <origen> <enlace_duro> | ln -s <origen> <enlace_simbólico>
+  description: Crear enlaces duros o simbólicos hacia archivos y directorios existentes
+  category: Crear y cambiar enlaces duros y simbólicos
+  subtopicIds:
+    - '104.6'
+  example: ln <origen> <enlace_duro> | ln -s <origen> <enlace_simbólico>
+  flags:
+    - flag: ln origen destino
+      description: >-
+        🎯 Crea un enlace duro: ambos comparten el mismo número de inodo y el
+        Link Count sube a 2.
+    - flag: ln -s origen destino
+      description: >-
+        🎯 Clave de Examen: Crea un enlace simbólico con su propio inodo
+        apuntando a la ruta de origen.
+    - flag: ln -f
+      description: >-
+        Force: elimina el archivo destino si ya existía antes de crear el nuevo
+        enlace.
+    - flag: Ruta Absoluta
+      description: >-
+        Enlace simbólico absoluto: funcionará siempre sin importar desde dónde
+        se invoque.
+    - flag: Ruta Relativa
+      description: >-
+        Enlace simbólico relativo: depende de la ubicación del propio enlace (si
+        se mueve de carpeta, se rompe).
+- id: readlink
+  name: readlink
+  synopsis: readlink [-f] <enlace> | unlink <enlace> | cp -d <enlace> <destino>
+  description: >-
+    Resolver rutas de symlinks, eliminar entradas de directorio y copiar enlaces
+    sin desreferenciar
+  category: Crear y cambiar enlaces duros y simbólicos
+  subtopicIds:
+    - '104.6'
+  example: readlink [-f] <enlace> | unlink <enlace> | cp -d <enlace> <destino>
+  flags:
+    - flag: readlink <enlace>
+      description: >-
+        🎯 Clave de Examen: Imprime en la consola el valor exacto del texto al
+        que apunta el enlace simbólico.
+    - flag: readlink -f <enlace>
+      description: >-
+        🎯 Resuelve recursivamente todos los symlinks intermedios devolviendo la
+        ruta física final absoluta.
+    - flag: unlink <enlace>
+      description: >-
+        Llama directamente a la llamada al sistema unlink() para eliminar la
+        entrada de directorio.
+    - flag: cp -d <enlace>
+      description: >-
+        🎯 Clave de Examen: Copia el enlace simbólico en sí mismo en lugar del
+        archivo original al que apunta.
+    - flag: cp -a
+      description: >-
+        Modo archivo completo: incluye '-d' para preservar enlaces simbólicos
+        sin expandirlos.
+- id: locate
+  name: locate
+  synopsis: locate [-i|-b|-c|-r] <patrón>
+  description: >-
+    Consultar la base de datos indexada local para localizar nombres de archivo
+    al instante
+  category: Encontrar archivos de sistema y ubicar archivos en el lugar correspondiente
+  subtopicIds:
+    - '104.7'
+  example: locate [-i|-b|-c|-r] <patrón>
+  flags:
+    - flag: locate <patrón>
+      description: >-
+        Busca el patrón en cualquier parte de la ruta completa dentro de la base
+        de datos indexada.
+    - flag: '-i, --ignore-case'
+      description: 🎯 Ignora mayúsculas y minúsculas en la búsqueda.
+    - flag: '-b, --basename'
+      description: >-
+        🎯 Clave de Examen: Busca coincidencias ÚNICAMENTE en el nombre final
+        del archivo, ignorando carpetas padre.
+    - flag: '-c, --count'
+      description: 🎯 Muestra únicamente el número total de archivos encontrados.
+    - flag: '-e, --existing'
+      description: >-
+        Comprueba si el archivo existe realmente en disco antes de imprimirlo
+        (omite archivos borrados).
+    - flag: updatedb previo
+      description: 🎯 No ve archivos creados después de la última ejecución de updatedb.
+- id: which
+  name: which
+  synopsis: which <comando> | whereis [-b|-m|-s] <comando>
+  description: Localizar rutas de ejecutables en PATH o encontrar código fuente y manuales
+  category: Encontrar archivos de sistema y ubicar archivos en el lugar correspondiente
+  subtopicIds:
+    - '104.7'
+  example: which <comando> | whereis [-b|-m|-s] <comando>
+  flags:
+    - flag: which <cmd>
+      description: >-
+        🎯 Clave de Examen: Busca ÚNICAMENTE en las carpetas de la variable
+        $PATH y devuelve el primer ejecutable.
+    - flag: which -a <cmd>
+      description: Muestra todas las coincidencias en $PATH, no solo la primera.
+    - flag: whereis <cmd>
+      description: >-
+        🎯 Busca en un conjunto fijo de rutas estándar del sistema binarios,
+        manuales y fuentes.
+    - flag: whereis -b
+      description: >-
+        🎯 Clave de Examen: Muestra ÚNICAMENTE las rutas de archivos binarios
+        ejecutables.
+    - flag: whereis -m
+      description: >-
+        🎯 Clave de Examen: Muestra ÚNICAMENTE las rutas de páginas del manual
+        man.
+    - flag: whereis -s
+      description: Muestra únicamente el código fuente del comando si está presente.
+- id: alias
+  name: alias
+  synopsis: alias nombre='comando' | unalias nombre | function mi_func() { ...; }
+  description: >-
+    Ahorrar pulsaciones creando atajos y definir funciones reutilizables con
+    parámetros dentro del shell
+  category: Personalizar y usar el entorno de shell
+  subtopicIds:
+    - '105.1'
+  example: alias nombre='comando' | unalias nombre | function mi_func() { ...; }
+  flags:
+    - flag: alias
+      description: Listar Alias
+    - flag: alias n='cmd'
+      description: Definir Alias
+    - flag: unalias <nombre>
+      description: Eliminar Alias
+    - flag: unalias -a
+      description: Eliminar Todos
+    - flag: function f() {}
+      description: Función de Shell
+- id: source
+  name: source
+  synopsis: source archivo.sh | . archivo.sh
+  description: >-
+    Leer y ejecutar un archivo de comandos dentro del proceso actual de shell
+    sin lanzar un subshell
+  category: Personalizar y usar el entorno de shell
+  subtopicIds:
+    - '105.1'
+  example: source archivo.sh | . archivo.sh
+  flags:
+    - flag: source <archivo>
+      description: Comando source
+    - flag: . <archivo>
+      description: Atajo Punto (.)
+    - flag: ./archivo.sh
+      description: Ejecución Normal
+- id: case
+  name: case
+  synopsis: case "$1" in start) ... ;; stop) ... ;; *) ... ;; esac
+  description: Selección Múltiple con case ... in ... esac
+  category: Personalizar y escribir scripts sencillos
+  subtopicIds:
+    - '105.2'
+  example: case "$1" in start) ... ;; stop) ... ;; *) ... ;; esac
+  flags:
+    - flag: '-'
+      description: Termina la cláusula actual y sale del bloque case.
+    - flag: '-'
+      description: >-
+        Captura cualquier valor no contemplado previamente (equivalente al
+        'else').
+    - flag: '-'
+      description: Coincide si el valor es p1 o p2.
+- id: read
+  name: read
+  synopsis: 'read -s -p "Password: " PASS'
+  description: Interacción con read, Sustitución $() y Alertas con mail
+  category: Personalizar y escribir scripts sencillos
+  subtopicIds:
+    - '105.2'
+  example: 'read -s -p "Password: " PASS'
+  flags:
+    - flag: '-'
+      description: Modo silencioso (preguntado explícitamente en el manual LPI).
+    - flag: '-'
+      description: Sustitución de comandos estándar POSIX moderna (permite anidamiento).
+    - flag: '-'
+      description: Envía correo de alerta al superusuario ante errores inesperados.
+- id: xdpyinfo
+  name: xdpyinfo
+  synopsis: xdpyinfo
+  description: Diagnóstico de Sesión con xdpyinfo
+  category: Instalar y configurar X11
+  subtopicIds:
+    - '106.1'
+  example: xdpyinfo
+  flags:
+    - flag: '-'
+      description: >-
+        Vuelca la lista completa de extensiones (GLX, RANDR, XINERAMA) y
+        dimensiones.
+    - flag: '-'
+      description: Filtra la resolución en píxeles y milímetros.
+    - flag: '-'
+      description: Lista las extensiones modulares soportadas.
+- id: xorg
+  name: Xorg
+  synopsis: Xorg -configure
+  description: Generación Automática con Xorg -configure y Archivos de Log
+  category: Instalar y configurar X11
+  subtopicIds:
+    - '106.1'
+  example: Xorg -configure
+  flags:
+    - flag: '-'
+      description: Detecta monitores y GPU creando /root/xorg.conf.new.
+    - flag: '-'
+      description: Log del servidor X (las líneas con (EE) indican errores y (WW) avisos).
+    - flag: '-'
+      description: >-
+        Bitácora en el home del usuario con errores de aplicaciones del
+        escritorio.
+- id: localectl
+  name: localectl
+  synopsis: localectl set-x11-keymap es
+  description: 'Configuración del Teclado: setxkbmap y localectl'
+  category: Instalar y configurar X11
+  subtopicIds:
+    - '106.1'
+  example: localectl set-x11-keymap es
+  flags:
+    - flag: '-'
+      description: Aplica inmediatamente el mapa de teclado español en la sesión X viva.
+    - flag: '-'
+      description: Muestra el Locale del sistema, VC Keymap (consola) y X11 Layout.
+    - flag: '-'
+      description: Lista todas las distribuciones nacionales disponibles.
+- id: xhost
+  name: xhost
+  synopsis: xhost +192.168.1.50
+  description: Control de Acceso Básico con xhost
+  category: Instalar y configurar X11
+  subtopicIds:
+    - '106.1'
+  example: xhost +192.168.1.50
+  flags:
+    - flag: '-'
+      description: Muestra el estado actual del control de acceso y los hosts autorizados.
+    - flag: '-'
+      description: ⚠️ Desactiva la protección (acceso libre universal, peligroso).
+    - flag: '-'
+      description: Reactiva el control de acceso estricto a los clientes registrados.
+    - flag: '-'
+      description: Autoriza al usuario root local mediante Server Interpreted.
+- id: xauth
+  name: xauth
+  synopsis: xauth list
+  description: Autenticación Segura con xauth y ~/.Xauthority
+  category: Instalar y configurar X11
+  subtopicIds:
+    - '106.1'
+  example: xauth list
+  flags:
+    - flag: '-'
+      description: Lista las entradas activas, displays y números hexadecimales de cookie.
+    - flag: '-'
+      description: Añade manualmente una cookie para un display remoto.
+    - flag: '-'
+      description: Exporta la cookie de una pantalla a un archivo para transferirla.
+    - flag: '-'
+      description: Archivo binario protegido en el home (permisos 600 obligatorios).
+- id: konsole
+  name: konsole
+  synopsis: konsole
+  description: Emuladores de Terminal Gráficos y Lanzador Alt+F2
+  category: Escritorios gráficos
+  subtopicIds:
+    - '106.2'
+  example: konsole
+  flags:
+    - flag: '-'
+      description: Atajo universal de escritorio para abrir el menú 'Ejecutar programa'.
+    - flag: '-'
+      description: >-
+        Ejecuta una orden interactiva directamente dentro de una nueva ventana
+        de terminal.
+    - flag: '-'
+      description: Lanza el comando tras '--' en una terminal independiente.
+- id: remmina
+  name: remmina
+  synopsis: remmina
+  description: Conectividad Multiprotocolo con Remmina
+  category: Escritorios gráficos
+  subtopicIds:
+    - '106.2'
+  example: remmina
+  flags:
+    - flag: '-'
+      description: >-
+        Plugin basado en FreeRDP para conectar a servidores Windows Terminal
+        Server.
+    - flag: '-'
+      description: Plugin basado en libvncclient para sesiones VNC estándar.
+    - flag: '-'
+      description: Plugin para consolas de máquinas virtuales KVM/Proxmox.
+- id: kmousetool
+  name: kmousetool
+  synopsis: kmousetool
+  description: 'Control del Puntero: Mouse Keys y KMouseTool'
+  category: Accesibilidad
+  subtopicIds:
+    - '106.3'
+  example: kmousetool
+  flags:
+    - flag: '-'
+      description: >-
+        Genera clic automático al pausar el ratón (configurable en
+        milisegundos).
+    - flag: '-'
+      description: Mapea las flechas del teclado numérico para desplazar el puntero.
+    - flag: '-'
+      description: Equivalente en GNOME para clics automáticos sin pulsar botones.
+- id: orca
+  name: orca
+  synopsis: orca
+  description: El Lector de Pantalla Orca y Pantallas Braille
+  category: Accesibilidad
+  subtopicIds:
+    - '106.3'
+  example: orca
+  flags:
+    - flag: '-'
+      description: Configura velocidad de habla, tono y parámetros de salida Braille.
+    - flag: '-'
+      description: Reinicia el lector de pantalla si la síntesis de audio se ha bloqueado.
+    - flag: '-'
+      description: Entorno auditivo alternativo integrado en Emacs para consola de texto.
