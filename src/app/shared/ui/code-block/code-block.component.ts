@@ -40,7 +40,7 @@ import { ChangeDetectionStrategy, Component, computed, input, signal } from '@an
         </div>
       }
 
-      <pre class="code-pre"><code class="code-body">{{ codeText() }}</code></pre>
+      <pre class="code-pre" tabindex="0" role="region" [attr.aria-label]="language() ? 'Bloque de código ' + language() : 'Bloque de código'"><code class="code-body">{{ codeText() }}</code></pre>
     </div>
   `,
   styles: [`

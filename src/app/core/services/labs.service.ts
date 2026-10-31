@@ -91,6 +91,7 @@ export class LabsService {
         }
       };
     });
+    this.store.flush();
   }
 
   markAllStepsCompleted(labId: string, totalSteps: number): void {
@@ -103,6 +104,7 @@ export class LabsService {
       }
     }));
     this.progressService.markLabCompleted(labId);
+    this.store.flush();
   }
 
   resetLab(labId: string): void {
@@ -114,6 +116,7 @@ export class LabsService {
         completedSteps: copy
       };
     });
+    this.store.flush();
   }
 
   getLabStatus(labId: string, totalSteps: number): LabStatus {
@@ -137,6 +140,7 @@ export class LabsService {
       ...s,
       dismissedVmNotice: true
     }));
+    this.store.flush();
   }
 
   dismissVmNotice(): void {
@@ -148,6 +152,7 @@ export class LabsService {
       ...s,
       dismissedVmNotice: false
     }));
+    this.store.flush();
   }
 
   flush(): void {

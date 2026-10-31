@@ -8,9 +8,9 @@ import { LabStep } from '../../../../core/models/lab.model';
   imports: [CommonModule],
   template: `
     <nav class="lab-stepper-nav w-full space-y-1.5" aria-label="Pasos de la práctica">
-      <div class="stepper-header px-2 py-1 text-xs font-mono font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center justify-between">
+      <div class="stepper-header px-2 py-1 text-xs font-mono font-bold uppercase tracking-wider text-[var(--text)] flex items-center justify-between">
         <span>Misiones ({{ completedCount() }}/{{ steps().length }})</span>
-        <span class="text-[11px] font-normal font-sans text-[var(--text-subtle)]">
+        <span class="text-[11px] font-normal font-sans text-[var(--text)]">
           {{ progressPercent() }}%
         </span>
       </div>
@@ -59,7 +59,6 @@ import { LabStep } from '../../../../core/models/lab.model';
                 [class.font-bold]="isActive"
                 [class.text-[var(--primary-text)]]="isActive"
                 [class.line-through]="isCompleted && !isActive"
-                [class.text-[var(--text-muted)]]="isCompleted && !isActive"
               >
                 {{ step.title }}
               </span>
