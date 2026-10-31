@@ -307,10 +307,71 @@ function convertSlide(leg: LegacySlide, subtopicId: string, index: number): Slid
 
   // Diagram HTML
   if (leg.diagram_html) {
-    blocks.push({
-      type: 'html',
-      sanitizedHtml: leg.diagram_html
-    });
+    if (subtopicId === '103.4' && (leg.id === 2 || index === 1)) {
+      blocks.push({
+        type: 'diagram',
+        kind: 'streams',
+        title: 'Flujos Estándar y Descriptores de Archivo (0, 1, 2)',
+        caption: 'Mapeo de los tres descriptores estándar de un proceso Linux',
+        alt: 'Diagrama de los canales estándar de un proceso Linux: stdin descriptor 0 para entrada, stdout descriptor 1 para salida estándar y stderr descriptor 2 para errores.',
+        spec: {
+          nodes: [
+            {
+              id: 'stdin',
+              label: '0: stdin',
+              sublabel: 'Entrada estándar',
+              tone: 'neutral',
+              badge: '0'
+            },
+            {
+              id: 'proc',
+              label: 'Proceso Linux',
+              sublabel: 'grep / awk / sed',
+              tone: 'primary',
+              shape: 'box'
+            },
+            {
+              id: 'stdout',
+              label: '1: stdout',
+              sublabel: 'Salida normal (>)',
+              tone: 'success',
+              badge: '1'
+            },
+            {
+              id: 'stderr',
+              label: '2: stderr',
+              sublabel: 'Errores (2>)',
+              tone: 'danger',
+              badge: '2'
+            }
+          ],
+          edges: [
+            {
+              from: 'stdin',
+              to: 'proc',
+              label: 'Canal 0 (<)'
+            },
+            {
+              from: 'proc',
+              to: 'stdout',
+              label: 'Canal 1 (>)',
+              tone: 'success'
+            },
+            {
+              from: 'proc',
+              to: 'stderr',
+              label: 'Canal 2 (2>)',
+              tone: 'danger'
+            }
+          ]
+        }
+      });
+    } else {
+      blocks.push({
+        type: 'html',
+        sanitizedHtml: leg.diagram_html
+      });
+    }
   }
 
   // Flashcards deck

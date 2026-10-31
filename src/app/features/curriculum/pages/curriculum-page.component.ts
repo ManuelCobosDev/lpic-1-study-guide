@@ -103,16 +103,16 @@ import { CurriculumCardComponent } from '../components/curriculum-card/curriculu
         } @else {
           <section class="exam-section" aria-label="Temario del Examen 102-500">
             <!-- Barra informativa del Examen 102 -->
-            <div class="exam-banner exam-banner-planned">
+            <div class="exam-banner">
               <div class="exam-info-col">
                 <div class="flex items-center gap-2 mb-1">
-                  <span class="text-xs font-mono font-bold text-[var(--text-muted)]">EXAMEN 102-500</span>
-                  <app-badge variant="neutral">Planificado</app-badge>
+                  <span class="text-xs font-mono font-bold text-[var(--primary-text)]">EXAMEN 102-500</span>
+                  <app-badge variant="success">Disponible completo</app-badge>
                 </div>
                 <h2 class="exam-heading">LPIC-1 Exam 102: Shells, scripting, redes y seguridad</h2>
                 <p class="exam-desc">
-                  Cubre los seis temas restantes del LPIC-1 (Temas 105 al 110). La importación de contenidos detallados
-                  está planificada para la Fase 11, pero los objetivos y la estructura ya están formalizados.
+                  Cubre los seis temas restantes del LPIC-1 (Temas 105 al 110): shells, scripting y gestión de datos,
+                  interfaces de usuario y escritorios, tareas administrativas, servicios esenciales, redes y seguridad.
                 </p>
               </div>
 
@@ -125,7 +125,7 @@ import { CurriculumCardComponent } from '../components/curriculum-card/curriculu
               </div>
             </div>
 
-            <!-- Cuadrícula de 3 Columnas para el Examen 102 (Grid Stretch con Borde Discontinuo) -->
+            <!-- Cuadrícula de 3 Columnas para el Examen 102 -->
             <div class="topics-grid-102">
               @for (topic of topics102(); track topic.id) {
                 <div class="grid-card-wrapper">
@@ -133,7 +133,7 @@ import { CurriculumCardComponent } from '../components/curriculum-card/curriculu
                     [topic]="topic"
                     [subtopics]="allSubtopics()"
                     [progress]="progress()"
-                    [isPlanned]="true"
+                    [isPlanned]="false"
                   />
                 </div>
               }
@@ -308,7 +308,11 @@ export class CurriculumPageComponent implements OnInit {
   readonly allSubtopics = computed(() => this.manifest()?.subtopics ?? []);
 
   readonly availableTopics = computed(() => {
-    return this.allTopics().filter((t) => t.examId === '101');
+    const exams = this.manifest()?.exams ?? [];
+    const availableExamIds = new Set(
+      exams.filter((e) => e.status === 'available').map((e) => e.id)
+    );
+    return this.allTopics().filter((t) => availableExamIds.has(t.examId));
   });
 
   readonly topics101 = computed(() => {

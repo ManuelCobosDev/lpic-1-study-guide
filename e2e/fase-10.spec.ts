@@ -300,6 +300,7 @@ test.describe('Gate 10: Herramientas complementarias, Ajustes, Backup, Progreso,
     await expect(page.locator('.page-title')).toContainText('Fe de Erratas');
     await expect(page.locator('[data-testid="report-errata-btn"]')).toHaveAttribute('href', /github\.com/);
     const errataCards = page.locator('.errata-card');
+    await expect(errataCards.first()).toBeVisible();
     expect(await errataCards.count()).toBeGreaterThan(0);
 
     // 2. /acerca-de

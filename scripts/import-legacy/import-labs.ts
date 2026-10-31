@@ -151,3 +151,4 @@ if (isMain) {
   for (const l of labs) totalSteps += l.steps.length;
   console.log(`SUCCESS: ${labs.length} laboratorios y ${totalSteps} pasos de misión importados con éxito.`);
 }
+

@@ -141,3 +141,4 @@ if (isMain) {
   }
   console.log(`SUCCESS: ${total} preguntas importadas y validadas con éxito.`);
 }
+

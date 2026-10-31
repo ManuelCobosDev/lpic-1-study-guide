@@ -43,3 +43,12 @@
 - Decisión: C · Decidió: agente (alineado con la spec 06a de atajos globales y componentes de shell).
 - Consecuencias: `SearchService` se retira de la lista `DOMAIN_SERVICES` en `scripts/check-boundaries.ts`, permitiendo que `SearchPaletteComponent` y `HeaderComponent` interactúen limpiamente con el estado de la paleta y las consultas reactivas.
 - Revisable si: se rediseña la arquitectura de layout o se introduce una librería de command palette desacoplada.
+
+## D-006 · 2026-10-31 · Transición del Examen 102 a disponible y actualización de aserciones E2E bajo R3
+- Contexto: En las Fases 0 a 10 el Examen 102 figuraba como `planned` en el currículo y los tests unitarios y E2E iniciales comprobaban que estaba planificado, que la letra 'A' del glosario estaba vacía en el seed inicial, y que `tee` pertenecía a una categoría ficticia. Con la finalización de la importación legacy completa en la Fase 11 (decisión D-004), ambos exámenes (101 y 102) están disponibles al 100% con 42 subtemas, 770 diapositivas, 42 laboratorios, 240 preguntas, 193 comandos y 230 términos reales.
+- Opciones:
+  A) Mantener los tests esperando que el Examen 102 esté planificado y que la categoría de comandos sea un mock (incompatible con la especificación de Gate 11 y R4).
+  B) Actualizar los tests unitarios (`curriculum.spec.ts`) y E2E (`fase-9.spec.ts`, `fase-10.spec.ts`) para reflejar la realidad del currículo disponible al 100%, tal como autoriza la Regla R3 ("No modifiques un test para que pase salvo que el test sea incorrecto, y entonces lo explicas en DECISIONS.md").
+- Decisión: B · Decidió: agente (conforme a R3 y D-004).
+- Consecuencias: `curriculum.spec.ts` valida que ambos exámenes tienen `status: 'available'`; `fase-9.spec.ts` utiliza la categoría real `Uso de secuencias de texto, tuberías y redireccionamientos` y comprueba la interactividad del índice A-Z con datos completos; `fase-10.spec.ts` espera a que las tarjetas de erratas se rendericen tras la resolución asíncrona.
+- Revisable si: se añade un nuevo examen o versión que empiece en estado planificado.

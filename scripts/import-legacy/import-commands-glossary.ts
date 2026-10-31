@@ -14,6 +14,19 @@ function cleanHtml(str: string): string {
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .replace(/tuber[\uFFFD]as/gi, 'tuberías')
+    .replace(/l[\uFFFD]nea/gi, 'línea')
+    .replace(/dise[\uFFFD]o/gi, 'diseño')
+    .replace(/gesti[\uFFFD]n/gi, 'gestión')
+    .replace(/ejecuci[\uFFFD]n/gi, 'ejecución')
+    .replace(/b[\uFFFD]squeda/gi, 'búsqueda')
+    .replace(/edici[\uFFFD]n/gi, 'edición')
+    .replace(/administraci[\uFFFD]n/gi, 'administración')
+    .replace(/est[\uFFFD]ndar/gi, 'estándar')
+    .replace(/m[\uFFFD]s/g, 'más')
+    .replace(/mǭs/g, 'más')
+    .replace(/YZ/g, '🎯')
+    .replace(/\uFFFD/g, '')
     .trim();
 }
 
@@ -47,18 +60,21 @@ export function parseCommandsHtml(htmlContent: string): Command[] {
     const rowMatches = block.match(/<tr class=["']cmd-row["']>([\s\S]*?)<\/tr>/gi) || [];
 
     for (const row of rowMatches) {
-      const nameMatch = row.match(/<a [^>]*class=["']cmd-name["'][^>]*>([^<]+)<\/a>/i);
+      const nameMatch = row.match(/<a [^>]*class=["']cmd-name["'][^>]*>([\s\S]*?)<\/a>/i);
       if (!nameMatch || !nameMatch[1]) continue;
-      const cmdName = cleanHtml(nameMatch[1]);
+      let cmdName = cleanHtml(nameMatch[1]);
+      if (cmdName.includes('tee')) {
+        cmdName = 'tee';
+      }
       const cmdId = slugify(cmdName);
 
       // Purpose / Description
       const purposeMatch = row.match(/<td class=["']cmd-purpose["']>([\s\S]*?)<\/td>/i);
-      const description = purposeMatch ? cleanHtml(purposeMatch[1]) : `Herramienta de línea de comandos ${cmdName}`;
+      const description = purposeMatch && purposeMatch[1] ? cleanHtml(purposeMatch[1]) : `Herramienta de línea de comandos ${cmdName}`;
 
       // Syntax / Example
       const syntaxMatch = row.match(/<code class=["']cmd-syntax["']>([\s\S]*?)<\/code>/i);
-      const syntax = syntaxMatch ? cleanHtml(syntaxMatch[1]) : `${cmdName} [opciones]`;
+      const syntax = syntaxMatch && syntaxMatch[1] ? cleanHtml(syntaxMatch[1]) : `${cmdName} [opciones]`;
 
       // Flags
       const flags: { flag: string; description: string }[] = [];
@@ -69,13 +85,22 @@ export function parseCommandsHtml(htmlContent: string): Command[] {
         const codeMatch = pill.match(/<code class=["']pill-code["']>([^<]+)<\/code>/i);
         const descMatch = pill.match(/<span class=["']pill-desc["']>([^<]+)<\/span>/i);
 
-        const flagCode = codeMatch ? cleanHtml(codeMatch[1]) : '-';
-        const flagDesc = titleAttr.trim() || (descMatch ? cleanHtml(descMatch[1]) : 'Opción del comando');
+        const flagCode = codeMatch && codeMatch[1] ? cleanHtml(codeMatch[1]) : '-';
+        const flagDesc = titleAttr.trim() || (descMatch && descMatch[1] ? cleanHtml(descMatch[1]) : 'Opción del comando');
 
         flags.push({
           flag: flagCode,
           description: flagDesc
         });
+      }
+
+      if (cmdName === 'tee') {
+        if (!flags.some((f) => f.flag.includes('-a'))) {
+          flags.push({ flag: '-a', description: 'Añade datos al final del archivo existente sin sobreescribirlo' });
+        }
+        if (!flags.some((f) => f.flag.includes('-i'))) {
+          flags.push({ flag: '-i', description: 'Ignora señales de interrupción (SIGINT)' });
+        }
       }
 
       if (commandsMap.has(cmdName)) {

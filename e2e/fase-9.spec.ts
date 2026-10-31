@@ -22,7 +22,7 @@ test.describe('Gate 9: Comandos, Glosario y Flashcards', () => {
 
     // 3. Seleccionar categoría y tema
     const categorySelect = page.locator('.category-filter');
-    await categorySelect.selectOption({ label: 'Redirecciones y Tuberías' });
+    await categorySelect.selectOption({ label: 'Uso de secuencias de texto, tuberías y redireccionamientos' });
 
     const topicSelect = page.locator('.topic-filter');
     await topicSelect.selectOption({ value: '103' });
@@ -40,7 +40,7 @@ test.describe('Gate 9: Comandos, Glosario y Flashcards', () => {
     await page.waitForSelector('app-commands-page');
 
     await expect(searchInput).toHaveValue('tee');
-    await expect(categorySelect).toHaveValue('Redirecciones y Tuberías');
+    await expect(categorySelect).toHaveValue('Uso de secuencias de texto, tuberías y redireccionamientos');
     await expect(topicSelect).toHaveValue('103');
     await expect(counterBadge).toContainText(/de.*comandos/);
 
@@ -93,26 +93,29 @@ test.describe('Gate 9: Comandos, Glosario y Flashcards', () => {
     const alphaNav = page.locator('.alpha-index-nav');
     await expect(alphaNav).toBeVisible();
 
-    // 2. Letras sin términos (ej. 'A') deben estar deshabilitadas
-    const letterA = page.locator('.alpha-letter-btn:has-text("A")');
+    // 2. Letras con términos (ej. 'A', 'S') deben estar habilitadas en catálogo completo
+    const letterA = page.locator('.alpha-letter-btn:has-text("A")').first();
+    await expect(letterA).toBeEnabled();
+
+    // 3. Filtrar para que una letra quede vacía y comprobar que se deshabilita dinámicamente
+    const searchInput = page.locator('.search-input');
+    await searchInput.fill('stdin');
     await expect(letterA).toBeDisabled();
     await expect(letterA).toHaveAttribute('aria-disabled', 'true');
 
-    // 3. Letras con términos (ej. 'S' o 'D') deben estar habilitadas
-    const letterS = page.locator('.alpha-letter-btn:has-text("S")');
+    // 4. Limpiar búsqueda, pulsar en 'S' y verificar que la sección correspondiente existe
+    await searchInput.fill('');
+    const letterS = page.locator('.alpha-letter-btn:has-text("S")').first();
     await expect(letterS).toBeEnabled();
-
-    // 4. Pulsar en 'S' y verificar que la sección correspondiente existe
     await letterS.click();
     const sectionS = page.locator('#letter-S');
     await expect(sectionS).toBeVisible();
     await expect(sectionS.locator('.letter-title')).toHaveText('S');
 
     // 5. Búsqueda en tiempo real
-    const searchInput = page.locator('.search-input');
-    await searchInput.fill('stdin');
-    await expect(page).toHaveURL(/q=stdin/);
-    await expect(page.locator('.term-name:has-text("stdin")')).toBeVisible();
+    await searchInput.fill('tee');
+    await expect(page).toHaveURL(/q=tee/);
+    await expect(page.locator('.term-name:has-text("tee")')).toBeVisible();
   });
 
   test('Sesión de flashcards con valoraciones y persistencia Leitner tras recargar (Gate 9)', async ({ page }) => {

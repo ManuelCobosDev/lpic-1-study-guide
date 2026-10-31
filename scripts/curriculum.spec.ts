@@ -29,7 +29,7 @@ describe('Curriculo Oficial LPIC-1 (content-src/curriculum.yaml)', () => {
     expect(exam102?.weight).toBe(60);
 
     expect(exam101?.status).toBe('available');
-    expect(exam102?.status).toBe('planned');
+    expect(exam102?.status).toBe('available');
 
     expect(exam101?.title).toBe(
       'Arquitectura del sistema, instalación de Linux y gestión de paquetes, comandos GNU y Unix, dispositivos y sistemas de archivos'

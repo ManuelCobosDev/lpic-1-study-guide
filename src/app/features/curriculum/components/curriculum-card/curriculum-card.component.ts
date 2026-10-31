@@ -61,7 +61,6 @@ import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
               [routerLink]="isPlanned() ? null : ['/estudiar', sub.id]"
               class="subtopic-link"
               [class.pointer-events-none]="isPlanned()"
-              [attr.aria-label]="sub.id + ' ' + sub.title"
             >
               <!-- Código mono en chip fijo de 52 px -->
               <span class="subtopic-code-chip font-mono">
@@ -86,7 +85,7 @@ import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
                   [routerLink]="['/laboratorios', sub.labId]"
                   class="lab-btn"
                   title="Práctica de consola de este subtema"
-                  aria-label="Abrir práctica del subtema"
+                  [attr.aria-label]="'Lab ' + sub.id + ': práctica de ' + sub.title"
                 >
                   Lab
                 </a>

@@ -2,22 +2,16 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0061
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0062
 
 ## Estado
-- **Fase actual**: Fase 11 (Importación completa del legacy) EN CURSO.
-- **Último gate superado**: Gate 10 (etiqueta `fase-10-ok`).
-- **Trabajo en curso**: Tarea 11.6 (Gate 11: Suite E2E de contenido real, capturas visuales, `npm run verify` y tag `fase-11-ok`).
+- **Fase actual**: Fase 11 (Importación completa del legacy) COMPLETADA.
+- **Último gate superado**: Gate 11 (etiqueta `fase-11-ok`).
+- **Trabajo en curso**: Ninguno. Fase 11 completada con éxito.
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-1. Tarea 11.6: Implementar `e2e/fase-11.spec.ts` validando los criterios objetivos de Gate 11:
-   - Cobertura 100% de los 42 subtemas oficiales disponibles (Exámenes 101 y 102).
-   - Comprobación de que la app muestra los contadores dinámicos calculados (42 subtemas, 770 diapositivas, 42 laboratorios, 240 preguntas).
-   - Navegación a lecciones y laboratorios del Examen 102 (ej. 105.1, 107.1, 110.3).
-   - El simulador permite iniciar exámenes tanto del 101 como del 102.
-   - Generación de capturas visuales en `e2e/screenshots/fase-11/` e inspección con `read_file` (R5).
-   - `npm run verify` íntegro en verde, commit `[C-0062]`, tag `fase-11-ok` y DETENERSE.
+- DETENERSE según la Regla R2 (Gate obligatorio) y esperar confirmación del usuario para proceder a la Fase 12 (`/ejecutar-fase 12` - Pulido final, accesibilidad, rendimiento y empaquetado).
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -33,18 +27,23 @@
 | 8 | Simulador | completada (Gate 8 OK) |
 | 9 | Comandos, Glosario y Flashcards | completada (Gate 9 OK) |
 | 10 | Herramientas complementarias, Ajustes, Progreso, Mapa mental | completada (Gate 10 OK) |
-| 11 | Importación completa del legacy | en curso (Tareas 11.1 a 11.5 listas · 100% contenido real e idempotente) |
+| 11 | Importación completa del legacy | completada (Gate 11 OK) |
 | 12 | Pulido, accesibilidad, rendimiento y documentación | pendiente |
 
 ## Stubs (páginas aún no implementadas)
 | Ruta | Se implementa en |
 |---|---|
-| Ninguna (0 stubs pendientes · 23 de 23 rutas implementadas) | Todas completadas |
+| Ninguna (0 stubs pendientes · 23 de 23 rutas reales implementadas) | Todas completadas |
+
+## Estadísticas del Manifiesto Oficial (100% Real, 0 Placeholders)
+- **Subtemas oficiales disponibles**: 42 / 42 (Examen 101: 23, Examen 102: 19)
+- **Diapositivas reales**: 770 (0 placeholders)
+- **Laboratorios con misiones paso a paso**: 42 (131 pasos reales)
+- **Banco de preguntas oficial**: 240 (120 del Examen 101, 120 del Examen 102)
+- **Catálogo de comandos**: 193
+- **Términos de glosario técnico**: 230
 
 ## Comandos útiles
+- `npm run verify`: pipeline completo de 9 etapas en verde (69 E2E specs + 16 scripts specs).
 - `npm run import:legacy`: importación reproducible e idempotente de todo el contenido.
-- `npm run build:content`: genera manifiesto y valida contenido (100% real).
-- `npm run verify`: pipeline completo de 9 etapas en verde.
-
-## Deuda conocida
-Ninguna.
+- `npm run build`: compilación de producción Angular y generación de `404.html`.

@@ -55,10 +55,16 @@ export class CommandsPageComponent implements OnInit {
 
   readonly availableTopics = [
     { id: 'todos', label: 'Todos los temas' },
-    { id: '101', label: 'Tema 101: Arquitectura del Sistema' },
-    { id: '102', label: 'Tema 102: Instalación de Linux y Paquetes' },
+    { id: '101', label: 'Tema 101: Arquitectura del sistema' },
+    { id: '102', label: 'Tema 102: Instalación de Linux y gestión de paquetes' },
     { id: '103', label: 'Tema 103: Comandos GNU y Unix' },
-    { id: '104', label: 'Tema 104: Dispositivos, Sistemas de Ficheros y FHS' }
+    { id: '104', label: 'Tema 104: Dispositivos, sistemas de archivos Linux y estándar FHS' },
+    { id: '105', label: 'Tema 105: Shells y scripts de shell' },
+    { id: '106', label: 'Tema 106: Interfaces de usuario y escritorios' },
+    { id: '107', label: 'Tema 107: Tareas administrativas' },
+    { id: '108', label: 'Tema 108: Servicios esenciales del sistema' },
+    { id: '109', label: 'Tema 109: Fundamentos de redes' },
+    { id: '110', label: 'Tema 110: Seguridad' }
   ];
 
   readonly totalCommands = computed(() => this.commands().length);
