@@ -1,0 +1,44 @@
+{
+  "id": "lab-101-1",
+  "subtopicId": "101.1",
+  "title": "Práctica 101.1 — Ajustes de Hardware, Buses y Módulos del Kernel",
+  "estimatedMinutes": 30,
+  "difficulty": "basic",
+  "type": "subtopic",
+  "placeholder": false,
+  "steps": [
+    {
+      "id": "step-101-1-1",
+      "stepNumber": 1,
+      "title": "Misión 1 — Auditoría del Bus PCI y Periféricos USB",
+      "instruction": "Antes de configurar drivers en un servidor Linux, debemos identificar la controladora de red, gráficos y buses conectados.",
+      "command": "# Listar dispositivos PCI revelando el módulo activo del kernel\r\nlspci -k | grep -A 3 -i -E \"vga|ethernet|network\"\r\n\r\n# Ver la topología USB en estructura de árbol\r\nlsusb -t",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-101-1-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Exploración de Hardware en /proc y /sys",
+      "instruction": "El núcleo expone las características del procesador y las interrupciones en el sistema de archivos virtual /proc y la topología en /sys.",
+      "command": "# Consultar modelo, núcleos y flags de virtualización de la CPU\r\ncat /proc/cpuinfo | grep -E \"model name|cpu cores|flags\" | head -n 6\r\n\r\n# Ver las líneas de interrupción (IRQ) activas\r\ncat /proc/interrupts | head -n 12\r\n\r\n# Comparar la vista organizativa en /sys con los nodos de acceso en /dev\r\nls -l /sys/class/net/\r\nls -l /dev/sda* /dev/tty1",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-101-1-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Gestión Segura de Módulos con modprobe y modinfo",
+      "instruction": "Cargaremos y descargaremos el módulo de prueba seguro `dummy` (interfaz de red ficticia) para practicar sin comprometer el driver del disco ni la red real.",
+      "command": "# Consultar la ficha técnica de un módulo antes de cargarlo\r\nmodinfo dummy\r\n\r\n# Cargar el módulo dummy en memoria\r\nsudo modprobe dummy\r\n\r\n# Verificar que el módulo está activo en el kernel\r\nlsmod | grep dummy\r\n\r\n# Descargar el módulo de forma limpia y segura\r\nsudo modprobe -r dummy\r\n\r\n# Confirmar que ya no reside en memoria viva\r\nlsmod | grep dummy",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-101-1-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Configuración Persistente y Blacklist en /etc/modprobe.d/",
+      "instruction": "Aprenderás cómo el administrador impide la carga de un módulo conflictivo o asigna opciones fijas mediante archivos .conf.",
+      "command": "# Crear un archivo de prueba en /etc/modprobe.d/\r\necho -e \"# Regla de prueba aula\\nblacklist dummy\\noptions dummy numdummies=2\" | sudo tee /etc/modprobe.d/aula-dummy.conf\r\n\r\n# Inspeccionar el contenido del archivo creado\r\ncat /etc/modprobe.d/aula-dummy.conf\r\n\r\n# Limpiar el archivo de prueba para no alterar el sistema\r\nsudo rm /etc/modprobe.d/aula-dummy.conf",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
+      "examAlert": "Ver pista desplegable si te atascas</summary>"
+    }
+  ]
+}

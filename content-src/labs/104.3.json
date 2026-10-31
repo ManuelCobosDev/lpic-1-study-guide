@@ -1,0 +1,44 @@
+{
+  "id": "lab-104-3",
+  "subtopicId": "104.3",
+  "title": "Práctica 104.3 — Control del Montaje y Desmontaje de Sistemas de Archivos",
+  "estimatedMinutes": 30,
+  "difficulty": "basic",
+  "type": "subtopic",
+  "placeholder": false,
+  "steps": [
+    {
+      "id": "step-104-3-1",
+      "stepNumber": 1,
+      "title": "Misión 1 — Montaje Manual Seguro y Opciones de Remontaje",
+      "instruction": "Montaremos un sistema de archivos de prueba en modo solo lectura (`ro`) y probaremos cómo remontarlo en caliente a modo lectura/escritura (`rw`).",
+      "command": "# Crear un punto de montaje y una imagen ext4 de prueba\r\nsudo mkdir -p /mnt/prueba_lab\r\ntruncate -s 50M /tmp/disco_montaje.raw\r\nsudo mkfs.ext4 -F /tmp/disco_montaje.raw > /dev/null\r\n\r\n# Montar inicialmente en modo SOLO LECTURA (-o ro)\r\nsudo mount -o ro /tmp/disco_montaje.raw /mnt/prueba_lab\r\n\r\n# Comprobar que está montado como ro con findmnt\r\nfindmnt /mnt/prueba_lab\r\n\r\n# Intentar crear un archivo (debe fallar con 'Read-only file system')\r\ntouch /mnt/prueba_lab/archivo.txt 2>&1 || true\r\n\r\n# Remontar en caliente a modo lectura y escritura (-o remount,rw)\r\nsudo mount -o remount,rw /mnt/prueba_lab\r\n\r\n# Ahora la creación del archivo tiene éxito\r\nsudo touch /mnt/prueba_lab/archivo_exito.txt && ls -l /mnt/prueba_lab/",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-104-3-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Desmontaje Limpio (umount) y Desmontaje Perezoso (-l)",
+      "instruction": "Cuando un proceso tiene un archivo abierto en el punto de montaje, umount falla con 'target is busy'. Aprenderás a resolverlo.",
+      "command": "# Desmontar el sistema de archivos normalmente\r\nsudo umount /mnt/prueba_lab\r\n\r\n# Comprobar que ya no aparece en findmnt\r\nfindmnt /mnt/prueba_lab || echo \"Desmontado correctamente.\"",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-104-3-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Anatomía de los 6 Campos de /etc/fstab",
+      "instruction": "El archivo /etc/fstab gobierna qué sistemas de archivos se montan automáticamente al iniciar el servidor.",
+      "command": "# Inspeccionar el archivo /etc/fstab de tu máquina virtual\r\ncat /etc/fstab | grep -v \"^#\" | grep -v \"^$\"\r\n\r\n# Verificar la tabla de montajes activos leída por el kernel\r\nhead -n 8 /proc/mounts",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-104-3-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Prueba de Montaje Automatizado con mount -a y Limpieza",
+      "instruction": "Aprenderás cómo validar /etc/fstab sin reiniciar la máquina mediante mount -a.",
+      "command": "# La orden 'sudo mount -a' monta todo lo declarado en /etc/fstab con la opción 'auto'\r\nsudo mount -a\r\n\r\n# Limpiar directorio y archivo temporal\r\nsudo rm -rf /mnt/prueba_lab /tmp/disco_montaje.raw\r\necho \"Limpieza completada.\"",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
+      "examAlert": "Ver pista desplegable si te atascas</summary>"
+    }
+  ]
+}

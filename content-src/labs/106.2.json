@@ -1,0 +1,36 @@
+{
+  "id": "lab-106-2",
+  "subtopicId": "106.2",
+  "title": "Práctica 106.2 — Entornos de Escritorio, Gestores de Ventanas y Acceso Remoto",
+  "estimatedMinutes": 30,
+  "difficulty": "basic",
+  "type": "subtopic",
+  "placeholder": false,
+  "steps": [
+    {
+      "id": "step-106-2-1",
+      "stepNumber": 1,
+      "title": "Misión 1 — Auditoría del Entorno de Escritorio, Gestor de Ventanas y Display Manager",
+      "instruction": "Un entorno de escritorio no es un único programa, sino una suite integrada por un Display Manager (gestor de login), un Window Manager (marcos, botones de ventana y composición) y utilidades de sesión.",
+      "command": "# 1. Identificar el entorno de escritorio activo mediante variables de entorno\r\necho \"Entorno de escritorio: $XDG_CURRENT_DESKTOP\"\r\necho \"Sesión de escritorio: $DESKTOP_SESSION\"\r\n\r\n# 2. Auditar qué gestor de inicio de sesión (Display Manager) está gestionando la pantalla\r\nsystemctl status display-manager.service --no-pager | head -n 15\r\n\r\n# 3. Identificar el proceso del gestor de ventanas en ejecución (Mutter, KWin, Xfwm4 o Openbox)\r\nps -ef | grep -E \"mutter|kwin|xfwm4|openbox\" | grep -v grep\r\n\r\n# 4. Comprobar la biblioteca gráfica base de las aplicaciones comunes instaladas\r\ndpkg -l | grep -E \"libgtk-[0-9]|libqt[0-9]\" | head -n 10",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-106-2-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — El Doble Portapapeles de X11 y el Comportamiento de Terminales",
+      "instruction": "X11 cuenta con dos mecanismos de portapapeles independientes que operan en paralelo:\r\n1. `PRIMARY`: Almacena el texto simplemente seleccionándolo con el cursor; se pega con el botón central del ratón.",
+      "command": "# 1. Inyectar texto directamente en el portapapeles PRIMARY mediante xclip\r\necho \"Texto seleccionado en PRIMARY para LPIC-1\" | xclip -selection primary\r\n\r\n# 2. Inyectar un texto distinto en el portapapeles CLIPBOARD\r\necho \"Texto explícito en CLIPBOARD con Ctrl+C\" | xclip -selection clipboard\r\n\r\n# 3. Leer qué contiene la selección PRIMARY (equivalente a pulsar botón central del ratón)\r\nxclip -selection primary -o\r\necho \"\"\r\n\r\n# 4. Leer qué contiene el portapapeles CLIPBOARD (equivalente a pulsar Ctrl+V)\r\nxclip -selection clipboard -o\r\necho \"\"",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-106-2-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Protocolos de Escritorio Remoto y Puertos de Red",
+      "instruction": "El examen LPIC-1 exige conocer los puertos TCP/UDP de los protocolos estándar de escritorio remoto y las herramientas cliente como `remmina`.",
+      "command": "# 1. Comprobar en /etc/services los números de puerto oficiales de RDP, VNC y XDMCP\r\ngrep -E \"(ms-wbt-server|vnc|xdmcp)\" /etc/services\r\n\r\n# 2. Auditar si existe algún servicio de escucha activo en los puertos de escritorio remoto\r\nss -tlpn | grep -E \"3389|5900|177\" || echo \"No hay servidores remotos escuchando en estos puertos (comportamiento normal)\"\r\n\r\n# 3. Comprobar la presencia del cliente unificado Remmina\r\nwhich remmina 2>/dev/null || echo \"Remmina es el cliente universal para RDP, VNC, SSH y SPICE\"",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
+      "examAlert": "Ver pista desplegable si te atascas</summary>"
+    }
+  ]
+}

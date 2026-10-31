@@ -1,0 +1,36 @@
+{
+  "id": "lab-107-1",
+  "subtopicId": "107.1",
+  "title": "Práctica 107.1 — Administración de Cuentas de Usuario, Grupos y Envejecimiento de Claves",
+  "estimatedMinutes": 30,
+  "difficulty": "basic",
+  "type": "subtopic",
+  "placeholder": false,
+  "steps": [
+    {
+      "id": "step-107-1-1",
+      "stepNumber": 1,
+      "title": "Misión 1 — Creación Avanzada de Usuarios y Grupos con useradd y groupadd",
+      "instruction": "Crearemos un grupo de desarrollo con GID específico y una cuenta de usuario corporativa asociada, configurando su shell, comentarios GECOS, fecha de caducidad y membresías secundarias en un solo comando.",
+      "command": "# 1. Crear el grupo corporativo 'desarrollo' con GID 2100\r\nsudo groupadd -g 2100 desarrollo\r\n\r\n# 2. Crear el usuario 'laura' con home (-m), shell bash (-s), UID 1550 (-u),\r\n# grupo primario 'desarrollo' (-g), grupos suplementarios 'sudo,adm' (-G),\r\n# comentario GECOS (-c) y fecha de caducidad fijada para fin de año (-e):\r\nsudo useradd -m -s /bin/bash -u 1550 -g 2100 -G sudo,adm -c \"Laura Gómez,DevOps\" -e 2026-12-31 laura\r\n\r\n# 3. Comprobar los identificadores y grupos asignados con 'id'\r\nid laura\r\n\r\n# 4. Verificar la línea creada en /etc/passwd y en /etc/group\r\ngrep laura /etc/passwd\r\ngrep desarrollo /etc/group",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-107-1-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Modificación con usermod: La Trampa de -aG y Traslado de Home",
+      "instruction": "Añadiremos al usuario a un nuevo grupo secundario verificando la necesidad de `-a` para no perder los grupos previos, y trasladaremos físicamente su directorio personal a una nueva ruta con `-d -m`.",
+      "command": "# 1. Crear un grupo adicional llamado 'docker'\r\nsudo groupadd docker\r\n\r\n# 2. Añadir a Laura al grupo 'docker' PRESERVANDO sus grupos anteriores (-a -G)\r\nsudo usermod -a -G docker laura\r\nid laura\r\n\r\n# 3. Trasladar su directorio personal a /var/home/laura físicamente (-d -m)\r\nsudo mkdir -p /var/home\r\nsudo usermod -d /var/home/laura -m laura\r\n\r\n# 4. Validar el cambio en /etc/passwd y en el sistema de archivos\r\ngrep laura /etc/passwd\r\nls -ld /var/home/laura",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-107-1-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Envejecimiento de Claves (chage), Bloqueo y getent",
+      "instruction": "Asignaremos una contraseña, estableceremos políticas de caducidad en `/etc/shadow` con `chage`, forzaremos la expiración en el siguiente inicio y probaremos el bloqueo seguro con `usermod -L` y consulta con `getent`.",
+      "command": "# 1. Asignar contraseña a Laura\r\necho \"laura:PasswordSegura2026!\" | sudo chpasswd\r\n\r\n# 2. Configurar envejecimiento: mínimo 7 días (-m), máximo 90 días (-M),\r\n# aviso 14 días antes (-W) e inactividad de 30 días tras expirar (-I):\r\nsudo chage -m 7 -M 90 -W 14 -I 30 laura\r\n\r\n# 3. Forzar cambio de contraseña inmediato en el próximo login (-d 0)\r\nsudo chage -d 0 laura\r\n\r\n# 4. Auditar el envejecimiento con chage -l\r\nsudo chage -l laura\r\n\r\n# 5. Bloquear la cuenta con usermod -L y comprobar el prefijo '!' en shadow con getent\r\nsudo usermod -L laura\r\nsudo getent shadow laura",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
+      "examAlert": "Ver pista desplegable si te atascas</summary>"
+    }
+  ]
+}

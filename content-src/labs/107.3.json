@@ -1,0 +1,36 @@
+{
+  "id": "lab-107-3",
+  "subtopicId": "107.3",
+  "title": "Práctica 107.3 — Localización, Zonas Horarias, Locales y Conversión con iconv",
+  "estimatedMinutes": 25,
+  "difficulty": "basic",
+  "type": "subtopic",
+  "placeholder": false,
+  "steps": [
+    {
+      "id": "step-107-3-1",
+      "stepNumber": 1,
+      "title": "Misión 1 — Diagnóstico y Configuración de Zonas Horarias con timedatectl",
+      "instruction": "Comprobaremos el estado horario del sistema, analizaremos el enlace `/etc/localtime` y cambiaremos la zona horaria de forma persistente con `timedatectl`, verificando además la sobreescritura temporal mediante la variable `TZ`.",
+      "command": "# 1. Consultar el estado detallado de tiempo y zona horaria\r\ntimedatectl status\r\n\r\n# 2. Comprobar a qué archivo apunta físicamente /etc/localtime\r\nls -l /etc/localtime\r\n\r\n# 3. Cambiar la zona horaria del sistema a 'Europe/Paris' con timedatectl\r\nsudo timedatectl set-timezone Europe/Paris\r\ntimedatectl status | grep \"Time zone\"\r\n\r\n# 4. Comprobar que el enlace simbólico /etc/localtime se actualizó automáticamente\r\nls -l /etc/localtime\r\n\r\n# 5. Probar una zona horaria diferente solo para un comando mediante la variable TZ\r\nTZ=America/New_York date\r\nTZ=Asia/Tokyo date\r\ndate",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-107-3-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Precedencia de Variables de Locale: LC_ALL vs LANG",
+      "instruction": "Comprobaremos de forma práctica la jerarquía de variables regionales del sistema demostrando cómo `LC_ALL` se impone sobre cualquier otra directiva configurada.",
+      "command": "# 1. Inspeccionar las variables de localización activas con locale\r\nlocale\r\n\r\n# 2. Configurar LANG en español y LC_MESSAGES en español\r\nexport LANG=es_ES.UTF-8\r\nexport LC_MESSAGES=es_ES.UTF-8\r\n\r\n# 3. Lanzar un comando que produzca un mensaje de error y ver el idioma\r\nls /archivo_que_no_existe\r\n\r\n# 4. Forzar LC_ALL=C (inglés neutro de desarrollo) y repetir la orden\r\nexport LC_ALL=C\r\nls /archivo_que_no_existe\r\n\r\n# 5. Desactivar LC_ALL y comprobar que vuelve a responder en español\r\nunset LC_ALL\r\nls /archivo_que_no_existe",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-107-3-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Codificación de Caracteres y Conversión con iconv",
+      "instruction": "Crearemos un archivo con caracteres especiales en codificación tradicional ISO-8859-15 (incluyendo tildes y el símbolo del Euro `€`) y lo convertiremos a UTF-8 estándar mediante `iconv`.",
+      "command": "# 1. Generar un archivo de texto codificado en ISO-8859-15\r\nprintf \"Certificación LPIC-1: Administración de Servidores en Europa.\r\nPrecio del examen: 160 €.\r\n\" | iconv -f UTF-8 -t ISO-8859-15 > ~/factura_iso.txt\r\n\r\n# 2. Comprobar el tipo de codificación detectado por la herramienta file\r\nfile ~/factura_iso.txt\r\n\r\n# 3. Convertir el archivo de ISO-8859-15 a UTF-8 mediante iconv\r\niconv -f ISO-8859-15 -t UTF-8 ~/factura_iso.txt -o ~/factura_utf8.txt\r\n\r\n# 4. Verificar que el archivo resultante es UTF-8 y leer su contenido\r\nfile ~/factura_utf8.txt\r\ncat ~/factura_utf8.txt",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
+      "examAlert": "Ver pista desplegable si te atascas</summary>"
+    }
+  ]
+}

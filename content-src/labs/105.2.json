@@ -1,0 +1,52 @@
+{
+  "id": "lab-105-2",
+  "subtopicId": "105.2",
+  "title": "Práctica 105.2 — Creación de Scripts Bash, Parámetros y Control de Flujo",
+  "estimatedMinutes": 35,
+  "difficulty": "intermediate",
+  "type": "subtopic",
+  "placeholder": false,
+  "steps": [
+    {
+      "id": "step-105-2-1",
+      "stepNumber": 1,
+      "title": "Misión 1 — Creación de un Script Ejecutable y Ubicación en $PATH",
+      "instruction": "Para que un archivo sea ejecutable directamente por el sistema operativo necesita comenzar con el shebang en la línea 1 y tener activo el bit `+x`. Además, guardarlo en `~/bin` permite ejecutarlo desde cualquier directorio.",
+      "command": "# 1. Crear el directorio personal de ejecutables si no existe\nmkdir -p ~/bin\n\n# 2. Escribir un script con Shebang\ncat << 'EOF' > ~/bin/info_sistema.sh\n#!/bin/bash\n# Script de auditoría básica del host\necho \">>> Ejecutable invocado: $0\"\necho \">>> Fecha del sistema:   $(date '+%Y-%m-%d %H:%M:%S')\"\necho \">>> Espacio en disco:    $(df -h / | awk 'NR==2 {print $4}') disponible\"\nexit 0\nEOF\n\n# 3. Intentar ejecutarlo sin permisos de ejecución (producirá error)\n~/bin/info_sistema.sh || echo \"Fallo esperado: Falta permiso de ejecución\"\n\n# 4. Asignar permisos de ejecución y lanzarlo\nchmod +x ~/bin/info_sistema.sh\n~/bin/info_sistema.sh",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-105-2-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Parámetros Posicionales y la Trampa de ${10}",
+      "instruction": "Los argumentos que recibe un script se almacenan en `$1` a `$9`. A partir del décimo argumento es OBLIGATORIO usar llaves `${10}` para evitar que Bash interprete `$1` seguido del número 0.",
+      "command": "# 1. Crear un script que procese múltiples parámetros\ncat << 'EOF' > ~/procesa_args.sh\n#!/bin/bash\necho \"Total de argumentos (\\$#): $#\"\necho \"Primer argumento (\\$1):    $1\"\necho \"Noveno argumento (\\$9):    $9\"\necho \"Trampa \\$10 sin llaves:     $10\"\necho \"Décimo correcto (\\${10}):   ${10}\"\necho \"Undécimo correcto (\\${11}): ${11}\"\nEOF\n\nchmod +x ~/procesa_args.sh\n\n# 2. Ejecutar pasando 11 argumentos numéricos\n~/procesa_args.sh A B C D E F G H I J K",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-105-2-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Pruebas con test, [ ... ] y la Trampa del Operador >",
+      "instruction": "El comando `test` (o su alias de corchete `[ ]`) evalúa ficheros, números y cadenas. Analizaremos las pruebas de archivo y comprobaremos por qué nunca se debe usar `>` para comparar números.",
+      "command": "# 1. Evaluar si existe un archivo y si es un directorio\n[ -f /etc/passwd ] && echo \"/etc/passwd es un archivo regular\"\n[ -d /etc ] && echo \"/etc es un directorio\"\n\n# 2. Comprobar marcas de tiempo entre archivos (-nt = newer than)\ntouch /tmp/viejo.txt\nsleep 1\ntouch /tmp/nuevo.txt\n[ /tmp/nuevo.txt -nt /tmp/viejo.txt ] && echo \"nuevo.txt es más reciente que viejo.txt\"\n\n# 3. EXPERIMENTO: La trampa de examen 'test 1 > 2'\ncd /tmp\nrm -f 2\ntest 1 > 2\necho \"Código de salida (\\$?) de 'test 1 > 2': $?\"\nls -l 2 && echo \"¡El comando creó un archivo llamado '2' por redirección!\"\n\n# 4. Comparación numérica correcta con -gt\ntest 1 -gt 2\necho \"Código de salida (\\$?) con 'test 1 -gt 2': $? (1 = falso)\"",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-105-2-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Condicionales if/fi, case/esac y Menú Interactivo",
+      "instruction": "Escribiremos un script con control condicional completo para gestionar un servicio simulado mediante `case` y verificar argumentos con `if`.",
+      "command": "# 1. Crear script de gestión de servicios con case\ncat << 'EOF' > ~/gestor.sh\n#!/bin/bash\nif [ $# -eq 0 ]; then\n    echo \"Error: Falta especificar una acción.\"\n    echo \"Uso: $0 {iniciar|parar|estado}\"\n    exit 1\nfi\n\ncase \"$1\" in\n    iniciar|start)\n        echo \"[OK] Iniciando servicio en segundo plano...\"\n        ;;\n    parar|stop)\n        echo \"[OK] Deteniendo servicio...\"\n        ;;\n    estado|status)\n        echo \"[INFO] El servicio está activo y saludable.\"\n        ;;\n    *)\n        echo \"Acción no reconocida: '$1'\"\n        echo \"Opciones válidas: iniciar | parar | estado\"\n        exit 2\n        ;;\nesac\nexit 0\nEOF\n\nchmod +x ~/gestor.sh\n\n# 2. Probar las distintas ramas del script\n~/gestor.sh\n~/gestor.sh iniciar\n~/gestor.sh estado\n~/gestor.sh opcion_invalida",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-105-2-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Bucles e Iteraciones con read y Aritmética $(( ))",
+      "instruction": "Automatizaremos el procesamiento de una lista con `for` y crearemos un bucle `while` con contador aritmético y lectura oculta de contraseñas con `read -s`.",
+      "command": "# 1. Iterar sobre una lista de usuarios con bucle for\nfor SERVICIO in ssh cron rsyslog; do\n    echo \"Comprobando servicio: $SERVICIO -> $(systemctl is-active $SERVICIO)\"\ndone\n\n# 2. Bucle while con contador aritmético (sin bucle infinito)\nCONTADOR=1\nwhile [ $CONTADOR -le 3 ]; do\n    echo \"Iteración número: $CONTADOR\"\n    CONTADOR=$(( CONTADOR + 1 ))\ndone\n\n# 3. Lectura silenciosa interactiva con read -s\necho \"Prueba de contraseña segura:\"\nread -s -p \"Introduce clave de prueba: \" PASS_SECRETA\necho \"\"\necho \"Longitud de la clave introducida: ${#PASS_SECRETA} caracteres\"",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
+      "examAlert": "Ver pista desplegable si te atascas</summary>"
+    }
+  ]
+}

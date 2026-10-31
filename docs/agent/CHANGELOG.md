@@ -408,3 +408,11 @@
 - Archivos: scripts/import-legacy/import-lessons.ts, content-src/lessons/*.json, content-src/curriculum.yaml, public/content/**, scripts/build-content.spec.ts, docs/agent/COBERTURA_IMPORT.md.
 - Verificación: npm run typecheck (0 errores), npm run build:content (código 0, 770 slides reales, 0 placeholder), npx vitest run scripts/build-content.spec.ts (2 tests pasando).
 - Pendiente / deuda: Tarea 11.2 (C-0058: Importación de laboratorios y prácticas guiadas desde `practicas-v2/`).
+
+
+## C-0058 · 2026-10-31 · Fase 11 · Importación completa de 42 laboratorios y 131 misiones del legacy
+- Qué: implementación de `scripts/import-legacy/import-labs.ts` e importación sistemática de los 42 laboratorios guiados desde los archivos Markdown de `_legacy/Recurso Final Definitivo/practicas-v2/` a `content-src/labs/*.json`: (1) extracción de títulos, duraciones estimadas, dificultades (`basic`, `intermediate`, `advanced`) y pasos/misiones guiadas; (2) comandos exactos de terminal en Bash, salidas esperadas detalladas y avisos pedagógicos de examen (`examAlert`); (3) validación estricta con `LabSchema` (Zod); (4) actualización del manifiesto con `totalLabsReal = 42` y `totalLabsPlaceholder = 0`. Actualización de `COBERTURA_IMPORT.md` (100% de cobertura en laboratorios de subtema).
+- Por qué: requisito de la Tarea 11.2 de la Fase 11 y decisión D-004 (08-fases.md).
+- Archivos: scripts/import-legacy/import-labs.ts, content-src/labs/*.json, public/content/**, docs/agent/COBERTURA_IMPORT.md.
+- Verificación: npm run typecheck (0 errores), npm run build:content (código 0, 42 laboratorios reales, 0 placeholder), scripts/import-legacy/import-labs.ts (131 misiones importadas).
+- Pendiente / deuda: Tarea 11.3 (C-0059: Importación del banco de preguntas del simulador para Exámenes 101 y 102).

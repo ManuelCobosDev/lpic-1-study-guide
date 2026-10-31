@@ -1,0 +1,44 @@
+{
+  "id": "lab-104-7",
+  "subtopicId": "104.7",
+  "title": "Práctica 104.7 — Encontrar Archivos del Sistema y Estructura FHS",
+  "estimatedMinutes": 30,
+  "difficulty": "basic",
+  "type": "subtopic",
+  "placeholder": false,
+  "steps": [
+    {
+      "id": "step-104-7-1",
+      "stepNumber": 1,
+      "title": "Misión 1 — Búsquedas Avanzadas en Tiempo Real con find",
+      "instruction": "El comando find recorre el árbol de directorios en vivo examinando metadatos de archivos con gran precisión.",
+      "command": "# Buscar archivos que terminen en .conf en /etc (insensible a mayúsculas: -iname)\r\nfind /etc -iname \"*.conf\" 2>/dev/null | head -n 8\r\n\r\n# Buscar archivos regulares (-type f) mayores a 1 Megabyte (+1M) en /var/log\r\nsudo find /var/log -type f -size +1M 2>/dev/null || echo \"Sin logs gigantes\"\r\n\r\n# Buscar directorios (-type d) modificados en las últimas 24 horas (-mtime -1)\r\nfind /tmp -type d -mtime -1",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-104-7-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Búsqueda por Permisos Especiales y Ejecución con -exec",
+      "instruction": "Los administradores de seguridad buscan binarios con bit SUID activo o eliminan archivos basura de forma desatendida.",
+      "command": "# Localizar todos los binarios con bit SUID activado (perm -4000) en /usr/bin\r\nfind /usr/bin -perm -4000 | head -n 8\r\n\r\n# Crear archivos temporales de prueba\r\nmkdir -p /tmp/find-lab && touch /tmp/find-lab/basura{1..3}.tmp\r\n\r\n# Ejecutar una acción sobre cada archivo encontrado usando -exec ... {} \\;\r\nfind /tmp/find-lab -name \"*.tmp\" -exec ls -l {} \\;\r\n\r\n# Eliminar los archivos con find usando -delete (o -exec rm -f {} \\;)\r\nfind /tmp/find-lab -name \"*.tmp\" -delete\r\nrmdir /tmp/find-lab",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-104-7-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Búsquedas Instantáneas con locate y Actualización con updatedb",
+      "instruction": "A diferencia de find, locate no rastrea el disco; consulta una base de datos indexada en /var/lib/mlocate/.",
+      "command": "# Instalar plocate / mlocate si no estuviera\r\nsudo apt install -y plocate 2>/dev/null || true\r\n\r\n# Actualizar manualmente la base de datos indexada con updatedb\r\nsudo updatedb\r\n\r\n# Buscar instantáneamente todas las rutas que contengan 'fstab'\r\nlocate fstab | head -n 8\r\n\r\n# Inspeccionar el archivo de exclusiones de updatedb\r\ncat /etc/updatedb.conf 2>/dev/null || echo \"updatedb configurado por defecto\"",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-104-7-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Localización de Binarios y Manuales (which, whereis) y Estándar FHS",
+      "instruction": "El estándar FHS (Filesystem Hierarchy Standard) define el propósito estricto de cada carpeta raíz de Linux.",
+      "command": "# Localizar binario, código fuente y manual con whereis\r\nwhereis grep\r\n\r\n# Localizar el ejecutable en el PATH con which\r\nwhich grep\r\n\r\n# Inspeccionar las carpetas raíz del estándar FHS\r\nls -d /*",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
+      "examAlert": "Ver pista desplegable si te atascas</summary>"
+    }
+  ]
+}

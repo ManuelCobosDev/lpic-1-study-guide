@@ -1,0 +1,44 @@
+{
+  "id": "lab-102-3",
+  "subtopicId": "102.3",
+  "title": "Práctica 102.3 — Gestión de Librerías Compartidas del Sistema",
+  "estimatedMinutes": 30,
+  "difficulty": "basic",
+  "type": "subtopic",
+  "placeholder": false,
+  "steps": [
+    {
+      "id": "step-102-3-1",
+      "stepNumber": 1,
+      "title": "Misión 1 — Inspección de Dependencias Dinámicas con ldd",
+      "instruction": "Casi todos los ejecutables de Linux requieren librerías dinámicas (`.so`) en memoria para funcionar. Identificaremos las dependencias de binarios estándar.",
+      "command": "# Inspeccionar las librerías dinámicas requeridas por /bin/bash\r\nldd /bin/bash\r\n\r\n# Comparar con un binario de manipulación de archivos\r\nldd /bin/ls",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-102-3-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Consulta de la Caché Binaria con ldconfig -p",
+      "instruction": "El cargador dinámico no rastrea los discos en cada ejecución; consulta una base de datos binaria optimizada en `/etc/ld.so.cache`.",
+      "command": "# Consultar la caché consolidada del sistema buscando la librería de C y matemáticas\r\nldconfig -p | grep -E \"libc\\.so|libm\\.so\" | head -n 10\r\n\r\n# Comprobar el tamaño y fecha del archivo de caché\r\nls -lh /etc/ld.so.cache",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-102-3-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Configuración de Rutas de Librerías en /etc/ld.so.conf",
+      "instruction": "Aprenderás cómo el sistema indexa nuevos directorios de librerías y cómo se regenera la caché con ldconfig.",
+      "command": "# Inspeccionar el archivo maestro de configuración\r\ncat /etc/ld.so.conf\r\n\r\n# Ver los archivos de inclusión modulares en /etc/ld.so.conf.d/\r\ncat /etc/ld.so.conf.d/*.conf\r\n\r\n# Regenerar la caché en modo verboso (inspeccionando los primeros directorios)\r\nsudo ldconfig -v 2>/dev/null | head -n 12",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-102-3-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Sobrescritura Temporal con la Variable LD_LIBRARY_PATH",
+      "instruction": "Los desarrolladores y administradores pueden forzar la carga de librerías personalizadas sin privilegios de root mediante esta variable.",
+      "command": "# Comprobar el valor actual de LD_LIBRARY_PATH (habitualmente vacío por seguridad)\r\necho \"LD_LIBRARY_PATH actual: $LD_LIBRARY_PATH\"\r\n\r\n# Simular la asignación de un directorio de librerías propio\r\nexport LD_LIBRARY_PATH=/opt/mislibrerias/lib:$LD_LIBRARY_PATH\r\necho \"Nuevo valor temporal: $LD_LIBRARY_PATH\"\r\n\r\n# Restaurar la variable a su estado original\r\nunset LD_LIBRARY_PATH",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
+      "examAlert": "Ver pista desplegable si te atascas</summary>"
+    }
+  ]
+}
