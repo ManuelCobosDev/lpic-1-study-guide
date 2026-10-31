@@ -29,3 +29,10 @@
 - Archivos: src/styles/tokens.css, src/styles/themes.css, src/styles/typography.css, src/styles/slides.css, src/styles/print.css, src/styles.css.
 - Verificación: npm run typecheck (código 0), npm run lint (código 0), npm test (2 tests pasando), npx ng build (código 0, bundle inicial de estilos 31.49 kB).
 - Pendiente / deuda: scripts de validación y calidad (Tarea 4), AppShell y stubs (Tarea 5).
+
+## C-0004 · 2026-10-31 · Fase 0 · Scripts de validación, pipeline mínimo y tests unitarios de reglas
+- Qué: implementación de scripts en TypeScript para Windows/Node: check-tokens (con tests), check-boundaries (con tests), check-stubs, build-content (con --validate), postbuild (copia a 404.html), new-subtopic, import-legacy, preview y verify.
+- Por qué: automatización de controles de calidad y cumplimiento estricto de reglas R3, R4, R6 y R8 antes de construir UI.
+- Archivos: scripts/check-tokens.ts, scripts/check-tokens.spec.ts, scripts/check-boundaries.ts, scripts/check-boundaries.spec.ts, scripts/check-stubs.ts, scripts/build-content.ts, scripts/postbuild.ts, scripts/verify.ts, scripts/preview.ts, scripts/new-subtopic.ts, scripts/import-legacy/index.ts, src/app/app.html, src/app/app.spec.ts, src/styles/print.css.
+- Verificación: npm run typecheck (código 0), npm run lint (código 0), npm test (8 tests pasando: 2 Angular + 2 tokens + 4 boundaries), npm run check:tokens (código 0), npm run check:boundaries (código 0), npm run build:content y validate:content (código 0).
+- Pendiente / deuda: AppShell, botón único, Container, servicios base y rutas stub (Tarea 5).

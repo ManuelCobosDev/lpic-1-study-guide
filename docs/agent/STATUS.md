@@ -2,16 +2,16 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0003
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0004
 
 ## Estado
 - **Fase actual**: Fase 0 · Andamiaje Angular (esqueleto limpio).
 - **Último gate superado**: ninguno (Fase 0 en curso).
-- **Trabajo en curso**: Fase 0 · Tarea 4 (Scripts de calidad y validación).
+- **Trabajo en curso**: Fase 0 · Tarea 5 (AppShell, servicios base, rutas stub y botón único).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Fase 0 · Tarea 4: Implementar `scripts/check-tokens.ts` (con test), `check-boundaries.ts` (con test), `check-stubs.ts`, `postbuild.ts`, `build-content.ts` y `verify.ts`.
+Fase 0 · Tarea 5: Implementar `StorageService`, `ThemeService`, `ContainerComponent`, `ButtonComponent` (`app-button`), `AppShell` y todas las rutas con `NotImplementedPage`.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -36,10 +36,11 @@ Fase 0 · Tarea 4: Implementar `scripts/check-tokens.ts` (con test), `check-boun
 | (se registra en la Tarea 5 de la Fase 0) | |
 
 ## Comandos útiles
-- `npm run typecheck`: comprobación estricta de TypeScript.
-- `npm run lint`: linter ESLint para TS y plantillas Angular.
-- `npm test`: tests unitarios con Vitest.
-- `npm run build`: compilación de producción.
+- `npm run verify`: pipeline completo ordenado.
+- `npm run check:tokens`: auditoría de colores literales.
+- `npm run check:boundaries`: verificación de fronteras arquitectónicas.
+- `npm run check:stubs`: auditoría de páginas pendientes.
+- `npm test`: suite completa de tests unitarios (Angular + scripts).
 
 ## Deuda conocida
 Ninguna.
