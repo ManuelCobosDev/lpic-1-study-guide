@@ -2,16 +2,16 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0034
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0035
 
 ## Estado
 - **Fase actual**: Fase 7 (Laboratorios) en curso.
 - **Último gate superado**: Gate 6 (etiqueta `fase-6-ok`).
-- **Trabajo en curso**: Fase 7 · Tarea 7.2 (Componente `LabStepperComponent` y UI de pasos).
+- **Trabajo en curso**: Fase 7 · Tarea 7.3 (Catálogo de laboratorios `/laboratorios`).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Implementar Tarea 7.2 (C-0035): crear `LabStepperComponent` en `src/app/features/labs/components/lab-stepper/lab-stepper.component.ts` accesible, vertical, con lista interactiva de pasos, estados completado/activo/pendiente y emisión de eventos `stepSelect` y `stepToggle`. Crear suite de pruebas unitarias en `lab-stepper.component.spec.ts`.
+Implementar Tarea 7.3 (C-0036): crear `LabsPageComponent` en `src/app/features/labs/pages/labs-page.component.ts` con filtros reactivos (Tema, Dificultad, Estado), búsqueda rápida, grid de 3 columnas de tarjetas responsivas con badges de estado y dificultad, y enlace a `/laboratorios/:id`. Reemplazar el stub en `app.routes.ts`, actualizar `scripts/check-stubs.ts` e `implementedRoutes` en `e2e/fase-0.spec.ts`. Crear suite de pruebas unitarias en `labs-page.component.spec.ts`.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -23,7 +23,7 @@ Implementar Tarea 7.2 (C-0035): crear `LabStepperComponent` en `src/app/features
 | 4 | Home y Temario | completada (Gate 4 OK) |
 | 5 | Lecciones y Estudiar | completada (Gate 5 OK) |
 | 6 | Buscador | completada (Gate 6 OK) |
-| 7 | Laboratorios | en curso (Tarea 7.1 OK) |
+| 7 | Laboratorios | en curso (Tareas 7.1 y 7.2 OK) |
 | 8 | Simulador | pendiente |
 | 9 | Comandos, Glosario y Flashcards | pendiente |
 | 10 | Mapa mental, Progreso, Ajustes, Erratas, Acerca de, 404 | pendiente |
@@ -40,7 +40,7 @@ Implementar Tarea 7.2 (C-0035): crear `LabStepperComponent` en `src/app/features
 
 ## Comandos útiles
 - `npm run verify`: pipeline completo de 9 etapas en verde.
-- `npm run test`: suite de tests unitarios (183 tests en verde).
+- `npm run test`: suite de tests unitarios (188 tests en verde).
 - `npm run check:stubs`: lista de stubs pendientes (15 rutas pendientes, 8 implementadas).
 
 ## Deuda conocida

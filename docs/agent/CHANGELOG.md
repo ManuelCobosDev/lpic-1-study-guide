@@ -258,3 +258,10 @@
 - Archivos: src/app/core/models/lab.model.ts, src/app/core/services/labs.service.ts, src/app/core/services/labs.service.spec.ts.
 - Verificación: npm run typecheck (0 errores), npm run test (183 tests unitarios en verde, 167 Angular + 16 Vitest), npm run lint (0 errores), npm run check:tokens (PASS), npm run check:boundaries (PASS).
 - Pendiente / deuda: Tarea 7.2 (C-0035: Componente LabStepperComponent y UI de pasos de laboratorio).
+
+## C-0035 · 2026-10-31 · Fase 7 · Componente vertical accesible LabStepperComponent
+- Qué: implementación de `LabStepperComponent` en [`src/app/features/labs/components/lab-stepper/lab-stepper.component.ts`](file:///d:/Github/lpic-1-study-guide/src/app/features/labs/components/lab-stepper/lab-stepper.component.ts) como componente presentacional puro. Renderizado de lista vertical accesible de misiones con estados visuales (paso activo con `aria-current="step"` y resalte con tokens primarios, pasos completados con checkmark `✓` verde y porcentaje de avance calculado, pasos pendientes con número e indicador neutro), soporte de navegación con clic o teclado (`Enter`), y botón dedicado de marcado/desmarcado rápido sin disparar la selección de paso mediante `stopPropagation`. Suite de pruebas unitarias en `src/app/features/labs/components/lab-stepper/lab-stepper.component.spec.ts` (5 tests pasando).
+- Por qué: componente central de navegación paso a paso especificado para la vista de prácticas guiadas (06b-pantallas-herramientas.md §6.6).
+- Archivos: src/app/features/labs/components/lab-stepper/lab-stepper.component.ts, src/app/features/labs/components/lab-stepper/lab-stepper.component.spec.ts.
+- Verificación: npm run typecheck (0 errores), npm run test (188 tests unitarios en verde, 172 Angular + 16 Vitest), npm run lint (0 errores), npm run check:tokens (PASS), npm run check:boundaries (PASS).
+- Pendiente / deuda: Tarea 7.3 (C-0036: Catálogo de laboratorios /laboratorios con filtros, búsqueda y tarjetas responsivas).
