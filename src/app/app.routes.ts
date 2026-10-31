@@ -161,7 +161,10 @@ export const routes: Routes = [
   },
   {
     path: 'mapa-mental',
-    loadComponent: loadStub,
+    loadComponent: () =>
+      import('./features/mind-map/pages/mind-map-page.component').then(
+        (m) => m.MindMapPageComponent
+      ),
     title: 'Mapa Mental Interactivo',
     data: { title: 'Mapa Mental', breadcrumb: 'Mapa Mental', phase: 'Fase 10' }
   },
