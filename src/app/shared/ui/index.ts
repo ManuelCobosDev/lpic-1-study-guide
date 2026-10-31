@@ -15,3 +15,5 @@ export * from './form/select.component';
 export * from './form/textarea.component';
 export * from './dialog/dialog.component';
 export * from './skeleton/skeleton.component';
+export * from './weight-meter/weight-meter.component';
+export * from './progress-ring/progress-ring.component';

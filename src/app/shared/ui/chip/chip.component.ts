@@ -11,9 +11,13 @@ import { CommonModule } from '@angular/common';
         class="inline-flex items-center gap-1.5 shrink-0 h-[28px] min-h-[28px] max-h-[28px] pl-3 pr-1.5 text-[13px] font-medium leading-none rounded-lg border transition-all select-none box-border"
         [ngClass]="classes()"
       >
-        <span class="inline-flex items-center">
+        <button
+          type="button"
+          class="inline-flex items-center text-inherit bg-transparent border-none p-0 cursor-pointer focus:outline-hidden"
+          (click)="handleClick()"
+        >
           <ng-content></ng-content>
-        </span>
+        </button>
         <button
           type="button"
           aria-label="Eliminar etiqueta"
