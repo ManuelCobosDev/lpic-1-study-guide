@@ -120,7 +120,8 @@ test.describe('Gate 0: Shell, Persistencia, Accesibilidad y Rutas Stub', () => {
       '/simulador/practica',
       '/simulador/resultados',
       '/comandos',
-      '/glosario'
+      '/glosario',
+      '/flashcards'
     ];
 
     for (const r of testRoutes) {

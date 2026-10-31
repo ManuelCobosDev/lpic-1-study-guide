@@ -2,17 +2,24 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0048
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0049
 
 ## Estado
 - **Fase actual**: Fase 9 (Comandos, Glosario y Flashcards) EN CURSO.
 - **Último gate superado**: Gate 8 (etiqueta `fase-8-ok`).
-- **Trabajo en curso**: Tarea 9.5 (Pantalla `/flashcards` con mazo interactivo Leitner y atajos de teclado).
+- **Trabajo en curso**: Tarea 9.6 (Suite E2E de Gate 9, capturas visuales, `npm run verify` completo y etiqueta `fase-9-ok`).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-1. Tarea 9.5: Implementar la página `FlashcardsPageComponent` en `/flashcards` (`src/app/features/flashcards/pages/flashcards-page.component.ts`) y el componente `FlashcardCardComponent` (`src/app/features/flashcards/components/flashcard-card/`): selector de mazos (Glosario, Comandos, Mixto), contador "N para hoy", tarjeta centrada con flip animado en 3D (clic o `Espacio`), botones "Otra vez · Difícil · Bien · Fácil" con atajos de teclado accesibles `1–4`, pantalla de resumen de sesión al terminar y persistencia en `StorageService`.
-2. Tarea 9.6: Suite E2E de Gate 9, capturas visuales, `npm run verify` completo y etiqueta `fase-9-ok`.
+1. Tarea 9.6: Implementar la suite de pruebas E2E `e2e/fase-9.spec.ts` validando:
+   - Filtros de comandos reflejados en URL y conservados tras recargar la página.
+   - Fila y tarjeta expandible con opciones y copiado funcional al portapapeles.
+   - AlphaIndex en `/glosario` con salto suave a letra y deshabilitación accesible de letras vacías.
+   - Sesión de flashcards con las 4 valoraciones persistiendo el estado de las cajas Leitner tras recarga.
+   - Pruebas unitarias de Leitner ejecutadas y en verde.
+   - Auditoría de accesibilidad Axe limpia en las 3 vistas (modo claro y oscuro).
+   - Generación de capturas visuales en `e2e/screenshots/fase-9/` inspeccionadas según Regla R5.
+   - `npm run verify` completo en verde y sellado con `git tag fase-9-ok`.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -26,7 +33,7 @@
 | 6 | Buscador | completada (Gate 6 OK) |
 | 7 | Laboratorios | completada (Gate 7 OK) |
 | 8 | Simulador | completada (Gate 8 OK) |
-| 9 | Comandos, Glosario y Flashcards | en curso (Tareas 9.1 a 9.4 listas) |
+| 9 | Comandos, Glosario y Flashcards | en curso (Tareas 9.1 a 9.5 listas) |
 | 10 | Mapa mental, Progreso, Ajustes, Erratas, Acerca de, 404 | pendiente |
 | 11 | Importación completa del legacy | pendiente |
 | 12 | Pulido, accesibilidad, rendimiento y documentación | pendiente |
@@ -34,13 +41,12 @@
 ## Stubs (páginas aún no implementadas)
 | Ruta | Se implementa en |
 |---|---|
-| `/flashcards` | Fase 9 |
 | `/mapa-mental` · `/progreso` · `/erratas` · `/ajustes` · `/acerca-de` · `**` (404) | Fase 10 |
 
 ## Comandos útiles
-- `npm run verify`: pipeline completo de 9 etapas en verde (308 unitarios + 50 E2E).
-- `npm run test`: suite de tests unitarios (308 tests en verde: 292 Angular + 16 Vitest).
-- `npm run check:stubs`: lista de stubs pendientes (7 rutas pendientes, 16 implementadas).
+- `npm run verify`: pipeline completo de 9 etapas en verde (317 unitarios + 50 E2E).
+- `npm run test`: suite de tests unitarios (317 tests en verde: 301 Angular + 16 Vitest).
+- `npm run check:stubs`: lista de stubs pendientes (6 rutas pendientes, 17 implementadas).
 
 ## Deuda conocida
 Ninguna.

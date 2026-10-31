@@ -152,7 +152,10 @@ export const routes: Routes = [
   },
   {
     path: 'flashcards',
-    loadComponent: loadStub,
+    loadComponent: () =>
+      import('./features/flashcards/pages/flashcards-page.component').then(
+        (m) => m.FlashcardsPageComponent
+      ),
     title: 'Flashcards de Repaso (Leitner)',
     data: { title: 'Flashcards', breadcrumb: 'Flashcards', phase: 'Fase 9' }
   },

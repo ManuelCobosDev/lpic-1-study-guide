@@ -1,0 +1,134 @@
+<app-container size="wide">
+  <div class="flashcards-page">
+    <!-- Encabezado -->
+    <header class="page-header">
+      <div class="header-titles">
+        <h1 class="page-title">Flashcards de Repaso (Leitner)</h1>
+        <p class="page-subtitle">
+          Sistema de repetición espaciada en 5 cajas para memorizar comandos, sintaxis y definiciones clave de la certificación LPIC-1.
+        </p>
+      </div>
+
+      <!-- Selector de Mazos -->
+      <div class="deck-selector" role="group" aria-label="Seleccionar mazo de flashcards">
+        @for (deck of availableDecks; track deck.id) {
+          <button
+            type="button"
+            class="deck-btn"
+            [class.active]="selectedDeck() === deck.id"
+            [attr.aria-pressed]="selectedDeck() === deck.id"
+            (click)="selectDeck(deck.id)"
+          >
+            <span class="deck-icon" aria-hidden="true">{{ deck.icon }}</span>
+            <span class="deck-label">{{ deck.label }}</span>
+          </button>
+        }
+      </div>
+    </header>
+
+    <!-- Estado de Carga -->
+    @if (loading()) {
+      <div class="loading-skeleton">
+        <app-skeleton variant="text" height="2rem" class="skeleton-item"></app-skeleton>
+        <app-skeleton variant="rectangular" height="22rem" class="skeleton-item"></app-skeleton>
+      </div>
+    }
+
+    <!-- Sesión en Curso -->
+    @if (!loading() && !isCompleted() && currentCard()) {
+      <main class="study-session" aria-label="Sesión de estudio de flashcards">
+        <!-- Barra de Progreso de la Sesión -->
+        <div class="session-progress-header">
+          <div class="progress-info">
+            <span class="card-counter">Tarjeta {{ currentIndex() + 1 }} de {{ totalCardsInSession() }}</span>
+            <span class="deck-indicator">{{ selectedDeck() === 'mixed' ? 'Mazo Mixto' : (selectedDeck() === 'commands' ? 'Mazo Comandos' : 'Mazo Glosario') }}</span>
+          </div>
+          <app-progress-bar [value]="progressPercent()" size="sm"></app-progress-bar>
+        </div>
+
+        <!-- Tarjeta Interactiva con Giro 3D -->
+        <app-flashcard-card
+          [card]="currentCard()!"
+          [currentBox]="currentCardBox()"
+          [isFlipped]="isFlipped()"
+          (flip)="flipCard()"
+          (rate)="rateCurrentCard($event)"
+        />
+      </main>
+    }
+
+    <!-- Estado Vacío (Sin tarjetas para hoy) -->
+    @if (!loading() && !isCompleted() && totalCardsInSession() === 0) {
+      <app-empty-state
+        title="¡Estás al día!"
+        description="No tienes tarjetas pendientes de repaso para hoy en este mazo según el algoritmo Leitner."
+      >
+        <app-button variant="secondary" (btnClick)="restartSession()">
+          Actualizar mazo
+        </app-button>
+      </app-empty-state>
+    }
+
+    <!-- Resumen de Sesión Completada -->
+    @if (!loading() && isCompleted()) {
+      <section class="session-summary-card" aria-label="Resumen de sesión completada">
+        <div class="summary-header">
+          <div class="trophy-badge" aria-hidden="true">🎉</div>
+          <h2 class="summary-title">¡Sesión completada con éxito!</h2>
+          <p class="summary-subtitle">
+            Has repasado {{ reviewedCards().length }} tarjetas en esta sesión. Tu progreso ha sido registrado en el motor Leitner.
+          </p>
+        </div>
+
+        <!-- Desglose de Calificaciones -->
+        <div class="ratings-breakdown">
+          <h3 class="breakdown-title">Resultados de la sesión</h3>
+          <div class="breakdown-grid">
+            <div class="breakdown-item item-again">
+              <span class="item-count">{{ ratingsCount().again }}</span>
+              <span class="item-label">Otra vez</span>
+            </div>
+            <div class="breakdown-item item-hard">
+              <span class="item-count">{{ ratingsCount().hard }}</span>
+              <span class="item-label">Difícil</span>
+            </div>
+            <div class="breakdown-item item-good">
+              <span class="item-count">{{ ratingsCount().good }}</span>
+              <span class="item-label">Bien</span>
+            </div>
+            <div class="breakdown-item item-easy">
+              <span class="item-count">{{ ratingsCount().easy }}</span>
+              <span class="item-label">Fácil</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estadísticas del Mazo -->
+        @if (deckStats()) {
+          <div class="deck-stats-panel">
+            <h3 class="breakdown-title">Distribución en Cajas Leitner</h3>
+            <div class="boxes-visual">
+              @for (boxNum of leitnerBoxes; track boxNum) {
+                <div class="box-column">
+                  <div class="box-number">Caja {{ boxNum }}</div>
+                  <div class="box-cards-count font-mono">{{ getBoxCount(boxNum) }}</div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Botones de Acción -->
+        <footer class="summary-actions">
+          <app-button variant="primary" (btnClick)="restartSession()">
+            Repasar de nuevo
+          </app-button>
+          <app-button variant="secondary" routerLink="/temario">
+            Volver al Temario
+          </app-button>
+        </footer>
+      </section>
+    }
+  </div>
+</app-container>
+
