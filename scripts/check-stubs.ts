@@ -25,11 +25,11 @@ export const STUBS: StubDefinition[] = [
   { route: '/mapa-mental', implementedIn: 'Fase 10', isImplemented: true },
   { route: '/buscar', implementedIn: 'Fase 6', isImplemented: true },
   { route: '/progreso', implementedIn: 'Fase 10', isImplemented: true },
-  { route: '/erratas', implementedIn: 'Fase 10', isImplemented: false },
+  { route: '/erratas', implementedIn: 'Fase 10', isImplemented: true },
   { route: '/ajustes', implementedIn: 'Fase 10', isImplemented: true },
-  { route: '/acerca-de', implementedIn: 'Fase 10', isImplemented: false },
+  { route: '/acerca-de', implementedIn: 'Fase 10', isImplemented: true },
   { route: '/guia-estilos', implementedIn: 'Fase 3', isImplemented: true },
-  { route: '** (404)', implementedIn: 'Fase 10', isImplemented: false }
+  { route: '** (404)', implementedIn: 'Fase 10', isImplemented: true }
 ];
 
 export function checkStubs(strict = false): { pendingCount: number; implementedCount: number } {

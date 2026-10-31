@@ -2,20 +2,24 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0054
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0055
 
 ## Estado
-- **Fase actual**: Fase 10 (Mapa mental, Progreso, Ajustes, Erratas, Acerca de, 404) EN CURSO.
+- **Fase actual**: Fase 10 (Herramientas complementarias, Progreso, Ajustes, Mapa mental, Erratas, Acerca de, 404) EN CURSO.
 - **Último gate superado**: Gate 9 (etiqueta `fase-9-ok`).
-- **Trabajo en curso**: Tarea 10.5 (Pantallas `/erratas`, `/acerca-de` y página 404 `NotFoundPageComponent`).
+- **Trabajo en curso**: Tarea 10.6 (Suite E2E de Gate 10 `e2e/fase-10.spec.ts`, capturas visuales, `npm run verify` y cierre de Fase 10).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-1. Tarea 10.5: Implementar las pantallas restantes de la Fase 10:
-   - `/erratas` en `src/app/features/support/pages/errata-page.component.ts`: catálogo de fe de erratas filtrable por gravedad y subtema con enlace a GitHub.
-   - `/acerca-de` en `src/app/features/support/pages/about-page.component.ts`: créditos, aviso legal no oficial LPI, versión y guía pedagógica.
-   - 404 `NotFoundPageComponent` en `src/app/shared/layout/not-found-page/not-found-page.component.ts`: página no encontrada amigable con enlaces a Home, Temario y Buscador.
-   - Reemplazo de los últimos 3 stubs en `app.routes.ts`, actualización de `check-stubs.ts` (0 stubs pendientes) y tests unitarios.
+1. Tarea 10.6: Implementar `e2e/fase-10.spec.ts` validando los criterios objetivos de Gate 10:
+   - Ciclo de backup completo: exportar backup JSON -> comprobar descarga -> resetear escribiendo "BORRAR" -> comprobar datos a cero -> importar backup -> verificar que todo se restaura.
+   - Rechazo de checksum adulterado y rollback de importación.
+   - Mapa mental: interacción de zoom, filtro "Solo pendientes" y panel lateral de detalle.
+   - Progreso: renderizado de 4 StatCards, heatmap interactivo y gráfica de puntuaciones con línea de aprobado en 500.
+   - Navegación a `/erratas`, `/acerca-de` y ruta inexistente `/ruta-inexistente` que carga el 404.
+   - Auditoría de accesibilidad Axe limpia en modo claro y oscuro.
+   - Generación de capturas de pantalla en `e2e/screenshots/fase-10/` e inspección visual (R5).
+   - Ejecución de `npm run verify` (9 etapas en verde), commit `[C-0056]`, tag `fase-10-ok` y DETENERSE.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -30,19 +34,19 @@
 | 7 | Laboratorios | completada (Gate 7 OK) |
 | 8 | Simulador | completada (Gate 8 OK) |
 | 9 | Comandos, Glosario y Flashcards | completada (Gate 9 OK) |
-| 10 | Mapa mental, Progreso, Ajustes, Erratas, Acerca de, 404 | en curso (Tareas 10.1, 10.2, 10.3 y 10.4 listas) |
+| 10 | Herramientas complementarias, Ajustes, Progreso, Mapa mental | en curso (Tareas 10.1 a 10.5 listas) |
 | 11 | Importación completa del legacy | pendiente |
 | 12 | Pulido, accesibilidad, rendimiento y documentación | pendiente |
 
 ## Stubs (páginas aún no implementadas)
 | Ruta | Se implementa en |
 |---|---|
-| `/erratas` · `/acerca-de` · `**` (404) | Fase 10 |
+| Ninguna (0 stubs pendientes · 23 de 23 rutas implementadas) | Todas completadas |
 
 ## Comandos útiles
-- `npm run verify`: pipeline completo de 9 etapas en verde (344 unitarios + 56 E2E).
-- `npm run test`: suite de tests unitarios (344 tests en verde: 328 Angular + 16 Vitest).
-- `npm run check:stubs`: lista de stubs pendientes (3 rutas pendientes, 20 implementadas).
+- `npm run verify`: pipeline completo de 9 etapas en verde (357 unitarios + 56 E2E).
+- `npm run test`: suite de tests unitarios (357 tests en verde: 341 Angular + 16 Vitest).
+- `npm run check:stubs`: lista de stubs pendientes (0 rutas pendientes, 23 implementadas).
 
 ## Deuda conocida
 Ninguna.

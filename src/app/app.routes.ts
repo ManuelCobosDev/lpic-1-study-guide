@@ -1,11 +1,6 @@
 import { Routes } from '@angular/router';
 import { canStartExamGuard } from './features/simulator/guards/can-start-exam.guard';
 
-const loadStub = () =>
-  import('./shared/layout/not-implemented-page/not-implemented-page.component').then(
-    (m) => m.NotImplementedPageComponent
-  );
-
 export const routes: Routes = [
   {
     path: '',
@@ -188,7 +183,10 @@ export const routes: Routes = [
   },
   {
     path: 'erratas',
-    loadComponent: loadStub,
+    loadComponent: () =>
+      import('./features/errata/pages/errata-page.component').then(
+        (m) => m.ErrataPageComponent
+      ),
     title: 'Fe de Erratas',
     data: { title: 'Erratas', breadcrumb: 'Erratas', phase: 'Fase 10' }
   },
@@ -203,7 +201,10 @@ export const routes: Routes = [
   },
   {
     path: 'acerca-de',
-    loadComponent: loadStub,
+    loadComponent: () =>
+      import('./features/about/pages/about-page.component').then(
+        (m) => m.AboutPageComponent
+      ),
     title: 'Acerca de LPIC-1 Study Guide',
     data: { title: 'Acerca de', breadcrumb: 'Acerca de', phase: 'Fase 10' }
   },
@@ -218,7 +219,10 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    loadComponent: loadStub,
+    loadComponent: () =>
+      import('./shared/layout/not-found-page/not-found-page.component').then(
+        (m) => m.NotFoundPageComponent
+      ),
     title: 'Página no encontrada (404)',
     data: { title: '404 · Página no encontrada', breadcrumb: '404', phase: 'Fase 10' }
   }
