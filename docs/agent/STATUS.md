@@ -2,16 +2,16 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0001
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0002
 
 ## Estado
 - **Fase actual**: Fase 0 · Andamiaje Angular (esqueleto limpio).
 - **Último gate superado**: ninguno (Fase 0 en curso).
-- **Trabajo en curso**: Fase 0 · Tarea 2 (Estructura de directorios y READMEs).
+- **Trabajo en curso**: Fase 0 · Tarea 3 (Tokens CSS y temas).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Fase 0 · Tarea 2: Crear el árbol completo de carpetas de `02-estructura.md`, con `README.md` de 3–6 líneas en cada carpeta principal explicando responsabilidad y restricciones.
+Fase 0 · Tarea 3: Implementar `src/styles/tokens.css` y `themes.css` con la paleta completa y variables semánticas según `05-diseno.md (§5.1–5.3)`.
 
 ## Fases
 | Fase | Descripción | Estado |
