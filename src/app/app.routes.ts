@@ -71,8 +71,11 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        loadComponent: loadStub,
-        title: 'Laboratorios y Prácticas',
+        loadComponent: () =>
+          import('./features/labs/pages/labs-page.component').then(
+            (m) => m.LabsPageComponent
+          ),
+        title: 'Laboratorios y Prácticas LPIC-1',
         data: { title: 'Laboratorios', breadcrumb: 'Laboratorios', phase: 'Fase 7' }
       },
       {

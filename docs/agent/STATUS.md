@@ -2,16 +2,16 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0035
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0036
 
 ## Estado
 - **Fase actual**: Fase 7 (Laboratorios) en curso.
 - **Último gate superado**: Gate 6 (etiqueta `fase-6-ok`).
-- **Trabajo en curso**: Fase 7 · Tarea 7.3 (Catálogo de laboratorios `/laboratorios`).
+- **Trabajo en curso**: Fase 7 · Tarea 7.4 (Vista de práctica guiada `/laboratorios/:id`).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Implementar Tarea 7.3 (C-0036): crear `LabsPageComponent` en `src/app/features/labs/pages/labs-page.component.ts` con filtros reactivos (Tema, Dificultad, Estado), búsqueda rápida, grid de 3 columnas de tarjetas responsivas con badges de estado y dificultad, y enlace a `/laboratorios/:id`. Reemplazar el stub en `app.routes.ts`, actualizar `scripts/check-stubs.ts` e `implementedRoutes` en `e2e/fase-0.spec.ts`. Crear suite de pruebas unitarias en `labs-page.component.spec.ts`.
+Implementar Tarea 7.4 (C-0037): crear `LabDetailPageComponent` en `src/app/features/labs/pages/lab-detail-page.component.ts` (HTML y CSS) para la ruta `/laboratorios/:id`. Integrar barra de progreso sticky superior, banner descartable de advertencia "Necesitas una VM Debian 12" con modal explicativo, distribución en 2 columnas con `LabStepperComponent` a la izquierda y el detalle de la misión/paso activo a la derecha con comandos copiables (`app-code-block`), salida esperada plegable, callouts de pistas/examen, botones de marcar como hecho, ver solución y reiniciar práctica, y diálogo sobrio de felicitación al completar todos los pasos. Reemplazar el stub en `app.routes.ts`, actualizar `scripts/check-stubs.ts` y tests unitarios en `lab-detail-page.component.spec.ts`.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -23,7 +23,7 @@ Implementar Tarea 7.3 (C-0036): crear `LabsPageComponent` en `src/app/features/l
 | 4 | Home y Temario | completada (Gate 4 OK) |
 | 5 | Lecciones y Estudiar | completada (Gate 5 OK) |
 | 6 | Buscador | completada (Gate 6 OK) |
-| 7 | Laboratorios | en curso (Tareas 7.1 y 7.2 OK) |
+| 7 | Laboratorios | en curso (Tareas 7.1, 7.2 y 7.3 OK) |
 | 8 | Simulador | pendiente |
 | 9 | Comandos, Glosario y Flashcards | pendiente |
 | 10 | Mapa mental, Progreso, Ajustes, Erratas, Acerca de, 404 | pendiente |
@@ -33,15 +33,15 @@ Implementar Tarea 7.3 (C-0036): crear `LabsPageComponent` en `src/app/features/l
 ## Stubs (páginas aún no implementadas)
 | Ruta | Se implementa en |
 |---|---|
-| `/laboratorios` · `/laboratorios/:id` | Fase 7 |
+| `/laboratorios/:id` | Fase 7 |
 | `/simulador` · `/simulador/examen` · `/simulador/practica` · `/simulador/resultados` | Fase 8 |
 | `/comandos` · `/glosario` · `/flashcards` | Fase 9 |
 | `/mapa-mental` · `/progreso` · `/erratas` · `/ajustes` · `/acerca-de` · `**` (404) | Fase 10 |
 
 ## Comandos útiles
 - `npm run verify`: pipeline completo de 9 etapas en verde.
-- `npm run test`: suite de tests unitarios (188 tests en verde).
-- `npm run check:stubs`: lista de stubs pendientes (15 rutas pendientes, 8 implementadas).
+- `npm run test`: suite de tests unitarios (195 tests en verde).
+- `npm run check:stubs`: lista de stubs pendientes (14 rutas pendientes, 9 implementadas).
 
 ## Deuda conocida
 Ninguna.

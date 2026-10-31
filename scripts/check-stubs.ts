@@ -13,7 +13,7 @@ export const STUBS: StubDefinition[] = [
   { route: '/temario/:examen/:tema', implementedIn: 'Fase 4', isImplemented: true },
   { route: '/estudiar/:subtema', implementedIn: 'Fase 5', isImplemented: true },
   { route: '/estudiar/:subtema/imprimir', implementedIn: 'Fase 5', isImplemented: true },
-  { route: '/laboratorios', implementedIn: 'Fase 7', isImplemented: false },
+  { route: '/laboratorios', implementedIn: 'Fase 7', isImplemented: true },
   { route: '/laboratorios/:id', implementedIn: 'Fase 7', isImplemented: false },
   { route: '/simulador', implementedIn: 'Fase 8', isImplemented: false },
   { route: '/simulador/examen', implementedIn: 'Fase 8', isImplemented: false },

@@ -1,0 +1,205 @@
+<div class="labs-page-view py-6 sm:py-8">
+  <app-container>
+    <div class="space-y-6">
+      <!-- Encabezado de página -->
+      <header class="space-y-2">
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--text)]">
+              Laboratorios Prácticos
+            </h1>
+            <p class="text-sm sm:text-base text-[var(--text-muted)] mt-1">
+              Prácticas guiadas paso a paso con comandos reales de Linux para preparar los exámenes 101 y 102.
+            </p>
+          </div>
+
+          <!-- Resumen de progreso de laboratorios -->
+          <div class="flex items-center gap-2 bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-2 px-3 text-xs font-mono">
+            <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[var(--success-soft)] text-[var(--success-text)] font-semibold">
+              <span class="w-1.5 h-1.5 rounded-full bg-[var(--success)]" aria-hidden="true"></span>
+              {{ totalCompleted() }} completadas
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[var(--primary-soft)] text-[var(--primary-text)] font-semibold">
+              <span class="w-1.5 h-1.5 rounded-full bg-[var(--primary)]" aria-hidden="true"></span>
+              {{ totalInProgress() }} en curso
+            </span>
+            <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[var(--surface-muted)] text-[var(--text-muted)]">
+              {{ totalPending() }} pendientes
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Barra de Filtros y Búsqueda -->
+      <section class="filters-section bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 shadow-xs space-y-3" aria-label="Filtros del catálogo">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <!-- Búsqueda rápida -->
+          <div class="relative flex items-center">
+            <span class="absolute left-3 text-[var(--text-muted)] text-sm select-none" aria-hidden="true">
+              🔍
+            </span>
+            <input
+              type="search"
+              [(ngModel)]="query"
+              (ngModelChange)="onFilterChange()"
+              placeholder="Buscar por código (103.4) o título…"
+              aria-label="Buscar laboratorio por código o texto"
+              class="w-full pl-9 pr-8 py-2 text-xs sm:text-sm rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent transition-all font-mono"
+            />
+            @if (query().trim()) {
+              <button
+                type="button"
+                (click)="query.set(''); onFilterChange()"
+                class="absolute right-2.5 text-[var(--text-muted)] hover:text-[var(--text)] p-0.5 rounded-full cursor-pointer text-xs"
+                title="Limpiar búsqueda"
+                aria-label="Limpiar búsqueda"
+              >
+                ✕
+              </button>
+            }
+          </div>
+
+          <!-- Filtro por Tema -->
+          <div>
+            <label for="topicFilter" class="sr-only">Filtrar por Tema</label>
+            <select
+              id="topicFilter"
+              [(ngModel)]="selectedTopic"
+              (ngModelChange)="onFilterChange()"
+              class="w-full py-2 px-3 text-xs sm:text-sm rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all cursor-pointer"
+            >
+              @for (topic of topics; track topic.id) {
+                <option [value]="topic.id">{{ topic.label }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Filtro por Dificultad -->
+          <div>
+            <label for="difficultyFilter" class="sr-only">Filtrar por Dificultad</label>
+            <select
+              id="difficultyFilter"
+              [(ngModel)]="selectedDifficulty"
+              (ngModelChange)="onFilterChange()"
+              class="w-full py-2 px-3 text-xs sm:text-sm rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all cursor-pointer"
+            >
+              @for (diff of difficulties; track diff.id) {
+                <option [value]="diff.id">{{ diff.label }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Filtro por Estado -->
+          <div>
+            <label for="statusFilter" class="sr-only">Filtrar por Estado</label>
+            <select
+              id="statusFilter"
+              [(ngModel)]="selectedStatus"
+              (ngModelChange)="onFilterChange()"
+              class="w-full py-2 px-3 text-xs sm:text-sm rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all cursor-pointer"
+            >
+              @for (st of statuses; track st.id) {
+                <option [value]="st.id">{{ st.label }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-[var(--text-muted)] font-mono pt-1">
+          <span>Mostrando {{ filteredLabs().length }} de {{ rawLabs().length }} prácticas</span>
+          @if (query().trim() || selectedTopic() !== 'all' || selectedDifficulty() !== 'all' || selectedStatus() !== 'all') {
+            <button
+              type="button"
+              (click)="clearFilters()"
+              class="text-[var(--primary-text)] hover:underline cursor-pointer"
+            >
+              Restablecer filtros
+            </button>
+          }
+        </div>
+      </section>
+
+      <!-- Grid de 3 columnas de Tarjetas de Laboratorio -->
+      @if (filteredLabs().length > 0) {
+        <main class="labs-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" role="feed" aria-label="Lista de laboratorios prácticos">
+          @for (lab of filteredLabs(); track lab.id) {
+            <article
+              class="lab-card p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] hover:border-[var(--primary)] transition-all flex flex-col justify-between space-y-4 group shadow-xs"
+            >
+              <!-- Cabecera de la tarjeta: Código, Dificultad y Estado -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                  <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-[var(--surface-muted)] text-[var(--primary-text)] font-mono font-bold text-xs border border-[var(--border)]">
+                    <span aria-hidden="true">🧪</span>
+                    <span>{{ lab.subtopicId }}</span>
+                  </span>
+
+                  <div class="flex items-center gap-1.5">
+                    <app-badge [variant]="getDifficultyBadgeVariant(lab.difficulty)">
+                      {{ getDifficultyLabel(lab.difficulty) }}
+                    </app-badge>
+
+                    <app-badge [variant]="getStatusBadgeVariant(lab.status)">
+                      {{ getStatusLabel(lab.status) }}
+                    </app-badge>
+                  </div>
+                </div>
+
+                <!-- Título del laboratorio -->
+                <h2 class="text-base font-bold text-[var(--text)] group-hover:text-[var(--primary-text)] transition-colors line-clamp-2 leading-snug">
+                  <a
+                    [routerLink]="['/laboratorios', lab.id]"
+                    class="hover:underline focus:outline-none focus:ring-2 focus:ring-[var(--primary)] rounded-sm"
+                  >
+                    {{ lab.title }}
+                  </a>
+                </h2>
+              </div>
+
+              <!-- Pie de la tarjeta: Progreso de pasos y Acción -->
+              <div class="space-y-3 pt-3 border-t border-[var(--border)]">
+                <div class="space-y-1.5">
+                  <div class="flex items-center justify-between text-xs font-mono text-[var(--text-muted)]">
+                    <span>{{ lab.completedStepCount }}/{{ lab.stepCount }} misiones</span>
+                    <span>~{{ lab.estimatedMinutes }} min</span>
+                  </div>
+                  <app-progress-bar [value]="lab.progressPercent" size="sm" />
+                </div>
+
+                <app-button
+                  [variant]="lab.status === 'completed' ? 'secondary' : 'primary'"
+                  size="sm"
+                  [routerLink]="['/laboratorios', lab.id]"
+                  class="w-full"
+                >
+                  @if (lab.status === 'completed') {
+                    <span>Repasar práctica →</span>
+                  } @else if (lab.status === 'in_progress') {
+                    <span>Continuar práctica ({{ lab.progressPercent }}%) →</span>
+                  } @else {
+                    <span>Comenzar práctica →</span>
+                  }
+                </app-button>
+              </div>
+            </article>
+          }
+        </main>
+      } @else {
+        <!-- Estado Vacío -->
+        <app-empty-state
+          title="No hay laboratorios que coincidan con los filtros"
+          description="Prueba ajustando los criterios de tema, dificultad o estado para ver más prácticas de laboratorio."
+        >
+          <div icon class="text-4xl" aria-hidden="true">🧪</div>
+
+          <div actions class="mt-2">
+            <app-button variant="secondary" size="sm" (btnClick)="clearFilters()">
+              Restablecer todos los filtros
+            </app-button>
+          </div>
+        </app-empty-state>
+      }
+    </div>
+  </app-container>
+</div>
+
