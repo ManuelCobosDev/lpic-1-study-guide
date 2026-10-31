@@ -2,16 +2,16 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0016
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0017
 
 ## Estado
-- **Fase actual**: Fase 3 (Sistema de diseño) en curso.
-- **Último gate superado**: Gate 2 (etiqueta `fase-2-ok`).
-- **Trabajo en curso**: Fase 3 · Tarea 3.5 (Suite E2E e2e/fase-3.spec.ts, capturas, auditoría Axe y Gate 3).
+- **Fase actual**: Fase 3 completada · Fase 4 pendiente.
+- **Último gate superado**: Gate 3 (etiqueta `fase-3-ok`).
+- **Trabajo en curso**: ninguno (esperando instrucciones del usuario para arrancar Fase 4).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Implementar Tarea 3.5 (C-0017): suite E2E `e2e/fase-3.spec.ts` verificando botones (6x4), altura exacta de 24 px en badges, capturas en claro/oscuro en `e2e/screenshots/fase-3/`, auditoría Axe de accesibilidad y verificación de Gate 3 con `/verificar-gate 3`.
+Ejecutar `/ejecutar-fase 4` (Home y Temario: páginas `/`, `/temario`, `/temario/:examen`, `/temario/:examen/:tema`, tarjetas de progreso por tema/examen y navegación a lecciones).
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -19,7 +19,7 @@ Implementar Tarea 3.5 (C-0017): suite E2E `e2e/fase-3.spec.ts` verificando boton
 | 0 | Andamiaje Angular (esqueleto limpio) | completada (Gate 0 OK) |
 | 1 | Inventario del legacy (solo lectura) + decisión D-004 | completada (Gate 1 OK) |
 | 2 | Currículo, pipeline de contenido, dominio + tajada vertical 103.4 | completada (Gate 2 OK) |
-| 3 | Sistema de diseño | en curso (Tareas 3.1, 3.2, 3.3 y 3.4 OK) |
+| 3 | Sistema de diseño | completada (Gate 3 OK) |
 | 4 | Home y Temario | pendiente |
 | 5 | Lecciones y Estudiar | pendiente |
 | 6 | Buscador | pendiente |
@@ -39,7 +39,6 @@ Implementar Tarea 3.5 (C-0017): suite E2E `e2e/fase-3.spec.ts` verificando boton
 | `/laboratorios` · `/laboratorios/:id` | Fase 7 |
 | `/simulador` · `/simulador/examen` · `/simulador/practica` · `/simulador/resultados` | Fase 8 |
 | `/comandos` · `/glosario` · `/flashcards` | Fase 9 |
-| `/guia-estilos` | Fase 3 (¡implementada!) |
 | `/mapa-mental` · `/progreso` · `/erratas` · `/ajustes` · `/acerca-de` · `**` (404) | Fase 10 |
 
 ## Comandos útiles
