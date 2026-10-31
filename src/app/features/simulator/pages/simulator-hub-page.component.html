@@ -1,0 +1,247 @@
+<app-container>
+  <div class="simulator-hub-layout">
+    <!-- Migas de pan accesibles -->
+    <nav class="breadcrumbs" aria-label="Migas de pan">
+      <ol class="breadcrumbs-list">
+        <li><a routerLink="/" class="breadcrumb-link">Home</a></li>
+        <li class="separator" aria-hidden="true">/</li>
+        <li class="current" aria-current="page">Simulador</li>
+      </ol>
+    </nav>
+
+    <!-- Banner si hay simulacro en curso -->
+    @if (hasActiveSession() && activeSession()) {
+      <section
+        class="resume-banner"
+        role="region"
+        aria-label="Simulacro en curso"
+      >
+        <div class="resume-info">
+          <div class="resume-icon-wrapper" aria-hidden="true">
+            <svg
+              class="resume-icon"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <div class="resume-text">
+            <h3 class="resume-title">Tienes un simulacro en curso</h3>
+            <p class="resume-meta">
+              Tiempo restante: <strong>{{ activeSessionRemainingTime() }}</strong>
+              · Pregunta {{ activeSession()!.currentQuestionIndex + 1 }} de {{ activeSession()!.questions.length }}
+            </p>
+          </div>
+        </div>
+
+        <div class="resume-actions">
+          <app-button
+            variant="warning"
+            size="md"
+            (clicked)="resumeActiveExam()"
+            aria-label="Reanudar el simulacro en curso"
+          >
+            Continuar simulacro
+          </app-button>
+          <app-button
+            variant="ghost"
+            size="md"
+            (clicked)="abandonActiveExam()"
+            aria-label="Descartar el examen actual sin guardar"
+          >
+            Descartar
+          </app-button>
+        </div>
+      </section>
+    }
+
+    <!-- Encabezado de la página -->
+    <header class="hub-header">
+      <div class="header-badge">
+        <app-badge variant="warning">Certificación LPIC-1</app-badge>
+      </div>
+      <h1 class="hub-title">Simulador de examen LPIC-1</h1>
+      <p class="hub-subtitle">
+        Pon a prueba tus conocimientos de administración Linux con simulacros completos de 60 preguntas cronometradas o entrena libremente a tu ritmo con retroalimentación inmediata.
+      </p>
+    </header>
+
+    <!-- Modos de examen principales (2 tarjetas) -->
+    <section class="modes-grid" aria-label="Modos de entrenamiento">
+      <!-- Tarjeta 1: Simulacro cronometrado -->
+      <article class="mode-card timed">
+        <div class="mode-header">
+          <span class="mode-pill timed-pill">Modo oficial</span>
+          <h2 class="mode-title">Simulacro cronometrado</h2>
+        </div>
+        <p class="mode-description">
+          60 preguntas seleccionadas proporcionalmente según los pesos del currículo oficial de LPIC-1. Cuenta atrás de 90 minutos y puntuación oficial de 200 a 800 puntos (aprobado a partir de 500).
+        </p>
+        <ul class="mode-features" aria-label="Características del simulacro">
+          <li>
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>60 preguntas ponderadas</span>
+          </li>
+          <li>
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>90 minutos límite</span>
+          </li>
+          <li>
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Puntuación oficial 200–800</span>
+          </li>
+        </ul>
+        <div class="mode-action">
+          <app-button
+            variant="primary"
+            size="lg"
+            [loading]="isStartingExam()"
+            (clicked)="startTimedExam()"
+            aria-label="Comenzar simulacro oficial de examen"
+          >
+            Comenzar simulacro
+          </app-button>
+        </div>
+      </article>
+
+      <!-- Tarjeta 2: Práctica libre -->
+      <article class="mode-card practice">
+        <div class="mode-header">
+          <span class="mode-pill practice-pill">Sin tiempo</span>
+          <h2 class="mode-title">Práctica libre</h2>
+        </div>
+        <p class="mode-description">
+          Aprende y repasa sin presión de tiempo. Responde pregunta a pregunta con botón de comprobación instantánea y accede a la justificación teórica detallada de cada respuesta.
+        </p>
+        <ul class="mode-features" aria-label="Características de la práctica libre">
+          <li>
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Sin límite de tiempo</span>
+          </li>
+          <li>
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Explicación didáctica inmediata</span>
+          </li>
+          <li>
+            <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Filtros por tema y tipo</span>
+          </li>
+        </ul>
+        <div class="mode-action">
+          <app-button
+            variant="secondary"
+            size="lg"
+            (clicked)="goToPractice()"
+            aria-label="Comenzar sesión de práctica libre"
+          >
+            Entrenar en modo libre
+          </app-button>
+        </div>
+      </article>
+    </section>
+
+    <!-- Sección: Entrenar por tema -->
+    <section class="topics-section" aria-labelledby="topics-section-heading">
+      <div class="section-header">
+        <h2 id="topics-section-heading" class="section-title">Entrenar por tema específico</h2>
+        <p class="section-subtitle">
+          Filtra directamente las preguntas de un bloque del currículo para afianzar conceptos concretos:
+        </p>
+      </div>
+
+      <div class="topics-chips-container" role="list" aria-label="Temas para entrenar">
+        @for (topic of topics(); track topic.id) {
+          <div role="listitem">
+            <app-chip
+              (clicked)="goToPractice(topic.id)"
+              [ariaLabel]="'Entrenar preguntas del Tema ' + topic.id + ': ' + topic.title"
+            >
+              <strong>Tema {{ topic.id }}</strong>: {{ topic.title }}
+            </app-chip>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Sección: Últimos intentos -->
+    <section class="attempts-section" aria-labelledby="attempts-section-heading">
+      <div class="section-header">
+        <h2 id="attempts-section-heading" class="section-title">Últimos intentos</h2>
+        <p class="section-subtitle">Historial reciente de simulacros realizados en este dispositivo:</p>
+      </div>
+
+      @if (recentAttempts().length === 0) {
+        <div class="empty-attempts-card" role="region" aria-label="Sin intentos previos">
+          <p class="empty-text">Aún no has completado ningún simulacro.</p>
+          <p class="empty-hint">Realiza tu primer simulacro cronometrado para comprobar tu preparación ante el examen LPIC-1.</p>
+        </div>
+      } @else {
+        <div class="table-responsive-wrapper">
+          <table class="attempts-table" aria-label="Tabla de últimos intentos de examen">
+            <thead>
+              <tr>
+                <th scope="col">Fecha</th>
+                <th scope="col">Modo</th>
+                <th scope="col">Puntuación</th>
+                <th scope="col">Resultado</th>
+                <th scope="col">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (attempt of recentAttempts(); track attempt.id) {
+                <tr>
+                  <td class="date-cell">
+                    {{ attempt.startedAt | date:'mediumDate' }}
+                  </td>
+                  <td>
+                    <span class="mode-tag">{{ attempt.mode === 'exam' ? 'Simulacro' : 'Práctica' }}</span>
+                  </td>
+                  <td class="score-cell font-mono">
+                    <strong>{{ attempt.score ?? '---' }}</strong> / 800
+                  </td>
+                  <td>
+                    @if (attempt.passed) {
+                      <app-badge variant="success">Aprobado</app-badge>
+                    } @else {
+                      <app-badge variant="danger">Suspendido</app-badge>
+                    }
+                  </td>
+                  <td>
+                    <a
+                      [routerLink]="['/simulador/resultados']"
+                      [queryParams]="{ id: attempt.id }"
+                      class="results-link"
+                      [attr.aria-label]="'Ver resultados del intento del ' + (attempt.startedAt | date:'shortDate')"
+                    >
+                      Ver resultados →
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  </div>
+</app-container>
+

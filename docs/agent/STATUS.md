@@ -2,24 +2,28 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0041
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0042
 
 ## Estado
 - **Fase actual**: Fase 8 (Simulador) en curso.
 - **Último gate superado**: Gate 7 (etiqueta `fase-7-ok`).
-- **Trabajo en curso**: Fase 8 · Tarea 8.4 (Páginas /simulador y /simulador/practica).
+- **Trabajo en curso**: Fase 8 · Tarea 8.5 (Páginas /simulador/examen y /simulador/resultados).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Implementar Tarea 8.4 (C-0042):
-1. `SimulatorHubPageComponent` (`src/app/features/simulator/pages/simulator-hub-page.component.ts`):
-   - Banner "Retomar simulacro en curso" si hay sesión activa en `ExamService`.
-   - Tarjetas principales "Simulacro cronometrado" (iniciar examen de 60 preguntas o disponibles, 90 min) y "Práctica libre" (sin límite de tiempo).
-   - Sección "Entrenar por tema" (chips para los 4 temas LPIC-1 con enlace directo a `/simulador/practica?tema=...`).
-   - Tabla "Últimos intentos" (5 filas: fecha, modo, puntuación oficial 200–800, badge Aprobado/Suspendido, enlace a resultados).
-2. `SimulatorPracticePageComponent` (`src/app/features/simulator/pages/simulator-practice-page.component.ts`):
-   - Práctica libre filtrable por tema, subtema, tipo, navegación pregunta a pregunta con botón "Comprobar respuesta" y retroalimentación pedagógica inmediata.
-3. Conectar rutas en `src/app/app.routes.ts` y suites unitarias para ambas páginas.
+Implementar Tarea 8.5 (C-0043):
+1. `SimulatorExamPageComponent` (`src/app/features/simulator/pages/simulator-exam-page.component.ts`):
+   - Pantalla completa sin sidebar, integración de `TimerBar`, `QuestionCard` y `QuestionNavigator`.
+   - Cuenta atrás sincronizada con `startedAt` persistido (sobrevive a recargas con tiempo exacto).
+   - Guardado continuo de respuestas y marcas para revisión en `ExamService`.
+   - Diálogo modal de confirmación al pulsar "Finalizar examen" que advierte sobre preguntas sin responder o marcadas.
+   - Finalización automática al agotarse el tiempo y redirección a `/simulador/resultados?id=...`.
+2. `SimulatorResultsPageComponent` (`src/app/features/simulator/pages/simulator-results-page.component.ts`):
+   - Carga del intento mediante query param `?id=...` desde el historial persistido (funciona tanto al terminar como tras recarga de página).
+   - Anillo con puntuación oficial LPI 200–800, badge Aprobado (≥ 500) o Suspendido, y tiempo total invertido.
+   - Desglose por tema con barras de acierto y detección de temas débiles (< 70%) con deep links al temario.
+   - Acordeón de revisión de preguntas con filtros Todas / Falladas / Marcadas, mostrando respuesta dada, respuesta correcta y explicación oficial.
+3. Conexión de rutas en `app.routes.ts` con `canStartExamGuard`, actualización de `scripts/check-stubs.ts` (stubs bajan a 9) y `e2e/fase-0.spec.ts`.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -32,7 +36,7 @@ Implementar Tarea 8.4 (C-0042):
 | 5 | Lecciones y Estudiar | completada (Gate 5 OK) |
 | 6 | Buscador | completada (Gate 6 OK) |
 | 7 | Laboratorios | completada (Gate 7 OK) |
-| 8 | Simulador | en curso (Tareas 8.1, 8.2 y 8.3 OK) |
+| 8 | Simulador | en curso (Tareas 8.1, 8.2, 8.3 y 8.4 OK) |
 | 9 | Comandos, Glosario y Flashcards | pendiente |
 | 10 | Mapa mental, Progreso, Ajustes, Erratas, Acerca de, 404 | pendiente |
 | 11 | Importación completa del legacy | pendiente |
@@ -41,14 +45,14 @@ Implementar Tarea 8.4 (C-0042):
 ## Stubs (páginas aún no implementadas)
 | Ruta | Se implementa en |
 |---|---|
-| `/simulador` · `/simulador/examen` · `/simulador/practica` · `/simulador/resultados` | Fase 8 |
+| `/simulador/examen` · `/simulador/resultados` | Fase 8 |
 | `/comandos` · `/glosario` · `/flashcards` | Fase 9 |
 | `/mapa-mental` · `/progreso` · `/erratas` · `/ajustes` · `/acerca-de` · `**` (404) | Fase 10 |
 
 ## Comandos útiles
 - `npm run verify`: pipeline completo de 9 etapas en verde.
-- `npm run test`: suite de tests unitarios (243 tests en verde).
-- `npm run check:stubs`: lista de stubs pendientes (13 rutas pendientes, 10 implementadas).
+- `npm run test`: suite de tests unitarios (251 tests en verde).
+- `npm run check:stubs`: lista de stubs pendientes (11 rutas pendientes, 12 implementadas).
 
 ## Deuda conocida
 Ninguna.

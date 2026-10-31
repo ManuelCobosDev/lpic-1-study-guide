@@ -94,7 +94,10 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        loadComponent: loadStub,
+        loadComponent: () =>
+          import('./features/simulator/pages/simulator-hub-page.component').then(
+            (m) => m.SimulatorHubPageComponent
+          ),
         title: 'Simulador de Examen LPIC-1',
         data: { title: 'Simulador', breadcrumb: 'Simulador', phase: 'Fase 8' }
       },
@@ -106,7 +109,10 @@ export const routes: Routes = [
       },
       {
         path: 'practica',
-        loadComponent: loadStub,
+        loadComponent: () =>
+          import('./features/simulator/pages/simulator-practice-page.component').then(
+            (m) => m.SimulatorPracticePageComponent
+          ),
         title: 'Modo Práctica Guiada',
         data: { title: 'Práctica', breadcrumb: 'Práctica', phase: 'Fase 8' }
       },
