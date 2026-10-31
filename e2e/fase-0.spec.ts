@@ -105,7 +105,14 @@ test.describe('Gate 0: Shell, Persistencia, Accesibilidad y Rutas Stub', () => {
       '/acerca-de'
     ];
 
-    const implementedRoutes = ['/', '/temario', '/temario/101', '/temario/101/101'];
+    const implementedRoutes = [
+      '/',
+      '/temario',
+      '/temario/101',
+      '/temario/101/101',
+      '/estudiar/101.1',
+      '/estudiar/101.1/imprimir'
+    ];
 
     for (const r of testRoutes) {
       const response = await page.goto(r);

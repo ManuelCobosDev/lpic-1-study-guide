@@ -211,18 +211,18 @@ import { KbdComponent } from '../../../../shared/ui/kbd/kbd.component';
             class="icon-tool-btn p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-muted)] transition-colors cursor-pointer"
             (click)="adjustZoom(-10)"
             title="Reducir zoom (-)"
-            aria-label="Reducir tamaño de texto"
+            aria-label="A- Reducir tamaño de texto"
           >
-            <span class="text-xs font-mono font-bold">A-</span>
+            <span class="text-xs font-mono font-bold" aria-hidden="true">A-</span>
           </button>
           <button
             type="button"
             class="icon-tool-btn p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-muted)] transition-colors cursor-pointer"
             (click)="adjustZoom(10)"
             title="Aumentar zoom (+)"
-            aria-label="Aumentar tamaño de texto"
+            aria-label="A+ Aumentar tamaño de texto"
           >
-            <span class="text-xs font-mono font-bold">A+</span>
+            <span class="text-xs font-mono font-bold" aria-hidden="true">A+</span>
           </button>
 
           <!-- Pantalla completa -->

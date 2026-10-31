@@ -82,7 +82,6 @@ import { ThemeService } from '../../../core/services/theme.service';
               variant="secondary"
               size="sm"
               routerLink="/buscar"
-              ariaLabel="Buscar contenidos (Ctrl + K)"
             >
               <span class="hidden sm:inline">Buscar…</span>
               <kbd class="ml-1 text-[11px] px-1 py-0.5 rounded border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)]">Ctrl K</kbd>

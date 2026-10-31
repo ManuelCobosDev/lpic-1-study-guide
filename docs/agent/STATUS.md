@@ -2,16 +2,16 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0027
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0028
 
 ## Estado
-- **Fase actual**: Fase 5 (Lecciones y Estudiar) en curso.
-- **Último gate superado**: Gate 4 (etiqueta `fase-4-ok`).
-- **Trabajo en curso**: Fase 5 · Tarea 5.6 (Suite E2E, capturas visuales, verificación de Gate 5).
+- **Fase actual**: Fase 5 completada · Esperando confirmación para iniciar Fase 6 (Buscador global).
+- **Último gate superado**: Gate 5 (etiqueta `fase-5-ok`).
+- **Trabajo en curso**: ninguno (fase cerrada y verificada).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Implementar Tarea 5.6 (C-0028): crear `e2e/fase-5.spec.ts` cubriendo todos los criterios del Gate 5 en `/estudiar/103.4` (atajos de teclado `→` y `Siguiente` sin clic previo, pantalla completa `F`/`Esc`, deep link `?slide=5`, marcar completado + escribir nota + reload y persistencia en `localStorage`, cambio a vista Web conservando sección, vista PDF abriendo `/imprimir` e invocando `window.print`, presencia de `svg[role=img]` con `<title>`, auditoría Axe y capturas en claro y oscuro en `e2e/screenshots/fase-5/`). Ejecutar `npm run verify`, sellar con `git tag fase-5-ok` y detenerse para esperar al usuario (R2).
+Iniciar Fase 6 (Buscador global): implementar el motor MiniSearch (`src/app/core/engines/search/`), la paleta de búsqueda global modal (Ctrl+K o `/`) con chips de filtro, resaltado de coincidencias y sugerencias, y la página de resultados `/buscar?q=`.
 
 ## Fases
 | Fase | Descripción | Estado |
@@ -21,7 +21,7 @@ Implementar Tarea 5.6 (C-0028): crear `e2e/fase-5.spec.ts` cubriendo todos los c
 | 2 | Currículo, pipeline de contenido, dominio + tajada vertical 103.4 | completada (Gate 2 OK) |
 | 3 | Sistema de diseño | completada (Gate 3 OK) |
 | 4 | Home y Temario | completada (Gate 4 OK) |
-| 5 | Lecciones y Estudiar | en curso (Tareas 5.1 a 5.5 OK) |
+| 5 | Lecciones y Estudiar | completada (Gate 5 OK) |
 | 6 | Buscador | pendiente |
 | 7 | Laboratorios | pendiente |
 | 8 | Simulador | pendiente |
@@ -40,7 +40,7 @@ Implementar Tarea 5.6 (C-0028): crear `e2e/fase-5.spec.ts` cubriendo todos los c
 | `/mapa-mental` · `/progreso` · `/erratas` · `/ajustes` · `/acerca-de` · `**` (404) | Fase 10 |
 
 ## Comandos útiles
-- `npm run verify`: pipeline completo de 9 etapas en verde.
+- `npm run verify`: pipeline completo de 9 etapas en verde (145 tests unitarios, 29 E2E).
 - `npm run test`: suite de tests unitarios (145 tests en verde).
 - `npm run check:stubs`: lista de stubs pendientes (16 rutas pendientes, 7 implementadas).
 
