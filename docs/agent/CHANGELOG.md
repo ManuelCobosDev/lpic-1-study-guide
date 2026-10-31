@@ -22,3 +22,10 @@
 - Archivos: src/app/core/**/README.md, src/app/shared/**/README.md, src/app/features/README.md, scripts/README.md, content-src/README.md, e2e/README.md, docs/ARCHITECTURE.md, docs/DESIGN_SYSTEM.md, docs/CONTENT_GUIDE.md, docs/DEPLOY.md.
 - Verificación: npm run typecheck (código 0), npm run lint (código 0), npm test (2 tests pasando).
 - Pendiente / deuda: tokens CSS y temas (Tarea 3), scripts de calidad (Tarea 4).
+
+## C-0003 · 2026-10-31 · Fase 0 · Tokens CSS, temas claro/oscuro y hojas de estilo base
+- Qué: implementación completa de src/styles/tokens.css (paleta Azure, Slate, Emerald, Amber, Rose, Sky, radios, sombras, z-index), themes.css (tokens semánticos claro/oscuro), typography.css, slides.css y print.css integrados con Tailwind CSS v4.
+- Por qué: base de diseño y regla R6 (cero colores fuera de tokens, 05-diseno.md).
+- Archivos: src/styles/tokens.css, src/styles/themes.css, src/styles/typography.css, src/styles/slides.css, src/styles/print.css, src/styles.css.
+- Verificación: npm run typecheck (código 0), npm run lint (código 0), npm test (2 tests pasando), npx ng build (código 0, bundle inicial de estilos 31.49 kB).
+- Pendiente / deuda: scripts de validación y calidad (Tarea 4), AppShell y stubs (Tarea 5).

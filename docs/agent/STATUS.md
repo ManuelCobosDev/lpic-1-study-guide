@@ -2,16 +2,16 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-10-31 · **Última entrada**: C-0002
+**Última actualización**: 2026-10-31 · **Última entrada**: C-0003
 
 ## Estado
 - **Fase actual**: Fase 0 · Andamiaje Angular (esqueleto limpio).
 - **Último gate superado**: ninguno (Fase 0 en curso).
-- **Trabajo en curso**: Fase 0 · Tarea 3 (Tokens CSS y temas).
+- **Trabajo en curso**: Fase 0 · Tarea 4 (Scripts de calidad y validación).
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-Fase 0 · Tarea 3: Implementar `src/styles/tokens.css` y `themes.css` con la paleta completa y variables semánticas según `05-diseno.md (§5.1–5.3)`.
+Fase 0 · Tarea 4: Implementar `scripts/check-tokens.ts` (con test), `check-boundaries.ts` (con test), `check-stubs.ts`, `postbuild.ts`, `build-content.ts` y `verify.ts`.
 
 ## Fases
 | Fase | Descripción | Estado |
