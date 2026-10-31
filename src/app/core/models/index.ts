@@ -11,4 +11,5 @@ export * from './preferences.model';
 export * from './progress.model';
 export * from './attempt.model';
 export * from './flashcard.model';
+export * from './backup.model';
 

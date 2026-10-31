@@ -56,6 +56,39 @@ export class StorageService {
     this.memoryStorage.delete(prefixedKey);
   }
 
+  hasItem(key: string): boolean {
+    return this.getItem(key) !== null;
+  }
+
+  getAllPrefixedItems(): Record<string, string> {
+    const result: Record<string, string> = {};
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        for (let i = 0; i < window.localStorage.length; i++) {
+          const k = window.localStorage.key(i);
+          if (k?.startsWith(this.PREFIX)) {
+            const unprefixed = k.slice(this.PREFIX.length);
+            const val = window.localStorage.getItem(k);
+            if (val !== null) {
+              result[unprefixed] = val;
+            }
+          }
+        }
+        return result;
+      }
+    } catch {
+      this.isFallbackMode.set(true);
+    }
+
+    for (const [k, v] of this.memoryStorage.entries()) {
+      if (k.startsWith(this.PREFIX)) {
+        const unprefixed = k.slice(this.PREFIX.length);
+        result[unprefixed] = v;
+      }
+    }
+    return result;
+  }
+
   clearAll(): void {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {

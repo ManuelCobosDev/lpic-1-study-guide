@@ -60,6 +60,10 @@ export class PreferencesService {
     this.store.update(p => ({ ...p, privacyBannerDismissed: true }));
   }
 
+  setLastExportAt(lastExportAt: string): void {
+    this.store.update(p => ({ ...p, lastExportAt }));
+  }
+
   updatePreferences(partial: Partial<UserPreferences>): void {
     this.store.update(p => ({ ...p, ...partial }));
   }
