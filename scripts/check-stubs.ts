@@ -7,7 +7,7 @@ export interface StubDefinition {
 }
 
 export const STUBS: StubDefinition[] = [
-  { route: '/', implementedIn: 'Fase 4', isImplemented: false },
+  { route: '/', implementedIn: 'Fase 4', isImplemented: true },
   { route: '/temario', implementedIn: 'Fase 4', isImplemented: false },
   { route: '/temario/:examen', implementedIn: 'Fase 4', isImplemented: false },
   { route: '/temario/:examen/:tema', implementedIn: 'Fase 4', isImplemented: false },

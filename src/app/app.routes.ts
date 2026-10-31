@@ -8,7 +8,8 @@ const loadStub = () =>
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: loadStub,
+    loadComponent: () =>
+      import('./features/home/pages/home-page.component').then((m) => m.HomePageComponent),
     title: 'LPIC-1 Study Guide · Aula Virtual',
     data: { title: 'Inicio · LPIC-1 Study Guide', breadcrumb: 'Inicio', phase: 'Fase 4' }
   },
