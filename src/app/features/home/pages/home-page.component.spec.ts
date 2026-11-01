@@ -28,7 +28,8 @@ describe('HomePageComponent', () => {
       totalQuestionsReal: 43,
       totalQuestionsPlaceholder: 0,
       totalCommands: 25,
-      totalTerms: 22
+      totalTerms: 22,
+      totalFlashcards: 100
     },
     exams: [
       {

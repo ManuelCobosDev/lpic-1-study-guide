@@ -13,7 +13,8 @@ import {
 import {
   evaluateCard,
   selectCardsForSession,
-  computeLeitnerStats
+  computeLeitnerStats,
+  isCardDue
 } from '../engines/leitner/leitner.engine';
 import { Command } from '../models/command.model';
 import { GlossaryTerm } from '../models/glossary.model';
@@ -46,38 +47,98 @@ export class FlashcardsService {
   readonly progress = computed(() => this.state().progress);
 
   /**
-   * Carga los elementos del mazo especificado y los convierte al modelo unificado FlashcardItem.
+   * Carga la colección completa de tarjetas desde el ContentService o genera un fallback si procede.
    */
-  async loadDeckItems(deck: DeckType): Promise<FlashcardItem[]> {
-    if (deck === 'commands') {
-      const commands = await this.contentService.getCommands();
-      return commands.map((c) => this.commandToFlashcard(c));
+  async getAllCards(): Promise<FlashcardItem[]> {
+    try {
+      if (typeof this.contentService.getFlashcards === 'function') {
+        const catalog = await this.contentService.getFlashcards();
+        if (catalog && catalog.length > 0) {
+          return catalog;
+        }
+      }
+    } catch {
+      // Ignorar fallo de red y pasar al fallback
     }
 
-    if (deck === 'glossary') {
-      const terms = await this.contentService.getGlossary();
-      return terms.map((t) => this.glossaryToFlashcard(t));
-    }
-
-    // Mazo mixto: combina comandos y glosario de forma intercalada
+    // Fallback: sintetiza tarjetas directamente desde comandos y glosario
     const [commands, terms] = await Promise.all([
       this.contentService.getCommands(),
       this.contentService.getGlossary()
     ]);
-
     const cmdCards = commands.map((c) => this.commandToFlashcard(c));
     const termCards = terms.map((t) => this.glossaryToFlashcard(t));
-    const mixed: FlashcardItem[] = [];
-    const maxLen = Math.max(cmdCards.length, termCards.length);
+    return [...cmdCards, ...termCards];
+  }
 
-    for (let i = 0; i < maxLen; i++) {
-      const cmd = cmdCards[i];
-      if (cmd) mixed.push(cmd);
-      const term = termCards[i];
-      if (term) mixed.push(term);
+  /**
+   * Carga los elementos del mazo especificado y los filtra según criterio avanzado (examen, tema, subtema, tipo).
+   */
+  async loadDeckItems(deck: DeckType): Promise<FlashcardItem[]> {
+    const allCards = await this.getAllCards();
+
+    if (deck === 'all') {
+      return allCards;
     }
 
-    return mixed;
+    if (deck === 'commands') {
+      return allCards.filter((c) => c.type === 'command' || c.kind === 'comando');
+    }
+
+    if (deck === 'flags') {
+      return allCards.filter((c) => c.type === 'flag' || c.kind === 'opcion');
+    }
+
+    if (deck === 'glossary') {
+      return allCards.filter((c) => c.type === 'glossary' || c.kind === 'termino');
+    }
+
+    if (deck === 'exam-101') {
+      return allCards.filter((c) => {
+        if (c.examId) return c.examId === '101';
+        return c.subtopicIds.some((s) => {
+          const num = parseInt(s.split('.')[0] || '0', 10);
+          return num >= 101 && num <= 104;
+        });
+      });
+    }
+
+    if (deck === 'exam-102') {
+      return allCards.filter((c) => {
+        if (c.examId) return c.examId === '102';
+        return c.subtopicIds.some((s) => {
+          const num = parseInt(s.split('.')[0] || '0', 10);
+          return num >= 105 && num <= 110;
+        });
+      });
+    }
+
+    if (deck === 'due-today') {
+      const prog = this.progress();
+      return allCards.filter((c) => {
+        const p = prog[c.id];
+        return p !== undefined && isCardDue(p.nextReviewDate);
+      });
+    }
+
+    if (deck.startsWith('topic-')) {
+      const topicId = deck.replace('topic-', '');
+      return allCards.filter((c) => {
+        if (c.topicId === topicId) return true;
+        return c.subtopicIds.some((s) => s.startsWith(`${topicId}.`));
+      });
+    }
+
+    if (deck.startsWith('subtopic-')) {
+      const subtopicId = deck.replace('subtopic-', '');
+      return allCards.filter((c) => c.subtopicIds.includes(subtopicId));
+    }
+
+    if (deck === 'mixed') {
+      return allCards;
+    }
+
+    return allCards;
   }
 
   /**
@@ -111,8 +172,8 @@ export class FlashcardsService {
     newCards: FlashcardItem[];
     sessionCards: FlashcardItem[];
   }> {
-    const items = await this.loadDeckItems('mixed');
-    const filtered = items.filter(
+    const allCards = await this.getAllCards();
+    const filtered = allCards.filter(
       (item) => item.subtopicIds && item.subtopicIds.includes(subtopicId)
     );
     return selectCardsForSession(filtered, this.progress(), {

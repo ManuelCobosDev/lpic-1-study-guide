@@ -6,7 +6,8 @@ import {
   Question,
   Command,
   GlossaryTerm,
-  Errata
+  Errata,
+  FlashcardItem
 } from '../models/index';
 
 @Injectable({
@@ -20,6 +21,7 @@ export class ContentService {
   private readonly cachedQuestions = new Map<string, Question[]>();
   private cachedCommands: Command[] | null = null;
   private cachedGlossary: GlossaryTerm[] | null = null;
+  private cachedFlashcards: FlashcardItem[] | null = null;
   private cachedErrata: Errata[] | null = null;
 
   readonly manifest = signal<CurriculumManifest | null>(null);
@@ -153,6 +155,26 @@ export class ContentService {
       return data;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al cargar glosario';
+      this.error.set(msg);
+      throw err;
+    }
+  }
+
+  async getFlashcards(): Promise<FlashcardItem[]> {
+    if (this.cachedFlashcards) {
+      return this.cachedFlashcards;
+    }
+
+    try {
+      const res = await fetch(`${this.baseUrl}/flashcards.json`);
+      if (!res.ok) {
+        throw new Error(`Error ${res.status} al cargar el catálogo de flashcards`);
+      }
+      const data = (await res.json()) as FlashcardItem[];
+      this.cachedFlashcards = data;
+      return data;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error al cargar flashcards';
       this.error.set(msg);
       throw err;
     }

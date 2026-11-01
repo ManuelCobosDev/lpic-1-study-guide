@@ -5,6 +5,7 @@ import { StorageService } from './storage.service';
 import { PreferencesService } from './preferences.service';
 import { Command } from '../models/command.model';
 import { GlossaryTerm } from '../models/glossary.model';
+import { FlashcardItem } from '../models/flashcard.model';
 import { DEFAULT_PREFERENCES } from '../models/preferences.model';
 import { signal } from '@angular/core';
 
@@ -35,9 +36,49 @@ describe('FlashcardsService', () => {
     }
   ];
 
+  const mockFlashcardsCatalog: FlashcardItem[] = [
+    {
+      id: 'cmd-tee',
+      type: 'command',
+      kind: 'comando',
+      frontTitle: 'tee',
+      prompt: '¿Función de tee?',
+      backTitle: 'tee',
+      backDescription: 'Copia stdin a archivo y stdout.',
+      subtopicIds: ['103.4'],
+      topicId: '103',
+      examId: '101'
+    },
+    {
+      id: 'term-stdin',
+      type: 'glossary',
+      kind: 'termino',
+      frontTitle: 'stdin',
+      prompt: '¿Definición de stdin?',
+      backTitle: 'stdin',
+      backDescription: 'Descriptor de archivo 0.',
+      subtopicIds: ['103.4'],
+      topicId: '103',
+      examId: '101'
+    },
+    {
+      id: 'fc-105-1-env',
+      type: 'extra',
+      kind: 'concepto',
+      frontTitle: 'env',
+      prompt: '¿Qué hace env?',
+      backTitle: 'env',
+      backDescription: 'Muestra el entorno.',
+      subtopicIds: ['105.1'],
+      topicId: '105',
+      examId: '102'
+    }
+  ];
+
   const mockContentService = {
     getCommands: () => Promise.resolve(mockCommands),
-    getGlossary: () => Promise.resolve(mockGlossary)
+    getGlossary: () => Promise.resolve(mockGlossary),
+    getFlashcards: () => Promise.resolve(mockFlashcardsCatalog)
   };
 
   const mockStorageService = {
@@ -72,18 +113,26 @@ describe('FlashcardsService', () => {
   });
 
   it('loadDeckItems carga tarjetas según el mazo seleccionado', async () => {
+    const allDeck = await service.loadDeckItems('all');
+    expect(allDeck.length).toBe(3);
+
     const cmdDeck = await service.loadDeckItems('commands');
     expect(cmdDeck.length).toBe(1);
     expect(cmdDeck[0]?.id).toBe('cmd-tee');
-    expect(cmdDeck[0]?.type).toBe('command');
 
     const termDeck = await service.loadDeckItems('glossary');
     expect(termDeck.length).toBe(1);
     expect(termDeck[0]?.id).toBe('term-stdin');
-    expect(termDeck[0]?.type).toBe('glossary');
 
-    const mixedDeck = await service.loadDeckItems('mixed');
-    expect(mixedDeck.length).toBe(2);
+    const exam101Deck = await service.loadDeckItems('exam-101');
+    expect(exam101Deck.length).toBe(2);
+
+    const exam102Deck = await service.loadDeckItems('exam-102');
+    expect(exam102Deck.length).toBe(1);
+    expect(exam102Deck[0]?.id).toBe('fc-105-1-env');
+
+    const subtopicDeck = await service.loadDeckItems('subtopic-105.1');
+    expect(subtopicDeck.length).toBe(1);
   });
 
   it('rateCard actualiza la caja Leitner y persiste en StorageService', () => {
@@ -101,8 +150,8 @@ describe('FlashcardsService', () => {
 
   it('getDeckStats calcula estadísticas del mazo', async () => {
     const stats = await service.getDeckStats('mixed');
-    expect(stats.total).toBe(2);
-    expect(stats.unseen).toBe(2);
+    expect(stats.total).toBe(3);
+    expect(stats.unseen).toBe(3);
   });
 
   it('resetProgress borra el progreso en memoria y almacenamiento', () => {

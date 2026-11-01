@@ -51,24 +51,24 @@ Reglas: un paso o subtema solo pasa a "hecho" con su gate en PASS (spec 10). Los
 | Subtema | Unidades (Map/Tot) | Tokens % | Diapositivas | Preguntas | Flashcards | Validación |
 |---|---|---|---|---|---|---|
 | 105.1 | 0 / 1606 | 0% | 19 | 0 | 0 | ⏳ Pendiente |
-| 105.2 | 0 / 530 | 0% | 19 | 0 | 0 | ⏳ Pendiente |
-| 106.1 | 0 / 245 | 0% | 19 | 0 | 0 | ⏳ Pendiente |
-| 106.2 | 0 / 121 | 0% | 16 | 0 | 0 | ⏳ Pendiente |
-| 106.3 | 0 / 96 | 0% | 15 | 0 | 0 | ⏳ Pendiente |
-| 107.1 | 0 / 525 | 0% | 19 | 0 | 0 | ⏳ Pendiente |
-| 107.2 | 0 / 433 | 0% | 19 | 0 | 0 | ⏳ Pendiente |
-| 107.3 | 0 / 241 | 0% | 18 | 0 | 0 | ⏳ Pendiente |
-| 108.1 | 0 / 611 | 0% | 16 | 0 | 0 | ⏳ Pendiente |
-| 108.2 | 0 / 1180 | 0% | 19 | 0 | 0 | ⏳ Pendiente |
+| 105.2 | 0 / 530 | 0% | 19 | 0 | 5 | ⏳ Pendiente |
+| 106.1 | 0 / 245 | 0% | 19 | 0 | 4 | ⏳ Pendiente |
+| 106.2 | 0 / 121 | 0% | 16 | 0 | 4 | ⏳ Pendiente |
+| 106.3 | 0 / 96 | 0% | 15 | 0 | 4 | ⏳ Pendiente |
+| 107.1 | 0 / 525 | 0% | 19 | 0 | 3 | ⏳ Pendiente |
+| 107.2 | 0 / 433 | 0% | 19 | 0 | 3 | ⏳ Pendiente |
+| 107.3 | 0 / 241 | 0% | 18 | 0 | 2 | ⏳ Pendiente |
+| 108.1 | 0 / 611 | 0% | 16 | 0 | 3 | ⏳ Pendiente |
+| 108.2 | 0 / 1180 | 0% | 19 | 0 | 3 | ⏳ Pendiente |
 | 108.3 | 0 / 187 | 0% | 16 | 0 | 0 | ⏳ Pendiente |
 | 108.4 | 0 / 299 | 0% | 16 | 0 | 0 | ⏳ Pendiente |
 | 109.1 | 0 / 333 | 0% | 18 | 0 | 0 | ⏳ Pendiente |
 | 109.2 | 0 / 341 | 0% | 18 | 0 | 0 | ⏳ Pendiente |
 | 109.3 | 0 / 568 | 0% | 18 | 0 | 0 | ⏳ Pendiente |
 | 109.4 | 0 / 293 | 0% | 16 | 0 | 0 | ⏳ Pendiente |
-| 110.1 | 0 / 751 | 0% | 18 | 0 | 0 | ⏳ Pendiente |
-| 110.2 | 0 / 290 | 0% | 16 | 0 | 0 | ⏳ Pendiente |
-| 110.3 | 0 / 755 | 0% | 19 | 0 | 0 | ⏳ Pendiente |
+| 110.1 | 0 / 751 | 0% | 18 | 0 | 10 | ⏳ Pendiente |
+| 110.2 | 0 / 290 | 0% | 16 | 0 | 10 | ⏳ Pendiente |
+| 110.3 | 0 / 755 | 0% | 19 | 0 | 12 | ⏳ Pendiente |
 <!-- AUTO:END -->
 
 ## Siguiente paso exacto

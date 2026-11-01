@@ -49,7 +49,8 @@ export const CurriculumManifestSchema = z.object({
     totalQuestionsReal: z.number().int().nonnegative(),
     totalQuestionsPlaceholder: z.number().int().nonnegative(),
     totalCommands: z.number().int().nonnegative(),
-    totalTerms: z.number().int().nonnegative()
+    totalTerms: z.number().int().nonnegative(),
+    totalFlashcards: z.number().int().nonnegative().optional().default(0)
   }),
   exams: z.array(ExamSchema),
   topics: z.array(TopicSchema),

@@ -43,6 +43,7 @@ describe('FlashcardsPageComponent', () => {
     progress: signal({
       'cmd-tee': { cardId: 'cmd-tee', box: 1, nextReviewDate: '2026-10-31', lastReviewedAt: null, repetitions: 0, lapses: 0 }
     }),
+    getAllCards: () => Promise.resolve(mockCards),
     getDeckStats: () => Promise.resolve(mockStats),
     getSessionCards: () =>
       Promise.resolve({
@@ -115,6 +116,28 @@ describe('FlashcardsPageComponent', () => {
     component.rateCurrentCard('easy'); // Segunda tarjeta
 
     expect(component.isCompleted()).toBe(true);
+  });
+
+  it('debe filtrar las tarjetas en el explorador según la búsqueda textual', () => {
+    expect(component.filteredExplorerCards().length).toBe(2);
+
+    component.onSearchQueryChange('tee');
+    expect(component.filteredExplorerCards().length).toBe(1);
+    expect(component.filteredExplorerCards()[0]?.id).toBe('cmd-tee');
+
+    component.onSearchQueryChange('no-existe');
+    expect(component.filteredExplorerCards().length).toBe(0);
+
+    component.onSearchQueryChange('');
+    expect(component.filteredExplorerCards().length).toBe(2);
+  });
+
+  it('debe permitir desplegar y ocultar el reverso de una tarjeta en el explorador', () => {
+    expect(component.isCardRevealed('cmd-tee')).toBe(false);
+    component.toggleCardReveal('cmd-tee');
+    expect(component.isCardRevealed('cmd-tee')).toBe(true);
+    component.toggleCardReveal('cmd-tee');
+    expect(component.isCardRevealed('cmd-tee')).toBe(false);
   });
 });
 

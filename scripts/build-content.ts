@@ -32,6 +32,7 @@ import {
   calculateExplainedInForEntry,
   validateExplainedIn
 } from '../src/app/core/engines/autolink/autolink.engine';
+import { generateFlashcards } from './generate-flashcards';
 
 export interface BuildContentOptions {
   validateOnly?: boolean;
@@ -837,6 +838,16 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     );
   }
 
+  // Generación de Flashcards Masivas
+  const flashcards = generateFlashcards(rootDir);
+  if (!options.validateOnly) {
+    fs.writeFileSync(
+      path.join(outputDir, 'flashcards.json'),
+      JSON.stringify(flashcards, null, 2),
+      'utf-8'
+    );
+  }
+
   // Construcción del Manifiesto
   const availableSubtopics = enrichedSubtopics.filter(s => s.status === 'available').length;
   const plannedSubtopics = enrichedSubtopics.filter(s => s.status === 'planned').length;
@@ -857,7 +868,8 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
       totalQuestionsReal,
       totalQuestionsPlaceholder,
       totalCommands: commands.length,
-      totalTerms: glossary.length
+      totalTerms: glossary.length,
+      totalFlashcards: flashcards.length
     },
     exams: curriculum.exams,
     topics: curriculum.topics,

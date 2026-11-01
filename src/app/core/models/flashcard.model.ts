@@ -2,7 +2,9 @@ export type LeitnerBox = 1 | 2 | 3 | 4 | 5;
 
 export type LeitnerRating = 'again' | 'hard' | 'good' | 'easy';
 
-export type DeckType = 'glossary' | 'commands' | 'mixed';
+export type DeckType = 'all' | 'commands' | 'flags' | 'glossary' | 'mixed' | 'due-today' | string;
+
+export type FlashcardKind = 'comando' | 'opcion' | 'termino' | 'archivo' | 'concepto' | 'areaClave';
 
 export interface CardProgress {
   cardId: string;
@@ -15,7 +17,8 @@ export interface CardProgress {
 
 export interface FlashcardItem {
   id: string;
-  type: 'command' | 'glossary';
+  type: 'command' | 'glossary' | 'flag' | 'extra';
+  kind?: FlashcardKind;
   frontTitle: string;
   frontSubtitle?: string;
   prompt: string;
@@ -26,6 +29,10 @@ export interface FlashcardItem {
   backFlags?: { flag: string; description: string }[];
   relatedTerms?: string[];
   subtopicIds: string[];
+  topicId?: string;
+  examId?: '101' | '102';
+  source?: string[];
+  hint?: string;
 }
 
 export interface LeitnerStats {

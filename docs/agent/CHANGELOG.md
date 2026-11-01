@@ -576,3 +576,31 @@
 - Archivos: src/app/core/models/practice.model.ts, src/app/core/models/lesson.model.ts, src/app/core/models/curriculum.model.ts, src/app/core/models/question.model.ts, src/app/core/schemas/lesson.schema.ts, src/app/core/schemas/curriculum.schema.ts, src/app/core/schemas/question.schema.ts, src/app/core/services/practice.service.ts, src/app/core/services/practice.service.spec.ts, src/app/core/services/flashcards.service.ts, src/app/features/study/components/practice-tab/practice-tab.component.ts, src/app/features/study/components/practice-tab/practice-tab.component.spec.ts, src/app/features/study/components/slide-viewer/slide-viewer.component.ts, src/app/features/study/pages/lesson-page.component.ts, src/app/features/curriculum/pages/topic-detail-page.component.ts, src/app/shared/ui/tabs/tabs.component.ts, scripts/build-content.ts, content-src/exercises/105.1.yaml, e2e/ronda2/f6-practica-subtema.spec.ts, docs/agent/PROGRESO_R2.md, docs/agent/STATUS.md, docs/agent/CHANGELOG.md.
 - Verificación: npm run typecheck (OK), npm run lint (OK), npm run check:boundaries (OK), npm run check:tokens (OK), npm test (377 Karma + 36 Vitest en verde), npx playwright test e2e/ronda2/f6-practica-subtema.spec.ts (4 tests pasando), npm run e2e:pendientes (3 fallos restantes verificados: F1, F2, F3), npm run verify (10 etapas completas en verde, 80 E2E pasando).
 - Pendiente / deuda: Paso R5 (Flashcards masivas: mazos ampliados para examen 101/102 y explorador de tarjetas).
+
+## C-0070 · 2026-11-01 · Ronda 2 · R5: Flashcards masivas y explorador de biblioteca
+- Qué: resolución del Fallo F2 y ejecución completa del Paso R5 según Spec 10 §R5, Spec 14 §14.2 y Spec 12 §12.6:
+  (1) Generador masivo determinista en `scripts/generate-flashcards.ts` integrado en `scripts/build-content.ts`:
+      - Compilación automática de 1 182 tarjetas en `public/content/flashcards.json`.
+      - Cobertura completa del 100% de opciones/flags con nombre documentadas en commands.yaml (684 flags).
+      - Mínimo de 10 tarjetas garantizado en cada uno de los 42 subtemas del currículo (0 subtemas con < 10 tarjetas).
+      - Catálogo curado complementario en `content-src/flashcards-extra.yaml` con trazabilidad a unidades oficiales y objetivos del examen.
+      - Validación completa de esquema (`FlashcardsCatalogSchema`), longitudes máximas (anverso ≤ 140, reverso ≤ 400 chars) y 0 duplicados en `scripts/generate-flashcards.spec.ts` (7 tests Vitest en verde).
+  (2) Modelo y esquemas Zod en `src/app/core/models/flashcard.model.ts`, `src/app/core/schemas/flashcard.schema.ts` y extensión de `CurriculumManifestSchema` con `totalFlashcards`.
+  (3) Servicio de datos y motor Leitner reactivo en `FlashcardsService` y `ContentService`:
+      - Carga reactiva de catálogo completo y filtrado dinámico de mazos: `all`, `exam-101`, `exam-102`, `commands`, `flags`, `glossary`, `due-today`, `topic-*` y `subtopic-*`.
+      - Persistencia en `localStorage` bajo clave prefijada `lpic1.v1.flashcards_progress` con algoritmo Leitner en 5 cajas.
+  (4) Interfaz ampliada en `/flashcards` (`FlashcardsPageComponent`):
+      - Selector de mazos ampliado con botones específicos para todo, examen 101, examen 102, comandos, opciones y glosario.
+      - Barra de estado activa "N para hoy · M nuevas · T en este mazo" e insignia total `data-testid="total-flashcards-count"`.
+      - Explorador y biblioteca completa (`[data-testid="flashcards-explorer"]`): buscador instantáneo `<input role="searchbox" data-testid="explorer-search">`, filtro por tipos y cajas Leitner, paginación client-side y botón de revelado de reverso individual.
+      - Cumplimiento de presupuesto CSS de componentes de Angular (< 8.00 kB) y contraste accesible WCAG AA (`var(--primary-text)`) en modo claro y oscuro.
+  (5) Coherencia visual con Home (`/`):
+      - Estadística total de flashcards sincronizada dinámicamente desde el manifiesto (`totalFlashcards: 1182`).
+  (6) Promoción de la suite E2E de Gate R5:
+      - `e2e/ronda2/f2-flashcards-masivas.spec.ts` promovido y validado al 100% en verde (4/4 tests pasando).
+      - Suite de fallos pendientes reducida a 2 fallos restantes: F1 (Simulador 102) y F3 (Mapa mental).
+  (7) Pipeline completo: `npm run verify` con 10/10 etapas en verde (84 tests E2E y 377 Karma + 43 Vitest).
+- Por qué: requisito de memorización técnica masiva con repetición espaciada según `docs/spec/10-ronda2-plan.md` §R5 y `docs/spec/14-simulador-flashcards-mapa.md` §14.2.
+- Archivos: content-src/flashcards-extra.yaml, scripts/generate-flashcards.ts, scripts/generate-flashcards.spec.ts, scripts/build-content.ts, src/app/core/models/curriculum.model.ts, src/app/core/models/flashcard.model.ts, src/app/core/schemas/curriculum.schema.ts, src/app/core/schemas/flashcard.schema.ts, src/app/core/schemas/index.ts, src/app/core/services/content.service.ts, src/app/core/services/flashcards.service.ts, src/app/core/services/flashcards.service.spec.ts, src/app/features/flashcards/components/flashcard-card/flashcard-card.component.html, src/app/features/flashcards/pages/flashcards-page.component.ts, src/app/features/flashcards/pages/flashcards-page.component.html, src/app/features/flashcards/pages/flashcards-page.component.css, src/app/features/flashcards/pages/flashcards-page.component.spec.ts, src/app/features/home/pages/home-page.component.ts, src/app/features/home/pages/home-page.component.spec.ts, src/app/features/study/components/practice-tab/practice-tab.component.spec.ts, e2e/ronda2/f2-flashcards-masivas.spec.ts, docs/agent/PROGRESO_R2.md, docs/agent/STATUS.md, docs/agent/CHANGELOG.md.
+- Verificación: npm run test (377 Karma + 43 Vitest en verde), npx playwright test e2e/ronda2/f2-flashcards-masivas.spec.ts (4 tests en verde), npx playwright test e2e/fase-9.spec.ts (6 tests en verde), npm run e2e:pendientes (2 fallos restantes verificados: F1 y F3), npm run verify (10 etapas completas en verde, 84 E2E pasando).
+- Pendiente / deuda: Paso R6 (Simulador de examen 102 con 60 preguntas ponderadas de temas 105 a 110).

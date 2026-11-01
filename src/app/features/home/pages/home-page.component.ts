@@ -349,7 +349,7 @@ interface FaqItem {
             <div class="tool-card-content">
               <div class="flex items-center justify-between mb-3">
                 <h3 class="text-base font-semibold">Flashcards (Leitner)</h3>
-                <app-badge variant="success">Repaso espaciado</app-badge>
+                <app-badge variant="success">{{ totalFlashcards() }} tarjetas</app-badge>
               </div>
               <p class="text-xs text-[var(--text-muted)] mb-4">
                 Memorización activa con algoritmo de 5 cajas para afianzar comandos y opciones de examen.
@@ -1064,6 +1064,11 @@ export class HomePageComponent implements OnInit {
   readonly totalTerms = computed(() => {
     const m = this.manifest();
     return m ? m.stats.totalTerms : 0;
+  });
+
+  readonly totalFlashcards = computed(() => {
+    const m = this.manifest();
+    return m ? (m.stats.totalFlashcards ?? 0) : 0;
   });
 
   async ngOnInit(): Promise<void> {

@@ -7,4 +7,5 @@ export * from './question.schema';
 export * from './command.schema';
 export * from './glossary.schema';
 export * from './errata.schema';
+export * from './flashcard.schema';
 

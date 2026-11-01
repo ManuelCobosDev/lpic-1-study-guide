@@ -48,6 +48,7 @@ export interface CurriculumStats {
   totalQuestionsPlaceholder: number;
   totalCommands: number;
   totalTerms: number;
+  totalFlashcards?: number;
 }
 
 export interface CurriculumManifest {
