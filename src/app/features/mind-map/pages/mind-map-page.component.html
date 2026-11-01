@@ -26,6 +26,7 @@
           [value]="searchQuery()"
           (input)="onSearchInput($event)"
           aria-label="Buscar nodo en el mapa mental"
+          data-testid="search-nodes"
         />
         @if (searchResults().length > 0) {
           <div class="search-dropdown" role="listbox" aria-label="Resultados de búsqueda">
@@ -56,6 +57,23 @@
       >
         Solo pendientes
       </button>
+
+      <!-- Interruptor mostrar comandos y términos -->
+      <button
+        type="button"
+        class="filter-toggle"
+        [class.active]="showCommandsTerms()"
+        [attr.aria-pressed]="showCommandsTerms()"
+        (click)="toggleCommandsTerms()"
+        data-testid="toggle-commands-terms"
+      >
+        Comandos y términos
+      </button>
+
+      <!-- Contador dinámico de nodos -->
+      <span class="nodes-badge" data-testid="total-nodes-count">
+        {{ totalNodesCount() }} nodos
+      </span>
     </div>
 
     <!-- Controles de Zoom -->
@@ -137,42 +155,51 @@
               [class.is-match]="node.isMatch"
               [class.is-dimmed]="node.isDimmed"
               [class.is-selected]="selectedNode()?.id === node.id"
-              [attr.transform]="'translate(' + node.x + ',' + (node.y - 18) + ')'"
+              [class.node-command]="node.data.type === 'command'"
+              [class.node-term]="node.data.type === 'term'"
+              [attr.transform]="'translate(' + node.x + ',' + (node.y - (node.depth === 4 ? 14 : 18)) + ')'"
               (click)="selectNode(node.data)"
               (keydown.enter)="selectNode(node.data)"
               (keydown.space)="selectNode(node.data)"
               role="button"
               tabindex="0"
+              [attr.aria-label]="(node.data.type === 'command' ? ('$ ' + node.data.name) : node.data.type === 'term' ? ('📖 ' + node.data.name) : (node.data.code ? node.data.code + ': ' : '') + node.data.name) + ' (' + node.data.status + ')'"
             >
               <title>{{ (node.data.code ? node.data.code + ': ' : '') + node.data.name }} ({{ node.data.status }})</title>
               <!-- Fondo del nodo -->
               <rect
                 x="0"
                 y="0"
-                [attr.width]="node.depth === 0 ? 280 : node.depth === 1 ? 210 : node.depth === 2 ? 220 : 250"
-                height="36"
-                rx="8"
+                [attr.width]="node.depth === 0 ? 280 : node.depth === 1 ? 210 : node.depth === 2 ? 220 : node.depth === 3 ? 240 : 190"
+                [attr.height]="node.depth === 4 ? 28 : 36"
+                rx="6"
                 class="node-rect"
               />
 
               <!-- Indicador de estado -->
               <circle
-                cx="16"
-                cy="18"
-                r="5"
+                cx="14"
+                [attr.cy]="node.depth === 4 ? 14 : 18"
+                [attr.r]="node.depth === 4 ? 4 : 5"
                 class="node-status-dot"
               />
 
               <!-- Código y título del nodo -->
               <text
-                x="30"
-                y="22"
+                x="26"
+                [attr.y]="node.depth === 4 ? 18 : 22"
                 class="node-text"
               >
-                @if (node.data.code) {
-                  <tspan class="text-code">{{ node.data.code }} · </tspan>
+                @if (node.depth === 4 && node.data.type === 'command') {
+                  <tspan class="text-cmd font-mono">$ {{ node.data.name }}</tspan>
+                } @else if (node.depth === 4 && node.data.type === 'term') {
+                  <tspan class="text-term">📖 {{ node.data.name }}</tspan>
+                } @else {
+                  @if (node.data.code) {
+                    <tspan class="text-code">{{ node.data.code }}: </tspan>
+                  }
+                  <tspan class="text-name">{{ node.data.name }}</tspan>
                 }
-                <tspan class="text-name">{{ node.data.name.length > 25 ? (node.data.name.slice(0, 24) + '…') : node.data.name }}</tspan>
               </text>
             </g>
           }
@@ -216,6 +243,10 @@
           <div class="drawer-type-badge">
             @if (node.type === 'subtopic') {
               Subtema oficial
+            } @else if (node.type === 'command') {
+              Comando del sistema
+            } @else if (node.type === 'term') {
+              Término del glosario
             } @else if (node.type === 'topic') {
               Tema de estudio
             } @else if (node.type === 'exam') {
@@ -279,10 +310,20 @@
             }
           </div>
 
+          @if (node.description) {
+            <div class="drawer-description">
+              <p>{{ node.description }}</p>
+            </div>
+          }
+
           <div class="drawer-actions">
             @if (node.type === 'subtopic') {
-              <a [routerLink]="['/leccion', node.code]" class="btn-primary" data-testid="drawer-action-btn">
-                Ir a la lección &rarr;
+              <a [routerLink]="['/estudiar', node.code]" class="btn-primary" data-testid="drawer-action-btn">
+                Ir a estudiar &rarr;
+              </a>
+            } @else if (node.type === 'command' || node.type === 'term') {
+              <a [routerLink]="['/estudiar', node.explainedIn || node.subtopicId]" class="btn-primary" data-testid="drawer-action-btn">
+                Ir a estudiar &rarr;
               </a>
             } @else if (node.type === 'topic') {
               <a [routerLink]="['/temario']" class="btn-primary" data-testid="drawer-action-btn">
@@ -319,7 +360,7 @@
                             <ul>
                               @for (sub of topic.children; track sub.id) {
                                 <li>
-                                  <a [routerLink]="['/leccion', sub.code]">
+                                  <a [routerLink]="['/estudiar', sub.code]">
                                     {{ sub.code }} - {{ sub.name }} ({{ sub.status }})
                                   </a>
                                 </li>

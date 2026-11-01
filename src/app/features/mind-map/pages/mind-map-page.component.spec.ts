@@ -61,6 +61,27 @@ describe('MindMapPageComponent', () => {
     contentService = TestBed.inject(ContentService);
     progressService = TestBed.inject(ProgressService);
     vi.spyOn(contentService, 'getManifest').mockResolvedValue(mockManifest);
+    vi.spyOn(contentService, 'getCommands').mockResolvedValue([
+      {
+        id: 'lspci',
+        name: 'lspci',
+        synopsis: 'list all PCI devices',
+        description: 'Muestra información sobre buses PCI',
+        category: 'Hardware',
+        subtopicIds: ['101.1'],
+        example: 'lspci -v',
+        flags: []
+      }
+    ]);
+    vi.spyOn(contentService, 'getGlossary').mockResolvedValue([
+      {
+        id: 'bios',
+        term: 'BIOS',
+        definition: 'Basic Input/Output System',
+        related: [],
+        subtopicIds: ['101.1']
+      }
+    ]);
 
     fixture = TestBed.createComponent(MindMapPageComponent);
     component = fixture.componentInstance;
@@ -140,9 +161,48 @@ describe('MindMapPageComponent', () => {
       component.selectNode(subNode.data);
       expect(component.selectedNode()).not.toBeNull();
 
-      component.onEscape();
+      component.handleKeyboard(new KeyboardEvent('keydown', { key: 'Escape' }));
       expect(component.selectedNode()).toBeNull();
     }
+  });
+
+  it('debe alternar la visualización de comandos y términos al pulsar toggleCommandsTerms', () => {
+    expect(component.totalNodesCount()).toBe(9);
+    expect(component.showCommandsTerms()).toBe(false);
+
+    component.toggleCommandsTerms();
+    fixture.detectChanges();
+
+    expect(component.showCommandsTerms()).toBe(true);
+    // 9 nodos base + 1 comando (lspci) + 1 término (BIOS) = 11 nodos
+    expect(component.totalNodesCount()).toBe(11);
+
+    const cmdNode = component.layoutTree().nodes.find((n) => n.data.type === 'command');
+    expect(cmdNode).toBeDefined();
+    expect(cmdNode?.data.name).toBe('lspci');
+
+    const termNode = component.layoutTree().nodes.find((n) => n.data.type === 'term');
+    expect(termNode).toBeDefined();
+    expect(termNode?.data.name).toBe('BIOS');
+
+    component.toggleCommandsTerms();
+    fixture.detectChanges();
+    expect(component.totalNodesCount()).toBe(9);
+  });
+
+  it('debe responder a los métodos de zoom interactivo', () => {
+    const initialK = component.currentTransform().k;
+
+    component.zoomIn();
+    const zoomedInK = component.currentTransform().k;
+    expect(zoomedInK).toBeGreaterThan(initialK);
+
+    component.zoomOut();
+    const zoomedOutK = component.currentTransform().k;
+    expect(zoomedOutK).toBeLessThan(zoomedInK);
+
+    component.resetZoom();
+    expect(component.currentTransform().k).toBe(1);
   });
 });
 

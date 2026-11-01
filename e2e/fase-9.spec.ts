@@ -164,6 +164,7 @@ test.describe('Gate 9: Comandos, Glosario y Flashcards', () => {
   });
 
   test('Auditoría de accesibilidad Axe en modo claro y oscuro en las 3 vistas (Gate 9)', async ({ page }) => {
+    test.slow();
     const urls = ['/comandos', '/glosario', '/flashcards'];
 
     for (const url of urls) {

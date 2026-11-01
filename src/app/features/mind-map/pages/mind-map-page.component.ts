@@ -1,4 +1,5 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   ElementRef,
@@ -17,9 +18,11 @@ import { zoom, zoomIdentity, ZoomBehavior, ZoomTransform } from 'd3-zoom';
 import { ContentService } from '../../../core/services/content.service';
 import { ProgressService } from '../../../core/services/progress.service';
 import { CurriculumManifest, Topic, Subtopic } from '../../../core/models/curriculum.model';
+import { Command } from '../../../core/models/command.model';
+import { GlossaryTerm } from '../../../core/models/glossary.model';
 
 export type NodeStatus = 'completed' | 'in_progress' | 'pending';
-export type NodeType = 'root' | 'exam' | 'topic' | 'subtopic';
+export type NodeType = 'root' | 'exam' | 'topic' | 'subtopic' | 'command' | 'term';
 
 export interface MindMapNodeData {
   id: string;
@@ -28,6 +31,9 @@ export interface MindMapNodeData {
   code?: string;
   examId?: string;
   topicId?: string;
+  subtopicId?: string;
+  explainedIn?: string;
+  description?: string;
   weight?: number;
   estimatedMinutes?: number;
   status: NodeStatus;
@@ -62,17 +68,20 @@ export interface RenderLink {
   styleUrls: ['./mind-map-page.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class MindMapPageComponent implements OnInit {
+export class MindMapPageComponent implements OnInit, AfterViewInit {
   private readonly contentService = inject(ContentService);
   private readonly progressService = inject(ProgressService);
 
   @ViewChild('svgContainer', { static: false }) svgContainerRef?: ElementRef<SVGSVGElement>;
 
   readonly manifest = signal<CurriculumManifest | null>(null);
+  readonly commands = signal<Command[]>([]);
+  readonly glossary = signal<GlossaryTerm[]>([]);
   readonly userProgress = this.progressService.progress;
 
   readonly searchQuery = signal<string>('');
   readonly onlyPending = signal<boolean>(false);
+  readonly showCommandsTerms = signal<boolean>(false);
   readonly selectedNode = signal<MindMapNodeData | null>(null);
 
   // Zoom y Pan
@@ -84,8 +93,36 @@ export class MindMapPageComponent implements OnInit {
   readonly canvasHeight = 2200;
 
   async ngOnInit(): Promise<void> {
-    const m = await this.contentService.getManifest();
-    this.manifest.set(m);
+    try {
+      const [m, cmds, terms] = await Promise.all([
+        this.contentService.getManifest(),
+        this.contentService.getCommands(),
+        this.contentService.getGlossary()
+      ]);
+      this.manifest.set(m);
+      this.commands.set(cmds);
+      this.glossary.set(terms);
+
+      // Si zoomBehavior ya fue inicializado, centrar el árbol
+      setTimeout(() => {
+        if (this.zoomBehavior && this.layoutTree().nodes.length > 0) {
+          this.fitToScreen();
+        }
+      }, 50);
+    } catch {
+      // Ignorar errores de carga
+    }
+  }
+
+  ngAfterViewInit(): void {
+    this.initZoom();
+  }
+
+  toggleCommandsTerms(): void {
+    this.showCommandsTerms.update((v) => !v);
+    setTimeout(() => {
+      this.fitToScreen();
+    }, 50);
   }
 
   // --- CONSTRUCCIÓN DEL ÁRBOL JERÁRQUICO ---
@@ -97,6 +134,9 @@ export class MindMapPageComponent implements OnInit {
     const completedMap = progress.completedSubtopics;
     const viewedSlidesMap = progress.viewedSlides;
     const completedLabsMap = progress.completedLabs;
+    const withDetails = this.showCommandsTerms();
+    const allCmds = this.commands();
+    const allTerms = this.glossary();
 
     const getSubtopicStatus = (s: Subtopic): NodeStatus => {
       if (completedMap[s.id]) return 'completed';
@@ -122,17 +162,55 @@ export class MindMapPageComponent implements OnInit {
       const topicNodes: MindMapNodeData[] = examTopics.map((t: Topic) => {
         const topicSubs = m.subtopics.filter((s: Subtopic) => s.topicId === t.id);
 
-        const subNodes: MindMapNodeData[] = topicSubs.map((s: Subtopic) => ({
-          id: s.id,
-          name: s.title,
-          type: 'subtopic',
-          code: s.id,
-          topicId: t.id,
-          examId: ex.id,
-          weight: s.weight,
-          estimatedMinutes: s.estimatedMinutes,
-          status: getSubtopicStatus(s)
-        }));
+        const subNodes: MindMapNodeData[] = topicSubs.map((s: Subtopic) => {
+          const detailChildren: MindMapNodeData[] = [];
+          if (withDetails) {
+            const subCmds = allCmds.filter((c) => c.subtopicIds?.includes(s.id));
+            for (const c of subCmds) {
+              detailChildren.push({
+                id: `cmd-${s.id}-${c.id}`,
+                name: c.name,
+                type: 'command',
+                code: c.name,
+                subtopicId: s.id,
+                topicId: t.id,
+                examId: ex.id,
+                explainedIn: (c.explainedIn && c.explainedIn[0]) || s.id,
+                description: c.synopsis || c.description,
+                status: getSubtopicStatus(s)
+              });
+            }
+
+            const subTerms = allTerms.filter((term) => term.subtopicIds?.includes(s.id));
+            for (const term of subTerms) {
+              detailChildren.push({
+                id: `term-${s.id}-${term.id}`,
+                name: term.term,
+                type: 'term',
+                code: term.term,
+                subtopicId: s.id,
+                topicId: t.id,
+                examId: ex.id,
+                explainedIn: (term.explainedIn && term.explainedIn[0]) || s.id,
+                description: term.definition,
+                status: getSubtopicStatus(s)
+              });
+            }
+          }
+
+          return {
+            id: s.id,
+            name: s.title,
+            type: 'subtopic',
+            code: s.id,
+            topicId: t.id,
+            examId: ex.id,
+            weight: s.weight,
+            estimatedMinutes: s.estimatedMinutes,
+            status: getSubtopicStatus(s),
+            children: detailChildren.length > 0 ? detailChildren : undefined
+          };
+        });
 
         return {
           id: `topic-${t.id}`,
@@ -177,7 +255,8 @@ export class MindMapPageComponent implements OnInit {
 
     // Disposición horizontal: nodeSize([distanciaVertical, distanciaHorizontal])
     const rootNode = hierarchy<MindMapNodeData>(rootData);
-    const treeLayout = tree<MindMapNodeData>().nodeSize([48, 320]);
+    const withDetails = this.showCommandsTerms();
+    const treeLayout = tree<MindMapNodeData>().nodeSize(withDetails ? [36, 260] : [48, 300]);
     const layoutRoot = treeLayout(rootNode) as HierarchyPointNode<MindMapNodeData>;
 
     const query = this.searchQuery().trim().toLowerCase();
@@ -246,6 +325,10 @@ export class MindMapPageComponent implements OnInit {
     return { nodes: renderedNodes, links: renderedLinks };
   });
 
+  readonly totalNodesCount = computed<number>(() => {
+    return this.layoutTree().nodes.length;
+  });
+
   // --- RESULTADOS DE BÚSQUEDA ---
   readonly searchResults = computed<MindMapNodeData[]>(() => {
     const q = this.searchQuery().trim().toLowerCase();
@@ -277,17 +360,25 @@ export class MindMapPageComponent implements OnInit {
   initZoom(): void {
     if (!this.svgContainerRef) return;
     const svgEl = this.svgContainerRef.nativeElement;
+    const width = svgEl.clientWidth || 900;
+    const height = svgEl.clientHeight || 650;
 
     this.zoomBehavior = zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.15, 2.5])
+      .extent([
+        [0, 0],
+        [width, height]
+      ])
+      .scaleExtent([0.1, 3.0])
       .on('zoom', (event) => {
         this.currentTransform.set(event.transform);
       });
 
     select(svgEl).call(this.zoomBehavior);
 
-    // Ajuste inicial
-    this.fitToScreen();
+    // Ajuste inicial si hay nodos
+    if (this.layoutTree().nodes.length > 0) {
+      this.fitToScreen();
+    }
   }
 
   zoomIn(): void {
@@ -343,21 +434,26 @@ export class MindMapPageComponent implements OnInit {
   }
 
   focusNode(nodeData: MindMapNodeData): void {
+    if ((nodeData.type === 'command' || nodeData.type === 'term') && !this.showCommandsTerms()) {
+      this.showCommandsTerms.set(true);
+    }
     this.selectedNode.set(nodeData);
 
-    const node = this.layoutTree().nodes.find((n) => n.id === nodeData.id);
-    if (!node || !this.svgContainerRef || !this.zoomBehavior) return;
+    setTimeout(() => {
+      const node = this.layoutTree().nodes.find((n) => n.id === nodeData.id);
+      if (!node || !this.svgContainerRef || !this.zoomBehavior) return;
 
-    const svgEl = this.svgContainerRef.nativeElement;
-    const width = svgEl.clientWidth || 900;
-    const height = svgEl.clientHeight || 650;
+      const svgEl = this.svgContainerRef.nativeElement;
+      const width = svgEl.clientWidth || 900;
+      const height = svgEl.clientHeight || 650;
 
-    const targetScale = 1.0;
-    const tx = width / 2 - node.x * targetScale;
-    const ty = height / 2 - node.y * targetScale;
+      const targetScale = 1.0;
+      const tx = width / 2 - node.x * targetScale;
+      const ty = height / 2 - node.y * targetScale;
 
-    select(svgEl)
-      .call(this.zoomBehavior.transform, zoomIdentity.translate(tx, ty).scale(targetScale));
+      select(svgEl)
+        .call(this.zoomBehavior.transform, zoomIdentity.translate(tx, ty).scale(targetScale));
+    }, 50);
   }
 
   selectNode(nodeData: MindMapNodeData): void {
@@ -377,10 +473,27 @@ export class MindMapPageComponent implements OnInit {
     this.onlyPending.update((v) => !v);
   }
 
-  @HostListener('window:keydown.escape')
-  onEscape(): void {
-    if (this.selectedNode()) {
-      this.closeDrawer();
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboard(event: KeyboardEvent): void {
+    const target = event.target as HTMLElement;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+      return;
+    }
+
+    if (event.key === '+' || event.key === '=') {
+      event.preventDefault();
+      this.zoomIn();
+    } else if (event.key === '-' || event.key === '_') {
+      event.preventDefault();
+      this.zoomOut();
+    } else if (event.key === '0') {
+      event.preventDefault();
+      this.fitToScreen();
+    } else if (event.key === 'Escape') {
+      if (this.selectedNode()) {
+        event.preventDefault();
+        this.closeDrawer();
+      }
     }
   }
 }
