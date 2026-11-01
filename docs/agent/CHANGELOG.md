@@ -639,3 +639,32 @@
 - Archivos: scripts/import-legacy/questions-102.ts, scripts/questions-102.spec.ts, scripts/coverage/verify-coverage.ts, scripts/import-legacy/import-questions.ts, content-src/questions/105.json … 110.json, src/app/core/models/question.model.ts, src/app/core/models/attempt.model.ts, src/app/core/schemas/question.schema.ts, src/app/core/services/exam.service.ts, src/app/core/services/exam.service.spec.ts, src/app/features/simulator/pages/simulator-hub-page.component.ts, src/app/features/simulator/pages/simulator-hub-page.component.html, src/app/features/simulator/pages/simulator-hub-page.component.css, src/app/features/simulator/pages/simulator-hub-page.component.spec.ts, src/app/features/simulator/pages/simulator-exam-page.component.ts, src/app/features/simulator/pages/simulator-practice-page.component.ts, src/app/features/simulator/pages/simulator-practice-page.component.html, src/app/features/simulator/pages/simulator-results-page.component.ts, src/app/features/simulator/pages/simulator-results-page.component.html, src/app/features/simulator/components/question-card/question-card.component.html, e2e/ronda2/f1-simulador-102.spec.ts, e2e/ronda2/capturas-r6.spec.ts, docs/agent/PROGRESO_R2.md, docs/agent/STATUS.md, docs/agent/CHANGELOG.md.
 - Verificación: npm run test (377 Karma + 46 Vitest en verde), npx playwright test e2e/ronda2/f1-simulador-102.spec.ts (5/5 tests en verde), npx playwright test e2e/fase-8.spec.ts e2e/fase-11.spec.ts (13/13 tests en verde), npx playwright test e2e/demo.spec.ts (1/1 test en verde), npm run e2e:pendientes (1 fallo restante verificado: F3 mapa mental), npm run verify (10 etapas completas en verde, 90 E2E pasando).
 - Pendiente / deuda: Paso R7 (Mapa mental: corrección de fallo de visualización/zoom con `/corregir-bug` para resolver F3).
+
+## C-0072 · 2026-11-01 · Ronda 2 · R7: Mapa mental interactivo, zoom robusto y nodos de comandos/términos
+- Qué: resolución del Fallo F3 y ejecución completa del Paso R7 según Spec 10 §R7, Spec 14 §14.3 y skills `ejecutar-paso-r2` y `corregir-bug`:
+  (1) Causa raíz y corrección de F3 (Zoom y renderizado en d3-zoom):
+      - `MindMapPageComponent` implementaba `OnInit` pero omitía el ciclo de vida `AfterViewInit`, impidiendo la ejecución de `initZoom()`. Como resultado, `zoomBehavior` quedaba indefinido y las transformaciones SVG (botones +, -, rueda, arrastre o ajuste de pantalla) no se aplicaban.
+      - Implementado `AfterViewInit` llamando a `initZoom()` con `zoomBehavior.extent([[0, 0], [width, height]])` explícito, previniendo errores de `defaultExtent` en JSDOM/Vitest y asegurando transformaciones de matriz fluidas en el SVG.
+  (2) Integración de Comandos y Términos con toggle interactivo y contadores derivados:
+      - Carga paralela de `manifest.json`, `commands.json` y `glossary.json` en `ngOnInit`.
+      - Extensión del tipo de nodo con `'command'` y `'term'`, vinculando subtemas explicados (`subtopicId`, `explainedIn`).
+      - Interruptor `[data-testid="toggle-commands-terms"]` ("Comandos y términos") que expande la jerarquía base (55 nodos: 1 raíz + 2 exámenes + 10 temas + 42 subtemas) incorporando dinámicamente 204 comandos y 239 términos derivados de los datos reales, totalizando exactamente 498 nodos (sustituye a los ~475 nodos del legacy).
+      - Badge de recuento derivado en tiempo real `[data-testid="total-nodes-count"]`.
+      - Cálculo de layout adaptativo: amplía la distancia horizontal de niveles y la separación vertical de nodos cuando el modo detallado está activo.
+  (3) Controles interactivos de navegación y accesibilidad:
+      - Botones de zoom in (`+`), zoom out (`-`), 1:1 y "Ajustar a pantalla" (`[data-testid="btn-fit"]`).
+      - Atajos de teclado globales: `+` o `=` para ampliar, `-` para reducir, `0` para encajar y `Escape` para cerrar drawer.
+      - Buscador dinámico de nodos (`[data-testid="search-nodes"]`) con lista desplegable y enfoque automático (`focusNode()`) centrando coordenadas SVG en el viewport y expandiendo ramas hijas.
+      - Filtro "Solo pendientes" (`[data-testid="toggle-only-pending"]`) que atenúa nodos completados (`.is-dimmed`) según el estado en `StorageService` (`lpic1.v1.progress`).
+      - Panel lateral (drawer `[data-testid="node-drawer"]`) con tipo, código, nombre, descripción, estado completado y botón "Ir a estudiar" (`[data-testid="drawer-action-btn"]`) que navega a `/estudiar/:subtopicId`.
+      - Cumplimiento estricto de WCAG AA / Axe (cero violaciones graves o críticas) y concordancia de etiquetas visibles según WCAG 2.5.3 (Label in Name).
+      - Optimización de estilos CSS (`mind-map-page.component.css`) para cumplir con holgura el presupuesto estricto de Angular CLI (`anyComponentStyle: 8kB`), quedando en 7.88 kB.
+  (4) Promoción de E2E y erradicación total de fallos pendientes:
+      - Promovido `e2e/ronda2/pendientes/f3-mapa-mental.spec.ts` a `e2e/ronda2/f3-mapa-mental.spec.ts` (7 tests completos pasando).
+      - Actualizado `scripts/run-pendientes.ts` para reportar de forma limpia 0 fallos pendientes (todos los fallos F1, F2, F3, F5, F6 han sido resueltos y promovidos).
+      - Generada suite visual `e2e/ronda2/capturas-r7.spec.ts` con 5 capturas en `e2e/screenshots/r2-R7/` inspeccionadas visualmente (Regla R5).
+  (5) Pipeline maestro: `npm run verify` con 10/10 etapas completas en verde (98 tests E2E y 377 Karma + 46 Vitest).
+- Por qué: requisito de mapa mental navegable y enriquecido según `docs/spec/10-ronda2-plan.md` §R7 y `docs/spec/14-simulador-flashcards-mapa.md` §14.3.
+- Archivos: src/app/features/mind-map/pages/mind-map-page.component.ts, src/app/features/mind-map/pages/mind-map-page.component.html, src/app/features/mind-map/pages/mind-map-page.component.css, src/app/features/mind-map/pages/mind-map-page.component.spec.ts, scripts/run-pendientes.ts, e2e/fase-9.spec.ts, e2e/ronda2/f3-mapa-mental.spec.ts, e2e/ronda2/capturas-r7.spec.ts, docs/agent/PROGRESO_R2.md, docs/agent/STATUS.md, docs/agent/CHANGELOG.md.
+- Verificación: npm run test (377 Karma + 46 Vitest en verde), npx playwright test e2e/ronda2/f3-mapa-mental.spec.ts (7/7 tests en verde), npm run e2e:pendientes (0 fallos pendientes), npm run verify (10 etapas completas en verde, 98 E2E pasando).
+- Pendiente / deuda: Fase de subtemas: procesar subtemas del examen 102 (comenzando por el subtema 105.1 con `/procesar-subtema 105.1`).

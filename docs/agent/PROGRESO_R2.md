@@ -17,7 +17,7 @@ Reglas: un paso o subtema solo pasa a "hecho" con su gate en PASS (spec 10). Los
 | R4 | Pestaña Practica lo aprendido | hecho | 2026-11-01 | d404209 | PracticeTabComponent (Bloques A, B, C), fin de slides CTA, insignias y áreas clave en temario, E2E f6 promovido a verde (80 E2E) |
 | R5 | Flashcards masivas | hecho | 2026-11-01 | 3d9e998 | 1 182 flashcards, 684 flags (100%), 0 subtemas < 10 cards, explorador en tiempo real, E2E f2 promovido a verde (84 E2E) |
 | R6 | Simulador examen 102 | hecho | 2026-11-01 | C-0071 | 120 preguntas importadas en 105-110 (19/19 subtemas cubiertos), selector examen 101/102, simulacro 60 preguntas / 90 min, E2E f1 promovido a verde (90 E2E) |
-| R7 | Mapa mental | pendiente | | | |
+| R7 | Mapa mental | hecho | 2026-11-01 | C-0072 | initZoom en AfterViewInit (F3 resuelto), zoom SVG + teclado, toggle 498 nodos comandos/términos, drawer con navegación a /estudiar, 0 fallos pendientes, E2E f3 promovido (98 E2E) |
 
 ## Subtemas del examen 102 (6 estados: 1 Extraído · 2 Trazado · 3 Completado · 4 Auto-verificado · 5 Auditado · 6 Validado)
 | Subtema | 1 | 2 | 3 | 4 | 5 | 6 | Notas |
