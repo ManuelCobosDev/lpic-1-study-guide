@@ -6,12 +6,12 @@
 
 ## Estado
 - **Fase actual**: Ronda 2 (Fidelidad y Cobertura Oficial Examen 102).
-- **Último hito superado**: Limpieza integral y reversible del repositorio (`/limpiar-repo`) en rama `chore/limpieza-repo`.
-- **Trabajo en curso**: Ninguno. Limpieza auditada y verificada al 100% en verde.
+- **Último hito superado**: Limpieza integral y definitiva del repositorio (`/limpiar-repo`) en rama `chore/limpieza-repo` (cuarentena `_to_delete` purgada).
+- **Trabajo en curso**: Ninguno. Repositorio limpio con solo lo esencial.
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-- **Decisión del usuario**: Decidir si purgar `_to_delete/` y fusionar la rama `chore/limpieza-repo` en `development`.
+- **Fusión en `development`**: Fusionar la rama limpia `chore/limpieza-repo` en `development` cuando el usuario lo autorice.
 - **Auditoría independiente de 105.1**: Abrir una conversación nueva y ejecutar `/auditar-subtema 105.1`. (No avanzar a 105.2 ni validar sin `VALIDADO 105.1` explícito del usuario).
 
 ## Ronda 2 · Pasos de Herramientas (R0 - R7)
@@ -27,7 +27,7 @@
 | R7 | Mapa mental interactivo y robusto | completado (Gate R7 OK) |
 
 ## Limpieza del Repositorio (C-0074)
-- **Archivos útiles**: 603 rastreados (+25 en `_to_delete/` preservados en cuarentena reversible).
+- **Archivos rastreados en Git**: 602 (26 eliminados entre código muerto, duplicados y configuración redundante).
 - **Espacio ahorrado**: -58.4 MB en `node_modules` y -14 MB en artefactos locales.
 - **Dependencias**: 5 paquetes obsoletos eliminados (`@angular/cdk`, `highlight.js`, `lucide-angular`, `marked`, `@types/dompurify`), +1 directo explícito (`d3-selection`).
 - **Pipeline de verificación**: 10/10 etapas en verde (389 Karma, 46 Vitest, 98 E2E).

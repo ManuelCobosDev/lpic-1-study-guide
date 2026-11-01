@@ -704,14 +704,15 @@
 - Verificación: npm run verify:coverage -- 105.1 (código 0, 100% cobertura), npm run report:coverage -- 105.1 (código 0), npm run progress:r2 (código 0), npm run verify (10/10 etapas en verde, 98 E2E, 377 Karma, 46 Vitest).
 - Pendiente / deuda: Auditoría independiente de 105.1 (`/auditar-subtema 105.1` en conversación nueva) y validación humana del usuario (`VALIDADO 105.1`).
 
-## C-0074 · 2026-11-01 · Mantenimiento · Limpieza integral y reversible del repositorio (/limpiar-repo)
-- Qué: ejecución reversible de la auditoría y limpieza del repositorio en la rama `chore/limpieza-repo` tras aprobación explícita de todos los lotes propuestos:
-  (1) Lote 1 (Restos y duplicados · Cat. B): movidos 20 ficheros duplicados de `round_2/` a `_to_delete/categoria-b/round_2/`, borrada carpeta vacía no rastreada `lpic1-limpieza-pack/`, y unificadas las 6 misiones de `content-src/labs/103.4.yaml` en `content-src/labs/103.4.json` (estandarizando los 42 laboratorios a formato `.json` homogéneo). `103.4.yaml` preservado en `_to_delete/categoria-b/`.
-  (2) Lote 2 (Código muerto · Cat. C): movido `scripts/import-legacy/import-103-4.ts` a `_to_delete/categoria-c/`, eliminados `src/app/app.css` (0 B) y `src/app/app.html` (stub no usado), movido `src/app/shared/ui/term-link/` a `_to_delete/categoria-c/` y limpiado su re-export huérfano en `src/app/shared/ui/index.ts`.
+## C-0074 · 2026-11-01 · Mantenimiento · Limpieza integral y definitiva del repositorio (/limpiar-repo)
+- Qué: ejecución de la auditoría y limpieza definitiva del repositorio en la rama `chore/limpieza-repo` tras aprobación explícita de todos los lotes propuestos y purga final de la cuarentena temporal:
+  (1) Lote 1 (Restos y duplicados · Cat. B): eliminados definitivamente 20 ficheros duplicados de `round_2/`, borrada carpeta vacía no rastreada `lpic1-limpieza-pack/`, y unificadas las 6 misiones de `content-src/labs/103.4.yaml` en `content-src/labs/103.4.json` (estandarizando los 42 laboratorios a formato `.json` homogéneo). `103.4.yaml` eliminado.
+  (2) Lote 2 (Código muerto · Cat. C): eliminado `scripts/import-legacy/import-103-4.ts`, eliminados `src/app/app.css` (0 B) y `src/app/app.html` (stub no usado), eliminado `src/app/shared/ui/term-link/` y limpiado su re-export huérfano en `src/app/shared/ui/index.ts`. Eliminado también `.postcssrc.json` (duplicado de `postcss.config.js`).
   (3) Lote 3 (Dependencias · Cat. C): desinstaladas 5 dependencias sin uso alguno (`@angular/cdk`, `highlight.js`, `lucide-angular`, `marked`, `@types/dompurify`), reduciendo `node_modules` en 58.4 MB (de 364.2 MB a 305.7 MB). Añadida dependencia directa `d3-selection` requerida por el mapa mental.
-  (4) Lote 4 (Artefactos locales · Cat. A): purgados `dist/`, `.angular/cache/`, `test-results/` y `scripts/extract-pdf/__pycache__/` (~14 MB).
-  (5) Documentación y estructura: actualizado `docs/agent/LIMPIEZA.md` con informe cuantitativo final antes/después, añadida sección de estructura en `README.md`, y verificado que `_legacy/`, `reference/` y `docs/spec/` se mantuvieron 100% intactos.
-- Por qué: consolidar un repositorio limpio, rápido de instalar y mantener, sin código muerto ni dependencias redundantes, preservando integridad y reversibilidad total según la skill `limpiar-repo`.
-- Archivos: package.json, package-lock.json, content-src/labs/103.4.json, src/app/shared/ui/index.ts, _to_delete/**, docs/agent/LIMPIEZA.md, README.md, docs/agent/STATUS.md, docs/agent/CHANGELOG.md.
+  (4) Lote 4 (Artefactos locales · Cat. A): purgados `dist/`, `.angular/cache/`, `test-results/` y `scripts/extract-pdf/__pycache__/` (~14 MB). Añadido `/_to_delete/` a `.gitignore`.
+  (5) Eliminación definitiva de `_to_delete`: eliminados los 25 ficheros de cuarentena temporal con `git rm -r _to_delete` tras confirmación del usuario para dejar únicamente lo esencial en el repositorio.
+  (6) Documentación y estructura: actualizado `docs/agent/LIMPIEZA.md` con informe cuantitativo final antes/después (de 628 a 602 archivos en git), añadida sección de estructura en `README.md`, y verificado que `_legacy/`, `reference/` y `docs/spec/` se mantuvieron 100% intactos.
+- Por qué: consolidar un repositorio limpio, rápido de instalar y mantener, sin código muerto ni dependencias redundantes, donde solo se exponga lo esencial del proyecto según la skill `limpiar-repo`.
+- Archivos: package.json, package-lock.json, content-src/labs/103.4.json, src/app/shared/ui/index.ts, .gitignore, docs/agent/LIMPIEZA.md, README.md, docs/agent/STATUS.md, docs/agent/CHANGELOG.md.
 - Verificación: npm run verify con 10/10 etapas completas en verde (389 tests Karma, 46 tests Vitest, 98 tests E2E Playwright sin regresiones).
-- Pendiente / deuda: decisión del usuario sobre purgar `_to_delete/` y fusionar `chore/limpieza-repo` en `development`.
+- Pendiente / deuda: fusionar `chore/limpieza-repo` en `development` cuando el usuario lo indique.
