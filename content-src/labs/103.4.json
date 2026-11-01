@@ -5,59 +5,40 @@
   "estimatedMinutes": 30,
   "difficulty": "basic",
   "type": "subtopic",
+  "placeholder": false,
   "steps": [
     {
-      "id": "mision-1",
+      "id": "step-103-4-1",
       "stepNumber": 1,
-      "title": "Misión 1: Separación de Salida Estándar (stdout) y Errores (stderr)",
-      "instruction": "Ejecuta un comando que genere salida válida y un error al mismo tiempo, aislando cada canal en un archivo.",
-      "command": "mkdir -p /tmp/redir-lab && cd /tmp/redir-lab && ls -l /etc/passwd /no_existe > aciertos.txt 2> fallos.txt",
-      "expectedOutput": "aciertos.txt contiene la línea de /etc/passwd; fallos.txt contiene el mensaje de error de ls",
-      "examAlert": "El descriptor 1 representa stdout (1>); el descriptor 2 representa stderr (2>)."
+      "title": "Misión 1 — Separación de Salida Estándar (stdout) y Errores (stderr)",
+      "instruction": "Cuando ejecutas comandos que combinan éxito y fallos, debes saber aislar los errores en un archivo de log y los resultados en otro.",
+      "command": "# Crear directorio de pruebas\r\nmkdir -p /tmp/redir-lab && cd /tmp/redir-lab\r\n\r\n# Ejecutar un comando que genera salida válida y un error simultáneamente\r\n# Redirigir stdout (1>) a aciertos.txt y stderr (2>) a fallos.txt\r\nls -l /etc/passwd /ruta_que_no_existe > aciertos.txt 2> fallos.txt\r\n\r\n# Comprobar el contenido de ambos archivos\r\ncat aciertos.txt\r\ncat fallos.txt",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
-      "id": "mision-2",
+      "id": "step-103-4-2",
       "stepNumber": 2,
-      "title": "Misión 2: Unificación de Flujos (2>&1) y Descarte en /dev/null",
-      "instruction": "Unifica todos los mensajes (éxito y errores) en un único archivo de registro, y prueba a descartar errores.",
-      "command": "ls -l /etc/passwd /no_existe > salida_completa.txt 2>&1 && ls /no_existe 2> /dev/null",
-      "expectedOutput": "salida_completa.txt contiene tanto el acierto como el error sin mostrar nada por pantalla",
-      "hint": "/dev/null actúa como el agujero negro del sistema de archivos; descarta datos sin ocupar espacio."
+      "title": "Misión 2 — Unificación de Flujos (2>&1 y &>) y Descarte en /dev/null",
+      "instruction": "Aprenderás a volcar todos los mensajes juntos en un único archivo o a silenciar completamente errores descartándolos en el agujero negro /dev/null.",
+      "command": "# Forma tradicional LPIC-1 para unificar stderr en stdout: > archivo 2>&1\r\nls -l /etc/passwd /no_existe > salida_completa.txt 2>&1\r\n\r\n# Forma moderna abreviada: &>\r\nls -l /etc/passwd /no_existe &> salida_moderna.txt\r\n\r\n# Descartar completamente los errores enviándolos a /dev/null\r\nfind /etc -name \"*.conf\" 2> /dev/null | head -n 8",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
-      "id": "mision-3",
+      "id": "step-103-4-3",
       "stepNumber": 3,
-      "title": "Misión 3: Concatenación con >> y Redirección de Entrada con <",
-      "instruction": "Añade líneas al final de un archivo sin destruirlo y utiliza el contenido como entrada estándar de wc.",
-      "command": "echo \"Línea 1\" > datos.txt && echo \"Línea 2\" >> datos.txt && wc -l < datos.txt",
-      "expectedOutput": "2"
+      "title": "Misión 3 — Bifurcación de Flujos con tee y Entrada con Here-Documents (<<)",
+      "instruction": "El comando tee actúa como una bifurcación en 'T': muestra los datos por pantalla y los guarda a la vez en disco.",
+      "command": "# Mostrar en terminal y guardar a la vez en informe.log con tee\r\necho \"Registro de auditoría del sistema\" | tee informe.log\r\n\r\n# Añadir más líneas sin sobrescribir con el flag -a (--append)\r\necho \"Fecha actual: $(date)\" | tee -a informe.log\r\n\r\n# Usar un Here-Document (<< EOF) para pasar texto multilínea a un comando\r\ncat << 'EOF' > archivo_multilinea.txt\r\nPrimera línea del examen\r\nSegunda línea de configuración\r\nTercera línea de cierre\r\nEOF\r\ncat archivo_multilinea.txt",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
-      "id": "mision-4",
+      "id": "step-103-4-4",
       "stepNumber": 4,
-      "title": "Misión 4: Entrada Masiva con Here Documents (<<) y Here Strings (<<<)",
-      "instruction": "Envía texto multilínea directamente al comando cat sin necesidad de crear archivos previos.",
-      "command": "cat << \"EOF\" > script.sh\n#!/bin/bash\necho \"Script generado con HereDoc\"\nEOF\nchmod +x script.sh && ./script.sh",
-      "expectedOutput": "Script generado con HereDoc"
-    },
-    {
-      "id": "mision-5",
-      "stepNumber": 5,
-      "title": "Misión 5: Creación de Tuberías con | y Bifurcación con tee",
-      "instruction": "Conecta dos comandos con una tubería y usa tee para ver la salida por pantalla mientras se guarda en disco.",
-      "command": "ls /etc | grep conf | tee lista_conf.txt | wc -l",
-      "expectedOutput": "Muestra los ficheros filtrados en pantalla y devuelve el número total de coincidencias"
-    },
-    {
-      "id": "mision-6",
-      "stepNumber": 6,
-      "title": "Misión 6: Procesamiento Masivo con xargs y Delimitación Nula (-print0 / -0)",
-      "instruction": "Usa find junto con xargs para procesar archivos de manera segura incluso con nombres que contienen espacios.",
-      "command": "find /tmp/redir-lab -name \"*.txt\" -print0 | xargs -0 ls -lh",
-      "expectedOutput": "Listado detallado de cada archivo .txt procesado de forma atómica",
-      "examAlert": "find -print0 combinado con xargs -0 garantiza que los espacios no rompan los argumentos del comando."
+      "title": "Misión 4 — Construcción de Argumentos Dinámicos con xargs",
+      "instruction": "Cuando un comando espera argumentos en su línea de órdenes en vez de por la entrada estándar, xargs realiza el puente.",
+      "command": "# Crear varios archivos de prueba temporales\r\ntouch f1.tmp f2.tmp f3.tmp\r\n\r\n# Usar xargs para pasar la lista de archivos como argumentos al comando rm\r\nls *.tmp | xargs rm -v\r\n\r\n# Limpiar directorio de laboratorio\r\ncd ~ && rm -rf /tmp/redir-lab",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
+      "examAlert": "Ver pista desplegable si te atascas</summary>"
     }
-  ],
-  "solutionNotes": "Práctica 103.4 completada satisfactoriamente con verificación de los 6 pasos guiados.",
-  "placeholder": false
+  ]
 }
