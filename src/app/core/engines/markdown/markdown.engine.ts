@@ -17,8 +17,8 @@ export function sanitizeHtml(rawHtml: string): string {
         'div', 'hr', 'br', 'img'
       ],
       ALLOWED_ATTR: [
-        'href', 'target', 'rel', 'class', 'id', 'data-cmd', 'data-term',
-        'src', 'alt', 'title', 'aria-label', 'role'
+        'href', 'target', 'rel', 'class', 'id', 'data-cmd', 'data-term', 'data-term-ref',
+        'tabindex', 'src', 'alt', 'title', 'aria-label', 'role'
       ]
     });
   }
@@ -44,12 +44,12 @@ export function parseInlineMarkdown(text: string): string {
 
   // 1. Enlaces estilo Wikipedia a comandos: [texto](cmd:tee)
   let html = text.replace(/\[([^\]]+)\]\(cmd:([a-zA-Z0-9_.-]+)\)/g, (_match, label, cmd) => {
-    return `<a href="/comandos" data-cmd="${cmd}" class="wiki-ref wiki-cmd-link inline-flex items-center gap-1 font-mono font-semibold text-[var(--primary-text)] hover:underline cursor-pointer" title="Ver comando: ${cmd}"><span aria-hidden="true">💻</span>${label}</a>`;
+    return `<a href="/comandos" data-term-ref="cmd:${cmd}" data-cmd="${cmd}" class="term-link wiki-ref wiki-cmd-link inline-flex items-center gap-1 font-mono font-semibold text-[var(--primary-text)] border-b border-dotted border-[var(--primary-text)] hover:opacity-80 cursor-pointer" title="Comando: ${cmd}" role="button" tabindex="0"><span aria-hidden="true">💻</span>${label}</a>`;
   });
 
   // 2. Enlaces estilo Wikipedia a términos del glosario: [texto](term:stdout)
   html = html.replace(/\[([^\]]+)\]\(term:([a-zA-Z0-9_.-]+)\)/g, (_match, label, term) => {
-    return `<a href="/glosario" data-term="${term}" class="wiki-ref wiki-term-link inline-flex items-center gap-1 font-semibold text-[var(--info-text)] hover:underline cursor-pointer" title="Ver definición: ${term}"><span aria-hidden="true">📖</span>${label}</a>`;
+    return `<a href="/glosario" data-term-ref="term:${term}" data-term="${term}" class="term-link wiki-ref wiki-term-link inline-flex items-center gap-1 font-semibold text-[var(--info-text)] border-b border-dotted border-[var(--info-text)] hover:opacity-80 cursor-pointer" title="Término: ${term}" role="button" tabindex="0"><span aria-hidden="true">📖</span>${label}</a>`;
   });
 
   // 3. Enlaces web normales [texto](url)

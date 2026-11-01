@@ -138,6 +138,7 @@
               <th scope="col" class="col-name">Comando</th>
               <th scope="col" class="col-category">Categoría</th>
               <th scope="col" class="col-subtopic">Subtemas</th>
+              <th scope="col" class="col-explained">Se explica en</th>
               <th scope="col" class="col-description">Descripción</th>
               <th scope="col" class="col-actions">Detalles</th>
             </tr>
@@ -170,6 +171,32 @@
                     }
                   </div>
                 </td>
+                <td class="col-explained">
+                  @if (cmd.explainedIn && cmd.explainedIn.length > 0) {
+                    <div class="flex flex-wrap gap-1">
+                      @for (loc of cmd.explainedIn.slice(0, 2); track loc) {
+                        <a
+                          [routerLink]="['/estudiar', parseSubtopic(loc)]"
+                          [queryParams]="{ slide: parseSlide(loc), q: cmd.name }"
+                          (click)="$event.stopPropagation()"
+                          class="explained-in-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[var(--primary-soft)] text-[var(--primary-text)] hover:opacity-80 transition-opacity"
+                          data-testid="explained-in"
+                          title="Ver explicación en {{ loc }}"
+                        >
+                          <span>📍 {{ loc }}</span>
+                        </a>
+                      }
+                    </div>
+                  } @else if (cmd.sinExplicacion) {
+                    <span
+                      class="explained-in-badge text-xs text-[var(--text-muted)] italic truncate block max-w-[150px]"
+                      data-testid="explained-in"
+                      [title]="cmd.sinExplicacion"
+                    >
+                      {{ cmd.sinExplicacion }}
+                    </span>
+                  }
+                </td>
                 <td class="col-description">
                   <p class="description-text">{{ cmd.description }}</p>
                 </td>
@@ -198,7 +225,7 @@
               <!-- Fila expandible con detalles completos -->
               @if (expandedCommandId() === cmd.id) {
                 <tr class="details-row">
-                  <td colspan="5" class="details-cell">
+                  <td colspan="6" class="details-cell">
                     <div class="expanded-panel">
                       <!-- Sinopsis -->
                       <div class="detail-block">

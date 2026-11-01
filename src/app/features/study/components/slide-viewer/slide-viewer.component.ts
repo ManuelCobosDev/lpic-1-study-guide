@@ -17,6 +17,7 @@ import { CommonModule } from '@angular/common';
 import { Slide } from '../../../../core/models/slide.model';
 import { BlockRendererComponent } from '../../../../shared/content-blocks/block-renderer.component';
 import { KbdComponent } from '../../../../shared/ui/kbd/kbd.component';
+import { WikiRefService } from '../../../../core/services/wiki-ref.service';
 
 @Component({
   selector: 'app-slide-viewer',
@@ -29,10 +30,18 @@ import { KbdComponent } from '../../../../shared/ui/kbd/kbd.component';
   template: `
     <div
       #viewerContainer
+      tabindex="0"
       class="slide-viewer-container relative select-none rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] overflow-hidden shadow-md flex flex-col focus:outline-hidden"
       [class.fullscreen-active]="isFullscreen()"
       [class.cursor-none]="isFullscreen() && !showControls()"
       (mousemove)="onUserActivity()"
+      (mouseover)="onMouseOver($event)"
+      (mouseout)="onMouseOut($event)"
+      (focus)="onFocusIn($event)"
+      (blur)="onFocusOut($event)"
+      (focusin)="onFocusIn($event)"
+      (focusout)="onFocusOut($event)"
+      (keydown.escape)="onEscape()"
     >
       <!-- Anuncio accesible aria-live para lectores de pantalla -->
       <div class="sr-only" aria-live="polite">
@@ -474,6 +483,52 @@ export class SlideViewerComponent implements OnInit, OnDestroy {
   private viewTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly totalSlides = computed(() => this.slides().length);
+
+  private readonly wikiRefService = inject(WikiRefService);
+
+  onMouseOver(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    const anchor = target?.closest('a.term-link, a.wiki-ref, [data-term-ref]') as HTMLElement | null;
+    if (anchor) {
+      const from = event.relatedTarget as Node | null;
+      if (from && anchor.contains(from)) {
+        return;
+      }
+      this.wikiRefService.onTargetEnter(anchor);
+    }
+  }
+
+  onMouseOut(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    const anchor = target?.closest('a.term-link, a.wiki-ref, [data-term-ref]') as HTMLElement | null;
+    if (anchor) {
+      const related = event.relatedTarget as Node | null;
+      if (related && anchor.contains(related)) {
+        return;
+      }
+      this.wikiRefService.onTargetLeave();
+    }
+  }
+
+  onFocusIn(event: FocusEvent): void {
+    const target = event.target as HTMLElement | null;
+    const anchor = target?.closest('a.term-link, a.wiki-ref, [data-term-ref]') as HTMLElement | null;
+    if (anchor) {
+      this.wikiRefService.openImmediately(anchor);
+    }
+  }
+
+  onFocusOut(event: FocusEvent): void {
+    const target = event.target as HTMLElement | null;
+    const anchor = target?.closest('a.term-link, a.wiki-ref, [data-term-ref]') as HTMLElement | null;
+    if (anchor) {
+      this.wikiRefService.onTargetLeave();
+    }
+  }
+
+  onEscape(): void {
+    this.wikiRefService.closePopover();
+  }
 
   readonly currentIndex = computed(() => {
     const num = this.currentSlideNumber();

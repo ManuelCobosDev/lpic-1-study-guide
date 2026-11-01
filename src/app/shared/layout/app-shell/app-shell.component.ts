@@ -5,6 +5,7 @@ import { BreadcrumbsComponent } from '../breadcrumbs/breadcrumbs.component';
 import { FooterComponent } from '../footer/footer.component';
 import { ContainerComponent } from '../../ui/container/container.component';
 import { SearchPaletteComponent } from '../../search-palette/search-palette.component';
+import { WikiPopoverComponent } from '../../ui/wiki-popover/wiki-popover.component';
 import { StorageService } from '../../../core/services/storage.service';
 
 @Component({
@@ -17,7 +18,8 @@ import { StorageService } from '../../../core/services/storage.service';
     BreadcrumbsComponent,
     FooterComponent,
     ContainerComponent,
-    SearchPaletteComponent
+    SearchPaletteComponent,
+    WikiPopoverComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -67,6 +69,9 @@ import { StorageService } from '../../../core/services/storage.service';
 
       <!-- Paleta modal de búsqueda global -->
       <app-search-palette />
+
+      <!-- Tarjeta flotante de enlaces tipo Wikipedia -->
+      <app-wiki-popover />
     </div>
   `
 })

@@ -120,5 +120,15 @@ export class GlossaryPageComponent implements OnInit {
   resetSearch(): void {
     this.onSearchInput('');
   }
+
+  parseSubtopic(loc: string): string {
+    const [sub] = loc.split('#');
+    return sub || '105.1';
+  }
+
+  parseSlide(loc: string): number {
+    const [, slide] = loc.split('#');
+    return slide ? parseInt(slide, 10) : 1;
+  }
 }
 

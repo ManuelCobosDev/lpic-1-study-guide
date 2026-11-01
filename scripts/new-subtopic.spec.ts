@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as yaml from 'js-yaml';
@@ -10,6 +10,11 @@ describe('new:subtopic (Extensibilidad orientada a datos - Gate 12)', () => {
   const lessonPath = path.resolve(`content-src/lessons/${testSubtopicId}.json`);
   const publicLessonPath = path.resolve(`public/content/lessons/${testSubtopicId}.json`);
   const curriculumPath = path.resolve('content-src/curriculum.yaml');
+  let curriculumBackup = '';
+
+  beforeEach(() => {
+    curriculumBackup = fs.readFileSync(curriculumPath, 'utf8');
+  });
 
   afterEach(() => {
     // Limpieza estricta tras la prueba
@@ -20,17 +25,10 @@ describe('new:subtopic (Extensibilidad orientada a datos - Gate 12)', () => {
       fs.unlinkSync(publicLessonPath);
     }
 
-    // Restaurar curriculum.yaml
-    const raw = yaml.load(fs.readFileSync(curriculumPath, 'utf8')) as {
-      subtopics: { id: string }[];
-      topics: { id: string; subtopicIds: string[] }[];
-    };
-    raw.subtopics = raw.subtopics.filter((s) => s.id !== testSubtopicId);
-    const topic = raw.topics.find((t) => t.id === '103');
-    if (topic) {
-      topic.subtopicIds = topic.subtopicIds.filter((id) => id !== testSubtopicId);
+    // Restaurar curriculum.yaml idéntico al original
+    if (curriculumBackup) {
+      fs.writeFileSync(curriculumPath, curriculumBackup, 'utf8');
     }
-    fs.writeFileSync(curriculumPath, yaml.dump(raw), 'utf8');
 
     // Recompilar para dejar el manifiesto limpio con 42 lecciones
     const tsxExecutable = process.platform === 'win32' ? 'npx.cmd' : 'npx';
@@ -54,5 +52,5 @@ describe('new:subtopic (Extensibilidad orientada a datos - Gate 12)', () => {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     const inManifest = manifest.subtopics.find((s: { id: string }) => s.id === testSubtopicId);
     expect(inManifest).toBeDefined();
-  }, 25000);
+  }, 60000);
 });

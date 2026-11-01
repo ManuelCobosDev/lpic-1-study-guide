@@ -13,7 +13,7 @@ Reglas: un paso o subtema solo pasa a "hecho" con su gate en PASS (spec 10). Los
 | R0 | Diagnóstico y línea base | hecho | 2026-11-01 | be19c8a | DIAGNOSTICO_R2.md + 5 tests en rojo |
 | R1 | Extracción completa del PDF 102 | hecho | 2026-11-01 | 535d72f | units.json (9405 un), 594 pág (100% contabilidad), 4 figuras, tests Vitest y Python en verde |
 | R2 | Herramientas de cobertura y validación | hecho | 2026-11-01 | f12ede6 | CLI cobertura (verify, report, progress, validation:register, verify:validations), 14 tests vitest OK |
-| R3 | Enlaces tipo Wikipedia | pendiente | | | |
+| R3 | Enlaces tipo Wikipedia | hecho | 2026-11-01 | C-0068 | Engine autolink (15 tests), preview card interactiva, enlaces contextuales en /comandos y /glosario, E2E f5 promovido a verde (76 E2E) |
 | R4 | Pestaña Practica lo aprendido | pendiente | | | |
 | R5 | Flashcards masivas | pendiente | | | |
 | R6 | Simulador examen 102 | pendiente | | | |

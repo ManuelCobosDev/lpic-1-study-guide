@@ -17,3 +17,5 @@ export * from './dialog/dialog.component';
 export * from './skeleton/skeleton.component';
 export * from './weight-meter/weight-meter.component';
 export * from './progress-ring/progress-ring.component';
+export * from './term-link/term-link.component';
+export * from './wiki-popover/wiki-popover.component';

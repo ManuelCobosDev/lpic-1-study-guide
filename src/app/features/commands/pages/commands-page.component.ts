@@ -84,6 +84,16 @@ export class CommandsPageComponent implements OnInit {
     return `${this.filteredCount()} de ${this.totalCommands()} comandos`;
   });
 
+  parseSubtopic(loc: string): string {
+    const [sub] = loc.split('#');
+    return sub || '105.1';
+  }
+
+  parseSlide(loc: string): number {
+    const [, slide] = loc.split('#');
+    return slide ? parseInt(slide, 10) : 1;
+  }
+
   async ngOnInit(): Promise<void> {
     // Sincronización inicial desde query parameters de la URL
     this.route.queryParamMap.subscribe((params) => {

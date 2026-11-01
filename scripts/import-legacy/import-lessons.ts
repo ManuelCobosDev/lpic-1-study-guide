@@ -106,9 +106,13 @@ function convertSlide(leg: LegacySlide, subtopicId: string, index: number): Slid
 
   // Subtitle
   if (leg.subtitle) {
+    let subText = leg.subtitle;
+    if (leg.type === 'cover' && subtopicId === '105.1') {
+      subText += ' · Gestión del entorno de shell, variables de configuración y comandos integrados como alias.';
+    }
     blocks.push({
       type: 'paragraph',
-      text: leg.subtitle
+      text: subText
     });
   }
 

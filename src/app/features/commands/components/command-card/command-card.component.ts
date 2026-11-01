@@ -26,4 +26,14 @@ export class CommandCardComponent {
   onCopy(text: string, id: string): void {
     this.copyCommand.emit({ text, id });
   }
+
+  parseSubtopic(loc: string): string {
+    const [sub] = loc.split('#');
+    return sub || '105.1';
+  }
+
+  parseSlide(loc: string): number {
+    const [, slide] = loc.split('#');
+    return slide ? parseInt(slide, 10) : 1;
+  }
 }

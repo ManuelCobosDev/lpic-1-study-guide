@@ -24,6 +24,13 @@ import {
   Subtopic,
   Topic
 } from '../src/app/core/models/index';
+import {
+  AutolinkEntry,
+  buildMatchCandidates,
+  autolinkSlide,
+  calculateExplainedInForEntry,
+  validateExplainedIn
+} from '../src/app/core/engines/autolink/autolink.engine';
 
 export interface BuildContentOptions {
   validateOnly?: boolean;
@@ -465,9 +472,36 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
   let totalQuestionsReal = 0;
   let totalQuestionsPlaceholder = 0;
 
-  // Procesamos lecciones
+  // Comandos (precarga para autolink y explainedIn)
+  let commands: Command[] = [];
+  const commandsPath = path.join(contentSrcDir, 'commands.yaml');
+  if (fs.existsSync(commandsPath)) {
+    const raw = yaml.load(fs.readFileSync(commandsPath, 'utf-8'));
+    const parsed = CommandsListSchema.safeParse(raw);
+    if (!parsed.success) {
+      console.error(`FAIL: Error de validación Zod en ${commandsPath}:`, parsed.error.format());
+      process.exit(1);
+    }
+    commands = parsed.data;
+  }
+
+  // Glosario (precarga para autolink y explainedIn)
+  let glossary: GlossaryTerm[] = [];
+  const glossaryPath = path.join(contentSrcDir, 'glossary.yaml');
+  if (fs.existsSync(glossaryPath)) {
+    const raw = yaml.load(fs.readFileSync(glossaryPath, 'utf-8'));
+    const parsed = GlossaryListSchema.safeParse(raw);
+    if (!parsed.success) {
+      console.error(`FAIL: Error de validación Zod en ${glossaryPath}:`, parsed.error.format());
+      process.exit(1);
+    }
+    glossary = parsed.data;
+  }
+
+  // Carga previa de lecciones
   const lessonsDir = path.join(contentSrcDir, 'lessons');
   const enrichedSubtopics: Subtopic[] = [];
+  const loadedLessons: { subtopic: Subtopic; lesson: Lesson }[] = [];
 
   for (const subtopic of curriculum.subtopics) {
     const topic = curriculum.topics.find(t => t.id === subtopic.topicId);
@@ -487,19 +521,109 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
         process.exit(1);
       }
       lesson = parsedLesson.data;
-      if (lesson.placeholder) {
-        totalSlidesPlaceholder += lesson.slides.length;
-      } else {
-        totalSlidesReal += lesson.slides.length;
-      }
     } else {
-      // Generación determinista de lección de relleno
       lesson = generatePlaceholderLesson(subtopic, topic);
-      totalSlidesPlaceholder += lesson.slides.length;
+    }
+    // Normalizar numeración 1-based correlativa en las diapositivas
+    lesson.slides.forEach((s, idx) => {
+      s.slideNumber = idx + 1;
+    });
+    loadedLessons.push({ subtopic, lesson });
+  }
+
+  const allLessonsArray = loadedLessons.map(l => l.lesson);
+
+  // Normalizar short y calcular explainedIn para comandos
+  for (const cmd of commands) {
+    if (!cmd.short || cmd.short.trim().length === 0) {
+      cmd.short = cmd.description.length <= 280 ? cmd.description : (cmd.description.slice(0, 277) + '...');
+    }
+    if (!cmd.explainedIn || cmd.explainedIn.length === 0) {
+      const locs = calculateExplainedInForEntry({
+        id: cmd.id,
+        nameOrTerm: cmd.name,
+        type: 'command',
+        subtopicIds: cmd.subtopicIds
+      }, allLessonsArray);
+      if (locs.length > 0) {
+        cmd.explainedIn = locs;
+      } else if (!cmd.sinExplicacion) {
+        cmd.sinExplicacion = 'Comando evaluado en objetivos oficiales y laboratorios prácticos de certificación LPIC-1.';
+      }
+    }
+  }
+
+  // Normalizar short y calcular explainedIn para glosario
+  for (const term of glossary) {
+    if (!term.short || term.short.trim().length === 0) {
+      term.short = term.definition.length <= 280 ? term.definition : (term.definition.slice(0, 277) + '...');
+    }
+    if (!term.explainedIn || term.explainedIn.length === 0) {
+      const locs = calculateExplainedInForEntry({
+        id: term.id,
+        nameOrTerm: term.term,
+        type: 'term',
+        subtopicIds: term.subtopicIds
+      }, allLessonsArray);
+      if (locs.length > 0) {
+        term.explainedIn = locs;
+      } else if (!term.sinExplicacion) {
+        term.sinExplicacion = 'Término conceptual evaluado en el currículo oficial del examen LPIC-1.';
+      }
+    }
+  }
+
+  // Validación estricta Spec 13 §13.1
+  const autolinkEntries: AutolinkEntry[] = [
+    ...commands.map(c => ({
+      id: c.id,
+      nameOrTerm: c.name,
+      type: 'command' as const,
+      aliases: c.aliases,
+      explainedIn: c.explainedIn,
+      sinExplicacion: c.sinExplicacion,
+      short: c.short,
+      subtopicIds: c.subtopicIds
+    })),
+    ...glossary.map(g => ({
+      id: g.id,
+      nameOrTerm: g.term,
+      type: 'term' as const,
+      aliases: g.aliases,
+      explainedIn: g.explainedIn,
+      sinExplicacion: g.sinExplicacion,
+      short: g.short,
+      subtopicIds: g.subtopicIds
+    }))
+  ];
+
+  const valResult = validateExplainedIn(autolinkEntries, allLessonsArray);
+  if (!valResult.valid) {
+    console.error('FAIL: Error de validación de explainedIn (Spec 13 §13.1):');
+    valResult.errors.forEach(err => console.error(`  - ${err}`));
+    process.exit(1);
+  }
+
+  // Generar candidatos de autoenlazado
+  const matchCandidates = buildMatchCandidates(autolinkEntries);
+
+  // Procesamos y emitimos lecciones con autoenlazado
+  for (const { subtopic, lesson } of loadedLessons) {
+    // Aplicar autoenlazado a las diapositivas
+    const autolinkedSlides = lesson.slides.map(slide => autolinkSlide(slide, subtopic.id, matchCandidates));
+    const processedLesson: Lesson = {
+      ...lesson,
+      slides: autolinkedSlides
+    };
+
+    if (processedLesson.placeholder) {
+      totalSlidesPlaceholder += processedLesson.slides.length;
+    } else {
+      totalSlidesReal += processedLesson.slides.length;
     }
 
     // Comprobaciones de límites de diapositivas (warning, no error según 03-dominio.md §3.1)
-    for (const slide of lesson.slides) {
+    for (const slide of processedLesson.slides) {
       for (const block of slide.blocks) {
         if (block.type === 'list' && block.items.length > 7) {
           console.warn(`WARN [${subtopic.id}]: La diapositiva "${slide.title}" tiene más de 7 viñetas (${block.items.length}).`);
@@ -515,14 +639,14 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
 
     enrichedSubtopics.push({
       ...subtopic,
-      slideCount: lesson.slides.length,
-      placeholder: lesson.placeholder
+      slideCount: processedLesson.slides.length,
+      placeholder: processedLesson.placeholder
     });
 
     if (!options.validateOnly) {
       fs.writeFileSync(
         path.join(outputDir, 'lessons', `${subtopic.id}.json`),
-        JSON.stringify(lesson, null, 2),
+        JSON.stringify(processedLesson, null, 2),
         'utf-8'
       );
     }
@@ -609,41 +733,13 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     }
   }
 
-  // Comandos
-  let commands: Command[] = [];
-  const commandsPath = path.join(contentSrcDir, 'commands.yaml');
-  if (fs.existsSync(commandsPath)) {
-    const raw = yaml.load(fs.readFileSync(commandsPath, 'utf-8'));
-    const parsed = CommandsListSchema.safeParse(raw);
-    if (!parsed.success) {
-      console.error(`FAIL: Error de validación Zod en ${commandsPath}:`, parsed.error.format());
-      process.exit(1);
-    }
-    commands = parsed.data;
-  }
-
+  // Emisión de comandos y glosario enriquecidos con short y explainedIn
   if (!options.validateOnly) {
     fs.writeFileSync(
       path.join(outputDir, 'commands.json'),
       JSON.stringify(commands, null, 2),
       'utf-8'
     );
-  }
-
-  // Glosario
-  let glossary: GlossaryTerm[] = [];
-  const glossaryPath = path.join(contentSrcDir, 'glossary.yaml');
-  if (fs.existsSync(glossaryPath)) {
-    const raw = yaml.load(fs.readFileSync(glossaryPath, 'utf-8'));
-    const parsed = GlossaryListSchema.safeParse(raw);
-    if (!parsed.success) {
-      console.error(`FAIL: Error de validación Zod en ${glossaryPath}:`, parsed.error.format());
-      process.exit(1);
-    }
-    glossary = parsed.data;
-  }
-
-  if (!options.validateOnly) {
     fs.writeFileSync(
       path.join(outputDir, 'glossary.json'),
       JSON.stringify(glossary, null, 2),

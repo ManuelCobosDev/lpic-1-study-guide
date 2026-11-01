@@ -19,7 +19,6 @@ import { DefaultStudyView } from '../../../core/models/preferences.model';
 import { Lesson } from '../../../core/models/lesson.model';
 import { SlideViewerComponent } from '../components/slide-viewer/slide-viewer.component';
 import { LessonWebViewComponent } from '../components/lesson-web-view/lesson-web-view.component';
-import { WikiPopoverComponent } from '../../../shared/ui/wiki-popover/wiki-popover.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
 
@@ -31,7 +30,6 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
     RouterLink,
     SlideViewerComponent,
     LessonWebViewComponent,
-    WikiPopoverComponent,
     ButtonComponent,
     TabsComponent
   ],
@@ -378,9 +376,6 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
           }
         </nav>
       }
-
-      <!-- Popover global interactivo para referencias Wikipedia -->
-      <app-wiki-popover />
     </div>
   `,
   styles: [`
