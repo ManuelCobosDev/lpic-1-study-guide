@@ -668,3 +668,38 @@
 - Archivos: src/app/features/mind-map/pages/mind-map-page.component.ts, src/app/features/mind-map/pages/mind-map-page.component.html, src/app/features/mind-map/pages/mind-map-page.component.css, src/app/features/mind-map/pages/mind-map-page.component.spec.ts, scripts/run-pendientes.ts, e2e/fase-9.spec.ts, e2e/ronda2/f3-mapa-mental.spec.ts, e2e/ronda2/capturas-r7.spec.ts, docs/agent/PROGRESO_R2.md, docs/agent/STATUS.md, docs/agent/CHANGELOG.md.
 - Verificación: npm run test (377 Karma + 46 Vitest en verde), npx playwright test e2e/ronda2/f3-mapa-mental.spec.ts (7/7 tests en verde), npm run e2e:pendientes (0 fallos pendientes), npm run verify (10 etapas completas en verde, 98 E2E pasando).
 - Pendiente / deuda: Fase de subtemas: procesar subtemas del examen 102 (comenzando por el subtema 105.1 con `/procesar-subtema 105.1`).
+
+## C-0073 · 2026-11-01 · Ronda 2 · Subtema 105.1: cobertura oficial 100% verificada
+- Qué: procesamiento completo del subtema 105.1 ("Personalizar y usar el entorno de shell", Examen 102-500, Peso 4) alcanzando el 100% de cobertura técnica verificada frente al manual oficial de LPI (1606 unidades):
+  (1) Análisis de brechas y libro mayor (`content-src/coverage/105.1.ledger.yaml`):
+      - 1606 unidades contabilizadas en 105.1 (Lección 1 p. 11-37, Lección 2 p. 38-67, Lección 3 p. 68-96).
+      - 1576 unidades mapeadas con trazabilidad estricta (`105.1#u...`).
+      - 30 unidades omitidas con motivo justificado (avisos de licencia CC/copyright y títulos de portada).
+      - 2640 tokens técnicos evaluados, 2640 cubiertos (100%), con 2 exenciones justificadas por erratas tipográficas en el texto impreso del manual oficial ("Signficado", 0.08% de tasa de exención << 3% máximo permitido).
+  (2) Lección estructurada en 20 diapositivas (`content-src/lessons/105.1.json`):
+      - 20 diapositivas que cubren fielmente las 3 lecciones del manual oficial sin saturar los presupuestos de densidad (≤ 140 palabras, ≤ 14 líneas de código, ≤ 7 viñetas por diapositiva).
+      - Trazabilidad atómica `src: "105.1#u..."` en cada diapositiva, notas ampliadas con el corpus oficial y cero bloques inventados (`autor: 0`).
+  (3) Ejercicios oficiales (`content-src/exercises/105.1.yaml`):
+      - 42 ejercicios oficiales íntegros (33 guiados con solución paso a paso y 9 retos exploratorios) con respuestas exhaustivas y trazabilidad a sus unidades de origen.
+  (4) Laboratorio interactivo (`content-src/labs/105.1.json`):
+      - 5 misiones prácticas revisadas contra el manual (`export`, `set`, `env -i`, `unset`, `shopt login_shell`, `/etc/skel`, `source`, `unalias`).
+  (5) Comandos y Glosario (`content-src/commands.yaml`, `content-src/glossary.yaml`):
+      - Comandos vinculados a 105.1: `source` (con alias `'.'`), `export`, `set`.
+      - Nuevos comandos agregados: `env`, `unset`, `unalias`, `shopt` con opciones clave (`-i`, `-a`, `-f`, `-v`, `login_shell`).
+      - Términos de glosario agregados y vinculados: `/etc/profile`, `/etc/bash.bashrc`, `~/.bash_profile`, `~/.bash_login`, `~/.profile`, `~/.bashrc`, `~/.bash_logout`, `function`, `PATH`, `export`, `parametro-posicional`.
+  (6) Preguntas y Flashcards (`content-src/questions/105.json`, `content-src/flashcards-extra.yaml`):
+      - 12 preguntas oficiales verificadas en el pool de 105.1.
+      - 20 flashcards técnicas agregadas en `content-src/flashcards-extra.yaml`.
+  (7) Robustez y correcciones de infraestructura:
+      - Aislamiento en directorio temporal de `scripts/import-idempotent.spec.ts` para proteger `content-src/` de sobreescrituras en ejecuciones de pruebas unitarias.
+      - Soporte de renderizado de markdown y enlaces interactivos dentro de `CalloutComponent` vía `app-paragraph-block`.
+      - Actualización de `verify-coverage.ts` y `report-coverage.ts` para recolectar unidades desde ejercicios y laboratorios YAML/JSON.
+  (8) Verificaciones y reporte:
+      - `npm run verify:coverage -- 105.1`: 100% VERIFICADO (código 0).
+      - Generado informe HTML en `docs/agent/cobertura/105.1.html`.
+      - Actualizada tabla en `docs/agent/PROGRESO_R2.md` con `npm run progress:r2` (105.1 pasa a Estado 4: Auto-verificado).
+      - Pipeline maestro: `npm run verify` con 10/10 etapas completas en verde (98 tests E2E y 377 Karma + 46 Vitest).
+- Por qué: procesamiento del primer subtema del Examen 102 según `docs/spec/10-ronda2-plan.md` §10.3, `docs/spec/11` a `14`, regla R40 y skill `procesar-subtema`.
+- Archivos: content-src/coverage/105.1.ledger.yaml, content-src/exercises/105.1.yaml, content-src/labs/105.1.json, content-src/lessons/105.1.json, content-src/flashcards-extra.yaml, content-src/commands.yaml, content-src/glossary.yaml, scripts/coverage/verify-coverage.ts, scripts/coverage/report-coverage.ts, scripts/import-idempotent.spec.ts, scripts/import-legacy/index.ts, src/app/shared/content-blocks/block-renderer.component.ts, e2e/fase-11.spec.ts, docs/agent/PROGRESO_R2.md, docs/agent/STATUS.md, docs/agent/CHANGELOG.md.
+- Verificación: npm run verify:coverage -- 105.1 (código 0, 100% cobertura), npm run report:coverage -- 105.1 (código 0), npm run progress:r2 (código 0), npm run verify (10/10 etapas en verde, 98 E2E, 377 Karma, 46 Vitest).
+- Pendiente / deuda: Auditoría independiente de 105.1 (`/auditar-subtema 105.1` en conversación nueva) y validación humana del usuario (`VALIDADO 105.1`).

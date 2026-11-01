@@ -17,12 +17,12 @@ Reglas: un paso o subtema solo pasa a "hecho" con su gate en PASS (spec 10). Los
 | R4 | Pestaña Practica lo aprendido | hecho | 2026-11-01 | d404209 | PracticeTabComponent (Bloques A, B, C), fin de slides CTA, insignias y áreas clave en temario, E2E f6 promovido a verde (80 E2E) |
 | R5 | Flashcards masivas | hecho | 2026-11-01 | 3d9e998 | 1 182 flashcards, 684 flags (100%), 0 subtemas < 10 cards, explorador en tiempo real, E2E f2 promovido a verde (84 E2E) |
 | R6 | Simulador examen 102 | hecho | 2026-11-01 | C-0071 | 120 preguntas importadas en 105-110 (19/19 subtemas cubiertos), selector examen 101/102, simulacro 60 preguntas / 90 min, E2E f1 promovido a verde (90 E2E) |
-| R7 | Mapa mental | hecho | 2026-11-01 | C-0072 | initZoom en AfterViewInit (F3 resuelto), zoom SVG + teclado, toggle 498 nodos comandos/términos, drawer con navegación a /estudiar, 0 fallos pendientes, E2E f3 promovido (98 E2E) |
+| R7 | Mapa mental interactivo y robusto | hecho | 2026-11-01 | 4c498ec | E2E F3 en verde (7 tests), zoom y búsqueda interactivos, 98 E2E OK |
 
 ## Subtemas del examen 102 (6 estados: 1 Extraído · 2 Trazado · 3 Completado · 4 Auto-verificado · 5 Auditado · 6 Validado)
 | Subtema | 1 | 2 | 3 | 4 | 5 | 6 | Notas |
 |---|---|---|---|---|---|---|---|
-| 105.1 | ☑ | ☐ | ☐ | ☐ | ☐ | ☐ | Extraído (1605 unidades) |
+| 105.1 | ☑ | ☑ | ☑ | ☑ | ☐ | ☐ | Auto-verificado (1606 unidades, 100% tokens) |
 | 105.2 | ☑ | ☐ | ☐ | ☐ | ☐ | ☐ | Extraído (531 unidades) |
 | 106.1 | ☑ | ☐ | ☐ | ☐ | ☐ | ☐ | Extraído (244 unidades + 2 figuras) |
 | 106.2 | ☑ | ☐ | ☐ | ☐ | ☐ | ☐ | Extraído (121 unidades + 2 figuras) |
@@ -50,7 +50,7 @@ Reglas: un paso o subtema solo pasa a "hecho" con su gate en PASS (spec 10). Los
 <!-- AUTO:BEGIN -->
 | Subtema | Unidades (Map/Tot) | Tokens % | Diapositivas | Preguntas | Flashcards | Validación |
 |---|---|---|---|---|---|---|
-| 105.1 | 0 / 1606 | 0% | 19 | 12 | 0 | ⏳ Pendiente |
+| 105.1 | 1606 / 1606 | 100% | 20 | 12 | 20 | ⏳ Pendiente |
 | 105.2 | 0 / 530 | 0% | 19 | 6 | 5 | ⏳ Pendiente |
 | 106.1 | 0 / 245 | 0% | 19 | 8 | 4 | ⏳ Pendiente |
 | 106.2 | 0 / 121 | 0% | 16 | 3 | 4 | ⏳ Pendiente |

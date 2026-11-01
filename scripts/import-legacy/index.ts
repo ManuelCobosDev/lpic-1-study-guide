@@ -5,14 +5,19 @@ import { importAllQuestions } from './import-questions';
 import { importAllCommandsAndGlossary } from './import-commands-glossary';
 import { buildContent } from '../build-content';
 
-export function runImportLegacy(): void {
+export interface ImportLegacyOptions {
+  contentSrcDir?: string;
+  outputDir?: string;
+}
+
+export function runImportLegacy(options?: ImportLegacyOptions): void {
   const rootDir = process.cwd();
   const legacyContentDir = path.resolve(rootDir, '_legacy/Recurso Final Definitivo/content');
   const legacyPracticasDir = path.resolve(rootDir, '_legacy/Recurso Final Definitivo/practicas-v2');
   const legacySimDir = path.resolve(rootDir, '_legacy/lpic1-slides-publico/simulador');
   const legacyPublicoDir = path.resolve(rootDir, '_legacy/lpic1-slides-publico');
 
-  const contentSrcDir = path.resolve(rootDir, 'content-src');
+  const contentSrcDir = options?.contentSrcDir ? path.resolve(options.contentSrcDir) : path.resolve(rootDir, 'content-src');
   const destLessonsDir = path.join(contentSrcDir, 'lessons');
   const destLabsDir = path.join(contentSrcDir, 'labs');
   const destQuestionsDir = path.join(contentSrcDir, 'questions');
@@ -48,7 +53,7 @@ export function runImportLegacy(): void {
   console.log(`   ✔ ${commands.length} comandos y ${glossary.length} términos de glosario importados.`);
 
   console.log('5. Ejecutando pipeline build-content para sincronizar public/content/...');
-  const manifest = buildContent({ contentSrcDir });
+  const manifest = buildContent({ contentSrcDir, outputDir: options?.outputDir });
   console.log('=== Importación Completa Legacy finalizada con éxito ===');
   console.log(`Estadísticas del manifiesto:`);
   console.log(`  - Subtemas disponibles: ${manifest.stats.availableSubtopics} / ${manifest.stats.totalSubtopics}`);

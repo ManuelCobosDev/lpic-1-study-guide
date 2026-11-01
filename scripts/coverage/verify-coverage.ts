@@ -72,17 +72,33 @@ export function evaluateCoverage(subtopicId: string, options: CoverageOptions = 
 
   // 4. Cargar Ejercicios
   let exercisesRaw = '';
+  let exercisesList: any[] = [];
   const exPath = path.resolve(rootDir, `content-src/exercises/${subtopicId}.yaml`);
   if (fs.existsSync(exPath)) {
     exercisesRaw = fs.readFileSync(exPath, 'utf-8');
+    try {
+      const parsed = yaml.load(exercisesRaw);
+      if (Array.isArray(parsed)) {
+        exercisesList = parsed;
+      }
+    } catch {
+      // fallback
+    }
   }
 
   // 5. Cargar Laboratorio
   let lab: Lab | null = null;
   const labPath = path.resolve(rootDir, `content-src/labs/${subtopicId}.yaml`);
+  const labJsonPath = path.resolve(rootDir, `content-src/labs/${subtopicId}.json`);
   if (fs.existsSync(labPath)) {
     try {
       lab = yaml.load(fs.readFileSync(labPath, 'utf-8')) as Lab;
+    } catch {
+      // fallback
+    }
+  } else if (fs.existsSync(labJsonPath)) {
+    try {
+      lab = JSON.parse(fs.readFileSync(labJsonPath, 'utf-8')) as Lab;
     } catch {
       // fallback
     }
@@ -202,6 +218,68 @@ export function evaluateCoverage(subtopicId: string, options: CoverageOptions = 
     }
   }
 
+  // Trazabilidad desde ejercicios oficiales (Spec 11 §11.5–11.6)
+  for (const ex of exercisesList) {
+    if (ex.source) {
+      const srcList = Array.isArray(ex.source) ? ex.source : [ex.source];
+      for (const s of srcList) {
+        const parsed = parseSrcString(s);
+        if (parsed.isAutor) {
+          authorBlocksCount++;
+        } else if (parsed.unitIds.length > 0) {
+          for (const uid of parsed.unitIds) {
+            if (!validUnitIds.has(uid)) {
+              invalidSrcIds.push(`Ejercicio ${ex.id || 'desconocido'} referencia unidad inválida: ${uid}`);
+            } else {
+              mappedUnitIds.add(uid);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Trazabilidad desde laboratorio oficial
+  if (lab) {
+    if ((lab as any).source) {
+      const srcList = Array.isArray((lab as any).source) ? (lab as any).source : [(lab as any).source];
+      for (const s of srcList) {
+        const parsed = parseSrcString(s);
+        if (parsed.isAutor) {
+          authorBlocksCount++;
+        } else if (parsed.unitIds.length > 0) {
+          for (const uid of parsed.unitIds) {
+            if (!validUnitIds.has(uid)) {
+              invalidSrcIds.push(`Laboratorio ${lab.id || subtopicId} referencia unidad inválida: ${uid}`);
+            } else {
+              mappedUnitIds.add(uid);
+            }
+          }
+        }
+      }
+    }
+    for (let stIdx = 0; stIdx < (lab.steps || []).length; stIdx++) {
+      const st = lab.steps[stIdx];
+      if ((st as any).source) {
+        const srcList = Array.isArray((st as any).source) ? (st as any).source : [(st as any).source];
+        for (const s of srcList) {
+          const parsed = parseSrcString(s);
+          if (parsed.isAutor) {
+            authorBlocksCount++;
+          } else if (parsed.unitIds.length > 0) {
+            for (const uid of parsed.unitIds) {
+              if (!validUnitIds.has(uid)) {
+                invalidSrcIds.push(`Laboratorio paso ${stIdx + 1} referencia unidad inválida: ${uid}`);
+              } else {
+                mappedUnitIds.add(uid);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   // Extraer texto destino para comprobar tokens técnicos
   const targetCorpus = extractTargetCorpus(slides, exercisesRaw, lab, commands, glossary);
   const targetCorpusLower = targetCorpus.toLowerCase();
@@ -215,7 +293,7 @@ export function evaluateCoverage(subtopicId: string, options: CoverageOptions = 
   for (const unit of objectiveUnits) {
     const isMapped = mappedUnitIds.has(unit.id);
     const isOmitted = omittedUnitIds.has(unit.id);
-    if (!isMapped && !isOmitted) continue;
+    if (!isMapped || isOmitted) continue;
 
     const unitWaivers = waivedTokensMap.get(unit.id) || new Set<string>();
 

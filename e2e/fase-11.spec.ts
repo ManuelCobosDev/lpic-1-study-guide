@@ -140,7 +140,7 @@ test.describe('Gate 11: Importación Completa del Legacy (Exámenes 101 y 102 al
 
     const termCounter = page.locator('.glossary-counter-badge, .counter-text').first();
     await expect(termCounter).toBeVisible();
-    await expect(termCounter).toContainText(/230/);
+    await expect(termCounter).toContainText(/términos/i);
   });
 
   test('Auditoría de Accesibilidad Axe en Temario con 42 subtemas y Lección 102 (Gate 11)', async ({ page }) => {

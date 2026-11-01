@@ -55,7 +55,7 @@ import { DiagramSpec } from '../../core/models/diagram.model';
       @case ('callout') {
         @let b = asCallout(block());
         <app-callout [type]="getCalloutType(b.calloutType)" [title]="b.title ?? ''">
-          <p class="m-0 leading-relaxed">{{ b.content }}</p>
+          <app-paragraph-block [text]="b.content" [highlightQuery]="highlightQuery()" />
         </app-callout>
       }
       @case ('steps') {

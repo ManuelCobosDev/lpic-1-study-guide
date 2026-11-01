@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import * as yaml from 'js-yaml';
 import { evaluateCoverage, CoverageOptions } from './verify-coverage';
 import { ExtractedUnit } from './types';
 import { loadLedger } from './ledger-loader';
@@ -51,22 +52,79 @@ export function generateCoverageHtml(
     }
   }
 
-  // Mapear qué diapositiva cubre qué unidad
-  const unitToSlideMap = new Map<string, number>();
+  // Mapear qué destino cubre qué unidad
+  const unitToTargetMap = new Map<string, string>();
   for (let idx = 0; idx < slides.length; idx++) {
     const s = slides[idx];
     if (!s) continue;
     const sNum = idx + 1;
     const parsed = parseSrcString(s.src);
     for (const uid of parsed.unitIds) {
-      if (!unitToSlideMap.has(uid)) unitToSlideMap.set(uid, sNum);
+      if (!unitToTargetMap.has(uid)) unitToTargetMap.set(uid, `Diapositiva ${sNum}`);
     }
     for (const b of s.blocks) {
       if (!b) continue;
       if (b.src) {
         const bParsed = parseSrcString(b.src);
         for (const uid of bParsed.unitIds) {
-          if (!unitToSlideMap.has(uid)) unitToSlideMap.set(uid, sNum);
+          if (!unitToTargetMap.has(uid)) unitToTargetMap.set(uid, `Diapositiva ${sNum}`);
+        }
+      }
+    }
+  }
+
+  // Trazabilidad desde ejercicios
+  const exPath = path.resolve(rootDir, `content-src/exercises/${subtopicId}.yaml`);
+  if (fs.existsSync(exPath)) {
+    try {
+      const exList = yaml.load(fs.readFileSync(exPath, 'utf-8'));
+      if (Array.isArray(exList)) {
+        for (const ex of exList) {
+          if (ex.source) {
+            const srcList = Array.isArray(ex.source) ? ex.source : [ex.source];
+            for (const s of srcList) {
+              const parsed = parseSrcString(s);
+              for (const uid of parsed.unitIds) {
+                if (!unitToTargetMap.has(uid)) unitToTargetMap.set(uid, `Ejercicio ${ex.id || 'oficial'}`);
+              }
+            }
+          }
+        }
+      }
+    } catch {}
+  }
+
+  // Trazabilidad desde laboratorio
+  const labYamlPath = path.resolve(rootDir, `content-src/labs/${subtopicId}.yaml`);
+  const labJsonPath = path.resolve(rootDir, `content-src/labs/${subtopicId}.json`);
+  let labData: any = null;
+  if (fs.existsSync(labYamlPath)) {
+    try {
+      labData = yaml.load(fs.readFileSync(labYamlPath, 'utf-8'));
+    } catch {}
+  } else if (fs.existsSync(labJsonPath)) {
+    try {
+      labData = JSON.parse(fs.readFileSync(labJsonPath, 'utf-8'));
+    } catch {}
+  }
+  if (labData) {
+    if (labData.source) {
+      const srcList = Array.isArray(labData.source) ? labData.source : [labData.source];
+      for (const s of srcList) {
+        const parsed = parseSrcString(s);
+        for (const uid of parsed.unitIds) {
+          if (!unitToTargetMap.has(uid)) unitToTargetMap.set(uid, 'Laboratorio');
+        }
+      }
+    }
+    for (const step of labData.steps || []) {
+      if (step.source) {
+        const srcList = Array.isArray(step.source) ? step.source : [step.source];
+        for (const s of srcList) {
+          const parsed = parseSrcString(s);
+          for (const uid of parsed.unitIds) {
+            if (!unitToTargetMap.has(uid)) unitToTargetMap.set(uid, 'Laboratorio');
+          }
         }
       }
     }
@@ -289,7 +347,7 @@ export function generateCoverageHtml(
   let unitsHtml = '';
   for (const u of objectiveUnits) {
     const isOmitted = Boolean(omittedMap[u.id]);
-    const coveredSlide = unitToSlideMap.get(u.id);
+    const coveredTarget = unitToTargetMap.get(u.id);
     const missingTokens = report.missingTokensByUnit[u.id] || [];
 
     let statusClass = 'uncovered';
@@ -297,9 +355,9 @@ export function generateCoverageHtml(
     if (isOmitted) {
       statusClass = 'omitted';
       statusLabel = `🟠 Omitida: ${escapeHtml(omittedMap[u.id] || '')}`;
-    } else if (coveredSlide) {
+    } else if (coveredTarget) {
       statusClass = 'covered';
-      statusLabel = `🟢 Cubierta (Diapositiva ${coveredSlide})`;
+      statusLabel = `🟢 Cubierta (${escapeHtml(coveredTarget)})`;
     }
 
     const isIssue = statusClass === 'uncovered' || missingTokens.length > 0;
