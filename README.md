@@ -114,6 +114,17 @@ Para consultar los detalles técnicos del diseño y desarrollo del proyecto, rev
 - **[Guía de Despliegue Estático](docs/DEPLOY.md)**: Despliegue en GitHub Pages, Netlify, Cloudflare Pages, Vercel o servidores Nginx.
 - **[Memoria del Proyecto](docs/agent/STATUS.md)**: Historial de fases, registro de decisiones de arquitectura ([DECISIONS.md](docs/agent/DECISIONS.md)) y changelog acumulativo ([CHANGELOG.md](docs/agent/CHANGELOG.md)).
 
+### 📁 Estructura del Repositorio
+
+- `src/` — Código fuente de la SPA Angular (arquitectura por capas: core, shared, features).
+- `public/` — Activos web estáticos y contenido compilado (`public/content/`).
+- `content-src/` — Fuente de verdad canónica del currículo (lecciones, labs, preguntas, glosario, comandos).
+- `docs/` — Especificaciones funcionales, técnicas (`docs/spec/`) y memoria del agente (`docs/agent/`).
+- `scripts/` — Herramientas de toolchain en TypeScript (compilación de contenido, linters, verificadores).
+- `e2e/` — Suites de integración E2E con Playwright y capturas de evidencia visual.
+- `.agents/` — Reglas y skills operativas del asistente de ingeniería.
+- `_legacy/` — Material y manuales oficiales de referencia histórica (solo lectura).
+
 ---
 
 ## ⚖️ Descargo de Responsabilidad
