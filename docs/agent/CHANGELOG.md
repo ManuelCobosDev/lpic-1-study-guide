@@ -479,3 +479,24 @@
 - Archivos: docs/agent/DIAGNOSTICO_R2.md, docs/agent/PROGRESO_R2.md, e2e/ronda2/pendientes/*, e2e/ronda2/capturas-r0.spec.ts, e2e/screenshots/r2-R0/*, scripts/run-pendientes.ts, package.json, playwright.config.ts.
 - Verificación: npm run e2e:pendientes (5 tests ejecutados, los 5 en rojo por la causa esperada), npm run verify (9 etapas completas en verde, 75 tests E2E y 17 tests unitarios pasando).
 - Pendiente / deuda: Paso R1 (Extracción completa determinista del PDF 102 mediante PyMuPDF con contabilidad >= 99.5%).
+
+
+## C-0066 · 2026-11-01 · Ronda 2 · R1: Extracción completa y determinista del manual oficial 102 con PyMuPDF
+- Qué: implementación completa del extractor oficial en Python con PyMuPDF (`scripts/extract-pdf/`) y paso R1:
+  (1) Análisis de scripts del legacy y tipografía en `docs/agent/EXTRACCION_NOTAS.md` (jerarquía tipográfica de la familia Google Noto, cabeceras/pies fijos, títulos de lección de 25 pt, secciones de 19 pt, subsecciones de 13 pt y bloques de código mono de 9 pt).
+  (2) Mapeo riguroso de los 6 temas y 19 subtemas (105.1 a 110.3) con pesos oficiales coincidentes al 100% con `docs/spec/07-curriculo.md`.
+  (3) Extractor modular determinista (`extract.py`, `tokenizer.py`, `accounting.py`, `html_report.py`, `config.py`):
+      - `units.json`: 9,405 unidades atómicas clasificadas (`kind`: `heading`, `paragraph`, `code`, `list-item`, `key-knowledge`, `key-files`, `exercise-guided`, `exercise-explor`, `summary`, `answer-guided`, `answer-explor`, `callout`, `figure`), con formato tipográfico (mono, bold, italic) y tokens técnicos extraídos y normalizados en Unicode NFC (comandos, flags, rutas, variables, números, términos, acrónimos).
+      - `objectives.json`: 19 objetivos con desglose de páginas, lecciones, secciones, unidades por tipo y tokens.
+      - `pages.json`: contabilidad de caracteres del 100.0% en las 594 páginas (0 páginas por debajo del umbral del 99.5%), diferenciando texto asignado de exclusiones reconocidas (cabeceras, pies de página y numeración).
+      - `figures/`: extracción nativa de las 4 figuras técnicas PNG del temario (arquitectura X Window, ejemplo de configuración en pantalla y 2 capturas de entornos KDE/Xfce) con leyenda y descripciones accesibles.
+      - `extraction-report.md` y `extract-overview.html`: informe navegable autónomo (sin servidor) con selector de muestreo aleatorio para validación humana de unidades contra el PDF.
+  (4) Configuración del script `npm run extract:pdf` en `package.json` y exclusión en `.gitignore` de `content-src/_extract/`, `docs/agent/cobertura/` y `.venv-extract/`.
+  (5) Suites de tests automáticos:
+      - Python (`scripts/extract-pdf/test_extract.py`): 6 tests unitarios verificando tokenizador en casos reales del PDF, existencia de archivos, estructura y pesos de los 19 objetivos, contabilidad de páginas >= 99.5%, extracción de figuras y determinismo estricto (dos ejecuciones consecutivas producen hashes SHA-256 idénticos).
+      - Vitest (`scripts/extract-pdf.spec.ts`): 5 tests integrados en el pipeline de testing verificando contratos y contabilidad.
+  (6) Actualización de `docs/agent/PROGRESO_R2.md` marcando R1 como hecho y el estado 1 (Extraído) completado en los 19 subtemas.
+- Por qué: requisito de base de datos canónica y trazabilidad para la Ronda 2 según `docs/spec/10-ronda2-plan.md`, `docs/spec/11-extraccion-y-cobertura.md` y regla 40.
+- Archivos: scripts/extract-pdf/extract.py, scripts/extract-pdf/tokenizer.py, scripts/extract-pdf/accounting.py, scripts/extract-pdf/html_report.py, scripts/extract-pdf/config.py, scripts/extract-pdf/test_extract.py, scripts/extract-pdf.spec.ts, docs/agent/EXTRACCION_NOTAS.md, docs/agent/PROGRESO_R2.md, docs/agent/STATUS.md, docs/agent/CHANGELOG.md, package.json, eslint.config.js, .gitignore.
+- Verificación: npm run extract:pdf (exitoso), python -m unittest scripts/extract-pdf/test_extract.py (6/6 OK), npx vitest run scripts/extract-pdf.spec.ts (5/5 OK), npm run verify (9 etapas completas en verde, 75 tests E2E y 18 tests unitarios pasando).
+- Pendiente / deuda: Validación humana del visor `content-src/_extract/102-500/extract-overview.html`. Siguiente paso: Paso R2 (Herramientas de cobertura y validación).
