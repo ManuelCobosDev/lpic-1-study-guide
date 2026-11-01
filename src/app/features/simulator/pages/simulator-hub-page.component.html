@@ -73,6 +73,63 @@
       </p>
     </header>
 
+    <!-- Selector de examen interactivo: Examen 101 vs Examen 102 -->
+    <section class="exam-selector-section" aria-label="Selección de examen">
+      <div class="exam-selector-container" role="tablist" aria-label="Examen LPIC-1">
+        <button
+          type="button"
+          role="tab"
+          class="exam-selector-tab"
+          [class.active]="selectedExam() === '101'"
+          [attr.aria-selected]="selectedExam() === '101'"
+          data-testid="select-exam-101"
+          (click)="selectExam('101')"
+        >
+          <span class="exam-tab-badge">101</span>
+          <span class="exam-tab-text">Examen 101-500</span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          class="exam-selector-tab"
+          [class.active]="selectedExam() === '102'"
+          [attr.aria-selected]="selectedExam() === '102'"
+          data-testid="select-exam-102"
+          (click)="selectExam('102')"
+        >
+          <span class="exam-tab-badge">102</span>
+          <span class="exam-tab-text">Examen 102-500</span>
+        </button>
+      </div>
+
+      <!-- Aviso discreto si el banco tiene preguntas pendientes de verificación -->
+      @if (verifiedStats().hasPending) {
+        <div class="revision-notice-banner" role="status" aria-label="Estado del banco de preguntas">
+          <div class="revision-notice-content">
+            <svg class="notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span class="notice-text">
+              Banco en revisión: {{ verifiedStats().verified }} de {{ verifiedStats().total }} verificadas
+            </span>
+          </div>
+
+          <label class="verified-toggle-label">
+            <input
+              type="checkbox"
+              class="verified-checkbox"
+              [ngModel]="onlyVerifiedQuestions()"
+              (ngModelChange)="onlyVerifiedQuestions.set($event)"
+            />
+            <span>Usar solo preguntas verificadas</span>
+          </label>
+        </div>
+      }
+    </section>
+
     <!-- Modos de examen principales (2 tarjetas) -->
     <section class="modes-grid" aria-label="Modos de entrenamiento">
       <!-- Tarjeta 1: Simulacro cronometrado -->
@@ -164,12 +221,12 @@
       <div class="section-header">
         <h2 id="topics-section-heading" class="section-title">Entrenar por tema específico</h2>
         <p class="section-subtitle">
-          Filtra directamente las preguntas de un bloque del currículo para afianzar conceptos concretos:
+          Filtra directamente las preguntas de un bloque del currículo para afianzar conceptos concretos (Temas 101 a 104 para Examen 101, o Tema 105 a Tema 110 para Examen 102):
         </p>
       </div>
 
       <div class="topics-chips-container" role="list" aria-label="Temas para entrenar">
-        @for (topic of topics(); track topic.id) {
+        @for (topic of filteredTopics(); track topic.id) {
           <div role="listitem">
             <app-chip
               (chipToggle)="goToPractice(topic.id)"
@@ -199,6 +256,7 @@
           <table class="attempts-table" aria-label="Tabla de últimos intentos de examen">
             <thead>
               <tr>
+                <th scope="col">Examen</th>
                 <th scope="col">Fecha</th>
                 <th scope="col">Modo</th>
                 <th scope="col">Puntuación</th>
@@ -209,6 +267,11 @@
             <tbody>
               @for (attempt of recentAttempts(); track attempt.id) {
                 <tr>
+                  <td>
+                    <app-badge [variant]="attempt.examId === '102' ? 'primary' : 'neutral'">
+                      {{ attempt.examId ? 'Examen ' + attempt.examId : 'Examen 101' }}
+                    </app-badge>
+                  </td>
                   <td class="date-cell">
                     {{ attempt.startedAt | date:'mediumDate' }}
                   </td>

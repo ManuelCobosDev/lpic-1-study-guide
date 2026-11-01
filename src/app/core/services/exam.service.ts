@@ -41,9 +41,21 @@ export class ExamService {
     initialValue: DEFAULT_HISTORY_STATE
   });
 
+  private readonly selectedExamStore = new PersistedStore<'101' | '102'>(this.storage, {
+    key: 'simulator_exam_id',
+    schemaVersion: 1,
+    initialValue: '101'
+  });
+
   readonly activeSession = this.sessionStore.data;
   readonly history = computed(() => this.historyStore.data().attempts);
   readonly hasActiveSession = computed(() => this.activeSession() !== null);
+  readonly selectedExamId = this.selectedExamStore.data;
+
+  setSelectedExamId(examId: '101' | '102'): void {
+    this.selectedExamStore.set(examId);
+    this.selectedExamStore.flush();
+  }
 
   /**
    * Calcula los segundos restantes del examen en base a startedAt persistido.
@@ -64,17 +76,27 @@ export class ExamService {
    */
   async startExam(options: {
     mode: 'exam' | 'practice';
+    examId?: '101' | '102';
     topicId?: string;
     seed?: number;
     questionLimit?: number;
+    onlyVerified?: boolean;
   }): Promise<ActiveExamSession> {
     const manifest = await this.contentService.getManifest();
 
-    // Recopilar preguntas según topicId o todo el currículo
+    let examId: '101' | '102' = options.examId ?? this.selectedExamId();
+    if (options.topicId) {
+      examId = parseInt(options.topicId) >= 105 ? '102' : '101';
+    }
+    this.setSelectedExamId(examId);
+
+    // Recopilar preguntas según topicId o los temas oficiales del examen seleccionado
     const allQuestions: Question[] = [];
     const topicsToLoad = options.topicId
       ? [options.topicId]
-      : manifest.topics.map((t) => t.id);
+      : manifest.topics
+          .filter((t) => (examId === '102' ? parseInt(t.id) >= 105 : parseInt(t.id) <= 104))
+          .map((t) => t.id);
 
     for (const tId of topicsToLoad) {
       try {
@@ -87,22 +109,32 @@ export class ExamService {
 
     // Filtrar preguntas según preferencias (incluir o excluir placeholders/ejemplo)
     const includePlaceholders = this.preferencesService.includeExampleContent();
-    const pool = includePlaceholders
+    let pool = includePlaceholders
       ? allQuestions
       : allQuestions.filter((q) => !q.placeholder);
 
-    const subtopicWeights: SubtopicWeightInfo[] = manifest.subtopics.map((s) => ({
-      id: s.id,
-      topicId: s.topicId,
-      weight: s.weight
-    }));
+    if (options.onlyVerified) {
+      const verifiedOnly = pool.filter((q) => q.status === 'verificada' || q.verified === true);
+      if (verifiedOnly.length > 0) {
+        pool = verifiedOnly;
+      }
+    }
+
+    const topicsToLoadSet = new Set(topicsToLoad);
+    const subtopicWeights: SubtopicWeightInfo[] = manifest.subtopics
+      .filter((s) => topicsToLoadSet.has(s.topicId))
+      .map((s) => ({
+        id: s.id,
+        topicId: s.topicId,
+        weight: s.weight
+      }));
 
     // Determinar cantidad de preguntas y duración
     const isExam = options.mode === 'exam';
     const defaultTarget = isExam ? 60 : 20;
     const targetCount = options.questionLimit ?? Math.min(defaultTarget, pool.length);
 
-    // 1.5 min por pregunta = 90 s por pregunta en examen cronometrado
+    // 1.5 min por pregunta = 90 s por pregunta en examen cronometrado (5400 s si son 60)
     const durationSeconds = isExam ? targetCount * 90 : 0;
     const seed = options.seed ?? Date.now();
 
@@ -111,6 +143,7 @@ export class ExamService {
     const newSession: ActiveExamSession = {
       id: `attempt-${Date.now()}`,
       mode: options.mode,
+      examId,
       topicId: options.topicId,
       startedAt: new Date().toISOString(),
       durationSeconds,
@@ -215,11 +248,18 @@ export class ExamService {
     if (!session) return null;
 
     const manifest = await this.contentService.getManifest();
-    const subtopicWeights: SubtopicWeightInfo[] = manifest.subtopics.map((s) => ({
-      id: s.id,
-      topicId: s.topicId,
-      weight: s.weight
-    }));
+    const examTopics = session.examId === '102'
+      ? manifest.topics.filter(t => parseInt(t.id) >= 105)
+      : manifest.topics.filter(t => parseInt(t.id) <= 104);
+    const examTopicIds = new Set(examTopics.map(t => t.id));
+
+    const subtopicWeights: SubtopicWeightInfo[] = manifest.subtopics
+      .filter((s) => (session.topicId ? s.topicId === session.topicId : examTopicIds.has(s.topicId)))
+      .map((s) => ({
+        id: s.id,
+        topicId: s.topicId,
+        weight: s.weight
+      }));
 
     const scoreResult = calculateExamScore(session.questions, session.answers, subtopicWeights);
     const timeRemainingSeconds = this.getRemainingSeconds(session);
@@ -227,6 +267,7 @@ export class ExamService {
     const completedAttempt: ExamAttempt = {
       id: session.id,
       mode: session.mode,
+      examId: session.examId,
       topicId: session.topicId,
       startedAt: session.startedAt,
       finishedAt: new Date().toISOString(),
@@ -253,6 +294,47 @@ export class ExamService {
     this.sessionStore.flush();
 
     return completedAttempt;
+  }
+
+  /**
+   * Obtiene estadísticas de preguntas verificadas vs pendientes de revisión para el examen indicado.
+   */
+  async getVerifiedQuestionsStats(examId: '101' | '102'): Promise<{
+    total: number;
+    verified: number;
+    pending: number;
+    hasPending: boolean;
+  }> {
+    try {
+      const manifest = await this.contentService.getManifest();
+      const topics = manifest.topics.filter((t) =>
+        examId === '102' ? parseInt(t.id) >= 105 : parseInt(t.id) <= 104
+      );
+      let total = 0;
+      let verified = 0;
+      let pending = 0;
+
+      for (const t of topics) {
+        const qList = await this.contentService.getQuestions(t.id);
+        for (const q of qList) {
+          if (q.placeholder) continue;
+          total++;
+          if (q.status === 'verificada' || q.verified === true) {
+            verified++;
+          } else {
+            pending++;
+          }
+        }
+      }
+      return {
+        total,
+        verified,
+        pending,
+        hasPending: pending > 0
+      };
+    } catch {
+      return { total: 0, verified: 0, pending: 0, hasPending: false };
+    }
   }
 
   /**

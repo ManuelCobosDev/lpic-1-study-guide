@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { TopicQuestionsSchema } from '../../src/app/core/schemas/index';
 import { Question } from '../../src/app/core/models/index';
+import { classify102QuestionSubtopic } from './questions-102';
 
 interface LegacyQuestion {
   id: number;
@@ -95,7 +96,7 @@ export function importAllQuestions(
     const question: Question = {
       id: qId,
       topicId,
-      subtopicId: `${topicId}.1`,
+      subtopicId: leg.tema >= 105 ? classify102QuestionSubtopic(leg) : `${topicId}.1`,
       type,
       prompt: leg.stem,
       options,
@@ -103,7 +104,9 @@ export function importAllQuestions(
       acceptedAnswers,
       explanation,
       difficulty: type === 'fill' ? 'hard' : (type === 'multiple' ? 'medium' : 'easy'),
-      placeholder: false
+      placeholder: false,
+      status: leg.tema >= 105 ? 'pendiente-verificacion' : undefined,
+      verified: leg.tema >= 105 ? false : undefined
     };
 
     byTopic[topicId]?.push(question);

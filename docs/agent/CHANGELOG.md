@@ -604,3 +604,38 @@
 - Archivos: content-src/flashcards-extra.yaml, scripts/generate-flashcards.ts, scripts/generate-flashcards.spec.ts, scripts/build-content.ts, src/app/core/models/curriculum.model.ts, src/app/core/models/flashcard.model.ts, src/app/core/schemas/curriculum.schema.ts, src/app/core/schemas/flashcard.schema.ts, src/app/core/schemas/index.ts, src/app/core/services/content.service.ts, src/app/core/services/flashcards.service.ts, src/app/core/services/flashcards.service.spec.ts, src/app/features/flashcards/components/flashcard-card/flashcard-card.component.html, src/app/features/flashcards/pages/flashcards-page.component.ts, src/app/features/flashcards/pages/flashcards-page.component.html, src/app/features/flashcards/pages/flashcards-page.component.css, src/app/features/flashcards/pages/flashcards-page.component.spec.ts, src/app/features/home/pages/home-page.component.ts, src/app/features/home/pages/home-page.component.spec.ts, src/app/features/study/components/practice-tab/practice-tab.component.spec.ts, e2e/ronda2/f2-flashcards-masivas.spec.ts, docs/agent/PROGRESO_R2.md, docs/agent/STATUS.md, docs/agent/CHANGELOG.md.
 - Verificación: npm run test (377 Karma + 43 Vitest en verde), npx playwright test e2e/ronda2/f2-flashcards-masivas.spec.ts (4 tests en verde), npx playwright test e2e/fase-9.spec.ts (6 tests en verde), npm run e2e:pendientes (2 fallos restantes verificados: F1 y F3), npm run verify (10 etapas completas en verde, 84 E2E pasando).
 - Pendiente / deuda: Paso R6 (Simulador de examen 102 con 60 preguntas ponderadas de temas 105 a 110).
+
+
+## C-0071 · 2026-11-01 · Ronda 2 · R6: Simulador completo del Examen 102 y selector interactivo
+- Qué: resolución del Fallo F1 y ejecución completa del Paso R6 según Spec 10 §R6 y Spec 14 §14.1:
+  (1) Importación reproducible del banco oficial del 102:
+      - Script reproducible `scripts/import-legacy/questions-102.ts` que importa 120 preguntas oficiales desde `_legacy/Recurso Final Definitivo/app/simulador/preguntas_102.json` a `content-src/questions/105.json` … `110.json`.
+      - Clasificador determinista `SUBTOPIC_KEYWORDS_102` con cobertura garantizada de ≥ 1 pregunta en cada uno de los 19 subtemas del Examen 102 (105.1: 12, 105.2: 6, 106.1: 8, 106.2: 3, 106.3: 1, 107.1: 6, 107.2: 10, 107.3: 4, 108.1: 8, 108.2: 7, 108.3: 4, 108.4: 3, 109.1: 8, 109.2: 11, 109.3: 4, 109.4: 4, 110.1: 10, 110.2: 5, 110.3: 6).
+      - Preguntas marcadas con `status: 'pendiente-verificacion'` y `verified: false`.
+      - Suite de validación en `scripts/questions-102.spec.ts` (3 tests Vitest pasando).
+  (2) Modelos y esquemas Zod en `src/app/core/models/` y `schemas/`:
+      - Extensión de `Question` y `QuestionSchema` con `status` y `verified`.
+      - Extensión de `ExamAttempt` y `ActiveExamSession` con `examId?: '101' | '102'`.
+  (3) Motor de simulación en `ExamService`:
+      - Persistencia de examen seleccionado en `localStorage` bajo clave `lpic1.v1.simulator_exam_id`.
+      - Selección ponderada según pesos oficiales de los subtemas del 102 (8/4/12/12/14/10) con tolerancia ±1 y barajado determinista Mulberry32.
+      - Temporizador de 90 minutos (o 1,5 min × nº de preguntas: 5 400 s para 60 preguntas), con persistencia sincronizada respecto al reloj real en reanudaciones tras recarga.
+      - Cálculo de puntuación oficial 200–800 y aprobado ≥ 500 adaptado a los pesos del examen activo.
+      - Método `getVerifiedQuestionsStats(examId)` para estadísticas de banco de preguntas en revisión.
+  (4) Interfaz y experiencia de usuario del Simulador:
+      - Selector de examen en `/simulador`: tabs accesibles "Examen 101-500" y "Examen 102-500" (`[data-testid="select-exam-101"]`, `[data-testid="select-exam-102"]`).
+      - Bloque "Entrenar por tema específico" filtra dinámicamente según el examen seleccionado (101–104 vs 105–110).
+      - Aviso discreto "Banco en revisión: N de M verificadas" con toggle "Usar solo preguntas verificadas".
+      - Columna de examen en la tabla de últimos intentos.
+      - Enlaces directos `/simulador/examen?exam=102` y `/simulador/practica?exam=102&tema=105` operativos.
+      - Pantalla `/simulador/resultados` con distintivo del examen y desglose específico de temas 105 a 110.
+      - Cumplimiento de accesibilidad WCAG AA en modo claro y oscuro (Axe limpio con 0 violaciones).
+  (5) Promoción de la suite E2E de Gate R6:
+      - Promovido `e2e/ronda2/pendientes/f1-simulador-102.spec.ts` a `e2e/ronda2/f1-simulador-102.spec.ts` (5 tests en verde).
+      - Suite de fallos pendientes `npm run e2e:pendientes` reducida al único fallo pendiente: F3 (Mapa mental).
+      - Capturas visuales registradas en `e2e/screenshots/r2-R6/`.
+  (6) Pipeline maestro: `npm run verify` con 10/10 etapas completas en verde (90 tests E2E y 377 Karma + 46 Vitest).
+- Por qué: requisito de simulador oficial para el Examen 102 según `docs/spec/10-ronda2-plan.md` §R6 y `docs/spec/14-simulador-flashcards-mapa.md` §14.1.
+- Archivos: scripts/import-legacy/questions-102.ts, scripts/questions-102.spec.ts, scripts/coverage/verify-coverage.ts, scripts/import-legacy/import-questions.ts, content-src/questions/105.json … 110.json, src/app/core/models/question.model.ts, src/app/core/models/attempt.model.ts, src/app/core/schemas/question.schema.ts, src/app/core/services/exam.service.ts, src/app/core/services/exam.service.spec.ts, src/app/features/simulator/pages/simulator-hub-page.component.ts, src/app/features/simulator/pages/simulator-hub-page.component.html, src/app/features/simulator/pages/simulator-hub-page.component.css, src/app/features/simulator/pages/simulator-hub-page.component.spec.ts, src/app/features/simulator/pages/simulator-exam-page.component.ts, src/app/features/simulator/pages/simulator-practice-page.component.ts, src/app/features/simulator/pages/simulator-practice-page.component.html, src/app/features/simulator/pages/simulator-results-page.component.ts, src/app/features/simulator/pages/simulator-results-page.component.html, src/app/features/simulator/components/question-card/question-card.component.html, e2e/ronda2/f1-simulador-102.spec.ts, e2e/ronda2/capturas-r6.spec.ts, docs/agent/PROGRESO_R2.md, docs/agent/STATUS.md, docs/agent/CHANGELOG.md.
+- Verificación: npm run test (377 Karma + 46 Vitest en verde), npx playwright test e2e/ronda2/f1-simulador-102.spec.ts (5/5 tests en verde), npx playwright test e2e/fase-8.spec.ts e2e/fase-11.spec.ts (13/13 tests en verde), npx playwright test e2e/demo.spec.ts (1/1 test en verde), npm run e2e:pendientes (1 fallo restante verificado: F3 mapa mental), npm run verify (10 etapas completas en verde, 90 E2E pasando).
+- Pendiente / deuda: Paso R7 (Mapa mental: corrección de fallo de visualización/zoom con `/corregir-bug` para resolver F3).

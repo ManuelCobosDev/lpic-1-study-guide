@@ -234,18 +234,24 @@ export class SimulatorResultsPageComponent implements OnInit {
   }
 
   async repeatExam(): Promise<void> {
-    await this.examService.startExam({ mode: 'exam' });
-    await this.router.navigate(['/simulador/examen']);
+    const examId = this.attempt()?.examId ?? '101';
+    await this.examService.startExam({ mode: 'exam', examId });
+    await this.router.navigate(['/simulador/examen'], {
+      queryParams: { exam: examId }
+    });
   }
 
   goToPracticeWeakTopics(): void {
     const weak = this.weakTopicIds();
+    const examId = this.attempt()?.examId ?? '101';
     if (weak.length > 0) {
       this.router.navigate(['/simulador/practica'], {
-        queryParams: { tema: weak[0] }
+        queryParams: { exam: examId, tema: weak[0] }
       });
     } else {
-      this.router.navigate(['/simulador/practica']);
+      this.router.navigate(['/simulador/practica'], {
+        queryParams: { exam: examId }
+      });
     }
   }
 }

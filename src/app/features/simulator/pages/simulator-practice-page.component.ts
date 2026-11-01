@@ -44,10 +44,22 @@ export class SimulatorPracticePageComponent implements OnInit {
   readonly isLoading = signal<boolean>(true);
 
   // Filtros interactivos
+  readonly selectedExam = signal<'101' | '102' | 'all'>('all');
   readonly selectedTopicId = signal<string>('all');
   readonly selectedType = signal<string>('all');
   readonly selectedDifficulty = signal<string>('all');
   readonly onlyFlagged = signal<boolean>(false);
+
+  /**
+   * Temas filtrados por el examen seleccionado en URL si aplica
+   */
+  readonly filteredTopics = computed<Topic[]>(() => {
+    const exam = this.selectedExam();
+    if (exam === 'all') return this.topics();
+    return this.topics().filter((t) =>
+      exam === '102' ? parseInt(t.id, 10) >= 105 : parseInt(t.id, 10) <= 104
+    );
+  });
 
   // Estado de la sesión de práctica
   readonly currentIndex = signal<number>(0);
@@ -59,6 +71,13 @@ export class SimulatorPracticePageComponent implements OnInit {
    */
   readonly filteredQuestions = computed<Question[]>(() => {
     let list = this.allQuestions();
+
+    const examFilter = this.selectedExam();
+    if (examFilter !== 'all') {
+      list = list.filter((q) =>
+        examFilter === '102' ? parseInt(q.topicId, 10) >= 105 : parseInt(q.topicId, 10) <= 104
+      );
+    }
 
     const topicFilter = this.selectedTopicId();
     if (topicFilter !== 'all') {
@@ -142,10 +161,19 @@ export class SimulatorPracticePageComponent implements OnInit {
 
       this.allQuestions.set(loadedQuestions);
 
+      // Leer query param ?exam=
+      const initialExam = this.route.snapshot.queryParamMap.get('exam');
+      if (initialExam === '102' || initialExam === '101') {
+        this.selectedExam.set(initialExam);
+      }
+
       // Leer query param ?tema=
       const initialTopic = this.route.snapshot.queryParamMap.get('tema');
       if (initialTopic && manifest.topics.some((t) => t.id === initialTopic)) {
         this.selectedTopicId.set(initialTopic);
+        if (!initialExam) {
+          this.selectedExam.set(parseInt(initialTopic, 10) >= 105 ? '102' : '101');
+        }
       }
     } finally {
       this.isLoading.set(false);

@@ -15,8 +15,8 @@ Reglas: un paso o subtema solo pasa a "hecho" con su gate en PASS (spec 10). Los
 | R2 | Herramientas de cobertura y validación | hecho | 2026-11-01 | f12ede6 | CLI cobertura (verify, report, progress, validation:register, verify:validations), 14 tests vitest OK |
 | R3 | Enlaces tipo Wikipedia | hecho | 2026-11-01 | c98b648 | Engine autolink (15 tests), preview card interactiva, enlaces contextuales en /comandos y /glosario, E2E f5 promovido a verde (76 E2E) |
 | R4 | Pestaña Practica lo aprendido | hecho | 2026-11-01 | d404209 | PracticeTabComponent (Bloques A, B, C), fin de slides CTA, insignias y áreas clave en temario, E2E f6 promovido a verde (80 E2E) |
-| R5 | Flashcards masivas | pendiente | | | |
-| R6 | Simulador examen 102 | pendiente | | | |
+| R5 | Flashcards masivas | hecho | 2026-11-01 | 3d9e998 | 1 182 flashcards, 684 flags (100%), 0 subtemas < 10 cards, explorador en tiempo real, E2E f2 promovido a verde (84 E2E) |
+| R6 | Simulador examen 102 | hecho | 2026-11-01 | C-0071 | 120 preguntas importadas en 105-110 (19/19 subtemas cubiertos), selector examen 101/102, simulacro 60 preguntas / 90 min, E2E f1 promovido a verde (90 E2E) |
 | R7 | Mapa mental | pendiente | | | |
 
 ## Subtemas del examen 102 (6 estados: 1 Extraído · 2 Trazado · 3 Completado · 4 Auto-verificado · 5 Auditado · 6 Validado)
@@ -50,25 +50,25 @@ Reglas: un paso o subtema solo pasa a "hecho" con su gate en PASS (spec 10). Los
 <!-- AUTO:BEGIN -->
 | Subtema | Unidades (Map/Tot) | Tokens % | Diapositivas | Preguntas | Flashcards | Validación |
 |---|---|---|---|---|---|---|
-| 105.1 | 0 / 1606 | 0% | 19 | 0 | 0 | ⏳ Pendiente |
-| 105.2 | 0 / 530 | 0% | 19 | 0 | 5 | ⏳ Pendiente |
-| 106.1 | 0 / 245 | 0% | 19 | 0 | 4 | ⏳ Pendiente |
-| 106.2 | 0 / 121 | 0% | 16 | 0 | 4 | ⏳ Pendiente |
-| 106.3 | 0 / 96 | 0% | 15 | 0 | 4 | ⏳ Pendiente |
-| 107.1 | 0 / 525 | 0% | 19 | 0 | 3 | ⏳ Pendiente |
-| 107.2 | 0 / 433 | 0% | 19 | 0 | 3 | ⏳ Pendiente |
-| 107.3 | 0 / 241 | 0% | 18 | 0 | 2 | ⏳ Pendiente |
-| 108.1 | 0 / 611 | 0% | 16 | 0 | 3 | ⏳ Pendiente |
-| 108.2 | 0 / 1180 | 0% | 19 | 0 | 3 | ⏳ Pendiente |
-| 108.3 | 0 / 187 | 0% | 16 | 0 | 0 | ⏳ Pendiente |
-| 108.4 | 0 / 299 | 0% | 16 | 0 | 0 | ⏳ Pendiente |
-| 109.1 | 0 / 333 | 0% | 18 | 0 | 0 | ⏳ Pendiente |
-| 109.2 | 0 / 341 | 0% | 18 | 0 | 0 | ⏳ Pendiente |
-| 109.3 | 0 / 568 | 0% | 18 | 0 | 0 | ⏳ Pendiente |
-| 109.4 | 0 / 293 | 0% | 16 | 0 | 0 | ⏳ Pendiente |
-| 110.1 | 0 / 751 | 0% | 18 | 0 | 10 | ⏳ Pendiente |
-| 110.2 | 0 / 290 | 0% | 16 | 0 | 10 | ⏳ Pendiente |
-| 110.3 | 0 / 755 | 0% | 19 | 0 | 12 | ⏳ Pendiente |
+| 105.1 | 0 / 1606 | 0% | 19 | 12 | 0 | ⏳ Pendiente |
+| 105.2 | 0 / 530 | 0% | 19 | 6 | 5 | ⏳ Pendiente |
+| 106.1 | 0 / 245 | 0% | 19 | 8 | 4 | ⏳ Pendiente |
+| 106.2 | 0 / 121 | 0% | 16 | 3 | 4 | ⏳ Pendiente |
+| 106.3 | 0 / 96 | 0% | 15 | 1 | 4 | ⏳ Pendiente |
+| 107.1 | 0 / 525 | 0% | 19 | 6 | 3 | ⏳ Pendiente |
+| 107.2 | 0 / 433 | 0% | 19 | 10 | 3 | ⏳ Pendiente |
+| 107.3 | 0 / 241 | 0% | 18 | 4 | 2 | ⏳ Pendiente |
+| 108.1 | 0 / 611 | 0% | 16 | 8 | 3 | ⏳ Pendiente |
+| 108.2 | 0 / 1180 | 0% | 19 | 7 | 3 | ⏳ Pendiente |
+| 108.3 | 0 / 187 | 0% | 16 | 4 | 0 | ⏳ Pendiente |
+| 108.4 | 0 / 299 | 0% | 16 | 3 | 0 | ⏳ Pendiente |
+| 109.1 | 0 / 333 | 0% | 18 | 8 | 0 | ⏳ Pendiente |
+| 109.2 | 0 / 341 | 0% | 18 | 11 | 0 | ⏳ Pendiente |
+| 109.3 | 0 / 568 | 0% | 18 | 4 | 0 | ⏳ Pendiente |
+| 109.4 | 0 / 293 | 0% | 16 | 4 | 0 | ⏳ Pendiente |
+| 110.1 | 0 / 751 | 0% | 18 | 10 | 10 | ⏳ Pendiente |
+| 110.2 | 0 / 290 | 0% | 16 | 5 | 10 | ⏳ Pendiente |
+| 110.3 | 0 / 755 | 0% | 19 | 6 | 12 | ⏳ Pendiente |
 <!-- AUTO:END -->
 
 ## Siguiente paso exacto

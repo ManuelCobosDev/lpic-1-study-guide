@@ -18,6 +18,8 @@ export interface Question {
   explanation: string;
   difficulty: QuestionDifficulty;
   placeholder: boolean;
+  status?: 'verificada' | 'pendiente-verificacion';
+  verified?: boolean;
   src?: string;
   source?: string;
   explainedIn?: string;

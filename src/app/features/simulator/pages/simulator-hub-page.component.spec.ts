@@ -5,6 +5,7 @@ import { ContentService } from '../../../core/services/content.service';
 import { Router, provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
 import { CurriculumManifest } from '../../../core/models/curriculum.model';
+import { ActiveExamSession } from '../../../core/models/attempt.model';
 
 describe('SimulatorHubPageComponent', () => {
   let component: SimulatorHubPageComponent;
@@ -24,9 +25,17 @@ describe('SimulatorHubPageComponent', () => {
     examServiceMock = {
       hasActiveSession: signal(false),
       activeSession: signal(null),
+      selectedExamId: signal<'101' | '102'>('101'),
+      setSelectedExamId: vi.fn(),
+      getVerifiedQuestionsStats: vi.fn().mockResolvedValue({
+        total: 120,
+        verified: 0,
+        pending: 120,
+        hasPending: true
+      }),
       getRecentAttempts: vi.fn().mockReturnValue([]),
       getRemainingSeconds: vi.fn().mockReturnValue(3600),
-      startExam: vi.fn().mockResolvedValue({ id: 'test-session' }),
+      startExam: vi.fn().mockResolvedValue({ id: 'test-session' } as unknown as ActiveExamSession),
       abandonCurrentExam: vi.fn()
     };
 
@@ -57,20 +66,32 @@ describe('SimulatorHubPageComponent', () => {
     expect(component.topics().length).toBe(2);
   });
 
-  it('debe iniciar un simulacro cronometrado y navegar a /simulador/examen', async () => {
+  it('debe iniciar un simulacro cronometrado y navegar a /simulador/examen con el examen seleccionado', async () => {
     await component.startTimedExam();
-    expect(examServiceMock.startExam).toHaveBeenCalledWith({ mode: 'exam' });
+    expect(examServiceMock.startExam).toHaveBeenCalledWith({
+      mode: 'exam',
+      examId: '101',
+      onlyVerified: false
+    });
     expect(router.navigate).toHaveBeenCalledWith(['/simulador/examen']);
+  });
+
+  it('debe permitir seleccionar el Examen 102 y alternar filtros', async () => {
+    await component.selectExam('102');
+    expect(component.selectedExam()).toBe('102');
+    expect(examServiceMock.setSelectedExamId).toHaveBeenCalledWith('102');
   });
 
   it('debe navegar a práctica libre con o sin query params de tema', () => {
     component.goToPractice('101');
     expect(router.navigate).toHaveBeenCalledWith(['/simulador/practica'], {
-      queryParams: { tema: '101' }
+      queryParams: { exam: '101', tema: '101' }
     });
 
     component.goToPractice();
-    expect(router.navigate).toHaveBeenCalledWith(['/simulador/practica']);
+    expect(router.navigate).toHaveBeenCalledWith(['/simulador/practica'], {
+      queryParams: { exam: '101' }
+    });
   });
 
   it('debe permitir descartar un examen activo', () => {

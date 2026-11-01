@@ -80,6 +80,13 @@ describe('ExamService (Servicio de Gestión de Exámenes y Persistencia)', () =>
         title: 'Tema 103',
         weight: 15,
         subtopicIds: ['103.4']
+      },
+      {
+        id: '105',
+        examId: '102',
+        title: 'Tema 105',
+        weight: 8,
+        subtopicIds: ['105.1']
       }
     ],
     subtopics: [
@@ -102,6 +109,16 @@ describe('ExamService (Servicio de Gestión de Exámenes y Persistencia)', () =>
         status: 'available',
         slideCount: 19,
         placeholder: false
+      },
+      {
+        id: '105.1',
+        topicId: '105',
+        title: 'Subtema 105.1',
+        weight: 8,
+        estimatedMinutes: 20,
+        status: 'available',
+        slideCount: 10,
+        placeholder: false
       }
     ]
   };
@@ -116,9 +133,29 @@ describe('ExamService (Servicio de Gestión de Exámenes y Persistencia)', () =>
     })
   };
 
+  const mock105Questions: Question[] = [
+    {
+      id: 'q105_1',
+      topicId: '105',
+      subtopicId: '105.1',
+      type: 'single',
+      prompt: 'Pregunta 105',
+      correct: ['a'],
+      explanation: 'Exp 105',
+      difficulty: 'easy',
+      placeholder: false,
+      status: 'pendiente-verificacion'
+    }
+  ];
+
   const mockContentService = {
     getManifest: vi.fn().mockResolvedValue(mockManifest),
-    getQuestions: vi.fn().mockResolvedValue(mockQuestions)
+    getQuestions: vi.fn((topicId: string) => {
+      if (topicId === '105') {
+        return Promise.resolve(mock105Questions);
+      }
+      return Promise.resolve(mockQuestions);
+    })
   };
 
   const mockPreferencesService = {
@@ -233,5 +270,27 @@ describe('ExamService (Servicio de Gestión de Exámenes y Persistencia)', () =>
     service.abandonCurrentExam();
     expect(service.hasActiveSession()).toBe(false);
     expect(service.activeSession()).toBeNull();
+  });
+
+  it('debe seleccionar preguntas de temas 105-110 al iniciar simulacro del Examen 102', async () => {
+    const session = await service.startExam({ mode: 'exam', examId: '102', questionLimit: 1 });
+    expect(session.examId).toBe('102');
+    expect(session.questions[0]?.topicId).toBe('105');
+    expect(session.durationSeconds).toBe(90);
+    expect(service.selectedExamId()).toBe('102');
+  });
+
+  it('debe calcular estadísticas de preguntas verificadas para el Examen 102', async () => {
+    const stats = await service.getVerifiedQuestionsStats('102');
+    expect(stats.total).toBe(1);
+    expect(stats.verified).toBe(0);
+    expect(stats.pending).toBe(1);
+    expect(stats.hasPending).toBe(true);
+  });
+
+  it('debe recordar y actualizar el selectedExamId seleccionado', () => {
+    expect(service.selectedExamId()).toBe('101');
+    service.setSelectedExamId('102');
+    expect(service.selectedExamId()).toBe('102');
   });
 });

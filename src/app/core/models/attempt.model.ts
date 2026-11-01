@@ -12,6 +12,7 @@ export interface QuestionAnswer {
 export interface ActiveExamSession {
   id: string;
   mode: 'exam' | 'practice';
+  examId?: '101' | '102';
   topicId?: string;
   startedAt: string;
   durationSeconds: number;
@@ -24,6 +25,7 @@ export interface ActiveExamSession {
 export interface ExamAttempt {
   id: string;
   mode: 'exam' | 'practice';
+  examId?: '101' | '102';
   topicId?: string;           // Si es práctica específica de tema
   startedAt: string;
   finishedAt?: string;

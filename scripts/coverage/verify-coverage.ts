@@ -118,9 +118,17 @@ export function evaluateCoverage(subtopicId: string, options: CoverageOptions = 
     questions = options.questionsOverride;
   } else {
     const qPath = path.resolve(rootDir, `content-src/questions/${topicId}.yaml`);
+    const qJsonPath = path.resolve(rootDir, `content-src/questions/${topicId}.json`);
     if (fs.existsSync(qPath)) {
       try {
         const qData = yaml.load(fs.readFileSync(qPath, 'utf-8')) as { questions?: Question[] };
+        questions = (qData?.questions || []).filter(q => q.subtopicId === subtopicId);
+      } catch {
+        // fallback
+      }
+    } else if (fs.existsSync(qJsonPath)) {
+      try {
+        const qData = JSON.parse(fs.readFileSync(qJsonPath, 'utf-8')) as { questions?: Question[] };
         questions = (qData?.questions || []).filter(q => q.subtopicId === subtopicId);
       } catch {
         // fallback

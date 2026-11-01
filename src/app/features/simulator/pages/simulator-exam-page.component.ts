@@ -7,7 +7,7 @@ import {
   inject,
   signal
 } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ExamService } from '../../../core/services/exam.service';
 import { Question } from '../../../core/models/question.model';
 import { TimerBarComponent } from '../components/timer-bar/timer-bar.component';
@@ -30,6 +30,7 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
 })
 export class SimulatorExamPageComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   readonly examService = inject(ExamService);
 
   readonly remainingSeconds = signal<number>(0);
@@ -99,7 +100,21 @@ export class SimulatorExamPageComponent implements OnInit, OnDestroy {
   });
 
   async ngOnInit(): Promise<void> {
-    const session = this.activeSession();
+    let session = this.activeSession();
+    const queryExam = this.route.snapshot.queryParamMap.get('exam');
+
+    if (!session && queryExam) {
+      const examId = queryExam === '102' ? '102' : '101';
+      await this.examService.startExam({ mode: 'exam', examId });
+      session = this.activeSession();
+    } else if (session && queryExam) {
+      const targetExam = queryExam === '102' ? '102' : '101';
+      if (session.examId && session.examId !== targetExam) {
+        await this.examService.startExam({ mode: 'exam', examId: targetExam });
+        session = this.activeSession();
+      }
+    }
+
     if (!session) {
       // Si no hay sesión activa, intentar iniciar una o redirigir
       await this.router.navigate(['/simulador']);

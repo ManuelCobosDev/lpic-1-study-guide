@@ -17,6 +17,8 @@ export const QuestionSchema = z.object({
   explanation: z.string().min(1),
   difficulty: z.enum(['easy', 'medium', 'hard']),
   placeholder: z.boolean(),
+  status: z.enum(['verificada', 'pendiente-verificacion']).optional(),
+  verified: z.boolean().optional(),
   src: z.string().optional(),
   source: z.string().optional(),
   explainedIn: z.string().optional()
