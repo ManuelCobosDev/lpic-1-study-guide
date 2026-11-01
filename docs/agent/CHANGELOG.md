@@ -464,3 +464,18 @@
 - Archivos: README.md, docs/ARCHITECTURE.md, docs/DESIGN_SYSTEM.md, docs/CONTENT_GUIDE.md, docs/DEPLOY.md, scripts/new-subtopic.ts, scripts/new-subtopic.spec.ts, e2e/demo.spec.ts, e2e/fase-12.spec.ts, e2e/fase-10.spec.ts, src/app/features/study/pages/lesson-print-page.component.ts, src/app/features/glossary/pages/glossary-page.component.css, src/app/features/glossary/components/alpha-index/alpha-index.component.css, e2e/screenshots/demo/*, e2e/screenshots/fase-12/*, docs/agent/STATUS.md, docs/agent/CHANGELOG.md.
 - Verificación: npm run verify (9 etapas en verde, 74 tests E2E pasando), npm run build (108.09 kB gzip inicial), npm run check:stubs -- --strict (0 stubs pendientes).
 - Pendiente / deuda: MVP completado al 100%. Código listo para producción.
+
+
+## C-0065 · 2026-11-01 · Ronda 2 · R0: Diagnóstico, línea base y tests pendientes de los 6 fallos
+- Qué: ejecución completa del paso R0 de la Ronda 2 (Diagnóstico y línea base):
+  (1) Generación del informe cuantitativo canónico `docs/agent/DIAGNOSTICO_R2.md` con las cifras reales del repositorio (42 subtemas, 770 diapositivas, 42 laboratorios, 240 preguntas, 193 comandos, 230 términos, 55 nodos del mapa mental y 423 flashcards).
+  (2) Diagnóstico exhaustivo y causa raíz con archivo y línea de los 6 fallos observados (F1 a F6: simulador sin 102, flashcards sin mazos ni opciones, mapa mental con zoom inactivo por falta de initZoom(), falta de cobertura en subtemas del 102 respecto a las 594 páginas del PDF, ausencia de sistema de enlaces contextuales tipo Wikipedia, y falta de la 4ª pestaña 'Practica lo aprendido').
+  (3) Verificación de los manuales oficiales en `_legacy/Recurso Final Definitivo/`: `LPI-Learning-Material-101-500-es.pdf` (571 páginas) y `LPI-Learning-Material-102-500-es.pdf` (594 páginas, fuente de verdad de R2) accesibles con PyMuPDF.
+  (4) Creación de la suite de 5 tests pendientes en `e2e/ronda2/pendientes/` (`f1-simulador-102.spec.ts`, `f2-flashcards-masivas.spec.ts`, `f3-mapa-mental.spec.ts`, `f5-enlaces-wikipedia.spec.ts`, `f6-practica-subtema.spec.ts`) ejecutables con `npm run e2e:pendientes`, verificando que los 5 fallan limpiamente por las aserciones funcionales esperadas.
+  (5) Generación e inspección visual de las 6 capturas de evidencia de los fallos en `e2e/screenshots/r2-R0/`.
+  (6) Configuración de `playwright.config.ts` y `package.json` para aislar `pendientes` del flujo principal, permitiendo que `npm run verify` permanezca 100% verde (75 tests E2E y 17 tests unitarios de scripts pasando).
+  (7) Inicialización de la línea base en `docs/agent/PROGRESO_R2.md` marcando R0 como hecho.
+- Por qué: especificación del paso R0 en `docs/spec/10-ronda2-plan.md` y regla 40 de fidelidad y cobertura.
+- Archivos: docs/agent/DIAGNOSTICO_R2.md, docs/agent/PROGRESO_R2.md, e2e/ronda2/pendientes/*, e2e/ronda2/capturas-r0.spec.ts, e2e/screenshots/r2-R0/*, scripts/run-pendientes.ts, package.json, playwright.config.ts.
+- Verificación: npm run e2e:pendientes (5 tests ejecutados, los 5 en rojo por la causa esperada), npm run verify (9 etapas completas en verde, 75 tests E2E y 17 tests unitarios pasando).
+- Pendiente / deuda: Paso R1 (Extracción completa determinista del PDF 102 mediante PyMuPDF con contabilidad >= 99.5%).

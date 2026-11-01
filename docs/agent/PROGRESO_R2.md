@@ -10,7 +10,7 @@ Reglas: un paso o subtema solo pasa a "hecho" con su gate en PASS (spec 10). Los
 ## Pasos de herramientas
 | Paso | Qué | Estado | Fecha | Commit | Evidencia |
 |---|---|---|---|---|---|
-| R0 | Diagnóstico y línea base | pendiente | | | |
+| R0 | Diagnóstico y línea base | hecho | 2026-11-01 | aff8392 | DIAGNOSTICO_R2.md + 5 tests en rojo |
 | R1 | Extracción completa del PDF 102 | pendiente | | | |
 | R2 | Herramientas de cobertura y validación | pendiente | | | |
 | R3 | Enlaces tipo Wikipedia | pendiente | | | |
@@ -52,4 +52,4 @@ Reglas: un paso o subtema solo pasa a "hecho" con su gate en PASS (spec 10). Los
 <!-- AUTO:END -->
 
 ## Siguiente paso exacto
-R0: abre una conversación nueva y escribe `/ejecutar-paso-r2 R0`.
+R1: abre una conversación nueva y escribe `/ejecutar-paso-r2 R1`.
