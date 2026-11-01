@@ -141,7 +141,7 @@ export class BackupService {
 
     const parseResult = BackupPayloadSchema.safeParse(parsedJson);
     if (!parseResult.success) {
-      const firstError = parseResult.error.errors[0]?.message ?? 'Estructura de copia de seguridad no válida.';
+      const firstError = parseResult.error.issues[0]?.message ?? 'Estructura de copia de seguridad no válida.';
       return { valid: false, error: firstError };
     }
 

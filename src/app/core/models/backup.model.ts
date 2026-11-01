@@ -6,12 +6,12 @@ export const APP_VERSION = '0.1.0';
 
 export const BackupPayloadSchema = z.object({
   format: z.literal(BACKUP_FORMAT, {
-    errorMap: () => ({ message: 'Formato de archivo no válido. Se esperaba una copia de seguridad oficial de LPIC-1 Aula.' })
+    message: 'Formato de archivo no válido. Se esperaba una copia de seguridad oficial de LPIC-1 Aula.'
   }),
   schemaVersion: z.number().int().min(1),
   appVersion: z.string(),
   exportedAt: z.string(),
-  data: z.record(z.unknown()),
+  data: z.record(z.string(), z.unknown()),
   checksum: z.string().length(64, { message: 'El checksum SHA-256 debe tener exactamente 64 caracteres hexadecimales.' })
 });
 

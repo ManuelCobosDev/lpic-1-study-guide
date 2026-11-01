@@ -83,7 +83,7 @@ export const DiagramBlockSchema = z.object({
   title: z.string().optional(),
   caption: z.string().optional(),
   alt: z.string().min(1), // alt obligatorio según 03-dominio.md §3.1
-  spec: z.record(z.unknown()),
+  spec: z.record(z.string(), z.unknown()),
   src: z.string().optional()
 });
 
