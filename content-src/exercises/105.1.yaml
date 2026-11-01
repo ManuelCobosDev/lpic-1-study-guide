@@ -1,0 +1,528 @@
+- id: 105.1-eg-01
+  kind: guiado
+  title: Clasificación de shells e inicio de sesión
+  statement: |-
+    Estudie cómo se han iniciado los shells en la columna 'Iniciado con…' y complete la información requerida (¿Interactivo?, ¿Inicio de sesión?, Resultado de echo $0):
+    • sudo ssh user2@machine2
+    • Ctrl + Alt + F2
+    • su - user2
+    • gnome-terminal
+    • Un usuario regular usa konsole para iniciar una instancia de sakura
+    • Un script llamado test.sh que contiene el comando echo $0
+  answer: |-
+    • sudo ssh user2@machine2 → Interactivo: Sí | Login: Sí | echo $0: -bash
+    • Ctrl + Alt + F2 (TTY virtual) → Interactivo: Sí | Login: Sí | echo $0: -bash
+    • su - user2 → Interactivo: Sí | Login: Sí | echo $0: -bash
+    • gnome-terminal → Interactivo: Sí | Login: No | echo $0: bash
+    • konsole / sakura → Interactivo: Sí | Login: No | echo $0: /bin/bash (o bash)
+    • Script test.sh → Interactivo: No | Login: No | echo $0: ./test.sh
+  source:
+    - 105.1#u288-u295
+    - 105.1#u389-u399
+- id: 105.1-eg-02
+  kind: guiado
+  title: Comandos su y sudo para lanzar shells específicos
+  statement: |-
+    Escriba los comandos su y sudo para lanzar cada uno de los shells especificados:
+    1. Shell de inicio de sesión interactivo como user2
+    2. Shell de inicio de sesión interactivo como root
+    3. Shell interactivo sin inicio de sesión como root
+    4. Shell interactivo sin inicio de sesión como user2
+    • Shell interactivo de no inicio de sesion como root
+    • Shell interactivo de no inicio de sesion como user2
+  answer: |-
+    1. Login interactivo como user2:
+       • su: su - user2 (o su -l user2, su --login user2)
+       • sudo: sudo su - user2 (o sudo -i -u user2)
+    2. Login interactivo como root:
+       • su: su - root o su -
+       • sudo: sudo su -, sudo -i o sudo su - root
+    3. Shell interactivo sin login como root:
+       • su: su root o su
+       • sudo: sudo su, sudo -s o sudo -u root -s
+    4. Shell interactivo sin login como user2:
+       • su: su user2
+       • sudo: sudo su user2 o sudo -u user2 -s
+    • Shell interactivo de no inicio de sesion como root: su root
+    • Shell interactivo de no inicio de sesion como user2: su user2
+  source:
+    - 105.1#u296-u308
+    - 105.1#u400-u420
+- id: 105.1-eg-03
+  kind: guiado
+  title: Archivos de inicio leídos según el tipo de shell
+  statement: |-
+    ¿Qué archivo de inicio se lee cuando se inicia el shell bajo 'Tipo de shell' (/etc/profile, /etc/bash.bashrc, ~/.profile, ~/.bashrc)?
+    1. Shell de inicio de sesión interactivo como user2
+    2. Shell de inicio de sesión interactivo como root
+    3. Shell interactivo sin inicio de sesión como root
+    4. Shell interactivo sin inicio de sesión como user2
+  answer: |-
+    1. Login interactivo como user2: Sí lee /etc/profile, /etc/bash.bashrc (referenciado), ~/.profile y ~/.bashrc (referenciado).
+    2. Login interactivo como root: Sí lee /etc/profile, /etc/bash.bashrc, ~/.profile / ~/.bash_profile y ~/.bashrc.
+    3. Shell interactivo sin login como root: No lee /etc/profile ni ~/.profile; Sí lee /etc/bash.bashrc y ~/.bashrc.
+    4. Shell interactivo sin login como user2: No lee /etc/profile ni ~/.profile; Sí lee /etc/bash.bashrc y ~/.bashrc.
+  source:
+    - 105.1#u309-u315
+    - 105.1#u421-u431
+- id: 105.1-ee-01
+  kind: exploratorio
+  title: Función simple en archivo e invocación en Bash
+  statement: |-
+    En Bash podemos escribir una simple función '¡Hola mundo!' incluyendo el código:
+    function hello() {
+      echo "Hello world!"
+    }
+    1. ¿Qué deberíamos hacer para que la función esté disponible en el shell actual?
+    2. ¿Cómo la invocarías?
+    3. ¿En qué archivo la agregarías para que esté disponible en cada terminal de user2?
+    4. ¿En qué archivo la pondrías para que se ejecute cuando root lance un nuevo shell?
+  answer: |-
+    1. Ejecutar 'source nombre_archivo' o '. nombre_archivo' para cargar la función en el proceso del shell actual.
+    2. Tecleando directamente su nombre: hello
+    3. En /home/user2/.bashrc para shells interactivos sin login.
+    4. En /etc/bash.bashrc para que se aplique a todos los shells interactivos del sistema.
+  source:
+    - 105.1#u317-u324
+    - 105.1#u433-u444
+- id: 105.1-ee-02
+  kind: exploratorio
+  title: Interactividad en scripts de Bash
+  statement: |-
+    Observe el script hello_world:
+    #!/bin/bash
+    echo "Hello world!"
+    ¿Sería un script interactivo si se le otorgan permisos de ejecución y se invoca? ¿Qué hace que un script sea interactivo?
+  answer: No es interactivo, ya que se ejecuta de forma autónoma sin esperar intervención humana ni tecleo de comandos por parte del usuario. Lo que hace interactivo a un shell o script es requerir entrada directa (stdin/teclado) del usuario.
+  source:
+    - 105.1#u325-u330
+    - 105.1#u445-u453
+- id: 105.1-ee-03
+  kind: exploratorio
+  title: Recargar variables en ~/.bashrc sin reiniciar
+  statement: Imagina que has cambiado los valores de algunas variables en ~/.bashrc y quieres que esos cambios surtan efecto de inmediato. Desde tu directorio principal, ¿cómo podrías lograrlo de dos maneras?
+  answer: 'Ejecutando ''source .bashrc'' o usando el comando punto: ''. .bashrc'' (o ''source ~/.bashrc'' / ''. ~/.bashrc'').'
+  source:
+    - 105.1#u331-u332
+    - 105.1#u454-u457
+- id: 105.1-ee-04
+  kind: exploratorio
+  title: Apertura de terminales virtuales TTY en entorno X Window
+  statement: John acaba de iniciar sesión de X Window en un servidor Linux. ¿Cómo puede abrir una consola virtual tty y qué archivos de inicio se obtendrán al autenticarse en ella?
+  answer: |-
+    Puede acceder presionando Ctrl + Alt + F1 hasta F6 para acceder a una consola virtual TTY. Al ser un shell interactivo de inicio de sesión (login), leerá /etc/profile y el primer dotfile encontrado en su home (/home/john/.bash_profile, .bash_login o .profile).
+    Archivos leídos: /etc/profile y /home/john/.profile.
+  source:
+    - 105.1#u333-u335
+    - 105.1#u458-u462
+- id: 105.1-ee-05
+  kind: exploratorio
+  title: Configuración inicial de plantillas con /etc/skel
+  statement: Linda le pide al administrador que todos los nuevos usuarios del servidor dispongan automáticamente de un archivo .bash_login preconfigurado en su directorio personal. ¿Cómo puede lograrlo el administrador?
+  answer: Colocando el archivo .bash_login dentro del directorio de plantilla /etc/skel. Cuando se cree un nuevo usuario con 'useradd -m', los archivos de /etc/skel se copiarán automáticamente a su nuevo directorio home.
+  source:
+    - 105.1#u336
+    - 105.1#u463-u464
+- id: 105.1-eg-04
+  kind: guiado
+  title: 'Ámbito de variables asignadas: local vs global'
+  statement: |-
+    Indique si la variable resultante en cada asignación es Local o Global:
+    • debian=mother
+    • ubuntu=deb-based
+    • mint=ubuntu-based; export mint
+    • export suse=rpm-based
+    • zorin=ubuntu-based
+  answer: |-
+    • debian=mother → Local: Sí | Global: No
+    • ubuntu=deb-based → Local: Sí | Global: No
+    • mint=ubuntu-based; export mint → Local: No | Global: Sí
+    • export suse=rpm-based → Local: No | Global: Sí
+    • zorin=ubuntu-based → Local: Sí | Global: No
+  source:
+    - 105.1#u843-u849
+    - 105.1#u949-u956
+- id: 105.1-eg-05
+  kind: guiado
+  title: Variables canónicas de entorno y significado de sus valores
+  statement: |-
+    Estudie el comando y la salida y explique su significado:
+    • echo $HISTCONTROL → ignoreboth
+    • echo ~ → /home/carol
+    • echo $DISPLAY → reptilium:0:2
+    • echo $MAILCHECK → 60
+    • echo $HISTFILE → /home/carol/.bash_history
+  answer: |-
+    • HISTCONTROL=ignoreboth: No se registran en el historial ni los comandos duplicados ni los que empiezan por espacio.
+    • echo ~: El directorio HOME del usuario carol es /home/carol.
+    • DISPLAY=reptilium:0:2: La máquina tiene servidor X activo en el display 0, pantalla virtual 2.
+    • MAILCHECK=60: El buzón de correo se verifica cada 60 segundos.
+    • HISTFILE=/home/carol/.bash_history: El historial de sesión se guardará en dicho archivo al salir.
+  source:
+    - 105.1#u850-u856
+    - 105.1#u957-u964
+- id: 105.1-eg-06
+  kind: guiado
+  title: Corrección sintáctica en asignación y referencia de variables
+  statement: |-
+    Corrija los comandos erróneos para que produzcan la salida esperada:
+    1. 'lizard =chameleon' → salida chameleon
+    2. 'cool' y 'lizard=chameleon' → salida chameleon
+    3. 'lizard=cha|me|leon' → salida cha|me|leon
+    4. 'lizard=/** chameleon **/' → salida /** chamelon **/
+    5. 'win_path=C:\path\to\dir\' → salida C:\path\to\dir\
+    Tabla con columnas: [Comando erróneo], [Comando correcto]. Casos evaluados: $cool_lizard, $win_path.
+  answer: |-
+    1. Sin espacios en la asignación: lizard=chameleon; echo $lizard
+    2. Sin espacio previo: lizard=chameleon; echo $lizard
+    3. Entrecomillando caracteres especiales de tubería: lizard='cha|me|leon' (o con comillas dobles)
+    4. Entrecomillando asteriscos para evitar globbing: lizard='/** chameleon **/' (o "/** chameleon **/")
+    5. Entrecomillando barras invertidas: win_path='C:\path\to\dir\' (las comillas simples protegen la barra invertida)
+    Comando erróneo vs Comando correcto con variables $cool_lizard y $win_path.
+  source:
+    - 105.1#u857-u869
+    - 105.1#u965-u979
+- id: 105.1-eg-07
+  kind: guiado
+  title: Comandos para configurar el entorno y variables de sistema
+  statement: |-
+    Escriba el comando apropiado para cada propósito:
+    1. Establecer el idioma del shell actual en español UTF-8 (es_ES.UTF-8)
+    2. Imprimir el nombre del directorio actual usando variable de entorno
+    3. Referenciar la variable que almacena información de conexiones SSH
+    4. Establecer PATH para incluir /home/carol/scripts como último directorio
+    5. Establecer el valor literal 'PATH' en la variable my_path
+    6. Establecer el valor de la variable de entorno PATH en my_path
+  answer: |-
+    1. export LANG=es_ES.UTF-8 (o LC_ALL=es_ES.UTF-8)
+    2. echo $PWD
+    3. echo $SSH_CONNECTION (o $SSH_CLIENT)
+    4. export PATH="$PATH:/home/carol/scripts"
+    5. my_path=PATH
+    6. my_path=$PATH
+  source:
+    - 105.1#u870-u877
+    - 105.1#u980-u991
+- id: 105.1-eg-08
+  kind: guiado
+  title: Creación de variable local mammal
+  statement: Crear una variable estrictamente local llamada 'mammal' y asignarle el valor 'gnu'.
+  answer: mammal=gnu
+  source:
+    - 105.1#u878
+    - 105.1#u992-u993
+- id: 105.1-eg-09
+  kind: guiado
+  title: Sustitución de variable en nueva variable local
+  statement: |-
+    Usando sustitución de variables, cree otra variable local llamada var_sub con el valor 'The value of mammal is gnu'.
+    Asignar a $var_sub: var_sub="The value of mammal is $mammal".
+  answer: |-
+    var_sub="The value of mammal is $mammal"
+    Definición: var_sub="The value of mammal is $mammal". La referencia $var_sub expande el valor.
+  source:
+    - 105.1#u879
+    - 105.1#u994-u995
+- id: 105.1-eg-10
+  kind: guiado
+  title: Promover variable local a variable de entorno con export
+  statement: Convierta la variable local mammal en una variable de entorno global.
+  answer: export mammal
+  source:
+    - 105.1#u880
+    - 105.1#u996-u997
+- id: 105.1-eg-11
+  kind: guiado
+  title: Consultar variable de entorno con set y grep
+  statement: Busque la variable mammal utilizando el comando set y grep.
+  answer: set | grep mammal
+  source:
+    - 105.1#u881
+    - 105.1#u998-u999
+- id: 105.1-eg-12
+  kind: guiado
+  title: Consultar variable de entorno con env y grep
+  statement: Busque la variable mammal utilizando el comando env y grep.
+  answer: env | grep mammal
+  source:
+    - 105.1#u882
+    - 105.1#u1000-u1001
+- id: 105.1-eg-13
+  kind: guiado
+  title: Crear variable de entorno BIRD en dos comandos consecutivos
+  statement: Crear, en dos comandos consecutivos (separados por punto y coma o salto de línea), una variable de entorno llamada BIRD cuyo valor es penguin.
+  answer: BIRD=penguin; export BIRD
+  source:
+    - 105.1#u883
+    - 105.1#u1002-u1003
+- id: 105.1-eg-14
+  kind: guiado
+  title: Crear variable de entorno con valor entrecomillado NEW_BIRD
+  statement: Crear una variable de entorno llamada NEW_BIRD cuyo valor es 'yellow-eyed penguin'.
+  answer: export NEW_BIRD="yellow-eyed penguin" (o con comillas simples 'yellow-eyed penguin')
+  source:
+    - 105.1#u884
+    - 105.1#u1004-u1007
+- id: 105.1-eg-15
+  kind: guiado
+  title: Creación de directorio bin personal
+  statement: Asumiendo que eres user2, escriba el comando para crear una carpeta bin en tu directorio principal.
+  answer: mkdir ~/bin (o mkdir /home/user2/bin o mkdir $HOME/bin)
+  source:
+    - 105.1#u885
+    - 105.1#u1008-u1013
+- id: 105.1-eg-16
+  kind: guiado
+  title: Añadir ~/bin como primer directorio en PATH
+  statement: Escriba el comando para agregar la carpeta ~/bin a su PATH de modo que sea la primera carpeta en la búsqueda de ejecutables.
+  answer: PATH="$HOME/bin:$PATH" (o PATH=~/bin:$PATH)
+  source:
+    - 105.1#u886
+    - 105.1#u1014-u1016
+- id: 105.1-eg-17
+  kind: guiado
+  title: Persistencia condicional de PATH en ~/.bashrc
+  statement: Para garantizar que el valor de PATH permanezca inalterado tras los reinicios, ¿qué bloque de código se añade en ~/.bashrc?
+  answer: |-
+    if [ -d "$HOME/bin" ] ; then
+      PATH="$HOME/bin:$PATH"
+    fi
+  source:
+    - 105.1#u887
+    - 105.1#u1017-u1020
+- id: 105.1-ee-06
+  kind: exploratorio
+  title: Evaluación aritmética con el comando let
+  statement: |-
+    1. Cree una variable llamada my_val cuyo valor sea 10 como resultado de sumar 5 + 5 con let.
+    2. Ahora cree otra variable your_val cuyo valor sea 5 dividiendo $my_val entre 2.
+  answer: |-
+    1. let "my_val = 5 + 5" (o let 'my_val = 5 + 5')
+    2. let "your_val = $my_val / 2" (o let 'your_val = $my_val / 2')
+  source:
+    - 105.1#u889-u891
+    - 105.1#u1022-u1030
+- id: 105.1-ee-07
+  kind: exploratorio
+  title: Sustitución de comandos con backticks vs $(...)
+  statement: |-
+    En la función music_info:
+    latest_music=`ls -l1t ~/Music | head -n 6`
+    ¿Cuál es la sintaxis moderna recomendada y sinónimo exacto?
+    A) latest_music=$(ls -l1t ~/Music | head -n 6)
+    B) latest_music="(ls -l1t ~/Music | head -n 6)"
+    C) latest_music=((ls -l1t ~/Music | head -n 6))
+    Variable utilizada: $latest_music.
+  answer: |-
+    La opción A: latest_music=$(ls -l1t ~/Music | head -n 6). La sintaxis $(comando) es más legible, estándar POSIX y permite anidamiento limpio frente a las comillas invertidas.
+    Definición: latest_music=$(ls -l1t ~/Music | head -n 6). El valor se almacena en $latest_music.
+  source:
+    - 105.1#u892-u905
+    - 105.1#u1031-u1040
+- id: 105.1-eg-18
+  kind: guiado
+  title: 'Tabla comparativa de capacidades: Alias vs Funciones'
+  statement: |-
+    Complete con Sí o No considerando las capacidades de los alias y las funciones:
+    • ¿Las variables locales pueden ser usadas?
+    • ¿Las variables de entorno pueden ser utilizadas?
+    • ¿Se puede escapar con \?
+    • ¿Puede ser recursivo?
+    • ¿Muy productivo cuando se usa con parámetros posicionales ($1, $2)?
+  answer: |-
+    • Variables locales: Alias: Sí | Funciones: Sí
+    • Variables de entorno: Alias: Sí | Funciones: Sí
+    • Escapar con \ para ignorar definición: Alias: Sí (\comando) | Funciones: No
+    • Recursivo: Alias: Sí | Funciones: Sí
+    • Parámetros posicionales: Alias: No (los argumentos se concatenan al final) | Funciones: Sí (maneja $1, $2, etc.)
+  source:
+    - 105.1#u1371-u1377
+    - 105.1#u1482-u1491
+- id: 105.1-eg-19
+  kind: guiado
+  title: Listar todos los alias activos
+  statement: Introduzca el comando que lista todos los alias configurados en el sistema actual.
+  answer: alias
+  source:
+    - 105.1#u1378
+    - 105.1#u1492-u1493
+- id: 105.1-eg-20
+  kind: guiado
+  title: Creación de alias logg para listar archivos multimedia
+  statement: Escriba un alias llamado logg que enumere todos los archivos ogg en ~/Music, uno por línea.
+  answer: alias logg='ls -1 ~/Music/*ogg'
+  source:
+    - 105.1#u1379
+    - 105.1#u1494-u1495
+- id: 105.1-eg-21
+  kind: guiado
+  title: Invocación del alias creado
+  statement: Invoque el alias logg en la terminal para comprobar su funcionamiento.
+  answer: logg
+  source:
+    - 105.1#u1380
+    - 105.1#u1496-u1497
+- id: 105.1-eg-22
+  kind: guiado
+  title: Modificar alias incorporando el usuario de sesión
+  statement: Modifique el alias logg para que imprima el usuario de la sesión ($USER) y dos puntos antes del listado.
+  answer: alias logg='echo -n $USER:; ls -1 ~/Music/*ogg'
+  source:
+    - 105.1#u1381
+    - 105.1#u1498-u1501
+- id: 105.1-eg-23
+  kind: guiado
+  title: Comprobación de la nueva versión del alias
+  statement: Invoque nuevamente el alias modificado para validar que imprime el prefijo de usuario.
+  answer: logg
+  source:
+    - 105.1#u1382
+    - 105.1#u1502-u1505
+- id: 105.1-eg-24
+  kind: guiado
+  title: Verificar presencia del alias en el listado del sistema
+  statement: ¿Cómo comprueba que el alias logg aparece en el listado global de alias?
+  answer: alias | grep logg (o ejecutando 'alias')
+  source:
+    - 105.1#u1383
+    - 105.1#u1506-u1507
+- id: 105.1-eg-25
+  kind: guiado
+  title: Eliminar alias con unalias
+  statement: Escriba el comando para quitar y desregistrar el alias logg del shell actual.
+  answer: unalias logg
+  source:
+    - 105.1#u1384
+    - 105.1#u1508-u1509
+- id: 105.1-eg-26
+  kind: guiado
+  title: Asignación de alias a comandos compuestos
+  statement: |-
+    Asigne cada alias a su definición correcta:
+    • b → bash
+    • bash_info → which bash y echo $BASH_VERSION
+    • kernel_info → uname -r
+    • greet → echo Hi, $USER!
+    • computer → pc=slimbook; echo My computer is a $pc
+    Columnas de la tabla: [Nombre del alias] y [Comando(s) aliado(s)].
+  answer: |-
+    • alias b='bash'
+    • alias bash_info='which bash; echo "$BASH_VERSION"'
+    • alias kernel_info='uname -r'
+    • alias greet='echo Hi, $USER!'
+    • alias computer='pc=slimbook; echo My computer is a $pc'
+    Asociación entre Nombre del alias y Comando(s) aliado(s).
+  source:
+    - 105.1#u1385-u1391
+    - 105.1#u1510-u1525
+- id: 105.1-eg-27
+  kind: guiado
+  title: Definición de función en /etc/bash.bashrc
+  statement: Como root, escriba una función llamada my_fun en /etc/bash.bashrc que salude al usuario con 'Hi, $USER!' y muestre la versión del kernel.
+  answer: |-
+    my_fun() {
+      echo "Hi, $USER!"
+      uname -r
+    }
+  source:
+    - 105.1#u1392
+    - 105.1#u1526-u1531
+- id: 105.1-eg-28
+  kind: guiado
+  title: Validar ejecución de función en sesión de usuario
+  statement: Ingrese como user2 para comprobar que la función my_fun definida en /etc/bash.bashrc está disponible.
+  answer: su - user2; my_fun
+  source:
+    - 105.1#u1393
+    - 105.1#u1532-u1533
+- id: 105.1-eg-29
+  kind: guiado
+  title: Función en una sola línea
+  statement: Escriba la misma función my_fun en una sola línea de comandos.
+  answer: 'my_fun() { echo "Hi, $USER!"; uname -r; }  (Nota: el espacio tras ''{'' y el punto y coma antes de ''}'' son obligatorios)'
+  source:
+    - 105.1#u1394
+    - 105.1#u1534-u1535
+- id: 105.1-eg-30
+  kind: guiado
+  title: Invocación de función en el shell
+  statement: Invoque la función my_fun desde la terminal.
+  answer: my_fun
+  source:
+    - 105.1#u1395
+    - 105.1#u1536-u1537
+- id: 105.1-eg-31
+  kind: guiado
+  title: Eliminación de funciones con unset -f
+  statement: Escriba el comando para desconectar y eliminar la función my_fun de la memoria del shell actual.
+  answer: unset -f my_fun
+  source:
+    - 105.1#u1396
+    - 105.1#u1538-u1539
+- id: 105.1-eg-32
+  kind: guiado
+  title: Variables especiales en funciones de Bash
+  statement: |-
+    Dada la función:
+    special_vars2() {
+      echo $#; echo $_; echo $1; echo $4; echo $6; echo $7; echo $_; echo $@; echo $?
+    }
+    Invocada con: special_vars2 crying cockles and mussels alive alive oh
+    Adivine cada una de las salidas.
+  answer: |-
+    • echo $# → 7 (número total de argumentos pasados)
+    • echo $_ → 7 (último argumento del comando anterior o expansión previa)
+    • echo $1 → crying
+    • echo $4 → mussels
+    • echo $6 → alive
+    • echo $7 → oh
+    • echo $_ → oh (último argumento evaluado)
+    • echo $@ → crying cockles and mussels alive alive oh
+    • echo $? → 0 (código de salida exitoso del comando previo)
+  source:
+    - 105.1#u1397-u1421
+    - 105.1#u1540-u1564
+- id: 105.1-eg-33
+  kind: guiado
+  title: Función parametrizada con control condicional
+  statement: 'Escriba una función llamada check_music que acepte argumentos para: carpeta ($1), extensión ($2), límite máximo ($3) y tipo de archivo ($4), verificando con ''ls -1 ~/$1/*.$2'' e imprimiendo avisos con echo.'
+  answer: |-
+    check_music() {
+      ls -1 ~/$1/*.$2 > ~/.mkv.log 2>&1
+      if [ "$?" = "0" ]; then
+        echo -e "Remember, you must not keep more than $3 $4 files in your $1 folder.\nThanks."
+      else
+        echo -e "You do not have any $4 files in the $1 folder. You can keep up to $3.\nThanks."
+      fi
+    }
+    # Invocación: check_music Music ogg 7 music
+  source:
+    - 105.1#u1422-u1426
+    - 105.1#u1565-u1580
+- id: 105.1-ee-08
+  kind: exploratorio
+  title: Funciones de solo lectura con readonly -f
+  statement: |-
+    1. ¿Cómo se marca una función llamada my_fun para que sea de solo lectura y no pueda ser modificada ni eliminada?
+    2. ¿Cómo se listan todas las funciones de solo lectura activas?
+    Investigación sobre funciones de sólo lectura. Columnas: [Nombre de la función], [Haz que sea sólo de lectura], [Lista de todas las funciones].
+  answer: |-
+    1. readonly -f my_fun
+    2. readonly -f
+    Las funciones de sólo lectura se protegen con readonly -f. Haz que sea sólo de lectura: readonly -f my_fun. Lista de todas las funciones de sólo lectura: readonly -f.
+  source:
+    - 105.1#u1428-u1430
+    - 105.1#u1582-u1584
+- id: 105.1-ee-09
+  kind: exploratorio
+  title: Función fyi y personalización avanzada de PS1
+  statement: 'Escriba una función fyi que muestre: usuario ($USER), home ($HOME), host ($HOSTNAME), SO ($OSTYPE), PATH ($PATH), directorio de correo ($MAIL), frecuencia ($MAILCHECK segundos), nivel de shell ($SHLVL) y modifique PS1 para que muestre ''<user>@<host-date>''.'
+  answer: |-
+    fyi() {
+      echo -e "For your Information:\nUsername: $USER\nHome directory: $HOME\nHost: $HOSTNAME\nOperating System: $OSTYPE\nPath for executable files: $PATH\nYour mail directory is $MAIL and is searched every $MAILCHECK seconds.\nThe current level of your shell is: $SHLVL"
+      PS1="\u@\h-\d "
+    }
+    fyi
+  source:
+    - 105.1#u1431-u1440
+    - 105.1#u1585-u1606

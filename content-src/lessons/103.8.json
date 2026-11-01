@@ -1,0 +1,1641 @@
+{
+  "id": "103.8",
+  "topicId": "103",
+  "examId": "101",
+  "title": "Edición básica de archivos",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 30,
+  "objectives": [
+    "Modos de vi, navegación h/j/k/l, inserción, borrado, yank/put, modo Ex (:), sustitución y recuperación (Alta Densidad LPIC-1)",
+    "Dominio técnico de las herramientas y configuración del subtema 103.8"
+  ],
+  "keyTerms": [
+    "Modos de vi/vim",
+    "Comandos de vi",
+    "vim (Vi IMproved)"
+  ],
+  "commands": [
+    "vi",
+    "i",
+    "x",
+    "yy",
+    "export"
+  ],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "103.8-slide-1",
+      "slideNumber": 1,
+      "title": "Edición básica de archivos (vi/vim)",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Edición básica de archivos (vi/vim)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Modos de vi, navegación h/j/k/l, inserción, borrado, yank/put, modo Ex (:), sustitución y recuperación (Modo Examen)"
+        }
+      ],
+      "notes": "Finalizamos el Tema 103 con el subtema 103.8 (peso 3). El editor vi (y su versión mejorada vim) es el editor estándar indiscutible de los sistemas Unix/Linux. Está presente en todas las instalaciones mínimas, contenedores y entornos de rescate. Dominaremos sus 4 modos de trabajo, navegación eficiente, atajos de edición y comandos de guardado."
+    },
+    {
+      "id": "103.8-slide-2",
+      "slideNumber": 2,
+      "title": "El Editor Estándar de Unix: Por qué vi es Obligatorio",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Editor Estándar de Unix: Por qué vi es Obligatorio"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué la certificación LPIC-1 exige dominar vi en lugar de editores más sencillos como nano?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Rescate en Modo de Emergencia (Single-User / Initramfs)** — 🎯 Cuando un servidor no arranca por un fallo crítico (ej. error en /etc/fstab) y caes en una consola de emergencia, nano NO existe ni está instalado. El único editor presente y compilado en /bin es vi. Si no sabes vi, no puedes reparar el servidor.",
+            "**2. El Único Editor Obligatorio por el Estándar POSIX** — 🎯 El estándar universal POSIX (IEEE 1003.1) estipula que todo sistema Unix/Linux DEBE incluir vi. Está presente en el 100% de las distribuciones del mundo (Debian, Red Hat, SUSE, Arch, Alpine, Docker containers mínimos, BSD y Solaris).",
+            "**3. Conexiones Mínimas sin Ratón ni Teclas de Función** — Diseñado para operar sobre conexiones SSH inestables, consolas serie y terminales remotas. No depende del ratón ni de teclas especiales (F1..F12); todo se controla desde las teclas alfanuméricas centrales (h, j, k, l).",
+            "**4. Invocación Nativa por Herramientas Críticas** — Herramientas esenciales del sistema como 'visudo' (editar sudoers de forma segura), 'crontab -e', 'edquota' o 'git commit' invocan automáticamente vi por defecto si no se configura otra variable."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:14px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚖️ nano frente a vi: ¿Por qué la Certificación LPIC-1 Exige vi?</span>\n    <span style=\"font-size:11px; background:#FEF3C7; color:#92400E; padding:2px 8px; border-radius:12px; font-weight:700;\">Diferencia Clave de Aula</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12px;\">\n    <!-- nano -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#991B1B; font-size:13px;\">Editor nano (No exigido en LPIC-1)</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:9.5px; font-weight:700; padding:1px 5px; border-radius:3px;\">Opcional</span>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.4;\">\n        • Intuitivo para principiantes (muestra atajos abajo).<br>\n        • <strong>DESVENTAJA CRÍTICA:</strong> Paquete adicional. <strong>NO viene instalado</strong> en entornos mínimos de producción, imágenes Docker base ni consolas de rescate <em>initramfs</em>.<br>\n        • Si el servidor falla, nano no estará disponible.\n      </div>\n    </div>\n\n    <!-- vi -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:13px;\">Editor vi / vim (Obligatorio en LPIC-1)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:700; padding:1px 5px; border-radius:3px;\">100% Universal</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • <strong>ESTÁNDAR POSIX:</strong> Garantizado en el 100% de los Unix/Linux.<br>\n        • <strong>DISPONIBLE SIEMPRE:</strong> Presente en modo de rescate, consolas de recuperación de emergencia y servidores minimalistas.<br>\n        • <strong>NATIVO:</strong> Invocado por <code>visudo</code> y <code>crontab -e</code> de serie.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Oro: nano es cómodo para usuarios noveles, pero vi es la herramienta universal de supervivencia del administrador de sistemas. Si el servidor se rompe, vi es el único editor que siempre estará disponible."
+        }
+      ],
+      "notes": "Insiste a los alumnos: en un examen de certificación y en un servidor de producción caído, nano no te salvará la vida; vi sí."
+    },
+    {
+      "id": "103.8-slide-3",
+      "slideNumber": 3,
+      "title": "La Máquina de Estados de vi: Modos y Transiciones",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "La Máquina de Estados de vi: Modos y Transiciones"
+        },
+        {
+          "type": "paragraph",
+          "text": "En vi las teclas no siempre escriben texto; el editor opera como una máquina de estados finitos:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin:14px 0;\">\n  <div style=\"font-size:15.5px; font-weight:800; color:var(--text); margin-bottom:12px;\">\n    🔄 Ciclo de Transición entre Modos de vi:\n  </div>\n\n  <div style=\"display:flex; justify-content:space-between; align-items:center; font-size:12.5px;\">\n    <!-- Modo Inserción -->\n    <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:12px; width:28%; text-align:center;\">\n      <div style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:11px; padding:2px 6px; border-radius:4px; margin-bottom:6px;\">\n        MODO INSERCIÓN\n      </div>\n      <strong style=\"color:#15803D; font-size:13.5px;\">Escritura de Texto</strong><br>\n      <code style=\"font-size:11px; color:#14532D;\">-- INSERT --</code><br>\n      <span style=\"color:#475569; font-size:11px;\">Teclear texto directo</span>\n    </div>\n\n    <!-- Flechas izq -->\n    <div style=\"display:flex; flex-direction:column; gap:8px; align-items:center; font-size:11.5px;\">\n      <span style=\"color:#16A34A; font-weight:800;\">i, I, a, A, o, O ▶</span>\n      <span style=\"color:#2563EB; font-weight:800;\">◀ Esc (Salir)</span>\n    </div>\n\n    <!-- Modo Normal (Centro) -->\n    <div style=\"background:#EFF6FF; border:3px solid #2563EB; border-radius:12px; padding:14px; width:30%; text-align:center; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);\">\n      <div style=\"background:#2563EB; color:#FFF; font-weight:900; font-size:12px; padding:3px 8px; border-radius:4px; margin-bottom:6px;\">\n        MODO NORMAL / COMANDO\n      </div>\n      <strong style=\"color:#1E40AF; font-size:14px;\">(Estado por Defecto)</strong><br>\n      <span style=\"color:#475569; font-size:11.5px;\">Navegación (h,j,k,l)<br>Copiar (yy) / Borrar (dd)</span>\n    </div>\n\n    <!-- Flechas der -->\n    <div style=\"display:flex; flex-direction:column; gap:8px; align-items:center; font-size:11.5px;\">\n      <span style=\"color:#D97706; font-weight:800;\">: (Dos Puntos) ▶</span>\n      <span style=\"color:#2563EB; font-weight:800;\">◀ Esc o Enter</span>\n    </div>\n\n    <!-- Modo Ex / Comando -->\n    <div style=\"background:#FEF3C7; border:2px solid #F59E0B; border-radius:10px; padding:12px; width:28%; text-align:center;\">\n      <div style=\"background:#D97706; color:#FFF; font-weight:800; font-size:11px; padding:2px 6px; border-radius:4px; margin-bottom:6px;\">\n        MODO EX / LÍNEA ( : )\n      </div>\n      <strong style=\"color:#B45309; font-size:13.5px;\">Guardado y Salida</strong><br>\n      <code style=\"font-size:11px; color:#78350F;\">:w , :q! , :wq , :%s</code><br>\n      <span style=\"color:#475569; font-size:11px;\">Comandos avanzados</span>\n    </div>\n  </div>\n\n  <div style=\"margin-top:14px; padding:8px 14px; background:#F8FAFC; border-left:4px solid #3B82F6; border-radius:4px; font-size:13px; color:#1E3A8A;\">\n    🎯 <strong>REGLA DE SUPERVIVENCIA EN EXAMEN:</strong> Si no sabes en qué modo estás o el teclado no responde como esperas, ¡pulsa <code>&lt;Esc&gt;</code> dos veces! Siempre te devolverá al Modo Normal de forma segura.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Supervivencia en vi: Si te pierdes o no sabes en qué modo estás, ¡pulsa la tecla 'Esc' dos veces para volver al Modo Normal!"
+        }
+      ],
+      "notes": "Haz que los alumnos interioricen: 'Esc' te devuelve siempre a casa (Modo Normal)."
+    },
+    {
+      "id": "103.8-slide-4",
+      "slideNumber": 4,
+      "title": "Invocación y Navegación Fundamental: h, j, k, l y Saltos",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Invocación y Navegación Fundamental: h, j, k, l y Saltos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Moverse por el archivo sin despegar las manos de la fila central del teclado:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "vi [+<línea>] <archivo> (Navegación en Modo Normal)",
+          "title": "Abrir archivos en líneas específicas y desplazarse rápidamente por el documento"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "vi +50 /etc/ssh/sshd_config",
+              "output": "# Abre el archivo posicionando el cursor directamente en la línea 50."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "vi +<N> <archivo>",
+              "Abrir en línea N",
+              "🎯 Abre el archivo posicionando el cursor directamente en la línea N."
+            ],
+            [
+              "h, j, k, l",
+              "Navegación fila central",
+              "🎯 'h' izquierda, 'j' abajo, 'k' arriba, 'l' derecha."
+            ],
+            [
+              "w / b",
+              "Palabra adelante/atrás",
+              "🎯 'w' salta a la palabra siguiente (word); 'b' salta a la anterior (back)."
+            ],
+            [
+              "0 / $",
+              "Inicio / Fin de línea",
+              "🎯 '0' salta al inicio de línea; '$' salta al final exacto."
+            ],
+            [
+              "1G (o gg) / G",
+              "Inicio / Fin de archivo",
+              "🎯 '1G' o 'gg' salta a la primera línea; 'G' mayúscula a la última línea."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:12px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    ⌨️ Teclado de Navegación Fundamental en Modo Normal:\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; font-size:12px; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#1E40AF; font-size:15px;\">h</strong><br>\n      <span style=\"color:#2563EB; font-weight:700;\">◀ Izquierda</span>\n    </div>\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#1E40AF; font-size:15px;\">j</strong><br>\n      <span style=\"color:#2563EB; font-weight:700;\">▼ Abajo</span>\n    </div>\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#1E40AF; font-size:15px;\">k</strong><br>\n      <span style=\"color:#2563EB; font-weight:700;\">▲ Arriba</span>\n    </div>\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#1E40AF; font-size:15px;\">l</strong><br>\n      <span style=\"color:#2563EB; font-weight:700;\">▶ Derecha</span>\n    </div>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-top:8px; font-size:11.5px; text-align:center;\">\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px;\">\n      <code>w</code> : Palabra siguiente | <code>b</code> : Palabra atrás\n    </div>\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px;\">\n      <code>0</code> : Inicio línea | <code>$</code> : Fin de línea\n    </div>\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px;\">\n      <code>gg</code> : Inicio archivo | <code>G</code> : Fin archivo\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: '1G' (o 'gg') primera línea; 'G' última línea; '0' inicio de línea; '$' fin de línea."
+        }
+      ],
+      "notes": "Muestra la mnemotecnia de h/j/k/l: j apunta hacia abajo (tiene cola hacia abajo), k apunta hacia arriba."
+    },
+    {
+      "id": "103.8-slide-5",
+      "slideNumber": 5,
+      "title": "Transición al Modo Inserción: i, I, a, A, o, O",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Transición al Modo Inserción: i, I, a, A, o, O"
+        },
+        {
+          "type": "paragraph",
+          "text": "Las 6 teclas para comenzar a redactar texto según la posición deseada:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "i | I | a | A | o | O (desde Modo Normal)",
+          "title": "Entrar en Modo Inserción para escribir texto en diferentes posiciones relativas al cursor"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "# En modo normal pulsas 'o' y vi abre una línea en blanco debajo:\n-- INSERT --",
+              "output": "# Todo lo que teclees a continuación se escribe en el archivo."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "i / I",
+              "Insertar antes / al inicio",
+              "🎯 'i' inserta antes del cursor; 'I' salta al principio de la línea e inserta."
+            ],
+            [
+              "a / A",
+              "Añadir después / al final",
+              "🎯 'a' añade después del cursor; 'A' salta al final de la línea y añade."
+            ],
+            [
+              "o (Open below)",
+              "Nueva línea DEBAJO",
+              "🎯 Clave de Examen: Abre una nueva línea en blanco DEBAJO de la actual y entra en inserción."
+            ],
+            [
+              "O (Open above)",
+              "Nueva línea ENCIMA",
+              "🎯 Clave de Examen: Abre una nueva línea en blanco ENCIMA de la actual y entra en inserción."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:12px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🎯 Posiciones Relativas de Inserción Respecto al Cursor:\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:12.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF; font-size:13.5px;\">i frente a a:</strong><br>\n      • <code>i</code> : Inserta <strong>antes</strong> del cursor.<br>\n      • <code>a</code> : Añade <strong>después</strong> del cursor.\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#15803D; font-size:13.5px;\">I frente a A:</strong><br>\n      • <code>I</code> : Salta al <strong>inicio</strong> de la línea.<br>\n      • <code>A</code> : Salta al <strong>final</strong> de la línea.\n    </div>\n\n    <div style=\"background:#FEF3C7; border:1px solid #FCD34D; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#B45309; font-size:13.5px;\">o frente a O:</strong><br>\n      • <code>o</code> : Abre línea <strong>DEBAJO</strong>.<br>\n      • <code>O</code> : Abre línea <strong>ENCIMA</strong>.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Diferencia Clásica de Examen: 'o' (minúscula) abre línea debajo; 'O' (mayúscula) abre línea encima; 'i' inserta antes, 'a' inserta después."
+        }
+      ],
+      "notes": "Haz que los alumnos practiquen la combinación 'A' para ir al final de la línea y añadir código de inmediato."
+    },
+    {
+      "id": "103.8-slide-6",
+      "slideNumber": 6,
+      "title": "Búsqueda Interactiva en vi: / y ?",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Búsqueda Interactiva en vi: / y ?"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo encontrar palabras en un archivo de configuración de miles de líneas?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "/<patrón> (hacia adelante) | ?<patrón> (hacia atrás)",
+          "title": "Localizar cadenas o expresiones regulares dentro del documento abierto"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "/Port\n# vi resalta la primera aparición de 'Port' y coloca el cursor sobre ella.",
+              "output": "Port 22\n# Pulsar 'n' salta a la siguiente aparición."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "/<patrón> y Enter",
+              "",
+              "🎯 Clave de Examen: Busca hacia ADELANTE (hacia el final del archivo) a partir del cursor."
+            ],
+            [
+              "?<patrón> y Enter",
+              "",
+              "🎯 Clave de Examen: Busca hacia ATRÁS (hacia el inicio del archivo) a partir del cursor."
+            ],
+            [
+              "n (Next)",
+              "",
+              "🎯 Salta a la SIGUIENTE coincidencia en la misma dirección de la búsqueda actual."
+            ],
+            [
+              "N (Previous)",
+              "",
+              "🎯 Salta a la coincidencia ANTERIOR en la dirección opuesta."
+            ],
+            [
+              "* (Asterisco sobre palabra)",
+              "",
+              "Busca automáticamente la siguiente aparición de la palabra bajo el cursor."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: '/' busca hacia adelante; '?' busca hacia atrás; 'n' repite la búsqueda. Funciona idénticamente en 'vi', 'less' y 'man'."
+        }
+      ],
+      "notes": "Muestra a la clase la coherencia de Unix: la sintaxis de búsqueda es exactamente la misma en vi y en less."
+    },
+    {
+      "id": "103.8-slide-7",
+      "slideNumber": 7,
+      "title": "Comandos de Borrado y Sustitución: x, dw, dd y r",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comandos de Borrado y Sustitución: x, dw, dd y r"
+        },
+        {
+          "type": "paragraph",
+          "text": "Eliminar texto rápidamente en Modo Normal sin necesidad de pulsar Backspace 50 veces:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "x | dw | dd | <N>dd | D | r<char>",
+          "title": "Borrar caracteres, palabras o líneas completas en Modo Normal"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "# En modo normal tecleas '3dd' sobre una función obsoleta:\n# Borra inmediatamente 3 líneas completas y las guarda en el búfer de corte.",
+              "output": "# El cursor se posiciona en la línea siguiente."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "x",
+              "",
+              "🎯 Borra el carácter individual que se encuentra bajo el cursor (equivale a la tecla Supr)."
+            ],
+            [
+              "dw (Delete word)",
+              "",
+              "🎯 Borra desde la posición del cursor hasta el final de la palabra actual."
+            ],
+            [
+              "dd (Delete line)",
+              "",
+              "🎯 Clave de Examen: Borra la LÍNEA COMPLETA donde está el cursor (y la copia al búfer de corte)."
+            ],
+            [
+              "<N>dd",
+              "",
+              "🎯 Borra N líneas consecutivas hacia abajo (ej: '5dd' borra 5 líneas de golpe)."
+            ],
+            [
+              "D (o d$)",
+              "",
+              "Borra desde el cursor hasta el final de la línea actual."
+            ],
+            [
+              "r<carácter>",
+              "",
+              "🎯 Reemplaza el carácter bajo el cursor por el nuevo carácter pulsado sin entrar en modo inserción."
+            ],
+            [
+              "dt<char>",
+              "",
+              "🎯 Borra desde el cursor hasta encontrar el carácter indicado (delete to char)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'dd' borra la línea completa actual; 'x' borra un carácter; 'r' sustituye un solo carácter al vuelo."
+        }
+      ],
+      "notes": "Explica que en vi borrar (d) equivale a 'cortar': el texto borrado se guarda en el portapapeles interno para poder pegarlo."
+    },
+    {
+      "id": "103.8-slide-8",
+      "slideNumber": 8,
+      "title": "Copiar (Yank), Pegar (Put) y Deshacer: yy, p, u y Ctrl+R",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Copiar (Yank), Pegar (Put) y Deshacer: yy, p, u y Ctrl+R"
+        },
+        {
+          "type": "paragraph",
+          "text": "Duplicar bloques de configuración y deshacer errores tipográficos al instante:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "yy | <N>yy | p | P | u | Ctrl+R",
+          "title": "Copiar líneas al portapapeles interno, pegarlas y revertir modificaciones"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "# Tecleas 'yy' en la línea de 'PermitRootLogin' y luego 'p':\n# Se duplica la línea exactamente debajo.",
+              "output": "PermitRootLogin no\nPermitRootLogin no"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "yy (Yank)",
+              "Copiar línea actual",
+              "🎯 Copia la línea actual al portapapeles de vi sin borrarla."
+            ],
+            [
+              "<N>yy",
+              "Copiar N líneas",
+              "Copia N líneas consecutivas hacia abajo (ej: '3yy')."
+            ],
+            [
+              "p / P (Put)",
+              "Pegar debajo / encima",
+              "🎯 'p' pega debajo de la línea actual; 'P' pega encima."
+            ],
+            [
+              "u (Undo)",
+              "Deshacer cambio",
+              "🎯 Deshace la última modificación realizada en el archivo."
+            ],
+            [
+              "Ctrl + R (Redo)",
+              "Rehacer cambio",
+              "🎯 Rehace el cambio que se acaba de deshacer con 'u'."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:12px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    📋 Flujo de Cortapapeles y Deshacer en Modo Normal:\n  </div>\n\n  <div style=\"display:flex; justify-content:space-between; align-items:center; font-size:12.5px; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:8px 12px; flex:1;\">\n      <strong style=\"color:#1E40AF;\">yy (Copiar)</strong> o <strong>dd (Cortar)</strong><br>\n      <span style=\"color:#475569; font-size:11px;\">Almacena la línea en el búfer</span>\n    </div>\n\n    <span style=\"font-size:18px; color:#2563EB; margin:0 10px;\">→</span>\n\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:8px 12px; flex:1;\">\n      <strong style=\"color:#15803D;\">p (Pegar Debajo)</strong> o <strong>P (Encima)</strong><br>\n      <span style=\"color:#475569; font-size:11px;\">Inserta el texto copiado</span>\n    </div>\n\n    <span style=\"font-size:18px; color:#2563EB; margin:0 10px;\">⇄</span>\n\n    <div style=\"background:#FEF3C7; border:1px solid #FCD34D; border-radius:8px; padding:8px 12px; flex:1;\">\n      <strong style=\"color:#B45309;\">u (Deshacer)</strong> / <strong>Ctrl+R (Rehacer)</strong><br>\n      <span style=\"color:#475569; font-size:11px;\">Control de historial de cambios</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Mnemotecnia de Edición: 'yy' copia; 'p' pega debajo; 'u' deshace (undo); 'Ctrl+R' rehace (redo)."
+        }
+      ],
+      "notes": "Muestra que si borras con 'dd' y luego pulsas 'p', has hecho una operación de 'cortar y pegar' perfecta."
+    },
+    {
+      "id": "103.8-slide-9",
+      "slideNumber": 9,
+      "title": "Modo Colon (:): Guardado, Salida y Emergencias",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Modo Colon (:): Guardado, Salida y Emergencias"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los comandos de la línea de estado inferior para guardar o salir sin romper nada:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": ":w | :q | :q! | :wq | :x | ZZ | ZQ",
+          "title": "Escribir cambios en disco, salir del editor o forzar el cierre descartando modificaciones"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": ":wq /tmp/nuevo.txt\n# Guarda los cambios y cierra el editor saliendo a la shell de Linux.",
+              "output": "\"/tmp/nuevo.txt\" 45L, 1205B written"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              ":w [archivo]",
+              "Guardar cambios",
+              "Escribe los cambios en el disco sin salir de vi."
+            ],
+            [
+              ":q",
+              "Salir (si no hay cambios)",
+              "Sale de vi; falla si hay modificaciones pendientes de guardar."
+            ],
+            [
+              ":q!",
+              "Salir forzado SIN guardar",
+              "🎯 Clave Absoluta de Examen: Descarta cambios y huye inmediatamente."
+            ],
+            [
+              ":wq (o :x)",
+              "Guardar y salir",
+              "🎯 Guarda el documento y cierra vi."
+            ],
+            [
+              "ZZ / ZQ",
+              "Atajos sin dos puntos",
+              "🎯 En Modo Normal: 'ZZ' = guardar y salir; 'ZQ' = salir sin guardar."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:12px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🚪 Comandos de Salida y Guardado en vi:\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:12.5px;\">\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:10px 14px;\">\n      <strong style=\"color:#15803D; font-size:13.5px;\">✅ Guardar y Salir Exitoso:</strong><br>\n      • <code>:wq</code> (Write and Quit) en Modo Ex.<br>\n      • <code>:x</code> (Guarda solo si hubo cambios reales).<br>\n      • <code>ZZ</code> (Mayúsculas en Modo Normal, sin teclear ':').\n    </div>\n\n    <div style=\"background:#FEF2F2; border:1px solid #FCA5A5; border-radius:8px; padding:10px 14px;\">\n      <strong style=\"color:#991B1B; font-size:13.5px;\">🚨 Salida Forzada de Emergencia:</strong><br>\n      • <code>:q!</code> (Descarta el 100% de cambios y sale al instante).<br>\n      • <code>ZQ</code> (Atajo directo en Modo Normal).<br>\n      <em>¡Esencial si modificaste un archivo por error y quieres evitar daños!</em>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Los Dos Comandos Maestros de Salida: ':wq' (o 'ZZ') para guardar y salir; ':q!' (o 'ZQ') para huir sin guardar nada si te has equivocado."
+        }
+      ],
+      "notes": "Pregunta típica de principiante: '¿Cómo salgo de vi?'. Enseña ':q!' como la salida de emergencia universal."
+    },
+    {
+      "id": "103.8-slide-10",
+      "slideNumber": 10,
+      "title": "Búsqueda y Sustitución Global con :s",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Búsqueda y Sustitución Global con :s"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo reemplazar todas las apariciones de una palabra en todo el archivo dentro de vi?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": ":[rango]s/<buscar>/<reemplazar>/[flags]",
+          "title": "Ejecutar sustituciones con expresiones regulares en líneas individuales o en todo el documento"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": ":%s/http/https/g\n# Sustituye todas las apariciones de http por https en todo el archivo.",
+              "output": "25 substitutions on 18 lines"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              ":s/viejo/nuevo/",
+              "",
+              "Sustituye la primera aparición de 'viejo' por 'nuevo' únicamente en la línea actual."
+            ],
+            [
+              ":s/viejo/nuevo/g",
+              "",
+              "Sustituye todas las apariciones en la línea actual (modificador global 'g')."
+            ],
+            [
+              ":%s/viejo/nuevo/g",
+              "",
+              "🎯 Clave de Examen: El signo '%' indica TODO EL ARCHIVO (de la línea 1 a la última). Sustituye todas las apariciones globalmente."
+            ],
+            [
+              ":%s/viejo/nuevo/gc",
+              "",
+              "🎯 Añade confirmación interactiva ('c'): vi pregunta en cada coincidencia 'replace with nuevo? (y/n/a/q)'."
+            ],
+            [
+              ":1,50s/viejo/nuevo/g",
+              "",
+              "Aplica la sustitución únicamente dentro del rango de líneas 1 a 50."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: ':%s/foo/bar/g' sustituye en todo el archivo sin preguntar; ':%s/foo/bar/gc' pide confirmación en cada caso."
+        }
+      ],
+      "notes": "Muestra que la sintaxis de sustitución en vi es idéntica a la del comando 'sed'."
+    },
+    {
+      "id": "103.8-slide-11",
+      "slideNumber": 11,
+      "title": "Archivos Swap (.swp) y Recuperación tras Caídas",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Archivos Swap (.swp) y Recuperación tras Caídas"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué ocurre si se apaga el ordenador o se corta la conexión SSH mientras editabas en vi?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**El archivo oculto de intercambio (.archivo.swp)** — Mientras editas un fichero 'hosts', vi crea un archivo oculto '.hosts.swp' en la misma carpeta donde registra en tiempo real cada tecla pulsada.",
+            "**El mensaje 'ATTENTION: Found a swap file'** — Si vi se cierra bruscamente por caída de luz o corte SSH, al volver a abrir el archivo vi detecta el .swp y muestra un menú advirtiendo que otra sesión quedó a medias.",
+            "**Recuperación con vi -r** — 🎯 Clave de Examen: Para recuperar los cambios no guardados se ejecuta: 'vi -r <archivo>'. Una vez recuperado y guardado, se debe borrar manualmente el archivo oculto .swp ('rm .archivo.swp')."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: El comando 'vi -r <archivo>' recupera el trabajo pendiente desde el archivo de intercambio .swp tras una caída del sistema."
+        }
+      ],
+      "notes": "Recuerda que si no borras el archivo .swp tras recuperar, vi seguirá mostrando el cartel de advertencia cada vez que lo abras."
+    },
+    {
+      "id": "103.8-slide-12",
+      "slideNumber": 12,
+      "title": "Variables de Entorno del Editor: EDITOR, VISUAL y update-alternatives",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Variables de Entorno del Editor: EDITOR, VISUAL y update-alternatives"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo decide Linux qué editor abrir al ejecutar crontab o visudo y qué diferencias existen?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "export VISUAL=vim | export EDITOR=nano | sudo update-alternatives --config editor",
+          "title": "Definir el editor predeterminado a nivel de sesión ($VISUAL, $EDITOR) o para todo el sistema (update-alternatives)"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "export EDITOR=nano; export VISUAL=vim; crontab -e",
+              "output": "# 1. Sesión de usuario: crontab abre 'vim' porque $VISUAL tiene preferencia sobre $EDITOR.\n# 2. Global del servidor: 'sudo update-alternatives --config editor' fija /usr/bin/editor para todos los usuarios."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "$VISUAL",
+              "",
+              "🎯 Máxima Prioridad: Variable pensada para terminales de pantalla completa. Si está definida, los programas interactivos (crontab, visudo, git) la usan ANTES que $EDITOR."
+            ],
+            [
+              "$EDITOR",
+              "",
+              "🎯 Estándar POSIX: Variable histórica para editores de texto. Se utiliza si $VISUAL no está definida o en utilidades en línea de comandos."
+            ],
+            [
+              "update-alternatives",
+              "",
+              "🎯 Configuración Global del Sistema: Comando de Debian/Ubuntu para cambiar el enlace simbólico maestro /usr/bin/editor entre nano, vim.basic o vim.tiny."
+            ],
+            [
+              "select-editor",
+              "",
+              "Comando interactivo para usuarios sin privilegios de root que guarda la preferencia personal en ~/.selected_editor."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:14px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚡ Flujo de Jerarquía: ¿Cómo eligen crontab -e o visudo qué editor abrir?</span>\n    <span style=\"font-size:11px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:12px; font-weight:700;\">Orden de Precedencia</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; font-size:11.5px;\">\n    <!-- 1. VISUAL -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:9px 10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n        <strong style=\"color:#1E40AF; font-size:12px;\">1. $VISUAL</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9px; font-weight:700; padding:1px 4px; border-radius:3px;\">Prioridad 1</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">\n        Si existe, se ejecuta <strong>SIEMPRE</strong> primero. Diseñada para terminales visuales.\n      </div>\n    </div>\n\n    <!-- 2. EDITOR -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:9px 10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n        <strong style=\"color:#15803D; font-size:12px;\">2. $EDITOR</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9px; font-weight:700; padding:1px 4px; border-radius:3px;\">Prioridad 2</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.35;\">\n        Se evalúa si <code>$VISUAL</code> está vacía o no existe. Estándar POSIX de sesión.\n      </div>\n    </div>\n\n    <!-- 3. update-alternatives -->\n    <div style=\"background:#FEF3C7; border:1.5px solid #F59E0B; border-radius:8px; padding:9px 10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n        <strong style=\"color:#92400E; font-size:12px;\">3. /usr/bin/editor</strong>\n        <span style=\"background:#D97706; color:#FFF; font-size:9px; font-weight:700; padding:1px 4px; border-radius:3px;\">Global SO</span>\n      </div>\n      <div style=\"color:#78350F; line-height:1.35;\">\n        Si no hay variables, usa el enlace gestionado por <code>update-alternatives</code>.\n      </div>\n    </div>\n\n    <!-- 4. Default /bin/vi -->\n    <div style=\"background:#F1F5F9; border:1.5px solid #94A3B8; border-radius:8px; padding:9px 10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;\">\n        <strong style=\"color:#334155; font-size:12px;\">4. /bin/vi</strong>\n        <span style=\"background:#475569; color:#FFF; font-size:9px; font-weight:700; padding:1px 4px; border-radius:3px;\">Fallback</span>\n      </div>\n      <div style=\"color:#475569; line-height:1.35;\">\n        Último recurso infalible del kernel y sistema si todo lo anterior falla.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Jerarquía de Decisión de Examen: 1. $VISUAL (primera prioridad) -> 2. $EDITOR (segunda prioridad) -> 3. Configuración global /usr/bin/editor (update-alternatives) -> 4. /bin/vi por defecto."
+        }
+      ],
+      "notes": "Muestra a la clase qué ocurre cuando configuran ambas variables: VISUAL siempre gana a EDITOR."
+    },
+    {
+      "id": "103.8-slide-13",
+      "slideNumber": 13,
+      "title": "Trampas Clásicas de Examen en el Editor vi",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Trampas Clásicas de Examen en el Editor vi"
+        },
+        {
+          "type": "paragraph",
+          "text": "Las 4 confusiones más destructivas en las preguntas de certificación LPIC-1:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Salir sin guardar con :q en lugar de forzar con :q!** — ❌ Trampa: Si has modificado texto sin querer, escribir ':q' dará el error 'E37: No write since last change'. Para salir descartando cambios OBLIGATORIAMENTE debes añadir la exclamación: ':q!'.",
+            "**2. Anteponer dos puntos ':' a comandos de Modo Normal (como :ZZ o :u)** — ❌ Trampa: Escribir ':ZZ' o ':u' creyendo que todo lleva dos puntos. 'ZZ' (guardar y salir) y 'u' (deshacer) se pulsan DIRECTAMENTE en Modo Normal sin dos puntos. Teclear ':ZZ' dará error de comando Ex no válido.",
+            "**3. Confundir mayúsculas y minúsculas en comandos de edición** — ❌ Trampa: Creer que 'o' y 'O', o 'p' y 'P' hacen lo mismo. En vi cambian drásticamente de dirección: 'o' abre línea DEBAJO; 'O' abre línea ENCIMA. 'p' pega DESPUÉS del cursor; 'P' pega ANTES.",
+            "**4. Intentar salir con Ctrl+C o suspender con Ctrl+Z** — ❌ Trampa: 'Ctrl+C' no sale de vi (muestra 'Type :quit<Enter> to exit'). Pulsar 'Ctrl+Z' suspende el proceso en segundo plano dejando un fichero de bloqueo '.swp' que dará errores de lectura. La salida limpia es 'Esc' + ':wq' o ':q!'."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Mnemotecnia Rápida: :q! para salir sin guardar; ZZ (en Modo Normal) para guardar y salir; o minúscula abre debajo, O mayúscula encima; Ctrl+C no cierra vi."
+        }
+      ],
+      "notes": "Pide a los alumnos que anoten estas 4 trampas porque constituyen al menos 2 preguntas clásicas del examen 101."
+    },
+    {
+      "id": "103.8-slide-14",
+      "slideNumber": 14,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Invocación y Movimiento)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Invocación y Movimiento)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 1 (Oficial Pág 410): ¿Cuál es el comando exacto de terminal para abrir el archivo '/etc/passwd' con el editor vi posicionando automáticamente el cursor en la línea número 15? — Comando: `vi +15 /etc/passwd` (La opción '+N' salta de forma instantánea a la línea especificada durante el arranque del editor.)",
+            "Caso 2 (Oficial Pág 410): Estando en Modo Normal, ¿qué teclas individuales permiten saltar directamente al inicio exacto de la línea actual y al final de la línea actual? — Comando: `Pulsar '0' (cero) para ir al inicio; pulsar '$' para ir al final` (Son los atajos directos de navegación horizontal dentro de la misma línea.)",
+            "Caso 3 (Oficial Pág 410): ¿Qué atajos de teclado en Modo Normal permiten saltar a la primera línea del archivo y a la última línea del archivo? — Comando: `Pulsar '1G' (o 'gg') para la primera línea; pulsar 'G' (mayúscula) para la última` ('1G' viaja a la línea 1; 'G' sin número salta a la última línea del documento.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "vi +N para arranque posicionado; 0 y $ para extremos de línea; 1G y G para extremos de archivo."
+        }
+      ],
+      "notes": "Haz que los alumnos comprueben cómo 'G' salta al final de un archivo de 2000 líneas al instante."
+    },
+    {
+      "id": "103.8-slide-15",
+      "slideNumber": 15,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: Edición y Salida)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: Edición y Salida)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 4 (Oficial Pág 410): Necesitas borrar 4 líneas completas a partir de la posición actual del cursor y pegarlas 10 líneas más abajo. ¿Qué secuencia de comandos en Modo Normal debes pulsar? — Comando: `Pulsar '4dd' (borra/corta 4 líneas), desplazarse al destino y pulsar 'p' (pega debajo)` ('4dd' corta las 4 líneas al búfer interno y 'p' las inserta debajo de la nueva posición.)",
+            "Caso 5 (Oficial Pág 410): Has abierto un archivo de configuración crítico, has borrado texto por error y necesitas salir inmediatamente a la shell garantizando que el archivo NO se modifique. — Comando: `Pulsar 'Esc' y teclear ':q!' seguido de Enter (o teclear 'ZQ')` (':q!' descarta todos los cambios del búfer y cierra el archivo sin escribir nada en el disco.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "4dd y p para cortar y mover bloques; :q! para salir descartando cambios con seguridad."
+        }
+      ],
+      "notes": "Recuerda que ':q!' es la acción más segura cuando no estás seguro de qué tocaste en un archivo de producción."
+    },
+    {
+      "id": "103.8-slide-16",
+      "slideNumber": 16,
+      "title": "Retos de Exploración Oficiales (Sustitución Global y .swp)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Retos de Exploración Oficiales (Sustitución Global y .swp)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. ¿Cuál es el comando exacto en Modo Ex (:) para sustituir en TODO el archivo la palabra 'servidor01' por 'servidor02' pidiendo confirmación interactiva en cada reemplazo?\n2. Se ha cortado la luz mientras un administrador editaba '/etc/hosts'. Al reiniciar y abrir el archivo con vi, ¿qué comando debe ejecutar para recuperar los cambios pendientes?\n3. ¿Qué variable de entorno debes exportar en tu archivo ~/.bashrc para que 'crontab -e' abra siempre el editor vi?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Pista",
+          "content": "Recuerda: :%s/antiguo/nuevo/gc; vi -r; y la variable de entorno EDITOR."
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Desafío",
+          "content": "1. Se ejecuta: :%s/servidor01/servidor02/gc\n2. Se ejecuta: vi -r /etc/hosts (y una vez guardado se borra el archivo oculto .hosts.swp).\n3. Se exporta: export EDITOR=vi (o export VISUAL=vi)."
+        }
+      ],
+      "notes": "El comando de sustitución con confirmación (:s///gc) es una de las preguntas de mayor dificultad en el objetivo 103.8."
+    },
+    {
+      "id": "103.8-slide-17",
+      "slideNumber": 17,
+      "title": "Pregunta de Examen LPIC-1: Salida Forzada sin Guardar en vi",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Salida Forzada sin Guardar en vi"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-103-8-17",
+          "question": "¿Qué comando del Modo Ex (dos puntos) debe introducirse en el editor vi para salir inmediatamente a la shell descartando todas las modificaciones realizadas desde el último guardado?",
+          "options": [
+            {
+              "key": "a",
+              "text": ":exit!"
+            },
+            {
+              "key": "b",
+              "text": ":q!"
+            },
+            {
+              "key": "c",
+              "text": ":w!"
+            },
+            {
+              "key": "d",
+              "text": ":abort"
+            }
+          ],
+          "correct": [
+            "b"
+          ],
+          "explanation": "El comando ':q!' (Quit con signo de exclamación) fuerza la salida inmediata del editor vi ignorando y descartando cualquier cambio no guardado en el archivo. El comando alternativo en Modo Normal es 'ZQ'."
+        }
+      ],
+      "notes": "Pregunta directa y fundamental de certificación."
+    },
+    {
+      "id": "103.8-slide-18",
+      "slideNumber": 18,
+      "title": "Tarjetas Nemotécnicas: Editor vi/vim 103.8",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tarjetas Nemotécnicas: Editor vi/vim 103.8"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto",
+            "Significado / Uso"
+          ],
+          "rows": [
+            [
+              "¿Cómo volver siempre al Modo Normal desde cualquier otro modo en vi?",
+              "Pulsando la tecla 'Esc'."
+            ],
+            [
+              "¿Qué teclas saltan a la primera y a la última línea del archivo en vi?",
+              "1G (o gg) para la primera; G (mayúscula) para la última."
+            ],
+            [
+              "¿Qué tecla abre una nueva línea en blanco DEBAJO de la actual?",
+              "La letra 'o' minúscula (la 'O' mayúscula la abre encima)."
+            ],
+            [
+              "¿Qué comando borra la línea completa actual en Modo Normal?",
+              "dd."
+            ],
+            [
+              "¿Qué comando copia una línea completa al portapapeles y cuál la pega?",
+              "yy copia (yank); p pega debajo (put)."
+            ],
+            [
+              "¿Qué tecla deshace el último cambio en vi?",
+              "La tecla 'u' (undo); Ctrl+R rehace (redo)."
+            ],
+            [
+              "¿Cómo salir de vi forzando el cierre sin guardar cambios?",
+              ":q! (o tecleando ZQ en Modo Normal)."
+            ],
+            [
+              "¿Cómo sustituir 'foo' por 'bar' en TODO el archivo pidiendo confirmación?",
+              ":%s/foo/bar/gc."
+            ]
+          ],
+          "caption": "Tarjetas de memorización"
+        }
+      ],
+      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 103.8."
+    },
+    {
+      "id": "103.8-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen y Claves de Examen: Subtema 103.8",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen y Claves de Examen: Subtema 103.8"
+        }
+      ],
+      "notes": "Concluimos el subtema 103.8 y finalizamos completamente la refactorización integral del Tema 103."
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-103-8-1",
+      "title": "El Editor Estándar de Unix: Por qué vi es Obligatorio",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Editor Estándar de Unix: Por qué vi es Obligatorio"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué la certificación LPIC-1 exige dominar vi en lugar de editores más sencillos como nano?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Rescate en Modo de Emergencia (Single-User / Initramfs)** — 🎯 Cuando un servidor no arranca por un fallo crítico (ej. error en /etc/fstab) y caes en una consola de emergencia, nano NO existe ni está instalado. El único editor presente y compilado en /bin es vi. Si no sabes vi, no puedes reparar el servidor.",
+            "**2. El Único Editor Obligatorio por el Estándar POSIX** — 🎯 El estándar universal POSIX (IEEE 1003.1) estipula que todo sistema Unix/Linux DEBE incluir vi. Está presente en el 100% de las distribuciones del mundo (Debian, Red Hat, SUSE, Arch, Alpine, Docker containers mínimos, BSD y Solaris).",
+            "**3. Conexiones Mínimas sin Ratón ni Teclas de Función** — Diseñado para operar sobre conexiones SSH inestables, consolas serie y terminales remotas. No depende del ratón ni de teclas especiales (F1..F12); todo se controla desde las teclas alfanuméricas centrales (h, j, k, l).",
+            "**4. Invocación Nativa por Herramientas Críticas** — Herramientas esenciales del sistema como 'visudo' (editar sudoers de forma segura), 'crontab -e', 'edquota' o 'git commit' invocan automáticamente vi por defecto si no se configura otra variable."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:14px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚖️ nano frente a vi: ¿Por qué la Certificación LPIC-1 Exige vi?</span>\n    <span style=\"font-size:11px; background:#FEF3C7; color:#92400E; padding:2px 8px; border-radius:12px; font-weight:700;\">Diferencia Clave de Aula</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12px;\">\n    <!-- nano -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#991B1B; font-size:13px;\">Editor nano (No exigido en LPIC-1)</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:9.5px; font-weight:700; padding:1px 5px; border-radius:3px;\">Opcional</span>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.4;\">\n        • Intuitivo para principiantes (muestra atajos abajo).<br>\n        • <strong>DESVENTAJA CRÍTICA:</strong> Paquete adicional. <strong>NO viene instalado</strong> en entornos mínimos de producción, imágenes Docker base ni consolas de rescate <em>initramfs</em>.<br>\n        • Si el servidor falla, nano no estará disponible.\n      </div>\n    </div>\n\n    <!-- vi -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:13px;\">Editor vi / vim (Obligatorio en LPIC-1)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:700; padding:1px 5px; border-radius:3px;\">100% Universal</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • <strong>ESTÁNDAR POSIX:</strong> Garantizado en el 100% de los Unix/Linux.<br>\n        • <strong>DISPONIBLE SIEMPRE:</strong> Presente en modo de rescate, consolas de recuperación de emergencia y servidores minimalistas.<br>\n        • <strong>NATIVO:</strong> Invocado por <code>visudo</code> y <code>crontab -e</code> de serie.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Oro: nano es cómodo para usuarios noveles, pero vi es la herramienta universal de supervivencia del administrador de sistemas. Si el servidor se rompe, vi es el único editor que siempre estará disponible."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-8-2",
+      "title": "La Máquina de Estados de vi: Modos y Transiciones",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "La Máquina de Estados de vi: Modos y Transiciones"
+        },
+        {
+          "type": "paragraph",
+          "text": "En vi las teclas no siempre escriben texto; el editor opera como una máquina de estados finitos:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin:14px 0;\">\n  <div style=\"font-size:15.5px; font-weight:800; color:var(--text); margin-bottom:12px;\">\n    🔄 Ciclo de Transición entre Modos de vi:\n  </div>\n\n  <div style=\"display:flex; justify-content:space-between; align-items:center; font-size:12.5px;\">\n    <!-- Modo Inserción -->\n    <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:12px; width:28%; text-align:center;\">\n      <div style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:11px; padding:2px 6px; border-radius:4px; margin-bottom:6px;\">\n        MODO INSERCIÓN\n      </div>\n      <strong style=\"color:#15803D; font-size:13.5px;\">Escritura de Texto</strong><br>\n      <code style=\"font-size:11px; color:#14532D;\">-- INSERT --</code><br>\n      <span style=\"color:#475569; font-size:11px;\">Teclear texto directo</span>\n    </div>\n\n    <!-- Flechas izq -->\n    <div style=\"display:flex; flex-direction:column; gap:8px; align-items:center; font-size:11.5px;\">\n      <span style=\"color:#16A34A; font-weight:800;\">i, I, a, A, o, O ▶</span>\n      <span style=\"color:#2563EB; font-weight:800;\">◀ Esc (Salir)</span>\n    </div>\n\n    <!-- Modo Normal (Centro) -->\n    <div style=\"background:#EFF6FF; border:3px solid #2563EB; border-radius:12px; padding:14px; width:30%; text-align:center; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);\">\n      <div style=\"background:#2563EB; color:#FFF; font-weight:900; font-size:12px; padding:3px 8px; border-radius:4px; margin-bottom:6px;\">\n        MODO NORMAL / COMANDO\n      </div>\n      <strong style=\"color:#1E40AF; font-size:14px;\">(Estado por Defecto)</strong><br>\n      <span style=\"color:#475569; font-size:11.5px;\">Navegación (h,j,k,l)<br>Copiar (yy) / Borrar (dd)</span>\n    </div>\n\n    <!-- Flechas der -->\n    <div style=\"display:flex; flex-direction:column; gap:8px; align-items:center; font-size:11.5px;\">\n      <span style=\"color:#D97706; font-weight:800;\">: (Dos Puntos) ▶</span>\n      <span style=\"color:#2563EB; font-weight:800;\">◀ Esc o Enter</span>\n    </div>\n\n    <!-- Modo Ex / Comando -->\n    <div style=\"background:#FEF3C7; border:2px solid #F59E0B; border-radius:10px; padding:12px; width:28%; text-align:center;\">\n      <div style=\"background:#D97706; color:#FFF; font-weight:800; font-size:11px; padding:2px 6px; border-radius:4px; margin-bottom:6px;\">\n        MODO EX / LÍNEA ( : )\n      </div>\n      <strong style=\"color:#B45309; font-size:13.5px;\">Guardado y Salida</strong><br>\n      <code style=\"font-size:11px; color:#78350F;\">:w , :q! , :wq , :%s</code><br>\n      <span style=\"color:#475569; font-size:11px;\">Comandos avanzados</span>\n    </div>\n  </div>\n\n  <div style=\"margin-top:14px; padding:8px 14px; background:#F8FAFC; border-left:4px solid #3B82F6; border-radius:4px; font-size:13px; color:#1E3A8A;\">\n    🎯 <strong>REGLA DE SUPERVIVENCIA EN EXAMEN:</strong> Si no sabes en qué modo estás o el teclado no responde como esperas, ¡pulsa <code>&lt;Esc&gt;</code> dos veces! Siempre te devolverá al Modo Normal de forma segura.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Supervivencia en vi: Si te pierdes o no sabes en qué modo estás, ¡pulsa la tecla 'Esc' dos veces para volver al Modo Normal!"
+        }
+      ]
+    },
+    {
+      "id": "sec-103-8-3",
+      "title": "Invocación y Navegación Fundamental: h, j, k, l y Saltos",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Invocación y Navegación Fundamental: h, j, k, l y Saltos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Moverse por el archivo sin despegar las manos de la fila central del teclado:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "vi [+<línea>] <archivo> (Navegación en Modo Normal)",
+          "title": "Abrir archivos en líneas específicas y desplazarse rápidamente por el documento"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "vi +50 /etc/ssh/sshd_config",
+              "output": "# Abre el archivo posicionando el cursor directamente en la línea 50."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "vi +<N> <archivo>",
+              "Abrir en línea N",
+              "🎯 Abre el archivo posicionando el cursor directamente en la línea N."
+            ],
+            [
+              "h, j, k, l",
+              "Navegación fila central",
+              "🎯 'h' izquierda, 'j' abajo, 'k' arriba, 'l' derecha."
+            ],
+            [
+              "w / b",
+              "Palabra adelante/atrás",
+              "🎯 'w' salta a la palabra siguiente (word); 'b' salta a la anterior (back)."
+            ],
+            [
+              "0 / $",
+              "Inicio / Fin de línea",
+              "🎯 '0' salta al inicio de línea; '$' salta al final exacto."
+            ],
+            [
+              "1G (o gg) / G",
+              "Inicio / Fin de archivo",
+              "🎯 '1G' o 'gg' salta a la primera línea; 'G' mayúscula a la última línea."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:12px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    ⌨️ Teclado de Navegación Fundamental en Modo Normal:\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; font-size:12px; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#1E40AF; font-size:15px;\">h</strong><br>\n      <span style=\"color:#2563EB; font-weight:700;\">◀ Izquierda</span>\n    </div>\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#1E40AF; font-size:15px;\">j</strong><br>\n      <span style=\"color:#2563EB; font-weight:700;\">▼ Abajo</span>\n    </div>\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#1E40AF; font-size:15px;\">k</strong><br>\n      <span style=\"color:#2563EB; font-weight:700;\">▲ Arriba</span>\n    </div>\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#1E40AF; font-size:15px;\">l</strong><br>\n      <span style=\"color:#2563EB; font-weight:700;\">▶ Derecha</span>\n    </div>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-top:8px; font-size:11.5px; text-align:center;\">\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px;\">\n      <code>w</code> : Palabra siguiente | <code>b</code> : Palabra atrás\n    </div>\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px;\">\n      <code>0</code> : Inicio línea | <code>$</code> : Fin de línea\n    </div>\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px;\">\n      <code>gg</code> : Inicio archivo | <code>G</code> : Fin archivo\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: '1G' (o 'gg') primera línea; 'G' última línea; '0' inicio de línea; '$' fin de línea."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-8-4",
+      "title": "Transición al Modo Inserción: i, I, a, A, o, O",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Transición al Modo Inserción: i, I, a, A, o, O"
+        },
+        {
+          "type": "paragraph",
+          "text": "Las 6 teclas para comenzar a redactar texto según la posición deseada:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "i | I | a | A | o | O (desde Modo Normal)",
+          "title": "Entrar en Modo Inserción para escribir texto en diferentes posiciones relativas al cursor"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "# En modo normal pulsas 'o' y vi abre una línea en blanco debajo:\n-- INSERT --",
+              "output": "# Todo lo que teclees a continuación se escribe en el archivo."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "i / I",
+              "Insertar antes / al inicio",
+              "🎯 'i' inserta antes del cursor; 'I' salta al principio de la línea e inserta."
+            ],
+            [
+              "a / A",
+              "Añadir después / al final",
+              "🎯 'a' añade después del cursor; 'A' salta al final de la línea y añade."
+            ],
+            [
+              "o (Open below)",
+              "Nueva línea DEBAJO",
+              "🎯 Clave de Examen: Abre una nueva línea en blanco DEBAJO de la actual y entra en inserción."
+            ],
+            [
+              "O (Open above)",
+              "Nueva línea ENCIMA",
+              "🎯 Clave de Examen: Abre una nueva línea en blanco ENCIMA de la actual y entra en inserción."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:12px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🎯 Posiciones Relativas de Inserción Respecto al Cursor:\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:12.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF; font-size:13.5px;\">i frente a a:</strong><br>\n      • <code>i</code> : Inserta <strong>antes</strong> del cursor.<br>\n      • <code>a</code> : Añade <strong>después</strong> del cursor.\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#15803D; font-size:13.5px;\">I frente a A:</strong><br>\n      • <code>I</code> : Salta al <strong>inicio</strong> de la línea.<br>\n      • <code>A</code> : Salta al <strong>final</strong> de la línea.\n    </div>\n\n    <div style=\"background:#FEF3C7; border:1px solid #FCD34D; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#B45309; font-size:13.5px;\">o frente a O:</strong><br>\n      • <code>o</code> : Abre línea <strong>DEBAJO</strong>.<br>\n      • <code>O</code> : Abre línea <strong>ENCIMA</strong>.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Diferencia Clásica de Examen: 'o' (minúscula) abre línea debajo; 'O' (mayúscula) abre línea encima; 'i' inserta antes, 'a' inserta después."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-8-5",
+      "title": "Búsqueda Interactiva en vi: / y ?",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Búsqueda Interactiva en vi: / y ?"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo encontrar palabras en un archivo de configuración de miles de líneas?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "/<patrón> (hacia adelante) | ?<patrón> (hacia atrás)",
+          "title": "Localizar cadenas o expresiones regulares dentro del documento abierto"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "/Port\n# vi resalta la primera aparición de 'Port' y coloca el cursor sobre ella.",
+              "output": "Port 22\n# Pulsar 'n' salta a la siguiente aparición."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "/<patrón> y Enter",
+              "",
+              "🎯 Clave de Examen: Busca hacia ADELANTE (hacia el final del archivo) a partir del cursor."
+            ],
+            [
+              "?<patrón> y Enter",
+              "",
+              "🎯 Clave de Examen: Busca hacia ATRÁS (hacia el inicio del archivo) a partir del cursor."
+            ],
+            [
+              "n (Next)",
+              "",
+              "🎯 Salta a la SIGUIENTE coincidencia en la misma dirección de la búsqueda actual."
+            ],
+            [
+              "N (Previous)",
+              "",
+              "🎯 Salta a la coincidencia ANTERIOR en la dirección opuesta."
+            ],
+            [
+              "* (Asterisco sobre palabra)",
+              "",
+              "Busca automáticamente la siguiente aparición de la palabra bajo el cursor."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: '/' busca hacia adelante; '?' busca hacia atrás; 'n' repite la búsqueda. Funciona idénticamente en 'vi', 'less' y 'man'."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-8-6",
+      "title": "Comandos de Borrado y Sustitución: x, dw, dd y r",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comandos de Borrado y Sustitución: x, dw, dd y r"
+        },
+        {
+          "type": "paragraph",
+          "text": "Eliminar texto rápidamente en Modo Normal sin necesidad de pulsar Backspace 50 veces:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "x | dw | dd | <N>dd | D | r<char>",
+          "title": "Borrar caracteres, palabras o líneas completas en Modo Normal"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "# En modo normal tecleas '3dd' sobre una función obsoleta:\n# Borra inmediatamente 3 líneas completas y las guarda en el búfer de corte.",
+              "output": "# El cursor se posiciona en la línea siguiente."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "x",
+              "",
+              "🎯 Borra el carácter individual que se encuentra bajo el cursor (equivale a la tecla Supr)."
+            ],
+            [
+              "dw (Delete word)",
+              "",
+              "🎯 Borra desde la posición del cursor hasta el final de la palabra actual."
+            ],
+            [
+              "dd (Delete line)",
+              "",
+              "🎯 Clave de Examen: Borra la LÍNEA COMPLETA donde está el cursor (y la copia al búfer de corte)."
+            ],
+            [
+              "<N>dd",
+              "",
+              "🎯 Borra N líneas consecutivas hacia abajo (ej: '5dd' borra 5 líneas de golpe)."
+            ],
+            [
+              "D (o d$)",
+              "",
+              "Borra desde el cursor hasta el final de la línea actual."
+            ],
+            [
+              "r<carácter>",
+              "",
+              "🎯 Reemplaza el carácter bajo el cursor por el nuevo carácter pulsado sin entrar en modo inserción."
+            ],
+            [
+              "dt<char>",
+              "",
+              "🎯 Borra desde el cursor hasta encontrar el carácter indicado (delete to char)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'dd' borra la línea completa actual; 'x' borra un carácter; 'r' sustituye un solo carácter al vuelo."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-8-7",
+      "title": "Copiar (Yank), Pegar (Put) y Deshacer: yy, p, u y Ctrl+R",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Copiar (Yank), Pegar (Put) y Deshacer: yy, p, u y Ctrl+R"
+        },
+        {
+          "type": "paragraph",
+          "text": "Duplicar bloques de configuración y deshacer errores tipográficos al instante:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "yy | <N>yy | p | P | u | Ctrl+R",
+          "title": "Copiar líneas al portapapeles interno, pegarlas y revertir modificaciones"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "# Tecleas 'yy' en la línea de 'PermitRootLogin' y luego 'p':\n# Se duplica la línea exactamente debajo.",
+              "output": "PermitRootLogin no\nPermitRootLogin no"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "yy (Yank)",
+              "Copiar línea actual",
+              "🎯 Copia la línea actual al portapapeles de vi sin borrarla."
+            ],
+            [
+              "<N>yy",
+              "Copiar N líneas",
+              "Copia N líneas consecutivas hacia abajo (ej: '3yy')."
+            ],
+            [
+              "p / P (Put)",
+              "Pegar debajo / encima",
+              "🎯 'p' pega debajo de la línea actual; 'P' pega encima."
+            ],
+            [
+              "u (Undo)",
+              "Deshacer cambio",
+              "🎯 Deshace la última modificación realizada en el archivo."
+            ],
+            [
+              "Ctrl + R (Redo)",
+              "Rehacer cambio",
+              "🎯 Rehace el cambio que se acaba de deshacer con 'u'."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:12px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    📋 Flujo de Cortapapeles y Deshacer en Modo Normal:\n  </div>\n\n  <div style=\"display:flex; justify-content:space-between; align-items:center; font-size:12.5px; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:8px 12px; flex:1;\">\n      <strong style=\"color:#1E40AF;\">yy (Copiar)</strong> o <strong>dd (Cortar)</strong><br>\n      <span style=\"color:#475569; font-size:11px;\">Almacena la línea en el búfer</span>\n    </div>\n\n    <span style=\"font-size:18px; color:#2563EB; margin:0 10px;\">→</span>\n\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:8px 12px; flex:1;\">\n      <strong style=\"color:#15803D;\">p (Pegar Debajo)</strong> o <strong>P (Encima)</strong><br>\n      <span style=\"color:#475569; font-size:11px;\">Inserta el texto copiado</span>\n    </div>\n\n    <span style=\"font-size:18px; color:#2563EB; margin:0 10px;\">⇄</span>\n\n    <div style=\"background:#FEF3C7; border:1px solid #FCD34D; border-radius:8px; padding:8px 12px; flex:1;\">\n      <strong style=\"color:#B45309;\">u (Deshacer)</strong> / <strong>Ctrl+R (Rehacer)</strong><br>\n      <span style=\"color:#475569; font-size:11px;\">Control de historial de cambios</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Mnemotecnia de Edición: 'yy' copia; 'p' pega debajo; 'u' deshace (undo); 'Ctrl+R' rehace (redo)."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-8-8",
+      "title": "Modo Colon (:): Guardado, Salida y Emergencias",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Modo Colon (:): Guardado, Salida y Emergencias"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los comandos de la línea de estado inferior para guardar o salir sin romper nada:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": ":w | :q | :q! | :wq | :x | ZZ | ZQ",
+          "title": "Escribir cambios en disco, salir del editor o forzar el cierre descartando modificaciones"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": ":wq /tmp/nuevo.txt\n# Guarda los cambios y cierra el editor saliendo a la shell de Linux.",
+              "output": "\"/tmp/nuevo.txt\" 45L, 1205B written"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              ":w [archivo]",
+              "Guardar cambios",
+              "Escribe los cambios en el disco sin salir de vi."
+            ],
+            [
+              ":q",
+              "Salir (si no hay cambios)",
+              "Sale de vi; falla si hay modificaciones pendientes de guardar."
+            ],
+            [
+              ":q!",
+              "Salir forzado SIN guardar",
+              "🎯 Clave Absoluta de Examen: Descarta cambios y huye inmediatamente."
+            ],
+            [
+              ":wq (o :x)",
+              "Guardar y salir",
+              "🎯 Guarda el documento y cierra vi."
+            ],
+            [
+              "ZZ / ZQ",
+              "Atajos sin dos puntos",
+              "🎯 En Modo Normal: 'ZZ' = guardar y salir; 'ZQ' = salir sin guardar."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:12px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🚪 Comandos de Salida y Guardado en vi:\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:12.5px;\">\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:10px 14px;\">\n      <strong style=\"color:#15803D; font-size:13.5px;\">✅ Guardar y Salir Exitoso:</strong><br>\n      • <code>:wq</code> (Write and Quit) en Modo Ex.<br>\n      • <code>:x</code> (Guarda solo si hubo cambios reales).<br>\n      • <code>ZZ</code> (Mayúsculas en Modo Normal, sin teclear ':').\n    </div>\n\n    <div style=\"background:#FEF2F2; border:1px solid #FCA5A5; border-radius:8px; padding:10px 14px;\">\n      <strong style=\"color:#991B1B; font-size:13.5px;\">🚨 Salida Forzada de Emergencia:</strong><br>\n      • <code>:q!</code> (Descarta el 100% de cambios y sale al instante).<br>\n      • <code>ZQ</code> (Atajo directo en Modo Normal).<br>\n      <em>¡Esencial si modificaste un archivo por error y quieres evitar daños!</em>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Los Dos Comandos Maestros de Salida: ':wq' (o 'ZZ') para guardar y salir; ':q!' (o 'ZQ') para huir sin guardar nada si te has equivocado."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-8-9",
+      "title": "Búsqueda y Sustitución Global con :s",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Búsqueda y Sustitución Global con :s"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo reemplazar todas las apariciones de una palabra en todo el archivo dentro de vi?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": ":[rango]s/<buscar>/<reemplazar>/[flags]",
+          "title": "Ejecutar sustituciones con expresiones regulares en líneas individuales o en todo el documento"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": ":%s/http/https/g\n# Sustituye todas las apariciones de http por https en todo el archivo.",
+              "output": "25 substitutions on 18 lines"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              ":s/viejo/nuevo/",
+              "",
+              "Sustituye la primera aparición de 'viejo' por 'nuevo' únicamente en la línea actual."
+            ],
+            [
+              ":s/viejo/nuevo/g",
+              "",
+              "Sustituye todas las apariciones en la línea actual (modificador global 'g')."
+            ],
+            [
+              ":%s/viejo/nuevo/g",
+              "",
+              "🎯 Clave de Examen: El signo '%' indica TODO EL ARCHIVO (de la línea 1 a la última). Sustituye todas las apariciones globalmente."
+            ],
+            [
+              ":%s/viejo/nuevo/gc",
+              "",
+              "🎯 Añade confirmación interactiva ('c'): vi pregunta en cada coincidencia 'replace with nuevo? (y/n/a/q)'."
+            ],
+            [
+              ":1,50s/viejo/nuevo/g",
+              "",
+              "Aplica la sustitución únicamente dentro del rango de líneas 1 a 50."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: ':%s/foo/bar/g' sustituye en todo el archivo sin preguntar; ':%s/foo/bar/gc' pide confirmación en cada caso."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-8-10",
+      "title": "Archivos Swap (.swp) y Recuperación tras Caídas",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Archivos Swap (.swp) y Recuperación tras Caídas"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué ocurre si se apaga el ordenador o se corta la conexión SSH mientras editabas en vi?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**El archivo oculto de intercambio (.archivo.swp)** — Mientras editas un fichero 'hosts', vi crea un archivo oculto '.hosts.swp' en la misma carpeta donde registra en tiempo real cada tecla pulsada.",
+            "**El mensaje 'ATTENTION: Found a swap file'** — Si vi se cierra bruscamente por caída de luz o corte SSH, al volver a abrir el archivo vi detecta el .swp y muestra un menú advirtiendo que otra sesión quedó a medias.",
+            "**Recuperación con vi -r** — 🎯 Clave de Examen: Para recuperar los cambios no guardados se ejecuta: 'vi -r <archivo>'. Una vez recuperado y guardado, se debe borrar manualmente el archivo oculto .swp ('rm .archivo.swp')."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: El comando 'vi -r <archivo>' recupera el trabajo pendiente desde el archivo de intercambio .swp tras una caída del sistema."
+        }
+      ]
+    }
+  ]
+}

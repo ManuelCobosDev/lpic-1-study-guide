@@ -1,0 +1,190 @@
+<div class="errata-page">
+  <header class="page-header">
+    <div class="header-main">
+      <h1 class="page-title">Fe de Erratas</h1>
+      <p class="page-subtitle">
+        Registro público y transparente de correcciones, erratas tipográficas y actualizaciones técnicas del contenido del curso LPIC-1.
+      </p>
+    </div>
+    <div class="header-cta">
+      <a
+        [href]="githubIssuesUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="report-btn"
+        data-testid="report-errata-btn"
+      >
+        <span class="github-icon" aria-hidden="true">↗</span>
+        Reportar en GitHub
+      </a>
+    </div>
+  </header>
+
+  <!-- Métricas rápidas -->
+  <section class="stats-row" aria-label="Resumen de erratas registradas">
+    <div class="stat-pill">
+      <span class="stat-label">Total registradas:</span>
+      <strong class="stat-val">{{ stats().total }}</strong>
+    </div>
+    <div class="stat-pill stat-fixed">
+      <span class="stat-label">Corregidas:</span>
+      <strong class="stat-val">{{ stats().fixed }}</strong>
+    </div>
+    <div class="stat-pill stat-open">
+      <span class="stat-label">En revisión:</span>
+      <strong class="stat-val">{{ stats().open }}</strong>
+    </div>
+  </section>
+
+  <!-- Filtros interactivos -->
+  <section class="filters-bar" aria-label="Filtros de búsqueda de erratas">
+    <div class="search-wrap">
+      <input
+        type="search"
+        class="search-input"
+        placeholder="Buscar por término, subtema (ej. 103.4) o texto..."
+        [value]="searchQuery()"
+        (input)="onSearch($event)"
+        aria-label="Buscar en la fe de erratas"
+      />
+    </div>
+
+    <div class="filter-group">
+      <span class="filter-label">Severidad:</span>
+      <div class="btn-group" role="group" aria-label="Filtrar por severidad">
+        <button
+          type="button"
+          class="pill-btn"
+          [class.active]="selectedSeverity() === 'all'"
+          (click)="setSeverity('all')"
+        >
+          Todas
+        </button>
+        <button
+          type="button"
+          class="pill-btn"
+          [class.active]="selectedSeverity() === 'minor'"
+          (click)="setSeverity('minor')"
+        >
+          Menor
+        </button>
+        <button
+          type="button"
+          class="pill-btn"
+          [class.active]="selectedSeverity() === 'major'"
+          (click)="setSeverity('major')"
+        >
+          Mayor
+        </button>
+        <button
+          type="button"
+          class="pill-btn"
+          [class.active]="selectedSeverity() === 'critical'"
+          (click)="setSeverity('critical')"
+        >
+          Crítica
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <span class="filter-label">Estado:</span>
+      <div class="btn-group" role="group" aria-label="Filtrar por estado">
+        <button
+          type="button"
+          class="pill-btn"
+          [class.active]="selectedStatus() === 'all'"
+          (click)="setStatus('all')"
+        >
+          Todos
+        </button>
+        <button
+          type="button"
+          class="pill-btn"
+          [class.active]="selectedStatus() === 'fixed'"
+          (click)="setStatus('fixed')"
+        >
+          Corregida
+        </button>
+        <button
+          type="button"
+          class="pill-btn"
+          [class.active]="selectedStatus() === 'open'"
+          (click)="setStatus('open')"
+        >
+          En revisión
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Listado de erratas -->
+  <main class="errata-list" aria-label="Lista de erratas">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <p>Cargando registro de erratas...</p>
+      </div>
+    } @else if (filteredErrata().length === 0) {
+      <div class="empty-state">
+        <p class="empty-title">No se encontraron erratas coincidentes</p>
+        <p class="empty-desc">Prueba a restablecer los filtros de búsqueda o severidad.</p>
+      </div>
+    } @else {
+      <div class="cards-grid">
+        @for (item of filteredErrata(); track item.id) {
+          <article class="errata-card" [class.is-fixed]="!!item.fixedAt">
+            <header class="card-header">
+              <div class="badges-row">
+                <span
+                  class="severity-badge"
+                  [class.sev-minor]="item.severity === 'minor'"
+                  [class.sev-major]="item.severity === 'major'"
+                  [class.sev-critical]="item.severity === 'critical'"
+                >
+                  @if (item.severity === 'minor') {
+                    Menor
+                  } @else if (item.severity === 'major') {
+                    Mayor
+                  } @else {
+                    Crítica
+                  }
+                </span>
+
+                <span
+                  class="status-badge"
+                  [class.status-fixed]="!!item.fixedAt"
+                  [class.status-open]="!item.fixedAt"
+                >
+                  {{ item.fixedAt ? '✓ Corregida (' + item.fixedAt + ')' : '◔ En revisión' }}
+                </span>
+              </div>
+
+              <div class="location-row">
+                @if (item.subtopicId) {
+                  <a [routerLink]="['/leccion', item.subtopicId]" class="subtopic-link">
+                    {{ item.page }} &rarr;
+                  </a>
+                } @else {
+                  <span class="page-label">{{ item.page }}</span>
+                }
+              </div>
+            </header>
+
+            <div class="card-body">
+              <div class="content-block desc-block">
+                <span class="block-label">Incidencia reportada:</span>
+                <p class="block-text">{{ item.description }}</p>
+              </div>
+
+              <div class="content-block fix-block">
+                <span class="block-label">Corrección aplicada:</span>
+                <p class="block-text">{{ item.correction }}</p>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </main>
+</div>
+

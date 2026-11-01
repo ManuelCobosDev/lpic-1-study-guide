@@ -1,0 +1,1466 @@
+{
+  "id": "101.1",
+  "topicId": "101",
+  "examId": "101",
+  "title": "Ajustes de hardware del sistema",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 30,
+  "objectives": [
+    "Determinación, configuración y gestión de periféricos en Linux (Alta Densidad LPIC-1)",
+    "Dominio técnico de las herramientas y configuración del subtema 101.1"
+  ],
+  "keyTerms": [
+    "PCI",
+    "USB",
+    "BIOS",
+    "UEFI",
+    "udev",
+    "D-Bus"
+  ],
+  "commands": [
+    "lspci",
+    "lsusb",
+    "lsmod",
+    "modprobe"
+  ],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "101.1-slide-1",
+      "slideNumber": 1,
+      "title": "Ajustes de hardware del sistema",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Ajustes de hardware del sistema"
+        },
+        {
+          "type": "paragraph",
+          "text": "Determinación, configuración y gestión de periféricos en Linux (Modo Examen)"
+        }
+      ],
+      "notes": "Comenzamos el Tema 101 con el objetivo 101.1 (peso 2). En esta lección aprenderemos cómo el sistema operativo Linux detecta, comunica y configura todos los componentes físicos del ordenador, desde el firmware BIOS/UEFI hasta los buses PCI/USB y los módulos dinámicos del kernel."
+    },
+    {
+      "id": "101.1-slide-2",
+      "slideNumber": 2,
+      "title": "¿Cómo interactúa Linux con el Hardware? (Arquitectura de 4 Capas)",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "¿Cómo interactúa Linux con el Hardware? (Arquitectura de 4 Capas)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Linux no accede al hardware a ciegas: sigue una jerarquía estricta de 4 capas desde el silicio hasta las aplicaciones del usuario:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Firmware del Sistema (BIOS / UEFI)** — Inicializa los chips de la placa base, realiza el testeo POST y entrega el control de arranque al gestor de inicio.",
+            "**2. Kernel y Módulos Dinámicos (/lib/modules)** — El núcleo Linux detecta la topología de buses y carga bajo demanda los controladores necesarios (drivers).",
+            "**3. Pseudo-sistemas /proc y /sys (sysfs)** — El kernel expone en memoria RAM el estado del hardware, asignaciones de interrupciones IRQ y jerarquías de dispositivos.",
+            "**4. Espacio de Usuario: udev, D-Bus y /dev** — El demonio udev crea dinámicamente los archivos de dispositivo en /dev aplicando reglas automáticas ante eventos de conexión."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:12px; margin:12px 0;\">\n  <!-- Pipeline horizontal de 4 capas -->\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:14px;\">\n    \n    <!-- Capa 1 -->\n    <div style=\"background:#EEF2FF; border:2px solid #818CF8; border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; justify-content:space-between; position:relative;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#4F46E5; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;\">1</span>\n          <span style=\"font-size:12px; font-weight:700; color:#4338CA; text-transform:uppercase; letter-spacing:0.05em;\">Firmware Base</span>\n        </div>\n        <div style=\"font-size:19px; font-weight:800; color:#1E1B4B; margin-bottom:4px;\">BIOS / UEFI</div>\n        <div style=\"font-size:13.5px; color:#3730A3; line-height:1.35;\">Inicializa el chipset, ejecuta el test POST, carga la tabla ACPI y salta al gestor de arranque (GRUB).</div>\n      </div>\n      <div style=\"margin-top:10px; padding:4px 8px; background:#E0E7FF; border-radius:6px; font-size:12px; font-weight:600; color:#312E81;\">\n        📍 Nivel Físico / NVRAM\n      </div>\n    </div>\n\n    <!-- Capa 2 -->\n    <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; justify-content:space-between; position:relative;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;\">2</span>\n          <span style=\"font-size:12px; font-weight:700; color:#15803D; text-transform:uppercase; letter-spacing:0.05em;\">Núcleo Linux</span>\n        </div>\n        <div style=\"font-size:19px; font-weight:800; color:#064E3B; margin-bottom:4px;\">Kernel & Drivers</div>\n        <div style=\"font-size:13.5px; color:#166534; line-height:1.35;\">Escanea buses (PCI, USB), asigna canales IRQ/DMA y carga módulos dinámicos desde <code>/lib/modules/</code>.</div>\n      </div>\n      <div style=\"margin-top:10px; padding:4px 8px; background:#DCFCE7; border-radius:6px; font-size:12px; font-weight:600; color:#14532D;\">\n        📍 Espacio de Kernel (Ring 0)\n      </div>\n    </div>\n\n    <!-- Capa 3 -->\n    <div style=\"background:#FEF3C7; border:2px solid #FCD34D; border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; justify-content:space-between; position:relative;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;\">3</span>\n          <span style=\"font-size:12px; font-weight:700; color:#B45309; text-transform:uppercase; letter-spacing:0.05em;\">Interfaces Vivas</span>\n        </div>\n        <div style=\"font-size:19px; font-weight:800; color:#78350F; margin-bottom:4px;\">/proc y /sys (sysfs)</div>\n        <div style=\"font-size:13.5px; color:#92400E; line-height:1.35;\">Pseudo-sistemas en RAM. El kernel expone estadísticas, jerarquía de buses y parámetros sin tocar el disco.</div>\n      </div>\n      <div style=\"margin-top:10px; padding:4px 8px; background:#FDE68A; border-radius:6px; font-size:12px; font-weight:600; color:#78350F;\">\n        📍 Memoria RAM (0 bytes en disco)\n      </div>\n    </div>\n\n    <!-- Capa 4 -->\n    <div style=\"background:#F1F5F9; border:2px solid #94A3B8; border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; justify-content:space-between; position:relative;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#475569; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;\">4</span>\n          <span style=\"font-size:12px; font-weight:700; color:#334155; text-transform:uppercase; letter-spacing:0.05em;\">Espacio Usuario</span>\n        </div>\n        <div style=\"font-size:19px; font-weight:800; color:#0F172A; margin-bottom:4px;\">udevd, D-Bus y /dev</div>\n        <div style=\"font-size:13.5px; color:#334155; line-height:1.35;\"><code>udevd</code> escucha <em>uevents</em>, crea nodos en <code>/dev</code> con permisos y D-Bus avisa al entorno de escritorio.</div>\n      </div>\n      <div style=\"margin-top:10px; padding:4px 8px; background:#E2E8F0; border-radius:6px; font-size:12px; font-weight:600; color:#1E293B;\">\n        📍 Espacio de Usuario (Userspace)\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Tarjeta de Definición Central: ¿Qué es en sí el Kernel? -->\n  <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-left:6px solid var(--success); border-radius:12px; padding:12px 18px; display:flex; align-items:center; justify-content:space-between; gap:20px;\">\n    <div style=\"display:flex; align-items:flex-start; gap:14px; flex:1;\">\n      <div style=\"width:40px; height:40px; border-radius:10px; background:var(--success-soft); color:var(--success-ink); display:flex; align-items:center; justify-content:center; flex:none; font-size:22px;\">\n        🧠\n      </div>\n      <div>\n        <div style=\"display:flex; align-items:center; gap:10px; margin-bottom:3px;\">\n          <h4 style=\"margin:0; font-size:16px; font-weight:800; color:var(--text);\">¿Qué es en sí el Kernel (Núcleo) de Linux?</h4>\n          <span style=\"background:var(--success); color:#FFFFFF; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;\">CONCEPTO MAESTRO</span>\n        </div>\n        <p style=\"margin:0; font-size:13px; color:var(--text-muted); line-height:1.4;\">\n          Es el <strong>corazón del sistema operativo</strong> y el primer programa cargado en RAM al arrancar. Se ejecuta en modo privilegiado (<em>Ring 0 / Kernel Space</em>) y es el <strong>único con acceso directo al hardware</strong>. Ningún programa de usuario puede tocar los circuitos físicos: todos deben pedírselo al Kernel mediante llamadas al sistema (<em>syscalls</em>).\n        </p>\n      </div>\n    </div>\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:4px 14px; font-size:12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px 12px; flex:none;\">\n      <div style=\"color:var(--text);\"><strong style=\"color:var(--primary);\">1. CPU:</strong> Reparte tiempo a procesos</div>\n      <div style=\"color:var(--text);\"><strong style=\"color:var(--success);\">2. RAM:</strong> Aísla y protege la memoria</div>\n      <div style=\"color:var(--text);\"><strong style=\"color:var(--warning);\">3. Hardware:</strong> Carga drivers (.ko)</div>\n      <div style=\"color:var(--text);\"><strong style=\"color:var(--cat-services-accent);\">4. E/S:</strong> Gestiona discos y redes</div>\n    </div>\n  </div>\n\n  <!-- Flujo de datos y relación de comunicación -->\n  <div style=\"background:var(--surface); border:1.5px solid var(--border-strong); border-radius:10px; padding:8px 16px; display:flex; align-items:center; justify-content:space-between; font-size:13.5px;\">\n    <span style=\"font-weight:700; color:var(--text);\">🔄 Flujo de Detección Hardware:</span>\n    <span style=\"color:#4338CA; font-weight:600;\">1. Conexión física USB/PCI</span>\n    <span style=\"color:var(--text-muted);\">➔</span>\n    <span style=\"color:#15803D; font-weight:600;\">2. Interrupción IRQ al Kernel</span>\n    <span style=\"color:var(--text-muted);\">➔</span>\n    <span style=\"color:#B45309; font-weight:600;\">3. Kernel actualiza /sys</span>\n    <span style=\"color:var(--text-muted);\">➔</span>\n    <span style=\"color:var(--text); font-weight:600;\">4. udev crea nodo en /dev</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Mnemotécnica LPIC-1: El hardware físico NUNCA se conecta directamente a tus programas. El kernel actúa de puente y árbitro absoluto, /sys documenta la conexión y /dev ofrece el archivo para leer o escribir."
+        }
+      ],
+      "notes": "Guía pedagógica del Kernel para el docente:\n1. DEFINICIÓN: El Kernel es el núcleo central del sistema operativo. Es un programa monolítico modular que se carga en RAM durante el arranque y tiene acceso irrestricto al hardware (Ring 0 / Kernel Space).\n2. CUATRO FUNCIONES MAESTRAS:\n   a) Gestión de procesos (reparto de CPU / Scheduler).\n   b) Gestión de memoria RAM (asignación y protección contra fallos).\n   c) Control de hardware mediante controladores (drivers/módulos .ko).\n   d) Gestión de sistemas de archivos y comunicaciones de red.\n3. POR QUÉ IMPORTA EN 101.1: Ninguna aplicación puede tocar un chip o disco directamente; todas deben solicitarlo al Kernel mediante llamadas al sistema (syscalls)."
+    },
+    {
+      "id": "101.1-slide-3",
+      "slideNumber": 3,
+      "title": "Firmware del Sistema: BIOS Legacy frente a UEFI Moderno",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Firmware del Sistema: BIOS Legacy frente a UEFI Moderno"
+        },
+        {
+          "type": "paragraph",
+          "text": "El examen LPIC-1 evalúa minuciosamente las diferencias estructurales y límites entre ambos estándares:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin:16px 0;\">\n  <!-- Tarjeta BIOS Legacy -->\n  <div style=\"background:#FFF5F5; border:2px solid #FCA5A5; border-radius:16px; padding:20px;\">\n    <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;\">\n      <div style=\"display:flex; align-items:center; gap:10px;\">\n        <span style=\"background:#EF4444; color:#FFF; font-weight:800; font-size:16px; padding:4px 12px; border-radius:8px;\">LEGACY</span>\n        <h3 style=\"margin:0; font-size:24px; font-weight:800; color:#991B1B;\">BIOS Tradicional</h3>\n      </div>\n      <span style=\"font-size:14px; font-weight:700; color:#B91C1C;\">16 bits · 1981</span>\n    </div>\n    \n    <div style=\"display:flex; flex-direction:column; gap:10px; font-size:16px;\">\n      <div style=\"background:#FFFFFF; border:1px solid #FECACA; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#7F1D1D;\">Esquema de partición:</span>\n        <span style=\"font-weight:800; color:#DC2626;\">MBR (Master Boot Record)</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #FECACA; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#7F1D1D;\">Límite de tamaño de disco:</span>\n        <span style=\"font-weight:800; color:#DC2626;\">Máximo 2 TiB por disco</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #FECACA; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#7F1D1D;\">Límite de particiones:</span>\n        <span style=\"font-weight:800; color:#DC2626;\">4 Primarias (o 3 + 1 Extendida)</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #FECACA; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#7F1D1D;\">Ubicación del código boot:</span>\n        <span>Primer sector del disco (512 bytes)</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #FECACA; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#7F1D1D;\">Memoria de configuración:</span>\n        <span>CMOS alimentada por pila CR2032</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #FECACA; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#7F1D1D;\">Seguridad de inicio:</span>\n        <span style=\"color:#991B1B; font-weight:600;\">Sin firmas criptográficas</span>\n      </div>\n    </div>\n  </div>\n\n  <!-- Tarjeta UEFI Moderno -->\n  <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:16px; padding:20px;\">\n    <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;\">\n      <div style=\"display:flex; align-items:center; gap:10px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:16px; padding:4px 12px; border-radius:8px;\">ESTÁNDAR</span>\n        <h3 style=\"margin:0; font-size:24px; font-weight:800; color:#14532D;\">UEFI Moderno</h3>\n      </div>\n      <span style=\"font-size:14px; font-weight:700; color:#15803D;\">32/64 bits nativo</span>\n    </div>\n\n    <div style=\"display:flex; flex-direction:column; gap:10px; font-size:16px;\">\n      <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#14532D;\">Esquema de partición:</span>\n        <span style=\"font-weight:800; color:#16A34A;\">GPT (GUID Partition Table)</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#14532D;\">Límite de tamaño de disco:</span>\n        <span style=\"font-weight:800; color:#16A34A;\">Hasta 9.4 ZB (Zettabytes)</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#14532D;\">Límite de particiones:</span>\n        <span style=\"font-weight:800; color:#16A34A;\">128 Particiones nativas</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#14532D;\">Partición obligatoria:</span>\n        <span style=\"font-weight:800; color:#15803D;\">ESP (FAT32, montada en /boot/efi)</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#14532D;\">Memoria de configuración:</span>\n        <span>NVRAM (memoria flash no volátil)</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#14532D;\">Seguridad de inicio:</span>\n        <span style=\"color:#15803D; font-weight:700;\">Secure Boot (claves criptográficas)</span>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA TOP DE EXAMEN: La partición ESP (EFI System Partition) debe formatearse estrictamente en FAT12, FAT16 o FAT32 (habitualmente FAT32). El firmware UEFI no puede leer ext4, Btrfs ni XFS de forma nativa."
+        }
+      ],
+      "notes": "Destaca que para entrar en la BIOS/UEFI durante el POST se pulsa Del/F2/F12. Si la pila de botón de la placa base se agota, la CMOS pierde la hora y la secuencia de arranque se desconfigura."
+    },
+    {
+      "id": "101.1-slide-4",
+      "slideNumber": 4,
+      "title": "Modos de Almacenamiento: IDE vs AHCI vs NVMe PCIe",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Modos de Almacenamiento: IDE vs AHCI vs NVMe PCIe"
+        },
+        {
+          "type": "paragraph",
+          "text": "Configurar adecuadamente la controladora en la BIOS/UEFI determina el rendimiento y la estabilidad del kernel:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Activación y desactivación de periféricos integrados** — Tarjetas de audio integradas, puertos serie/paralelo y adaptadores de red (NIC) pueden deshabilitarse en BIOS para ahorrar energía y evitar conflictos de IRQ.",
+            "**Modos de controlador SATA: IDE vs AHCI vs RAID** — IDE/Legacy emula controladoras PATA de 16 bits. AHCI activa Native Command Queuing (NCQ) y conexión en caliente (hotplug). Al pasar a AHCI, el initramfs debe contener el módulo ahci para que el kernel acceda al disco.",
+            "**Almacenamiento ultrarrápido NVMe sobre bus PCIe** — Las unidades NVMe (Non-Volatile Memory Express) van directamente al bus PCIe, superando el cuello de botella SATA (600 MB/s) y alcanzando varios GB/s.",
+            "**Recursos heredados: IRQ, DMA y puertos E/S** — Las IRQ (peticiones de interrupción) van de 0 a 15 en PC heredados; si dos tarjetas antiguas comparten IRQ sin soporte de bus, provocan cuelgues del sistema."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin:16px 0;\">\n  <!-- IDE Legacy -->\n  <div style=\"background:#F8FAFC; border:2px solid #CBD5E1; border-radius:14px; padding:16px; display:flex; flex-direction:column; justify-content:space-between;\">\n    <div>\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;\">\n        <span style=\"background:#64748B; color:#FFF; font-weight:800; font-size:14px; padding:2px 8px; border-radius:6px;\">LEGACY</span>\n        <span style=\"font-weight:700; color:#475569; font-size:14px;\">133 MB/s</span>\n      </div>\n      <h3 style=\"margin:0 0 8px 0; font-size:22px; font-weight:800; color:#1E293B;\">IDE / PATA</h3>\n      <p style=\"font-size:15px; color:#475569; line-height:1.4; margin:0 0 10px 0;\">Emulación de controladoras antiguas de 16 bits. Carece de soporte para conexión en caliente y cola de comandos.</p>\n    </div>\n    <div style=\"font-size:13.5px; background:#F1F5F9; border-radius:8px; padding:8px 10px; color:#334155;\">\n      ⚠️ Nodos históricos <code>/dev/hda</code>, <code>/dev/hdb</code>. Muy obsoleto.\n    </div>\n  </div>\n\n  <!-- AHCI SATA -->\n  <div style=\"background:#EFF6FF; border:2px solid #93C5FD; border-radius:14px; padding:16px; display:flex; flex-direction:column; justify-content:space-between;\">\n    <div>\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:14px; padding:2px 8px; border-radius:6px;\">SATA 3</span>\n        <span style=\"font-weight:700; color:#1D4ED8; font-size:14px;\">600 MB/s</span>\n      </div>\n      <h3 style=\"margin:0 0 8px 0; font-size:22px; font-weight:800; color:#1E3A8A;\">AHCI (Advanced Host)</h3>\n      <p style=\"font-size:15px; color:#1E40AF; line-height:1.4; margin:0 0 10px 0;\">Estándar nativo SATA. Activa <strong>NCQ</strong> (Native Command Queuing) para reordenar lecturas en disco y <strong>Hotplug</strong> (conexión en caliente).</p>\n    </div>\n    <div style=\"font-size:13.5px; background:#DBEAFE; border-radius:8px; padding:8px 10px; color:#1E3A8A; font-weight:600;\">\n      📍 Nodos SCSI universales <code>/dev/sda</code>, <code>/dev/sdb</code>.\n    </div>\n  </div>\n\n  <!-- NVMe PCIe -->\n  <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:14px; padding:16px; display:flex; flex-direction:column; justify-content:space-between;\">\n    <div>\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:14px; padding:2px 8px; border-radius:6px;\">PCIE BUS</span>\n        <span style=\"font-weight:700; color:#15803D; font-size:14px;\">7.000+ MB/s</span>\n      </div>\n      <h3 style=\"margin:0 0 8px 0; font-size:22px; font-weight:800; color:#14532D;\">NVMe (Non-Volatile)</h3>\n      <p style=\"font-size:15px; color:#166534; line-height:1.4; margin:0 0 10px 0;\">Conexión directa sobre 4 líneas PCIe sin cuello de botella SATA. Soporta 64.000 colas paralelas con 64.000 comandos cada una.</p>\n    </div>\n    <div style=\"font-size:13.5px; background:#DCFCE7; border-radius:8px; padding:8px 10px; color:#14532D; font-weight:600;\">\n      📍 Nomenclatura PCIe <code>/dev/nvme0n1</code>.\n    </div>\n  </div>\n</div>\n\n<div style=\"display:grid; grid-template-columns: 1.15fr 0.85fr; gap:16px; margin:16px 0;\">\n  <!-- ¿Qué es el initramfs? -->\n  <div style=\"background:#F8FAFC; border:2px solid #CBD5E1; border-left:6px solid #2563EB; border-radius:12px; padding:14px 18px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:6px;\">CONCEPTO CLAVE</span>\n      <h4 style=\"margin:0; font-size:18px; font-weight:800; color:#1E293B;\">¿Qué es el initramfs? (Initial RAM File System)</h4>\n    </div>\n    <p style=\"font-size:15px; color:#334155; line-height:1.45; margin:0;\">\n      Es un <strong>sistema de archivos temporal cargado en memoria RAM</strong> durante el arranque. Contiene los módulos (drivers) esenciales (SATA, NVMe, RAID, LVM) para que el kernel pueda reconocer el almacenamiento y <strong>montar la partición raíz (<code>/</code>) real</strong>.\n    </p>\n  </div>\n\n  <!-- Peligro en examen -->\n  <div style=\"background:#FEF2F2; border:2px solid #FECACA; border-left:6px solid #EF4444; border-radius:12px; padding:14px 18px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n      <span style=\"font-size:18px;\">⚠️</span>\n      <h4 style=\"margin:0; font-size:18px; font-weight:800; color:#991B1B;\">Peligro en examen: Cambio IDE ➔ AHCI</h4>\n    </div>\n    <p style=\"font-size:15px; color:#991B1B; line-height:1.45; margin:0;\">\n      Si cambias una controladora SATA a <strong>AHCI</strong> en la BIOS de un sistema ya instalado, el kernel fallará con <em>Kernel Panic</em> si su <code>initramfs</code> carece del controlador AHCI necesario para leer el disco.\n    </p>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave LPIC-1: El initramfs carga en RAM los drivers de almacenamiento necesarios para montar la raíz (/). Si cambias el modo a AHCI en la BIOS sin tener el driver en el initramfs, el kernel colapsa con Kernel Panic."
+        }
+      ],
+      "notes": "Explica a la clase qué es el initramfs (Initial RAM File System): un sistema de archivos temporal cargado en memoria RAM con los drivers mínimos para que el kernel pueda acceder al disco y montar la raíz (/). Si el sistema se instaló en modo IDE, su initramfs solo contiene drivers IDE; si el usuario cambia en la BIOS a AHCI sin regenerar el initramfs, el kernel no sabe comunicarse con la controladora SATA y el arranque falla con Kernel Panic. (En el tema 101.2 se detalla a fondo este proceso)."
+    },
+    {
+      "id": "101.1-slide-5",
+      "slideNumber": 5,
+      "title": "Auditoría del Bus PCI con lspci",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Auditoría del Bus PCI con lspci"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué hace lspci? Lee directamente la base de datos de dispositivos conectados a los buses PCI y PCI Express del ordenador:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "lspci",
+          "title": "Inspeccionar tarjetas gráficas, controladoras de red, sonido y almacenamiento PCI"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "lspci -nnk -s 00:02.0",
+              "output": "00:02.0 VGA compatible controller [0300]: Intel Corporation CometLake-S GT2 [UHD Graphics 630] [8086:9bc5] (rev 05)\n\tSubsystem: Dell Device [1028:099e]\n\tKernel driver in use: i915\n\tKernel modules: i915"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-k",
+              "",
+              "🎯 Clave de Examen: Muestra el controlador activo del kernel (Kernel driver in use) y módulos disponibles."
+            ],
+            [
+              "-v / -vv / -vvv",
+              "",
+              "Incrementa el nivel de detalle (interrupciones IRQ, rangos de memoria E/S y capacidades)."
+            ],
+            [
+              "-s [[[[<domain>]:]<bus>]:][<slot>][.[<func>]]",
+              "",
+              "Filtra por dirección física del bus (ej: -s 00:02.0)."
+            ],
+            [
+              "-d [<vendor>]:[<device>][:<class>]",
+              "",
+              "Filtra por identificador numérico de fabricante y modelo en hexadecimal (ej: -d 8086:9bc5)."
+            ],
+            [
+              "-nn",
+              "",
+              "Muestra los nombres textuales junto a los códigos numéricos [vendor:device] entre corchetes."
+            ],
+            [
+              "-t",
+              "",
+              "Muestra la topología de buses y puentes en formato de árbol jerárquico."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-top:14px;\">\n  <div style=\"background:#FFFFFF; border:2px solid #BFDBFE; border-radius:10px; padding:10px 14px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:4px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:13px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;\">1</span>\n      <span style=\"font-weight:700; color:#1E40AF; font-size:15px;\">Dirección del Bus</span>\n    </div>\n    <div style=\"font-size:14px; color:#334155;\"><code>00:02.0</code> (Dominio:Bus:Dispositivo.Función). Se filtra con <code>-s</code>.</div>\n  </div>\n\n  <div style=\"background:#FFFFFF; border:2px solid #FED7AA; border-radius:10px; padding:10px 14px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:4px;\">\n      <span style=\"background:#EA580C; color:#FFF; font-weight:800; font-size:13px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;\">2</span>\n      <span style=\"font-weight:700; color:#9A3412; font-size:15px;\">ID [Vendor:Device]</span>\n    </div>\n    <div style=\"font-size:14px; color:#334155;\"><code>[8086:9bc5]</code> en hex. 8086 = Intel. Se muestra con <code>-nn</code> y filtra con <code>-d</code>.</div>\n  </div>\n\n  <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:10px; padding:10px 14px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:4px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:13px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;\">3</span>\n      <span style=\"font-weight:800; color:#14532D; font-size:15px;\">Driver Activo (-k)</span>\n    </div>\n    <div style=\"font-size:14px; color:#166534;\"><strong>Kernel driver in use: i915</strong>. Revela qué driver tiene el control en RAM.</div>\n  </div>\n\n  <div style=\"background:#FFFFFF; border:2px solid #CBD5E1; border-radius:10px; padding:10px 14px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:4px;\">\n      <span style=\"background:#64748B; color:#FFF; font-weight:800; font-size:13px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;\">4</span>\n      <span style=\"font-weight:700; color:#334155; font-size:15px;\">Módulos Aptos</span>\n    </div>\n    <div style=\"font-size:14px; color:#334155;\"><code>Kernel modules: i915</code>. Controladores compilados compatibles detectados.</div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA INFALIBLE DE EXAMEN: Si te preguntan qué comando y opción muestra qué driver del kernel está controlando una tarjeta de red o gráfica en bus PCI, responde: lspci -k."
+        }
+      ],
+      "notes": "Haz leer a los alumnos la salida de la terminal: 'Kernel driver in use: i915'. Ese es el driver real cargado en el núcleo."
+    },
+    {
+      "id": "101.1-slide-6",
+      "slideNumber": 6,
+      "title": "Auditoría del Bus USB con lsusb",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Auditoría del Bus USB con lsusb"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué hace lsusb? Muestra todos los concentradores (hubs) y periféricos USB conectados a las controladoras del sistema:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "lsusb",
+          "title": "Identificar teclados, ratones, pendrives, cámaras y concentradores USB"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "lsusb -t",
+              "output": "/:  Bus 02.Port 1: Dev 1, Class=root_hub, Driver=xhci_hcd/4p, 10000M\n/:  Bus 01.Port 1: Dev 1, Class=root_hub, Driver=xhci_hcd/10p, 480M\n    |__ Port 1: Dev 2, If 0, Class=Human Interface Device, Driver=usbhid, 12M\n    |__ Port 2: Dev 3, If 0, Class=Mass Storage, Driver=usb-storage, 480M"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-t",
+              "",
+              "🎯 Clave de Examen: Muestra la topología jerárquica en árbol, indicando clase de dispositivo, driver y velocidad (ej: 480M = USB 2.0)."
+            ],
+            [
+              "-v",
+              "",
+              "Detalle exhaustivo de descriptores de configuración USB (requiere sudo para ver números de serie completos)."
+            ],
+            [
+              "-s [bus]:[devnum]",
+              "",
+              "Filtra por número de bus y número de dispositivo (ej: -s 001:002)."
+            ],
+            [
+              "-d [vendor]:[product]",
+              "",
+              "Filtra por ID de fabricante y producto en hexadecimal (ej: -d 0781:5583)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:14px;\">\n  <!-- Tarjeta de Velocidades USB en lsusb -t -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:14px 18px;\">\n    <div style=\"font-size:16px; font-weight:700; color:var(--text); margin-bottom:8px; display:flex; align-items:center; gap:8px;\">\n      <span>⚡ Velocidades en <code>lsusb -t</code>:</span>\n    </div>\n    <div style=\"display:flex; flex-direction:column; gap:6px; font-size:14.5px;\">\n      <div style=\"display:flex; justify-content:space-between; padding:4px 8px; background:#F8FAFC; border-radius:6px;\">\n        <span><strong>1.5M</strong> (Low Speed):</span>\n        <span style=\"color:#64748B;\">USB 1.0 (Teclados y ratones básicos)</span>\n      </div>\n      <div style=\"display:flex; justify-content:space-between; padding:4px 8px; background:#F8FAFC; border-radius:6px;\">\n        <span><strong>12M</strong> (Full Speed):</span>\n        <span style=\"color:#64748B;\">USB 1.1 (Audio, mandos de juego)</span>\n      </div>\n      <div style=\"display:flex; justify-content:space-between; padding:4px 8px; background:#FEF3C7; border-radius:6px;\">\n        <span><strong>480M</strong> (High Speed):</span>\n        <span style=\"color:#B45309; font-weight:700;\">USB 2.0 (Pendrives, webcams HD)</span>\n      </div>\n      <div style=\"display:flex; justify-content:space-between; padding:4px 8px; background:#DCFCE7; border-radius:6px;\">\n        <span><strong>5000M / 10000M</strong> (SuperSpeed):</span>\n        <span style=\"color:#15803D; font-weight:700;\">USB 3.0 / 3.1 (SSDs externos)</span>\n      </div>\n    </div>\n  </div>\n\n  <!-- Anatomía del ID en lsusb -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:14px 18px;\">\n    <div style=\"font-size:16px; font-weight:700; color:var(--text); margin-bottom:8px;\">\n      🔍 Anatomía de la salida estándar <code>lsusb</code>:\n    </div>\n    <div style=\"background:#0F172A; color:#E2E8F0; padding:10px 14px; border-radius:8px; font-family:monospace; font-size:13.5px; margin-bottom:10px;\">\n      Bus 001 Device 004: ID <span style=\"color:#38BDF8; font-weight:bold;\">0781</span>:<span style=\"color:#FBBF24; font-weight:bold;\">5583</span> SanDisk Corp. Ultra Fit\n    </div>\n    <div style=\"display:flex; gap:12px; font-size:14px;\">\n      <div style=\"flex:1; background:#F0F9FF; border:1px solid #BAE6FD; padding:8px; border-radius:6px;\">\n        <span style=\"font-weight:700; color:#0369A1;\">0781:</span> Vendor ID (Fabricante: SanDisk)\n      </div>\n      <div style=\"flex:1; background:#FEF9C3; border:1px solid #FDE047; padding:8px; border-radius:6px;\">\n        <span style=\"font-weight:700; color:#854D0E;\">5583:</span> Product ID (Dispositivo: Ultra Fit)\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Diferencia vital para el examen: El identificador USB consta de dos bloques hex de 4 dígitos (VendorID:ProductID), por ejemplo '046d:c52b' (Logitech Unifying Receiver)."
+        }
+      ],
+      "notes": "Resalta el flag -t en la terminal: permite saber de un vistazo si un pendrive rápido está conectado a un puerto lento de 12M o a uno de 480M/5000M."
+    },
+    {
+      "id": "101.1-slide-7",
+      "slideNumber": 7,
+      "title": "Inspección de Módulos del Kernel: lsmod y modinfo",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Inspección de Módulos del Kernel: lsmod y modinfo"
+        },
+        {
+          "type": "paragraph",
+          "text": "Un módulo del kernel es un controlador (driver) compilado (.ko) que se inserta en RAM bajo demanda sin reiniciar el sistema operativo:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "lsmod | modinfo",
+          "title": "Un módulo es un controlador (driver) compilado (.ko) que añade funciones al kernel en caliente sin reiniciar. Con lsmod y modinfo los auditamos:"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "lsmod | head -n 4; echo '---'; modinfo -d e1000e",
+              "output": "Module                  Size  Used by\ne1000e                299008  0\nptp                    24576  1 e1000e\nusb_storage            81920  1 uas\n---\nIntel(R) PRO/1000 Network Driver"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "lsmod",
+              "",
+              "Lee /proc/modules y formatea 3 columnas: Nombre del módulo, tamaño en bytes y módulos dependientes que lo usan."
+            ],
+            [
+              "modinfo <módulo>",
+              "",
+              "Muestra autor, licencia, ruta del archivo .ko.xz, dependencias y parámetros configurables."
+            ],
+            [
+              "-d <módulo>",
+              "",
+              "Muestra únicamente la descripción textual del módulo (description)."
+            ],
+            [
+              "-p <módulo>",
+              "",
+              "Lista todos los parámetros que acepta el módulo con sus tipos de datos."
+            ],
+            [
+              "-F field",
+              "",
+              "Filtra un campo específico de la cabecera (ej: filename, license, depends)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:14px;\">\n  <!-- ¿Qué es un módulo? -->\n  <div style=\"background:#F8FAFC; border:2px solid #CBD5E1; border-left:6px solid #2563EB; border-radius:12px; padding:12px 16px; display:flex; flex-direction:column; justify-content:space-between;\">\n    <div>\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:6px; letter-spacing:0.04em;\">CONCEPTO CLAVE</span>\n        <h4 style=\"margin:0; font-size:16.5px; font-weight:800; color:#0F172A;\">¿Qué es un Módulo del Kernel? (*.ko)</h4>\n      </div>\n      <p style=\"font-size:14px; color:#1E293B; line-height:1.45; margin:0 0 8px 0;\">\n        Es un <strong>controlador (driver) o extensión compilada</strong> (archivo <code>.ko.xz</code> en <code>/lib/modules/</code>). Linux lo sube a la <strong>RAM en caliente</strong> sin reiniciar cuando detecta nuevo hardware (red, Wi-Fi, disco, USB).\n      </p>\n    </div>\n    <div style=\"font-size:13px; color:#1E3A8A; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:6px 10px; line-height:1.4;\">\n      📊 <strong>Columnas de <code>lsmod</code>:</strong> <code>Module</code> (nombre), <code>Size</code> (bytes en RAM), <code>Used by</code> (procesos y módulos dependientes).\n    </div>\n  </div>\n\n  <!-- ¿Cómo saber si está cargado o no? -->\n  <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-left:6px solid #16A34A; border-radius:12px; padding:12px 16px; display:flex; flex-direction:column; justify-content:space-between;\">\n    <div>\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:6px; letter-spacing:0.04em;\">REGLA PRÁCTICA</span>\n        <h4 style=\"margin:0; font-size:16.5px; font-weight:800; color:#064E3B;\">¿Cómo sé si un módulo está cargado o no?</h4>\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:6px; font-size:13px; line-height:1.4; margin-top:4px;\">\n        <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:6px; padding:6px 10px; color:#0F172A;\">\n          <span style=\"color:#15803D; font-weight:700;\">⚡ ¿Está activo en RAM?</span> ➔ Filtrar con <code>lsmod | grep &lt;nombre&gt;</code><br>\n          <span style=\"color:#14532D;\">• Si <strong>aparece en la lista</strong> ➔ <strong>SÍ está cargado</strong> en memoria.<br>• Si la terminal queda <strong>vacía</strong> ➔ <strong>NO está cargado</strong> en RAM.</span>\n        </div>\n        <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:6px; padding:6px 10px; color:#0F172A;\">\n          <span style=\"color:#15803D; font-weight:700;\">💾 ¿Existe en disco?</span> ➔ Consultar con <code>modinfo &lt;nombre&gt;</code><br>\n          <span style=\"color:#14532D;\">• Funciona <strong>esté cargado o no</strong> (lee <code>/lib/modules/</code>). Si no existe en el sistema, devuelve <em>ERROR: Module not found</em>.</span>\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para saber si un módulo está cargado, busca su nombre con 'lsmod | grep <módulo>' (lee /proc/modules). Si no aparece, NO está cargado en RAM. Para examinar su archivo en disco (cargado o no), usa 'modinfo <módulo>'."
+        }
+      ],
+      "notes": "Responde con claridad a la duda más frecuente del alumno: '¿Cómo sé si un módulo está cargado?'. 1) En RAM: ejecutas 'lsmod | grep <nombre>'. Si devuelve una línea, está cargado y activo. Si no devuelve nada, no está en RAM. 2) En disco: ejecutas 'modinfo <nombre>'. modinfo busca directamente en los archivos .ko de /lib/modules/$(uname -r)/; funciona tanto si el módulo está cargado como si no. Si modinfo da error 'module not found', es que ni siquiera está instalado en el sistema. Explica que en la siguiente diapositiva (101.1 slide 8) aprenderán cómo cargarlo con modprobe si no está en RAM."
+    },
+    {
+      "id": "101.1-slide-8",
+      "slideNumber": 8,
+      "title": "Carga y Descarga de Módulos: modprobe e insmod",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Carga y Descarga de Módulos: modprobe e insmod"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué nunca debes usar insmod en producción? Porque modprobe resuelve dependencias automáticamente:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "modprobe",
+          "title": "modprobe resuelve dependencias leyendo modules.dep; insmod es de bajo nivel y no gestiona dependencias:"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo modprobe -v usb_storage",
+              "output": "insmod /lib/modules/6.1.0-21-amd64/kernel/drivers/scsi/scsi_mod.ko.xz\ninsmod /lib/modules/6.1.0-21-amd64/kernel/drivers/usb/storage/usb-storage.ko.xz"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "modprobe <mod>",
+              "",
+              "Carga automática con dependencias de modules.dep."
+            ],
+            [
+              "-r / --remove",
+              "",
+              "🎯 Examen: Descarga el módulo y sus dependencias no usadas."
+            ],
+            [
+              "-v / --verbose",
+              "",
+              "Muestra los insmod ejecutados en orden de dependencia."
+            ],
+            [
+              "-c / --showconfig",
+              "",
+              "Muestra la unión consolidada de /etc/ y /lib/."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:8px;\">\n  <!-- Tarjeta 1: modules.dep -->\n  <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:5px solid var(--primary); border-radius:12px; padding:12px 16px; display:flex; flex-direction:column; justify-content:space-between;\">\n    <div>\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;\">\n        <h4 style=\"margin:0; font-size:16px; font-weight:800; color:var(--text);\">📄 ¿Qué es y cómo se ve modules.dep?</h4>\n        <span style=\"background:var(--primary); color:#FFF; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;\">MAPA DE DEPENDENCIAS</span>\n      </div>\n      <p style=\"font-size:13px; color:var(--text-muted); line-height:1.35; margin:0 0 6px 0;\">\n        Archivo de texto generado por <code style=\"font-weight:700;\">depmod -a</code> que indica la relación entre drivers:\n      </p>\n      <div style=\"background:#0F172A; color:#E2E8F0; border-radius:8px; padding:10px 12px; font-family:monospace; font-size:12px; line-height:1.45; border:1px solid #334155;\">\n        <div style=\"color:#94A3B8; font-size:10.5px; margin-bottom:4px;\"># Ruta: /lib/modules/$(uname -r)/modules.dep</div>\n        <div style=\"display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px dashed #475569; padding-bottom:4px; margin-bottom:4px;\">\n          <span style=\"color:#60A5FA; font-weight:700;\">usb-storage.ko.xz:</span>\n          <span style=\"color:#4ADE80; font-weight:700;\">kernel/drivers/scsi/scsi_mod.ko.xz</span>\n        </div>\n        <div style=\"display:flex; justify-content:space-between; font-size:10.5px; color:#94A3B8;\">\n          <span style=\"color:#93C5FD;\">▲ Módulo solicitado</span>\n          <span style=\"color:#86EFAC;\">▲ Dependencia previa (se carga 1º)</span>\n        </div>\n      </div>\n    </div>\n    <div style=\"margin-top:8px; font-size:12.5px; color:var(--text); line-height:1.4;\">\n      ➔ <strong>Flujo:</strong> <code>modprobe usb_storage</code> lee esto y ejecuta <code>insmod</code> primero para <code>scsi_mod</code>.<br>\n      ⚠️ <strong>insmod:</strong> No lee <code>modules.dep</code>. Si lo lanzas a mano sin <code>scsi_mod</code>, fallará con error.\n    </div>\n  </div>\n\n  <!-- Tarjeta 2: $(uname -r) -->\n  <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:5px solid var(--success); border-radius:12px; padding:12px 16px; display:flex; flex-direction:column; justify-content:space-between;\">\n    <div>\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;\">\n        <h4 style=\"margin:0; font-size:16px; font-weight:800; color:var(--text);\">💻 ¿Qué significa exactamente $(uname -r)?</h4>\n        <span style=\"background:var(--success); color:#FFF; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;\">KERNEL ACTIVO</span>\n      </div>\n      <p style=\"font-size:13px; color:var(--text-muted); line-height:1.35; margin:0 0 6px 0;\">\n        Cada versión de kernel tiene sus propios drivers en <code>/lib/modules/</code>. Bash lo resuelve dinámicamente:\n      </p>\n      <div style=\"display:flex; flex-direction:column; gap:4px; font-size:12px; line-height:1.35;\">\n        <div style=\"background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:4px 8px; color:var(--text); display:flex; justify-content:space-between;\">\n          <span><strong>1. Comando solo:</strong> <code>uname -r</code></span>\n          <span style=\"color:var(--text-muted);\">Imprime: <code>6.1.0-21-amd64</code></span>\n        </div>\n        <div style=\"background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:4px 8px; color:var(--text); display:flex; justify-content:space-between;\">\n          <span><strong>2. Sustitución $():</strong></span>\n          <span style=\"color:var(--text-muted);\">Ejecuta el comando y pega su texto</span>\n        </div>\n        <div style=\"background:var(--success-soft); border:1px solid var(--success); border-radius:6px; padding:4px 8px; color:var(--success-ink); font-weight:700;\">\n          ➔ /lib/modules/$(uname -r)/ = /lib/modules/6.1.0-21-amd64/\n        </div>\n      </div>\n    </div>\n    <div style=\"margin-top:8px; font-size:12px; color:var(--text-muted); line-height:1.35;\">\n      🎯 <strong>Motivo:</strong> Los drivers de un kernel no sirven para otro. Con <code>$(uname -r)</code> el comando apunta siempre a la versión en ejecución.\n    </div>\n  </div>\n</div>\n\n<!-- Barra de conexión con la configuración persistente -->\n<div style=\"margin-top:8px; background:var(--warning-soft); border:1.5px solid var(--warning); border-radius:10px; padding:8px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12.5px; color:var(--warning-ink);\">\n  <div style=\"display:flex; align-items:center; gap:8px;\">\n    <span style=\"font-size:16px;\">📁</span>\n    <span><strong>Diferencia modprobe.d:</strong> <code>/etc/modprobe.d/</code> (Tú, SysAdmin, gana siempre) anula a <code>/lib/modprobe.d/</code> (Distribución, de fábrica, no tocar).</span>\n  </div>\n  <div style=\"flex:none; font-weight:700;\">\n    Ver unión final: <code style=\"background:var(--surface); padding:2px 6px; border-radius:4px; border:1px solid var(--warning); color:var(--text);\">modprobe -c</code>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave LPIC-1: 'depmod -a' genera 'modules.dep'. Sin él, modprobe falla. En modprobe.d, /etc/ (Tú, SysAdmin) gana siempre a /lib/ (De fábrica, Distro); 'modprobe -c' muestra ambas unificadas."
+        }
+      ],
+      "notes": "Guía pedagógica completa para el docente:\n1. QUÉ ES Y CÓMO SE VE modules.dep:\n   - Archivo de texto plano generado por 'depmod -a' ubicado en /lib/modules/$(uname -r)/modules.dep.\n   - Su formato es 'modulo.ko.xz: dependencia1.ko.xz dependencia2.ko.xz'.\n   - Gracias a este mapa, al pedir 'modprobe usb_storage', Linux sabe que debe llamar a 'insmod' primero para scsi_mod y luego para usb_storage.\n2. QUÉ SIGNIFICA $(uname -r):\n   - 'uname -r' imprime la versión exacta del kernel en ejecución (ej: 6.1.0-21-amd64).\n   - En Bash, $(comando) es una 'sustitución de comandos': ejecuta el comando y pega su texto. Por tanto, /lib/modules/$(uname -r)/ se convierte en /lib/modules/6.1.0-21-amd64/.\n   - Esto es vital porque en un servidor puede haber varios kernels instalados; cada uno tiene su propia carpeta de módulos para evitar mezclas.\n3. DIFERENCIA ENTRE /etc/ Y /lib/ PARA modprobe.d:\n   - /etc/modprobe.d/*.conf: Carpeta del SysAdmin (TÚ). Máxima prioridad. Aquí creas 'blacklist', 'options' o 'alias'. Sobrescribe a la distribución.\n   - /lib/modprobe.d/*.conf (o /usr/lib/): Carpeta 'de fábrica' de la Distribución (Debian, RedHat). NUNCA se edita a mano porque los paquetes del sistema la sobrescriben en las actualizaciones.\n   - Comando 'modprobe -c': Lee y consolida en pantalla la unión de ambos directorios."
+    },
+    {
+      "id": "101.1-slide-9",
+      "slideNumber": 9,
+      "title": "Configuración Persistente: /etc/modprobe.d/",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Configuración Persistente: /etc/modprobe.d/"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo pasamos parámetros a los drivers o impedimos que un módulo conflictivo se cargue al arrancar?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Extensión .conf obligatoria** — Todo archivo en /etc/modprobe.d/ debe terminar obligatoriamente en .conf.",
+            "**Directiva blacklist <módulo>** — 🎯 Examen: Evita la carga automática por udev (no impide modprobe manual).",
+            "**Directiva options <módulo> <parm>=<val>** — Fija opciones estáticas que se aplican cada vez que el kernel activa el módulo.",
+            "**Directiva alias <apodo> <nombre>** — Permite asociar un nombre genérico a un módulo específico del hardware."
+          ]
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "blacklist nouveau\noptions nouveau modeset=0\nalias red-local e1000e",
+          "title": "/etc/modprobe.d/desactivar-nouveau.conf"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"margin-top:8px; background:var(--surface-alt); border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px;\">\n  <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"font-size:16px;\">⚖️</span>\n      <strong style=\"font-size:15px; color:var(--text);\">Jerarquía y Precedencia en modprobe.d: ¿Quién manda?</strong>\n    </div>\n    <span style=\"background:var(--primary); color:#FFF; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;\">REGLA DE ORO LPIC-1</span>\n  </div>\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12.5px;\">\n    <div style=\"background:var(--surface); border:1.5px solid var(--primary); border-left:5px solid var(--primary); border-radius:8px; padding:8px 12px; color:var(--text);\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;\">\n        <strong style=\"color:var(--primary); font-size:14px;\">📁 /etc/modprobe.d/*.conf</strong>\n        <span style=\"background:var(--primary-soft); color:var(--primary-ink); font-size:10.5px; font-weight:800; padding:1px 6px; border-radius:4px;\">PRIORIDAD ALTA</span>\n      </div>\n      <div><strong>Propietario:</strong> El Administrador (TÚ). Tus reglas (<code>blacklist</code>, <code>options</code>, <code>alias</code>).</div>\n      <div style=\"margin-top:3px; font-weight:600; color:var(--primary-ink); font-size:12px;\">➔ Gana siempre: Si coincide el nombre con uno de /lib/, lo anula. No lo tocan las actualizaciones.</div>\n    </div>\n    <div style=\"background:var(--surface); border:1.5px solid var(--border-strong); border-left:5px solid var(--text-faint); border-radius:8px; padding:8px 12px; color:var(--text);\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;\">\n        <strong style=\"color:var(--text-faint); font-size:14px;\">📦 /lib/modprobe.d/*.conf</strong>\n        <span style=\"background:var(--surface-alt); color:var(--text-faint); font-size:10.5px; font-weight:800; padding:1px 6px; border-radius:4px;\">DE FÁBRICA</span>\n      </div>\n      <div><strong>Propietario:</strong> La Distribución (Debian, Ubuntu, RHEL). Ajustes por defecto de paquetes.</div>\n      <div style=\"margin-top:3px; font-weight:600; color:var(--danger-ink); font-size:12px;\">⚠️ NUNCA editar a mano: Las actualizaciones de paquetes (apt/dnf) lo sobrescriben.</div>\n    </div>\n  </div>\n  <div style=\"margin-top:6px; font-size:12px; color:var(--text-muted); display:flex; align-items:center; justify-content:space-between; border-top:1px dashed var(--border); padding-top:4px;\">\n    <span>🔍 <strong>Auditoría:</strong> Ver unión consolidada de ambos directorios: <code style=\"font-weight:700; color:var(--primary);\">modprobe -c</code> (o <code>--showconfig</code>)</span>\n    <span>🎯 Extensión obligatoria: <code>.conf</code></span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para consultar los parámetros que admite un módulo antes de escribirlos en .conf, ejecuta modinfo -p <módulo>."
+        }
+      ],
+      "notes": "Guía docente para modprobe.d:\n1. /etc/modprobe.d/: Exclusivo del Administrador. Prioridad más alta. Todo archivo aquí tiene extensión .conf y sobreescribe cualquier ajuste de la distribución.\n2. /lib/modprobe.d/ (o /usr/lib/modprobe.d/): Exclusivo de la Distribución (paquetes oficiales de Debian, RHEL, Ubuntu). Nunca se editan directamente porque las actualizaciones del sistema los reemplazan.\n3. Precedencia: Si existe el mismo archivo en /etc/ y en /lib/, el de /etc/ anula al de /lib/.\n4. Para ver la unión de todas las reglas aplicadas en el sistema: modprobe -c (o modprobe --showconfig)."
+    },
+    {
+      "id": "101.1-slide-10",
+      "slideNumber": 10,
+      "title": "Recursos de Hardware en el Pseudo-sistema /proc",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Recursos de Hardware en el Pseudo-sistema /proc"
+        },
+        {
+          "type": "paragraph",
+          "text": "El kernel expone la asignación de líneas de comunicación del hardware mediante archivos de texto plano legibles en /proc:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Archivo en /proc",
+            "Recurso Evaluado",
+            "Qué información crítica contiene para el examen"
+          ],
+          "rows": [
+            [
+              "/proc/cpuinfo",
+              "Procesador (CPU)",
+              "Modelo, frecuencia, número de núcleos/hilos, tamaño de caché y flags de virtualización: vmx (Intel) o svm (AMD)."
+            ],
+            [
+              "/proc/interrupts",
+              "Interrupciones (IRQ)",
+              "Líneas de aviso hardware a la CPU: número de IRQ, contador de interrupciones por núcleo y driver/dispositivo gestor."
+            ],
+            [
+              "/proc/ioports",
+              "Puertos de E/S (I/O)",
+              "Rangos de direcciones de memoria en hexadecimal que la CPU usa como canales de comunicación con los periféricos."
+            ],
+            [
+              "/proc/dma",
+              "Acceso Directo a Memoria",
+              "Canales DMA para transferir datos a alta velocidad directamente a la RAM sin saturar ni consumir ciclos de CPU."
+            ],
+            [
+              "/proc/modules",
+              "Módulos en RAM",
+              "Lista viva de módulos y controladores cargados actualmente (base de datos en texto crudo que lee el comando lsmod)."
+            ]
+          ],
+          "caption": "Recursos de Hardware en el Pseudo-sistema /proc"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<!-- Banner Conceptual: ¿Qué es una IRQ? -->\n<div style=\"margin-top:10px; background:var(--surface-alt); border:1.5px solid var(--border-strong); border-left:6px solid var(--warning); border-radius:10px; padding:8px 14px; display:flex; align-items:center; justify-content:space-between; gap:16px;\">\n  <div style=\"display:flex; align-items:center; gap:10px;\">\n    <span style=\"font-size:20px;\">⚡</span>\n    <div style=\"font-size:13px; color:var(--text); line-height:1.35;\">\n      <strong>¿Qué es en sí una IRQ (Interrupt Request)?</strong> Es la señal de aviso que un periférico (teclado, ratón, red) envía a la CPU para decirle <em>\"¡Tengo datos listos, atiéndeme ya!\"</em>. Actúa como un <strong>timbre</strong>: evita que la CPU gaste el 100% de su energía preguntando continuamente al hardware (sondeo / <em>polling</em>).\n    </div>\n  </div>\n  <span style=\"background:var(--warning); color:#FFFFFF; font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:6px; flex:none;\">LÍNEA DE INTERRUPCIÓN</span>\n</div>\n\n<!-- Terminales de Ejemplo Práctico -->\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:10px;\">\n  <!-- Ejemplo 1: /proc/interrupts -->\n  <div style=\"background:var(--surface); border:1.5px solid var(--border-strong); border-radius:10px; padding:10px 14px;\">\n    <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n      <strong style=\"color:var(--warning-ink); font-size:13.5px;\">⚡ Inspeccionar líneas IRQ en /proc/interrupts</strong>\n      <span style=\"font-size:11px; color:var(--text-muted); font-family:monospace;\"># head -n 4</span>\n    </div>\n    <div style=\"background:#0F172A; color:#E2E8F0; padding:8px 12px; border-radius:6px; font-family:monospace; font-size:12px; line-height:1.4; border:1px solid #334155;\">\n      <div style=\"color:#94A3B8;\">$ head -n 3 /proc/interrupts</div>\n      <div style=\"color:#64748B;\">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;CPU0 &nbsp; &nbsp;CPU1</div>\n      <div><span style=\"color:#FBBF24; font-weight:700;\">&nbsp; 1:</span> &nbsp; &nbsp; <span style=\"color:#4ADE80;\">9542</span> &nbsp; &nbsp; &nbsp; <span style=\"color:#4ADE80;\">0</span> &nbsp; IO-APIC &nbsp; <span style=\"color:#38BDF8; font-weight:700;\">i8042</span></div>\n    </div>\n    <div style=\"margin-top:4px; font-size:11.5px; color:var(--text-muted); display:flex; justify-content:space-between;\">\n      <span><strong style=\"color:var(--warning);\">1:</strong> Número IRQ</span>\n      <span><strong style=\"color:var(--success);\">9542:</strong> Avisos recibidos</span>\n      <span><strong style=\"color:var(--primary);\">i8042:</strong> Teclado PS/2</span>\n    </div>\n  </div>\n\n  <!-- Ejemplo 2: /proc/cpuinfo -->\n  <div style=\"background:var(--surface); border:1.5px solid var(--border-strong); border-radius:10px; padding:10px 14px;\">\n    <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n      <strong style=\"color:var(--primary); font-size:13.5px;\">💻 Virtualización por hardware en /proc/cpuinfo</strong>\n      <span style=\"font-size:11px; color:var(--text-muted); font-family:monospace;\"># grep -E</span>\n    </div>\n    <div style=\"background:#0F172A; color:#E2E8F0; padding:8px 12px; border-radius:6px; font-family:monospace; font-size:12px; line-height:1.4; border:1px solid #334155;\">\n      <div style=\"color:#94A3B8;\">$ grep -E --color=auto 'vmx|svm' /proc/cpuinfo</div>\n      <div>flags : fpu vme de tsc ... <span style=\"color:#38BDF8; font-weight:700;\">vmx</span> ... (Intel)</div>\n      <div>flags : fpu vme de tsc ... <span style=\"color:#4ADE80; font-weight:700;\">svm</span> ... (AMD)</div>\n    </div>\n    <div style=\"margin-top:4px; font-size:11.5px; color:var(--text-muted); display:flex; justify-content:space-between;\">\n      <span>🎯 <strong>vmx:</strong> Intel VT-x</span>\n      <span>🎯 <strong>svm:</strong> AMD-V (Pacifica)</span>\n      <span>💡 Soporte para KVM</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Clave de Examen: ¿En qué archivo de /proc comprobarías si tu CPU soporta virtualización por hardware? En /proc/cpuinfo, buscando el flag vmx (Intel VT-x) o svm (AMD-V)."
+        }
+      ],
+      "notes": "Guía didáctica de /proc para el docente:\n1. QUÉ ES UNA IRQ (Interrupt Request): Es una línea de aviso eléctrico de hardware. Analogía del timbre: en lugar de que la CPU consulte cada milisegundo al teclado si hay teclas ('polling', gasta 100% CPU), el teclado 'toca el timbre' (dispara IRQ 1) solo cuando pulsas. La CPU atiende la interrupción al vuelo y continúa su trabajo.\n2. ARCHIVO /proc/interrupts: Muestra el número de IRQ (columna 1), las veces atendida por cada CPU (CPU0, CPU1...) y el driver responsable.\n3. /proc/ioports vs /proc/dma: Los puertos E/S son buzones de memoria hex para dialogar con el chip; DMA transfiere bloques pesados a RAM sin pasar por CPU.\n4. REGLA: Todos estos archivos se leen con cat, grep, head o less. No se editan porque residen en memoria RAM viva."
+    },
+    {
+      "id": "101.1-slide-11",
+      "slideNumber": 11,
+      "title": "Jerarquía de Dispositivos: /sys (sysfs) y /dev",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Jerarquía de Dispositivos: /sys (sysfs) y /dev"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cuál es la diferencia exacta entre /sys y /dev? Esta distinción conceptual aparece en casi todas las convocatorias LPIC-1:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**/sys (sysfs): La vista organizativa del Kernel** — Sistema de archivos virtual montado en /sys. Representa la topología jerárquica del hardware: buses, clases, drivers y atributos modificables de los dispositivos.",
+            "**/dev (Device Nodes): Los puntos de acceso de E/S** — Contiene los nodos de dispositivo reales mediante los cuales los programas leen y escriben datos hacia el hardware (ej: /dev/sda, /dev/tty1, /dev/urandom).",
+            "**Dispositivos de Carácter (c) vs Dispositivos de Bloque (b)** — Los de Bloque transfieren datos en bloques direccionables con búfer de memoria (discos duros, SSD). Los de Carácter transfieren flujo secuencial byte a byte (teclados, terminales, ratón).",
+            "**Números Major y Minor** — El Major identifica el tipo de dispositivo/driver del kernel. El Minor distingue la unidad o partición individual concreta dentro de ese driver."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin:16px 0;\">\n  <!-- sysfs -->\n  <div style=\"background:#F0F9FF; border:2px solid #7DD3FC; border-radius:14px; padding:18px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:10px;\">\n      <span style=\"background:#0284C7; color:#FFF; font-weight:800; font-size:14px; padding:2px 8px; border-radius:6px;\">SYSFS</span>\n      <h3 style=\"margin:0; font-size:22px; font-weight:800; color:#0369A1;\">/sys (Topología del Kernel)</h3>\n    </div>\n    <p style=\"font-size:15px; color:#0C4A6E; line-height:1.45; margin:0 0 12px 0;\">\n      Es el plano organizativo interno. Muestra qué buses, puentes y drivers están conectados entre sí.\n    </p>\n    <div style=\"font-size:13.5px; background:#E0F2FE; border-radius:8px; padding:10px; color:#0369A1; font-family:monospace;\">\n      /sys/block/sda/<br>\n      /sys/bus/pci/devices/0000:00:02.0/<br>\n      /sys/class/net/eth0/\n    </div>\n  </div>\n\n  <!-- devtmpfs -->\n  <div style=\"background:#FAF5FF; border:2px solid #D8B4FE; border-radius:14px; padding:18px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:10px;\">\n      <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:14px; padding:2px 8px; border-radius:6px;\">DEVTMPFS</span>\n      <h3 style=\"margin:0; font-size:22px; font-weight:800; color:#6B21A8;\">/dev (Nodos de Acceso E/S)</h3>\n    </div>\n    <p style=\"font-size:15px; color:#581C87; line-height:1.45; margin:0 0 12px 0;\">\n      Son los archivos especiales mediante los cuales los programas leen y escriben datos en los dispositivos.\n    </p>\n    <div style=\"font-size:13.5px; background:#F3E8FF; border-radius:8px; padding:10px; color:#6B21A8; font-family:monospace;\">\n      /dev/sda (disco de bloque)<br>\n      /dev/tty1 (terminal de carácter)<br>\n      /dev/urandom (generador pseudoaleatorio)\n    </div>\n  </div>\n</div>\n\n<!-- Anatomía Major / Minor -->\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:14px 20px;\">\n  <div style=\"font-size:16px; font-weight:700; color:var(--text); margin-bottom:8px;\">\n    🔢 Anatomía de un nodo en <code>/dev</code> (Salida de <code>ls -l /dev/sda</code>):\n  </div>\n  <div style=\"background:#0F172A; color:#E2E8F0; padding:10px 16px; border-radius:8px; font-family:monospace; font-size:15px; margin-bottom:10px;\">\n    <span style=\"color:#F472B6; font-weight:bold;\">b</span>rw-rw---- 1 root disk <span style=\"color:#38BDF8; font-weight:bold;\">8</span>, <span style=\"color:#FBBF24; font-weight:bold;\">0</span> 24 oct 10:00 /dev/sda\n  </div>\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:14px;\">\n    <div style=\"background:#FDF2F8; border:1px solid #FBCFE8; padding:8px 12px; border-radius:6px;\">\n      <strong style=\"color:#9D174D;\">Tipo (b / c):</strong> 'b' = Bloque (discos con búfer). 'c' = Carácter (flujo secuencial).\n    </div>\n    <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:8px 12px; border-radius:6px;\">\n      <strong style=\"color:#0369A1;\">Major (8):</strong> Identifica el driver del kernel asociado (8 = Controlador SCSI/SATA).\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FEF08A; padding:8px 12px; border-radius:6px;\">\n      <strong style=\"color:#854D0E;\">Minor (0):</strong> Identifica la unidad física o partición concreta (0 = disco sda, 1 = sda1).\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Mnemotécnica: /sys es el plano del arquitecto (cómo está conectado el hardware); /dev es la puerta de entrada para usarlo."
+        }
+      ],
+      "notes": "Pide a los alumnos que hagan 'ls -l /dev/sda': verán la letra 'b' al principio de los permisos y dos números (8, 0) que son el major y el minor."
+    },
+    {
+      "id": "101.1-slide-12",
+      "slideNumber": 12,
+      "title": "Gestión Dinámica de Nodos con udev y D-Bus",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Gestión Dinámica de Nodos con udev y D-Bus"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué ocurre en tu ordenador exactamente desde que enchufas un pendrive hasta que ves tus archivos?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**El demonio udev: Gestor dinámico de /dev** — Crea y borra archivos en /dev al vuelo cuando conectas o desconectas hardware, evitando tener miles de archivos estáticos innecesarios.",
+            "**Reglas de udev: /etc frente a /lib** — 🎯 Pregunta de Examen: Tus reglas personalizadas se guardan en /etc/udev/rules.d/ y anulan a las de fábrica ubicadas en /lib/udev/rules.d/.",
+            "**D-Bus: El cartero entre el sistema y tu escritorio** — Bus de mensajes que avisa a entornos gráficos como GNOME o KDE para que abran la ventana del explorador cuando conectas un disco."
+          ]
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "KERNEL==\"sd*\", SYMLINK+=\"mi_disco\"",
+          "title": "/etc/udev/rules.d/99-disco.rules"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:12px; margin:8px 0;\">\n  <!-- 1. Los 4 Pasos del Flujo Explicados de Forma Sencilla -->\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:12px;\">\n    <!-- Paso 1 -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:4px solid var(--text-faint); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;\">\n          <span style=\"font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;\">Paso 1 · Físico</span>\n          <span style=\"font-size:18px;\">🔌</span>\n        </div>\n        <div style=\"font-size:16px; font-weight:800; color:var(--text); margin-bottom:4px;\">Enchufar el Pendrive</div>\n        <div style=\"font-size:13px; color:var(--text-muted); line-height:1.4;\">Conectas la memoria al puerto USB con el equipo encendido (<em>conexión en caliente</em>). La ranura detecta corriente eléctrica.</div>\n      </div>\n      <div style=\"margin-top:10px; padding-top:6px; border-top:1px dashed var(--border); font-size:11.5px; color:var(--text-faint); font-weight:700;\">⚡ Contacto físico detectado</div>\n    </div>\n\n    <!-- Paso 2 -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:4px solid var(--primary); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;\">\n          <span style=\"font-size:11px; font-weight:800; color:var(--primary); text-transform:uppercase; letter-spacing:0.04em;\">Paso 2 · Núcleo</span>\n          <span style=\"font-size:18px;\">🧠</span>\n        </div>\n        <div style=\"font-size:16px; font-weight:800; color:var(--text); margin-bottom:4px;\">El Kernel se entera</div>\n        <div style=\"font-size:13px; color:var(--text-muted); line-height:1.4;\">El Kernel reconoce el chip del dispositivo, carga su controlador (<em>driver</em>) y anota todos sus datos técnicos en <code>/sys</code>.</div>\n      </div>\n      <div style=\"margin-top:10px; padding-top:6px; border-top:1px dashed var(--border); font-size:11.5px; color:var(--primary-ink); font-weight:700;\">📢 Grita: «¡Hay hardware nuevo!»</div>\n    </div>\n\n    <!-- Paso 3 -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:4px solid var(--success); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;\">\n          <span style=\"font-size:11px; font-weight:800; color:var(--success); text-transform:uppercase; letter-spacing:0.04em;\">Paso 3 · Gestor</span>\n          <span style=\"font-size:18px;\">⚙️</span>\n        </div>\n        <div style=\"font-size:16px; font-weight:800; color:var(--text); margin-bottom:4px;\">udev crea el archivo</div>\n        <div style=\"font-size:13px; color:var(--text-muted); line-height:1.4;\">El servicio <code>udevd</code> oye el aviso del kernel, busca tus reglas y <strong>crea el archivo en <code>/dev/sdb1</code></strong> listo para usarse.</div>\n      </div>\n      <div style=\"margin-top:10px; padding-top:6px; border-top:1px dashed var(--border); font-size:11.5px; color:var(--success-ink); font-weight:700;\">📁 Crea el nodo en /dev</div>\n    </div>\n\n    <!-- Paso 4 -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:4px solid var(--warning); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;\">\n          <span style=\"font-size:11px; font-weight:800; color:var(--warning-ink); text-transform:uppercase; letter-spacing:0.04em;\">Paso 4 · Pantalla</span>\n          <span style=\"font-size:18px;\">🖥️</span>\n        </div>\n        <div style=\"font-size:16px; font-weight:800; color:var(--text); margin-bottom:4px;\">D-Bus avisa al escritorio</div>\n        <div style=\"font-size:13px; color:var(--text-muted); line-height:1.4;\"><strong>D-Bus</strong> actúa como cartero y avisa a GNOME o KDE para que monte el pendrive y abra la ventana en pantalla.</div>\n      </div>\n      <div style=\"margin-top:10px; padding-top:6px; border-top:1px dashed var(--border); font-size:11.5px; color:var(--warning-ink); font-weight:700;\">📂 ¡Se abre la ventana de archivos!</div>\n    </div>\n  </div>\n\n  <!-- 2. Lo que SÍ pregunta el Examen sobre Reglas de udev -->\n  <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; padding:14px 18px;\">\n    <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:8px;\">\n      <div>\n        <span style=\"font-size:15px; font-weight:800; color:var(--text);\">📝 Lo que pide el examen LPIC-1 sobre reglas de udev</span>\n        <span style=\"font-size:13px; color:var(--text-muted); margin-left:8px;\">(No exige memorizar reglas complejas, solo su lógica básica)</span>\n      </div>\n      <span style=\"font-family:monospace; font-size:12px; background:var(--surface-alt); padding:3px 8px; border-radius:6px; border:1px solid var(--border); color:var(--primary); font-weight:700;\">/etc/udev/rules.d/</span>\n    </div>\n\n    <!-- Ejemplo simplificado al máximo -->\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:10px;\">\n      <div style=\"background:var(--surface-alt); border:1px solid var(--border); border-left:4px solid var(--primary); border-radius:8px; padding:10px 14px;\">\n        <div style=\"display:flex; align-items:center; gap:6px; margin-bottom:4px;\">\n          <span style=\"background:var(--primary); color:#FFF; font-size:11px; font-weight:800; padding:1px 6px; border-radius:4px;\">== COMPARAR</span>\n          <strong style=\"font-size:14px; color:var(--text);\">Condición (¿Qué dispositivo es?)</strong>\n        </div>\n        <div style=\"font-size:13px; color:var(--text-muted); line-height:1.4;\">\n          <code>KERNEL==\"sd*\"</code> ➔ Comprueba si el kernel lo ha identificado como un disco (sda, sdb...).\n        </div>\n      </div>\n\n      <div style=\"background:var(--surface-alt); border:1px solid var(--border); border-left:4px solid var(--success); border-radius:8px; padding:10px 14px;\">\n        <div style=\"display:flex; align-items:center; gap:6px; margin-bottom:4px;\">\n          <span style=\"background:var(--success); color:#FFF; font-size:11px; font-weight:800; padding:1px 6px; border-radius:4px;\">+= o = ASIGNAR</span>\n          <strong style=\"font-size:14px; color:var(--text);\">Acción (¿Qué orden le damos?)</strong>\n        </div>\n        <div style=\"font-size:13px; color:var(--text-muted); line-height:1.4;\">\n          <code>SYMLINK+=\"mi_disco\"</code> ➔ Le crea un acceso directo fijo y cómodo: <code>/dev/mi_disco</code>.\n        </div>\n      </div>\n    </div>\n\n    <!-- Comando oficial de auditoría: udevadm -->\n    <div style=\"background:#0F172A; color:#E2E8F0; padding:8px 14px; border-radius:8px; font-family:monospace; font-size:13px; display:flex; align-items:center; justify-content:space-between; border:1px solid #334155;\">\n      <div>\n        <span style=\"color:#38BDF8; font-weight:bold;\">udevadm monitor</span>\n        <span style=\"color:#94A3B8; margin-left:10px;\"># Comando oficial del temario para ver eventos de hardware en tiempo real</span>\n      </div>\n      <span style=\"background:#1E293B; color:#FCD34D; font-size:11px; font-weight:bold; padding:2px 8px; border-radius:4px;\">HERRAMIENTA LPIC-1</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA TOP DE EXAMEN: Las reglas de /etc/udev/rules.d/ (creadas por el SysAdmin) tienen prioridad máxima y anulan a las de /lib/udev/rules.d/ (de fábrica)."
+        }
+      ],
+      "notes": "Guión sencillo para explicar udev en clase:\n1. PARA EL EXAMEN NO PIDEN ESCRIBIR REGLAS COMPLEJAS. Solo saber:\n   - udev crea y borra dinámicamente nodos en /dev.\n   - Las reglas del admin van en /etc/udev/rules.d/ (prioridad máxima sobre /lib/udev/rules.d/).\n   - '==' es condición (pregunta) y '+=' o '=' es acción (asignación).\n   - D-Bus avisa a las aplicaciones y al escritorio.\n   - El comando para monitorizar udev en vivo es: udevadm monitor."
+    },
+    {
+      "id": "101.1-slide-13",
+      "slideNumber": 13,
+      "title": "Nomenclatura de Dispositivos en /dev y Erratas",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Nomenclatura de Dispositivos en /dev y Erratas"
+        },
+        {
+          "type": "paragraph",
+          "text": "El examen exige reconocer inmediatamente a qué tipo de hardware físico apunta cualquier ruta bajo /dev:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Ruta en /dev",
+            "Tipo de Almacenamiento",
+            "Desglose de Nombres y Particiones"
+          ],
+          "rows": [
+            [
+              "/dev/sda, /dev/sdb2",
+              "SATA, SCSI, SAS, USB",
+              "sd = SCSI disk. La letra indica la unidad física (a, b, c); el número indica la partición (1, 2, ...)."
+            ],
+            [
+              "/dev/nvme0n1, nvme0n1p2",
+              "SSD NVMe (PCIe)",
+              "nvme0 = controladora 0; n1 = espacio de nombres (disco 1); p2 = partición 2."
+            ],
+            [
+              "/dev/mmcblk0, mmcblk0p1",
+              "Tarjetas SD / eMMC",
+              "mmcblk0 = tarjeta física 0; p1 = partición 1 (típico en Raspberry Pi)."
+            ],
+            [
+              "/dev/hda, /dev/hdb",
+              "Discos IDE / PATA (Legacy)",
+              "hda = canal primario maestro; hdb = canal primario esclavo; hdc = secundario maestro."
+            ],
+            [
+              "/dev/fd0",
+              "Disquetera de 3.5 pulgadas",
+              "⚠️ ERRATA OFICIAL DEL MANUAL: El manual escribe erróneamente /dev/fdO (con letra O) en vez de /dev/fd0 (cero)."
+            ]
+          ],
+          "caption": "Nomenclatura de Dispositivos en /dev y Erratas"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; margin-top:14px;\">\n  <div style=\"background:#EFF6FF; border:2px solid #93C5FD; border-radius:12px; padding:12px 16px;\">\n    <div style=\"font-size:16px; font-weight:800; color:#1E40AF; margin-bottom:4px;\">Discos SATA / SCSI / USB</div>\n    <div style=\"font-size:20px; font-weight:800; color:#1D4ED8; font-family:monospace;\">/dev/sda1</div>\n    <div style=\"font-size:14px; color:#1E3A8A; margin-top:6px;\">\n      <code>sd</code> = SCSI Disk<br>\n      <code>a</code> = 1ª unidad física (b, c...)<br>\n      <code>1</code> = Partición 1 (directo sin letra 'p')\n    </div>\n  </div>\n\n  <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:12px; padding:12px 16px;\">\n    <div style=\"font-size:16px; font-weight:800; color:#14532D; margin-bottom:4px;\">SSD NVMe (PCIe)</div>\n    <div style=\"font-size:20px; font-weight:800; color:#16A34A; font-family:monospace;\">/dev/nvme0n1p2</div>\n    <div style=\"font-size:14px; color:#14532D; margin-top:6px;\">\n      <code>nvme0</code> = Controladora 0<br>\n      <code>n1</code> = Namespace 1 (disco físico)<br>\n      <code>p2</code> = <strong>Partición 2 con prefijo 'p'</strong>\n    </div>\n  </div>\n\n  <div style=\"background:#FEF2F2; border:2px solid #FCA5A5; border-radius:12px; padding:12px 16px;\">\n    <div style=\"font-size:16px; font-weight:800; color:#991B1B; margin-bottom:4px;\">⚠️ Errata Oficial Manual</div>\n    <div style=\"font-size:20px; font-weight:800; color:#DC2626; font-family:monospace;\">/dev/fd0 (Disquete)</div>\n    <div style=\"font-size:14px; color:#991B1B; margin-top:6px;\">\n      El manual escribe por error <code>/dev/fdO</code> con letra 'O'. En Linux es estrictamente el número <strong>0</strong>.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Alerta de Examen: ¡Ojo con las unidades NVMe! La partición siempre lleva el prefijo 'p' (nvme0n1p1), mientras que en discos SATA se pega directamente al disco (sda1)."
+        }
+      ],
+      "notes": "Muestra la errata del manual de LPIC-1 (fdO vs fd0) para que nadie falle una pregunta de test si aparece esa trampa de tipografía."
+    },
+    {
+      "id": "101.1-slide-14",
+      "slideNumber": 14,
+      "title": "Ejercicios Guiados Oficiales (Parte 1: Servidores y GPUs)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales (Parte 1: Servidores y GPUs)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 1: Un servidor no arranca tras instalar un disco duro SATA moderno en una placa antigua configurada en IDE Legacy. — Comando: `Cambiar el modo SATA de IDE a AHCI en el menú de la BIOS/UEFI` (El modo IDE emula interfaces antiguas PATA de 16 bits sin soporte NCQ; AHCI activa el estándar nativo de alto rendimiento para unidades SATA modernas.)",
+            "Caso 2: Encontrar el modelo exacto de la tarjeta gráfica instalada y averiguar qué controlador del kernel la está gestionando. — Comando: `lspci -k | grep -A 3 -i vga` (El flag -k muestra la línea 'Kernel driver in use' debajo del dispositivo VGA, revelando si usa el controlador libre (nouveau/amdgpu) o propietario.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "Estos ejercicios evalúan la comprensión directa de las limitaciones del hardware en firmware y el dominio del flag -k de lspci para relacionar el hardware físico con el módulo del kernel activo."
+        }
+      ],
+      "notes": "Haz que los alumnos analicen por qué usamos grep -A 3: para ver las 3 líneas siguientes a la tarjeta gráfica y capturar el 'Kernel driver in use'."
+    },
+    {
+      "id": "101.1-slide-15",
+      "slideNumber": 15,
+      "title": "Ejercicios Guiados Oficiales (Parte 2: Filtros PCI y Módulos)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales (Parte 2: Filtros PCI y Módulos)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 3: Filtrar lspci para inspeccionar únicamente el dispositivo situado en la dirección de bus 03:00.0 con máximo detalle. — Comando: `lspci -v -s 03:00.0` (La opción -s selecciona el slot de bus específico y -v incrementa la verbosidad mostrando memoria E/S e interrupciones IRQ.)",
+            "Caso 4: Al ejecutar 'modprobe -r e1000e' el sistema responde 'FATAL: Module e1000e is in use'. ¿Cómo se diagnostica? — Comando: `lsmod | grep e1000e` (La tercera columna de lsmod ('Used by') desvela qué otros módulos dependen de él o si la interfaz de red sigue activa en el sistema.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "El kernel protege la estabilidad del sistema impidiendo descargar módulos en uso. Para descargarlo, antes se debe apagar la interfaz con 'ip link set eth0 down' o descargar los submódulos dependientes."
+        }
+      ],
+      "notes": "Explica la seguridad que ofrece el kernel: jamás permitirá descargar un driver de disco o red que esté transmitiendo datos en ese instante."
+    },
+    {
+      "id": "101.1-slide-16",
+      "slideNumber": 16,
+      "title": "Retos de Exploración del Manual Oficial",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Retos de Exploración del Manual Oficial"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Resuelve estos 4 retos de examen planteados en el manual oficial LPIC-1 (Página 17):\n1. ¿Por qué un servidor en un rack sin teclado físico puede fallar al arrancar la BIOS?\n2. En una Raspberry Pi o placa ARM embebida, ¿por qué el comando lspci no devuelve ninguna salida?\n3. Conectas un disco USB a un router Linux y se asigna como /dev/sda. ¿Por qué no es /dev/sdb?\n4. ¿En qué archivo de /proc comprobarías la mitigación de la vulnerabilidad Meltdown/Spectre?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Pista",
+          "content": "Recuerda: configuraciones Halt On en BIOS; buses SoC sin controlador PCI; orden de asignación sd en el arranque; y ficheros informativos de la CPU."
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Desafío",
+          "content": "1. Fallo sin teclado: La BIOS tiene activada la opción clásica 'Halt On: All Errors (No keyboard present)'. Se soluciona configurando 'Halt On: No Errors' o modo Headless.\n2. Raspberry Pi: Las placas SoC ARM conectan sus periféricos (red, almacenamiento) mediante buses integrados directos o USB interno, careciendo de bus PCI físico.\n3. Router /dev/sda: El router carece de discos duros internos SATA; por tanto, el primer dispositivo de almacenamiento detectado por el kernel recibe siempre la primera letra libre: sda.\n4. Vulnerabilidad Meltdown: Se consulta en /proc/cpuinfo (en el campo 'bugs') o en el directorio /sys/devices/system/cpu/vulnerabilities/."
+        }
+      ],
+      "notes": "Estos retos demuestran la diferencia entre memorizar comandos y entender cómo Linux gestiona el hardware en entornos reales de producción."
+    },
+    {
+      "id": "101.1-slide-17",
+      "slideNumber": 17,
+      "title": "Pregunta de Examen LPIC-1: Auditoría de Hardware",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Auditoría de Hardware"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-101-1-17",
+          "question": "¿Qué comando y opción muestra el controlador activo del kernel que está gestionando actualmente una tarjeta de red conectada al bus PCI?",
+          "options": [
+            {
+              "key": "a",
+              "text": "lsmod -v"
+            },
+            {
+              "key": "b",
+              "text": "lspci -k"
+            },
+            {
+              "key": "c",
+              "text": "modinfo -c"
+            },
+            {
+              "key": "d",
+              "text": "dmesg --driver"
+            }
+          ],
+          "correct": [
+            "b"
+          ],
+          "explanation": "lspci -k es la opción oficial evaluada en LPIC-1 que imprime la línea 'Kernel driver in use:' junto a cada dispositivo PCI. lsmod no tiene opción -v; modinfo muestra metadatos de archivos en disco, no el estado en vivo; y dmesg lee el buffer de arranque."
+        }
+      ],
+      "notes": "Pregunta recurrente en el examen 101. Haz que toda la clase justifique por qué las opciones A, C y D son distractores."
+    },
+    {
+      "id": "101.1-slide-18",
+      "slideNumber": 18,
+      "title": "Tarjetas de Memorización: Comandos y Rutas 101.1",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tarjetas de Memorización: Comandos y Rutas 101.1"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto",
+            "Significado / Uso"
+          ],
+          "rows": [
+            [
+              "¿Qué hace lspci -k?",
+              "Muestra el controlador activo del kernel (Kernel driver in use) y módulos compatibles para cada dispositivo PCI."
+            ],
+            [
+              "¿Qué comando muestra los dispositivos USB en estructura de árbol jerárquico?",
+              "lsusb -t (muestra la topología de buses, puertos, velocidad y drivers asociados)."
+            ],
+            [
+              "¿Diferencia fundamental entre modprobe e insmod?",
+              "modprobe resuelve dependencias automáticamente usando modules.dep; insmod requiere la ruta exacta al archivo .ko y no resuelve dependencias."
+            ],
+            [
+              "¿Qué comando regenera el archivo modules.dep?",
+              "depmod -a (escanea /lib/modules/$(uname -r)/ y actualiza el mapa de dependencias)."
+            ],
+            [
+              "¿Para qué sirve la directiva 'blacklist' en /etc/modprobe.d/*.conf?",
+              "Evita que udev cargue automáticamente un módulo conflictivo durante la detección de hardware."
+            ],
+            [
+              "¿Qué contiene /proc/interrupts?",
+              "La lista de interrupciones IRQ asignadas a cada CPU física y qué controlador/dispositivo las atiende."
+            ],
+            [
+              "¿Dónde crea el administrador sus reglas personalizadas de udev?",
+              "En /etc/udev/rules.d/*.rules (tienen prioridad sobre /lib/udev/rules.d/)."
+            ],
+            [
+              "¿Cuál es la nomenclatura en /dev de la partición 1 del primer SSD NVMe?",
+              "/dev/nvme0n1p1 (nvme0 = controladora 0, n1 = disco 1, p1 = partición 1)."
+            ]
+          ],
+          "caption": "Tarjetas de memorización"
+        }
+      ],
+      "notes": "Pasa estas tarjetas con los alumnos antes de finalizar el subtema para asegurar la retención de los conceptos más preguntados."
+    },
+    {
+      "id": "101.1-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen y Claves de Examen: Subtema 101.1",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen y Claves de Examen: Subtema 101.1"
+        }
+      ],
+      "notes": "Concluimos el subtema 101.1. Los alumnos ya dominan la interacción entre firmware, kernel y periféricos."
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-101-1-1",
+      "title": "¿Cómo interactúa Linux con el Hardware? (Arquitectura de 4 Capas)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "¿Cómo interactúa Linux con el Hardware? (Arquitectura de 4 Capas)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Linux no accede al hardware a ciegas: sigue una jerarquía estricta de 4 capas desde el silicio hasta las aplicaciones del usuario:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Firmware del Sistema (BIOS / UEFI)** — Inicializa los chips de la placa base, realiza el testeo POST y entrega el control de arranque al gestor de inicio.",
+            "**2. Kernel y Módulos Dinámicos (/lib/modules)** — El núcleo Linux detecta la topología de buses y carga bajo demanda los controladores necesarios (drivers).",
+            "**3. Pseudo-sistemas /proc y /sys (sysfs)** — El kernel expone en memoria RAM el estado del hardware, asignaciones de interrupciones IRQ y jerarquías de dispositivos.",
+            "**4. Espacio de Usuario: udev, D-Bus y /dev** — El demonio udev crea dinámicamente los archivos de dispositivo en /dev aplicando reglas automáticas ante eventos de conexión."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:12px; margin:12px 0;\">\n  <!-- Pipeline horizontal de 4 capas -->\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:14px;\">\n    \n    <!-- Capa 1 -->\n    <div style=\"background:#EEF2FF; border:2px solid #818CF8; border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; justify-content:space-between; position:relative;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#4F46E5; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;\">1</span>\n          <span style=\"font-size:12px; font-weight:700; color:#4338CA; text-transform:uppercase; letter-spacing:0.05em;\">Firmware Base</span>\n        </div>\n        <div style=\"font-size:19px; font-weight:800; color:#1E1B4B; margin-bottom:4px;\">BIOS / UEFI</div>\n        <div style=\"font-size:13.5px; color:#3730A3; line-height:1.35;\">Inicializa el chipset, ejecuta el test POST, carga la tabla ACPI y salta al gestor de arranque (GRUB).</div>\n      </div>\n      <div style=\"margin-top:10px; padding:4px 8px; background:#E0E7FF; border-radius:6px; font-size:12px; font-weight:600; color:#312E81;\">\n        📍 Nivel Físico / NVRAM\n      </div>\n    </div>\n\n    <!-- Capa 2 -->\n    <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; justify-content:space-between; position:relative;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;\">2</span>\n          <span style=\"font-size:12px; font-weight:700; color:#15803D; text-transform:uppercase; letter-spacing:0.05em;\">Núcleo Linux</span>\n        </div>\n        <div style=\"font-size:19px; font-weight:800; color:#064E3B; margin-bottom:4px;\">Kernel & Drivers</div>\n        <div style=\"font-size:13.5px; color:#166534; line-height:1.35;\">Escanea buses (PCI, USB), asigna canales IRQ/DMA y carga módulos dinámicos desde <code>/lib/modules/</code>.</div>\n      </div>\n      <div style=\"margin-top:10px; padding:4px 8px; background:#DCFCE7; border-radius:6px; font-size:12px; font-weight:600; color:#14532D;\">\n        📍 Espacio de Kernel (Ring 0)\n      </div>\n    </div>\n\n    <!-- Capa 3 -->\n    <div style=\"background:#FEF3C7; border:2px solid #FCD34D; border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; justify-content:space-between; position:relative;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;\">3</span>\n          <span style=\"font-size:12px; font-weight:700; color:#B45309; text-transform:uppercase; letter-spacing:0.05em;\">Interfaces Vivas</span>\n        </div>\n        <div style=\"font-size:19px; font-weight:800; color:#78350F; margin-bottom:4px;\">/proc y /sys (sysfs)</div>\n        <div style=\"font-size:13.5px; color:#92400E; line-height:1.35;\">Pseudo-sistemas en RAM. El kernel expone estadísticas, jerarquía de buses y parámetros sin tocar el disco.</div>\n      </div>\n      <div style=\"margin-top:10px; padding:4px 8px; background:#FDE68A; border-radius:6px; font-size:12px; font-weight:600; color:#78350F;\">\n        📍 Memoria RAM (0 bytes en disco)\n      </div>\n    </div>\n\n    <!-- Capa 4 -->\n    <div style=\"background:#F1F5F9; border:2px solid #94A3B8; border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; justify-content:space-between; position:relative;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#475569; color:#FFF; font-weight:800; font-size:14px; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;\">4</span>\n          <span style=\"font-size:12px; font-weight:700; color:#334155; text-transform:uppercase; letter-spacing:0.05em;\">Espacio Usuario</span>\n        </div>\n        <div style=\"font-size:19px; font-weight:800; color:#0F172A; margin-bottom:4px;\">udevd, D-Bus y /dev</div>\n        <div style=\"font-size:13.5px; color:#334155; line-height:1.35;\"><code>udevd</code> escucha <em>uevents</em>, crea nodos en <code>/dev</code> con permisos y D-Bus avisa al entorno de escritorio.</div>\n      </div>\n      <div style=\"margin-top:10px; padding:4px 8px; background:#E2E8F0; border-radius:6px; font-size:12px; font-weight:600; color:#1E293B;\">\n        📍 Espacio de Usuario (Userspace)\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Tarjeta de Definición Central: ¿Qué es en sí el Kernel? -->\n  <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-left:6px solid var(--success); border-radius:12px; padding:12px 18px; display:flex; align-items:center; justify-content:space-between; gap:20px;\">\n    <div style=\"display:flex; align-items:flex-start; gap:14px; flex:1;\">\n      <div style=\"width:40px; height:40px; border-radius:10px; background:var(--success-soft); color:var(--success-ink); display:flex; align-items:center; justify-content:center; flex:none; font-size:22px;\">\n        🧠\n      </div>\n      <div>\n        <div style=\"display:flex; align-items:center; gap:10px; margin-bottom:3px;\">\n          <h4 style=\"margin:0; font-size:16px; font-weight:800; color:var(--text);\">¿Qué es en sí el Kernel (Núcleo) de Linux?</h4>\n          <span style=\"background:var(--success); color:#FFFFFF; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;\">CONCEPTO MAESTRO</span>\n        </div>\n        <p style=\"margin:0; font-size:13px; color:var(--text-muted); line-height:1.4;\">\n          Es el <strong>corazón del sistema operativo</strong> y el primer programa cargado en RAM al arrancar. Se ejecuta en modo privilegiado (<em>Ring 0 / Kernel Space</em>) y es el <strong>único con acceso directo al hardware</strong>. Ningún programa de usuario puede tocar los circuitos físicos: todos deben pedírselo al Kernel mediante llamadas al sistema (<em>syscalls</em>).\n        </p>\n      </div>\n    </div>\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:4px 14px; font-size:12px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px 12px; flex:none;\">\n      <div style=\"color:var(--text);\"><strong style=\"color:var(--primary);\">1. CPU:</strong> Reparte tiempo a procesos</div>\n      <div style=\"color:var(--text);\"><strong style=\"color:var(--success);\">2. RAM:</strong> Aísla y protege la memoria</div>\n      <div style=\"color:var(--text);\"><strong style=\"color:var(--warning);\">3. Hardware:</strong> Carga drivers (.ko)</div>\n      <div style=\"color:var(--text);\"><strong style=\"color:var(--cat-services-accent);\">4. E/S:</strong> Gestiona discos y redes</div>\n    </div>\n  </div>\n\n  <!-- Flujo de datos y relación de comunicación -->\n  <div style=\"background:var(--surface); border:1.5px solid var(--border-strong); border-radius:10px; padding:8px 16px; display:flex; align-items:center; justify-content:space-between; font-size:13.5px;\">\n    <span style=\"font-weight:700; color:var(--text);\">🔄 Flujo de Detección Hardware:</span>\n    <span style=\"color:#4338CA; font-weight:600;\">1. Conexión física USB/PCI</span>\n    <span style=\"color:var(--text-muted);\">➔</span>\n    <span style=\"color:#15803D; font-weight:600;\">2. Interrupción IRQ al Kernel</span>\n    <span style=\"color:var(--text-muted);\">➔</span>\n    <span style=\"color:#B45309; font-weight:600;\">3. Kernel actualiza /sys</span>\n    <span style=\"color:var(--text-muted);\">➔</span>\n    <span style=\"color:var(--text); font-weight:600;\">4. udev crea nodo en /dev</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Mnemotécnica LPIC-1: El hardware físico NUNCA se conecta directamente a tus programas. El kernel actúa de puente y árbitro absoluto, /sys documenta la conexión y /dev ofrece el archivo para leer o escribir."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-1-2",
+      "title": "Firmware del Sistema: BIOS Legacy frente a UEFI Moderno",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Firmware del Sistema: BIOS Legacy frente a UEFI Moderno"
+        },
+        {
+          "type": "paragraph",
+          "text": "El examen LPIC-1 evalúa minuciosamente las diferencias estructurales y límites entre ambos estándares:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin:16px 0;\">\n  <!-- Tarjeta BIOS Legacy -->\n  <div style=\"background:#FFF5F5; border:2px solid #FCA5A5; border-radius:16px; padding:20px;\">\n    <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;\">\n      <div style=\"display:flex; align-items:center; gap:10px;\">\n        <span style=\"background:#EF4444; color:#FFF; font-weight:800; font-size:16px; padding:4px 12px; border-radius:8px;\">LEGACY</span>\n        <h3 style=\"margin:0; font-size:24px; font-weight:800; color:#991B1B;\">BIOS Tradicional</h3>\n      </div>\n      <span style=\"font-size:14px; font-weight:700; color:#B91C1C;\">16 bits · 1981</span>\n    </div>\n    \n    <div style=\"display:flex; flex-direction:column; gap:10px; font-size:16px;\">\n      <div style=\"background:#FFFFFF; border:1px solid #FECACA; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#7F1D1D;\">Esquema de partición:</span>\n        <span style=\"font-weight:800; color:#DC2626;\">MBR (Master Boot Record)</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #FECACA; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#7F1D1D;\">Límite de tamaño de disco:</span>\n        <span style=\"font-weight:800; color:#DC2626;\">Máximo 2 TiB por disco</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #FECACA; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#7F1D1D;\">Límite de particiones:</span>\n        <span style=\"font-weight:800; color:#DC2626;\">4 Primarias (o 3 + 1 Extendida)</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #FECACA; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#7F1D1D;\">Ubicación del código boot:</span>\n        <span>Primer sector del disco (512 bytes)</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #FECACA; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#7F1D1D;\">Memoria de configuración:</span>\n        <span>CMOS alimentada por pila CR2032</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #FECACA; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#7F1D1D;\">Seguridad de inicio:</span>\n        <span style=\"color:#991B1B; font-weight:600;\">Sin firmas criptográficas</span>\n      </div>\n    </div>\n  </div>\n\n  <!-- Tarjeta UEFI Moderno -->\n  <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:16px; padding:20px;\">\n    <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;\">\n      <div style=\"display:flex; align-items:center; gap:10px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:16px; padding:4px 12px; border-radius:8px;\">ESTÁNDAR</span>\n        <h3 style=\"margin:0; font-size:24px; font-weight:800; color:#14532D;\">UEFI Moderno</h3>\n      </div>\n      <span style=\"font-size:14px; font-weight:700; color:#15803D;\">32/64 bits nativo</span>\n    </div>\n\n    <div style=\"display:flex; flex-direction:column; gap:10px; font-size:16px;\">\n      <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#14532D;\">Esquema de partición:</span>\n        <span style=\"font-weight:800; color:#16A34A;\">GPT (GUID Partition Table)</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#14532D;\">Límite de tamaño de disco:</span>\n        <span style=\"font-weight:800; color:#16A34A;\">Hasta 9.4 ZB (Zettabytes)</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#14532D;\">Límite de particiones:</span>\n        <span style=\"font-weight:800; color:#16A34A;\">128 Particiones nativas</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#14532D;\">Partición obligatoria:</span>\n        <span style=\"font-weight:800; color:#15803D;\">ESP (FAT32, montada en /boot/efi)</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#14532D;\">Memoria de configuración:</span>\n        <span>NVRAM (memoria flash no volátil)</span>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between;\">\n        <span style=\"font-weight:700; color:#14532D;\">Seguridad de inicio:</span>\n        <span style=\"color:#15803D; font-weight:700;\">Secure Boot (claves criptográficas)</span>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA TOP DE EXAMEN: La partición ESP (EFI System Partition) debe formatearse estrictamente en FAT12, FAT16 o FAT32 (habitualmente FAT32). El firmware UEFI no puede leer ext4, Btrfs ni XFS de forma nativa."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-1-3",
+      "title": "Modos de Almacenamiento: IDE vs AHCI vs NVMe PCIe",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Modos de Almacenamiento: IDE vs AHCI vs NVMe PCIe"
+        },
+        {
+          "type": "paragraph",
+          "text": "Configurar adecuadamente la controladora en la BIOS/UEFI determina el rendimiento y la estabilidad del kernel:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Activación y desactivación de periféricos integrados** — Tarjetas de audio integradas, puertos serie/paralelo y adaptadores de red (NIC) pueden deshabilitarse en BIOS para ahorrar energía y evitar conflictos de IRQ.",
+            "**Modos de controlador SATA: IDE vs AHCI vs RAID** — IDE/Legacy emula controladoras PATA de 16 bits. AHCI activa Native Command Queuing (NCQ) y conexión en caliente (hotplug). Al pasar a AHCI, el initramfs debe contener el módulo ahci para que el kernel acceda al disco.",
+            "**Almacenamiento ultrarrápido NVMe sobre bus PCIe** — Las unidades NVMe (Non-Volatile Memory Express) van directamente al bus PCIe, superando el cuello de botella SATA (600 MB/s) y alcanzando varios GB/s.",
+            "**Recursos heredados: IRQ, DMA y puertos E/S** — Las IRQ (peticiones de interrupción) van de 0 a 15 en PC heredados; si dos tarjetas antiguas comparten IRQ sin soporte de bus, provocan cuelgues del sistema."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin:16px 0;\">\n  <!-- IDE Legacy -->\n  <div style=\"background:#F8FAFC; border:2px solid #CBD5E1; border-radius:14px; padding:16px; display:flex; flex-direction:column; justify-content:space-between;\">\n    <div>\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;\">\n        <span style=\"background:#64748B; color:#FFF; font-weight:800; font-size:14px; padding:2px 8px; border-radius:6px;\">LEGACY</span>\n        <span style=\"font-weight:700; color:#475569; font-size:14px;\">133 MB/s</span>\n      </div>\n      <h3 style=\"margin:0 0 8px 0; font-size:22px; font-weight:800; color:#1E293B;\">IDE / PATA</h3>\n      <p style=\"font-size:15px; color:#475569; line-height:1.4; margin:0 0 10px 0;\">Emulación de controladoras antiguas de 16 bits. Carece de soporte para conexión en caliente y cola de comandos.</p>\n    </div>\n    <div style=\"font-size:13.5px; background:#F1F5F9; border-radius:8px; padding:8px 10px; color:#334155;\">\n      ⚠️ Nodos históricos <code>/dev/hda</code>, <code>/dev/hdb</code>. Muy obsoleto.\n    </div>\n  </div>\n\n  <!-- AHCI SATA -->\n  <div style=\"background:#EFF6FF; border:2px solid #93C5FD; border-radius:14px; padding:16px; display:flex; flex-direction:column; justify-content:space-between;\">\n    <div>\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:14px; padding:2px 8px; border-radius:6px;\">SATA 3</span>\n        <span style=\"font-weight:700; color:#1D4ED8; font-size:14px;\">600 MB/s</span>\n      </div>\n      <h3 style=\"margin:0 0 8px 0; font-size:22px; font-weight:800; color:#1E3A8A;\">AHCI (Advanced Host)</h3>\n      <p style=\"font-size:15px; color:#1E40AF; line-height:1.4; margin:0 0 10px 0;\">Estándar nativo SATA. Activa <strong>NCQ</strong> (Native Command Queuing) para reordenar lecturas en disco y <strong>Hotplug</strong> (conexión en caliente).</p>\n    </div>\n    <div style=\"font-size:13.5px; background:#DBEAFE; border-radius:8px; padding:8px 10px; color:#1E3A8A; font-weight:600;\">\n      📍 Nodos SCSI universales <code>/dev/sda</code>, <code>/dev/sdb</code>.\n    </div>\n  </div>\n\n  <!-- NVMe PCIe -->\n  <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:14px; padding:16px; display:flex; flex-direction:column; justify-content:space-between;\">\n    <div>\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:14px; padding:2px 8px; border-radius:6px;\">PCIE BUS</span>\n        <span style=\"font-weight:700; color:#15803D; font-size:14px;\">7.000+ MB/s</span>\n      </div>\n      <h3 style=\"margin:0 0 8px 0; font-size:22px; font-weight:800; color:#14532D;\">NVMe (Non-Volatile)</h3>\n      <p style=\"font-size:15px; color:#166534; line-height:1.4; margin:0 0 10px 0;\">Conexión directa sobre 4 líneas PCIe sin cuello de botella SATA. Soporta 64.000 colas paralelas con 64.000 comandos cada una.</p>\n    </div>\n    <div style=\"font-size:13.5px; background:#DCFCE7; border-radius:8px; padding:8px 10px; color:#14532D; font-weight:600;\">\n      📍 Nomenclatura PCIe <code>/dev/nvme0n1</code>.\n    </div>\n  </div>\n</div>\n\n<div style=\"display:grid; grid-template-columns: 1.15fr 0.85fr; gap:16px; margin:16px 0;\">\n  <!-- ¿Qué es el initramfs? -->\n  <div style=\"background:#F8FAFC; border:2px solid #CBD5E1; border-left:6px solid #2563EB; border-radius:12px; padding:14px 18px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:6px;\">CONCEPTO CLAVE</span>\n      <h4 style=\"margin:0; font-size:18px; font-weight:800; color:#1E293B;\">¿Qué es el initramfs? (Initial RAM File System)</h4>\n    </div>\n    <p style=\"font-size:15px; color:#334155; line-height:1.45; margin:0;\">\n      Es un <strong>sistema de archivos temporal cargado en memoria RAM</strong> durante el arranque. Contiene los módulos (drivers) esenciales (SATA, NVMe, RAID, LVM) para que el kernel pueda reconocer el almacenamiento y <strong>montar la partición raíz (<code>/</code>) real</strong>.\n    </p>\n  </div>\n\n  <!-- Peligro en examen -->\n  <div style=\"background:#FEF2F2; border:2px solid #FECACA; border-left:6px solid #EF4444; border-radius:12px; padding:14px 18px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n      <span style=\"font-size:18px;\">⚠️</span>\n      <h4 style=\"margin:0; font-size:18px; font-weight:800; color:#991B1B;\">Peligro en examen: Cambio IDE ➔ AHCI</h4>\n    </div>\n    <p style=\"font-size:15px; color:#991B1B; line-height:1.45; margin:0;\">\n      Si cambias una controladora SATA a <strong>AHCI</strong> en la BIOS de un sistema ya instalado, el kernel fallará con <em>Kernel Panic</em> si su <code>initramfs</code> carece del controlador AHCI necesario para leer el disco.\n    </p>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave LPIC-1: El initramfs carga en RAM los drivers de almacenamiento necesarios para montar la raíz (/). Si cambias el modo a AHCI en la BIOS sin tener el driver en el initramfs, el kernel colapsa con Kernel Panic."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-1-4",
+      "title": "Auditoría del Bus PCI con lspci",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Auditoría del Bus PCI con lspci"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué hace lspci? Lee directamente la base de datos de dispositivos conectados a los buses PCI y PCI Express del ordenador:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "lspci",
+          "title": "Inspeccionar tarjetas gráficas, controladoras de red, sonido y almacenamiento PCI"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "lspci -nnk -s 00:02.0",
+              "output": "00:02.0 VGA compatible controller [0300]: Intel Corporation CometLake-S GT2 [UHD Graphics 630] [8086:9bc5] (rev 05)\n\tSubsystem: Dell Device [1028:099e]\n\tKernel driver in use: i915\n\tKernel modules: i915"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-k",
+              "",
+              "🎯 Clave de Examen: Muestra el controlador activo del kernel (Kernel driver in use) y módulos disponibles."
+            ],
+            [
+              "-v / -vv / -vvv",
+              "",
+              "Incrementa el nivel de detalle (interrupciones IRQ, rangos de memoria E/S y capacidades)."
+            ],
+            [
+              "-s [[[[<domain>]:]<bus>]:][<slot>][.[<func>]]",
+              "",
+              "Filtra por dirección física del bus (ej: -s 00:02.0)."
+            ],
+            [
+              "-d [<vendor>]:[<device>][:<class>]",
+              "",
+              "Filtra por identificador numérico de fabricante y modelo en hexadecimal (ej: -d 8086:9bc5)."
+            ],
+            [
+              "-nn",
+              "",
+              "Muestra los nombres textuales junto a los códigos numéricos [vendor:device] entre corchetes."
+            ],
+            [
+              "-t",
+              "",
+              "Muestra la topología de buses y puentes en formato de árbol jerárquico."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-top:14px;\">\n  <div style=\"background:#FFFFFF; border:2px solid #BFDBFE; border-radius:10px; padding:10px 14px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:4px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:13px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;\">1</span>\n      <span style=\"font-weight:700; color:#1E40AF; font-size:15px;\">Dirección del Bus</span>\n    </div>\n    <div style=\"font-size:14px; color:#334155;\"><code>00:02.0</code> (Dominio:Bus:Dispositivo.Función). Se filtra con <code>-s</code>.</div>\n  </div>\n\n  <div style=\"background:#FFFFFF; border:2px solid #FED7AA; border-radius:10px; padding:10px 14px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:4px;\">\n      <span style=\"background:#EA580C; color:#FFF; font-weight:800; font-size:13px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;\">2</span>\n      <span style=\"font-weight:700; color:#9A3412; font-size:15px;\">ID [Vendor:Device]</span>\n    </div>\n    <div style=\"font-size:14px; color:#334155;\"><code>[8086:9bc5]</code> en hex. 8086 = Intel. Se muestra con <code>-nn</code> y filtra con <code>-d</code>.</div>\n  </div>\n\n  <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:10px; padding:10px 14px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:4px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:13px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;\">3</span>\n      <span style=\"font-weight:800; color:#14532D; font-size:15px;\">Driver Activo (-k)</span>\n    </div>\n    <div style=\"font-size:14px; color:#166534;\"><strong>Kernel driver in use: i915</strong>. Revela qué driver tiene el control en RAM.</div>\n  </div>\n\n  <div style=\"background:#FFFFFF; border:2px solid #CBD5E1; border-radius:10px; padding:10px 14px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:4px;\">\n      <span style=\"background:#64748B; color:#FFF; font-weight:800; font-size:13px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;\">4</span>\n      <span style=\"font-weight:700; color:#334155; font-size:15px;\">Módulos Aptos</span>\n    </div>\n    <div style=\"font-size:14px; color:#334155;\"><code>Kernel modules: i915</code>. Controladores compilados compatibles detectados.</div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA INFALIBLE DE EXAMEN: Si te preguntan qué comando y opción muestra qué driver del kernel está controlando una tarjeta de red o gráfica en bus PCI, responde: lspci -k."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-1-5",
+      "title": "Auditoría del Bus USB con lsusb",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Auditoría del Bus USB con lsusb"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué hace lsusb? Muestra todos los concentradores (hubs) y periféricos USB conectados a las controladoras del sistema:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "lsusb",
+          "title": "Identificar teclados, ratones, pendrives, cámaras y concentradores USB"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "lsusb -t",
+              "output": "/:  Bus 02.Port 1: Dev 1, Class=root_hub, Driver=xhci_hcd/4p, 10000M\n/:  Bus 01.Port 1: Dev 1, Class=root_hub, Driver=xhci_hcd/10p, 480M\n    |__ Port 1: Dev 2, If 0, Class=Human Interface Device, Driver=usbhid, 12M\n    |__ Port 2: Dev 3, If 0, Class=Mass Storage, Driver=usb-storage, 480M"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-t",
+              "",
+              "🎯 Clave de Examen: Muestra la topología jerárquica en árbol, indicando clase de dispositivo, driver y velocidad (ej: 480M = USB 2.0)."
+            ],
+            [
+              "-v",
+              "",
+              "Detalle exhaustivo de descriptores de configuración USB (requiere sudo para ver números de serie completos)."
+            ],
+            [
+              "-s [bus]:[devnum]",
+              "",
+              "Filtra por número de bus y número de dispositivo (ej: -s 001:002)."
+            ],
+            [
+              "-d [vendor]:[product]",
+              "",
+              "Filtra por ID de fabricante y producto en hexadecimal (ej: -d 0781:5583)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:14px;\">\n  <!-- Tarjeta de Velocidades USB en lsusb -t -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:14px 18px;\">\n    <div style=\"font-size:16px; font-weight:700; color:var(--text); margin-bottom:8px; display:flex; align-items:center; gap:8px;\">\n      <span>⚡ Velocidades en <code>lsusb -t</code>:</span>\n    </div>\n    <div style=\"display:flex; flex-direction:column; gap:6px; font-size:14.5px;\">\n      <div style=\"display:flex; justify-content:space-between; padding:4px 8px; background:#F8FAFC; border-radius:6px;\">\n        <span><strong>1.5M</strong> (Low Speed):</span>\n        <span style=\"color:#64748B;\">USB 1.0 (Teclados y ratones básicos)</span>\n      </div>\n      <div style=\"display:flex; justify-content:space-between; padding:4px 8px; background:#F8FAFC; border-radius:6px;\">\n        <span><strong>12M</strong> (Full Speed):</span>\n        <span style=\"color:#64748B;\">USB 1.1 (Audio, mandos de juego)</span>\n      </div>\n      <div style=\"display:flex; justify-content:space-between; padding:4px 8px; background:#FEF3C7; border-radius:6px;\">\n        <span><strong>480M</strong> (High Speed):</span>\n        <span style=\"color:#B45309; font-weight:700;\">USB 2.0 (Pendrives, webcams HD)</span>\n      </div>\n      <div style=\"display:flex; justify-content:space-between; padding:4px 8px; background:#DCFCE7; border-radius:6px;\">\n        <span><strong>5000M / 10000M</strong> (SuperSpeed):</span>\n        <span style=\"color:#15803D; font-weight:700;\">USB 3.0 / 3.1 (SSDs externos)</span>\n      </div>\n    </div>\n  </div>\n\n  <!-- Anatomía del ID en lsusb -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:14px 18px;\">\n    <div style=\"font-size:16px; font-weight:700; color:var(--text); margin-bottom:8px;\">\n      🔍 Anatomía de la salida estándar <code>lsusb</code>:\n    </div>\n    <div style=\"background:#0F172A; color:#E2E8F0; padding:10px 14px; border-radius:8px; font-family:monospace; font-size:13.5px; margin-bottom:10px;\">\n      Bus 001 Device 004: ID <span style=\"color:#38BDF8; font-weight:bold;\">0781</span>:<span style=\"color:#FBBF24; font-weight:bold;\">5583</span> SanDisk Corp. Ultra Fit\n    </div>\n    <div style=\"display:flex; gap:12px; font-size:14px;\">\n      <div style=\"flex:1; background:#F0F9FF; border:1px solid #BAE6FD; padding:8px; border-radius:6px;\">\n        <span style=\"font-weight:700; color:#0369A1;\">0781:</span> Vendor ID (Fabricante: SanDisk)\n      </div>\n      <div style=\"flex:1; background:#FEF9C3; border:1px solid #FDE047; padding:8px; border-radius:6px;\">\n        <span style=\"font-weight:700; color:#854D0E;\">5583:</span> Product ID (Dispositivo: Ultra Fit)\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Diferencia vital para el examen: El identificador USB consta de dos bloques hex de 4 dígitos (VendorID:ProductID), por ejemplo '046d:c52b' (Logitech Unifying Receiver)."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-1-6",
+      "title": "Inspección de Módulos del Kernel: lsmod y modinfo",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Inspección de Módulos del Kernel: lsmod y modinfo"
+        },
+        {
+          "type": "paragraph",
+          "text": "Un módulo del kernel es un controlador (driver) compilado (.ko) que se inserta en RAM bajo demanda sin reiniciar el sistema operativo:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "lsmod | modinfo",
+          "title": "Un módulo es un controlador (driver) compilado (.ko) que añade funciones al kernel en caliente sin reiniciar. Con lsmod y modinfo los auditamos:"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "lsmod | head -n 4; echo '---'; modinfo -d e1000e",
+              "output": "Module                  Size  Used by\ne1000e                299008  0\nptp                    24576  1 e1000e\nusb_storage            81920  1 uas\n---\nIntel(R) PRO/1000 Network Driver"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "lsmod",
+              "",
+              "Lee /proc/modules y formatea 3 columnas: Nombre del módulo, tamaño en bytes y módulos dependientes que lo usan."
+            ],
+            [
+              "modinfo <módulo>",
+              "",
+              "Muestra autor, licencia, ruta del archivo .ko.xz, dependencias y parámetros configurables."
+            ],
+            [
+              "-d <módulo>",
+              "",
+              "Muestra únicamente la descripción textual del módulo (description)."
+            ],
+            [
+              "-p <módulo>",
+              "",
+              "Lista todos los parámetros que acepta el módulo con sus tipos de datos."
+            ],
+            [
+              "-F field",
+              "",
+              "Filtra un campo específico de la cabecera (ej: filename, license, depends)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:14px;\">\n  <!-- ¿Qué es un módulo? -->\n  <div style=\"background:#F8FAFC; border:2px solid #CBD5E1; border-left:6px solid #2563EB; border-radius:12px; padding:12px 16px; display:flex; flex-direction:column; justify-content:space-between;\">\n    <div>\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:6px; letter-spacing:0.04em;\">CONCEPTO CLAVE</span>\n        <h4 style=\"margin:0; font-size:16.5px; font-weight:800; color:#0F172A;\">¿Qué es un Módulo del Kernel? (*.ko)</h4>\n      </div>\n      <p style=\"font-size:14px; color:#1E293B; line-height:1.45; margin:0 0 8px 0;\">\n        Es un <strong>controlador (driver) o extensión compilada</strong> (archivo <code>.ko.xz</code> en <code>/lib/modules/</code>). Linux lo sube a la <strong>RAM en caliente</strong> sin reiniciar cuando detecta nuevo hardware (red, Wi-Fi, disco, USB).\n      </p>\n    </div>\n    <div style=\"font-size:13px; color:#1E3A8A; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:6px 10px; line-height:1.4;\">\n      📊 <strong>Columnas de <code>lsmod</code>:</strong> <code>Module</code> (nombre), <code>Size</code> (bytes en RAM), <code>Used by</code> (procesos y módulos dependientes).\n    </div>\n  </div>\n\n  <!-- ¿Cómo saber si está cargado o no? -->\n  <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-left:6px solid #16A34A; border-radius:12px; padding:12px 16px; display:flex; flex-direction:column; justify-content:space-between;\">\n    <div>\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:6px; letter-spacing:0.04em;\">REGLA PRÁCTICA</span>\n        <h4 style=\"margin:0; font-size:16.5px; font-weight:800; color:#064E3B;\">¿Cómo sé si un módulo está cargado o no?</h4>\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:6px; font-size:13px; line-height:1.4; margin-top:4px;\">\n        <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:6px; padding:6px 10px; color:#0F172A;\">\n          <span style=\"color:#15803D; font-weight:700;\">⚡ ¿Está activo en RAM?</span> ➔ Filtrar con <code>lsmod | grep &lt;nombre&gt;</code><br>\n          <span style=\"color:#14532D;\">• Si <strong>aparece en la lista</strong> ➔ <strong>SÍ está cargado</strong> en memoria.<br>• Si la terminal queda <strong>vacía</strong> ➔ <strong>NO está cargado</strong> en RAM.</span>\n        </div>\n        <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:6px; padding:6px 10px; color:#0F172A;\">\n          <span style=\"color:#15803D; font-weight:700;\">💾 ¿Existe en disco?</span> ➔ Consultar con <code>modinfo &lt;nombre&gt;</code><br>\n          <span style=\"color:#14532D;\">• Funciona <strong>esté cargado o no</strong> (lee <code>/lib/modules/</code>). Si no existe en el sistema, devuelve <em>ERROR: Module not found</em>.</span>\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para saber si un módulo está cargado, busca su nombre con 'lsmod | grep <módulo>' (lee /proc/modules). Si no aparece, NO está cargado en RAM. Para examinar su archivo en disco (cargado o no), usa 'modinfo <módulo>'."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-1-7",
+      "title": "Carga y Descarga de Módulos: modprobe e insmod",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Carga y Descarga de Módulos: modprobe e insmod"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué nunca debes usar insmod en producción? Porque modprobe resuelve dependencias automáticamente:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "modprobe",
+          "title": "modprobe resuelve dependencias leyendo modules.dep; insmod es de bajo nivel y no gestiona dependencias:"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo modprobe -v usb_storage",
+              "output": "insmod /lib/modules/6.1.0-21-amd64/kernel/drivers/scsi/scsi_mod.ko.xz\ninsmod /lib/modules/6.1.0-21-amd64/kernel/drivers/usb/storage/usb-storage.ko.xz"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "modprobe <mod>",
+              "",
+              "Carga automática con dependencias de modules.dep."
+            ],
+            [
+              "-r / --remove",
+              "",
+              "🎯 Examen: Descarga el módulo y sus dependencias no usadas."
+            ],
+            [
+              "-v / --verbose",
+              "",
+              "Muestra los insmod ejecutados en orden de dependencia."
+            ],
+            [
+              "-c / --showconfig",
+              "",
+              "Muestra la unión consolidada de /etc/ y /lib/."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:8px;\">\n  <!-- Tarjeta 1: modules.dep -->\n  <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:5px solid var(--primary); border-radius:12px; padding:12px 16px; display:flex; flex-direction:column; justify-content:space-between;\">\n    <div>\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;\">\n        <h4 style=\"margin:0; font-size:16px; font-weight:800; color:var(--text);\">📄 ¿Qué es y cómo se ve modules.dep?</h4>\n        <span style=\"background:var(--primary); color:#FFF; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;\">MAPA DE DEPENDENCIAS</span>\n      </div>\n      <p style=\"font-size:13px; color:var(--text-muted); line-height:1.35; margin:0 0 6px 0;\">\n        Archivo de texto generado por <code style=\"font-weight:700;\">depmod -a</code> que indica la relación entre drivers:\n      </p>\n      <div style=\"background:#0F172A; color:#E2E8F0; border-radius:8px; padding:10px 12px; font-family:monospace; font-size:12px; line-height:1.45; border:1px solid #334155;\">\n        <div style=\"color:#94A3B8; font-size:10.5px; margin-bottom:4px;\"># Ruta: /lib/modules/$(uname -r)/modules.dep</div>\n        <div style=\"display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px dashed #475569; padding-bottom:4px; margin-bottom:4px;\">\n          <span style=\"color:#60A5FA; font-weight:700;\">usb-storage.ko.xz:</span>\n          <span style=\"color:#4ADE80; font-weight:700;\">kernel/drivers/scsi/scsi_mod.ko.xz</span>\n        </div>\n        <div style=\"display:flex; justify-content:space-between; font-size:10.5px; color:#94A3B8;\">\n          <span style=\"color:#93C5FD;\">▲ Módulo solicitado</span>\n          <span style=\"color:#86EFAC;\">▲ Dependencia previa (se carga 1º)</span>\n        </div>\n      </div>\n    </div>\n    <div style=\"margin-top:8px; font-size:12.5px; color:var(--text); line-height:1.4;\">\n      ➔ <strong>Flujo:</strong> <code>modprobe usb_storage</code> lee esto y ejecuta <code>insmod</code> primero para <code>scsi_mod</code>.<br>\n      ⚠️ <strong>insmod:</strong> No lee <code>modules.dep</code>. Si lo lanzas a mano sin <code>scsi_mod</code>, fallará con error.\n    </div>\n  </div>\n\n  <!-- Tarjeta 2: $(uname -r) -->\n  <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:5px solid var(--success); border-radius:12px; padding:12px 16px; display:flex; flex-direction:column; justify-content:space-between;\">\n    <div>\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;\">\n        <h4 style=\"margin:0; font-size:16px; font-weight:800; color:var(--text);\">💻 ¿Qué significa exactamente $(uname -r)?</h4>\n        <span style=\"background:var(--success); color:#FFF; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;\">KERNEL ACTIVO</span>\n      </div>\n      <p style=\"font-size:13px; color:var(--text-muted); line-height:1.35; margin:0 0 6px 0;\">\n        Cada versión de kernel tiene sus propios drivers en <code>/lib/modules/</code>. Bash lo resuelve dinámicamente:\n      </p>\n      <div style=\"display:flex; flex-direction:column; gap:4px; font-size:12px; line-height:1.35;\">\n        <div style=\"background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:4px 8px; color:var(--text); display:flex; justify-content:space-between;\">\n          <span><strong>1. Comando solo:</strong> <code>uname -r</code></span>\n          <span style=\"color:var(--text-muted);\">Imprime: <code>6.1.0-21-amd64</code></span>\n        </div>\n        <div style=\"background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:4px 8px; color:var(--text); display:flex; justify-content:space-between;\">\n          <span><strong>2. Sustitución $():</strong></span>\n          <span style=\"color:var(--text-muted);\">Ejecuta el comando y pega su texto</span>\n        </div>\n        <div style=\"background:var(--success-soft); border:1px solid var(--success); border-radius:6px; padding:4px 8px; color:var(--success-ink); font-weight:700;\">\n          ➔ /lib/modules/$(uname -r)/ = /lib/modules/6.1.0-21-amd64/\n        </div>\n      </div>\n    </div>\n    <div style=\"margin-top:8px; font-size:12px; color:var(--text-muted); line-height:1.35;\">\n      🎯 <strong>Motivo:</strong> Los drivers de un kernel no sirven para otro. Con <code>$(uname -r)</code> el comando apunta siempre a la versión en ejecución.\n    </div>\n  </div>\n</div>\n\n<!-- Barra de conexión con la configuración persistente -->\n<div style=\"margin-top:8px; background:var(--warning-soft); border:1.5px solid var(--warning); border-radius:10px; padding:8px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12.5px; color:var(--warning-ink);\">\n  <div style=\"display:flex; align-items:center; gap:8px;\">\n    <span style=\"font-size:16px;\">📁</span>\n    <span><strong>Diferencia modprobe.d:</strong> <code>/etc/modprobe.d/</code> (Tú, SysAdmin, gana siempre) anula a <code>/lib/modprobe.d/</code> (Distribución, de fábrica, no tocar).</span>\n  </div>\n  <div style=\"flex:none; font-weight:700;\">\n    Ver unión final: <code style=\"background:var(--surface); padding:2px 6px; border-radius:4px; border:1px solid var(--warning); color:var(--text);\">modprobe -c</code>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave LPIC-1: 'depmod -a' genera 'modules.dep'. Sin él, modprobe falla. En modprobe.d, /etc/ (Tú, SysAdmin) gana siempre a /lib/ (De fábrica, Distro); 'modprobe -c' muestra ambas unificadas."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-1-8",
+      "title": "Configuración Persistente: /etc/modprobe.d/",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Configuración Persistente: /etc/modprobe.d/"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo pasamos parámetros a los drivers o impedimos que un módulo conflictivo se cargue al arrancar?"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Extensión .conf obligatoria** — Todo archivo en /etc/modprobe.d/ debe terminar obligatoriamente en .conf.",
+            "**Directiva blacklist <módulo>** — 🎯 Examen: Evita la carga automática por udev (no impide modprobe manual).",
+            "**Directiva options <módulo> <parm>=<val>** — Fija opciones estáticas que se aplican cada vez que el kernel activa el módulo.",
+            "**Directiva alias <apodo> <nombre>** — Permite asociar un nombre genérico a un módulo específico del hardware."
+          ]
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "blacklist nouveau\noptions nouveau modeset=0\nalias red-local e1000e",
+          "title": "/etc/modprobe.d/desactivar-nouveau.conf"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"margin-top:8px; background:var(--surface-alt); border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px;\">\n  <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"font-size:16px;\">⚖️</span>\n      <strong style=\"font-size:15px; color:var(--text);\">Jerarquía y Precedencia en modprobe.d: ¿Quién manda?</strong>\n    </div>\n    <span style=\"background:var(--primary); color:#FFF; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;\">REGLA DE ORO LPIC-1</span>\n  </div>\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12.5px;\">\n    <div style=\"background:var(--surface); border:1.5px solid var(--primary); border-left:5px solid var(--primary); border-radius:8px; padding:8px 12px; color:var(--text);\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;\">\n        <strong style=\"color:var(--primary); font-size:14px;\">📁 /etc/modprobe.d/*.conf</strong>\n        <span style=\"background:var(--primary-soft); color:var(--primary-ink); font-size:10.5px; font-weight:800; padding:1px 6px; border-radius:4px;\">PRIORIDAD ALTA</span>\n      </div>\n      <div><strong>Propietario:</strong> El Administrador (TÚ). Tus reglas (<code>blacklist</code>, <code>options</code>, <code>alias</code>).</div>\n      <div style=\"margin-top:3px; font-weight:600; color:var(--primary-ink); font-size:12px;\">➔ Gana siempre: Si coincide el nombre con uno de /lib/, lo anula. No lo tocan las actualizaciones.</div>\n    </div>\n    <div style=\"background:var(--surface); border:1.5px solid var(--border-strong); border-left:5px solid var(--text-faint); border-radius:8px; padding:8px 12px; color:var(--text);\">\n      <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;\">\n        <strong style=\"color:var(--text-faint); font-size:14px;\">📦 /lib/modprobe.d/*.conf</strong>\n        <span style=\"background:var(--surface-alt); color:var(--text-faint); font-size:10.5px; font-weight:800; padding:1px 6px; border-radius:4px;\">DE FÁBRICA</span>\n      </div>\n      <div><strong>Propietario:</strong> La Distribución (Debian, Ubuntu, RHEL). Ajustes por defecto de paquetes.</div>\n      <div style=\"margin-top:3px; font-weight:600; color:var(--danger-ink); font-size:12px;\">⚠️ NUNCA editar a mano: Las actualizaciones de paquetes (apt/dnf) lo sobrescriben.</div>\n    </div>\n  </div>\n  <div style=\"margin-top:6px; font-size:12px; color:var(--text-muted); display:flex; align-items:center; justify-content:space-between; border-top:1px dashed var(--border); padding-top:4px;\">\n    <span>🔍 <strong>Auditoría:</strong> Ver unión consolidada de ambos directorios: <code style=\"font-weight:700; color:var(--primary);\">modprobe -c</code> (o <code>--showconfig</code>)</span>\n    <span>🎯 Extensión obligatoria: <code>.conf</code></span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para consultar los parámetros que admite un módulo antes de escribirlos en .conf, ejecuta modinfo -p <módulo>."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-1-9",
+      "title": "Recursos de Hardware en el Pseudo-sistema /proc",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Recursos de Hardware en el Pseudo-sistema /proc"
+        },
+        {
+          "type": "paragraph",
+          "text": "El kernel expone la asignación de líneas de comunicación del hardware mediante archivos de texto plano legibles en /proc:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Archivo en /proc",
+            "Recurso Evaluado",
+            "Qué información crítica contiene para el examen"
+          ],
+          "rows": [
+            [
+              "/proc/cpuinfo",
+              "Procesador (CPU)",
+              "Modelo, frecuencia, número de núcleos/hilos, tamaño de caché y flags de virtualización: vmx (Intel) o svm (AMD)."
+            ],
+            [
+              "/proc/interrupts",
+              "Interrupciones (IRQ)",
+              "Líneas de aviso hardware a la CPU: número de IRQ, contador de interrupciones por núcleo y driver/dispositivo gestor."
+            ],
+            [
+              "/proc/ioports",
+              "Puertos de E/S (I/O)",
+              "Rangos de direcciones de memoria en hexadecimal que la CPU usa como canales de comunicación con los periféricos."
+            ],
+            [
+              "/proc/dma",
+              "Acceso Directo a Memoria",
+              "Canales DMA para transferir datos a alta velocidad directamente a la RAM sin saturar ni consumir ciclos de CPU."
+            ],
+            [
+              "/proc/modules",
+              "Módulos en RAM",
+              "Lista viva de módulos y controladores cargados actualmente (base de datos en texto crudo que lee el comando lsmod)."
+            ]
+          ],
+          "caption": "Recursos de Hardware en el Pseudo-sistema /proc"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<!-- Banner Conceptual: ¿Qué es una IRQ? -->\n<div style=\"margin-top:10px; background:var(--surface-alt); border:1.5px solid var(--border-strong); border-left:6px solid var(--warning); border-radius:10px; padding:8px 14px; display:flex; align-items:center; justify-content:space-between; gap:16px;\">\n  <div style=\"display:flex; align-items:center; gap:10px;\">\n    <span style=\"font-size:20px;\">⚡</span>\n    <div style=\"font-size:13px; color:var(--text); line-height:1.35;\">\n      <strong>¿Qué es en sí una IRQ (Interrupt Request)?</strong> Es la señal de aviso que un periférico (teclado, ratón, red) envía a la CPU para decirle <em>\"¡Tengo datos listos, atiéndeme ya!\"</em>. Actúa como un <strong>timbre</strong>: evita que la CPU gaste el 100% de su energía preguntando continuamente al hardware (sondeo / <em>polling</em>).\n    </div>\n  </div>\n  <span style=\"background:var(--warning); color:#FFFFFF; font-size:10.5px; font-weight:800; padding:3px 8px; border-radius:6px; flex:none;\">LÍNEA DE INTERRUPCIÓN</span>\n</div>\n\n<!-- Terminales de Ejemplo Práctico -->\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:10px;\">\n  <!-- Ejemplo 1: /proc/interrupts -->\n  <div style=\"background:var(--surface); border:1.5px solid var(--border-strong); border-radius:10px; padding:10px 14px;\">\n    <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n      <strong style=\"color:var(--warning-ink); font-size:13.5px;\">⚡ Inspeccionar líneas IRQ en /proc/interrupts</strong>\n      <span style=\"font-size:11px; color:var(--text-muted); font-family:monospace;\"># head -n 4</span>\n    </div>\n    <div style=\"background:#0F172A; color:#E2E8F0; padding:8px 12px; border-radius:6px; font-family:monospace; font-size:12px; line-height:1.4; border:1px solid #334155;\">\n      <div style=\"color:#94A3B8;\">$ head -n 3 /proc/interrupts</div>\n      <div style=\"color:#64748B;\">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;CPU0 &nbsp; &nbsp;CPU1</div>\n      <div><span style=\"color:#FBBF24; font-weight:700;\">&nbsp; 1:</span> &nbsp; &nbsp; <span style=\"color:#4ADE80;\">9542</span> &nbsp; &nbsp; &nbsp; <span style=\"color:#4ADE80;\">0</span> &nbsp; IO-APIC &nbsp; <span style=\"color:#38BDF8; font-weight:700;\">i8042</span></div>\n    </div>\n    <div style=\"margin-top:4px; font-size:11.5px; color:var(--text-muted); display:flex; justify-content:space-between;\">\n      <span><strong style=\"color:var(--warning);\">1:</strong> Número IRQ</span>\n      <span><strong style=\"color:var(--success);\">9542:</strong> Avisos recibidos</span>\n      <span><strong style=\"color:var(--primary);\">i8042:</strong> Teclado PS/2</span>\n    </div>\n  </div>\n\n  <!-- Ejemplo 2: /proc/cpuinfo -->\n  <div style=\"background:var(--surface); border:1.5px solid var(--border-strong); border-radius:10px; padding:10px 14px;\">\n    <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;\">\n      <strong style=\"color:var(--primary); font-size:13.5px;\">💻 Virtualización por hardware en /proc/cpuinfo</strong>\n      <span style=\"font-size:11px; color:var(--text-muted); font-family:monospace;\"># grep -E</span>\n    </div>\n    <div style=\"background:#0F172A; color:#E2E8F0; padding:8px 12px; border-radius:6px; font-family:monospace; font-size:12px; line-height:1.4; border:1px solid #334155;\">\n      <div style=\"color:#94A3B8;\">$ grep -E --color=auto 'vmx|svm' /proc/cpuinfo</div>\n      <div>flags : fpu vme de tsc ... <span style=\"color:#38BDF8; font-weight:700;\">vmx</span> ... (Intel)</div>\n      <div>flags : fpu vme de tsc ... <span style=\"color:#4ADE80; font-weight:700;\">svm</span> ... (AMD)</div>\n    </div>\n    <div style=\"margin-top:4px; font-size:11.5px; color:var(--text-muted); display:flex; justify-content:space-between;\">\n      <span>🎯 <strong>vmx:</strong> Intel VT-x</span>\n      <span>🎯 <strong>svm:</strong> AMD-V (Pacifica)</span>\n      <span>💡 Soporte para KVM</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Clave de Examen: ¿En qué archivo de /proc comprobarías si tu CPU soporta virtualización por hardware? En /proc/cpuinfo, buscando el flag vmx (Intel VT-x) o svm (AMD-V)."
+        }
+      ]
+    },
+    {
+      "id": "sec-101-1-10",
+      "title": "Jerarquía de Dispositivos: /sys (sysfs) y /dev",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Jerarquía de Dispositivos: /sys (sysfs) y /dev"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cuál es la diferencia exacta entre /sys y /dev? Esta distinción conceptual aparece en casi todas las convocatorias LPIC-1:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**/sys (sysfs): La vista organizativa del Kernel** — Sistema de archivos virtual montado en /sys. Representa la topología jerárquica del hardware: buses, clases, drivers y atributos modificables de los dispositivos.",
+            "**/dev (Device Nodes): Los puntos de acceso de E/S** — Contiene los nodos de dispositivo reales mediante los cuales los programas leen y escriben datos hacia el hardware (ej: /dev/sda, /dev/tty1, /dev/urandom).",
+            "**Dispositivos de Carácter (c) vs Dispositivos de Bloque (b)** — Los de Bloque transfieren datos en bloques direccionables con búfer de memoria (discos duros, SSD). Los de Carácter transfieren flujo secuencial byte a byte (teclados, terminales, ratón).",
+            "**Números Major y Minor** — El Major identifica el tipo de dispositivo/driver del kernel. El Minor distingue la unidad o partición individual concreta dentro de ese driver."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin:16px 0;\">\n  <!-- sysfs -->\n  <div style=\"background:#F0F9FF; border:2px solid #7DD3FC; border-radius:14px; padding:18px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:10px;\">\n      <span style=\"background:#0284C7; color:#FFF; font-weight:800; font-size:14px; padding:2px 8px; border-radius:6px;\">SYSFS</span>\n      <h3 style=\"margin:0; font-size:22px; font-weight:800; color:#0369A1;\">/sys (Topología del Kernel)</h3>\n    </div>\n    <p style=\"font-size:15px; color:#0C4A6E; line-height:1.45; margin:0 0 12px 0;\">\n      Es el plano organizativo interno. Muestra qué buses, puentes y drivers están conectados entre sí.\n    </p>\n    <div style=\"font-size:13.5px; background:#E0F2FE; border-radius:8px; padding:10px; color:#0369A1; font-family:monospace;\">\n      /sys/block/sda/<br>\n      /sys/bus/pci/devices/0000:00:02.0/<br>\n      /sys/class/net/eth0/\n    </div>\n  </div>\n\n  <!-- devtmpfs -->\n  <div style=\"background:#FAF5FF; border:2px solid #D8B4FE; border-radius:14px; padding:18px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:10px;\">\n      <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:14px; padding:2px 8px; border-radius:6px;\">DEVTMPFS</span>\n      <h3 style=\"margin:0; font-size:22px; font-weight:800; color:#6B21A8;\">/dev (Nodos de Acceso E/S)</h3>\n    </div>\n    <p style=\"font-size:15px; color:#581C87; line-height:1.45; margin:0 0 12px 0;\">\n      Son los archivos especiales mediante los cuales los programas leen y escriben datos en los dispositivos.\n    </p>\n    <div style=\"font-size:13.5px; background:#F3E8FF; border-radius:8px; padding:10px; color:#6B21A8; font-family:monospace;\">\n      /dev/sda (disco de bloque)<br>\n      /dev/tty1 (terminal de carácter)<br>\n      /dev/urandom (generador pseudoaleatorio)\n    </div>\n  </div>\n</div>\n\n<!-- Anatomía Major / Minor -->\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:14px 20px;\">\n  <div style=\"font-size:16px; font-weight:700; color:var(--text); margin-bottom:8px;\">\n    🔢 Anatomía de un nodo en <code>/dev</code> (Salida de <code>ls -l /dev/sda</code>):\n  </div>\n  <div style=\"background:#0F172A; color:#E2E8F0; padding:10px 16px; border-radius:8px; font-family:monospace; font-size:15px; margin-bottom:10px;\">\n    <span style=\"color:#F472B6; font-weight:bold;\">b</span>rw-rw---- 1 root disk <span style=\"color:#38BDF8; font-weight:bold;\">8</span>, <span style=\"color:#FBBF24; font-weight:bold;\">0</span> 24 oct 10:00 /dev/sda\n  </div>\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:14px;\">\n    <div style=\"background:#FDF2F8; border:1px solid #FBCFE8; padding:8px 12px; border-radius:6px;\">\n      <strong style=\"color:#9D174D;\">Tipo (b / c):</strong> 'b' = Bloque (discos con búfer). 'c' = Carácter (flujo secuencial).\n    </div>\n    <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:8px 12px; border-radius:6px;\">\n      <strong style=\"color:#0369A1;\">Major (8):</strong> Identifica el driver del kernel asociado (8 = Controlador SCSI/SATA).\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FEF08A; padding:8px 12px; border-radius:6px;\">\n      <strong style=\"color:#854D0E;\">Minor (0):</strong> Identifica la unidad física o partición concreta (0 = disco sda, 1 = sda1).\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Mnemotécnica: /sys es el plano del arquitecto (cómo está conectado el hardware); /dev es la puerta de entrada para usarlo."
+        }
+      ]
+    }
+  ]
+}

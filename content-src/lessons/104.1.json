@@ -1,0 +1,1582 @@
+{
+  "id": "104.1",
+  "topicId": "104",
+  "examId": "101",
+  "title": "Creación de particiones y sistemas de archivos",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 30,
+  "objectives": [
+    "MBR frente a GPT, fdisk, gdisk, GNU parted, mke2fs, mkfs.xfs, mkfs.btrfs y swap (Alta Densidad LPIC-1)",
+    "Dominio técnico de las herramientas y configuración del subtema 104.1"
+  ],
+  "keyTerms": [
+    "Creación de particiones y sistemas de archivos",
+    "Tema 104"
+  ],
+  "commands": [
+    "sudo"
+  ],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "104.1-slide-1",
+      "slideNumber": 1,
+      "title": "Creación de particiones y sistemas de archivos",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Creación de particiones y sistemas de archivos"
+        },
+        {
+          "type": "paragraph",
+          "text": "MBR frente a GPT, fdisk, gdisk, GNU parted, mke2fs, mkfs.xfs, mkfs.btrfs y swap (Modo Examen)"
+        }
+      ],
+      "notes": "Comenzamos el Tema 104 con el subtema 104.1 (peso 2). Crear particiones y formatearlas con sistemas de archivos es la base física de cualquier instalación. Dominaremos los dos esquemas de particionado (MBR vs GPT), las herramientas de disco (fdisk, gdisk, parted) y los formateadores (mkfs para ext4, XFS, Btrfs y Swap)."
+    },
+    {
+      "id": "104.1-slide-2",
+      "slideNumber": 2,
+      "title": "Nomenclatura y Jerarquía de Dispositivos en /dev",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Nomenclatura y Jerarquía de Dispositivos en /dev"
+        },
+        {
+          "type": "paragraph",
+          "text": "El kernel de Linux mapea cada disco físico y partición en el árbol /dev según el bus y la controladora de almacenamiento:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Discos SATA, SAS y USB (/dev/sd*)** — 🎯 Cada disco físico recibe una letra: /dev/sda (primer disco), /dev/sdb (segundo disco). Las particiones añaden un número: /dev/sda1 (primera partición), /dev/sda2 (segunda partición).",
+            "**Discos de Estado Sólido NVMe (/dev/nvme*n*p*)** — 🎯 Siguen la convención de espacio de nombres y particiones: /dev/nvme0n1 representa el primer disco físico; /dev/nvme0n1p1 representa su primera partición.",
+            "**Tarjetas SD y memorias eMMC (/dev/mmcblk*p*)** — Siguen la estructura de bloques: /dev/mmcblk0 es el dispositivo completo; /dev/mmcblk0p1 es la primera partición."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:16px; margin:14px 0;\">\n  <!-- Grid 3 Familias de Dispositivos -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:14px;\">\n    \n    <!-- Familia 1: SATA / SCSI / USB -->\n    <div style=\"background:#F8FAFC; border:2px solid #3B82F6; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:8px;\">\n          <span style=\"background:#3B82F6; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">SATA / SCSI / USB</span>\n          <span style=\"font-family:monospace; font-weight:700; color:#1E40AF; font-size:15px;\">/dev/sd*</span>\n        </div>\n        <div style=\"font-size:13.5px; color:#334155; line-height:1.45; margin-bottom:10px;\">\n          Discos tradicionales y unidades flash externas. Cada disco físico recibe una letra consecutiva:\n        </div>\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:8px 10px; font-family:monospace; font-size:13px; color:#1E3A8A; line-height:1.6; border-radius:4px;\">\n          <div>/dev/sda  &rarr; 1.<sup>er</sup> disco físico</div>\n          <div>/dev/sda1 &rarr; Partición 1 de sda</div>\n          <div>/dev/sda2 &rarr; Partición 2 de sda</div>\n          <div>/dev/sdb  &rarr; 2.º disco físico</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:12px; color:#2563EB; font-weight:700; background:#DBEAFE; padding:4px 8px; border-radius:6px;\">\n        Sin 'p' &bull; Número pegado a letra\n      </div>\n    </div>\n\n    <!-- Familia 2: NVMe PCIe SSD -->\n    <div style=\"background:#F8FAFC; border:2px solid #10B981; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:8px;\">\n          <span style=\"background:#10B981; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">NVMe PCIe SSD</span>\n          <span style=\"font-family:monospace; font-weight:700; color:#065F46; font-size:15px;\">/dev/nvme*</span>\n        </div>\n        <div style=\"font-size:13.5px; color:#334155; line-height:1.45; margin-bottom:10px;\">\n          Discos SSD M.2 de ultra alta velocidad. Indican controlador (c), namespace (n) y partición (p):\n        </div>\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:8px 10px; font-family:monospace; font-size:13px; color:#064E3B; line-height:1.6; border-radius:4px;\">\n          <div>/dev/nvme0n1   &rarr; Disco 1 (Ctrl 0, NS 1)</div>\n          <div>/dev/nvme0n1p1 &rarr; Partición 1 (con 'p')</div>\n          <div>/dev/nvme0n1p2 &rarr; Partición 2 (con 'p')</div>\n          <div>/dev/nvme1n1   &rarr; Disco 2 (Ctrl 1, NS 1)</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:12px; color:#047857; font-weight:700; background:#D1FAE5; padding:4px 8px; border-radius:6px;\">\n        Lleva 'p' obligatoria para partición\n      </div>\n    </div>\n\n    <!-- Familia 3: SD / eMMC -->\n    <div style=\"background:#F8FAFC; border:2px solid #8B5CF6; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:8px;\">\n          <span style=\"background:#8B5CF6; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">SD / eMMC Flash</span>\n          <span style=\"font-family:monospace; font-weight:700; color:#5B21B6; font-size:15px;\">/dev/mmcblk*</span>\n        </div>\n        <div style=\"font-size:13.5px; color:#334155; line-height:1.45; margin-bottom:10px;\">\n          Tarjetas SD y memorias eMMC soldadas en placa (Raspberry Pi, servidores embebidos):\n        </div>\n        <div style=\"background:#F5F3FF; border-left:3px solid #8B5CF6; padding:8px 10px; font-family:monospace; font-size:13px; color:#4C1D95; line-height:1.6; border-radius:4px;\">\n          <div>/dev/mmcblk0   &rarr; Dispositivo completo</div>\n          <div>/dev/mmcblk0p1 &rarr; Partición 1 (con 'p')</div>\n          <div>/dev/mmcblk0p2 &rarr; Partición 2 (con 'p')</div>\n          <div>/dev/mmcblk1   &rarr; Segunda tarjeta SD</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:12px; color:#6D28D9; font-weight:700; background:#EDE9FE; padding:4px 8px; border-radius:6px;\">\n        Lleva 'p' obligatoria para partición\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Alerta de examen: Trampa clásica de sintaxis -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:14px;\">\n    <span style=\"font-size:24px;\">⚠️</span>\n    <div style=\"font-size:13.5px; color:#92400E; line-height:1.45;\">\n      <strong>Trampa Frecuente de Certificación:</strong> En discos SATA nunca hay letra 'p' (<code style=\"background:#FEF3C7; color:#B45309; padding:2px 6px; border-radius:4px; font-weight:700;\">/dev/sda1</code>, NUNCA <code style=\"text-decoration:line-through; color:#DC2626;\">/dev/sdap1</code>). En cambio, en discos NVMe y MMC la letra 'p' es <strong>estrictamente obligatoria</strong> (<code style=\"background:#FEF3C7; color:#B45309; padding:2px 6px; border-radius:4px; font-weight:700;\">/dev/nvme0n1p1</code>, NUNCA <code style=\"text-decoration:line-through; color:#DC2626;\">/dev/nvme0n11</code>).\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: En discos SATA/SCSI el formato es /dev/sda1; en discos NVMe modernos se añade la 'p' para indicar partición: /dev/nvme0n1p1."
+        }
+      ],
+      "notes": "Muestra la salida de 'lsblk' para que los alumnos vean la jerarquía de nombres de disco en la máquina real."
+    },
+    {
+      "id": "104.1-slide-3",
+      "slideNumber": 3,
+      "title": "MBR frente a GPT: Diferencias Clave y Anatomía en Disco",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "MBR frente a GPT: Diferencias Clave y Anatomía en Disco"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo organiza cada sistema la tabla de particiones y por qué GPT sustituye a MBR?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Característica Clave",
+            "MBR (Master Boot Record — Clásico)",
+            "GPT (GUID Partition Table — Moderno)"
+          ],
+          "rows": [
+            [
+              "Límite de Disco",
+              "🎯 Máximo 2.2 TB (se queda ciego con discos mayores).",
+              "🎯 Hasta 9.4 Zettabytes (prácticamente sin límite)."
+            ],
+            [
+              "Nº de Particiones",
+              "🎯 Solo 4 particiones primarias (o 3 primarias + 1 extendida).",
+              "🎯 128 particiones directas e independientes de serie."
+            ],
+            [
+              "Seguridad / Copia",
+              "⚠️ Cero copias de respaldo: si falla el Sector 0, se pierde todo.",
+              "🎯 Copia espejo automática al final del disco y detección de fallos."
+            ],
+            [
+              "Tipo de Arranque",
+              "BIOS tradicional (Legacy).",
+              "UEFI moderno (con 'Protective MBR' para evitar borrados viejos)."
+            ]
+          ],
+          "caption": "MBR frente a GPT: Diferencias Clave y Anatomía en Disco"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>📐 Anatomía Física: ¿Qué contiene exactamente cada sistema en el disco?</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Estructura Real</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- MBR Card -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#991B1B; font-size:13px;\">MBR (Sector 0 — 512 Bytes en total)</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:3px;\">Sin Respaldo</span>\n      </div>\n      <!-- Barra MBR -->\n      <div style=\"display:flex; gap:4px; font-family:monospace; font-size:10px; text-align:center; margin-bottom:8px;\">\n        <div style=\"flex:4; background:#FCA5A5; color:#7F1D1D; padding:6px 2px; border-radius:4px; font-weight:800;\">446B Bootloader</div>\n        <div style=\"flex:2; background:#F87171; color:#FFF; padding:6px 2px; border-radius:4px; font-weight:800;\">64B Tabla (4 Part)</div>\n        <div style=\"flex:1; background:#DC2626; color:#FFF; padding:6px 2px; border-radius:4px; font-weight:800;\">2B 55AA</div>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.45;\">\n        • <strong>Bootloader (446 bytes):</strong> El microcódigo que lee la BIOS para arrancar Linux.<br>\n        • <strong>Tabla (64 bytes):</strong> Solo 4 casillas de 16 bytes (por eso el límite de 4 particiones).<br>\n        • <strong>Firma 55AA (2 bytes):</strong> Código 'mágico' que confirma a la BIOS que el disco es arrancable.<br>\n        • ⚠️ <strong>Punto único de fallo:</strong> Si se daña este sector, la tabla se pierde para siempre.\n      </div>\n    </div>\n\n    <!-- GPT Card -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#15803D; font-size:13px;\">GPT (GUID Partition Table — 64 bits UEFI)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:3px;\">Con Copia Espejo</span>\n      </div>\n      <!-- Barra GPT -->\n      <div style=\"display:flex; gap:4px; font-family:monospace; font-size:10px; text-align:center; margin-bottom:8px;\">\n        <div style=\"flex:1.2; background:#BBF7D0; color:#14532D; padding:6px 2px; border-radius:4px; font-weight:700;\">LBA 0 Prot MBR</div>\n        <div style=\"flex:1.2; background:#86EFAC; color:#14532D; padding:6px 2px; border-radius:4px; font-weight:700;\">LBA 1 Cabecera</div>\n        <div style=\"flex:3; background:#4ADE80; color:#14532D; padding:6px 2px; border-radius:4px; font-weight:800;\">LBA 2-33 (128 Part)</div>\n        <div style=\"flex:1.2; background:#16A34A; color:#FFF; padding:6px 2px; border-radius:4px; font-weight:800;\">Backup GPT</div>\n      </div>\n      <div style=\"color:#14532D; line-height:1.45;\">\n        • <strong>Protective MBR (LBA 0):</strong> Falso MBR para que sistemas viejos no borren el disco.<br>\n        • <strong>Cabecera GPT (LBA 1):</strong> Identificador GUID del disco y sumas CRC32 de integridad.<br>\n        • <strong>Entradas de Partición (LBA 2-33):</strong> Lista amplia para 128 particiones nativas.<br>\n        • 🛡️ <strong>Backup GPT (al final):</strong> Copia idéntica en los últimos 33 sectores del disco físico.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Fija de Examen: Discos de más de 2 TB o sistemas modernos UEFI exigen siempre GPT. MBR no tiene copia de respaldo; GPT guarda una copia idéntica al final del disco."
+        }
+      ],
+      "notes": "Explica la anatomía física: MBR concentra todo en el sector 0 (512 bytes). GPT reparte cabecera, 128 entradas y copia de seguridad al final."
+    },
+    {
+      "id": "104.1-slide-4",
+      "slideNumber": 4,
+      "title": "Particionado Interactivo MBR con fdisk",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Particionado Interactivo MBR con fdisk"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué hace cada tecla interactiva en fdisk y cómo leer la salida de un disco MBR?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sudo fdisk /dev/sdb | sudo fdisk -l /dev/sdb",
+          "title": "Gestionar particiones en discos MBR de forma interactiva con confirmación obligatoria al guardar"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo fdisk -l /dev/sdb",
+              "output": "Disco /dev/sdb: 20 GiB, 21474836480 bytes, 41943040 sectores\nTipo de etiqueta de disco: dos   # 'dos' significa tabla MBR clásica.\nDispositivo  Arrancable    Inicio       Fin  Sectores Tamaño Id Tipo\n/dev/sdb1    *               2048  20973567  20971520    10G 83 Linux\n# '*' = partición de arranque; Inicio 2048 = alineada a 1 MiB para velocidad.\n/dev/sdb2                20973568  41943039  20969472    10G 82 Linux swap\n# Id 83 = Sistema de archivos Linux (ext4/XFS); Id 82 = Memoria de intercambio (Swap)."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "m",
+              "",
+              "Ayuda"
+            ],
+            [
+              "p",
+              "",
+              "Imprimir"
+            ],
+            [
+              "n",
+              "",
+              "Nueva"
+            ],
+            [
+              "t",
+              "",
+              "Tipo"
+            ],
+            [
+              "d",
+              "",
+              "Borrar"
+            ],
+            [
+              "w",
+              "",
+              "Guardar"
+            ],
+            [
+              "q",
+              "",
+              "Salir"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔄 Flujo Operativo en fdisk (Trabajo en RAM hasta pulsar 'w')</span>\n    <span style=\"font-size:10.5px; background:#FEF3C7; color:#92400E; padding:2px 7px; border-radius:10px; font-weight:700;\">Edición Segura en RAM</span>\n  </div>\n\n  <div style=\"display:flex; align-items:center; justify-content:space-between; gap:6px; font-size:11px; text-align:center;\">\n    <div style=\"flex:1; background:#EFF6FF; border:1.5px solid #3B82F6; padding:6px 4px; border-radius:6px;\">\n      <strong style=\"color:#1E40AF; display:block;\">1. Entrar</strong>\n      <code style=\"color:#2563EB;\">fdisk /dev/sdb</code>\n    </div>\n    <span style=\"color:#64748B; font-weight:900;\">➔</span>\n    <div style=\"flex:1; background:#F0FDF4; border:1.5px solid #22C55E; padding:6px 4px; border-radius:6px;\">\n      <strong style=\"color:#166534; display:block;\">2. Crear</strong>\n      <code style=\"color:#16A34A;\">n (nueva part.)</code>\n    </div>\n    <span style=\"color:#64748B; font-weight:900;\">➔</span>\n    <div style=\"flex:1; background:#FEF3C7; border:1.5px solid #F59E0B; padding:6px 4px; border-radius:6px;\">\n      <strong style=\"color:#92400E; display:block;\">3. Tipo</strong>\n      <code style=\"color:#D97706;\">t (83 / 82)</code>\n    </div>\n    <span style=\"color:#64748B; font-weight:900;\">➔</span>\n    <div style=\"flex:1; background:#F5F3FF; border:1.5px solid #8B5CF6; padding:6px 4px; border-radius:6px;\">\n      <strong style=\"color:#5B21B6; display:block;\">4. Verificar</strong>\n      <code style=\"color:#7C3AED;\">p (imprimir)</code>\n    </div>\n    <span style=\"color:#64748B; font-weight:900;\">➔</span>\n    <div style=\"flex:1.2; background:#DCFCE7; border:1.5px solid #16A34A; padding:6px 4px; border-radius:6px;\">\n      <strong style=\"color:#166534; display:block;\">5. Guardar (Físico)</strong>\n      <code style=\"color:#15803D; font-weight:800;\">w (escribir a disco)</code>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Oro en fdisk: fdisk edita únicamente en la memoria RAM. Si no pulsas la tecla 'w' (Write), NINGÚN cambio se guarda físicamente en el disco y todo se pierde al salir."
+        }
+      ],
+      "notes": "Enseña el flujo típico a los alumnos: entrar con fdisk /dev/sdb -> p (ver) -> n (crear) -> t (tipo) -> p (comprobar) -> w (guardar a disco)."
+    },
+    {
+      "id": "104.1-slide-5",
+      "slideNumber": 5,
+      "title": "Particionado GPT con gdisk y Códigos de 4 Dígitos",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Particionado GPT con gdisk y Códigos de 4 Dígitos"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué significan esos números de tipo y cómo usar gdisk de la forma más sencilla?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sudo gdisk /dev/sdc | sudo gdisk -l /dev/sdc",
+          "title": "Particionar discos modernos GPT con identificadores simplificados de 4 dígitos"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo gdisk -l /dev/sdc",
+              "output": "Partition table scan:   MBR: protective   GPT: present\n# 'protective' protege el disco; 'GPT: present' indica tabla moderna activa.\nDisk /dev/sdc: 8589934592 sectors, 4.0 TiB  # Disco de 4 TB (imposible en MBR)\nNumber  Start (sector)    End (sector)  Size       Code  Name\n   1            2048        20973567   10.0 GiB    8300  Linux filesystem\n   2        20973568        41943039   10.0 GiB    8200  Linux swap\n   3        41943040        43026431  529.0 MiB    EF00  EFI system partition\n# 8300 = Linux datos; 8200 = Memoria Swap; EF00 = Partición de arranque UEFI."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "?",
+              "",
+              "Ayuda"
+            ],
+            [
+              "p",
+              "",
+              "Imprimir"
+            ],
+            [
+              "n",
+              "",
+              "Nueva"
+            ],
+            [
+              "t",
+              "",
+              "Tipo (4 dígitos)"
+            ],
+            [
+              "w",
+              "",
+              "Escribir"
+            ],
+            [
+              "q",
+              "",
+              "Salir"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔢 ¿Por qué estos números? La Regla de los 'Dos Ceros' (00) de gdisk</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 7px; border-radius:10px; font-weight:700;\">Atajo MBR ➔ GPT</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11px; text-align:center;\">\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; padding:8px 4px; border-radius:6px;\">\n      <span style=\"font-size:10px; color:#166534; font-weight:700;\">Linux Nativo</span>\n      <div style=\"font-family:monospace; font-size:13px; font-weight:800; color:#15803D; margin:3px 0;\">83 ➔ 8300</div>\n      <span style=\"font-size:9.5px; color:#14532D;\">ext4, XFS, Btrfs</span>\n    </div>\n\n    <div style=\"background:#FEF3C7; border:1.5px solid #F59E0B; padding:8px 4px; border-radius:6px;\">\n      <span style=\"font-size:10px; color:#92400E; font-weight:700;\">Linux Swap</span>\n      <div style=\"font-family:monospace; font-size:13px; font-weight:800; color:#D97706; margin:3px 0;\">82 ➔ 8200</div>\n      <span style=\"font-size:9.5px; color:#78350F;\">Intercambio RAM</span>\n    </div>\n\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; padding:8px 4px; border-radius:6px;\">\n      <span style=\"font-size:10px; color:#1E40AF; font-weight:700;\">Arranque UEFI</span>\n      <div style=\"font-family:monospace; font-size:13px; font-weight:800; color:#2563EB; margin:3px 0;\">EF ➔ EF00</div>\n      <span style=\"font-size:9.5px; color:#1E3A8A;\">Partición ESP (/boot/efi)</span>\n    </div>\n\n    <div style=\"background:#F1F5F9; border:1.5px solid #94A3B8; padding:8px 4px; border-radius:6px;\">\n      <span style=\"font-size:10px; color:#334155; font-weight:700;\">Windows Datos</span>\n      <div style=\"font-family:monospace; font-size:13px; font-weight:800; color:#475569; margin:3px 0;\">07 ➔ 0700</div>\n      <span style=\"font-size:9.5px; color:#64748B;\">NTFS / exFAT</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Mnemotécnica Infalible: Para saber el código GPT en gdisk, solo toma el código clásico de MBR y añádele dos ceros al final: 83 -> 8300 (Linux), 82 -> 8200 (Swap), EF -> EF00 (EFI)."
+        }
+      ],
+      "notes": "Aclara el porqué: internamente GPT usa GUIDs de 128 bits ilegibles; gdisk inventó este atajo de 4 cifras para facilitarnos la vida."
+    },
+    {
+      "id": "104.1-slide-6",
+      "slideNumber": 6,
+      "title": "Particionado con GNU parted: Scripts y Edición en Caliente",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Particionado con GNU parted: Scripts y Edición en Caliente"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cuándo se usa parted, en qué casos es imprescindible y cuál es su peligro fundamental?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sudo parted /dev/sdb | sudo parted -s /dev/sdb <subcomandos>",
+          "title": "Particionar mediante scripts no interactivos y definir tamaños amigables en Megas o Gigas"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo parted -s /dev/sdb mklabel gpt mkpart primary ext4 1MiB 10GiB",
+              "output": "# 1. '-s' activa modo script (no pregunta ni pide confirmaciones).\n# 2. 'mklabel gpt' escribe la tabla GPT directamente en el disco.\n# 3. 'mkpart primary ext4 1MiB 10GiB' crea una partición de 10 GB al instante.\n$ sudo parted /dev/sdb print\nDisk /dev/sdb: 21.5GB   Partition Table: gpt\nNumber  Start   End     Size    File system  Name     Flags\n 1      1048kB  10.7GB  10.7GB  ext4         primary"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-s",
+              "",
+              "Script (Modo silencioso)"
+            ],
+            [
+              "-l",
+              "",
+              "Listar"
+            ],
+            [
+              "mklabel <tipo>",
+              "",
+              "Crear tabla"
+            ],
+            [
+              "mkpart <part>",
+              "",
+              "Crear partición"
+            ],
+            [
+              "print",
+              "",
+              "Mostrar"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚖️ ¿Cuándo usar fdisk/gdisk frente a GNU parted?</span>\n    <span style=\"font-size:10.5px; background:#FEE2E2; color:#991B1B; padding:2px 7px; border-radius:10px; font-weight:700;\">Diferencia de Riesgo</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:11.5px;\">\n    <!-- fdisk/gdisk -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:6px; padding:8px 10px;\">\n      <strong style=\"color:#1E40AF; display:block; margin-bottom:4px;\">🛡️ fdisk / gdisk (Interactivo / Seguro)</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">\n        • <strong>Edición en búfer de RAM:</strong> Puedes equivocarte sin consecuencias.<br>\n        • <strong>Confirmación:</strong> Solo se aplica si pulsas explícitamente <code>w</code>.<br>\n        • <strong>Uso habitual:</strong> Mantenimiento manual por administradores.\n      </div>\n    </div>\n\n    <!-- parted -->\n    <div style=\"background:#FFF7ED; border:1.5px solid #F97316; border-radius:6px; padding:8px 10px;\">\n      <strong style=\"color:#C2410C; display:block; margin-bottom:4px;\">⚡ GNU parted (Scripts / Tiempo Real)</strong>\n      <div style=\"color:#9A3412; line-height:1.35;\">\n        • <strong>Escritura inmediata en disco:</strong> Modifica sectores al instante.<br>\n        • <strong>Sin vuelta atrás:</strong> No hay opción 'w' ni 'q' para cancelar.<br>\n        • <strong>Uso habitual:</strong> Scripts no interactivos (<code>-s</code>) y despliegues desatendidos.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "⚠️ PELIGRO CRÍTICO DE EXAMEN: parted escribe DIRECTAMENTE en el disco físico en tiempo real con cada orden. No existe tecla 'w' para guardar ni tecla 'q' para cancelar. ¡No hay marcha atrás!"
+        }
+      ],
+      "notes": "Compara en clase: ¿Automatización en cloud/scripts? Usa parted -s. ¿Trabajo manual seguro? Usa fdisk o gdisk."
+    },
+    {
+      "id": "104.1-slide-7",
+      "slideNumber": 7,
+      "title": "Crear Sistemas de Archivos: mkfs y Formateo Ext4 con mke2fs",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Crear Sistemas de Archivos: mkfs y Formateo Ext4 con mke2fs"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cuándo se usa cada comando, para qué sirve formatear y cómo funciona Ext4 por dentro?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sudo mkfs -t ext4 /dev/sdb1 | sudo mke2fs -t ext4 -m 1 /dev/sdb1",
+          "title": "Amueblar la partición con la estructura de archivos necesaria para guardar datos"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo mke2fs -t ext4 -L 'DATOS' -m 1 /dev/sdb1",
+              "output": "mke2fs 1.46.2 (28-Feb-2021)\nCreating filesystem with 2621440 4k blocks and 655360 inodes\n# Crea 2.6 millones de bloques de datos (4 KB c/u) y 655.000 inodos (fichas de archivos).\nFilesystem UUID: a1b2c3d4-e5f6-7890-abcd-ef1234567890\nSuperblock backups stored on blocks: 32768, 98304, 163840\n# Copias de seguridad del Superbloque por si el principal se daña tras un corte de luz.\nCreating journal (16384 blocks): done\n# El 'Journal' (diario) anota los cambios antes de escribirlos para evitar corrupciones."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "mkfs -t <tipo>",
+              "",
+              "Comando Atajo"
+            ],
+            [
+              "mke2fs",
+              "",
+              "Herramienta Nativa"
+            ],
+            [
+              "-L <nombre>",
+              "",
+              "Etiqueta (Label)"
+            ],
+            [
+              "-m <porcentaje>",
+              "",
+              "Reserva Root"
+            ],
+            [
+              "-j",
+              "",
+              "Añadir Journal"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🧱 Las 4 Partes Internas de un Sistema de Archivos Ext4</span>\n    <span style=\"font-size:10.5px; background:#DCFCE7; color:#166534; padding:2px 7px; border-radius:10px; font-weight:700;\">Estructura de Disco</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; padding:8px 6px; border-radius:6px;\">\n      <strong style=\"color:#1E40AF; display:block; margin-bottom:3px;\">1. Superbloque</strong>\n      <span style=\"color:#1E3A8A; line-height:1.3; display:block;\">El carné de identidad del disco: tamaño total, bloques libres y copias de respaldo de seguridad.</span>\n    </div>\n\n    <div style=\"background:#F5F3FF; border:1.5px solid #8B5CF6; padding:8px 6px; border-radius:6px;\">\n      <strong style=\"color:#5B21B6; display:block; margin-bottom:3px;\">2. Tabla de Inodos</strong>\n      <span style=\"color:#4C1D95; line-height:1.3; display:block;\">Fichas técnicas de archivos: guardan dueño, permisos y fechas (cada archivo ocupa un inodo).</span>\n    </div>\n\n    <div style=\"background:#FEE2E2; border:1.5px solid #EF4444; padding:8px 6px; border-radius:6px;\">\n      <strong style=\"color:#991B1B; display:block; margin-bottom:3px;\">3. Journal (Diario)</strong>\n      <span style=\"color:#7F1D1D; line-height:1.3; display:block;\">Libreta donde se anota cada cambio antes de escribirlo. Si se apaga la luz, evita reparar todo el disco.</span>\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; padding:8px 6px; border-radius:6px;\">\n      <strong style=\"color:#166534; display:block; margin-bottom:3px;\">4. Bloques de Datos</strong>\n      <span style=\"color:#14532D; line-height:1.3; display:block;\">Los cajones de 4 KB donde se guarda el contenido real de tus fotos, documentos y programas.</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Concepto Simple: Particionar con fdisk solo levanta las paredes de la habitación; formatear con mkfs pone las estanterías (los inodos y bloques) para poder guardar archivos."
+        }
+      ],
+      "notes": "Destaca la opción -m 1: en un disco de 4 TB, el 5% por defecto desperdicia 200 GB. Bajarlo a 1% (-m 1) ahorra cientos de Gigas."
+    },
+    {
+      "id": "104.1-slide-8",
+      "slideNumber": 8,
+      "title": "Sistemas Empresariales: mkfs.xfs y mkfs.btrfs",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Sistemas Empresariales: mkfs.xfs y mkfs.btrfs"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué es XFS, qué es Btrfs, para qué sirve cada uno y cuál es su diferencia vital de examen?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sudo mkfs.xfs [-f] /dev/sdb2 | sudo mkfs.btrfs /dev/sdb3",
+          "title": "Elegir entre rendimiento masivo en bases de datos (XFS) o instantáneas avanzadas (Btrfs)"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo mkfs.xfs -f -L 'BD_PROD' /dev/sdb2",
+              "output": "meta-data=/dev/sdb2              isize=512    agcount=4, agsize=655296 blks\n# 'agcount=4' indica 4 carriles paralelos independientes para escribir a máxima velocidad.\ndata     =                       bsize=4096   blocks=2621184, imaxpct=25\n# XFS crea inodos dinámicos según se necesiten (no tiene tabla fija como ext4).\n$ sudo xfs_growfs /mnt/datos  # Amplía XFS en caliente al máximo espacio disponible.\n# ⚠️ PREGUNTA DE EXAMEN: ¿Cómo se reduce XFS? -> ¡IMPOSIBLE! XFS jamás se puede achicar."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "mkfs.xfs [-f]",
+              "",
+              "Formatear XFS"
+            ],
+            [
+              "xfs_growfs <punto>",
+              "",
+              "Agrandar XFS"
+            ],
+            [
+              "mkfs.btrfs",
+              "",
+              "Formatear Btrfs"
+            ],
+            [
+              "btrfs fi resize",
+              "",
+              "Redimensionar Btrfs"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚡ Comparativa Directa: ¿Para qué sirve cada uno y cuál es su diferencia clave?</span>\n    <span style=\"font-size:10.5px; background:#FEF3C7; color:#92400E; padding:2px 7px; border-radius:10px; font-weight:700;\">Diferencia Clave</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:11.5px;\">\n    <!-- XFS -->\n    <div style=\"background:#FFF7ED; border:1.5px solid #F97316; border-radius:6px; padding:9px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#C2410C; font-size:12.5px;\">XFS (El bólido de Red Hat / Enterprise)</strong>\n        <span style=\"background:#EA580C; color:#FFF; font-size:9px; font-weight:800; padding:1px 5px; border-radius:3px;\">No Reducible</span>\n      </div>\n      <div style=\"color:#9A3412; line-height:1.4;\">\n        • <strong>Para qué sirve:</strong> Bases de datos masivas y servidores de alto rendimiento.<br>\n        • <strong>Cómo funciona:</strong> Escribe en 4 carriles paralelos (*Allocation Groups*).<br>\n        • <strong>Ampliación:</strong> Sí, en caliente con <code>xfs_growfs</code>.<br>\n        • ⚠️ <strong>DIFERENCIA CLAVE:</strong> <strong>¡JAMÁS SE PUEDE REDUCIR SU TAMAÑO!</strong>\n      </div>\n    </div>\n\n    <!-- Btrfs -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #A855F7; border-radius:6px; padding:9px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#7E22CE; font-size:12.5px;\">Btrfs (El moderno con Snapshots / openSUSE)</strong>\n        <span style=\"background:#9333EA; color:#FFF; font-size:9px; font-weight:800; padding:1px 5px; border-radius:3px;\">Reducible</span>\n      </div>\n      <div style=\"color:#6B21A8; line-height:1.4;\">\n        • <strong>Para qué sirve:</strong> Copias instantáneas, subvolúmenes y protección contra fallos.<br>\n        • <strong>Cómo funciona:</strong> <em>Copy-on-Write</em> (hace fotos del sistema en 1 milisegundo).<br>\n        • <strong>Ampliación:</strong> Sí, en caliente con <code>btrfs filesystem resize</code>.<br>\n        • 🎯 <strong>DIFERENCIA CLAVE:</strong> <strong>SÍ se puede REDUCIR de tamaño en caliente.</strong>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Estrella de Certificación: XFS se puede agrandar en caliente con 'xfs_growfs', pero ¡JAMÁS SE PUEDE REDUCIR DE TAMAÑO! Btrfs sí permite tanto ampliar como reducir."
+        }
+      ],
+      "notes": "Explica la diferencia de uso: Red Hat usa XFS por defecto por su brutal velocidad en bases de datos. openSUSE usa Btrfs por sus instantáneas (snapshots)."
+    },
+    {
+      "id": "104.1-slide-9",
+      "slideNumber": 9,
+      "title": "Memoria de Intercambio (Swap): mkswap, swapon y swapoff",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Memoria de Intercambio (Swap): mkswap, swapon y swapoff"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué hace cada comando, para qué sirve la Swap y cómo funciona su ciclo completo de vida?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sudo mkswap /dev/sdb2 | sudo swapon --show | sudo swapoff /dev/sdb2",
+          "title": "Gestionar espacio de disco para auxiliar a la memoria RAM física ante saturaciones"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo mkswap /dev/sdb2 && sudo swapon /dev/sdb2 && swapon --show",
+              "output": "Setting up swapspace version 1, size = 10 GiB (10737414144 bytes)\nUUID=f1e2d3c4-b5a6-7890-1234-56789abcdef0   # Swap inicializada con éxito.\n$ swapon --show\nNAME      TYPE      SIZE  USED PRIO\n/dev/sdb2 partition  10G    0B   -2   # Swap de 10 GB activa y lista para el kernel."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "mkswap <disp>",
+              "",
+              "Formatear Swap"
+            ],
+            [
+              "swapon <disp>",
+              "",
+              "Activar Swap"
+            ],
+            [
+              "swapon --show",
+              "",
+              "Ver Estado (-s)"
+            ],
+            [
+              "swapon -a",
+              "",
+              "Activar Todo"
+            ],
+            [
+              "swapoff <disp>",
+              "",
+              "Desactivar Swap"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔄 Ciclo de Vida Completo de la Memoria Swap (De cero a persistente)</span>\n    <span style=\"font-size:10.5px; background:#DCFCE7; color:#166534; padding:2px 7px; border-radius:10px; font-weight:700;\">4 Pasos Clave</span>\n  </div>\n\n  <div style=\"display:flex; align-items:center; justify-content:space-between; gap:6px; font-size:11px; text-align:center;\">\n    <div style=\"flex:1; background:#EFF6FF; border:1.5px solid #3B82F6; padding:8px 4px; border-radius:6px;\">\n      <strong style=\"color:#1E40AF; display:block;\">1. Crear Espacio</strong>\n      <span style=\"color:#1E3A8A; font-size:10px;\">Partición tipo 82/8200 o archivo dd</span>\n    </div>\n    <span style=\"color:#64748B; font-weight:900;\">➔</span>\n    <div style=\"flex:1; background:#FEF3C7; border:1.5px solid #F59E0B; padding:8px 4px; border-radius:6px;\">\n      <strong style=\"color:#92400E; display:block;\">2. Inicializar</strong>\n      <code style=\"color:#D97706; font-size:10px; font-weight:700;\">mkswap /dev/sdb2</code>\n    </div>\n    <span style=\"color:#64748B; font-weight:900;\">➔</span>\n    <div style=\"flex:1; background:#DCFCE7; border:1.5px solid #16A34A; padding:8px 4px; border-radius:6px;\">\n      <strong style=\"color:#166534; display:block;\">3. Activar en Caliente</strong>\n      <code style=\"color:#15803D; font-size:10px; font-weight:700;\">swapon /dev/sdb2</code>\n    </div>\n    <span style=\"color:#64748B; font-weight:900;\">➔</span>\n    <div style=\"flex:1; background:#F5F3FF; border:1.5px solid #8B5CF6; padding:8px 4px; border-radius:6px;\">\n      <strong style=\"color:#5B21B6; display:block;\">4. Persistencia</strong>\n      <span style=\"font-size:10px; color:#7C3AED; font-weight:700;\">Línea en /etc/fstab</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Ciclo de Memoria Swap: 1) Crear partición (Id 82/8200) -> 2) Inicializar con mkswap -> 3) Activar con swapon -> 4) Configurar en /etc/fstab para que persista tras reiniciar."
+        }
+      ],
+      "notes": "Explica la utilidad real: la swap es una red de seguridad. Si se agota la RAM física y no hay swap, el kernel (OOM Killer) mata procesos de golpe."
+    },
+    {
+      "id": "104.1-slide-10",
+      "slideNumber": 10,
+      "title": "Procedimiento Paso a Paso: Archivo Swapfile de Emergencia",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Procedimiento Paso a Paso: Archivo Swapfile de Emergencia"
+        },
+        {
+          "type": "paragraph",
+          "text": "🔥 PROBLEMA REAL: La base de datos agota la RAM física (98%), el kernel empieza a matar procesos críticos (OOM Killer) y no quedan particiones libres en disco. Solución en caliente en 60 segundos:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:14px 18px; margin-top:8px;\">\n  <!-- Context Box -->\n  <div style=\"background:#FFF7ED; border:1.5px solid #F97316; border-left:5px solid #EA580C; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:12.5px; color:#9A3412; line-height:1.45;\">\n    🚨 <strong>ESCENARIO CRÍTICO DE PRODUCCIÓN (Viernes 23:45h):</strong> La base de datos entra en saturación masiva (98% RAM). El <em>OOM Killer</em> del kernel empieza a matar procesos vitales con SIGKILL y no hay espacio para crear una partición swap tradicional. <strong>Secuencia de rescate en caliente sin reiniciar:</strong>\n  </div>\n\n  <!-- 5 Horizontal Steps -->\n  <div style=\"display:grid; grid-template-columns: repeat(5, 1fr); gap:10px;\">\n    <!-- Step 1 -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:12px 10px; display:flex; flex-direction:column; justify-content:space-between; min-height:165px;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n          <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:12px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex:none;\">1</span>\n          <strong style=\"color:#1E40AF; font-size:12px;\">Reservar 2 GB</strong>\n        </div>\n        <div style=\"color:#1E3A8A; font-size:11px; line-height:1.35;\">\n          Crea archivo continuo de 2 GB con ceros continuos en disco:\n        </div>\n      </div>\n      <code style=\"background:#DBEAFE; color:#1E40AF; font-size:9.5px; font-weight:700; padding:6px 6px; border-radius:4px; margin-top:6px; display:block; word-break:break-all; font-family:monospace;\">\n        dd if=/dev/zero of=/swapfile bs=1M count=2048\n      </code>\n    </div>\n\n    <!-- Step 2 -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:12px 10px; display:flex; flex-direction:column; justify-content:space-between; min-height:165px;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n          <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:12px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex:none;\">2</span>\n          <strong style=\"color:#991B1B; font-size:12px;\">Permisos 0600</strong>\n        </div>\n        <div style=\"color:#7F1D1D; font-size:11px; line-height:1.35;\">\n          ⚠️ <strong>¡CRÍTICO!</strong> Solo root. Con otros permisos swapon se niega:\n        </div>\n      </div>\n      <code style=\"background:#FEE2E2; color:#991B1B; font-size:9.5px; font-weight:700; padding:6px 6px; border-radius:4px; margin-top:6px; display:block; font-family:monospace;\">\n        chmod 600 /swapfile\n      </code>\n    </div>\n\n    <!-- Step 3 -->\n    <div style=\"background:#FEF3C7; border:1.5px solid #F59E0B; border-radius:8px; padding:12px 10px; display:flex; flex-direction:column; justify-content:space-between; min-height:165px;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n          <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:12px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex:none;\">3</span>\n          <strong style=\"color:#92400E; font-size:12px;\">Formatear Swap</strong>\n        </div>\n        <div style=\"color:#78350F; font-size:11px; line-height:1.35;\">\n          Escribe cabecera mágica SWAPSPACE2 y genera UUID único:\n        </div>\n      </div>\n      <code style=\"background:#FDE68A; color:#92400E; font-size:9.5px; font-weight:700; padding:6px 6px; border-radius:4px; margin-top:6px; display:block; font-family:monospace;\">\n        mkswap /swapfile\n      </code>\n    </div>\n\n    <!-- Step 4 -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:12px 10px; display:flex; flex-direction:column; justify-content:space-between; min-height:165px;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n          <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex:none;\">4</span>\n          <strong style=\"color:#15803D; font-size:12px;\">Activar Kernel</strong>\n        </div>\n        <div style=\"color:#14532D; font-size:11px; line-height:1.35;\">\n          Incorpora los 2 GB a la memoria virtual al instante:\n        </div>\n      </div>\n      <code style=\"background:#DCFCE7; color:#15803D; font-size:9.5px; font-weight:700; padding:6px 6px; border-radius:4px; margin-top:6px; display:block; font-family:monospace;\">\n        swapon /swapfile\n      </code>\n    </div>\n\n    <!-- Step 5 -->\n    <div style=\"background:#F5F3FF; border:1.5px solid #8B5CF6; border-radius:8px; padding:12px 10px; display:flex; flex-direction:column; justify-content:space-between; min-height:165px;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n          <span style=\"background:#7C3AED; color:#FFF; font-weight:800; font-size:12px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex:none;\">5</span>\n          <strong style=\"color:#5B21B6; font-size:12px;\">Persistencia</strong>\n        </div>\n        <div style=\"color:#4C1D95; font-size:11px; line-height:1.35;\">\n          Añade al archivo /etc/fstab para activarse en cada reinicio:\n        </div>\n      </div>\n      <code style=\"background:#EDE9FE; color:#5B21B6; font-size:9.5px; font-weight:700; padding:6px 6px; border-radius:4px; margin-top:6px; display:block; word-break:break-all; font-family:monospace;\">\n        /swapfile none swap sw 0 0\n      </code>\n    </div>\n  </div>\n\n  <!-- Bottom Callout -->\n  <div style=\"margin-top:14px; padding:10px 16px; background:#F5F3FF; border-left:4px solid #8B5CF6; border-radius:8px; font-size:12px; color:#5B21B6; display:flex; align-items:center; gap:8px;\">\n    <span>💡 <strong>REGLA DE ORO DE EXAMEN:</strong> ¿Qué permisos obligatorios debe tener un swapfile? ➔ <code>chmod 600 /swapfile</code> (solo lectura y escritura para root; con permisos abiertos swapon se niega rotundamente a activarlo).</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Estrella de Examen: ¿Qué permisos obligatorios debe tener un swapfile? -> Permisos 0600 (chmod 600 /swapfile). Sin ellos, swapon falla por seguridad."
+        }
+      ],
+      "notes": "Insiste mucho en el paso 2: la seguridad de la memoria es crítica porque la Swap almacena datos confidenciales de la RAM en texto claro."
+    },
+    {
+      "id": "104.1-slide-11",
+      "slideNumber": 11,
+      "title": "Sistemas de Archivos en Linux: Comparativa y Cuándo Usar Cada Uno",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Sistemas de Archivos en Linux: Comparativa y Cuándo Usar Cada Uno"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué es un sistema de archivos y cuáles son las diferencias clave entre los 6 evaluados en LPIC-1?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <!-- Concept Banner -->\n  <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-left:5px solid #2563EB; border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:12px; color:#1E40AF; line-height:1.4;\">\n    📁 <strong>¿QUÉ ES UN SISTEMA DE ARCHIVOS?</strong> Es el método y la estructura que usa el sistema operativo para organizar, indexar y localizar los datos en el disco (como las estanterías de una biblioteca). En Linux cada partición se formatea con su comando especializado <code>mkfs.&lt;tipo&gt;</code>:\n  </div>\n\n  <!-- 6 Visual Cards Grid -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:11.5px;\">\n    <!-- ext4 -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:12.5px;\">ext4 (El Estándar Linux)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">mkfs.ext4</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.35;\">\n        • <strong>Qué es:</strong> El sistema de archivos por defecto en Debian, Ubuntu y derivados.<br>\n        • <strong>Diferencia clave:</strong> Diario con sumas de control y 'extents' (bloques continuos veloces).<br>\n        • <strong>Uso:</strong> Servidores y portátiles para propósito general (soporta archivos hasta 16 TB).\n      </div>\n    </div>\n\n    <!-- XFS -->\n    <div style=\"background:#FFF7ED; border:1.5px solid #F97316; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#C2410C; font-size:12.5px;\">XFS (RHEL / Enterprise)</strong>\n        <span style=\"background:#EA580C; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">mkfs.xfs</span>\n      </div>\n      <div style=\"color:#9A3412; line-height:1.35;\">\n        • <strong>Qué es:</strong> El sistema de archivos por defecto en Red Hat, CentOS y Rocky Linux.<br>\n        • <strong>Diferencia clave:</strong> Asignación paralela masiva multihilo (*Allocation Groups*).<br>\n        • ⚠️ <strong>TRAMPA FIJA:</strong> Se amplía con <code>xfs_growfs</code>, pero <strong>¡JAMÁS SE PUEDE REDUCIR!</strong>\n      </div>\n    </div>\n\n    <!-- Btrfs -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #A855F7; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#7E22CE; font-size:12.5px;\">Btrfs (openSUSE / CoW)</strong>\n        <span style=\"background:#9333EA; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">mkfs.btrfs</span>\n      </div>\n      <div style=\"color:#6B21A8; line-height:1.35;\">\n        • <strong>Qué es:</strong> Sistema moderno de nueva generación con <em>Copy-on-Write</em>.<br>\n        • <strong>Diferencia clave:</strong> Hace instantáneas (*snapshots*) en 1 milisegundo sin duplicar datos.<br>\n        • 🎯 <strong>Ventaja:</strong> Permite tanto <strong>ampliar como reducir su tamaño en caliente</strong>.\n      </div>\n    </div>\n\n    <!-- ext2 -->\n    <div style=\"background:#F1F5F9; border:1.5px solid #94A3B8; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#334155; font-size:12.5px;\">ext2 (Heredado / Simple)</strong>\n        <span style=\"background:#64748B; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">mkfs.ext2</span>\n      </div>\n      <div style=\"color:#475569; line-height:1.35;\">\n        • <strong>Qué es:</strong> El formato clásico de Linux sin diario (*No journaling*).<br>\n        • <strong>Diferencia clave:</strong> Cero sobrecarga de escritura, pero si hay un apagón brusco queda vulnerable.<br>\n        • <strong>Uso:</strong> Memorias USB antiguas, tarjetas SD o particiones <code>/boot</code> muy pequeñas.\n      </div>\n    </div>\n\n    <!-- ext3 -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">ext3 (Con Diario / Transición)</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">mkfs.ext3</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">\n        • <strong>Qué es:</strong> Es un <code>ext2</code> al que se le añadió el <em>Journal</em> (diario transaccional).<br>\n        • <strong>Diferencia clave:</strong> Permite migrar desde ext2 sin formatear ejecutando <code>tune2fs -j</code>.<br>\n        • <strong>Uso:</strong> Servidores antiguos de transición (hoy reemplazado por ext4).\n      </div>\n    </div>\n\n    <!-- VFAT -->\n    <div style=\"background:#FEF3C7; border:1.5px solid #F59E0B; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#92400E; font-size:12.5px;\">VFAT / FAT32 (Universal)</strong>\n        <span style=\"background:#D97706; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">mkfs.vfat</span>\n      </div>\n      <div style=\"color:#78350F; line-height:1.35;\">\n        • <strong>Qué es:</strong> El estándar universal compatible con Windows, Mac y Linux.<br>\n        • 🎯 <strong>OBLIGATORIO:</strong> Es el sistema requerido por la especificación UEFI para <code>/boot/efi</code>.<br>\n        • ⚠️ <strong>LÍMITE VITAL:</strong> Ningún archivo individual puede superar los <strong>4 GB</strong> de tamaño.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Claves de Certificación: ext4 = estándar general de Linux; XFS = bólido de bases de datos pero ¡JAMÁS se reduce!; Btrfs = instantáneas (snapshots) y sí es reducible; VFAT = obligatorio en UEFI (/boot/efi) con límite de 4 GB."
+        }
+      ],
+      "notes": "Explica la analogía: un disco sin sistema de archivos es un almacén vacío; formatear con mkfs coloca las estanterías (inodos) y los cajones (bloques) para guardar ficheros."
+    },
+    {
+      "id": "104.1-slide-12",
+      "slideNumber": 12,
+      "title": "Trampas Clásicas de Examen en Particionado",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Trampas Clásicas de Examen en Particionado"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 4 aspectos clave donde caen los candidatos y el porqué de cada uno explicado de forma sencilla:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Discos de más de 2 TB ➔ Siempre GPT (MBR se queda ciego)** — <div style='margin-top:4px; line-height:1.4;'><span style='color:#DC2626; font-weight:700;'>❌ La Trampa:</span> Preguntas que intentan crear una partición de 3 TB o 4 TB usando tabla MBR.<br><span style='color:#16A34A; font-weight:700;'>✅ El Porqué:</span> MBR fue inventado en 1982 y solo tiene casillas de 32 bits para contar sectores. En 32 bits solo caben 2.19 TB. Con discos mayores, MBR no puede contar más y el resto del disco no existe. Requiere obligatoriamente <strong>GPT</strong> (64 bits).</div>",
+            "**2. Salir de fdisk / gdisk ➔ Siempre pulsar 'w' para guardar en disco** — <div style='margin-top:4px; line-height:1.4;'><span style='color:#DC2626; font-weight:700;'>❌ La Trampa:</span> Crear particiones en fdisk y salir pulsando 'q' o cerrando la terminal.<br><span style='color:#16A34A; font-weight:700;'>✅ El Porqué:</span> fdisk y gdisk trabajan únicamente en la memoria RAM para que no rompas nada por error. Si sales con 'q', descartas todo. Para que se grabe físicamente en el disco es <strong>OBLIGATORIO pulsar 'w' (Write)</strong>.</div>",
+            "**3. Crear un archivo Swapfile ➔ Siempre 'chmod 600' antes de swapon** — <div style='margin-top:4px; line-height:1.4;'><span style='color:#DC2626; font-weight:700;'>❌ La Trampa:</span> Crear /swapfile y lanzar directamente 'swapon /swapfile' sin cambiar permisos.<br><span style='color:#16A34A; font-weight:700;'>✅ El Porqué:</span> La swap guarda fragmentos de la memoria RAM, donde hay contraseñas y claves privadas sin cifrar. Si el archivo tuviera permisos normales (644), cualquiera podría leerlas. Por seguridad, <code>swapon</code> aborta y se niega a arrancar si no tiene <strong>chmod 600</strong> (solo lectura/escritura para root).</div>",
+            "**4. Reducir tamaño de partición ➔ XFS NUNCA se puede reducir** — <div style='margin-top:4px; line-height:1.4;'><span style='color:#DC2626; font-weight:700;'>❌ La Trampa:</span> Opciones de examen que ofrecen comandos falsos para achicar o reducir una partición XFS.<br><span style='color:#16A34A; font-weight:700;'>✅ El Porqué:</span> Por diseño interno de arquitectura, XFS se puede ampliar en caliente con <code>xfs_growfs</code>, pero <strong>JAMÁS SE PUEDE ENCOGER</strong>. (Btrfs y ext4 sí se pueden reducir).</div>"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Las 4 Leyes Inmutables de Disco: 1) Disco > 2 TB = GPT siempre. 2) fdisk/gdisk = 'w' para guardar. 3) Swapfile = chmod 600 obligatorio. 4) XFS = jamás se puede reducir."
+        }
+      ],
+      "notes": "Repasa estas cuatro reglas antes de que los alumnos hagan el test final: representan el 80% de los fallos típicos del Examen 101."
+    },
+    {
+      "id": "104.1-slide-13",
+      "slideNumber": 13,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: fdisk y gdisk)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: fdisk y gdisk)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 1 (Oficial Pág 436): ¿Cuál es el comando exacto para inspeccionar la lista completa de particiones de todos los discos conectados al sistema sin entrar en ningún menú interactivo? — Comando: `sudo fdisk -l (o sudo parted -l)` (La opción -l (--list) vuelca en la salida estándar la tabla de particiones, tamaños y tipos de todos los dispositivos de bloque detectados.)",
+            "Caso 2 (Oficial Pág 436): En la herramienta 'gdisk', ¿qué código hexadecimal de tipo de partición se debe asignar a la partición ESP (EFI System Partition)? — Comando: `ef00` (El código 'ef00' corresponde a la partición de sistema EFI requerida por el estándar UEFI (en MBR su código equivalente es 0xEF).)",
+            "Caso 3 (Oficial Pág 436): Dentro de 'fdisk', ¿qué subcomando de una sola letra permite cambiar el tipo de sistema de una partición (por ejemplo de Linux a Linux Swap)? — Comando: `t (Type)` (El comando interactivo 't' solicita el número de partición y el nuevo código hexadecimal de tipo deseado.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "fdisk -l lista sin entrar; ef00 identifica la partición ESP en gdisk; y 't' altera el identificador de tipo."
+        }
+      ],
+      "notes": "Muestra que en gdisk puedes teclear 'L' para ver la lista completa de los cientos de códigos GUID disponibles."
+    },
+    {
+      "id": "104.1-slide-14",
+      "slideNumber": 14,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: mke2fs y swap)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: mke2fs y swap)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 4 (Oficial Pág 436): ¿Qué comando formatea la partición '/dev/sdb1' con sistema de archivos ext4 fijando el tamaño de bloque a 2048 bytes y asignando la etiqueta 'RESPALDO'? — Comando: `sudo mke2fs -t ext4 -b 2048 -L 'RESPALDO' /dev/sdb1 (o mkfs.ext4 -b 2048 -L 'RESPALDO' /dev/sdb1)` (-t define el tipo ext4, -b fija los 2048 bytes por bloque y -L asigna la etiqueta de volumen.)",
+            "Caso 5 (Oficial Pág 436): Tras crear un archivo de intercambio con 'fallocate -l 1G /swapfile', ¿qué dos comandos deben ejecutarse consecutivamente para asegurarlo con permisos correctos y formatearlo como swap? — Comando: `sudo chmod 600 /swapfile && sudo mkswap /swapfile` (chmod 600 restringe el acceso exclusivamente al usuario root y mkswap escribe la firma de intercambio necesaria para su activación con swapon.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "mke2fs parametrizado permite afinar bloques y etiquetas; chmod 600 es el requisito previo innegociable antes de mkswap."
+        }
+      ],
+      "notes": "Recuerda que los tamaños válidos de bloque para ext4 son 1024, 2048 y 4096 bytes."
+    },
+    {
+      "id": "104.1-slide-15",
+      "slideNumber": 15,
+      "title": "Retos de Exploración Oficiales (parted y Conversión MBR a GPT)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Retos de Exploración Oficiales (parted y Conversión MBR a GPT)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. Tienes un disco nuevo '/dev/sdc' y necesitas crear una tabla GPT e inicializar una partición primaria ext4 de 5 GB desde un script bash desatendido sin interacción humana. ¿Qué línea de comandos completa con 'parted' debes ejecutar?\n2. ¿Qué herramienta especializada de la familia gdisk permite convertir una tabla de particiones MBR existente a GPT de forma segura conservando los datos de las particiones?\n3. ¿Qué comando de GNU parted muestra el alineamiento óptimo de sectores de una partición para garantizar el máximo rendimiento en discos SSD?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Pista",
+          "content": "Recuerda: parted -s mklabel gpt mkpart; la herramienta gdisk directamente; y parted align-check."
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Desafío",
+          "content": "1. Se ejecuta: sudo parted -s /dev/sdc mklabel gpt mkpart primary ext4 1MiB 5GiB\n2. Se utiliza la propia utilidad 'gdisk /dev/sdc', que al abrir un disco MBR carga automáticamente la conversión en memoria y la guarda en GPT al pulsar 'w'.\n3. Se ejecuta: sudo parted /dev/sdc align-check optimal 1."
+        }
+      ],
+      "notes": "La conversión de MBR a GPT con gdisk es una técnica de examen muy valorada para modernizar servidores antiguos a UEFI."
+    },
+    {
+      "id": "104.1-slide-16",
+      "slideNumber": 16,
+      "title": "Pregunta de Examen LPIC-1: Límites Arquitectónicos de Particionado",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Límites Arquitectónicos de Particionado"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-104-1-16",
+          "question": "Un administrador necesita configurar un nuevo disco duro de 8 TB en un servidor de base de datos. ¿Cuál de las siguientes afirmaciones es correcta respecto al esquema de particionado que debe emplear?",
+          "options": [
+            {
+              "key": "a",
+              "text": "Debe utilizar una tabla MBR tradicional con una partición extendida."
+            },
+            {
+              "key": "b",
+              "text": "Debe utilizar una tabla GPT porque MBR no puede direccionar discos de más de 2.2 TB."
+            },
+            {
+              "key": "c",
+              "text": "Puede utilizar MBR si formatea las particiones con el sistema de archivos ext4."
+            },
+            {
+              "key": "d",
+              "text": "Debe utilizar LVM directamente sobre el disco sin ninguna tabla de particiones."
+            }
+          ],
+          "correct": [
+            "b"
+          ],
+          "explanation": "El esquema de particionado MBR tradicional utiliza direcciones de bloque LBA de 32 bits, lo que impone un límite matemático estricto de direccionamiento de 2.2 Terabytes (2 TiB con sectores de 512 bytes). Para discos superiores a 2.2 TB (como este de 8 TB) es obligatoria la tabla GPT (GUID Partition Table), que soporta hasta 9.4 Zettabytes."
+        }
+      ],
+      "notes": "Pregunta conceptual clásica e indispensable en la certificación LPIC-1."
+    },
+    {
+      "id": "104.1-slide-17",
+      "slideNumber": 17,
+      "title": "Pregunta de Examen LPIC-1: Parámetros del Formateador mke2fs",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Parámetros del Formateador mke2fs"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-104-1-17",
+          "question": "¿Qué opción del comando 'mke2fs' se utiliza para incorporar un diario de transacciones (Journal) y crear directamente un sistema de archivos ext3?",
+          "options": [
+            {
+              "key": "a",
+              "text": "-t ext3"
+            },
+            {
+              "key": "b",
+              "text": "-j"
+            },
+            {
+              "key": "c",
+              "text": "-J"
+            },
+            {
+              "key": "d",
+              "text": "Tanto la opción -t ext3 como la opción -j son correctas."
+            }
+          ],
+          "correct": [
+            "d"
+          ],
+          "explanation": "En 'mke2fs', la opción '-j' (journal) se diseñó originalmente para añadir el diario de ext3 sobre la base de ext2. Con las versiones modernas de e2fsprogs, también es completamente válido indicar el tipo explícito con '-t ext3'. Ambas opciones consiguen exactamente el mismo resultado."
+        }
+      ],
+      "notes": "Pregunta técnica detallada sobre la sintaxis de mke2fs."
+    },
+    {
+      "id": "104.1-slide-18",
+      "slideNumber": 18,
+      "title": "Tarjetas Nemotécnicas: Particiones y Formateo 104.1",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tarjetas Nemotécnicas: Particiones y Formateo 104.1"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto",
+            "Significado / Uso"
+          ],
+          "rows": [
+            [
+              "¿Cuál es el límite de tamaño máximo de un disco con tabla MBR?",
+              "2.2 Terabytes (2 TiB)."
+            ],
+            [
+              "¿Cuántas particiones primarias soporta una tabla GPT por defecto?",
+              "128 particiones primarias."
+            ],
+            [
+              "¿Qué código hexadecimal asigna 'gdisk' a una partición Swap y a la ESP?",
+              "8200 para Swap; ef00 para la partición EFI System Partition (ESP)."
+            ],
+            [
+              "¿Qué subcomando de 'fdisk' escribe los cambios en el disco físico?",
+              "El subcomando 'w' (write)."
+            ],
+            [
+              "¿Qué opción de 'mke2fs' añade un journal de transacciones?",
+              "-j (o -t ext3 / -t ext4)."
+            ],
+            [
+              "¿Qué permisos obligatorios debe tener un archivo swapfile por seguridad?",
+              "Permisos 0600 (chmod 600 /swapfile)."
+            ],
+            [
+              "¿Qué comando activa todas las áreas de swap configuradas en /etc/fstab?",
+              "swapon -a."
+            ],
+            [
+              "¿Qué sistema de archivos soporta subvolúmenes y snapshots CoW nativos?",
+              "Btrfs (formateado con mkfs.btrfs)."
+            ]
+          ],
+          "caption": "Tarjetas de memorización"
+        }
+      ],
+      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 104.1."
+    },
+    {
+      "id": "104.1-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen y Claves de Examen: Subtema 104.1",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen y Claves de Examen: Subtema 104.1"
+        }
+      ],
+      "notes": "Concluimos el subtema 104.1. Los alumnos dominan ahora el particionado y formateo de discos."
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-104-1-1",
+      "title": "Nomenclatura y Jerarquía de Dispositivos en /dev",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Nomenclatura y Jerarquía de Dispositivos en /dev"
+        },
+        {
+          "type": "paragraph",
+          "text": "El kernel de Linux mapea cada disco físico y partición en el árbol /dev según el bus y la controladora de almacenamiento:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Discos SATA, SAS y USB (/dev/sd*)** — 🎯 Cada disco físico recibe una letra: /dev/sda (primer disco), /dev/sdb (segundo disco). Las particiones añaden un número: /dev/sda1 (primera partición), /dev/sda2 (segunda partición).",
+            "**Discos de Estado Sólido NVMe (/dev/nvme*n*p*)** — 🎯 Siguen la convención de espacio de nombres y particiones: /dev/nvme0n1 representa el primer disco físico; /dev/nvme0n1p1 representa su primera partición.",
+            "**Tarjetas SD y memorias eMMC (/dev/mmcblk*p*)** — Siguen la estructura de bloques: /dev/mmcblk0 es el dispositivo completo; /dev/mmcblk0p1 es la primera partición."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:16px; margin:14px 0;\">\n  <!-- Grid 3 Familias de Dispositivos -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:14px;\">\n    \n    <!-- Familia 1: SATA / SCSI / USB -->\n    <div style=\"background:#F8FAFC; border:2px solid #3B82F6; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:8px;\">\n          <span style=\"background:#3B82F6; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">SATA / SCSI / USB</span>\n          <span style=\"font-family:monospace; font-weight:700; color:#1E40AF; font-size:15px;\">/dev/sd*</span>\n        </div>\n        <div style=\"font-size:13.5px; color:#334155; line-height:1.45; margin-bottom:10px;\">\n          Discos tradicionales y unidades flash externas. Cada disco físico recibe una letra consecutiva:\n        </div>\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:8px 10px; font-family:monospace; font-size:13px; color:#1E3A8A; line-height:1.6; border-radius:4px;\">\n          <div>/dev/sda  &rarr; 1.<sup>er</sup> disco físico</div>\n          <div>/dev/sda1 &rarr; Partición 1 de sda</div>\n          <div>/dev/sda2 &rarr; Partición 2 de sda</div>\n          <div>/dev/sdb  &rarr; 2.º disco físico</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:12px; color:#2563EB; font-weight:700; background:#DBEAFE; padding:4px 8px; border-radius:6px;\">\n        Sin 'p' &bull; Número pegado a letra\n      </div>\n    </div>\n\n    <!-- Familia 2: NVMe PCIe SSD -->\n    <div style=\"background:#F8FAFC; border:2px solid #10B981; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:8px;\">\n          <span style=\"background:#10B981; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">NVMe PCIe SSD</span>\n          <span style=\"font-family:monospace; font-weight:700; color:#065F46; font-size:15px;\">/dev/nvme*</span>\n        </div>\n        <div style=\"font-size:13.5px; color:#334155; line-height:1.45; margin-bottom:10px;\">\n          Discos SSD M.2 de ultra alta velocidad. Indican controlador (c), namespace (n) y partición (p):\n        </div>\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:8px 10px; font-family:monospace; font-size:13px; color:#064E3B; line-height:1.6; border-radius:4px;\">\n          <div>/dev/nvme0n1   &rarr; Disco 1 (Ctrl 0, NS 1)</div>\n          <div>/dev/nvme0n1p1 &rarr; Partición 1 (con 'p')</div>\n          <div>/dev/nvme0n1p2 &rarr; Partición 2 (con 'p')</div>\n          <div>/dev/nvme1n1   &rarr; Disco 2 (Ctrl 1, NS 1)</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:12px; color:#047857; font-weight:700; background:#D1FAE5; padding:4px 8px; border-radius:6px;\">\n        Lleva 'p' obligatoria para partición\n      </div>\n    </div>\n\n    <!-- Familia 3: SD / eMMC -->\n    <div style=\"background:#F8FAFC; border:2px solid #8B5CF6; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:8px;\">\n          <span style=\"background:#8B5CF6; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">SD / eMMC Flash</span>\n          <span style=\"font-family:monospace; font-weight:700; color:#5B21B6; font-size:15px;\">/dev/mmcblk*</span>\n        </div>\n        <div style=\"font-size:13.5px; color:#334155; line-height:1.45; margin-bottom:10px;\">\n          Tarjetas SD y memorias eMMC soldadas en placa (Raspberry Pi, servidores embebidos):\n        </div>\n        <div style=\"background:#F5F3FF; border-left:3px solid #8B5CF6; padding:8px 10px; font-family:monospace; font-size:13px; color:#4C1D95; line-height:1.6; border-radius:4px;\">\n          <div>/dev/mmcblk0   &rarr; Dispositivo completo</div>\n          <div>/dev/mmcblk0p1 &rarr; Partición 1 (con 'p')</div>\n          <div>/dev/mmcblk0p2 &rarr; Partición 2 (con 'p')</div>\n          <div>/dev/mmcblk1   &rarr; Segunda tarjeta SD</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:12px; color:#6D28D9; font-weight:700; background:#EDE9FE; padding:4px 8px; border-radius:6px;\">\n        Lleva 'p' obligatoria para partición\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Alerta de examen: Trampa clásica de sintaxis -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:14px;\">\n    <span style=\"font-size:24px;\">⚠️</span>\n    <div style=\"font-size:13.5px; color:#92400E; line-height:1.45;\">\n      <strong>Trampa Frecuente de Certificación:</strong> En discos SATA nunca hay letra 'p' (<code style=\"background:#FEF3C7; color:#B45309; padding:2px 6px; border-radius:4px; font-weight:700;\">/dev/sda1</code>, NUNCA <code style=\"text-decoration:line-through; color:#DC2626;\">/dev/sdap1</code>). En cambio, en discos NVMe y MMC la letra 'p' es <strong>estrictamente obligatoria</strong> (<code style=\"background:#FEF3C7; color:#B45309; padding:2px 6px; border-radius:4px; font-weight:700;\">/dev/nvme0n1p1</code>, NUNCA <code style=\"text-decoration:line-through; color:#DC2626;\">/dev/nvme0n11</code>).\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: En discos SATA/SCSI el formato es /dev/sda1; en discos NVMe modernos se añade la 'p' para indicar partición: /dev/nvme0n1p1."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-1-2",
+      "title": "MBR frente a GPT: Diferencias Clave y Anatomía en Disco",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "MBR frente a GPT: Diferencias Clave y Anatomía en Disco"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo organiza cada sistema la tabla de particiones y por qué GPT sustituye a MBR?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Característica Clave",
+            "MBR (Master Boot Record — Clásico)",
+            "GPT (GUID Partition Table — Moderno)"
+          ],
+          "rows": [
+            [
+              "Límite de Disco",
+              "🎯 Máximo 2.2 TB (se queda ciego con discos mayores).",
+              "🎯 Hasta 9.4 Zettabytes (prácticamente sin límite)."
+            ],
+            [
+              "Nº de Particiones",
+              "🎯 Solo 4 particiones primarias (o 3 primarias + 1 extendida).",
+              "🎯 128 particiones directas e independientes de serie."
+            ],
+            [
+              "Seguridad / Copia",
+              "⚠️ Cero copias de respaldo: si falla el Sector 0, se pierde todo.",
+              "🎯 Copia espejo automática al final del disco y detección de fallos."
+            ],
+            [
+              "Tipo de Arranque",
+              "BIOS tradicional (Legacy).",
+              "UEFI moderno (con 'Protective MBR' para evitar borrados viejos)."
+            ]
+          ],
+          "caption": "MBR frente a GPT: Diferencias Clave y Anatomía en Disco"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>📐 Anatomía Física: ¿Qué contiene exactamente cada sistema en el disco?</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Estructura Real</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- MBR Card -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#991B1B; font-size:13px;\">MBR (Sector 0 — 512 Bytes en total)</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:3px;\">Sin Respaldo</span>\n      </div>\n      <!-- Barra MBR -->\n      <div style=\"display:flex; gap:4px; font-family:monospace; font-size:10px; text-align:center; margin-bottom:8px;\">\n        <div style=\"flex:4; background:#FCA5A5; color:#7F1D1D; padding:6px 2px; border-radius:4px; font-weight:800;\">446B Bootloader</div>\n        <div style=\"flex:2; background:#F87171; color:#FFF; padding:6px 2px; border-radius:4px; font-weight:800;\">64B Tabla (4 Part)</div>\n        <div style=\"flex:1; background:#DC2626; color:#FFF; padding:6px 2px; border-radius:4px; font-weight:800;\">2B 55AA</div>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.45;\">\n        • <strong>Bootloader (446 bytes):</strong> El microcódigo que lee la BIOS para arrancar Linux.<br>\n        • <strong>Tabla (64 bytes):</strong> Solo 4 casillas de 16 bytes (por eso el límite de 4 particiones).<br>\n        • <strong>Firma 55AA (2 bytes):</strong> Código 'mágico' que confirma a la BIOS que el disco es arrancable.<br>\n        • ⚠️ <strong>Punto único de fallo:</strong> Si se daña este sector, la tabla se pierde para siempre.\n      </div>\n    </div>\n\n    <!-- GPT Card -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#15803D; font-size:13px;\">GPT (GUID Partition Table — 64 bits UEFI)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:3px;\">Con Copia Espejo</span>\n      </div>\n      <!-- Barra GPT -->\n      <div style=\"display:flex; gap:4px; font-family:monospace; font-size:10px; text-align:center; margin-bottom:8px;\">\n        <div style=\"flex:1.2; background:#BBF7D0; color:#14532D; padding:6px 2px; border-radius:4px; font-weight:700;\">LBA 0 Prot MBR</div>\n        <div style=\"flex:1.2; background:#86EFAC; color:#14532D; padding:6px 2px; border-radius:4px; font-weight:700;\">LBA 1 Cabecera</div>\n        <div style=\"flex:3; background:#4ADE80; color:#14532D; padding:6px 2px; border-radius:4px; font-weight:800;\">LBA 2-33 (128 Part)</div>\n        <div style=\"flex:1.2; background:#16A34A; color:#FFF; padding:6px 2px; border-radius:4px; font-weight:800;\">Backup GPT</div>\n      </div>\n      <div style=\"color:#14532D; line-height:1.45;\">\n        • <strong>Protective MBR (LBA 0):</strong> Falso MBR para que sistemas viejos no borren el disco.<br>\n        • <strong>Cabecera GPT (LBA 1):</strong> Identificador GUID del disco y sumas CRC32 de integridad.<br>\n        • <strong>Entradas de Partición (LBA 2-33):</strong> Lista amplia para 128 particiones nativas.<br>\n        • 🛡️ <strong>Backup GPT (al final):</strong> Copia idéntica en los últimos 33 sectores del disco físico.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Fija de Examen: Discos de más de 2 TB o sistemas modernos UEFI exigen siempre GPT. MBR no tiene copia de respaldo; GPT guarda una copia idéntica al final del disco."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-1-3",
+      "title": "Particionado Interactivo MBR con fdisk",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Particionado Interactivo MBR con fdisk"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué hace cada tecla interactiva en fdisk y cómo leer la salida de un disco MBR?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sudo fdisk /dev/sdb | sudo fdisk -l /dev/sdb",
+          "title": "Gestionar particiones en discos MBR de forma interactiva con confirmación obligatoria al guardar"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo fdisk -l /dev/sdb",
+              "output": "Disco /dev/sdb: 20 GiB, 21474836480 bytes, 41943040 sectores\nTipo de etiqueta de disco: dos   # 'dos' significa tabla MBR clásica.\nDispositivo  Arrancable    Inicio       Fin  Sectores Tamaño Id Tipo\n/dev/sdb1    *               2048  20973567  20971520    10G 83 Linux\n# '*' = partición de arranque; Inicio 2048 = alineada a 1 MiB para velocidad.\n/dev/sdb2                20973568  41943039  20969472    10G 82 Linux swap\n# Id 83 = Sistema de archivos Linux (ext4/XFS); Id 82 = Memoria de intercambio (Swap)."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "m",
+              "",
+              "Ayuda"
+            ],
+            [
+              "p",
+              "",
+              "Imprimir"
+            ],
+            [
+              "n",
+              "",
+              "Nueva"
+            ],
+            [
+              "t",
+              "",
+              "Tipo"
+            ],
+            [
+              "d",
+              "",
+              "Borrar"
+            ],
+            [
+              "w",
+              "",
+              "Guardar"
+            ],
+            [
+              "q",
+              "",
+              "Salir"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔄 Flujo Operativo en fdisk (Trabajo en RAM hasta pulsar 'w')</span>\n    <span style=\"font-size:10.5px; background:#FEF3C7; color:#92400E; padding:2px 7px; border-radius:10px; font-weight:700;\">Edición Segura en RAM</span>\n  </div>\n\n  <div style=\"display:flex; align-items:center; justify-content:space-between; gap:6px; font-size:11px; text-align:center;\">\n    <div style=\"flex:1; background:#EFF6FF; border:1.5px solid #3B82F6; padding:6px 4px; border-radius:6px;\">\n      <strong style=\"color:#1E40AF; display:block;\">1. Entrar</strong>\n      <code style=\"color:#2563EB;\">fdisk /dev/sdb</code>\n    </div>\n    <span style=\"color:#64748B; font-weight:900;\">➔</span>\n    <div style=\"flex:1; background:#F0FDF4; border:1.5px solid #22C55E; padding:6px 4px; border-radius:6px;\">\n      <strong style=\"color:#166534; display:block;\">2. Crear</strong>\n      <code style=\"color:#16A34A;\">n (nueva part.)</code>\n    </div>\n    <span style=\"color:#64748B; font-weight:900;\">➔</span>\n    <div style=\"flex:1; background:#FEF3C7; border:1.5px solid #F59E0B; padding:6px 4px; border-radius:6px;\">\n      <strong style=\"color:#92400E; display:block;\">3. Tipo</strong>\n      <code style=\"color:#D97706;\">t (83 / 82)</code>\n    </div>\n    <span style=\"color:#64748B; font-weight:900;\">➔</span>\n    <div style=\"flex:1; background:#F5F3FF; border:1.5px solid #8B5CF6; padding:6px 4px; border-radius:6px;\">\n      <strong style=\"color:#5B21B6; display:block;\">4. Verificar</strong>\n      <code style=\"color:#7C3AED;\">p (imprimir)</code>\n    </div>\n    <span style=\"color:#64748B; font-weight:900;\">➔</span>\n    <div style=\"flex:1.2; background:#DCFCE7; border:1.5px solid #16A34A; padding:6px 4px; border-radius:6px;\">\n      <strong style=\"color:#166534; display:block;\">5. Guardar (Físico)</strong>\n      <code style=\"color:#15803D; font-weight:800;\">w (escribir a disco)</code>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Oro en fdisk: fdisk edita únicamente en la memoria RAM. Si no pulsas la tecla 'w' (Write), NINGÚN cambio se guarda físicamente en el disco y todo se pierde al salir."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-1-4",
+      "title": "Particionado GPT con gdisk y Códigos de 4 Dígitos",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Particionado GPT con gdisk y Códigos de 4 Dígitos"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué significan esos números de tipo y cómo usar gdisk de la forma más sencilla?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sudo gdisk /dev/sdc | sudo gdisk -l /dev/sdc",
+          "title": "Particionar discos modernos GPT con identificadores simplificados de 4 dígitos"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo gdisk -l /dev/sdc",
+              "output": "Partition table scan:   MBR: protective   GPT: present\n# 'protective' protege el disco; 'GPT: present' indica tabla moderna activa.\nDisk /dev/sdc: 8589934592 sectors, 4.0 TiB  # Disco de 4 TB (imposible en MBR)\nNumber  Start (sector)    End (sector)  Size       Code  Name\n   1            2048        20973567   10.0 GiB    8300  Linux filesystem\n   2        20973568        41943039   10.0 GiB    8200  Linux swap\n   3        41943040        43026431  529.0 MiB    EF00  EFI system partition\n# 8300 = Linux datos; 8200 = Memoria Swap; EF00 = Partición de arranque UEFI."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "?",
+              "",
+              "Ayuda"
+            ],
+            [
+              "p",
+              "",
+              "Imprimir"
+            ],
+            [
+              "n",
+              "",
+              "Nueva"
+            ],
+            [
+              "t",
+              "",
+              "Tipo (4 dígitos)"
+            ],
+            [
+              "w",
+              "",
+              "Escribir"
+            ],
+            [
+              "q",
+              "",
+              "Salir"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔢 ¿Por qué estos números? La Regla de los 'Dos Ceros' (00) de gdisk</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 7px; border-radius:10px; font-weight:700;\">Atajo MBR ➔ GPT</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11px; text-align:center;\">\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; padding:8px 4px; border-radius:6px;\">\n      <span style=\"font-size:10px; color:#166534; font-weight:700;\">Linux Nativo</span>\n      <div style=\"font-family:monospace; font-size:13px; font-weight:800; color:#15803D; margin:3px 0;\">83 ➔ 8300</div>\n      <span style=\"font-size:9.5px; color:#14532D;\">ext4, XFS, Btrfs</span>\n    </div>\n\n    <div style=\"background:#FEF3C7; border:1.5px solid #F59E0B; padding:8px 4px; border-radius:6px;\">\n      <span style=\"font-size:10px; color:#92400E; font-weight:700;\">Linux Swap</span>\n      <div style=\"font-family:monospace; font-size:13px; font-weight:800; color:#D97706; margin:3px 0;\">82 ➔ 8200</div>\n      <span style=\"font-size:9.5px; color:#78350F;\">Intercambio RAM</span>\n    </div>\n\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; padding:8px 4px; border-radius:6px;\">\n      <span style=\"font-size:10px; color:#1E40AF; font-weight:700;\">Arranque UEFI</span>\n      <div style=\"font-family:monospace; font-size:13px; font-weight:800; color:#2563EB; margin:3px 0;\">EF ➔ EF00</div>\n      <span style=\"font-size:9.5px; color:#1E3A8A;\">Partición ESP (/boot/efi)</span>\n    </div>\n\n    <div style=\"background:#F1F5F9; border:1.5px solid #94A3B8; padding:8px 4px; border-radius:6px;\">\n      <span style=\"font-size:10px; color:#334155; font-weight:700;\">Windows Datos</span>\n      <div style=\"font-family:monospace; font-size:13px; font-weight:800; color:#475569; margin:3px 0;\">07 ➔ 0700</div>\n      <span style=\"font-size:9.5px; color:#64748B;\">NTFS / exFAT</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Mnemotécnica Infalible: Para saber el código GPT en gdisk, solo toma el código clásico de MBR y añádele dos ceros al final: 83 -> 8300 (Linux), 82 -> 8200 (Swap), EF -> EF00 (EFI)."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-1-5",
+      "title": "Particionado con GNU parted: Scripts y Edición en Caliente",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Particionado con GNU parted: Scripts y Edición en Caliente"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cuándo se usa parted, en qué casos es imprescindible y cuál es su peligro fundamental?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sudo parted /dev/sdb | sudo parted -s /dev/sdb <subcomandos>",
+          "title": "Particionar mediante scripts no interactivos y definir tamaños amigables en Megas o Gigas"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo parted -s /dev/sdb mklabel gpt mkpart primary ext4 1MiB 10GiB",
+              "output": "# 1. '-s' activa modo script (no pregunta ni pide confirmaciones).\n# 2. 'mklabel gpt' escribe la tabla GPT directamente en el disco.\n# 3. 'mkpart primary ext4 1MiB 10GiB' crea una partición de 10 GB al instante.\n$ sudo parted /dev/sdb print\nDisk /dev/sdb: 21.5GB   Partition Table: gpt\nNumber  Start   End     Size    File system  Name     Flags\n 1      1048kB  10.7GB  10.7GB  ext4         primary"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-s",
+              "",
+              "Script (Modo silencioso)"
+            ],
+            [
+              "-l",
+              "",
+              "Listar"
+            ],
+            [
+              "mklabel <tipo>",
+              "",
+              "Crear tabla"
+            ],
+            [
+              "mkpart <part>",
+              "",
+              "Crear partición"
+            ],
+            [
+              "print",
+              "",
+              "Mostrar"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚖️ ¿Cuándo usar fdisk/gdisk frente a GNU parted?</span>\n    <span style=\"font-size:10.5px; background:#FEE2E2; color:#991B1B; padding:2px 7px; border-radius:10px; font-weight:700;\">Diferencia de Riesgo</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:11.5px;\">\n    <!-- fdisk/gdisk -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:6px; padding:8px 10px;\">\n      <strong style=\"color:#1E40AF; display:block; margin-bottom:4px;\">🛡️ fdisk / gdisk (Interactivo / Seguro)</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">\n        • <strong>Edición en búfer de RAM:</strong> Puedes equivocarte sin consecuencias.<br>\n        • <strong>Confirmación:</strong> Solo se aplica si pulsas explícitamente <code>w</code>.<br>\n        • <strong>Uso habitual:</strong> Mantenimiento manual por administradores.\n      </div>\n    </div>\n\n    <!-- parted -->\n    <div style=\"background:#FFF7ED; border:1.5px solid #F97316; border-radius:6px; padding:8px 10px;\">\n      <strong style=\"color:#C2410C; display:block; margin-bottom:4px;\">⚡ GNU parted (Scripts / Tiempo Real)</strong>\n      <div style=\"color:#9A3412; line-height:1.35;\">\n        • <strong>Escritura inmediata en disco:</strong> Modifica sectores al instante.<br>\n        • <strong>Sin vuelta atrás:</strong> No hay opción 'w' ni 'q' para cancelar.<br>\n        • <strong>Uso habitual:</strong> Scripts no interactivos (<code>-s</code>) y despliegues desatendidos.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "⚠️ PELIGRO CRÍTICO DE EXAMEN: parted escribe DIRECTAMENTE en el disco físico en tiempo real con cada orden. No existe tecla 'w' para guardar ni tecla 'q' para cancelar. ¡No hay marcha atrás!"
+        }
+      ]
+    },
+    {
+      "id": "sec-104-1-6",
+      "title": "Crear Sistemas de Archivos: mkfs y Formateo Ext4 con mke2fs",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Crear Sistemas de Archivos: mkfs y Formateo Ext4 con mke2fs"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cuándo se usa cada comando, para qué sirve formatear y cómo funciona Ext4 por dentro?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sudo mkfs -t ext4 /dev/sdb1 | sudo mke2fs -t ext4 -m 1 /dev/sdb1",
+          "title": "Amueblar la partición con la estructura de archivos necesaria para guardar datos"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo mke2fs -t ext4 -L 'DATOS' -m 1 /dev/sdb1",
+              "output": "mke2fs 1.46.2 (28-Feb-2021)\nCreating filesystem with 2621440 4k blocks and 655360 inodes\n# Crea 2.6 millones de bloques de datos (4 KB c/u) y 655.000 inodos (fichas de archivos).\nFilesystem UUID: a1b2c3d4-e5f6-7890-abcd-ef1234567890\nSuperblock backups stored on blocks: 32768, 98304, 163840\n# Copias de seguridad del Superbloque por si el principal se daña tras un corte de luz.\nCreating journal (16384 blocks): done\n# El 'Journal' (diario) anota los cambios antes de escribirlos para evitar corrupciones."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "mkfs -t <tipo>",
+              "",
+              "Comando Atajo"
+            ],
+            [
+              "mke2fs",
+              "",
+              "Herramienta Nativa"
+            ],
+            [
+              "-L <nombre>",
+              "",
+              "Etiqueta (Label)"
+            ],
+            [
+              "-m <porcentaje>",
+              "",
+              "Reserva Root"
+            ],
+            [
+              "-j",
+              "",
+              "Añadir Journal"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🧱 Las 4 Partes Internas de un Sistema de Archivos Ext4</span>\n    <span style=\"font-size:10.5px; background:#DCFCE7; color:#166534; padding:2px 7px; border-radius:10px; font-weight:700;\">Estructura de Disco</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; padding:8px 6px; border-radius:6px;\">\n      <strong style=\"color:#1E40AF; display:block; margin-bottom:3px;\">1. Superbloque</strong>\n      <span style=\"color:#1E3A8A; line-height:1.3; display:block;\">El carné de identidad del disco: tamaño total, bloques libres y copias de respaldo de seguridad.</span>\n    </div>\n\n    <div style=\"background:#F5F3FF; border:1.5px solid #8B5CF6; padding:8px 6px; border-radius:6px;\">\n      <strong style=\"color:#5B21B6; display:block; margin-bottom:3px;\">2. Tabla de Inodos</strong>\n      <span style=\"color:#4C1D95; line-height:1.3; display:block;\">Fichas técnicas de archivos: guardan dueño, permisos y fechas (cada archivo ocupa un inodo).</span>\n    </div>\n\n    <div style=\"background:#FEE2E2; border:1.5px solid #EF4444; padding:8px 6px; border-radius:6px;\">\n      <strong style=\"color:#991B1B; display:block; margin-bottom:3px;\">3. Journal (Diario)</strong>\n      <span style=\"color:#7F1D1D; line-height:1.3; display:block;\">Libreta donde se anota cada cambio antes de escribirlo. Si se apaga la luz, evita reparar todo el disco.</span>\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; padding:8px 6px; border-radius:6px;\">\n      <strong style=\"color:#166534; display:block; margin-bottom:3px;\">4. Bloques de Datos</strong>\n      <span style=\"color:#14532D; line-height:1.3; display:block;\">Los cajones de 4 KB donde se guarda el contenido real de tus fotos, documentos y programas.</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Concepto Simple: Particionar con fdisk solo levanta las paredes de la habitación; formatear con mkfs pone las estanterías (los inodos y bloques) para poder guardar archivos."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-1-7",
+      "title": "Sistemas Empresariales: mkfs.xfs y mkfs.btrfs",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Sistemas Empresariales: mkfs.xfs y mkfs.btrfs"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué es XFS, qué es Btrfs, para qué sirve cada uno y cuál es su diferencia vital de examen?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sudo mkfs.xfs [-f] /dev/sdb2 | sudo mkfs.btrfs /dev/sdb3",
+          "title": "Elegir entre rendimiento masivo en bases de datos (XFS) o instantáneas avanzadas (Btrfs)"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo mkfs.xfs -f -L 'BD_PROD' /dev/sdb2",
+              "output": "meta-data=/dev/sdb2              isize=512    agcount=4, agsize=655296 blks\n# 'agcount=4' indica 4 carriles paralelos independientes para escribir a máxima velocidad.\ndata     =                       bsize=4096   blocks=2621184, imaxpct=25\n# XFS crea inodos dinámicos según se necesiten (no tiene tabla fija como ext4).\n$ sudo xfs_growfs /mnt/datos  # Amplía XFS en caliente al máximo espacio disponible.\n# ⚠️ PREGUNTA DE EXAMEN: ¿Cómo se reduce XFS? -> ¡IMPOSIBLE! XFS jamás se puede achicar."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "mkfs.xfs [-f]",
+              "",
+              "Formatear XFS"
+            ],
+            [
+              "xfs_growfs <punto>",
+              "",
+              "Agrandar XFS"
+            ],
+            [
+              "mkfs.btrfs",
+              "",
+              "Formatear Btrfs"
+            ],
+            [
+              "btrfs fi resize",
+              "",
+              "Redimensionar Btrfs"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚡ Comparativa Directa: ¿Para qué sirve cada uno y cuál es su diferencia clave?</span>\n    <span style=\"font-size:10.5px; background:#FEF3C7; color:#92400E; padding:2px 7px; border-radius:10px; font-weight:700;\">Diferencia Clave</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:11.5px;\">\n    <!-- XFS -->\n    <div style=\"background:#FFF7ED; border:1.5px solid #F97316; border-radius:6px; padding:9px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#C2410C; font-size:12.5px;\">XFS (El bólido de Red Hat / Enterprise)</strong>\n        <span style=\"background:#EA580C; color:#FFF; font-size:9px; font-weight:800; padding:1px 5px; border-radius:3px;\">No Reducible</span>\n      </div>\n      <div style=\"color:#9A3412; line-height:1.4;\">\n        • <strong>Para qué sirve:</strong> Bases de datos masivas y servidores de alto rendimiento.<br>\n        • <strong>Cómo funciona:</strong> Escribe en 4 carriles paralelos (*Allocation Groups*).<br>\n        • <strong>Ampliación:</strong> Sí, en caliente con <code>xfs_growfs</code>.<br>\n        • ⚠️ <strong>DIFERENCIA CLAVE:</strong> <strong>¡JAMÁS SE PUEDE REDUCIR SU TAMAÑO!</strong>\n      </div>\n    </div>\n\n    <!-- Btrfs -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #A855F7; border-radius:6px; padding:9px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#7E22CE; font-size:12.5px;\">Btrfs (El moderno con Snapshots / openSUSE)</strong>\n        <span style=\"background:#9333EA; color:#FFF; font-size:9px; font-weight:800; padding:1px 5px; border-radius:3px;\">Reducible</span>\n      </div>\n      <div style=\"color:#6B21A8; line-height:1.4;\">\n        • <strong>Para qué sirve:</strong> Copias instantáneas, subvolúmenes y protección contra fallos.<br>\n        • <strong>Cómo funciona:</strong> <em>Copy-on-Write</em> (hace fotos del sistema en 1 milisegundo).<br>\n        • <strong>Ampliación:</strong> Sí, en caliente con <code>btrfs filesystem resize</code>.<br>\n        • 🎯 <strong>DIFERENCIA CLAVE:</strong> <strong>SÍ se puede REDUCIR de tamaño en caliente.</strong>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Estrella de Certificación: XFS se puede agrandar en caliente con 'xfs_growfs', pero ¡JAMÁS SE PUEDE REDUCIR DE TAMAÑO! Btrfs sí permite tanto ampliar como reducir."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-1-8",
+      "title": "Memoria de Intercambio (Swap): mkswap, swapon y swapoff",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Memoria de Intercambio (Swap): mkswap, swapon y swapoff"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué hace cada comando, para qué sirve la Swap y cómo funciona su ciclo completo de vida?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sudo mkswap /dev/sdb2 | sudo swapon --show | sudo swapoff /dev/sdb2",
+          "title": "Gestionar espacio de disco para auxiliar a la memoria RAM física ante saturaciones"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo mkswap /dev/sdb2 && sudo swapon /dev/sdb2 && swapon --show",
+              "output": "Setting up swapspace version 1, size = 10 GiB (10737414144 bytes)\nUUID=f1e2d3c4-b5a6-7890-1234-56789abcdef0   # Swap inicializada con éxito.\n$ swapon --show\nNAME      TYPE      SIZE  USED PRIO\n/dev/sdb2 partition  10G    0B   -2   # Swap de 10 GB activa y lista para el kernel."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "mkswap <disp>",
+              "",
+              "Formatear Swap"
+            ],
+            [
+              "swapon <disp>",
+              "",
+              "Activar Swap"
+            ],
+            [
+              "swapon --show",
+              "",
+              "Ver Estado (-s)"
+            ],
+            [
+              "swapon -a",
+              "",
+              "Activar Todo"
+            ],
+            [
+              "swapoff <disp>",
+              "",
+              "Desactivar Swap"
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔄 Ciclo de Vida Completo de la Memoria Swap (De cero a persistente)</span>\n    <span style=\"font-size:10.5px; background:#DCFCE7; color:#166534; padding:2px 7px; border-radius:10px; font-weight:700;\">4 Pasos Clave</span>\n  </div>\n\n  <div style=\"display:flex; align-items:center; justify-content:space-between; gap:6px; font-size:11px; text-align:center;\">\n    <div style=\"flex:1; background:#EFF6FF; border:1.5px solid #3B82F6; padding:8px 4px; border-radius:6px;\">\n      <strong style=\"color:#1E40AF; display:block;\">1. Crear Espacio</strong>\n      <span style=\"color:#1E3A8A; font-size:10px;\">Partición tipo 82/8200 o archivo dd</span>\n    </div>\n    <span style=\"color:#64748B; font-weight:900;\">➔</span>\n    <div style=\"flex:1; background:#FEF3C7; border:1.5px solid #F59E0B; padding:8px 4px; border-radius:6px;\">\n      <strong style=\"color:#92400E; display:block;\">2. Inicializar</strong>\n      <code style=\"color:#D97706; font-size:10px; font-weight:700;\">mkswap /dev/sdb2</code>\n    </div>\n    <span style=\"color:#64748B; font-weight:900;\">➔</span>\n    <div style=\"flex:1; background:#DCFCE7; border:1.5px solid #16A34A; padding:8px 4px; border-radius:6px;\">\n      <strong style=\"color:#166534; display:block;\">3. Activar en Caliente</strong>\n      <code style=\"color:#15803D; font-size:10px; font-weight:700;\">swapon /dev/sdb2</code>\n    </div>\n    <span style=\"color:#64748B; font-weight:900;\">➔</span>\n    <div style=\"flex:1; background:#F5F3FF; border:1.5px solid #8B5CF6; padding:8px 4px; border-radius:6px;\">\n      <strong style=\"color:#5B21B6; display:block;\">4. Persistencia</strong>\n      <span style=\"font-size:10px; color:#7C3AED; font-weight:700;\">Línea en /etc/fstab</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Ciclo de Memoria Swap: 1) Crear partición (Id 82/8200) -> 2) Inicializar con mkswap -> 3) Activar con swapon -> 4) Configurar en /etc/fstab para que persista tras reiniciar."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-1-9",
+      "title": "Procedimiento Paso a Paso: Archivo Swapfile de Emergencia",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Procedimiento Paso a Paso: Archivo Swapfile de Emergencia"
+        },
+        {
+          "type": "paragraph",
+          "text": "🔥 PROBLEMA REAL: La base de datos agota la RAM física (98%), el kernel empieza a matar procesos críticos (OOM Killer) y no quedan particiones libres en disco. Solución en caliente en 60 segundos:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:14px 18px; margin-top:8px;\">\n  <!-- Context Box -->\n  <div style=\"background:#FFF7ED; border:1.5px solid #F97316; border-left:5px solid #EA580C; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:12.5px; color:#9A3412; line-height:1.45;\">\n    🚨 <strong>ESCENARIO CRÍTICO DE PRODUCCIÓN (Viernes 23:45h):</strong> La base de datos entra en saturación masiva (98% RAM). El <em>OOM Killer</em> del kernel empieza a matar procesos vitales con SIGKILL y no hay espacio para crear una partición swap tradicional. <strong>Secuencia de rescate en caliente sin reiniciar:</strong>\n  </div>\n\n  <!-- 5 Horizontal Steps -->\n  <div style=\"display:grid; grid-template-columns: repeat(5, 1fr); gap:10px;\">\n    <!-- Step 1 -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:12px 10px; display:flex; flex-direction:column; justify-content:space-between; min-height:165px;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n          <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:12px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex:none;\">1</span>\n          <strong style=\"color:#1E40AF; font-size:12px;\">Reservar 2 GB</strong>\n        </div>\n        <div style=\"color:#1E3A8A; font-size:11px; line-height:1.35;\">\n          Crea archivo continuo de 2 GB con ceros continuos en disco:\n        </div>\n      </div>\n      <code style=\"background:#DBEAFE; color:#1E40AF; font-size:9.5px; font-weight:700; padding:6px 6px; border-radius:4px; margin-top:6px; display:block; word-break:break-all; font-family:monospace;\">\n        dd if=/dev/zero of=/swapfile bs=1M count=2048\n      </code>\n    </div>\n\n    <!-- Step 2 -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:12px 10px; display:flex; flex-direction:column; justify-content:space-between; min-height:165px;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n          <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:12px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex:none;\">2</span>\n          <strong style=\"color:#991B1B; font-size:12px;\">Permisos 0600</strong>\n        </div>\n        <div style=\"color:#7F1D1D; font-size:11px; line-height:1.35;\">\n          ⚠️ <strong>¡CRÍTICO!</strong> Solo root. Con otros permisos swapon se niega:\n        </div>\n      </div>\n      <code style=\"background:#FEE2E2; color:#991B1B; font-size:9.5px; font-weight:700; padding:6px 6px; border-radius:4px; margin-top:6px; display:block; font-family:monospace;\">\n        chmod 600 /swapfile\n      </code>\n    </div>\n\n    <!-- Step 3 -->\n    <div style=\"background:#FEF3C7; border:1.5px solid #F59E0B; border-radius:8px; padding:12px 10px; display:flex; flex-direction:column; justify-content:space-between; min-height:165px;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n          <span style=\"background:#D97706; color:#FFF; font-weight:800; font-size:12px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex:none;\">3</span>\n          <strong style=\"color:#92400E; font-size:12px;\">Formatear Swap</strong>\n        </div>\n        <div style=\"color:#78350F; font-size:11px; line-height:1.35;\">\n          Escribe cabecera mágica SWAPSPACE2 y genera UUID único:\n        </div>\n      </div>\n      <code style=\"background:#FDE68A; color:#92400E; font-size:9.5px; font-weight:700; padding:6px 6px; border-radius:4px; margin-top:6px; display:block; font-family:monospace;\">\n        mkswap /swapfile\n      </code>\n    </div>\n\n    <!-- Step 4 -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:12px 10px; display:flex; flex-direction:column; justify-content:space-between; min-height:165px;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n          <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex:none;\">4</span>\n          <strong style=\"color:#15803D; font-size:12px;\">Activar Kernel</strong>\n        </div>\n        <div style=\"color:#14532D; font-size:11px; line-height:1.35;\">\n          Incorpora los 2 GB a la memoria virtual al instante:\n        </div>\n      </div>\n      <code style=\"background:#DCFCE7; color:#15803D; font-size:9.5px; font-weight:700; padding:6px 6px; border-radius:4px; margin-top:6px; display:block; font-family:monospace;\">\n        swapon /swapfile\n      </code>\n    </div>\n\n    <!-- Step 5 -->\n    <div style=\"background:#F5F3FF; border:1.5px solid #8B5CF6; border-radius:8px; padding:12px 10px; display:flex; flex-direction:column; justify-content:space-between; min-height:165px;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n          <span style=\"background:#7C3AED; color:#FFF; font-weight:800; font-size:12px; width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; flex:none;\">5</span>\n          <strong style=\"color:#5B21B6; font-size:12px;\">Persistencia</strong>\n        </div>\n        <div style=\"color:#4C1D95; font-size:11px; line-height:1.35;\">\n          Añade al archivo /etc/fstab para activarse en cada reinicio:\n        </div>\n      </div>\n      <code style=\"background:#EDE9FE; color:#5B21B6; font-size:9.5px; font-weight:700; padding:6px 6px; border-radius:4px; margin-top:6px; display:block; word-break:break-all; font-family:monospace;\">\n        /swapfile none swap sw 0 0\n      </code>\n    </div>\n  </div>\n\n  <!-- Bottom Callout -->\n  <div style=\"margin-top:14px; padding:10px 16px; background:#F5F3FF; border-left:4px solid #8B5CF6; border-radius:8px; font-size:12px; color:#5B21B6; display:flex; align-items:center; gap:8px;\">\n    <span>💡 <strong>REGLA DE ORO DE EXAMEN:</strong> ¿Qué permisos obligatorios debe tener un swapfile? ➔ <code>chmod 600 /swapfile</code> (solo lectura y escritura para root; con permisos abiertos swapon se niega rotundamente a activarlo).</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pregunta Estrella de Examen: ¿Qué permisos obligatorios debe tener un swapfile? -> Permisos 0600 (chmod 600 /swapfile). Sin ellos, swapon falla por seguridad."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-1-10",
+      "title": "Sistemas de Archivos en Linux: Comparativa y Cuándo Usar Cada Uno",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Sistemas de Archivos en Linux: Comparativa y Cuándo Usar Cada Uno"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué es un sistema de archivos y cuáles son las diferencias clave entre los 6 evaluados en LPIC-1?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <!-- Concept Banner -->\n  <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-left:5px solid #2563EB; border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:12px; color:#1E40AF; line-height:1.4;\">\n    📁 <strong>¿QUÉ ES UN SISTEMA DE ARCHIVOS?</strong> Es el método y la estructura que usa el sistema operativo para organizar, indexar y localizar los datos en el disco (como las estanterías de una biblioteca). En Linux cada partición se formatea con su comando especializado <code>mkfs.&lt;tipo&gt;</code>:\n  </div>\n\n  <!-- 6 Visual Cards Grid -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:11.5px;\">\n    <!-- ext4 -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:12.5px;\">ext4 (El Estándar Linux)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">mkfs.ext4</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.35;\">\n        • <strong>Qué es:</strong> El sistema de archivos por defecto en Debian, Ubuntu y derivados.<br>\n        • <strong>Diferencia clave:</strong> Diario con sumas de control y 'extents' (bloques continuos veloces).<br>\n        • <strong>Uso:</strong> Servidores y portátiles para propósito general (soporta archivos hasta 16 TB).\n      </div>\n    </div>\n\n    <!-- XFS -->\n    <div style=\"background:#FFF7ED; border:1.5px solid #F97316; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#C2410C; font-size:12.5px;\">XFS (RHEL / Enterprise)</strong>\n        <span style=\"background:#EA580C; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">mkfs.xfs</span>\n      </div>\n      <div style=\"color:#9A3412; line-height:1.35;\">\n        • <strong>Qué es:</strong> El sistema de archivos por defecto en Red Hat, CentOS y Rocky Linux.<br>\n        • <strong>Diferencia clave:</strong> Asignación paralela masiva multihilo (*Allocation Groups*).<br>\n        • ⚠️ <strong>TRAMPA FIJA:</strong> Se amplía con <code>xfs_growfs</code>, pero <strong>¡JAMÁS SE PUEDE REDUCIR!</strong>\n      </div>\n    </div>\n\n    <!-- Btrfs -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #A855F7; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#7E22CE; font-size:12.5px;\">Btrfs (openSUSE / CoW)</strong>\n        <span style=\"background:#9333EA; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">mkfs.btrfs</span>\n      </div>\n      <div style=\"color:#6B21A8; line-height:1.35;\">\n        • <strong>Qué es:</strong> Sistema moderno de nueva generación con <em>Copy-on-Write</em>.<br>\n        • <strong>Diferencia clave:</strong> Hace instantáneas (*snapshots*) en 1 milisegundo sin duplicar datos.<br>\n        • 🎯 <strong>Ventaja:</strong> Permite tanto <strong>ampliar como reducir su tamaño en caliente</strong>.\n      </div>\n    </div>\n\n    <!-- ext2 -->\n    <div style=\"background:#F1F5F9; border:1.5px solid #94A3B8; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#334155; font-size:12.5px;\">ext2 (Heredado / Simple)</strong>\n        <span style=\"background:#64748B; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">mkfs.ext2</span>\n      </div>\n      <div style=\"color:#475569; line-height:1.35;\">\n        • <strong>Qué es:</strong> El formato clásico de Linux sin diario (*No journaling*).<br>\n        • <strong>Diferencia clave:</strong> Cero sobrecarga de escritura, pero si hay un apagón brusco queda vulnerable.<br>\n        • <strong>Uso:</strong> Memorias USB antiguas, tarjetas SD o particiones <code>/boot</code> muy pequeñas.\n      </div>\n    </div>\n\n    <!-- ext3 -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">ext3 (Con Diario / Transición)</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">mkfs.ext3</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">\n        • <strong>Qué es:</strong> Es un <code>ext2</code> al que se le añadió el <em>Journal</em> (diario transaccional).<br>\n        • <strong>Diferencia clave:</strong> Permite migrar desde ext2 sin formatear ejecutando <code>tune2fs -j</code>.<br>\n        • <strong>Uso:</strong> Servidores antiguos de transición (hoy reemplazado por ext4).\n      </div>\n    </div>\n\n    <!-- VFAT -->\n    <div style=\"background:#FEF3C7; border:1.5px solid #F59E0B; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#92400E; font-size:12.5px;\">VFAT / FAT32 (Universal)</strong>\n        <span style=\"background:#D97706; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">mkfs.vfat</span>\n      </div>\n      <div style=\"color:#78350F; line-height:1.35;\">\n        • <strong>Qué es:</strong> El estándar universal compatible con Windows, Mac y Linux.<br>\n        • 🎯 <strong>OBLIGATORIO:</strong> Es el sistema requerido por la especificación UEFI para <code>/boot/efi</code>.<br>\n        • ⚠️ <strong>LÍMITE VITAL:</strong> Ningún archivo individual puede superar los <strong>4 GB</strong> de tamaño.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Claves de Certificación: ext4 = estándar general de Linux; XFS = bólido de bases de datos pero ¡JAMÁS se reduce!; Btrfs = instantáneas (snapshots) y sí es reducible; VFAT = obligatorio en UEFI (/boot/efi) con límite de 4 GB."
+        }
+      ]
+    }
+  ]
+}

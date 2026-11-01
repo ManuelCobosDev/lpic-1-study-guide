@@ -1,0 +1,379 @@
+<app-container size="wide">
+  <div class="flashcards-page">
+    <!-- Encabezado Principal -->
+    <header class="page-header">
+      <div class="header-titles">
+        <div class="header-title-row">
+          <h1 class="page-title">Flashcards de Repaso (Leitner)</h1>
+          <span data-testid="total-flashcards-count" class="total-cards-badge">
+            🎯 {{ totalFlashcardsCount() }} tarjetas disponibles
+          </span>
+        </div>
+        <p class="page-subtitle">
+          Sistema de repetición espaciada en 5 cajas para memorizar comandos, opciones de examen y conceptos clave de la certificación LPIC-1.
+        </p>
+      </div>
+
+      <!-- Selector de Mazos Ampliados -->
+      <div class="deck-selector" role="group" aria-label="Seleccionar mazo de flashcards">
+        @for (deck of availableDecks; track deck.id) {
+          <button
+            type="button"
+            class="deck-btn"
+            [class.active]="selectedDeck() === deck.id"
+            [attr.aria-pressed]="selectedDeck() === deck.id"
+            [attr.data-testid]="'deck-' + deck.id"
+            (click)="selectDeck(deck.id)"
+          >
+            <span class="deck-icon" aria-hidden="true">{{ deck.icon }}</span>
+            <span class="deck-label">{{ deck.label }}</span>
+          </button>
+        }
+      </div>
+    </header>
+
+    <!-- Barra de Estado del Mazo Activo -->
+    @if (deckStats(); as stats) {
+      <div class="deck-metrics-bar">
+        <div class="metrics-deck-name">
+          <span class="metrics-label">Mazo actual:</span>
+          <strong>{{ activeDeckLabel() }}</strong>
+        </div>
+        <div class="metrics-counters">
+          <span class="metric-pill pill-due">
+            <strong>{{ stats.dueToday }}</strong> para hoy
+          </span>
+          <span class="metric-pill pill-new">
+            <strong>{{ stats.unseen }}</strong> nuevas
+          </span>
+          <span class="metric-pill pill-total">
+            <strong>{{ stats.total }}</strong> en este mazo
+          </span>
+        </div>
+      </div>
+    }
+
+    <!-- Estado de Carga -->
+    @if (loading()) {
+      <div class="loading-skeleton">
+        <app-skeleton variant="text" height="2rem" class="skeleton-item"></app-skeleton>
+        <app-skeleton variant="rectangular" height="22rem" class="skeleton-item"></app-skeleton>
+      </div>
+    }
+
+    <!-- SECCIÓN 1: Sesión de Estudio Leitner -->
+    @if (!loading() && !isCompleted() && currentCard()) {
+      <main class="study-session" aria-label="Sesión de estudio de flashcards">
+        <!-- Barra de Progreso de la Sesión -->
+        <div class="session-progress-header">
+          <div class="progress-info">
+            <span class="card-counter">Tarjeta {{ currentIndex() + 1 }} de {{ totalCardsInSession() }}</span>
+            <span class="deck-indicator">{{ activeDeckLabel() }}</span>
+          </div>
+          <app-progress-bar [value]="progressPercent()" size="sm"></app-progress-bar>
+        </div>
+
+        <!-- Tarjeta Interactiva con Giro 3D -->
+        <app-flashcard-card
+          [card]="currentCard()!"
+          [currentBox]="currentCardBox()"
+          [isFlipped]="isFlipped()"
+          (flip)="flipCard()"
+          (rate)="rateCurrentCard($event)"
+        />
+      </main>
+    }
+
+    <!-- Estado Vacío (Sin tarjetas para hoy) -->
+    @if (!loading() && !isCompleted() && totalCardsInSession() === 0) {
+      <app-empty-state
+        title="¡Estás al día!"
+        description="No tienes tarjetas pendientes de repaso para hoy en este mazo según el algoritmo Leitner."
+      >
+        <div class="empty-state-actions">
+          <app-button variant="secondary" (btnClick)="restartSession()">
+            Actualizar sesión
+          </app-button>
+          <a href="#explorer" class="explorer-jump-link">
+            Explorar biblioteca completa ↓
+          </a>
+        </div>
+      </app-empty-state>
+    }
+
+    <!-- Resumen de Sesión Completada -->
+    @if (!loading() && isCompleted()) {
+      <section class="session-summary-card" aria-label="Resumen de sesión completada">
+        <div class="summary-header">
+          <div class="trophy-badge" aria-hidden="true">🎉</div>
+          <h2 class="summary-title">¡Sesión completada con éxito!</h2>
+          <p class="summary-subtitle">
+            Has repasado {{ reviewedCards().length }} tarjetas en esta sesión. Tu progreso ha sido registrado en el motor Leitner.
+          </p>
+        </div>
+
+        <!-- Desglose de Calificaciones -->
+        <div class="ratings-breakdown">
+          <h3 class="breakdown-title">Resultados de la sesión</h3>
+          <div class="breakdown-grid">
+            <div class="breakdown-item item-again">
+              <span class="item-count">{{ ratingsCount().again }}</span>
+              <span class="item-label">Otra vez</span>
+            </div>
+            <div class="breakdown-item item-hard">
+              <span class="item-count">{{ ratingsCount().hard }}</span>
+              <span class="item-label">Difícil</span>
+            </div>
+            <div class="breakdown-item item-good">
+              <span class="item-count">{{ ratingsCount().good }}</span>
+              <span class="item-label">Bien</span>
+            </div>
+            <div class="breakdown-item item-easy">
+              <span class="item-count">{{ ratingsCount().easy }}</span>
+              <span class="item-label">Fácil</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estadísticas del Mazo -->
+        @if (deckStats(); as stats) {
+          <div class="deck-stats-panel">
+            <h3 class="breakdown-title">Distribución en Cajas Leitner</h3>
+            <div class="boxes-visual">
+              @for (boxNum of leitnerBoxes; track boxNum) {
+                <div class="box-column">
+                  <div class="box-number">Caja {{ boxNum }}</div>
+                  <div class="box-cards-count font-mono">{{ getBoxCount(boxNum) }}</div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Botones de Acción -->
+        <footer class="summary-actions">
+          <app-button variant="primary" (btnClick)="restartSession()">
+            Repasar de nuevo
+          </app-button>
+          <app-button variant="secondary" routerLink="/temario">
+            Volver al Temario
+          </app-button>
+        </footer>
+      </section>
+    }
+
+    <!-- SECCIÓN 2: Biblioteca y Explorador de Tarjetas Masivas -->
+    <section
+      id="explorer"
+      class="flashcards-explorer"
+      data-testid="flashcards-explorer"
+      aria-label="Explorador de biblioteca de flashcards"
+    >
+      <div class="explorer-header">
+        <div class="explorer-title-row">
+          <h2 class="explorer-title">Biblioteca y Explorador de Tarjetas</h2>
+          <span class="explorer-results-count">
+            Mostrando {{ filteredExplorerCards().length }} de {{ allCards().length }} tarjetas
+          </span>
+        </div>
+        <p class="explorer-subtitle">
+          Consulta y busca rápidamente entre todos los comandos, opciones de examen, sintaxis y definiciones del manual.
+        </p>
+      </div>
+
+      <!-- Controles de Búsqueda y Filtros Rápidos -->
+      <div class="explorer-controls">
+        <div class="search-input-wrapper">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input
+            type="search"
+            role="searchbox"
+            aria-label="Buscar tarjetas o filtrar"
+            data-testid="explorer-search"
+            class="explorer-search-input"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearchQueryChange($event)"
+            placeholder="Buscar tarjetas por comando, término, flag o subtema..."
+          />
+          @if (searchQuery()) {
+            <button
+              type="button"
+              class="clear-search-btn"
+              aria-label="Limpiar búsqueda"
+              (click)="onSearchQueryChange('')"
+            >
+              ✕
+            </button>
+          }
+        </div>
+
+        <div class="explorer-filter-chips">
+          <!-- Filtro por Tipo -->
+          <div class="chip-group" role="group" aria-label="Filtrar por tipo de tarjeta">
+            <button
+              type="button"
+              class="chip-btn"
+              [class.active]="filterKind() === 'all'"
+              (click)="setFilterKind('all')"
+            >
+              Todos los tipos
+            </button>
+            <button
+              type="button"
+              class="chip-btn"
+              [class.active]="filterKind() === 'comando'"
+              (click)="setFilterKind('comando')"
+            >
+              Comandos
+            </button>
+            <button
+              type="button"
+              class="chip-btn"
+              [class.active]="filterKind() === 'opcion'"
+              (click)="setFilterKind('opcion')"
+            >
+              Opciones / Flags
+            </button>
+            <button
+              type="button"
+              class="chip-btn"
+              [class.active]="filterKind() === 'termino'"
+              (click)="setFilterKind('termino')"
+            >
+              Glosario
+            </button>
+            <button
+              type="button"
+              class="chip-btn"
+              [class.active]="filterKind() === 'archivo'"
+              (click)="setFilterKind('archivo')"
+            >
+              Archivos clave
+            </button>
+          </div>
+
+          <!-- Filtro por Caja Leitner -->
+          <div class="chip-group" role="group" aria-label="Filtrar por estado Leitner">
+            <button
+              type="button"
+              class="chip-btn"
+              [class.active]="filterBox() === 'all'"
+              (click)="setFilterBox('all')"
+            >
+              Todas las cajas
+            </button>
+            <button
+              type="button"
+              class="chip-btn"
+              [class.active]="filterBox() === 'unseen'"
+              (click)="setFilterBox('unseen')"
+            >
+              Sin estudiar
+            </button>
+            @for (box of leitnerBoxes; track box) {
+              <button
+                type="button"
+                class="chip-btn"
+                [class.active]="filterBox() === box.toString()"
+                (click)="setFilterBox(box.toString())"
+              >
+                Caja {{ box }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Cuadrícula de Tarjetas Paginadas -->
+      @if (paginatedExplorerCards().length > 0) {
+        <div class="explorer-grid">
+          @for (card of paginatedExplorerCards(); track card.id) {
+            <article class="explorer-card" [class.revealed]="isCardRevealed(card.id)">
+              <header class="card-meta">
+                <div class="card-tags">
+                  <span class="card-type-tag tag-{{ card.kind || card.type }}">
+                    {{ card.kind || card.type }}
+                  </span>
+                  @if (card.subtopicIds[0]) {
+                    <span class="card-subtopic-tag">
+                      Subtema {{ card.subtopicIds[0] }}
+                    </span>
+                  }
+                </div>
+                <div class="card-leitner-status">
+                  @if (getCardBox(card.id); as box) {
+                    <span class="box-badge box-{{ box }}">Caja {{ box }}</span>
+                  } @else {
+                    <span class="box-badge box-new">Nueva</span>
+                  }
+                </div>
+              </header>
+
+              <div class="card-front-content">
+                <h3 class="card-front-title">{{ card.frontTitle }}</h3>
+                @if (card.frontSubtitle) {
+                  <p class="card-front-subtitle">{{ card.frontSubtitle }}</p>
+                }
+                <p class="card-prompt">{{ card.prompt }}</p>
+              </div>
+
+              <!-- Reverso Desplegable -->
+              @if (isCardRevealed(card.id)) {
+                <div class="card-back-content">
+                  <h4 class="card-back-title">{{ card.backTitle }}</h4>
+                  <p class="card-back-description">{{ card.backDescription }}</p>
+                  @if (card.backSyntax) {
+                    <code class="card-syntax font-mono">{{ card.backSyntax }}</code>
+                  }
+                </div>
+              }
+
+              <footer class="card-footer">
+                <button
+                  type="button"
+                  class="toggle-reveal-btn"
+                  [attr.aria-expanded]="isCardRevealed(card.id)"
+                  (click)="toggleCardReveal(card.id)"
+                >
+                  {{ isCardRevealed(card.id) ? 'Ocultar reverso ↑' : 'Ver reverso ↓' }}
+                </button>
+              </footer>
+            </article>
+          }
+        </div>
+
+        <!-- Paginación del Explorador -->
+        <nav class="explorer-pagination" aria-label="Paginación de biblioteca">
+          <button
+            type="button"
+            class="pagination-btn"
+            [disabled]="explorerPage() <= 1"
+            (click)="prevExplorerPage()"
+          >
+            ← Anterior
+          </button>
+          <span class="pagination-info">
+            Página {{ explorerPage() }} de {{ totalExplorerPages() }}
+          </span>
+          <button
+            type="button"
+            class="pagination-btn"
+            [disabled]="explorerPage() >= totalExplorerPages()"
+            (click)="nextExplorerPage()"
+          >
+            Siguiente →
+          </button>
+        </nav>
+      } @else {
+        <div class="explorer-empty">
+          <p class="explorer-empty-text">
+            No se encontraron tarjetas que coincidan con la búsqueda o los filtros seleccionados.
+          </p>
+          <button type="button" class="reset-filters-btn" (click)="onSearchQueryChange(''); setFilterKind('all'); setFilterBox('all')">
+            Restablecer filtros
+          </button>
+        </div>
+      }
+    </section>
+  </div>
+</app-container>

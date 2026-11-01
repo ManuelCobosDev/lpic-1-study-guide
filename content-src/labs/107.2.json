@@ -1,0 +1,36 @@
+{
+  "id": "lab-107-2",
+  "subtopicId": "107.2",
+  "title": "Práctica 107.2 — Automatización de Tareas con cron, anacron, at y systemd-run",
+  "estimatedMinutes": 30,
+  "difficulty": "basic",
+  "type": "subtopic",
+  "placeholder": false,
+  "steps": [
+    {
+      "id": "step-107-2-1",
+      "stepNumber": 1,
+      "title": "Misión 1 — Creación y Control de Tareas con crontab de Usuario",
+      "instruction": "Crearemos un script de mantenimiento en el directorio personal del usuario y programaremos su ejecución periódica en su crontab individual de 6 campos sin tocar `/etc/crontab`.",
+      "command": "# 1. Crear un script de prueba que registre fecha y memoria libre\r\nmkdir -p ~/scripts\r\ncat << 'EOF' > ~/scripts/registro_mem.sh\r\n#!/bin/bash\r\necho \"$(date '+%Y-%m-%d %H:%M:%S') - Memoria libre: $(free -m | awk '/Mem:/ {print $4}') MB\" >> ~/registro_memoria.log\r\nEOF\r\nchmod +x ~/scripts/registro_mem.sh\r\n\r\n# 2. Programar en el crontab personal del usuario cada 5 minutos (*/5 * * * *)\r\n(crontab -l 2>/dev/null; echo \"*/5 * * * * $HOME/scripts/registro_mem.sh\") | crontab -\r\n\r\n# 3. Listar el crontab activo para verificar los 6 campos\r\ncrontab -l\r\n\r\n# 4. Inspeccionar la ubicación real del archivo en el sistema\r\nsudo ls -la /var/spool/cron/crontabs/",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-107-2-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Tareas Periódicas del Sistema en /etc/cron.* y run-parts",
+      "instruction": "Instalaremos un script de mantenimiento del sistema en `/etc/cron.daily/`, verificando la regla de oro de Debian (no debe llevar extensión) y probaremos su ejecución mediante `run-parts`.",
+      "command": "# 1. Crear un script en /etc/cron.daily/ SIN extensión .sh\r\nsudo tee /etc/cron.daily/limpieza-tmp << 'EOF'\r\n#!/bin/sh\r\n# Script de mantenimiento diario\r\necho \"[$(date)] Limpieza diaria ejecutada correctamente\" >> /var/log/limpieza_diaria.log\r\nEOF\r\n\r\n# 2. Asignar permisos de ejecución obligatorios\r\nsudo chmod +x /etc/cron.daily/limpieza-tmp\r\n\r\n# 3. Probar la ejecución manual mediante run-parts\r\nsudo run-parts --test /etc/cron.daily | grep limpieza-tmp\r\nsudo run-parts --report /etc/cron.daily\r\n\r\n# 4. Verificar que se generó el registro en /var/log/\r\nsudo cat /var/log/limpieza_diaria.log",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-107-2-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Programación Diferida con at, atq, atrm y systemd-run",
+      "instruction": "Programaremos tareas únicas para ejecutarse en el futuro mediante `at`, inspeccionaremos y cancelaremos tareas con `atq` y `atrm`, y probaremos la alternativa moderna `systemd-run`.",
+      "command": "# 1. Programar una tarea puntual para dentro de 10 minutos con at\r\necho \"echo 'Alerta: Tarea at ejecutada' > /tmp/alerta_at.txt\" | at now + 10 minutes\r\n\r\n# 2. Programar una segunda tarea para las 16:00 (teatime)\r\necho \"logger 'Mensaje registrado a la hora del té'\" | at teatime\r\n\r\n# 3. Listar los trabajos en cola con atq (o at -l)\r\natq\r\n\r\n# 4. Cancelar el último trabajo mediante atrm (o at -d)\r\nID_CANCELAR=$(atq | sort -n | tail -n 1 | awk '{print $1}')\r\natrm $ID_CANCELAR\r\natq\r\n\r\n# 5. Probar un temporizador transitorio con systemd-run relativo a 1 minuto\r\nsudo systemd-run --on-active=\"1m\" --unit=\"mi-alerta-lpic\" logger \"Alerta lanzada por systemd timer transitorio\"\r\nsystemctl list-timers | grep mi-alerta-lpic || true",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
+      "examAlert": "Ver pista desplegable si te atascas</summary>"
+    }
+  ]
+}

@@ -1,0 +1,582 @@
+{
+  "id": "105.1",
+  "subtopicId": "105.1",
+  "title": "Personalizar y usar el entorno de shell",
+  "topicId": "105",
+  "examId": "102",
+  "version": "5.0",
+  "language": "es",
+  "estimatedMinutes": 45,
+  "description": "Dominar la personalización del shell Bash: clasificación de sesiones login/no-login, archivos de inicio del sistema y personales, variables locales y de entorno (export, env, unset), manipulación de PATH, plantillas /etc/skel, definición de alias y funciones avanzadas.",
+  "objectives": [
+    "Establecer variables de entorno (e.g. PATH) al inicio de sesión o al generar un nuevo shell",
+    "Escribir funciones de shell para secuencias comunes de comandos",
+    "Mantener los esqueletos de shell para los nuevos usuarios",
+    "Establecer la ruta de búsqueda de comandos con el directorio apropiado"
+  ],
+  "keyTerms": [
+    "Shell de login",
+    "Variable de entorno",
+    "/etc/skel",
+    "source (o punto '.')",
+    "/etc/profile",
+    "/etc/bash.bashrc",
+    "~/.bash_profile",
+    "~/.bashrc",
+    "~/.bash_logout",
+    "function"
+  ],
+  "commands": [
+    "source",
+    "alias",
+    "unalias",
+    "env",
+    "export",
+    "set",
+    "unset",
+    "shopt"
+  ],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "105.1-slide-1",
+      "slideNumber": 1,
+      "title": "105.1 Personalizar y usar el entorno de shell",
+      "layout": "cover",
+      "src": "105.1#u001-u004",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "105.1 Personalizar y usar el entorno de shell"
+        },
+        {
+          "type": "paragraph",
+          "text": "Tema 105: Shells y scripts · Examen LPIC-1 (102-500) · Peso oficial: 4"
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Objetivo de Certificación LPI",
+          "content": "Aprende a configurar variables de entorno y del shell al iniciar sesión o generar nuevos procesos, escribir funciones y alias para secuencias comunes, gestionar plantillas con /etc/skel y configurar adecuadamente la ruta de búsqueda de ejecutables en PATH."
+        }
+      ],
+      "notes": "El objetivo 105.1 cuenta con peso 4 en el examen 102. Cubre archivos de inicio de Bash, variables locales vs exportadas, plantillas de usuario y definición de alias y funciones.\n\n--- Detalle ampliado del manual oficial ---\nTema 105: Shells y scripts\n105.1 Personalizar y usar el entorno de shell\nLPIC-1 version 5.0, Exam 102, Objective 105.1\n4"
+    },
+    {
+      "id": "105.1-slide-2",
+      "slideNumber": 2,
+      "title": "Áreas de Conocimiento Clave",
+      "layout": "content",
+      "src": "105.1#u005-u008",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Requisitos Oficiales Evaluados por LPI"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Establecer variables de entorno (e.g. PATH) al inicio de sesión o al generar un nuevo shell.",
+            "Escribir funciones en Bash para secuencias de comandos usadas con frecuencia.",
+            "Mantener el esqueleto de directorios (/etc/skel) para nuevas cuentas de usuario.",
+            "Establecer el directorio adecuado en la ruta de búsqueda de comandos."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Estrategia para el Examen",
+          "content": "LPI evalúa con gran precisión el orden exacto de lectura de los dotfiles (.bash_profile vs .profile vs .bashrc), la diferencia entre ejecutar con '.' o source vs subshell, y el paso de parámetros a funciones."
+        }
+      ],
+      "notes": "Las 4 áreas de conocimiento clave son la guía de las preguntas del examen oficial 102.\n\n--- Detalle ampliado del manual oficial ---\n• Establecer variables de entorno (e.g. PATH) al inicio de sesión o al generar un nuevo shell.\n• Escribir funciones en Bash para secuencias de comandos usadas con frecuencia.\n• Mantener el esqueleto de directorios para nuevas cuentas de usuario.\n• Establecer el directorio adecuado en la ruta de búsqueda de comandos."
+    },
+    {
+      "id": "105.1-slide-3",
+      "slideNumber": 3,
+      "title": "Archivos, Términos y Utilidades Clave",
+      "layout": "content",
+      "src": "105.1#u009-u023",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Lista Parcial del Manual Oficial LPIC-1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Comandos y atajos: . (punto), source, env, export, set, unset, alias, function.",
+            "Archivos globales del sistema: /etc/profile, /etc/bash.bashrc, /etc/skel/.",
+            "Archivos personales de inicio: ~/.bash_profile, ~/.bash_login, ~/.profile, ~/.bashrc.",
+            "Archivo de cierre de sesión: ~/.bash_logout."
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Todos estos términos, rutas y comandos son evaluados tanto en preguntas de opción múltiple como en preguntas de rellenar texto (fill-in-the-blank)."
+        }
+      ],
+      "notes": "Familiarízate con la sintaxis exacta de cada dotfile y su distinción entre ámbito global (/etc) y local (~/).\n\n--- Detalle ampliado del manual oficial ---\n• .\n• source\n• /etc/bash.bashrc\n• /etc/profile\n• env\n• export\n• set\n• unset\n• ~/.bash_profile\n• ~/.bash_login\n• ~/.profile\n• ~/.bashrc\n• ~/.bash_logout\n• function\n• alias"
+    },
+    {
+      "id": "105.1-slide-4",
+      "slideNumber": 4,
+      "title": "Tipos de Shell: Interactivo y Login",
+      "layout": "content",
+      "src": "105.1#u030-u047",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Clasificación de Shells en Linux"
+        },
+        {
+          "type": "paragraph",
+          "text": "Bash clasifica sus sesiones según dos criterios independientes:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Interactivo vs No Interactivo: Un shell interactivo está conectado a un teclado (stdin) y muestra un prompt (PS1). Los scripts desatendidos son no interactivos.",
+            "Inicio de Sesión (Login) vs Sin Inicio (Non-Login): Una login shell se inicia tras autenticación con usuario y contraseña (TTY virtual Ctrl+Alt+F1..F6 o SSH).",
+            "Non-Login shell: Shells abiertos dentro de una interfaz gráfica (GNOME Terminal, Konsole, sakura) o subshells secundarios."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Impacto en los archivos de inicio",
+          "content": "El tipo de shell determina qué archivos de configuración se ejecutan al arrancar y en qué orden secuencial."
+        }
+      ],
+      "notes": "Distingue siempre entre login interactiva (SSH, TTY) y no-login interactiva (terminal GUI).\n\n--- Detalle ampliado del manual oficial ---\nIntroducción\nEl shell es posiblemente la herramienta más poderosa en un sistema operativo Linux y puede\ndefinirse como una interfaz entre el usuario y el kernel. Tiene la función de Interpretar los\ncomandos introducidos por el usuario, por lo tanto, los administradores de sistemas deben ser\nhábiles en su uso. Como probablemente sabemos, el Bourne Again Shell (Bash) es el shell de facto\nde la gran mayoría de las distribuciones de Linux.\nEl momento que el sistema operativo inicia, lo primero que el Bash (o cualquier otro shell) realiza,\nes ejecutar una serie de scripts de inicio. Estos scripts personalizan el entorno de sesión. Existen\nvarios scripts para todo el sistema operativo, asi también para usuarios específicos. En estos\nscripts podemos elegir las preferencias o configuraciones que mejor se adapten a las necesidades\nde nuestros usuarios en forma de variables, alias y funciones.\nLa serie exacta de archivos de inicio depende de un parámetro muy importante: El tipo de shell.\nEchemos un vistazo a la variedad de shell que existen.\nTipos de shell: Interactivo vs. No Interactivo y Inicio de sesión vs\nSin inicio de sesión\nComencemos aclarando los conceptos de interactivo e inicio de sesión en el contexto de shells:\nShells interactivos / no interactivos\nEste tipo de shell se refiere a la intercomunicación entre el usuario y el shell: Mediante el\nteclado el usuario proporciona la entrada digitando comandos en la terminal y su vez el shell\nproporciona la salida imprimiendo mensajes en la pantalla.\nShells de inicio de sesión / Sin inicio de sesión\nEste tipo de shell se refiere al evento de un usuario cuando accede a un sistema informático por\nmedio sus credenciales, como el nombre de usuario y la contraseña.\nTanto los shells interactivos como los no interactivos pueden ser de inicio de sesión o sin inicio de\nsesión y cualquier combinación posible de estos tipos tiene sus usos específicos.\nshells Interactivo de inicio de sesión se ejecutan cuando los usuarios se conectan al sistema y se\nutilizan para personalizar las configuraciones de los usuarios según sus necesidades. Un buen\nejemplo de este tipo de shell, sería el de un grupo de usuarios que pertenecen al mismo\ndepartamento y necesitan un conjunto de variables determinadas en sus sesiones.\nPara shells Interactivos sin inicio de sesión nos referimos a cualquier otro shell abierto por el\nusuario después de entrar en el sistema. Los usuarios utilizan estos shells durante las sesiones\npara llevar a cabo tareas administrativas y de mantenimiento como la configuración de variables,\nel tiempo, la copia de archivos, crear scripts, etc.\nPor otro lado, los shells no interactivos no requieren ningún tipo de interacción humana. Por lo\ntanto, estos shells no solicitan al usuario una entrada y su salida — si la hubiera — será escrita en\nun registro (en la mayoría de los casos).\nLos shells de inicio de sesión no interactivos son bastante raros y poco prácticos. Sus usos son\nvirtualmente inexistentes y sólo los comentaremos para comprender su comportamiento. Algunos\nejemplos extraños incluyen forzar un script a ser ejecutado desde un shell de inicio de sesión con\n/bin/bash --login <some_script> o canalizar la salida estándar (stdout) de un comando a la\nentrada estándar (stdin) de una conexión ssh:\n<some_command> | ssh <some_user>@<some_server>\nEn cuanto el shell interactivo sin inicio de sesión no hay interacción ni login en nombre del\nusuario, por lo que aquí nos referimos al uso de scripts automatizados. Estos scripts se utilizan\nprincipalmente para llevar a cabo tareas administrativas y de mantenimiento repetitivas como las\nincluidas en los cronjobs. En algunos casos, bash no lee ningún archivo de inicio."
+    },
+    {
+      "id": "105.1-slide-5",
+      "slideNumber": 5,
+      "title": "Lanzar Shells: bash, su y sudo",
+      "layout": "content",
+      "src": "105.1#u048-u086",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comportamiento según el comando de inicio"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# Iniciar una login shell explícita con bash:\nbash --login   # o 'bash -l'\n\n# Cambiar a usuario con shell de LOGIN (entorno limpio de user2):\nsu - user2     # o 'su -l user2' o 'su --login user2'\nsudo -i -u user2\n\n# Cambiar a usuario SIN login shell (conserva variables del usuario original):\nsu user2       # o 'su root' o 'su'\nsudo -s        # abre shell de root conservando entorno"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "🎯 Pregunta Típica de Examen",
+          "content": "El guion en 'su -' es vital: simula un inicio de sesión completo, cambiando $HOME, $PATH, $USER y leyendo /etc/profile y ~/.profile de la cuenta destino."
+        }
+      ],
+      "notes": "Recuerda que su sin guion mantiene variables previas, mientras que su - inicializa el entorno de la cuenta destino.\n\n--- Detalle ampliado del manual oficial ---\nIniciando una terminal\nCuando estamos en un entorno de escritorio, podemos abrir una terminal o cambiar a una de las\nconsolas del sistema. Por lo tanto, un nuevo shell es un pts cuando se abre desde un emulador de\nterminal en el GUI o una tty cuando se ejecuta desde una consola de sistema. En el primer caso\nno se trata de una terminal sino de un emulador de terminales. Como parte de las sesiones\ngráficas, los emuladores de terminales como gnome-terminal o konsole son muy amplios en\ncaracterísticas y fáciles de usar en comparación con las terminales de interfaz de usuario basadas\nen texto. Los emuladores de terminal menos extenso en características incluyen — entre\notros — XTerm y sakura.\nUsando las teclas Ctrl + Alt + F1 - F6 podemos ir a los inicios de sesión de la consola que abren un shell\nde inicio de sesión interactivo basado en texto y la combinación de Ctrl + Alt + F7 llevará la sesión de\nvuelta al escritorio.\nNOTE\ntty significa \"teletypewritter\"; pts significa \"pseudo terminal slave\". Para más\ninformación: man tty y man pts.\nEjecutando shells con bash\nDespués de iniciar sesión, escribe bash en una terminal para abrir un nuevo shell. Técnicamente,\neste shell es un proceso hijo del shell actual.\nAl iniciar el proceso hijo de bash, podemos especificar varias opciones para definir qué tipo de\nshell queremos iniciar. Aquí hay algunas importantes a la hora invocarlo:\nbash -l o bash --login\nInvocará un shell de inicio de sesión.\nbash -i\nInvocará un shell interactivo.\nbash --noprofile\nCon shell de inicio de sesión ignorará tanto el archivo de inicio de todo el sistema\n/etc/profile como los archivos de inicio a nivel de usuario ~/.bash_profile,\n~/.bash_login y ~/.profile.\nbash --norc\nCon shell interactivo ignorará tanto el archivo de inicio del sistema /etc/bash.bashrc como\nel archivo de inicio a nivel de usuario ~/.bashrc.\nbash --rcfile <file>\nCon shell interactivo tomará <file> como el archivo de inicio ignorando a nivel de sistema\netc/bash.bashrc y a nivel de usuario ~/.bashrc.\nDiscutiremos los diferentes archivos de inicio a continuación.\nEjecutando shells con su y sudo\nA través del uso de estos dos programas (similares) podemos obtener tipos específicos de shells:\nsu\nCambia el ID de usuario o lo convierte en superusuario (root). Con este comando podemos\ninvocar ambos shells, el de inicio de sesión y sin inicio de sesión:\n• su - user2, su -l user2 o su --login user2 iniciará un shell de inicio de sesión\ninteractivo como user2.\n• su user2 iniciará un shell interactivo y sin inicio de sesión como user2.\n• su - root o su - iniciará un shell de inicio de sesión interactivo como root.\n• su root o su iniciará un shell interactivo y sin inicio de sesión como root.\nsudo\nEjecuta comandos como otro usuario (incluyendo el superusuario). Debido a que este comando\nse usa principalmente para obtener privilegios temporales de root, el usuario que lo use debe\nestar en el archivo sudoers. Para añadir usuarios a sudoers necesitamos convertirnos en\nroot y luego ejecutar:\nroot@debian:~# usermod -aG sudo user2\nAsí como su, sudo nos permite invocar tanto los shells de inicio de sesión como los de no de\ninicio de sesión:\n• sudo su - user2, sudo su -l user2 o sudo su --login user2 iniciará un shell de\ninicio de sesión interactivo como user2.\n• sudo su user2 iniciará un shell interactivo sin inicio de sesión como user2.\n• sudo -u user2 -s iniciará un shell interactivo sin inicio de sesión como user2.\n• sudo su - root or sudo su - iniciará un shell de inicio de sesión interactivo como root.\n• sudo -i iniciará un shell de inicio de sesión interactivo como root.\n• sudo -i <some_command> iniciará un shell de inicio de sesión interactivo como root,\nejecuta el comando y volverá al usuario original.\n• sudo su root or sudo su iniciará un shell interactivo sin inicio de sesión como root.\n• sudo -s or sudo -u root -s iniciará un shell sin inicio de sesión como`root`.\nCuando se usa su o sudo, es importante considerar el inicio de un nuevo shell y preguntarnos:\n¿Necesitamos el entorno del usuario o no? Si es así, usaríamos las opciones que invocan las shells\nde inicio de sesión; si no, las que invocan sin inicio de sesión."
+    },
+    {
+      "id": "105.1-slide-6",
+      "slideNumber": 6,
+      "title": "Identificación de Shells: $0, shopt y $SHLVL",
+      "layout": "content",
+      "src": "105.1#u087-u102",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "¿Qué tipo de shell tenemos y cuántos niveles?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# 1. El primer carácter de $0 revela si es login shell:\necho $0\n# Salida '-bash' -> Login shell (TTY virtual o SSH)\n# Salida 'bash'  -> Shell interactivo sin login (GUI Terminal)\n# Salida './test.sh' -> Script no interactivo\n\n# 2. Comprobar programáticamente con shopt:\nshopt login_shell   # devuelve 'on' si es login shell\n\n# 3. Nivel de anidamiento de shells con $SHLVL:\necho $SHLVL         # se incrementa en cada nuevo subshell"
+        },
+        {
+          "type": "paragraph",
+          "text": "El guion inicial en el nombre del proceso (ej. `-bash`) es la convención clásica de UNIX para marcar un shell de inicio de sesión."
+        }
+      ],
+      "notes": "El valor '-bash' en echo $0 es el método clásico para identificar que nos encontramos en una login shell.\n\n--- Detalle ampliado del manual oficial ---\n¿Qué tipo de shell tenemos?\nPara saber en qué tipo de shell estamos trabajando, podemos escribir echo $0 en la terminal y\nobtener la siguiente salida:\nInicio de sesión interactivo\n-bash or -su\nSin inicio de sesión interactivo\nbash or /bin/bash\nSin inicio de sesión no interactivo (scripts)\n<name_of_script>\n¿Cuántas shell tenemos?\nPara observar cuántos bash shells tenemos en ejecutando en el sistema, podemos usar el\ncomando ps aux | grep bash:\nuser2@debian:~$ ps aux | grep bash\nuser2 5270 0.1 0.1 25532 5664 pts/0 Ss 23:03 0:00 bash\nuser2 5411 0.3 0.1 25608 5268 tty1 S+ 23:03 0:00 -bash\nuser2 5452 0.0 0.0 16760 940 pts/0 S+ 23:04 0:00 grep --color=auto bash\nEl user2 en debian ha entrado en una sesión de GUI (Sistema de Ventanas X o en ingles: X\nWindow System) y ha abierto gnome-terminal, luego ha pulsado Ctrl + Alt + F1 para entrar en una\nsesión terminal tty. Finalmente, ha vuelto a la sesión del GUI presionando Ctrl + Alt + F7 y ha\nescrito el comando ps aux | grep bash. De esta manera, la salida muestra un shell interactivo\nsin inicio de sesión a través del emulador de terminal (pts/0) y un shell de inicio de sesión\ninteractivo a través de la propia terminal basada en texto (tty1). Note también como el último\ncampo de cada línea (el comando) es bash para el primero y -bash para el segundo."
+    },
+    {
+      "id": "105.1-slide-7",
+      "slideNumber": 7,
+      "title": "Secuencia de Inicio en Login Shells",
+      "layout": "content",
+      "src": "105.1#u103-u155",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Orden de Carga en Sesiones de Inicio de Sesión"
+        },
+        {
+          "type": "list",
+          "items": [
+            "1. /etc/profile: Se ejecuta siempre primero para todos los usuarios. Configura PATH global y ejecuta /etc/profile.d/*.sh.",
+            "2. ~/.bash_profile: Primera opción en el home del usuario. Si existe, se ejecuta y Bash DETIENE la búsqueda.",
+            "3. ~/.bash_login: Se evalúa ÚNICAMENTE si ~/.bash_profile no existe.",
+            "4. ~/.profile: Se evalúa ÚNICAMENTE si ni ~/.bash_profile ni ~/.bash_login existen (estándar compatible POSIX)."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "🎯 Regla de Exclusión de LPI",
+          "content": "Bash NO ejecuta los tres archivos del home; ejecuta solamente el primero que encuentre de la terna (~/.bash_profile > ~/.bash_login > ~/.profile) y se detiene."
+        }
+      ],
+      "notes": "Esta jerarquía de lectura es una de las preguntas fijas en el examen 102.\n\n--- Detalle ampliado del manual oficial ---\n¿De donde shell obtiene la configuración: Archivos de inicio?\nAhora que conocemos los tipos de shell que podemos encontrar en un sistema Linux, ya es hora\nde que veamos qué archivos de inicio son ejecutados por shell. Nóte que los scripts de todo el\nsistema o globales se colocan en el directorio /etc/, mientras que los locales o de nivel de usuario\nse encuentran en el directorio \"home\" del usuario (~). Además, cuando hay más de un archivo que\nbuscar, y una vez que ellos es encontrado y ejecutado, los otros serán ignorados. Explora y estudia\nestos archivos con tu editor de texto favorito o escribiendo less <fichero_de_inicio>.\nNOTE\nLos archivos de inicio se pueden dividir en Bash específicos (los que se limitan sólo\na las configuraciones y comandos bash) y generales (relacionados con la mayoría\nde los shells).\nShell interactivo de inicio de sesión\nNivel Global\n/etc/profile\nEste es el archivo .profile de todo el sistema para el shell Bourne y los shells compatibles con\nBourne (Incluido bash). A través de una serie de declaraciones if este archivo establece un\nnúmero de variables como PATH y PS1, así como origen — si existe — tanto del archivo\n/etc/bash.bashrc como los del directorio /etc/profile.d.\n/etc/profile.d/*\nEste directorio puede contener scripts que son ejecutados por /etc/profile.\nNivel Local\n~/.bash_profile\nEste archivo específico de Bash se utiliza para configurar el entorno del usuario. También\npuede ser usado para crear el ~/.bash_login y ~/.profile.\n~/.bash_login\nEste archivo (específicamente), sólo se ejecutará si no hay un archivo ~/.bash_profile. Su\nnombre sugiere que debería ser usado para ejecutar los comandos necesarios para el inicio de\nsesión.\n~/.profile\nEste archivo no es específico de Bash y se obtiene sólo si no existe ~/.bash_profile ni\n~/.bash_login, que es lo que normalmente ocurre. Por lo tanto, el propósito principal de\n~/.profile es el de revisar si se está ejecutando un shell de Bash, y si fuese afirmativo,\nobtener ~/.bashrc (si existe). Normalmente establece la variable PATH para que incluya el\ndirectorio privado del usuario ~/bin (si existe).\n~/.bash_logout\nSi existe, este archivo específico de Bash hace algunas operaciones de limpieza al salir del shell.\nEsto puede ser conveniente en casos como los de las sesiones remotas.\nExploración de los archivos de configuración de bash de inicio de sesión interactivo\nMostramos \nalgunos \nde \nestos \narchivos \nen \nacción \nmodificando \n/etc/profile \ny\n/home/user2/.profile. Añadiremos a cada uno una línea que nos recuerde el archivo que se\nestá ejecutando:\nroot@debian:~# echo 'echo Hello from /etc/profile' >> /etc/profile\nroot@debian:~# echo 'echo Hello from ~/.profile' >> /home/user2/.profile\nNOTE\nDos operadores de redirección >> añaden la salida de un comando a un archivo\nexistente, sin sobrescribirlo. Sin embargo, si el archivo no existe, será creado.\nPor lo tanto, a través de la salida de sus respectivos comandos echo sabremos cuando uno de estos\narchivos es leído y ejecutado. Para probarlo, veamos qué pasa cuando user2 se conecta vía ssh\ndesde otra máquina:\nuser2@debian:~$ ssh user2@192.168.1.6\nuser2@192.168.1.6's password:\nLinux debian 4.9.0-8-amd64 #1 SMP Debian 4.9.130-2 (2018-10-27) x86_64\nLos programas incluidos en el sistema Debian GNU/Linux son software libre; los términos\nexactos de distribución de cada programa se describen en archivos individuales en\n/usr/share/doc/*/copyright.\nDebian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent\npermitted by applicable law.\nLast login: Tue Nov 27 19:57:19 2018 from 192.168.1.10\nHello from /etc/profile\nHello from /home/user2/.profile\nComo se observan en las dos últimas líneas, funcionó. Además, note tres cosas:\n• El archivo global se ejecutó primero.\n• No había archivos .bash_profile o .bash_login en el directorio \"home\" de user2.\n• La tilde (~) se expandió a la ruta absoluta del archivo (/home/user2/.profile).\nShell Interactivo sin inicio de sesión\nNivel Global\n/etc/bash.bashrc\nEste es el archivo .bashrc de todo el sistema para los shells interactivos bash. A través de su\nejecución, bash se asegura de que se está ejecutando interactivamente, comprueba el tamaño\nde la ventana después de cada comando (actualizando los valores de LÍNEAS y COLUMNAS, si es\nnecesario) y establece algunas variables.\nNivel Local\n~/.bashrc\nAdemás de llevar a cabo tareas similares a las descritas para /etc/bash.bashrc a nivel de\nusuario (como comprobar el tamaño de la ventana o si se está ejecutando de forma\ninteractiva), este archivo específico de Bash suele establecer algunas variables de historial y\norigen ~/.bash_aliases (si existe). Aparte de eso, este archivo se utiliza normalmente para\nalmacenar alias y funciones específicas de los usuarios.\nAsimismo, también vale la pena señalar que ~/.bashrc se lee si bash detecta que su <stdin>\nes una conexión de red (como en ejemplo de la conexión Secure Shell (SSH)).\nExploración de los archivos de configuración de shell no Interactivo y de inicio de sesión\nModifiquemos ahora /etc/bash.bashrc y /home/user2/.bashrc:\nroot@debian:~# echo 'echo Hello from /etc/bash.bashrc' >> /etc/bash.bashrc\nroot@debian:~# echo 'echo Hello from ~/.bashrc' >> /home/user2/.bashrc\nY esto es lo que sucede cuando user2 comienza un nuevo shell:"
+    },
+    {
+      "id": "105.1-slide-8",
+      "slideNumber": 8,
+      "title": "Shells Sin Login y Cierre de Sesión",
+      "layout": "content",
+      "src": "105.1#u156-u201",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Archivos en Sesiones Non-Login y Finalización"
+        },
+        {
+          "type": "list",
+          "items": [
+            "/etc/bash.bashrc: Configuración global leída por shells interactivos sin login en sistemas Debian/Ubuntu.",
+            "~/.bashrc: Archivo personal ejecutado por cada terminal interactiva sin login (ej. abrir una ventana de terminal).",
+            "Cadena de inclusión: ~/.bash_profile suele contener 'source ~/.bashrc' para que las login shells compartan alias y funciones.",
+            "~/.bash_logout: Archivo personal ejecutado automáticamente por Bash al cerrar una sesión de login (exit/logout)."
+          ]
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# Comprobación habitual dentro de ~/.bash_profile:\nif [ -f ~/.bashrc ]; then\n  . ~/.bashrc\nfi"
+        }
+      ],
+      "notes": "Observa cómo ~/.bashrc suele ser invocado desde ~/.bash_profile para unificar alias.\n\n--- Detalle ampliado del manual oficial ---\nuser2@debian:~$ bash\nHello from /etc/bash.bashrc\nHello from /home/user2/.bashrc\nDe nuevo, los dos archivos fueron leídos y ejecutados.\nWARNING\nRecuerde, debido al orden en que se ejecutan los archivos, los archivos locales\ntienen prioridad sobre los globales.\nShell no Interactivo de inicio de sesión\nUn shell no interactivo con las opciones -l o --login es forzado a comportarse como un shell de\ninicio de sesión y así los archivos de inicio a ser ejecutados serán los mismos que los de los shells\nde inicio de sesión interactivos.\nPara probarlo, escribamos un simple script y hagámoslo ejecutable. No incluiremos ningún\nshebangs porque invocaremos el ejecutable bash (/bin/bash con la opción de inicio de sesión)\ndesde la línea de comandos.\n1. Creamos el script test.sh que contiene la línea echo 'Hello from a script' para que\npodamos probar que el script se ejecuta con éxito:\nuser2@debian:~$ echo \"echo 'Hello from a script'\" > test.sh\n2. Hacemos que nuestro script sea ejecutable:\nuser2@debian:~$ chmod +x ./test.sh\n3. Finalmente, invocamos a bash con la opción l para ejecutar el script:\nuser2@debian:~$ bash -l ./test.sh\nHello from /etc/profile\nHello from /home/user2/.profile\nHello from a script\n¡Funciona! Antes de ejecutar el script, el login tuvo lugar y tanto el /etc/profile como el\n~/.profile fueron ejecutados.\nNOTE\nAprenderemos sobre shebangs y todos los demás aspectos del shell scripting en\nfuturas lecciones.\nTengamos ahora la salida estándar (stdout) del comando echo en la entrada estándar (stdin) de\nuna conexión ssh por medio de un pipe (|):\nuser2@debian:~$ echo \"Hello-from-a-noninteractive-login-shell\" | ssh user2@192.168.1.6\nPseudo-terminal will not be allocated because stdin is not a terminal.\nuser2@192.168.1.6's password:\nLinux debian 4.9.0-8-amd64 #1 SMP Debian 4.9.130-2 (2018-10-27) x86_64\nLos programas incluidos en el sistema Debian GNU/Linux son software libre; los términos\nexactos de distribución de cada programa se describen en archivos individuales en\n/usr/share/doc/*/copyright.\nDebian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent\npermitted by applicable law.\nHello from /etc/profile\nHello from /home/user2/.profile\n-bash: line 1: Hello-from-a-noninteractive-login-shell: command not found\nUna vez más, /etc/profile y ~/.profile se ejecutan. Aparte de eso, la primera y la última\nlínea de la salida son bastante reveladoras en lo que respecta al comportamiento de shell. =====\nShell no Interactivo sin inicio de sesión Los scripts no leen ninguno de los archivos listados arriba,\npero buscan la variable de entorno BASH_ENV que expanden su valor si es necesario y la usan\ncomo el nombre de un archivo de inicio para leer y ejecutar comandos. Aprenderemos más sobre\nlas variables de entorno en la próxima lección.\nComo se mencionó anteriormente, típicamente /etc/profile y ~/.profile se aseguran de que\ntanto /etc/bash.bashrc como ~/.bashrc se ejecuten después de un inicio de sesión exitoso. La\nsalida del siguiente comando muestra este fenómeno:\nroot@debian:~# su - user2\nHello from /etc/bash.bashrc\nHello from /etc/profile\nHello from /home/user2/.bashrc\nHello from /home/user2/.profile\nTeniendo en cuenta las líneas que hemos añadido previamente a los scripts de inicio e invocando\nun shell de inicio de sesión interactivo a nivel de usuario con su - user2 las cuatro líneas de\nsalida pueden explicarse de la siguiente manera:\n1. Hello from /etc/bash.bashrc significa /etc/profile se ha obtenido /etc/bash.bashrc.\n2. Hello from /etc/profile significa /etc/profile ha sido completamente leído y ejecutado.\n3. Hello from /home/user2/.bashrc significa ~/.profile se ha obtenido ~/.bashrc.\n4. Hello from /home/user2/.profile significa ~/.profile ha sido completamente leído y\nejecutado.\nNote en como con su - <nombre de usuario> (también su -l <nombre de usuario> y su\n--login <nombre de usuario>) garantizamos la invocación de un shell de acceso, mientras\nque su <nombre de usuario> sólo habría invocado /etc/bash.bashrc y ~/.bashrc."
+    },
+    {
+      "id": "105.1-slide-9",
+      "slideNumber": 9,
+      "title": "Ejecución con source y Plantillas /etc/skel",
+      "layout": "content",
+      "src": "105.1#u202-u286",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Recarga en Caliente y Nuevos Usuarios"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# 1. Recargar ~/.bashrc en el proceso actual sin reiniciar la terminal:\nsource ~/.bashrc\n. ~/.bashrc       # El comando punto '.' es sinónimo POSIX directo\n\n# 2. Plantilla de usuarios en /etc/skel:\nls -la /etc/skel  # Contiene .bashrc, .profile, .bash_logout por defecto\n\n# 3. Crear usuario aplicando la plantilla:\nsudo useradd -m -s /bin/bash nuevo_usuario"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Mantenimiento Corporativo con /etc/skel",
+          "content": "Cualquier archivo añadido a /etc/skel se copiará automáticamente al HOME de nuevos usuarios creados con 'useradd -m', pero no altera a los usuarios ya existentes."
+        }
+      ],
+      "notes": "El comando source / . es fundamental para recargar configuración sin reiniciar el entorno.\n\n--- Detalle ampliado del manual oficial ---\nArchivos fuentes\nEn las secciones anteriores hemos discutido que algunos scripts de inicio incluyen o ejecutan otros\nscripts. Este mecanismo se llama \"sourcing\" y se explica en esta sección.\nEjecutando archivos con .\nEl punto (.) se encuentra normalmente en los archivos de inicio.\nEn el archivo .profile de nuestro servidor de Debian podemos encontrar un ejemplo en el\nsiguiente bloque:\n# include .bashrc if it exists\nif [ -f \"$HOME/.bashrc\" ]; then\n. \"$HOME/.bashrc\"\nfi\nHemos observado cómo la ejecución de un script puede llevar a la de otro. Así la declaración if\ngarantiza que el archivo $HOME/.bashrc — si existe (-f) — se obtendrá (es decir, se leerá y se\nejecutará) en el inicio de sesión:\n. \"$HOME/.bashrc\"\nNOTE\nComo aprenderemos en la próxima lección, $HOME es una variable de entorno que\nse expande a la ruta absoluta del directorio principal del usuario.\nAdemás, podemos usar el . siempre que hayamos modificado un archivo de inicio y queramos\nhacer efectivos los cambios sin necesidad de reiniciar. Por ejemplo:\n• Agregar un alias a ~/.bashrc:\nuser2@debian:~$ echo \"alias hi='echo We salute you.'\" >> ~/.bashrc\nWARNING\nAl enviar la salida de un comando a un archivo, recuerde no confundir el\nañadir (>>) con la sobreescritura (>).\n• Imprime la última línea de ~/.bashrc para comprobar que todo ha ido bien:\nuser2@debian:~$ tail -n 1 !$\ntail -n 1 ~/.bashrc\nalias hi='echo We salute you.'\nNOTE\n!$ se expande hasta el último argumento del comando anterior, en nuestro\ncaso: ~/.bashrc.\n• ejecutar el archivo manuamente:\nuser2@debian:~$ . ~/.bashrc\n• e invocar el alias para probar que funciona:\nuser2@debian:~$ hi\nWe salute you.\nNOTE\nRefiérase a la siguiente lección para aprender acerca de alias y variables.\nEjecutando archivos con source\nEl comando \"source\" es un sinónimo de .. Así que para ejecutar ~/.bashrc también podemos\nhacerlo de esta manera:\nuser2@debian:~$ source ~/.bashrc\nEl origen de los archivos de inicio de Shell: SKEL\nSKEL es una variable cuyo valor es la ruta absoluta al directorio skel. Este directorio sirve como\nplantilla para la estructura del sistema de archivos de los principales directorios de los usuarios.\nIncluye los archivos que serán heredados por cualquier nueva cuenta de usuario que se cree\n(incluyendo, por supuesto, los archivos de configuración de los shells). El SKEL y otras variables\nrelacionadas se almacenan en el /etc/adduser.conf, que es el archivo de configuración para\nadduser:\nuser2@debian:~$ grep SKEL /etc/adduser.conf\n# La variable SKEL especifica el directorio que contiene el usuario \"skeletal\"...\nSKEL=/etc/skel\n# Si SKEL_IGNORE_REGEX está configurado, adduser ignorará los archivos que coincidan con\neste.\nSKEL_IGNORE_REGEX=\"dpkg-(old|new|dist|save)\"\nSKEL está configurado como /etc/skel; por lo tanto, los scripts de inicio que configuran nuestros\nshells están ahí:\nuser2@debian:~$ ls -a /etc/skel/\n. .. .bash_logout .bashrc .profile\nWARNING\nRecuerde, los archivos que empiezan por . están ocultos, por lo que debemos\nusar ls -a para verlos al listar el contenido del directorio.\nVamos a crear un directorio en /etc/skel para que todos los nuevos usuarios almacenen sus\nscripts personales:\n1. Como root nos movemos a /etc/skel:\nroot@debian:~# cd /etc/skel/\nroot@debian:/etc/skel#\n2. Listamos su contenido:\nroot@debian:/etc/skel# ls -a\n. .. .bash_logout .bashrc .profile\n3. Creamos nuestro directorio y comprobamos que todo ha ido como se esperaba:\nroot@debian:/etc/skel# mkdir my_personal_scripts\nroot@debian:/etc/skel# ls -a\n. .. .bash_logout .bashrc my_personal_scripts .profile\n4. Ahora borramos user2 junto con su directorio home:\nroot@debian:~# deluser --remove-home user2\nLooking for files to backup/remove ...\nRemoving files ...\nRemoving user `user2' ...\nWarning: group `user2' has no more members.\nDone.\n5. Añadimos user2 de nuevo para que tenga un nuevo directorio principal:\nroot@debian:~# adduser user2\nAdding user `user2' ...\nAdding new group `user2' (1001) ...\nAdding new user `user2' (1001) with group `user2' ...\nCreating home directory `/home/user2' ...\nCopying files from `/etc/skel' ...\nEnter new UNIX password:\nRetype new UNIX password:\npasswd: password updated successfully\nChanging the user information for user2\nEnter the new value, or press ENTER for the default\nFull Name []:\nRoom Number []:\nWork Phone []:\nHome Phone []:\nOther []:\nIs the information correct? [Y/n] y\n6. Finalmente, entramos como user2 y listamos todos los archivos en /home/user2 para ver si\ntodo salió como se esperaba:\nroot@debian:~# su - user2\nuser2@debian:~$ pwd\n/home/user2\nuser2@debian:~$ ls -a\n. .. .bash_history .bash_logout .bashrc my_personal_scripts .profile\nLo hizo."
+    },
+    {
+      "id": "105.1-slide-10",
+      "slideNumber": 10,
+      "title": "Variables en Bash: Asignación y Nombres",
+      "layout": "content",
+      "src": "105.1#u471-u513",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Sintaxis de Asignación y Referencia"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# Asignación: SIN espacios alrededor del signo '=':\ndistro=Debian         # Correcto\ndistro = Debian       # ERROR: intentará ejecutar el comando 'distro'\n\n# Referencia con '$':\necho $distro          # Muestra 'Debian'\necho ${distro}_Linux  # Uso de llaves para delimitar el nombre de la variable"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Reglas de nombres: Letras (A-Z, a-z), dígitos (0-9) y guiones bajos (_).",
+            "Sensible a mayúsculas: $distro y $DISTRO son dos variables completamente distintas.",
+            "Prohibición: Un nombre de variable NO puede comenzar con un número (ej. 1var=x es inválido)."
+          ]
+        }
+      ],
+      "notes": "Recuerda: nunca pongas espacios antes o después del '=' al asignar variables en Bash.\n\n--- Detalle ampliado del manual oficial ---\nIntroducción\nPiense en una variable como una caja imaginaria en la que coloca temporalmente una\ninformación. Al igual que los scripts de inicialización, Bash clasifica las variables como shell/local\n(las que se ubican sólo dentro de los límites del shell en el que fueron creadas) o entorno/global\n(las que son heredadas por shells y/o procesos hijos). De hecho, en la lección anterior hemos\nechado un vistazo a las shell y sus scripts de configuración o inicialización. Ahora es conveniente\nseñalar el poder de estos archivos de inicio, el cual radica en el hecho de que nos permiten utilizar\nvariables — así como alias y funciones — que nos ayudan a crear y personalizar el entorno de\nshell como queramos.\nVariables: Asignación y referencia\nUna variable puede definirse como un nombre que contiene un valor.\nEn Bash, dar un valor a un nombre se llama asignación de variables y es la forma en que creamos\no establecemos las variables. Por otro lado, el proceso de acceder al valor contenido en el nombre\nse llama variable referenciada.\nLa sintaxis para la asignación de variables es:\n<variable_name>=<variable_value>\nPor ejemplo:\n$ distro=zorinos\nLa variable distro es igual a zorinos, es decir, hay una porción de memoria que contiene el\nvalor zorinos — con distro siendo el puntero hacia este.\nTenga en cuenta, que no puede haber ningún espacio a ambos lados del signo igual cuando se\nasigna una variable:\n$ distro =zorinos\n-bash: distro: command not found\n$ distro= zorinos\n-bash: zorinos: command not found\nA causa de nuestro error, Bash leyó distro y zorinos como órdenes.\nPara referenciar una variable (es decir, para comprobar su valor) utilizamos el comando echo\nque precede al nombre de la variable con un signo $:\n$ echo $distro\nzorinos\nNombres de variables\nAl elegir el nombre de las variables, hay ciertas reglas que debemos tener en cuenta.\nEl nombre de una variable puede contener letras (a-z,A-Z), números (0-9) y guiones bajos (_):\n$ distro=zorinos\n$ echo $distro\nzorinos\n$ DISTRO=zorinos\n$ echo $DISTRO\nzorinos\n$ distro_1=zorinos\n$ echo $distro_1\nzorinos\n$ _distro=zorinos\n$ echo $_distro\nzorinos\nNo puede empezar con un numero o Bash se confundira:\n$ 1distro=zorinos\n-bash: 1distro=zorinos: command not found\nNo puede contener espacios (ni siquiera usando comillas); por convención, se usan los guiones\nbajos en su lugar:\n$ \"my distro\"=zorinos\n-bash: my: command not found\n$ my_distro=zorinos\n$ echo $my_distro\nzorinos"
+    },
+    {
+      "id": "105.1-slide-11",
+      "slideNumber": 11,
+      "title": "Valores y Entrecomillado en Bash",
+      "layout": "content",
+      "src": "105.1#u514-u564",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comillas Simples, Dobles y Sustitución"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Comillas Simples ('...'): Preservan el valor estrictamente literal de cada carácter. Inhiben la expansión de variables ($) y comodines (*).",
+            "Comillas Dobles (\"...\"): Preservan espacios en blanco pero PERMITEN la expansión de variables ($VAR), sustitución de comandos y escape con barra invertida (\\).",
+            "Sustitución de Comandos $(...) o `...`: Ejecuta el comando y devuelve su salida para asignarla a la variable."
+          ]
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "animal=gnu\necho 'El animal es $animal'  # Salida: El animal es $animal\necho \"El animal es $animal\"  # Salida: El animal es gnu\nkernel=$(uname -r)           # Sustitución moderna recomendada"
+        }
+      ],
+      "notes": "Las comillas simples son estrictamente literales; las dobles permiten interpretar variables y sustitución.\n\n--- Detalle ampliado del manual oficial ---\nValores de las variables\nEn lo que respecta a la referencia o el valor de las variables, también es importante considerar\nuna serie de reglas.\nLas variables pueden contener cualquier carácter alfanumérico (a-z,A-Z,0-9) así como la\nmayoría de los caracteres (?,!,*,.,/, etc.):\n$ distro=zorin12.4?\n$ echo $distro\nzorin12.4?\nLos valores de las variables deben ser encerrados entre comillas si contienen espacios simples:\n$ distro=zorin 12.4\n-bash: 12.4: command not found\n$ distro=\"zorin 12.4\"\n$ echo $distro\nzorin 12.4\n$ distro='zorin 12.4'\n$ echo $distro\nzorin 12.4\nLos valores de las variables también deben ser encerrados entre comillas si contienen caracteres\ncomo los utilizados para la redirección (<,>) o el símbolo de \"pipe\" (|). Lo único que hace el\nsiguiente comando es crear un archivo vacío llamado zorin:\n$ distro=>zorin\n$ echo $distro\n$ ls zorin\nzorin\nEsto funciona, siempre y cuando usemos las comillas:\n$ distro=\">zorin\"\n$ echo $distro\n>zorin\nSin embargo, las comillas simples y dobles no siempre son intercambiables. Según lo que hagamos\ncon una variable (asignación o referencia), el uso de una u otra tiene implicaciones y dará\nresultados diferentes. En el contexto de la asignación de variables, las comillas simples toman\ntodos los caracteres del valor de la variable literalmente, mientras que las comillas dobles\npermiten la sustitución de la variable:\n$ lizard=uromastyx\n$ animal='My $lizard'\n$ echo $animal\nMy $lizard\n$ animal=\"My $lizard\"\n$ echo $animal\nMy uromastyx\nPor otra parte, cuando se hace referencia a una variable cuyo valor incluye algunos espacios\niniciales (o adicionales) — a veces combinados con asteriscos — es obligatorio utilizar comillas\ndobles después del comando echo para evitar la división de campos y la expansión de nombres:\n$ lizard=\" genus | uromastyx\"\n$ echo $lizard\ngenus | uromastyx\n$ echo \"$lizard\"\ngenus | uromastyx\nSi la referencia de la variable contiene un signo de exclamación de cierre, éste debe ser el último\ncarácter de la cadena (ya que de lo contrario Bash pensará que nos referimos a un evento\nhistórico):\n$ distro=zorin.?/!os\n-bash: !os: event not found\n$ distro=zorin.?/!\n$ echo $distro\nzorin.?/!\nCualquier \"backslash\" debe escapar por otro. Además, si una barra invertida es el último caracter\nde la cadena (string) y no escapa, Bash interpretará que queremos un salto de línea y nos dará\nuna nueva línea:\n$ distro=zorinos\\\n>\n$ distro=zorinos\\\\\n$ echo $distro\nzorinos\\\nEn las próximas dos secciones resumiremos las principales diferencias entre las variables locales\ny de entorno."
+    },
+    {
+      "id": "105.1-slide-12",
+      "slideNumber": 12,
+      "title": "Variables Locales vs Globales (export y unset)",
+      "layout": "content",
+      "src": "105.1#u565-u686",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ámbito de Variables y Herencia a Subprocesos"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# Variable local: Solo visible en la shell actual\nmammal=gnu\nbash -c 'echo [$mammal]'    # Salida: [] (vacía)\n\n# Variable global con export: Heredable por procesos hijos\nexport mammal\nbash -c 'echo [$mammal]'    # Salida: [gnu]\n\n# Listado y eliminación:\nset | grep mammal           # set lista locales, exportadas y funciones\nenv | grep mammal           # env lista ÚNICAMENTE variables exportadas\nunset mammal                # Elimina la variable de la memoria"
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "🎯 La herencia es unidireccional",
+          "content": "Un subproceso hijo hereda variables exportadas de su padre, pero los cambios que realice en el subshell jamás alterarán a la sesión del shell padre."
+        }
+      ],
+      "notes": "export marca la variable para exportarse a los procesos hijos mediante la tabla de entorno.\n\n--- Detalle ampliado del manual oficial ---\nVariables locales o de Shell\nLas variables locales o de shell existen sólo en el shell en el que se crean. Por convención, las\nvariables locales se escriben en minúsculas.\nCon el fin de realizar algunas pruebas, vamos a crear una variable local. Como se ha explicado\nanteriormente, elegimos un nombre apropiado para la variable y la equiparamos a un valor\napropiado. Por ejemplo:\n$ reptile=tortoise\nUsemos ahora el comando echo para referirnos a nuestra variable y comprobar que todo ha ido\ncomo se esperaba:\n$ echo $reptile\ntortoise\nEn ciertos escenarios — cuando se escriben los scripts — la inmutabilidad puede ser una\ncaracterística interesante de las variables. Si queremos que nuestras variables sean inmutables,\npodemos crearlas en modo sólo lectura (readonly):\n$ readonly reptile=tortoise\nOtra opción es convertirlas después de haberlas creado:\n$ reptile=tortoise\n$ readonly reptile\nAhora, si intentamos cambiar el valor de reptile, Bash lo negará:\n$ reptile=lizard\n-bash: reptile: readonly variable\nNOTE\nPara listar todas las variables de sólo lectura en nuestra sesión actual, escriba\nreadonly o readonly -p en la terminal.\nUn comando útil cuando se trata de variables locales es set.\nset da salida a todas las variables y funciones de shell que se encuentran actualmente asignadas.\nDado que pueden ser muchas líneas (¡pruébalo tú mismo!), se recomienda usarlo en combinación\ncon un buscador como less:\n$ set | less\nBASH=/bin/bash\nBASHOPTS=checkwinsize:cmdhist:complete_fullquote:expand_aliases:extglob:extquote:force_figno\nre:histappend:interactive_comments:login_shell:progcomp:promptvars:sourcepath\nBASH_ALIASES=()\nBASH_ARGC=()\nBASH_ARGV=()\nBASH_CMDS=()\nBASH_COMPLETION_COMPAT_DIR=/etc/bash_completion.d\nBASH_LINENO=()\nBASH_SOURCE=()\nBASH_VERSINFO=([0]=\"4\" [1]=\"4\" [2]=\"12\" [3]=\"1\" [4]=\"release\" [5]=\"x86_64-pc-linux-gnu\")\nBASH_VERSION='4.4.12(1)-release'\n(...)\n¿Se encuentra nuestra variable reptile?\n$ set | grep reptile\nreptile=tortoise\n¡Sí, ahí está!\nSin embargo, reptile — siendo una variable local — no será heredado por ningún proceso hijo\ngenerado desde el shell actual:\n$ bash\n$ set | grep reptile\n$\nY por supuesto, tampoco podemos ejecutar el comando echo para revisar su valor:\n$ echo $reptile\n$\nNOTE\nAl teclear el comando bash en la terminal abrimos un nuevo shell (hijo).\nPara remover cualquier variable (ya sea local o global), usamos el comando unset:\n$ echo $reptile\ntortoise\n$ unset reptile\n$ echo $reptile\n$\nNOTE\nunset debe ser seguido por el nombre de la variable solamente (no precedido por\nel símbolo $).\nVariables globales o de entorno\nExisten variables globales o de entorno para el shell actual, así como para todos los procesos\nsubsecuentes que se derivan de este. Por convención, las variables de entorno se escriben en\nmayúsculas:\n$ echo $SHELL\n/bin/bash\nPodemos pasar recursivamente el valor de estas variables a otras variables y el valor de estas\núltimas se expandirá finalmente a las primeras:\n$ my_shell=$SHELL\n$ echo $my_shell\n/bin/bash\n$ your_shell=$my_shell\n$ echo $your_shell\n/bin/bash\n$ our_shell=$your_shell\n$ echo $our_shell\n/bin/bash\nPara que una variable de shell local se convierta en una variable de entorno, se debe utilizar el\ncomando export:\n$ export reptile\nCon export reptile hemos convertido nuestra variable local en una variable de entorno para\nque los shells hijos puedan reconocerla y usarla:\n$ bash\n$ echo $reptile\ntortoise\nDe la misma manera, export puede ser usado para asignar y exportar una variable, todo a la vez:\n$ export amphibian=frog\nAhora podemos abrir una nueva instancia de Bash y referirnos con éxito a la nueva variable:\n$ bash\n$ echo $amphibian\nfrog\nNOTE\nCon export -n <VARIABLE-NAME> la variable se convertirá de nuevo en una\nvariable de la shell local.\nEl comando export también nos dará una lista de todas las variables de entorno existentes o\ncuando se digita con la opción -p:\n$ export\ndeclare -x HOME=\"/home/user2\"\ndeclare -x LANG=\"en_GB.UTF-8\"\ndeclare -x LOGNAME=\"user2\"\n(...)\ndeclare -x PATH=\"/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games\"\ndeclare -x PWD=\"/home/user2\"\ndeclare -x SHELL=\"/bin/bash\"\ndeclare -x SHLVL=\"1\"\ndeclare -x SSH_CLIENT=\"192.168.1.10 49330 22\"\ndeclare -x SSH_CONNECTION=\"192.168.1.10 49330 192.168.1.7 22\"\ndeclare -x SSH_TTY=\"/dev/pts/0\"\ndeclare -x TERM=\"xterm-256color\"\ndeclare -x USER=\"user2\"\ndeclare -x XDG_RUNTIME_DIR=\"/run/user/1001\"\ndeclare -x XDG_SESSION_ID=\"8\"\ndeclare -x reptile=\"tortoise\"\nNOTE\nEl comando declare -x es equivalente a export.\nDos comandos más que pueden ser usados para imprimir una lista de todas las variables de\nentorno son env y printenv:\n$ env\nSSH_CONNECTION=192.168.1.10 48678 192.168.1.7 22\nLANG=en_GB.UTF-8\nXDG_SESSION_ID=3\nUSER=user2\nPWD=/home/user2\nHOME=/home/user2\nSSH_CLIENT=192.168.1.10 48678 22\nSSH_TTY=/dev/pts/0\nMAIL=/var/mail/user2\nTERM=xterm-256color\nSHELL=/bin/bash\nSHLVL=1\nLOGNAME=user2\nXDG_RUNTIME_DIR=/run/user/1001\nPATH=/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games\n_=/usr/bin/env\nAdemás de ser un sinónimo de env, a veces podemos usar printenv de forma similar a como\nusamos el comando echo para comprobar el valor de una variable:\n$ echo $PWD\n/home/user2\n$ printenv PWD\n/home/user2\nSin embargo, con printenv el nombre de la variable no está precedido por $.\nNOTE\nPWD almacena la ruta del directorio de trabajo actual. Aprenderemos sobre esta y\notras variables de entorno más adelante."
+    },
+    {
+      "id": "105.1-slide-13",
+      "slideNumber": 13,
+      "title": "Entorno Modificado (env -i) y Variable PATH",
+      "layout": "content",
+      "src": "105.1#u687-u765",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Aislamiento de Entorno y Rutas de Búsqueda"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# Ejecutar un programa en un entorno completamente vacío:\nenv -i HOME=/root /bin/bash   # Descarta variables previas heredadas\n\n# La variable PATH: lista de directorios separados por dos puntos (:)\necho $PATH\n# /usr/local/bin:/usr/bin:/bin:/usr/games\n\n# Añadir ~/bin como primer directorio de búsqueda:\nexport PATH=\"$HOME/bin:$PATH\"\n\n# Añadir /opt/bin como último directorio de búsqueda:\nexport PATH=\"$PATH:/opt/bin\""
+        },
+        {
+          "type": "paragraph",
+          "text": "El shell busca los ejecutables en PATH en orden estricto de izquierda a derecha. El primer binario coincidente es el que se ejecuta."
+        }
+      ],
+      "notes": "El orden en PATH es determinante para saber qué ejecutable se lanza cuando existen binarios con el mismo nombre.\n\n--- Detalle ampliado del manual oficial ---\nEjecución de un programa en un entorno modificado\nEl comando env puede ser usado para modificar el entorno del shell en el momento de la\nejecución de un programa.\nPara iniciar una nueva sesión de Bash con un entorno tan vacío como sea posible — despejando la\nmayoría de las variables (así como las funciones y alias) — usaremos env con la opción -i:\n$ env -i bash\nAhora la mayoría de las variables de nuestro entorno han desaparecido:\n$ echo $USER\n$\nY sólo quedan unas pocas:\n$ env\nLS_COLORS=\nPWD=/home/user2\nSHLVL=1\n_=/usr/bin/printenv\nTambién podemos usar env para establecer una variable particular para un programa particular.\nEn nuestra lección anterior, cuando hablamos de los shells no interactivos sin inicio de sesión,\nobservamos como los scripts no leen ningún archivo de inicio estándar sino que buscan el valor\nde la variable BASH_ENV y lo usan como su archivo de inicio si existe.\nDemostrémos este proceso:\n1. Creamos nuestro propio archivo de inicio llamado .startup_script con el siguiente\ncontenido:\nCROCODILIAN=caiman\n2. Escribimos un script Bash llamado test_env.sh con el siguiente contenido:\n#!/bin/bash\necho $CROCODILIAN\n3. Establecemos el bit ejecutable para nuestro script test_env.sh:\n$ chmod +x test_env.sh\n4. Por último, usamos env para establecer BASH_ENV en startup_script para test_env.sh:\n$ env BASH_ENV=/home/user2/.startup_script ./test_env.sh\ncaiman\nEl comando env está implícito incluso si nos deshacemos de este:\n$ BASH_ENV=/home/user2/.startup_script ./test_env.sh\ncaiman\nNOTE\nSi no comprendes la línea #!/bin/bash o el comando chmod +x, ¡no te asustes!\nAprenderemos todo lo necesario acerca de los scripts de shell en futuras lecciones.\nPor ahora, sólo recuerda que para ejecutar un script desde su propio directorio\nusamos ./some_script.\nVariables comunes de entorno\nEs hora de revisar algunas de las variables de entorno más relevantes que se establecen en los\narchivos de configuración de Bash.\nDISPLAY\nEn relación con el servidor X, el valor de esta variable se compone normalmente de tres\nelementos:\n• El hostname (la ausencia de este significa localhost) donde se ejecuta el servidor X.\n• Dos puntos como delimitador.\n• Un número (normalmente es 0 y se refiere a la pantalla de la computadora).\n$ printenv DISPLAY\n:0\nUn valor vacío para esta variable significa un servidor sin un sistema X WIndow. Un número\nextra — como en mi.xserver:0:1 — se referiría al número de pantalla (si existe más de\nuno).\nHISTCONTROL\nEsta variable controla qué comandos se guardan en HISTFILE (ver abajo). Hay tres valores\nposibles:\nignorespace\nLos comandos que empiecen con un espacio no se guardarán.\nignoredups\nUn comando que es el mismo que el anterior no se guardará.\nignoreboth\nLos comandos que caen en cualquiera de las dos categorías anteriores no se guardarán.\n$ echo $HISTCONTROL\nignoreboth\nHISTSIZE\nEsto establece el número de comandos que se almacenarán en la memoria mientras dure la\nsesión de shell.\n$ echo $HISTSIZE\n1000\nHISTFILESIZE\nEsto establece el número de comandos que se guardarán en HISTFILE tanto al principio como\nal final de la sesión:\n$ echo $HISTFILESIZE\n2000\nHISTFILE\nEl nombre del archivo que almacena todos los comandos a medida que se escriben. Por defecto\neste archivo se encuentra en ~/.bash_history:\n$ echo $HISTFILE\n/home/user2/.bash_history\nNOTE\nPara ver el contenido de HISTFILE, simplemente escribimos history.\nAlternativamente, podemos especificar el número de comandos que queremos\nver pasando un argumento (el número de los comandos más recientes) a\nhistory, ejemplo: history 3.\nHOME\nEsta variable almacena la ruta absoluta del directorio principal del usuario y se establece\ncuando el usuario se conecta.\nEsta parte del código — de ~/.profile — se explica por sí mismo (tiene como origen\n\"$HOME/.bashrc\" si existe):\n# include .bashrc if it exists\nif [ -f \"$HOME/.bashrc\" ]; then\n. \"$HOME/.bashrc\"\nfi\nNOTE\nSi no comprende bien la afirmación if, no te preocupes: sólo consulta las\nlecciones sobre shell scripting.\nRecuerda que ~ es equivalente a $HOME:\n$ echo ~; echo $HOME\n/home/carol\n/home/carol\nNOTE\nLos comandos pueden ser concatenados con un punto y coma (;).\nTambién podemos probar esto con una declaración de if."
+    },
+    {
+      "id": "105.1-slide-14",
+      "slideNumber": 14,
+      "title": "Variables Canónicas: HISTCONTROL, PS1 y PS2",
+      "layout": "content",
+      "src": "105.1#u766-u841",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Afinar el Historial y el Prompt del Shell"
+        },
+        {
+          "type": "list",
+          "items": [
+            "USER y LOGNAME: Nombre del usuario autenticado en la sesión.",
+            "HOME: Directorio de inicio del usuario actual (ej. /home/user2 o ~).",
+            "HISTSIZE y HISTFILE: Número de comandos en memoria y ruta del archivo de guardado (~/.bash_history).",
+            "HISTCONTROL: Control de comandos duplicados (ignoredups), con espacio previo (ignorespace) o ambos (ignoreboth).",
+            "PS1: Prompt principal interactivo (ej. '\\u@\\h:\\w\\$ ').",
+            "PS2: Prompt secundario para comandos continuados en múltiples líneas (por defecto '> ')."
+          ]
+        }
+      ],
+      "notes": "HISTCONTROL=ignoreboth es un valor muy preguntado en LPIC-1.\n\n--- Detalle ampliado del manual oficial ---\n$ if [ ~ == \"$HOME\" ]; then echo \"true\"; else echo \"false\"; fi\ntrue\nNOTE\nRecuerde: El signo de igualdad = se utiliza para la asignación de variables. Y el\nsigno == se usa para probar la igualdad.\nHOSTNAME\nVariable que almacena nombre del computador en la red:\n$ echo $HOSTNAME\ndebian\nHOSTTYPE\nEsto almacena la arquitectura de la unidad central de procesamiento (CPU) del computador:\n$ echo $HOSTTYPE\nx86_64\nLANG\nEsta variable guarda la información de localización que utiliza el sistema:\n$ echo $LANG\nen_UK.UTF-8\nLD_LIBRARY_PATH\nEsta variable consiste en un conjunto de directorios separados por dos puntos donde las\nbibliotecas compartidas (shared libraries) son compartidas por los programas:\n$ echo $LD_LIBRARY_PATH\n/usr/local/lib\nMAIL\nEsta variable almacena el archivo en el que Bash revisa el correo electrónico:\n$ echo $MAIL\n/var/mail/carol\nOtro valor común para esta variable es /var/spool/mail/$USER.\nMAILCHECK\nEsta variable almacena un valor numérico que indica en segundos la frecuencia con la que\nBash comprueba si hay correo nuevo:\n$ echo $MAILCHECK\n60\nPATH\nEsta variable de entorno almacena la lista de directorios donde Bash busca los archivos\nejecutables cuando se le indica que ejecute cualquier programa. En nuestra máquina de\nejemplo, esta variable se establece a través del archivo /etc/profile de todo el sistema:\nif [ \"`id -u`\" -eq 0 ]; then\nPATH=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"\nelse\nPATH=\"/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games\"\nfi\nexport PATH\nA través de la declaración if se comprueba la identidad del usuario y — dependiendo del\nresultado de la prueba (root o de otra manera) — obtendremos un PATH u otro. Finalmente, el\nPATH elegido se propaga invocando el comando export.\nObserve dos cosas con respecto al valor de PATH:\n• Los nombres de los directorios se escriben usando rutas absolutas.\n• Los dos puntos se usan como delimitador.\nSi quisiéramos incluir la carpeta /usr/local/sbin en el PATH para usuarios habituales,\nmodificaremos la línea para que se vea así:\n(...)\nelse\nPATH=\"/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/usr/local/sbin\"\nfi\nexport PATH\nAhora podemos ver cómo cambia el valor de la variable cuando entramos como usuario\nregular:\n# su - carol\n$ echo $PATH\n/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/usr/local/sbin\nNOTE\nTambién podríamos haber añadido /usr/local/sbin al PATH del usuario en\nla \nlínea \nde \ncomandos \no \nbien \nPATH=/usr/local/sbin:$PATH \no\nPATH=$PATH:/usr/local/sbin — el primero hace que /usr/local/sbin\nsea el primer directorio en el que se busquen archivos ejecutables; el segundo\nhace que sea el último.\nPS1\nEsta variable almacena el valor del indicador Bash. En la siguiente parte de código (también de\n/etc/profile), la sentencia if comprueba la identidad del usuario y en consecuencia brinda\nun indicador muy discreto ( # para root o $ para usuarios regulares):\nif [ \"`id -u`\" -eq 0 ]; then\nPS1='# '\nelse\nPS1='$ '\nfi\nNOTE\nEl id de root es 0. Conviértete en root y compruébalo tú mismo con id -u.\nOtras variables de aviso incluyen:\nPS2\nNormalmente se establece en > y se usa como un mensaje de continuidad para comandos\nlargos de varias líneas.\nPS3\nUsado como el indicador para el comando select.\nPS4\nNormalmente se establece en + y se usa para la depuración.\nSHELL\nEsta variable almacena la ruta absoluta del shell actual:\n$ echo $SHELL\n/bin/bash\nUSER\nEsto almacena el nombre del usuario actual:\n$ echo $USER\ncarol"
+    },
+    {
+      "id": "105.1-slide-15",
+      "slideNumber": 15,
+      "title": "Alias en Bash: Creación, Uso y unalias",
+      "layout": "content",
+      "src": "105.1#u1047-u1148",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Atajos de Comandos en Línea de Órdenes"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# Definir alias con comillas obligatorias si contiene espacios:\nalias ll='ls -la --color=auto'\nalias logg='ls -1 ~/Music/*ogg'\n\n# Listar todos los alias definidos:\nalias\n\n# Escapar un alias para ejecutar el comando binario original sin alias:\n\\ls\n\n# Eliminar un alias específico o todos:\nunalias logg     # Elimina el alias 'logg'\nunalias -a       # Elimina TODOS los alias de la sesión"
+        },
+        {
+          "type": "paragraph",
+          "text": "Para que los alias persistan entre reinicios y terminales, deben guardarse en `~/.bashrc` o `~/.bash_aliases`."
+        }
+      ],
+      "notes": "El carácter barra invertida antes de un comando (ej. \\ls) ignora cualquier alias definido para él.\n\n--- Detalle ampliado del manual oficial ---\nIntroducción\nDespués de repasar los shells, los scripts de inicio y las variables, abarcaremos todo el tema de la\npersonalización del shell echando un vistazo a dos elementos muy interesantes: los alias y las\nfunciones. De hecho, todo el grupo de variables, alias y funciones, es lo que constituye el entorno\nde shell.\nLa principal fortaleza tiene que ver con el concepto de encapsulamiento: ofrecen la posibilidad de\nreunir — bajo un solo comando — una serie de comandos repetitivos o recurrentes.\nCreando Alias\nUn alias es un nombre sustituto de otro(s) comando(s). Puede ejecutarse como un comando\nnormal, pero en su lugar ejecuta otro comando según la definición de alias\nLa sintaxis para declarar alias es muy sencilla. Estos se declaran escribiendo la palabra clave\nalias seguida de su asignación. A su vez, dicha asignación consiste en el nombre de alias, un\nsigno igual y uno o más comandos:\nalias alias_name=command(s)\nPor ejemplo:\n$ alias oldshell=sh\nEste alias iniciará una instancia del shell original sh cuando el usuario digite oldshell en la\nterminal:\n$ oldshell\n$\nEl poder de los alias radica en que nos permiten escribir versiones cortas de comandos largos:\n$ alias ls='ls --color=auto'\nNOTE\nPara información sobre ls y sus colores, escriba man dir_colors en la terminal.\nDe la misma manera, podemos crear alias para una serie de comandos concatenados — el punto y\ncoma (;) se utiliza como delimitador. Por ejemplo, podemos tener un alias que nos dé información\nsobre la ubicación del ejecutable git y su versión:\n$ alias git_info='which git;git --version'\nPara invocar un alias, escribimos su nombre en la terminal:\n$ git_info\n/usr/bin/git\ngit version 2.7.4\nEl comando alias producirá un listado de todos los alias disponibles en el sistema:\n$ alias\nalias git-info='which git;git --version'\nalias ls='ls --color=auto'\nalias oldshell='sh'\nEl comando unalias elimina los alias. Por ejemplo, unalias git-info, posteriormente\npodremos ver como desaparece del listado:\n$ unalias git-info\n$ alias\nalias ls='ls --color=auto'\nalias oldshell='sh'\nComo se observa en la sentencia alias hi='echo We salute you.', debemos encerrar los\ncomandos \nentre \ncomillas \n(ya \nsea \nsimple \no \ndoble) \ncuando — los \nargumentos \no\nparámetros — contienen espacios:\n$ alias greet='echo Hello world!'\n$ greet\nHello world!\nLos comandos con espacios también son incluidos con esas opciones:\n$ alias ll='ls -al'\nAhora ll listará todos los archivos — incluyendo los ocultos (a) — en el formato largo (l).\nPodemos referenciar variables en los alias:\n$ reptile=uromastyx\n$ alias greet='echo Hello $reptile!'\n$ greet\nHello uromastyx!\nLa variable también puede ser asignada dentro del alias:\n$ alias greet='reptile=tortoise; echo Hello $reptile!'\n$ greet\nHello tortoise!\nPodemos escapar de un alias con \\:\n$ alias where?='echo $PWD'\n$ where?\n/home/user2\n$ \\where?\n-bash: where?: command not found\nEscapar de un alias es útil cuando un alias tiene el mismo nombre que un comando normal. En\neste caso, el alias tiene prioridad sobre el comando original, sin embargo, este sigue siendo\naccesible al escapar del alias.\nDel mismo modo, podemos colocar un alias dentro de otro alias:\n$ where?\n/home/user2\n$ alias my_home=where?\n$ my_home\n/home/user2\nAdemás, también podemos agregar una función dentro de un alias como se muestra a\ncontinuación.\nExpansión y evaluación de las comillas en los alias\nCuando se usan comillas con variables de entorno, las comillas simples hacen que la expansión\nsea dinámica:\n$ alias where?='echo $PWD'\n$ where?\n/home/user2\n$ cd Music\n$ where?\n/home/user2/Music\nSin embargo, con las comillas dobles la expansión se hace de forma estática:\n$ alias where?=\"echo $PWD\"\n$ where?\n/home/user2\n$ cd Music\n$ where?\n/home/user2\nPersistencia de Alias: Scripts de inicio\nAl igual que con las variables, para que nuestros alias ganen persistencia, debemos escribirlos en\nscripts de inicialización que se ejecuten al inicio. Como ya sabemos, un buen archivo para que los\nusuarios agreguen sus alias personales es ~/.bashrc. Probablemente encontrarás algunos alias\nallí (la mayoría de ellos comentados y listos para ser usados eliminando el # principal):\n$ grep alias .bashrc\n# enable color support of ls and also add handy aliases\nalias ls='ls --color=auto'\n#alias dir='dir --color=\n#alias vdir='vdir --color=\n#alias grep='grep --color=\n#alias fgrep='fgrep --color'\n#alias egrep='egrep --color=\n# some more ls aliases\n#ll='ls -al'\n#alias la='ls -A'\n#alias l='ls -CF'\n# ~/.bash_aliases, instead of adding them here directly.\nif [ -f ~/.bash_aliases ]; then\n. ~/.bash_aliases\nComo pueden leer en las últimas tres líneas, se nos ofrece la posibilidad de tener nuestro propio\narchivo dedicado a los alias — ~/.bash_aliases — y ser ejecutado por .bashrc con cada inicio\ndel sistema. Así que podemos ir por esa opción, crear y editar dicho archivo:\n###########\n# .bash_aliases:\n# a file to be populated by the user's personal aliases (and sourced by ~/.bashrc).\n###########\nalias git_info='which git;git --version'\nalias greet='echo Hello world!'\nalias ll='ls -al'\nalias where?='echo $PWD'"
+    },
+    {
+      "id": "105.1-slide-16",
+      "slideNumber": 16,
+      "title": "Funciones en Bash: Declaración y unset -f",
+      "layout": "content",
+      "src": "105.1#u1149-u1188",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Dos Sintaxis Válidas para Definir Funciones"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# 1. Sintaxis POSIX (Recomendada) y con palabra function:\nmi_funcion() { echo \"Hola, $USER\"; }\nfunction otra_funcion { echo \"Ejecutando función\"; }\n\n# 2. Sintaxis en una sola línea (espacios y ';' obligatorios):\nuna_linea() { echo \"En una línea\"; uname -r; }\n\n# 3. Eliminar función de la memoria:\nunset -f mi_funcion"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Diferencia con los Alias",
+          "content": "A diferencia de los alias, las funciones de Bash pueden recibir parámetros posicionales ($1, $2), evaluar bucles y contener lógica condicional compleja."
+        }
+      ],
+      "notes": "Observa la sintaxis de una sola línea: el espacio tras '{' y el ';' antes de '}' son obligatorios en Bash.\n\n--- Detalle ampliado del manual oficial ---\nCreando funciones\nEn comparación con los alias, las funciones son más programables y flexibles, especialmente\ncuando se trata de explotar todo el potencial de las variables incorporadas y los parámetros\nposicionales de Bash. También son muy buenas para trabajar con estructuras de control de flujo,\ncomo bucles o condicionales. Podemos pensar en una función como un comando que incluye la\nlógica a través de bloques o colecciones de otros comandos.\nDos sintaxis para crear funciones\nHay dos sintaxis válidas para definir las funciones.\nUsando la palabra clave function\nPor un lado, podemos usar la palabra clave function, seguida del nombre de la función y los\ncomandos entre corchetes:\nfunction function_name {\ncommand #1\ncommand #2\ncommand #3\n.\n.\n.\ncommand #n\n}\nUsing ()\nPor otro lado, podemos omitir la palabra function y usar dos paréntesis justo después del\nnombre de la función:\nfunction_name() {\ncommand #1\ncommand #2\ncommand #3\n.\n.\n.\ncommand #n\n}\nEs común agregar funciones en archivos o scripts. Sin embargo, también se puede escribir con\ncada comando en el shell prompt, en una línea diferente — note PS2(>) que indica una nueva\nlínea después de un salto de línea:\n$ greet() {\n> greeting=\"Hello world!\"\n> echo $greeting\n> }\nEn cualquier caso, e independientemente de la sintaxis que elijamos, si decidimos saltarnos los\nsaltos de línea y escribir una función en una sola línea, los comandos deben estar separados por\npunto y coma (también observe el punto y coma que hay después del último comando):\n$ greet() { greeting=\"Hello world!\"; echo $greeting; }\nEl shell bash no se reaccionó negativamente cuando presionamos \"Enter\", así que nuestra función\nestá lista para ser invocada. Para invocar una función, debemos escribir su nombre en la\nterminal:\n$ greet\nHello world!\nAl igual que con las variables y los alias, si queremos que las funciones sean persistentes a través\nde los reinicios del sistema tenemos que agregarlas en los scripts de inicialización de shell como\n/etc/bash.bashrc (global) o ~/.bashrc (local).\nWARNING\nDespués de añadir alias o funciones a cualquier archivo de script de inicio,\ndebe ejecutar tales archivos con . o source para que los cambios surtan\nefecto si no quiere salir y volver a entrar o reiniciar el sistema."
+    },
+    {
+      "id": "105.1-slide-17",
+      "slideNumber": 17,
+      "title": "Variables Especiales Incorporadas de Bash",
+      "layout": "content",
+      "src": "105.1#u1189-u1248",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Parámetros Automáticos del Shell"
+        },
+        {
+          "type": "list",
+          "items": [
+            "$0: Nombre del script o comando con el que se invocó el shell (ej. -bash o ./script.sh).",
+            "$1, $2 ... $9: Argumentos posicionales individuales pasados a la función o script. A partir del décimo: ${10}.",
+            "$#: Número total de parámetros posicionales pasados.",
+            "$@ y $*: Todos los parámetros posicionales. \"$@\" los expande como palabras separadas e independientes.",
+            "$?: Código de salida (exit status) del último comando ejecutado (0 = éxito, >0 = error).",
+            "$$ y $!: PID del proceso del shell actual ($$) y PID del último comando lanzado en background ($!)."
+          ]
+        }
+      ],
+      "notes": "Aprende de memoria la tabla de variables especiales: $0, $#, $@, $?, $$.\n\n--- Detalle ampliado del manual oficial ---\nVariables especiales incorporadas en Bash\nBourne Again Shell llega con un conjunto de variables especiales que son particularmente útiles\npara funciones y scripts. Estas son especiales porque sólo pueden ser referenciadas — no\nasignadas. Aquí hay una lista de las más relevantes:\n$?\nLa referencia de esta variable se expande hasta el resultado de la última ejecución del\ncomando. Un valor de 0 significa éxito:\n$ ps aux | grep bash\nuser2 420 0.0 0.4 21156 5012 pts/0 Ss 17:10 0:00 -bash\nuser2 640 0.0 0.0 12784 936 pts/0 S+ 18:04 0:00 grep bash\n$ echo $?\n0\nUn valor distinto de 0 significa error:\nuser1@debian:~$ ps aux |rep bash\n-bash: rep: command not found\nuser1@debian:~$ echo $?\n127\n$$\nSe expande hasta el PID del shell (process ID):\n$ ps aux | grep bash\nuser2 420 0.0 0.4 21156 5012 pts/0 Ss 17:10 0:00 -bash\nuser2 640 0.0 0.0 12784 936 pts/0 S+ 18:04 0:00 grep bash\n$ echo $$\n420\n$!\nIt expands to the PID of the last background job:\n$ ps aux | grep bash &\n[1] 663\n$ user2 420 0.0 0.4 21156 5012 pts/0 Ss+ 17:10 0:00 -bash\nuser2 663 0.0 0.0 12784 972 pts/0 S 18:08 0:00 grep bash\n^C\n[1]+ Done ps aux | grep bash\n$ echo $!\n663\nNOTE\nRemember, the ampersand (&) is used to start processes in the background.\nParámetros de posición de 0 a 9\nSe expanden a los parámetros o argumentos que se pasan a la función (alias o script) — $0\nexpandiéndose al nombre del script o shell.\nVamos a crear una función para demostrar los parámetros de posición — note PS2 (>)\nindicando nuevas líneas después de los saltos de línea:\n$ special_vars() {\n> echo $0\n> echo $1\n> echo $2\n> echo $3\n}\nAhora, invocaremos la función (special_vars) pasándole tres parámetros (debian, ubuntu,\nzorin):\n$ special_vars debian ubuntu zorin\n-bash\ndebian\nubuntu\nzorin\nExcelente, funcionó como se esperaba.\nWARNING\nAunque pasar parámetros posicionales a los alias es técnicamente posible,\nno es en absoluto funcional ya que - con los alias - los parámetros\nposicionales siempre se pasan al final:\n$ alias great_editor='echo $1 is a great text editor'\n$ great_editor emacs\nis a great text editor emacs\nOtras variables especiales incorporadas en Bash incluyen:\n$#\nSe expande al número de argumentos que se le pasan al comando.\n$@, $*\nSe extienden a los argumentos pasados al comando.\n$_\nSe expande hasta el último parámetro o el nombre del script (entre otras cosas; ¡revisa \"man\nbash\" para conocer más!):"
+    },
+    {
+      "id": "105.1-slide-18",
+      "slideNumber": 18,
+      "title": "Ámbito Local (local) y Parámetros en Funciones",
+      "layout": "content",
+      "src": "105.1#u1249-u1297",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Protección de Variables con la Palabra Clave 'local'"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# Declarar variables locales dentro de funciones:\ncalcular() {\n  local resultado=$(( $1 * $2 ))\n  echo \"Resultado interno: $resultado\"\n}\ncalcular 4 5\necho \"Fuera: [$resultado]\"  # Salida: [] (no contamina el shell padre)\n\n# Desplazamiento de parámetros con 'shift':\nprocesar() {\n  echo \"Primer argumento: $1\"\n  shift        # Descarta $1 y convierte $2 en $1\n  echo \"Nuevo primer argumento: $1\"\n}"
+        },
+        {
+          "type": "paragraph",
+          "text": "El uso de `local` es una regla de oro en programación defensiva de shell para evitar sobreescritura accidental de variables globales."
+        }
+      ],
+      "notes": "shift desplaza la lista de parámetros posicionales hacia la izquierda.\n\n--- Detalle ampliado del manual oficial ---\nVariables en funciones\nPor supuesto, las variables pueden utilizarse dentro de las funciones.\nPara probarlo, esta vez crearemos un nuevo archivo vacío llamado funed y agregaremos la\nsiguiente función:\neditors() {\neditor=emacs\necho \"My editor is: $editor. $editor is a fun text editor.\"\n}\nComo ya habrán adivinado, debemos obtener el archivo primero para poder invocar la función:\n$ . funed\nY ahora podemos probarlo:\n$ editors\nMy editor is emacs. emacs is a fun text editor.\nComo pueden apreciar, para que la función de editors funcione correctamente, la variable\neditor debe ser fijada primero. El alcance de esa variable es local al shell actual y podemos\nreferirnos a ella mientras la sesión este activa:\n$ echo $editor\nemacs\nJunto con las variables locales también podemos incluir variables de entorno en nuestra función:\neditors() {\neditor=emacs\necho \"The text editor of $USER is: $editor.\"\n}\neditors\nNote como esta vez decidimos llamar a la función desde el propio archivo (editors en la última\nlínea). De esta manera, cuando hagamos la ejecución del archivo, la función también será\ninvocada — todo a la vez:\n$ . funed\nThe text editor of user2 is: emacs.\nParámetros de posición en las funciones\nAlgo similar ocurre con los parámetros posicionales.\nPodemos pasarlos a las funciones desde adentro del archivo o el script (note la última línea:\neditors tortoise):\neditors() {\neditor=emacs\necho \"The text editor of $USER is: $editor.\"\necho \"Bash is not a $1 shell.\"\n}\neditors tortoise\nBuscamos la fuente del archivo y probamos que funciona:\n$ . funed\nThe text editor of user2 is: emacs.\nBash is not a tortoise shell.\nY también podemos pasar parámetros posicionales a funciones en la línea de comandos. Para\nprobarlo, nos deshacemos de la última línea del archivo:\neditors() {\neditor=emacs\necho \"The text editor of $USER is: $editor.\"\necho \"Bash is not a $1 shell.\"\n}\nEntonces, tenemos que ejecutar el archivo:\n$ . funed\nFinalmente, invocamos la función con tortoise como el parámetro posicional 1$ en la línea de\ncomando:\n$ editors tortoise\nThe text editor of user2 is: emacs.\nBash is not a tortoise shell."
+    },
+    {
+      "id": "105.1-slide-19",
+      "slideNumber": 19,
+      "title": "Funciones Avanzadas: Scripts y Alias Compuestos",
+      "layout": "content",
+      "src": "105.1#u1298-u1369",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Patrones Avanzados de Shell Scripting"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# 1. Funciones de solo lectura (no modificables ni borrables):\nreadonly -f mi_funcion\nreadonly -f              # Lista todas las funciones read-only\n\n# 2. Combinar función dentro de un alias para aceptar argumentos:\nalias mkcd='_mkcd() { mkdir -p \"$1\" && cd \"$1\"; }; _mkcd'\n\n# 3. Funciones en scripts modulares cargados con source:\n# En ~/lib/red.sh:\nverificar_red() { ping -c 1 8.8.8.8 >/dev/null 2>&1; }\n# En el script principal:\nsource ~/lib/red.sh && verificar_red"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Funciones vs Scripts en disco",
+          "content": "Las funciones residen en memoria RAM: se ejecutan mucho más rápido que un script binario en disco y pueden alterar variables del shell actual."
+        }
+      ],
+      "notes": "readonly -f protege funciones críticas frente a modificaciones o borrados accidentales.\n\n--- Detalle ampliado del manual oficial ---\nFunciones en Scripts\nLas funciones se encuentran principalmente en scripts de Bash.\nConvertir nuestro archivo funed en un script (lo llamaremos funed.sh) es realmente sencillo:\n#!/bin/bash\neditors() {\neditor=emacs\necho \"The text editor of $USER is: $editor.\"\necho \"Bash is not a $1 shell.\"\n}\neditors tortoise\n¡Eso es! Sólo añadimos dos líneas:\n• La primera línea es el shebang y define qué programa va a interpretar el script: #!/bin/bash.\nCuriosamente, ese programa es bash en sí mismo.\n• La última línea es simplemente la invocación de la función.\nAhora sólo queda una cosa — tenemos que hacer el script ejecutable:\n$ chmod +x funed.sh\nY ahora está listo para ser ejecutado:\n$ ./funed.sh\nThe text editor of user2 is: emacs.\nBash is not a tortoise shell.\nNOTE\nAprenderás todo sobre el shell scripting en las próximas lecciones.\nUna función dentro de un Alias\nComo se ha dicho antes, podemos agregar una función dentro de un alias:\n$ alias great_editor='gr8_ed() { echo $1 is a great text editor; unset -f gr8_ed; }; gr8_ed'\nEste largo valor del alias merece una explicación. Vamos a desglosarlo:\n• Primero está la función en sí misma: gr8_ed() { echo $1 is a great text editor;\nunset -f gr8_ed; }\n• El último comando de la función — unset -f gr8_ed — remueve la función para que no\npermanezca en la sesión actual de bash después de que el alias sea llamado.\n• Por último, pero no menos importante, para tener una invocación de alias exitosa, también\ndebemos invocar la función: gr8_ed.\nInvoquemos el alias y probemos si funciona:\n$ great_editor emacs\nemacs is a great text editor\nComo se muestra en unset -f gr8_ed, el comando unset no sólo se usa para remover variables,\nsino también funciones. De hecho, hay opciones específicas:\nunset -v\npara variables\nunset -f\npara funciones\nSi se usa sin opciones, unset tratará de desajustar una variable primero y — si falla — entonces\ntratará de desajustar una función.\nUna función dentro de un Alias\nAhora mencionamos que queremos comunicar dos cosas a user2 cada vez que se registre en el\nsistema:\n• Saludar y recomendar un editor de texto.\n• Ya que está empezando a agregar muchos archivos de video de Matrosk`\" en su carpeta\n`$HOME/Video, también queremos darle una advertencia.\nPara lograr ese propósito, hemos puesto las siguientes dos funciones en /home/user2/.bashrc:\nLa primera función (check_vids) hace el chequeo de los archivos .mkv y la advertencia:\ncheck_vids() {\nls -1 ~/Video/*.mkv > /dev/null 2>&1\nif [ \"$?\" = \"0\" ];then\necho -e \"Remember, you must not keep more than 5 video files in your Video\nfolder.\\nThanks.\"\nelse\necho -e \"You do not have any videos in the Video folder. You can keep up to 5.\\nThanks.\"\nfi\n}\ncheck_vids hace tres cosas:\n• Lista los archivos mkv en ~/Video enviando la salida — y cualquier error — al llamado bit-\nbucket (/dev/null).\n• Prueba la salida del comando anterior para el éxito.\n• Dependiendo del resultado de la prueba, imprime uno de los dos mensajes.\nLa segunda función es una versión modificada de nuestra función de editors:\neditors() {\neditor=emacs\necho \"Hi, $USER!\"\necho \"$editor is more than a text editor!\"\ncheck_vids\n}\neditors\nEs importante observar dos cosas:\n• El último comando de editors invoca check_vids para que ambas funciones se encadenen:\nEl saludo, el elogio, el chequeo y la advertencia se ejecutan en secuencia.\n• editors es el mismo punto de entrada a la secuencia de funciones, por lo que se invoca en la\núltima línea (editors).\nAhora, entremos como user2 y probemos que funciona:\n# su - user2\nHi, user2!\nemacs is more than a text editor!\nRemember, you must not keep more than 5 video files in your Video folder.\nThanks."
+    },
+    {
+      "id": "105.1-slide-20",
+      "slideNumber": 20,
+      "title": "Resumen Oficial y Claves del Subtema 105.1",
+      "layout": "summary",
+      "src": "105.1#u337-u387, 105.1#u906-u947, 105.1#u1441-u1480",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Síntesis del Manual LPI 105.1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Tipos de shell: Login (SSH, TTY) lee /etc/profile y ~/.bash_profile. Non-login lee /etc/bash.bashrc y ~/.bashrc. ~/.bash_logout se ejecuta al salir.",
+            "Recarga y Plantillas: 'source' o '.' ejecuta en el shell actual. /etc/skel provee la plantilla inicial para 'useradd -m'.",
+            "Variables: Sin espacios al asignar. 'export' las hace globales para subprocesos. 'env' lista exportadas; 'set' lista todas. 'unset' las borra.",
+            "PATH: Lista separada por ':' evaluada de izquierda a derecha. Añadir binarios con PATH=\"$HOME/bin:$PATH\".",
+            "Alias y Funciones: 'alias nombre=cmd' para atajos; '\\cmd' ignora alias; 'unalias -a' borra todos. Funciones con func() o function admiten parámetros ($1..$9, $#) y 'local'."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Siguiente Paso",
+          "content": "Practica lo aprendido en las pestañas inferiores: realiza el test rápido, repasa las mini-flashcards y resuelve los 42 ejercicios del manual."
+        }
+      ],
+      "notes": "Resumen final del subtema 105.1 según el manual oficial de LPI.\n\n--- Detalle ampliado del manual oficial ---\nResumen\nEn esta lección aprendimos:\n• Los Shells establecen el entorno de los usuarios en un sistema Linux.\n• Bash es el shell número uno en todas las distribuciones de GNU/Linux.\n• El primer trabajo que realiza un shell es leer y ejecutar uno o varios archivos de inicio.\n• Los conceptos de interacción y inicio de sesión en relación con los shells.\n• Cómo lanzar diferentes tipos de shells con bash, su, sudo y Ctrl + Alt + F1 - F6 .\n• Cómo comprobar el tipo de shell con echo $0.\n• Los \narchivos \nde \ninicio \nlocales \n~/.bash_profile, \n~/.profile, \n~/.bash_login,\n~/.bash_logout y ~/.bashrc.\n• Los archivos de inicio globales /etc/profile, /etc/profile.d/*, /etc/bash.bashrc.\n• Los archivos locales tienen prioridad sobre los globales.\n• Cómo redirigir la salida de un comando con > (sobrescribir) y >> (añadir).\n• El significado del directorio skel.\n• Comprender el funcionamiento de source.\nComandos usados en esta lección:\nbash\nCrear un nuevo shell.\nsu\nCrear un nuevo shell.\nsudo\nCrear un nuevo shell.\nusermod\nModificar una cuenta de usuario.\necho\nImprimir en pantalla una línea de texto.\nps\nCaptura de los procesos actuales.\nless\nUn visualizador para archivos largos.\nssh\nInicie una conexión SSH (remotamente).\nchmod\nCambiar permisos de un archivo, por ejemplo hacerlo ejecutable.\ngrep\nImprime líneas que coincidan con un patrón.\nls\nLista el contenido de un directorio.\ncd\nCambiar de directorio.\nmkdir\nCrear un directorio.\ndeluser\nEliminar un usuario\nadduser\nCrear un nuevo usuario.\n.\nEjecutar un archivo\nsource\nRealiza una ejecución de un archivo con el comando source\ntail\nEmitir la última parte de los archivos.\nResumen\nEn esta lección aprendimos:\n• Las variables son una parte muy importante del entorno del shell ya que son utilizadas por el\npropio shell así como por otros programas.\n• Como asignar y referenciar las variables.\n• Las diferencias entre las variables local y global (o entorno).\n• Como hacer variables sólo lectura.\n• Como convertir una variable local en una variable de entorno con el comando export.\n• Como listar todas las variables de entorno.\n• Como ejecutar un programa en un entorno modificado.\n• Como hacer que las variables sean persistentes con la ayuda de los scripts de inicio.\n• Algunas variables de entorno comunes: DISPLAY, HISTCONTROL, HISTSIZE, HISTFILESIZE,\nHISTFILE, HOME, HOSTNAME, HOSTTYPE, LANG, LD_LIBRARY_PATH, MAIL, MAILCHECK, PATH, PS1\n(y otras variables), SHELL y USER.\n• El significado de la tilde (~).\n• Lo básico de las declaraciones de if.\nComandos usados en esta lección:\necho\nReferencia a una variable.\nls\nLista el contenido de un directorio.\nreadonly\nHacer que las variables sean inmutables. Listar todas las variables de sólo lectura en la sesión\nactual.\nset\nEnumera todas las variables y funciones de la sesión actual.\ngrep\nImprime líneas que coincidan con un patrón.\nbash\nCrear un nuevo shell.\nunset\nRemover variables.\nexport\nConvierte una variable local en una variable de entorno. Enumera las variables de entorno\nenv\nEnumera las variables de entorno. Ejecuta un programa en un entorno modificado.\nprintenv\nEnumera las variables de entorno. Refiere a una variable.\nchmod\nCambiar permisos de un archivo, por ejemplo hacerlo ejecutable.\nhistory\nEnumera los comandos anteriores.\nsu\nCambia la identificación de usuario o lo convierte en superusuario.\nid\nImprime la identificación de usuario.\nResumen\nEn esta lección aprendió:\n• Tanto los alias como las funciones son características importantes de shell que nos permiten\nencapsular bloques de código recurrentes.\n• Los alias son útiles para tener versiones más cortas de comandos largos y/o complicados.\n• Las funciones son procedimientos que implementan la lógica y nos permiten automatizar\ntareas, especialmente cuando se usan en scripts.\n• La sintaxis para escribir alias y funciones.\n• Como concatenar varios comandos por medio del punto y coma (;).\n• Como usar correctamente las comillas con los alias.\n• Como hacer que los alias y las funciones sean persistentes.\n• Variables Bash especiales incorporadas: $?, $$, $!, parámetros de posición ($0-$9), $#, $@, $* y\n$_.\n• Como usar variables y parámetros posicionales con las funciones.\n• Como usar funciones en los scripts.\n• Como invocar una función desde un alias.\n• Como invocar una función desde otra función.\n• Lo básico para crear un script bash.\nComandos y palabras clave utilizadas en esta lección:\nalias\nCrear alias.\nunalias\nEliminar alias.\ncd\nCambiar de directorio.\ngrep\nImprime líneas que coincidan con un patrón.\nfunction\nPalabra clave de Shell para crear funciones\n.\nEjecutar un archivo\nsource\nRealiza una ejecución de un archivo con el comando source\nps\nCaptura de los procesos actuales.\necho\nImprimir en pantalla una línea de texto.\nchmod\nCambiar permisos de un archivo, por ejemplo hacerlo ejecutable.\nunset\nRemover variables and funciones.\nsu\nCambia la identificación de usuario o lo convierte en superusuario."
+    }
+  ]
+}

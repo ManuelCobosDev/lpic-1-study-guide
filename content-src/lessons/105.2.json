@@ -1,0 +1,982 @@
+{
+  "id": "105.2",
+  "topicId": "105",
+  "examId": "102",
+  "title": "Personalizar y escribir scripts sencillos",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 45,
+  "objectives": [
+    "Estructura de scripts Bash, shebang, parámetros posicionales, códigos de salida, condicionales if y case, bucles for/while/until y comando test.",
+    "Dominio técnico de las herramientas y configuración del subtema 105.2"
+  ],
+  "keyTerms": [
+    "Shebang (#!)",
+    "Parámetro posicional",
+    "Código de retorno ($?)",
+    "test (o corchete '[')"
+  ],
+  "commands": [
+    "case",
+    "read"
+  ],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "105.2-slide-1",
+      "slideNumber": 1,
+      "title": "Personalizar y escribir scripts sencillos",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Personalizar y escribir scripts sencillos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Subtema 105.2 · Peso LPI: 4 · Examen LPIC-1 102-500"
+        }
+      ],
+      "notes": "Bienvenido al Subtema 105.2. Aquí aprenderás a estructurar scripts ejecutables, procesar argumentos, evaluar condiciones con test, construir bucles y automatizar tareas administrativas."
+    },
+    {
+      "id": "105.2-slide-2",
+      "slideNumber": 2,
+      "title": "Anatomía de un Script Ejecutable en Bash",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Anatomía de un Script Ejecutable en Bash"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué componentes técnicos convierten un archivo de texto plano en un programa ejecutable?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚙️ Componentes Estructurales de un Script Bash</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Estándar POSIX & Linux</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:11.5px;\">\n    <!-- Bloque 1: Código Fuente y Shebang -->\n    <div style=\"background:#F8FAFC; border:1.5px solid #CBD5E1; border-radius:8px; padding:10px 12px;\">\n      <strong style=\"color:#0F172A; font-size:12px; display:block; margin-bottom:6px;\">1. Estructura Interna del Archivo</strong>\n      <div style=\"background:#0F172A; color:#E2E8F0; border-radius:6px; padding:8px 10px; font-family:monospace; font-size:11px; line-height:1.45;\">\n        <span style=\"color:#38BDF8; font-weight:bold;\">#!/bin/bash</span> <span style=\"color:#94A3B8;\">&larr; Shebang (mágicos 0x23 0x21)</span><br>\n        <span style=\"color:#64748B;\"># Script de copia y mantenimiento</span><br>\n        <span style=\"color:#F59E0B;\">set -e</span> <span style=\"color:#94A3B8;\">&larr; Opcional: aborta si hay error</span><br>\n        <span style=\"color:#4ADE80;\">echo</span> <span style=\"color:#FDE047;\">\"Iniciando respaldo...\"</span><br>\n        <span style=\"color:#38BDF8;\">exit 0</span> <span style=\"color:#94A3B8;\">&larr; Código de salida explícito</span>\n      </div>\n      <div style=\"margin-top:6px; color:#475569; font-size:11px; line-height:1.35;\">\n        • <strong>Shebang:</strong> Indica al kernel la ruta absoluta del intérprete.<br>\n        • Si se omite, la shell actual intentará interpretar los comandos.\n      </div>\n    </div>\n\n    <!-- Bloque 2: Permisos y Ejecución -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:8px; padding:10px 12px;\">\n      <strong style=\"color:#166534; font-size:12px; display:block; margin-bottom:6px;\">2. Permisos y Métodos de Invocación</strong>\n      <div style=\"line-height:1.4; color:#14532D; font-size:11px;\">\n        <div style=\"background:#DCFCE7; padding:6px 8px; border-radius:6px; margin-bottom:6px; border:1px solid #BBF7D0;\">\n          <strong>Paso 1: Asignar permiso de ejecución</strong><br>\n          <code>chmod +x script.sh</code> o <code>chmod 755 script.sh</code>\n        </div>\n        <div style=\"background:#DCFCE7; padding:6px 8px; border-radius:6px; margin-bottom:6px; border:1px solid #BBF7D0;\">\n          <strong>Método A: Ejecución Directa (Usa Shebang)</strong><br>\n          <code>./script.sh</code> &rarr; Requiere permiso de ejecución (<code>x</code>).\n        </div>\n        <div style=\"background:#DCFCE7; padding:6px 8px; border-radius:6px; border:1px solid #BBF7D0;\">\n          <strong>Método B: Invocación Explícita</strong><br>\n          <code>bash script.sh</code> &rarr; Solo requiere permiso de lectura (<code>r</code>).\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para ejecutar directamente './script.sh' son obligatorios dos factores: la línea shebang ('#!/bin/bash') al principio y permisos de ejecución ('chmod +x script.sh')."
+        }
+      ],
+      "notes": "Explica la diferencia entre ejecutar con './script.sh' (requiere permisos +x y lee shebang) y 'bash script.sh' (el ejecutable es bash, solo requiere permiso de lectura)."
+    },
+    {
+      "id": "105.2-slide-3",
+      "slideNumber": 3,
+      "title": "Ubicación de Scripts y la Variable $PATH",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ubicación de Scripts y la Variable $PATH"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué necesitamos escribir './' para ejecutar scripts locales y dónde deben instalarse?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "./backup.sh",
+          "title": "Sintaxis del comando"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "ls -l backup.sh; ./backup.sh",
+              "output": "-rw-r--r-- 1 usuario usuario 120 oct 29 10:00 backup.sh\nbash: ./backup.sh: Permission denied\nusuario@servidor:~$ chmod +x backup.sh\nusuario@servidor:~$ ./backup.sh\n[INFO] Iniciando respaldo en /var/backups... Terminado con éxito."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "",
+              "",
+              "Ejecuta el script indicando explícitamente la ruta relativa."
+            ],
+            [
+              "",
+              "",
+              "Carpeta personal de ejecutables añadida automáticamente al PATH por ~/.profile."
+            ],
+            [
+              "",
+              "",
+              "Directorio estándar FHS para scripts personalizados accesibles a todo el sistema."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Por seguridad, Linux NUNCA incluye el directorio actual (.) en la variable $PATH de root. Por eso es obligatorio anteponer './' para ejecutar un script local."
+        }
+      ],
+      "notes": "Detalla las ubicaciones estándar: ~/bin para scripts personales del usuario y /usr/local/bin para scripts del sistema compartidos."
+    },
+    {
+      "id": "105.2-slide-4",
+      "slideNumber": 4,
+      "title": "Parámetros Posicionales y Variables Mágicas",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Parámetros Posicionales y Variables Mágicas"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo recibe y procesa un script los argumentos pasados en la línea de comandos?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Trampa Clásica de Examen: Para acceder al argumento número 10 o superior se DEBEN usar llaves: '${10}'. Si pones '$10', Bash lo evalúa como '$1' seguido del texto '0'."
+        }
+      ],
+      "notes": "Explica la diferencia entre $* y $@ entre comillas dobles, fundamental en las preguntas LPI."
+    },
+    {
+      "id": "105.2-slide-5",
+      "slideNumber": 5,
+      "title": "Códigos de Salida ($?) y Control con &&, || y ;",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Códigos de Salida ($?) y Control con &&, || y ;"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo comprueban los scripts si un comando tuvo éxito y cómo encadenar acciones?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🚦 Los 3 Operadores de Encadenamiento en Shell</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Evaluación de $?</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:11.5px;\">\n    <!-- Operador && -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <div style=\"font-size:12.5px; font-weight:800; color:#15803D; margin-bottom:4px;\">1. Operador AND (&&)</div>\n      <div style=\"font-family:monospace; background:#DCFCE7; padding:4px 6px; border-radius:4px; color:#166534; font-size:10.5px; margin-bottom:6px;\">\n        cmd1 &amp;&amp; cmd2\n      </div>\n      <div style=\"color:#14532D; line-height:1.35;\">\n        • <strong>Regla:</strong> Ejecuta <code>cmd2</code> <strong>SOLO SI</strong> <code>cmd1</code> tiene éxito (<code>$? == 0</code>).<br>\n        • <em>Ejemplo LPI:</em><br>\n        <code>apt update &amp;&amp; apt upgrade -y</code>\n      </div>\n    </div>\n\n    <!-- Operador || -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px;\">\n      <div style=\"font-size:12.5px; font-weight:800; color:#B91C1C; margin-bottom:4px;\">2. Operador OR (||)</div>\n      <div style=\"font-family:monospace; background:#FEE2E2; padding:4px 6px; border-radius:4px; color:#991B1B; font-size:10.5px; margin-bottom:6px;\">\n        cmd1 || cmd2\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.35;\">\n        • <strong>Regla:</strong> Ejecuta <code>cmd2</code> <strong>SOLO SI</strong> <code>cmd1</code> falla (<code>$? != 0</code>).<br>\n        • <em>Ejemplo LPI:</em><br>\n        <code>cd /var/log || exit 1</code>\n      </div>\n    </div>\n\n    <!-- Operador ; -->\n    <div style=\"background:#F1F5F9; border:1.5px solid #94A3B8; border-radius:8px; padding:10px;\">\n      <div style=\"font-size:12.5px; font-weight:800; color:#334155; margin-bottom:4px;\">3. Secuencial (;)</div>\n      <div style=\"font-family:monospace; background:#E2E8F0; padding:4px 6px; border-radius:4px; color:#1E293B; font-size:10.5px; margin-bottom:6px;\">\n        cmd1 ; cmd2\n      </div>\n      <div style=\"color:#475569; line-height:1.35;\">\n        • <strong>Regla:</strong> Ejecuta <code>cmd1</code> y luego <code>cmd2</code> <strong>SIEMPRE</strong>, sin importar si falló o no.<br>\n        • <em>Ejemplo:</em><br>\n        <code>sync ; reboot</code>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave LPI: '&&' ejecuta el segundo comando SOLO SI el primero devolvió 0 (éxito). '||' ejecuta el segundo SOLO SI el primero devolvió distinto de 0 (fallo)."
+        }
+      ],
+      "notes": "El punto y coma ';' es incondicional: ejecuta ambos comandos secuencialmente sin importar el código de retorno."
+    },
+    {
+      "id": "105.2-slide-6",
+      "slideNumber": 6,
+      "title": "Evaluación con test y [ ... ]: Comprobación de Archivos",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Evaluación con test y [ ... ]: Comprobación de Archivos"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo comprobar si un archivo o directorio existe y qué permisos tiene antes de procesarlo?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Sintáctica de Oro: '[' es en realidad un comando ejecutable. Por ello es OBLIGATORIO dejar un espacio tras '[' y antes de ']'. Escribir '[-f $file]' provoca error de comando no encontrado."
+        }
+      ],
+      "notes": "Detalla las opciones de archivo del comando test que más se preguntan en el examen."
+    },
+    {
+      "id": "105.2-slide-7",
+      "slideNumber": 7,
+      "title": "Comparación: Cadenas de Texto vs Números Enteros",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comparación: Cadenas de Texto vs Números Enteros"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué nunca debes mezclar operadores de texto con operadores numéricos en Bash?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🚨 TRAMPA MORTAL DE EXAMEN: 'test 1 > 2' o '[ 1 > 2 ]' devuelve CÓDIGO 0 (VERDADERO) porque el '>' es interpretado como redirección de salida y crea un archivo '2' en el disco."
+        }
+      ],
+      "notes": "Destaca la diferencia entre '=' (texto) y '-eq' (números), y los operadores de longitud -z y -n."
+    },
+    {
+      "id": "105.2-slide-8",
+      "slideNumber": 8,
+      "title": "Estructuras Condicionales: if, then, elif, else, fi",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Estructuras Condicionales: if, then, elif, else, fi"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo implementar bifurcaciones de control limpias y robustas en scripts de administración?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔀 Flujo de Ejecución Condicional con if / elif / else / fi</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Control Lógico</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1.1fr 0.9fr; gap:12px; font-size:11.5px;\">\n    <!-- Código bash limpio -->\n    <div style=\"background:#0F172A; color:#E2E8F0; border-radius:8px; padding:10px 14px; font-family:monospace; font-size:11px; line-height:1.5;\">\n      <span style=\"color:#38BDF8; font-weight:bold;\">if</span> [ <span style=\"color:#FDE047;\">\"$UID\"</span> <span style=\"color:#F472B6;\">-eq</span> 0 ]; <span style=\"color:#38BDF8; font-weight:bold;\">then</span><br>\n      &nbsp;&nbsp;<span style=\"color:#4ADE80;\">echo</span> <span style=\"color:#FDE047;\">\"Sesión de Administrador (root)\"</span><br>\n      <span style=\"color:#38BDF8; font-weight:bold;\">elif</span> [ <span style=\"color:#FDE047;\">\"$USER\"</span> = <span style=\"color:#FDE047;\">\"operador\"</span> ]; <span style=\"color:#38BDF8; font-weight:bold;\">then</span><br>\n      &nbsp;&nbsp;<span style=\"color:#4ADE80;\">echo</span> <span style=\"color:#FDE047;\">\"Sesión de Operaciones restringida\"</span><br>\n      <span style=\"color:#38BDF8; font-weight:bold;\">else</span><br>\n      &nbsp;&nbsp;<span style=\"color:#4ADE80;\">echo</span> <span style=\"color:#FDE047;\">\"Usuario común: $USER\"</span><br>\n      <span style=\"color:#38BDF8; font-weight:bold;\">fi</span>\n    </div>\n\n    <!-- Puntos clave del diagrama -->\n    <div style=\"display:flex; flex-direction:column; gap:8px;\">\n      <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:8px 10px; color:#1E40AF;\">\n        <strong>1. Condición 'if' inicial:</strong><br>\n        Evalúa el comando o prueba. Si devuelve estado 0 (éxito), ejecuta el bloque tras <code>then</code>.\n      </div>\n      <div style=\"background:#FEF3C7; border:1px solid #FDE68A; border-radius:6px; padding:8px 10px; color:#92400E;\">\n        <strong>2. Alternativa 'elif':</strong><br>\n        Si la condición previa falló, evalúa esta segunda prueba antes de caer en el caso general.\n      </div>\n      <div style=\"background:#F1F5F9; border:1px solid #CBD5E1; border-radius:6px; padding:8px 10px; color:#334155;\">\n        <strong>3. Cierre obligatorio 'fi':</strong><br>\n        Finaliza el bloque condicional. Si falta <code>fi</code>, la shell genera un error fatal de sintaxis.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Cada bloque 'if' DEBE cerrarse con 'fi' (if escrito al revés). La cláusula 'then' puede ir en la misma línea usando punto y coma: 'if [ ... ]; then'."
+        }
+      ],
+      "notes": "Muestra el flujo de toma de decisiones y el uso de elif y else."
+    },
+    {
+      "id": "105.2-slide-9",
+      "slideNumber": 9,
+      "title": "Selección Múltiple con case ... in ... esac",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Selección Múltiple con case ... in ... esac"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo estructurar menús y ramas múltiples de forma limpia sin anidar decenas de 'if'?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "case \"$1\" in start) ... ;; stop) ... ;; *) ... ;; esac",
+          "title": "Sintaxis del comando"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "./servicio.sh status",
+              "output": "[INFO] Comprobando estado del demonio web...\nEstado: ACTIVO (PID 1420)\nusuario@servidor:~$ ./servicio.sh restart\nReiniciando demonio web... [OK]\nusuario@servidor:~$ ./servicio.sh opcion_invalida\nUso: ./servicio.sh {start|stop|restart|status}"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "",
+              "",
+              "Termina la cláusula actual y sale del bloque case."
+            ],
+            [
+              "",
+              "",
+              "Captura cualquier valor no contemplado previamente (equivalente al 'else')."
+            ],
+            [
+              "",
+              "",
+              "Coincide si el valor es p1 o p2."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Cada rama de opciones en un 'case' DEBE terminar obligatoriamente con DOBLE PUNTO Y COMA ';;'. El bloque entero se cierra con 'esac'."
+        }
+      ],
+      "notes": "Los patrones en case admiten comodines como '|' para OR o '*' para comodín por defecto."
+    },
+    {
+      "id": "105.2-slide-10",
+      "slideNumber": 10,
+      "title": "Bucles e Iteraciones: for, while y until",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Bucles e Iteraciones: for, while y until"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo repetir tareas automatizadas sobre listas de archivos, secuencias o condiciones de estado?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔁 Las 3 Construcciones de Bucles en Bash</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">do ... done</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:11.5px;\">\n    <!-- Bucle FOR -->\n    <div style=\"background:#F8FAFC; border:1.5px solid #CBD5E1; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#0F172A; font-size:12px; display:block; margin-bottom:4px;\">1. Bucle 'for'</strong>\n      <div style=\"color:#475569; font-size:10.5px; margin-bottom:6px;\">Itera sobre una lista predefinida:</div>\n      <div style=\"background:#0F172A; color:#E2E8F0; padding:6px 8px; border-radius:6px; font-family:monospace; font-size:10px; line-height:1.4;\">\n        <span style=\"color:#38BDF8;\">for</span> f <span style=\"color:#38BDF8;\">in</span> *.log; <span style=\"color:#38BDF8;\">do</span><br>\n        &nbsp;&nbsp;gzip <span style=\"color:#FDE047;\">\"$f\"</span><br>\n        <span style=\"color:#38BDF8;\">done</span>\n      </div>\n      <div style=\"margin-top:6px; color:#334155; font-size:10.5px;\">\n        • Con secuencias: <code>$(seq 1 5)</code><br>\n        • Con argumentos: <code>for a in \"$@\"</code>\n      </div>\n    </div>\n\n    <!-- Bucle WHILE -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF; font-size:12px; display:block; margin-bottom:4px;\">2. Bucle 'while'</strong>\n      <div style=\"color:#1E3A8A; font-size:10.5px; margin-bottom:6px;\">Repite mientras sea VERDADERO:</div>\n      <div style=\"background:#0F172A; color:#E2E8F0; padding:6px 8px; border-radius:6px; font-family:monospace; font-size:10px; line-height:1.4;\">\n        <span style=\"color:#38BDF8;\">while</span> [ <span style=\"color:#FDE047;\">$C</span> <span style=\"color:#F472B6;\">-lt</span> 10 ]; <span style=\"color:#38BDF8;\">do</span><br>\n        &nbsp;&nbsp;<span style=\"color:#4ADE80;\">echo</span> <span style=\"color:#FDE047;\">\"$C\"</span><br>\n        &nbsp;&nbsp;C=$(( <span style=\"color:#FDE047;\">$C</span> + 1 ))<br>\n        <span style=\"color:#38BDF8;\">done</span>\n      </div>\n      <div style=\"margin-top:6px; color:#1E3A8A; font-size:10.5px;\">\n        • ⚠️ ¡Obligatorio incrementar el contador para no crear un bucle infinito!\n      </div>\n    </div>\n\n    <!-- Bucle UNTIL -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#166534; font-size:12px; display:block; margin-bottom:4px;\">3. Bucle 'until'</strong>\n      <div style=\"color:#14532D; font-size:10.5px; margin-bottom:6px;\">Repite hasta que sea VERDADERO:</div>\n      <div style=\"background:#0F172A; color:#E2E8F0; padding:6px 8px; border-radius:6px; font-family:monospace; font-size:10px; line-height:1.4;\">\n        <span style=\"color:#38BDF8;\">until</span> ping -c1 host; <span style=\"color:#38BDF8;\">do</span><br>\n        &nbsp;&nbsp;sleep 2<br>\n        <span style=\"color:#38BDF8;\">done</span>\n      </div>\n      <div style=\"margin-top:6px; color:#14532D; font-size:10.5px;\">\n        • Ideal para esperar que un servicio o máquina remota levante la red.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave LPIC-1: 'while' se repite MIENTRAS la condición sea verdadera ($? = 0). 'until' se repite HASTA QUE la condición sea verdadera (se ejecuta mientras sea falsa)."
+        }
+      ],
+      "notes": "Explica la sintaxis de bucle con do y done, el uso de seq y la aritmética $(( ))."
+    },
+    {
+      "id": "105.2-slide-11",
+      "slideNumber": 11,
+      "title": "Interacción con read, Sustitución $() y Alertas con mail",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Interacción con read, Sustitución $() y Alertas con mail"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo solicitar datos al usuario, capturar salidas de comandos y alertar al administrador?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "read -s -p \"Password: \" PASS",
+          "title": "Sintaxis del comando"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "read -p 'Servidor destino: ' HOST; read -s -p 'Clave SSH: ' PASS; echo ''",
+              "output": "Servidor destino: nodo01.empresa.local\nClave SSH: \nroot@servidor:~# WHO=$(whoami); echo \"Script ejecutado por: $WHO\"\nScript ejecutado por: root"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "",
+              "",
+              "Modo silencioso (preguntado explícitamente en el manual LPI)."
+            ],
+            [
+              "",
+              "",
+              "Sustitución de comandos estándar POSIX moderna (permite anidamiento)."
+            ],
+            [
+              "",
+              "",
+              "Envía correo de alerta al superusuario ante errores inesperados."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: La opción '-s' de 'read' silencia la entrada en el terminal (ideal para passwords). Para capturar salidas, prefiere '$(cmd)' frente a acentos graves '`cmd`'."
+        }
+      ],
+      "notes": "Muestra también cómo usar mail para enviar avisos condicionales en scripts desatendidos de mantenimiento."
+    },
+    {
+      "id": "105.2-slide-12",
+      "slideNumber": 12,
+      "title": "Ejercicio Guiado 1: Depuración de Bucle while Infinito",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicio Guiado 1: Depuración de Bucle while Infinito"
+        },
+        {
+          "type": "paragraph",
+          "text": "El siguiente script oficial del manual LPI debe imprimir del 0 al 9, pero se queda colgado imprimiendo ceros."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla LPI: En Bash, la aritmética se realiza con la sintaxis '$(( expresión ))' o mediante el comando interno 'let'. Sin incremento, un while nunca cumplirá su condición de salida."
+        }
+      ],
+      "notes": "Ejercicio tomado directamente de la pág. 129 del manual oficial LPI 102."
+    },
+    {
+      "id": "105.2-slide-13",
+      "slideNumber": 13,
+      "title": "Ejercicio Guiado 2: Comparación Temporal y Localización (LANG)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicio Guiado 2: Comparación Temporal y Localización (LANG)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Analiza dos escenarios del manual oficial: comparación de versiones de archivo y consistencia de ordenación."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave LPI: El operador '-nt' (Newer Than) evalúa marcas de tiempo. La ordenación de texto cambia según la región del sistema; para ordenaciones consistentes usa 'LANG=C'."
+        }
+      ],
+      "notes": "Basado en los ejercicios guiados oficiales de las páginas 129 y 130 del manual LPI."
+    },
+    {
+      "id": "105.2-slide-14",
+      "slideNumber": 14,
+      "title": "Retos de Exploración: Nombre de Invocación y la Redirección 'test 1 > 2'",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Retos de Exploración: Nombre de Invocación y la Redirección 'test 1 > 2'"
+        },
+        {
+          "type": "paragraph",
+          "text": "Dos enigmas de comportamiento de shell que suelen costar puntos en el examen de certificación LPIC-1."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Claves Críticas:\n1. $0 almacena el nombre con el que se llamó al script (clave para symlinks do.sh / undo.sh).\n2. 'test 1 > 2' crea un archivo '2' por redirección y evalúa a verdadero."
+        }
+      ],
+      "notes": "Preguntas directas de exploración de las páginas 109 y 127 del manual oficial."
+    },
+    {
+      "id": "105.2-slide-15",
+      "slideNumber": 15,
+      "title": "Pregunta de Examen 1: Parámetros Posicionales Superiores a 9",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen 1: Parámetros Posicionales Superiores a 9"
+        },
+        {
+          "type": "paragraph",
+          "text": "Comprueba tu preparación para el examen oficial LPIC-1 102-500."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave: A partir del argumento 10, las llaves son OBLIGATORIAS: ${10}, ${11}, etc."
+        }
+      ],
+      "notes": "Pregunta típica de examen de selección múltiple."
+    },
+    {
+      "id": "105.2-slide-16",
+      "slideNumber": 16,
+      "title": "Pregunta de Examen 2: Operadores de Comparación en [ ... ]",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen 2: Operadores de Comparación en [ ... ]"
+        },
+        {
+          "type": "paragraph",
+          "text": "Diferenciación entre operadores de texto y de enteros en el comando test."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave: Comparación numérica = -eq, -ne, -lt, -gt, -le, -ge. Comparación texto = '=', '!='."
+        }
+      ],
+      "notes": "Pregunta fundamental sobre la sintaxis de corchetes en Bash."
+    },
+    {
+      "id": "105.2-slide-17",
+      "slideNumber": 17,
+      "title": "Pregunta de Examen 3: Control de Flujo con Códigos de Retorno",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen 3: Control de Flujo con Códigos de Retorno"
+        },
+        {
+          "type": "paragraph",
+          "text": "Encadenamiento condicional con operadores lógicos en línea de comandos."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave: cmd1 && cmd2 ejecuta cmd2 únicamente si cmd1 devuelve código 0 (éxito)."
+        }
+      ],
+      "notes": "Pregunta tomada del ejercicio de la lección 105.2."
+    },
+    {
+      "id": "105.2-slide-18",
+      "slideNumber": 18,
+      "title": "Baraja de Memorización: 8 Conceptos Clave de Scripting",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Baraja de Memorización: 8 Conceptos Clave de Scripting"
+        },
+        {
+          "type": "paragraph",
+          "text": "Repaso mnemotécnico interactivo de conceptos indispensables para el examen LPIC-1."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🧠 Pasa cada tarjeta mentalmente antes de voltearla para comprobar tu retención activa."
+        }
+      ],
+      "notes": "8 tarjetas con los conceptos más preguntados de 105.2."
+    },
+    {
+      "id": "105.2-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen de Unidad 105.2: Automatización y Scripts Bash",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen de Unidad 105.2: Automatización y Scripts Bash"
+        },
+        {
+          "type": "paragraph",
+          "text": "Conceptos dominados, comandos prioritarios para examen y acceso a la práctica de laboratorio."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Resumen Maestro: Un script combina shebang + chmod +x + parámetros posicionales ($0..${10}) + pruebas con [ ... ] + control de flujo con if/case/while."
+        }
+      ],
+      "notes": "Cierre de la unidad 105.2 con enlaces a la práctica de laboratorio interactiva."
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-105-2-1",
+      "title": "Anatomía de un Script Ejecutable en Bash",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Anatomía de un Script Ejecutable en Bash"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué componentes técnicos convierten un archivo de texto plano en un programa ejecutable?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚙️ Componentes Estructurales de un Script Bash</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Estándar POSIX & Linux</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:11.5px;\">\n    <!-- Bloque 1: Código Fuente y Shebang -->\n    <div style=\"background:#F8FAFC; border:1.5px solid #CBD5E1; border-radius:8px; padding:10px 12px;\">\n      <strong style=\"color:#0F172A; font-size:12px; display:block; margin-bottom:6px;\">1. Estructura Interna del Archivo</strong>\n      <div style=\"background:#0F172A; color:#E2E8F0; border-radius:6px; padding:8px 10px; font-family:monospace; font-size:11px; line-height:1.45;\">\n        <span style=\"color:#38BDF8; font-weight:bold;\">#!/bin/bash</span> <span style=\"color:#94A3B8;\">&larr; Shebang (mágicos 0x23 0x21)</span><br>\n        <span style=\"color:#64748B;\"># Script de copia y mantenimiento</span><br>\n        <span style=\"color:#F59E0B;\">set -e</span> <span style=\"color:#94A3B8;\">&larr; Opcional: aborta si hay error</span><br>\n        <span style=\"color:#4ADE80;\">echo</span> <span style=\"color:#FDE047;\">\"Iniciando respaldo...\"</span><br>\n        <span style=\"color:#38BDF8;\">exit 0</span> <span style=\"color:#94A3B8;\">&larr; Código de salida explícito</span>\n      </div>\n      <div style=\"margin-top:6px; color:#475569; font-size:11px; line-height:1.35;\">\n        • <strong>Shebang:</strong> Indica al kernel la ruta absoluta del intérprete.<br>\n        • Si se omite, la shell actual intentará interpretar los comandos.\n      </div>\n    </div>\n\n    <!-- Bloque 2: Permisos y Ejecución -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:8px; padding:10px 12px;\">\n      <strong style=\"color:#166534; font-size:12px; display:block; margin-bottom:6px;\">2. Permisos y Métodos de Invocación</strong>\n      <div style=\"line-height:1.4; color:#14532D; font-size:11px;\">\n        <div style=\"background:#DCFCE7; padding:6px 8px; border-radius:6px; margin-bottom:6px; border:1px solid #BBF7D0;\">\n          <strong>Paso 1: Asignar permiso de ejecución</strong><br>\n          <code>chmod +x script.sh</code> o <code>chmod 755 script.sh</code>\n        </div>\n        <div style=\"background:#DCFCE7; padding:6px 8px; border-radius:6px; margin-bottom:6px; border:1px solid #BBF7D0;\">\n          <strong>Método A: Ejecución Directa (Usa Shebang)</strong><br>\n          <code>./script.sh</code> &rarr; Requiere permiso de ejecución (<code>x</code>).\n        </div>\n        <div style=\"background:#DCFCE7; padding:6px 8px; border-radius:6px; border:1px solid #BBF7D0;\">\n          <strong>Método B: Invocación Explícita</strong><br>\n          <code>bash script.sh</code> &rarr; Solo requiere permiso de lectura (<code>r</code>).\n        </div>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para ejecutar directamente './script.sh' son obligatorios dos factores: la línea shebang ('#!/bin/bash') al principio y permisos de ejecución ('chmod +x script.sh')."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-2-2",
+      "title": "Ubicación de Scripts y la Variable $PATH",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ubicación de Scripts y la Variable $PATH"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué necesitamos escribir './' para ejecutar scripts locales y dónde deben instalarse?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "./backup.sh",
+          "title": "Sintaxis del comando"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "ls -l backup.sh; ./backup.sh",
+              "output": "-rw-r--r-- 1 usuario usuario 120 oct 29 10:00 backup.sh\nbash: ./backup.sh: Permission denied\nusuario@servidor:~$ chmod +x backup.sh\nusuario@servidor:~$ ./backup.sh\n[INFO] Iniciando respaldo en /var/backups... Terminado con éxito."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "",
+              "",
+              "Ejecuta el script indicando explícitamente la ruta relativa."
+            ],
+            [
+              "",
+              "",
+              "Carpeta personal de ejecutables añadida automáticamente al PATH por ~/.profile."
+            ],
+            [
+              "",
+              "",
+              "Directorio estándar FHS para scripts personalizados accesibles a todo el sistema."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Por seguridad, Linux NUNCA incluye el directorio actual (.) en la variable $PATH de root. Por eso es obligatorio anteponer './' para ejecutar un script local."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-2-3",
+      "title": "Parámetros Posicionales y Variables Mágicas",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Parámetros Posicionales y Variables Mágicas"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo recibe y procesa un script los argumentos pasados en la línea de comandos?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Trampa Clásica de Examen: Para acceder al argumento número 10 o superior se DEBEN usar llaves: '${10}'. Si pones '$10', Bash lo evalúa como '$1' seguido del texto '0'."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-2-4",
+      "title": "Códigos de Salida ($?) y Control con &&, || y ;",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Códigos de Salida ($?) y Control con &&, || y ;"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo comprueban los scripts si un comando tuvo éxito y cómo encadenar acciones?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🚦 Los 3 Operadores de Encadenamiento en Shell</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Evaluación de $?</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:11.5px;\">\n    <!-- Operador && -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <div style=\"font-size:12.5px; font-weight:800; color:#15803D; margin-bottom:4px;\">1. Operador AND (&&)</div>\n      <div style=\"font-family:monospace; background:#DCFCE7; padding:4px 6px; border-radius:4px; color:#166534; font-size:10.5px; margin-bottom:6px;\">\n        cmd1 &amp;&amp; cmd2\n      </div>\n      <div style=\"color:#14532D; line-height:1.35;\">\n        • <strong>Regla:</strong> Ejecuta <code>cmd2</code> <strong>SOLO SI</strong> <code>cmd1</code> tiene éxito (<code>$? == 0</code>).<br>\n        • <em>Ejemplo LPI:</em><br>\n        <code>apt update &amp;&amp; apt upgrade -y</code>\n      </div>\n    </div>\n\n    <!-- Operador || -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px;\">\n      <div style=\"font-size:12.5px; font-weight:800; color:#B91C1C; margin-bottom:4px;\">2. Operador OR (||)</div>\n      <div style=\"font-family:monospace; background:#FEE2E2; padding:4px 6px; border-radius:4px; color:#991B1B; font-size:10.5px; margin-bottom:6px;\">\n        cmd1 || cmd2\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.35;\">\n        • <strong>Regla:</strong> Ejecuta <code>cmd2</code> <strong>SOLO SI</strong> <code>cmd1</code> falla (<code>$? != 0</code>).<br>\n        • <em>Ejemplo LPI:</em><br>\n        <code>cd /var/log || exit 1</code>\n      </div>\n    </div>\n\n    <!-- Operador ; -->\n    <div style=\"background:#F1F5F9; border:1.5px solid #94A3B8; border-radius:8px; padding:10px;\">\n      <div style=\"font-size:12.5px; font-weight:800; color:#334155; margin-bottom:4px;\">3. Secuencial (;)</div>\n      <div style=\"font-family:monospace; background:#E2E8F0; padding:4px 6px; border-radius:4px; color:#1E293B; font-size:10.5px; margin-bottom:6px;\">\n        cmd1 ; cmd2\n      </div>\n      <div style=\"color:#475569; line-height:1.35;\">\n        • <strong>Regla:</strong> Ejecuta <code>cmd1</code> y luego <code>cmd2</code> <strong>SIEMPRE</strong>, sin importar si falló o no.<br>\n        • <em>Ejemplo:</em><br>\n        <code>sync ; reboot</code>\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave LPI: '&&' ejecuta el segundo comando SOLO SI el primero devolvió 0 (éxito). '||' ejecuta el segundo SOLO SI el primero devolvió distinto de 0 (fallo)."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-2-5",
+      "title": "Evaluación con test y [ ... ]: Comprobación de Archivos",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Evaluación con test y [ ... ]: Comprobación de Archivos"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo comprobar si un archivo o directorio existe y qué permisos tiene antes de procesarlo?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Sintáctica de Oro: '[' es en realidad un comando ejecutable. Por ello es OBLIGATORIO dejar un espacio tras '[' y antes de ']'. Escribir '[-f $file]' provoca error de comando no encontrado."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-2-6",
+      "title": "Comparación: Cadenas de Texto vs Números Enteros",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comparación: Cadenas de Texto vs Números Enteros"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué nunca debes mezclar operadores de texto con operadores numéricos en Bash?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🚨 TRAMPA MORTAL DE EXAMEN: 'test 1 > 2' o '[ 1 > 2 ]' devuelve CÓDIGO 0 (VERDADERO) porque el '>' es interpretado como redirección de salida y crea un archivo '2' en el disco."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-2-7",
+      "title": "Estructuras Condicionales: if, then, elif, else, fi",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Estructuras Condicionales: if, then, elif, else, fi"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo implementar bifurcaciones de control limpias y robustas en scripts de administración?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔀 Flujo de Ejecución Condicional con if / elif / else / fi</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Control Lógico</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1.1fr 0.9fr; gap:12px; font-size:11.5px;\">\n    <!-- Código bash limpio -->\n    <div style=\"background:#0F172A; color:#E2E8F0; border-radius:8px; padding:10px 14px; font-family:monospace; font-size:11px; line-height:1.5;\">\n      <span style=\"color:#38BDF8; font-weight:bold;\">if</span> [ <span style=\"color:#FDE047;\">\"$UID\"</span> <span style=\"color:#F472B6;\">-eq</span> 0 ]; <span style=\"color:#38BDF8; font-weight:bold;\">then</span><br>\n      &nbsp;&nbsp;<span style=\"color:#4ADE80;\">echo</span> <span style=\"color:#FDE047;\">\"Sesión de Administrador (root)\"</span><br>\n      <span style=\"color:#38BDF8; font-weight:bold;\">elif</span> [ <span style=\"color:#FDE047;\">\"$USER\"</span> = <span style=\"color:#FDE047;\">\"operador\"</span> ]; <span style=\"color:#38BDF8; font-weight:bold;\">then</span><br>\n      &nbsp;&nbsp;<span style=\"color:#4ADE80;\">echo</span> <span style=\"color:#FDE047;\">\"Sesión de Operaciones restringida\"</span><br>\n      <span style=\"color:#38BDF8; font-weight:bold;\">else</span><br>\n      &nbsp;&nbsp;<span style=\"color:#4ADE80;\">echo</span> <span style=\"color:#FDE047;\">\"Usuario común: $USER\"</span><br>\n      <span style=\"color:#38BDF8; font-weight:bold;\">fi</span>\n    </div>\n\n    <!-- Puntos clave del diagrama -->\n    <div style=\"display:flex; flex-direction:column; gap:8px;\">\n      <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:8px 10px; color:#1E40AF;\">\n        <strong>1. Condición 'if' inicial:</strong><br>\n        Evalúa el comando o prueba. Si devuelve estado 0 (éxito), ejecuta el bloque tras <code>then</code>.\n      </div>\n      <div style=\"background:#FEF3C7; border:1px solid #FDE68A; border-radius:6px; padding:8px 10px; color:#92400E;\">\n        <strong>2. Alternativa 'elif':</strong><br>\n        Si la condición previa falló, evalúa esta segunda prueba antes de caer en el caso general.\n      </div>\n      <div style=\"background:#F1F5F9; border:1px solid #CBD5E1; border-radius:6px; padding:8px 10px; color:#334155;\">\n        <strong>3. Cierre obligatorio 'fi':</strong><br>\n        Finaliza el bloque condicional. Si falta <code>fi</code>, la shell genera un error fatal de sintaxis.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Cada bloque 'if' DEBE cerrarse con 'fi' (if escrito al revés). La cláusula 'then' puede ir en la misma línea usando punto y coma: 'if [ ... ]; then'."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-2-8",
+      "title": "Selección Múltiple con case ... in ... esac",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Selección Múltiple con case ... in ... esac"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo estructurar menús y ramas múltiples de forma limpia sin anidar decenas de 'if'?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "case \"$1\" in start) ... ;; stop) ... ;; *) ... ;; esac",
+          "title": "Sintaxis del comando"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "./servicio.sh status",
+              "output": "[INFO] Comprobando estado del demonio web...\nEstado: ACTIVO (PID 1420)\nusuario@servidor:~$ ./servicio.sh restart\nReiniciando demonio web... [OK]\nusuario@servidor:~$ ./servicio.sh opcion_invalida\nUso: ./servicio.sh {start|stop|restart|status}"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "",
+              "",
+              "Termina la cláusula actual y sale del bloque case."
+            ],
+            [
+              "",
+              "",
+              "Captura cualquier valor no contemplado previamente (equivalente al 'else')."
+            ],
+            [
+              "",
+              "",
+              "Coincide si el valor es p1 o p2."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Cada rama de opciones en un 'case' DEBE terminar obligatoriamente con DOBLE PUNTO Y COMA ';;'. El bloque entero se cierra con 'esac'."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-2-9",
+      "title": "Bucles e Iteraciones: for, while y until",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Bucles e Iteraciones: for, while y until"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo repetir tareas automatizadas sobre listas de archivos, secuencias o condiciones de estado?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔁 Las 3 Construcciones de Bucles en Bash</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">do ... done</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:11.5px;\">\n    <!-- Bucle FOR -->\n    <div style=\"background:#F8FAFC; border:1.5px solid #CBD5E1; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#0F172A; font-size:12px; display:block; margin-bottom:4px;\">1. Bucle 'for'</strong>\n      <div style=\"color:#475569; font-size:10.5px; margin-bottom:6px;\">Itera sobre una lista predefinida:</div>\n      <div style=\"background:#0F172A; color:#E2E8F0; padding:6px 8px; border-radius:6px; font-family:monospace; font-size:10px; line-height:1.4;\">\n        <span style=\"color:#38BDF8;\">for</span> f <span style=\"color:#38BDF8;\">in</span> *.log; <span style=\"color:#38BDF8;\">do</span><br>\n        &nbsp;&nbsp;gzip <span style=\"color:#FDE047;\">\"$f\"</span><br>\n        <span style=\"color:#38BDF8;\">done</span>\n      </div>\n      <div style=\"margin-top:6px; color:#334155; font-size:10.5px;\">\n        • Con secuencias: <code>$(seq 1 5)</code><br>\n        • Con argumentos: <code>for a in \"$@\"</code>\n      </div>\n    </div>\n\n    <!-- Bucle WHILE -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF; font-size:12px; display:block; margin-bottom:4px;\">2. Bucle 'while'</strong>\n      <div style=\"color:#1E3A8A; font-size:10.5px; margin-bottom:6px;\">Repite mientras sea VERDADERO:</div>\n      <div style=\"background:#0F172A; color:#E2E8F0; padding:6px 8px; border-radius:6px; font-family:monospace; font-size:10px; line-height:1.4;\">\n        <span style=\"color:#38BDF8;\">while</span> [ <span style=\"color:#FDE047;\">$C</span> <span style=\"color:#F472B6;\">-lt</span> 10 ]; <span style=\"color:#38BDF8;\">do</span><br>\n        &nbsp;&nbsp;<span style=\"color:#4ADE80;\">echo</span> <span style=\"color:#FDE047;\">\"$C\"</span><br>\n        &nbsp;&nbsp;C=$(( <span style=\"color:#FDE047;\">$C</span> + 1 ))<br>\n        <span style=\"color:#38BDF8;\">done</span>\n      </div>\n      <div style=\"margin-top:6px; color:#1E3A8A; font-size:10.5px;\">\n        • ⚠️ ¡Obligatorio incrementar el contador para no crear un bucle infinito!\n      </div>\n    </div>\n\n    <!-- Bucle UNTIL -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#166534; font-size:12px; display:block; margin-bottom:4px;\">3. Bucle 'until'</strong>\n      <div style=\"color:#14532D; font-size:10.5px; margin-bottom:6px;\">Repite hasta que sea VERDADERO:</div>\n      <div style=\"background:#0F172A; color:#E2E8F0; padding:6px 8px; border-radius:6px; font-family:monospace; font-size:10px; line-height:1.4;\">\n        <span style=\"color:#38BDF8;\">until</span> ping -c1 host; <span style=\"color:#38BDF8;\">do</span><br>\n        &nbsp;&nbsp;sleep 2<br>\n        <span style=\"color:#38BDF8;\">done</span>\n      </div>\n      <div style=\"margin-top:6px; color:#14532D; font-size:10.5px;\">\n        • Ideal para esperar que un servicio o máquina remota levante la red.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave LPIC-1: 'while' se repite MIENTRAS la condición sea verdadera ($? = 0). 'until' se repite HASTA QUE la condición sea verdadera (se ejecuta mientras sea falsa)."
+        }
+      ]
+    },
+    {
+      "id": "sec-105-2-10",
+      "title": "Interacción con read, Sustitución $() y Alertas con mail",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Interacción con read, Sustitución $() y Alertas con mail"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo solicitar datos al usuario, capturar salidas de comandos y alertar al administrador?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "read -s -p \"Password: \" PASS",
+          "title": "Sintaxis del comando"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "read -p 'Servidor destino: ' HOST; read -s -p 'Clave SSH: ' PASS; echo ''",
+              "output": "Servidor destino: nodo01.empresa.local\nClave SSH: \nroot@servidor:~# WHO=$(whoami); echo \"Script ejecutado por: $WHO\"\nScript ejecutado por: root"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "",
+              "",
+              "Modo silencioso (preguntado explícitamente en el manual LPI)."
+            ],
+            [
+              "",
+              "",
+              "Sustitución de comandos estándar POSIX moderna (permite anidamiento)."
+            ],
+            [
+              "",
+              "",
+              "Envía correo de alerta al superusuario ante errores inesperados."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: La opción '-s' de 'read' silencia la entrada en el terminal (ideal para passwords). Para capturar salidas, prefiere '$(cmd)' frente a acentos graves '`cmd`'."
+        }
+      ]
+    }
+  ]
+}

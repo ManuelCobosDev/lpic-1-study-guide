@@ -1,0 +1,147 @@
+<div class="exam-page-container">
+  <!-- Barra sticky superior del temporizador -->
+  <app-timer-bar
+    [remainingSeconds]="remainingSeconds()"
+    [totalSeconds]="activeSession()?.durationSeconds ?? 5400"
+    [currentIndex]="currentIndex()"
+    [totalQuestions]="questions().length"
+    [isPractice]="false"
+    (finishExam)="openFinishDialog()"
+  />
+
+  @if (questions().length > 0 && currentQuestion()) {
+    <main class="exam-body-layout">
+      <!-- Columna central: Pregunta y navegación -->
+      <section class="question-column" aria-label="Pregunta del examen">
+        <app-question-card
+          [question]="currentQuestion()!"
+          [questionNumber]="currentIndex() + 1"
+          [totalQuestions]="questions().length"
+          [answer]="currentAnswer()"
+          [isFlagged]="isCurrentFlagged()"
+          [mode]="'exam'"
+          (answerChanged)="handleAnswerChange($event)"
+          (toggleFlag)="handleToggleFlag()"
+        />
+
+        <!-- Controles de navegación inferior -->
+        <nav class="exam-nav-footer" aria-label="Navegación entre preguntas">
+          <app-button
+            variant="secondary"
+            size="md"
+            [disabled]="currentIndex() === 0"
+            (btnClick)="prevQuestion()"
+            aria-label="Ir a la pregunta anterior"
+          >
+            ← Anterior
+          </app-button>
+
+          <span class="nav-question-counter">
+            Pregunta {{ currentIndex() + 1 }} de {{ questions().length }}
+          </span>
+
+          <app-button
+            variant="primary"
+            size="md"
+            [disabled]="currentIndex() >= questions().length - 1"
+            (btnClick)="nextQuestion()"
+            aria-label="Ir a la pregunta siguiente"
+          >
+            Siguiente →
+          </app-button>
+        </nav>
+      </section>
+
+      <!-- Columna lateral derecha / Cajón móvil: Navegador de preguntas -->
+      <aside class="navigator-column">
+        <app-question-navigator
+          [questions]="questions()"
+          [currentIndex]="currentIndex()"
+          [answers]="answers()"
+          [mode]="'exam'"
+          (selectQuestion)="handleSelectQuestion($event)"
+        />
+      </aside>
+    </main>
+  } @else {
+    <div class="exam-empty-state" role="status" aria-live="polite">
+      <p>Cargando preguntas del examen...</p>
+    </div>
+  }
+
+  <!-- Diálogo modal de confirmación de entrega del examen -->
+  @if (isFinishDialogOpen()) {
+    <div
+      class="dialog-backdrop"
+      (click)="closeFinishDialog()"
+      aria-hidden="true"
+    ></div>
+
+    <div
+      class="finish-dialog"
+      role="dialog"
+      aria-labelledby="finish-dialog-title"
+      aria-modal="true"
+    >
+      <header class="dialog-header">
+        <h3 id="finish-dialog-title" class="dialog-title">¿Finalizar el simulacro de examen?</h3>
+      </header>
+
+      <div class="dialog-body">
+        <p class="dialog-description">
+          Al entregar el examen se evaluarán todas tus respuestas con el baremo oficial LPI y se generará tu informe de resultados con puntuación entre 200 y 800.
+        </p>
+
+        <!-- Resumen de estado de las preguntas -->
+        <div class="dialog-summary" role="region" aria-label="Resumen de preguntas">
+          <div class="summary-row">
+            <span class="summary-label">Preguntas respondidas:</span>
+            <span class="summary-val font-mono">
+              <strong>{{ answeredCount() }}</strong> / {{ questions().length }}
+            </span>
+          </div>
+
+          @if (unansweredCount() > 0) {
+            <div class="summary-row warning-row">
+              <span class="summary-label">⚠️ Preguntas sin responder:</span>
+              <span class="summary-val font-mono">
+                <strong>{{ unansweredCount() }}</strong>
+              </span>
+            </div>
+          }
+
+          @if (flaggedCount() > 0) {
+            <div class="summary-row flagged-row">
+              <span class="summary-label">🚩 Preguntas marcadas para revisión:</span>
+              <span class="summary-val font-mono">
+                <strong>{{ flaggedCount() }}</strong>
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <footer class="dialog-footer">
+        <app-button
+          variant="ghost"
+          size="md"
+          (btnClick)="closeFinishDialog()"
+          aria-label="Continuar en el examen"
+        >
+          Continuar examen
+        </app-button>
+
+        <app-button
+          variant="warning"
+          size="md"
+          [loading]="isSubmitting()"
+          (btnClick)="confirmFinishExam()"
+          aria-label="Confirmar entrega definitiva del examen"
+        >
+          Entregar examen
+        </app-button>
+      </footer>
+    </div>
+  }
+</div>
+

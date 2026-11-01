@@ -1,0 +1,1128 @@
+{
+  "id": "107.3",
+  "topicId": "107",
+  "examId": "102",
+  "title": "Localización e internacionalización",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 35,
+  "objectives": [
+    "Configuración regional y lingüística de Linux: zonas horarias, /etc/localtime, /usr/share/zoneinfo/, timedatectl, tzselect, jerarquía de variables LANG y LC_*, comando locale, codificación de caracteres ASCII, ISO-8859, UTF-8 y conversión con iconv.",
+    "Dominio técnico de las herramientas y configuración del subtema 107.3"
+  ],
+  "keyTerms": [
+    "/etc/localtime",
+    "/usr/share/zoneinfo/",
+    "timedatectl",
+    "LANG",
+    "LC_ALL",
+    "LC_MESSAGES",
+    "LC_COLLATE",
+    "UTF-8",
+    "iconv"
+  ],
+  "commands": [],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "107.3-slide-1",
+      "slideNumber": 1,
+      "title": "Localización e internacionalización",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Localización e internacionalización"
+        },
+        {
+          "type": "paragraph",
+          "text": "Subtema 107.3 · Peso LPI: 3 · Examen LPIC-1 102-500"
+        }
+      ],
+      "notes": "Bienvenido al Subtema 107.3. Cubre la gestión de zonas horarias, bases de datos tzdata, timedatectl, variables de entorno de locale (LANG, LC_ALL), estándares de caracteres (ASCII, ISO, UTF-8) y la orden iconv."
+    },
+    {
+      "id": "107.3-slide-2",
+      "slideNumber": 2,
+      "title": "Zonas Horarias en Linux: UTC, Hora Local y tzdata",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Zonas Horarias en Linux: UTC, Hora Local y tzdata"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo sabe el sistema operativo qué hora mostrar según la posición geográfica?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🌍 La Cadena de Conversión Horaria en Linux</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Base de Datos IANA</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:12px; font-size:11.5px;\">\n    <!-- 1. Reloj Kernel UTC -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <div style=\"color:#1D4ED8; font-weight:bold; font-size:12px; margin-bottom:4px;\">1. Kernel (UTC)</div>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • Reloj de software continuo e invariable.<br>\n        • Cuenta los segundos transcurridos desde el 01/01/1970 00:00:00 UTC (Epoch).<br>\n        • No sufre saltos por cambio de hora.\n      </div>\n    </div>\n\n    <!-- 2. Tabla tzdata -->\n    <div style=\"background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:8px; padding:10px;\">\n      <div style=\"color:#B45309; font-weight:bold; font-size:12px; margin-bottom:4px;\">2. /usr/share/zoneinfo/</div>\n      <div style=\"color:#78350F; line-height:1.4;\">\n        • Base de datos Olson/tzdata.<br>\n        • Archivos binarios organizados por <code>Continente/Ciudad</code> (ej. <code>Europe/Madrid</code>).<br>\n        • Contiene el offset UTC y las fechas exactas de cambio a Horario de Verano (DST).\n      </div>\n    </div>\n\n    <!-- 3. Configuración Local -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <div style=\"color:#15803D; font-weight:bold; font-size:12px; margin-bottom:4px;\">3. /etc/localtime</div>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • Enlace simbólico que apunta al archivo específico en <code>/usr/share/zoneinfo/</code>.<br>\n        • Las aplicaciones leen este archivo (o la variable <code>TZ</code>) para convertir UTC a hora visible.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569; display:flex; justify-content:space-between; align-items:center;\">\n    <span>⚡ <strong>Comprobación rápida con date:</strong> <code>date</code> muestra la hora local; <code>date -u</code> muestra la hora en UTC puro.</span>\n    <span style=\"font-weight:700; color:#1E40AF;\">date -u</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: El kernel de Linux mantiene su reloj interno siempre en UTC (Tiempo Universal Coordinado). La conversión a hora local se realiza aplicando las reglas de /usr/share/zoneinfo/."
+        }
+      ],
+      "notes": "El reloj físico de la placa base (RTC o hardware clock) se puede configurar en UTC (estándar Linux) o en hora local (estándar Windows)."
+    },
+    {
+      "id": "107.3-slide-3",
+      "slideNumber": 3,
+      "title": "Archivos del Sistema: /etc/localtime y /etc/timezone",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Archivos del Sistema: /etc/localtime y /etc/timezone"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Dónde reside físicamente la zona horaria del sistema y cómo se verifica?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: 1.3fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- /etc/localtime -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px 12px;\">\n      <div style=\"color:#1D4ED8; font-weight:bold; font-size:12.5px; margin-bottom:6px;\">\n        🔗 /etc/localtime (Enlace Simbólico)\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.4; font-size:11px;\">\n        • Es el estándar universal en todas las distribuciones Linux.<br>\n        • Para verificar la zona activa basta con ejecutar <code>ls -l /etc/localtime</code>:<br>\n        <div style=\"background:#0F172A; color:#E2E8F0; padding:4px 6px; border-radius:4px; font-family:monospace; margin-top:4px;\">\n          /etc/localtime -> /usr/share/zoneinfo/Europe/Madrid\n        </div>\n        • Si se elimina o corrompe, el sistema vuelve a la hora UTC por defecto.\n      </div>\n    </div>\n\n    <!-- /etc/timezone -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"color:#15803D; font-weight:bold; font-size:12.5px; margin-bottom:6px;\">\n        📄 /etc/timezone (Texto Plano)\n      </div>\n      <div style=\"color:#14532D; line-height:1.4; font-size:11px;\">\n        • Típico de distribuciones basadas en Debian y Ubuntu.<br>\n        • Archivo de una sola línea legible que contiene el identificador canónico:<br>\n        <div style=\"background:#0F172A; color:#E2E8F0; padding:4px 6px; border-radius:4px; font-family:monospace; margin-top:4px;\">\n          Europe/Madrid\n        </div>\n        • En RHEL/CentOS modernas este archivo no se usa y se confía únicamente en <code>/etc/localtime</code>.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#FFFBEB; border:1px solid #FCD34D; border-radius:6px; padding:6px 10px; font-size:11px; color:#92400E;\">\n    💡 <strong>Diferencia técnica:</strong> <code>/etc/localtime</code> es leído por la librería C (glibc) en tiempo de ejecución. Cualquier cambio en él tiene efecto inmediato sin necesidad de reiniciar el equipo.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: En sistemas modernos, /etc/localtime es un symlink apuntando a /usr/share/zoneinfo/Region/Ciudad. En Debian/Ubuntu /etc/timezone contiene el nombre en texto plano."
+        }
+      ],
+      "notes": "Cambiar la zona manualmente implica rehacer el enlace: ln -sf /usr/share/zoneinfo/Europe/Madrid /etc/localtime."
+    },
+    {
+      "id": "107.3-slide-4",
+      "slideNumber": 4,
+      "title": "Comando tzselect: El Asistente de Menús Interactivo",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando tzselect: El Asistente de Menús Interactivo"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Para qué sirve y por qué es una de las trampas más recurrentes de la certificación?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "The following information has been given:\n\n        Spain\n        Peninsula\n\nTherefore TZ='Europe/Madrid' will be used.\nLocal time is now:      Fri Oct 30 08:35:10 CET 2026.\nUniversal Time is now:  Fri Oct 30 07:35:10 UTC 2026.\nIs the above information OK? 1) Yes  2) No\n#? 1\n\nYou can make this change permanent for yourself by appending the line\n        TZ='Europe/Madrid'; export TZ\nto the file '.profile' in your home directory."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "(Sin opciones)",
+              "",
+              "Lanza un menú interactivo en consola con preguntas geográficas: 1) Continente, 2) País, 3) Región/Ciudad."
+            ],
+            [
+              "Salida final",
+              "",
+              "Imprime: 'Therefore TZ=\"Region/City\" will be used. You can make this change permanent for yourself by appending the line TZ=\"...\"; export TZ to the file .profile...'."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Trampa Mortal de Examen: 'tzselect' NUNCA cambia la zona horaria del sistema. No edita /etc/localtime ni /etc/timezone. Solo devuelve por consola el valor para la variable de entorno TZ."
+        }
+      ],
+      "notes": "tzselect es muy útil para averiguar el nombre formal de una ciudad si no se recuerda de memoria."
+    },
+    {
+      "id": "107.3-slide-5",
+      "slideNumber": 5,
+      "title": "Comando timedatectl: Gestión Integral con systemd",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando timedatectl: Gestión Integral con systemd"
+        },
+        {
+          "type": "paragraph",
+          "text": "El comando estándar contemporáneo para consultar y fijar hora, zona horaria y NTP."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "               Local time: Fri 2026-10-30 08:35:45 CET\n           Universal time: Fri 2026-10-30 07:35:45 UTC\n                 RTC time: Fri 2026-10-30 07:35:45\n                Time zone: Europe/Madrid (CET, +0100)\nSystem clock synchronized: yes\n              NTP service: active\n          RTC in local TZ: no"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "status",
+              "",
+              "Muestra estado actual: Local time, Universal time, RTC time, Time zone y NTP service."
+            ],
+            [
+              "list-timezones",
+              "",
+              "Lista en formato de paginador todas las zonas horarias admitidas por el sistema."
+            ],
+            [
+              "set-timezone ZONA",
+              "",
+              "Establece la zona horaria del sistema de forma permanente (actualiza /etc/localtime)."
+            ],
+            [
+              "set-time 'YYYY-MM-DD HH:MM:SS'",
+              "",
+              "Ajusta manualmente la fecha y la hora del sistema (requiere NTP desactivado)."
+            ],
+            [
+              "set-ntp true|false",
+              "",
+              "Habilita o deshabilita la sincronización horaria automática por protocolo NTP."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'timedatectl set-timezone Region/Ciudad' actualiza automáticamente el enlace /etc/localtime de forma persistente y segura en caliente."
+        }
+      ],
+      "notes": "timedatectl set-ntp true/false activa o desactiva la sincronización horaria por red (systemd-timesyncd)."
+    },
+    {
+      "id": "107.3-slide-6",
+      "slideNumber": 6,
+      "title": "Comando date y Sobreescritura en Caliente con TZ",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando date y Sobreescritura en Caliente con TZ"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo consultar o ejecutar un programa en otra zona horaria sin alterar el servidor?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "Fri Oct 30 08:36:12 CET 2026    (Hora local Madrid)\nFri Oct 30 03:36:12 EDT 2026    (Hora en Nueva York)\nFri Oct 30 16:36:12 JST 2026    (Hora en Tokio)"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-u, --utc",
+              "",
+              "Muestra o establece la fecha en Tiempo Universal Coordinado (UTC)."
+            ],
+            [
+              "-d, --date 'CADENA'",
+              "",
+              "Muestra la hora descrita por una cadena relativa (ej. 'next Friday', '2 days ago')."
+            ],
+            [
+              "-s, --set 'FECHA'",
+              "",
+              "Fija la fecha y hora del sistema (requiere privilegios de root)."
+            ],
+            [
+              "+%FORMATO",
+              "",
+              "Formateo: %Y (año 4 dígitos), %m (mes), %d (día), %H (hora 24h), %M (minuto), %Z (zona)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Anteponer 'TZ=Region/Ciudad' a cualquier comando aplica esa zona horaria exclusivamente para la ejecución de ese proceso, sin tocar la configuración global."
+        }
+      ],
+      "notes": "date permite dar formato personalizado con el prefijo '+', por ejemplo: date +%Y-%m-%d."
+    },
+    {
+      "id": "107.3-slide-7",
+      "slideNumber": 7,
+      "title": "Internacionalización (i18n) y Localización (l10n)",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Internacionalización (i18n) y Localización (l10n)"
+        },
+        {
+          "type": "paragraph",
+          "text": "La infraestructura que permite que el software hable tu idioma y use tus convenios culturales."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Formato canónico de un locale: 'idioma[_TERRITORIO][.codificación][@modificador]', por ejemplo: 'es_ES.UTF-8@euro'."
+        }
+      ],
+      "notes": "i18n viene de 18 letras entre la 'i' y la 'n' de internationalization; l10n de 10 letras entre la 'l' y la 'n'."
+    },
+    {
+      "id": "107.3-slide-8",
+      "slideNumber": 8,
+      "title": "Jerarquía de Variables de Locale: La Regla de Precedencia",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Jerarquía de Variables de Locale: La Regla de Precedencia"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué variable manda cuando se configuran LANG, LC_ALL y categorías individuales a la vez?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 1º LC_ALL (máxima prioridad) > 2º LC_* individuales > 3º LANG (valor por defecto). Si LC_ALL está definida, ignora TODO lo demás."
+        }
+      ],
+      "notes": "El locale 'C' (o POSIX) es el entorno neutro en inglés americano tradicional sin acentos."
+    },
+    {
+      "id": "107.3-slide-9",
+      "slideNumber": 9,
+      "title": "Las Categorías Individuales de Localización (LC_*)",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Las Categorías Individuales de Localización (LC_*)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué aspecto exacto del comportamiento del sistema controla cada variable?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; font-size:11px;\">\n    <!-- LC_MESSAGES -->\n    <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#1D4ED8; font-size:11.5px;\">LC_MESSAGES</strong><br>\n      Idioma de los mensajes del sistema, textos de ayuda y respuestas afirmativas/negativas (ej. responder 's' o 'y').\n    </div>\n\n    <!-- LC_COLLATE -->\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#15803D; font-size:11.5px;\">LC_COLLATE</strong><br>\n      Ordenación alfabética y comparación de cadenas (afecta a <code>sort</code> y rangos de comodines como <code>[a-z]</code>).\n    </div>\n\n    <!-- LC_CTYPE -->\n    <div style=\"background:#FFFBEB; border:1px solid #FDE68A; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#B45309; font-size:11.5px;\">LC_CTYPE</strong><br>\n      Clasificación de caracteres (mayúsculas/minúsculas, qué caracteres se consideran letras, dígitos o signos de puntuación).\n    </div>\n\n    <!-- LC_TIME -->\n    <div style=\"background:#FAF5FF; border:1px solid #E9D5FF; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#7E22CE; font-size:11.5px;\">LC_TIME</strong><br>\n      Formato de fecha y hora (orden día/mes/año, reloj de 12 o 24 horas y nombres traducidos de días y meses).\n    </div>\n\n    <!-- LC_NUMERIC -->\n    <div style=\"background:#FEF2F2; border:1px solid #FECDD3; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#B91C1C; font-size:11.5px;\">LC_NUMERIC</strong><br>\n      Formato de números no monetarios: separador decimal (coma o punto) y símbolo separador de millares.\n    </div>\n\n    <!-- LC_MONETARY -->\n    <div style=\"background:#ECFDF5; border:1px solid #A7F3D0; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#059669; font-size:11.5px;\">LC_MONETARY</strong><br>\n      Formato de valores monetarios, símbolos de moneda (ej. € o $) y posición del símbolo respecto a la cifra.\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569;\">\n    🧪 <strong>Ejemplo de impacto de LC_COLLATE:</strong> En el locale <code>C</code>, las mayúsculas se ordenan ANTES que las minúsculas (A-Z luego a-z). En <code>es_ES</code>, se intercalan (a, A, b, B...).\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: LC_MESSAGES controla el idioma de salida de errores y avisos; LC_COLLATE controla el orden de clasificación (sorting) y patrones de shell."
+        }
+      ],
+      "notes": "LC_CTYPE es vital para que las utilidades traten los caracteres con tildes o eñes como letras válidas."
+    },
+    {
+      "id": "107.3-slide-10",
+      "slideNumber": 10,
+      "title": "Comandos locale y localectl: Consulta y Configuración",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comandos locale y localectl: Consulta y Configuración"
+        },
+        {
+          "type": "paragraph",
+          "text": "Auditoría en vivo de variables regionales y fijación de locales persistentes."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "LANG=es_ES.UTF-8\nLC_CTYPE=\"es_ES.UTF-8\"\nLC_NUMERIC=\"es_ES.UTF-8\"\nLC_TIME=\"es_ES.UTF-8\"\nLC_COLLATE=\"es_ES.UTF-8\"\nLC_MESSAGES=\"es_ES.UTF-8\"\nLC_ALL=\nes_ES.utf8\nes_ES@euro"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "locale",
+              "",
+              "Muestra todas las variables de entorno de localización activas en la sesión actual."
+            ],
+            [
+              "locale -a",
+              "",
+              "Lista todos los locales disponibles (all) instalados y compilados en el sistema."
+            ],
+            [
+              "locale -m",
+              "",
+              "Muestra todos los mapas de caracteres (charmaps) admitidos (ej. UTF-8, ISO-8859-1)."
+            ],
+            [
+              "localectl status",
+              "",
+              "Muestra la configuración permanente de systemd para Locale, VC Keymap y X11 Layout."
+            ],
+            [
+              "localectl set-locale LANG=...",
+              "",
+              "Fija el locale permanente del sistema en /etc/locale.conf o /etc/default/locale."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'locale -a' lista todos los locales instalados en el sistema; 'locale -m' lista los mapas de caracteres (charmaps). Para cambiarlo permanentemente: 'localectl set-locale LANG=...' ."
+        }
+      ],
+      "notes": "En Debian, los locales disponibles se eligen en /etc/locale.gen y se compilan con locale-gen."
+    },
+    {
+      "id": "107.3-slide-11",
+      "slideNumber": 11,
+      "title": "Codificación de Caracteres: Del Estándar ASCII a ISO-8859",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Codificación de Caracteres: Del Estándar ASCII a ISO-8859"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo representan los ordenadores las letras en secuencias binarias de bits?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: 1fr 1.2fr; gap:14px; font-size:11.5px;\">\n    <!-- ASCII -->\n    <div style=\"background:#F8FAFC; border:1.5px solid #CBD5E1; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#334155; font-size:12.5px;\">1. ASCII (7 bits · 1963)</strong>\n        <span style=\"background:#64748B; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">128 Símbolos</span>\n      </div>\n      <div style=\"color:#475569; line-height:1.4; font-size:11px;\">\n        • Códigos del <code>0</code> al <code>127</code> (0x00 a 0x7F).<br>\n        • Cubre el alfabeto inglés básico (A-Z, a-z), dígitos (0-9), signos comunes y caracteres de control (LF, CR, TAB).<br>\n        • ❌ <strong>Limitación:</strong> No soporta acentos (á, é), eñes (ñ), diéresis ni caracteres de otros alfabetos.\n      </div>\n    </div>\n\n    <!-- ISO-8859 -->\n    <div style=\"background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#B45309; font-size:12.5px;\">2. Familia ISO-8859 (8 bits)</strong>\n        <span style=\"background:#D97706; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">256 Símbolos</span>\n      </div>\n      <div style=\"color:#78350F; line-height:1.4; font-size:11px;\">\n        • Aprovecha el 8º bit (códigos 128 a 255) para lenguas específicas.<br>\n        • <strong>ISO-8859-1 (Latin-1):</strong> Europa Occidental (á, é, í, ó, ú, ñ, ç). ¡NO tiene el símbolo €!<br>\n        • <strong>ISO-8859-15 (Latin-9):</strong> Actualización que añade el símbolo <strong>€</strong>, œ, Œ y Ÿ.<br>\n        • ❌ <strong>Limitación:</strong> Incompatible entre países: un texto en ISO-8859-5 (ruso) se ve corrupto en Europa.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:6px 10px; font-size:11px; color:#1E3A8A;\">\n    💡 <strong>Problema histórico:</strong> El caos de decenas de codificaciones incompatibles de 8 bits impulsó la creación de un estándar único universal: <strong>Unicode</strong>.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: ASCII = 7 bits (128 caracteres, solo inglés). ISO-8859 = 8 bits (256 caracteres). ISO-8859-1 (Latin-1) NO tiene euro; ISO-8859-15 (Latin-9) SÍ tiene euro (€)."
+        }
+      ],
+      "notes": "Los caracteres de 128 a 255 en ISO-8859 cambian según la región (ISO-8859-1 para Europa occidental, ISO-8859-5 para cirílico)."
+    },
+    {
+      "id": "107.3-slide-12",
+      "slideNumber": 12,
+      "title": "Unicode y UTF-8: El Estándar Universal de Longitud Variable",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Unicode y UTF-8: El Estándar Universal de Longitud Variable"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué UTF-8 se convirtió en el formato estándar absoluto en todos los sistemas Linux modernos?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>⚡ Estructura Multibyte de UTF-8 (1 a 4 bytes por símbolo)</span>\n    <span style=\"font-size:10.5px; background:#F0FDF4; color:#16A34A; padding:2px 8px; border-radius:10px; font-weight:700;\">100% Retrocompatible</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11px;\">\n    <!-- 1 Byte -->\n    <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#0284C7;\">1 Byte (8 bits)</strong><br>\n      <code>0xxxxxxx</code><br>\n      • Caracteres ASCII estándar (0 a 127).<br>\n      • Letras A-Z, a-z, 0-9, signos básicos.<br>\n      • Compatible 100% con código heredado.\n    </div>\n\n    <!-- 2 Bytes -->\n    <div style=\"background:#FFF1F2; border:1px solid #FECDD3; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#E11D48;\">2 Bytes (16 bits)</strong><br>\n      <code>110xxxxx 10xxxxxx</code><br>\n      • Caracteres latinos extendidos (á, é, ñ, ü).<br>\n      • Alfabetos griego, cirílico, hebreo y árabe.\n    </div>\n\n    <!-- 3 Bytes -->\n    <div style=\"background:#FAF5FF; border:1px solid #E9D5FF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#9333EA;\">3 Bytes (24 bits)</strong><br>\n      <code>1110xxxx 10xxxxxx...</code><br>\n      • Símbolos chinos, japoneses y coreanos (CJK).<br>\n      • Símbolo del Euro (<code>€</code>) y signos matemáticos.\n    </div>\n\n    <!-- 4 Bytes -->\n    <div style=\"background:#FEFCE8; border:1px solid #FEF08A; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#CA8A04;\">4 Bytes (32 bits)</strong><br>\n      <code>11110xxx 10xxxxxx...</code><br>\n      • Emojis modernos (😀, 🐧, 🚀).<br>\n      • Jeroglíficos y escrituras históricas raras.\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569;\">\n    🛡️ <strong>Ventaja clave:</strong> Al no tener bytes nulos en los caracteres estándar, los programas clásicos escritos en lenguaje C procesan cadenas UTF-8 sin errores de terminación prematura.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: UTF-8 utiliza entre 1 y 4 bytes por carácter. Si un archivo solo contiene caracteres ASCII (0-127), su contenido en UTF-8 es 100% IDÉNTICO en bytes a un archivo ASCII."
+        }
+      ],
+      "notes": "Unicode define puntos de código (U+XXXX). UTF-8 es la forma de codificar esos puntos de código en secuencias de bytes."
+    },
+    {
+      "id": "107.3-slide-13",
+      "slideNumber": 13,
+      "title": "Comando iconv: Conversión de Archivos entre Codificaciones",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando iconv: Conversión de Archivos entre Codificaciones"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo migrar documentos creados en ISO-8859-1 a UTF-8 sin perder tildes ni caracteres especiales?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "texto_antiguo.txt: ISO-8859 text\ntexto_utf8.txt:    UTF-8 Unicode text"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-f, --from-code=COD",
+              "",
+              "Especifica la codificación de caracteres original de entrada (ej. ISO-8859-1, WINDOWS-1252)."
+            ],
+            [
+              "-t, --to-code=COD",
+              "",
+              "Especifica la codificación deseada para la salida (ej. UTF-8)."
+            ],
+            [
+              "-o, --output=ARCHIVO",
+              "",
+              "Escribe el resultado directamente en el archivo destino especificado en lugar de stdout."
+            ],
+            [
+              "-l, --list",
+              "",
+              "Lista exhaustiva de todas las codificaciones de caracteres admitidas por el conversor."
+            ],
+            [
+              "-c",
+              "",
+              "Omite silenciosamente los caracteres de entrada que no puedan convertirse al juego destino."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'iconv -f &lt;origen&gt; -t &lt;destino&gt; [archivo] -o &lt;salida&gt;'. 'iconv -l' lista todas las codificaciones conocidas. -f = from (desde); -t = to (hacia)."
+        }
+      ],
+      "notes": "Si no se usa -o, iconv vuelca el resultado transformado a la salida estándar (stdout)."
+    },
+    {
+      "id": "107.3-slide-14",
+      "slideNumber": 14,
+      "title": "Matriz Comparativa: ASCII vs ISO-8859-1 vs ISO-8859-15 vs UTF-8",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Matriz Comparativa: ASCII vs ISO-8859-1 vs ISO-8859-15 vs UTF-8"
+        },
+        {
+          "type": "paragraph",
+          "text": "Tabla resumen de características para fijar los conceptos evaluados en la certificación."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Estándar de Codificación",
+            "Tamaño en Bits/Bytes",
+            "Capacidad Símbolos",
+            "Símbolo Euro (€)",
+            "Ámbito de Uso"
+          ],
+          "rows": [
+            [
+              "<strong>ASCII</strong>",
+              "7 bits (1 byte)",
+              "128 caracteres",
+              "❌ No",
+              "Inglés básico y protocolos de red históricos"
+            ],
+            [
+              "<strong>ISO-8859-1 (Latin-1)</strong>",
+              "8 bits (1 byte)",
+              "256 caracteres",
+              "❌ No",
+              "Europa Occidental previa al Euro"
+            ],
+            [
+              "<strong>ISO-8859-15 (Latin-9)</strong>",
+              "8 bits (1 byte)",
+              "256 caracteres",
+              "✅ Sí (código 0xA4)",
+              "Europa Occidental con soporte de Euro y œ/Œ"
+            ],
+            [
+              "<strong>UTF-8 (Unicode)</strong>",
+              "Variable (1 a 4 bytes)",
+              "Más de 1.1 millones",
+              "✅ Sí (3 bytes: E2 82 AC)",
+              "Estándar universal predeterminado en Linux moderno"
+            ]
+          ],
+          "caption": "Matriz Comparativa: ASCII vs ISO-8859-1 vs ISO-8859-15 vs UTF-8"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Mnemotecnia: El Euro (€) nació en 1999: ISO-8859-1 NO lo tiene; ISO-8859-15 SÍ lo tiene. UTF-8 lo soporta en 3 bytes."
+        }
+      ]
+    },
+    {
+      "id": "107.3-slide-15",
+      "slideNumber": 15,
+      "title": "Ejercicio Guiado LPI: Resolución de Precedencia y Conversión",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicio Guiado LPI: Resolución de Precedencia y Conversión"
+        },
+        {
+          "type": "paragraph",
+          "text": "Aplica las reglas oficiales de precedencia para determinar el idioma de ejecución."
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "\n<strong>1. Respuesta:</strong> En <strong>inglés neutro (locale C)</strong>.<br>\n<em>Razón:</em> La variable <code>LC_ALL=C</code> tiene la máxima prioridad absoluta y anula cualquier otra directiva (incluida <code>LC_MESSAGES=fr_FR.UTF-8</code>).<br><br>\n<strong>2. Respuesta tras 'unset LC_ALL':</strong> En <strong>francés (fr_FR)</strong>.<br>\n<em>Razón:</em> Al desaparecer <code>LC_ALL</code>, entra en juego la categoría específica <code>LC_MESSAGES</code>, que prevalece sobre el valor genérico <code>LANG=es_ES.UTF-8</code>.<br><br>\n<strong>3. Comando de conversión:</strong><br>\n<code>iconv -f ISO-8859-15 -t UTF-8 datos.txt -o datos_utf8.txt</code>\n",
+          "title": "Solución del ejercicio"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pista: Comprueba siempre en primer lugar si LC_ALL tiene valor."
+        }
+      ]
+    },
+    {
+      "id": "107.3-slide-16",
+      "slideNumber": 16,
+      "title": "Reto Práctico LPI: Despliegue de Localización Multi-Región",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Reto Práctico LPI: Despliegue de Localización Multi-Región"
+        },
+        {
+          "type": "paragraph",
+          "text": "Configura la zona horaria del servidor, compila un nuevo locale y procesa archivos con iconv."
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Un servidor internacional debe prestar servicio a una delegación en Tokio:<br>1. Ajustar la zona horaria global a 'Asia/Tokyo' utilizando la herramienta oficial de systemd.<br>2. Compilar e instalar el locale 'ja_JP.UTF-8' si no estuviera disponible en el sistema.<br>3. Ejecutar un script llamado 'informe.sh' de modo que sus fechas y mensajes aparezcan en inglés (locale C) sin modificar el sistema global."
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "\n<pre style=\"background:#0F172A; color:#E2E8F0; padding:10px; border-radius:6px; font-size:12px;\">\n# 1. Cambiar la zona horaria a Tokio de forma permanente:\ntimedatectl set-timezone Asia/Tokyo\n\n# 2. Generar el locale japonés en Debian/Ubuntu:\n# Descomentar 'ja_JP.UTF-8 UTF-8' en /etc/locale.gen y compilar:\nsudo sed -i '/^# ja_JP.UTF-8/s/^# //' /etc/locale.gen\nsudo locale-gen\nlocale -a | grep ja_JP\n\n# 3. Ejecutar el script forzando la salida en locale C de forma aislada:\nLC_ALL=C ./informe.sh\n</pre>\n",
+          "title": "Solución del desafío"
+        }
+      ]
+    },
+    {
+      "id": "107.3-slide-17",
+      "slideNumber": 17,
+      "title": "Checklist de Examen: Trampas Críticas en el Subtema 107.3",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Checklist de Examen: Trampas Críticas en el Subtema 107.3"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los errores de concepto más comunes en preguntas de internacionalización."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Oro: tzselect solo sugiere; timedatectl o el symlink /etc/localtime aplican el cambio."
+        }
+      ]
+    },
+    {
+      "id": "107.3-slide-18",
+      "slideNumber": 18,
+      "title": "Resumen del Subtema 107.3 y Preparación para el Laboratorio",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen del Subtema 107.3 y Preparación para el Laboratorio"
+        },
+        {
+          "type": "paragraph",
+          "text": "Internacionalización dominada, comandos clave y enlace a la práctica en máquina virtual."
+        }
+      ]
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-107-3-1",
+      "title": "Zonas Horarias en Linux: UTC, Hora Local y tzdata",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Zonas Horarias en Linux: UTC, Hora Local y tzdata"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo sabe el sistema operativo qué hora mostrar según la posición geográfica?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🌍 La Cadena de Conversión Horaria en Linux</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Base de Datos IANA</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:12px; font-size:11.5px;\">\n    <!-- 1. Reloj Kernel UTC -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <div style=\"color:#1D4ED8; font-weight:bold; font-size:12px; margin-bottom:4px;\">1. Kernel (UTC)</div>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • Reloj de software continuo e invariable.<br>\n        • Cuenta los segundos transcurridos desde el 01/01/1970 00:00:00 UTC (Epoch).<br>\n        • No sufre saltos por cambio de hora.\n      </div>\n    </div>\n\n    <!-- 2. Tabla tzdata -->\n    <div style=\"background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:8px; padding:10px;\">\n      <div style=\"color:#B45309; font-weight:bold; font-size:12px; margin-bottom:4px;\">2. /usr/share/zoneinfo/</div>\n      <div style=\"color:#78350F; line-height:1.4;\">\n        • Base de datos Olson/tzdata.<br>\n        • Archivos binarios organizados por <code>Continente/Ciudad</code> (ej. <code>Europe/Madrid</code>).<br>\n        • Contiene el offset UTC y las fechas exactas de cambio a Horario de Verano (DST).\n      </div>\n    </div>\n\n    <!-- 3. Configuración Local -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <div style=\"color:#15803D; font-weight:bold; font-size:12px; margin-bottom:4px;\">3. /etc/localtime</div>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • Enlace simbólico que apunta al archivo específico en <code>/usr/share/zoneinfo/</code>.<br>\n        • Las aplicaciones leen este archivo (o la variable <code>TZ</code>) para convertir UTC a hora visible.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569; display:flex; justify-content:space-between; align-items:center;\">\n    <span>⚡ <strong>Comprobación rápida con date:</strong> <code>date</code> muestra la hora local; <code>date -u</code> muestra la hora en UTC puro.</span>\n    <span style=\"font-weight:700; color:#1E40AF;\">date -u</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: El kernel de Linux mantiene su reloj interno siempre en UTC (Tiempo Universal Coordinado). La conversión a hora local se realiza aplicando las reglas de /usr/share/zoneinfo/."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-3-2",
+      "title": "Archivos del Sistema: /etc/localtime y /etc/timezone",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Archivos del Sistema: /etc/localtime y /etc/timezone"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Dónde reside físicamente la zona horaria del sistema y cómo se verifica?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: 1.3fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- /etc/localtime -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px 12px;\">\n      <div style=\"color:#1D4ED8; font-weight:bold; font-size:12.5px; margin-bottom:6px;\">\n        🔗 /etc/localtime (Enlace Simbólico)\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.4; font-size:11px;\">\n        • Es el estándar universal en todas las distribuciones Linux.<br>\n        • Para verificar la zona activa basta con ejecutar <code>ls -l /etc/localtime</code>:<br>\n        <div style=\"background:#0F172A; color:#E2E8F0; padding:4px 6px; border-radius:4px; font-family:monospace; margin-top:4px;\">\n          /etc/localtime -> /usr/share/zoneinfo/Europe/Madrid\n        </div>\n        • Si se elimina o corrompe, el sistema vuelve a la hora UTC por defecto.\n      </div>\n    </div>\n\n    <!-- /etc/timezone -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"color:#15803D; font-weight:bold; font-size:12.5px; margin-bottom:6px;\">\n        📄 /etc/timezone (Texto Plano)\n      </div>\n      <div style=\"color:#14532D; line-height:1.4; font-size:11px;\">\n        • Típico de distribuciones basadas en Debian y Ubuntu.<br>\n        • Archivo de una sola línea legible que contiene el identificador canónico:<br>\n        <div style=\"background:#0F172A; color:#E2E8F0; padding:4px 6px; border-radius:4px; font-family:monospace; margin-top:4px;\">\n          Europe/Madrid\n        </div>\n        • En RHEL/CentOS modernas este archivo no se usa y se confía únicamente en <code>/etc/localtime</code>.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#FFFBEB; border:1px solid #FCD34D; border-radius:6px; padding:6px 10px; font-size:11px; color:#92400E;\">\n    💡 <strong>Diferencia técnica:</strong> <code>/etc/localtime</code> es leído por la librería C (glibc) en tiempo de ejecución. Cualquier cambio en él tiene efecto inmediato sin necesidad de reiniciar el equipo.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: En sistemas modernos, /etc/localtime es un symlink apuntando a /usr/share/zoneinfo/Region/Ciudad. En Debian/Ubuntu /etc/timezone contiene el nombre en texto plano."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-3-3",
+      "title": "Comando tzselect: El Asistente de Menús Interactivo",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando tzselect: El Asistente de Menús Interactivo"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Para qué sirve y por qué es una de las trampas más recurrentes de la certificación?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "The following information has been given:\n\n        Spain\n        Peninsula\n\nTherefore TZ='Europe/Madrid' will be used.\nLocal time is now:      Fri Oct 30 08:35:10 CET 2026.\nUniversal Time is now:  Fri Oct 30 07:35:10 UTC 2026.\nIs the above information OK? 1) Yes  2) No\n#? 1\n\nYou can make this change permanent for yourself by appending the line\n        TZ='Europe/Madrid'; export TZ\nto the file '.profile' in your home directory."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "(Sin opciones)",
+              "",
+              "Lanza un menú interactivo en consola con preguntas geográficas: 1) Continente, 2) País, 3) Región/Ciudad."
+            ],
+            [
+              "Salida final",
+              "",
+              "Imprime: 'Therefore TZ=\"Region/City\" will be used. You can make this change permanent for yourself by appending the line TZ=\"...\"; export TZ to the file .profile...'."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Trampa Mortal de Examen: 'tzselect' NUNCA cambia la zona horaria del sistema. No edita /etc/localtime ni /etc/timezone. Solo devuelve por consola el valor para la variable de entorno TZ."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-3-4",
+      "title": "Comando timedatectl: Gestión Integral con systemd",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando timedatectl: Gestión Integral con systemd"
+        },
+        {
+          "type": "paragraph",
+          "text": "El comando estándar contemporáneo para consultar y fijar hora, zona horaria y NTP."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "               Local time: Fri 2026-10-30 08:35:45 CET\n           Universal time: Fri 2026-10-30 07:35:45 UTC\n                 RTC time: Fri 2026-10-30 07:35:45\n                Time zone: Europe/Madrid (CET, +0100)\nSystem clock synchronized: yes\n              NTP service: active\n          RTC in local TZ: no"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "status",
+              "",
+              "Muestra estado actual: Local time, Universal time, RTC time, Time zone y NTP service."
+            ],
+            [
+              "list-timezones",
+              "",
+              "Lista en formato de paginador todas las zonas horarias admitidas por el sistema."
+            ],
+            [
+              "set-timezone ZONA",
+              "",
+              "Establece la zona horaria del sistema de forma permanente (actualiza /etc/localtime)."
+            ],
+            [
+              "set-time 'YYYY-MM-DD HH:MM:SS'",
+              "",
+              "Ajusta manualmente la fecha y la hora del sistema (requiere NTP desactivado)."
+            ],
+            [
+              "set-ntp true|false",
+              "",
+              "Habilita o deshabilita la sincronización horaria automática por protocolo NTP."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'timedatectl set-timezone Region/Ciudad' actualiza automáticamente el enlace /etc/localtime de forma persistente y segura en caliente."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-3-5",
+      "title": "Comando date y Sobreescritura en Caliente con TZ",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando date y Sobreescritura en Caliente con TZ"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo consultar o ejecutar un programa en otra zona horaria sin alterar el servidor?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "Fri Oct 30 08:36:12 CET 2026    (Hora local Madrid)\nFri Oct 30 03:36:12 EDT 2026    (Hora en Nueva York)\nFri Oct 30 16:36:12 JST 2026    (Hora en Tokio)"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-u, --utc",
+              "",
+              "Muestra o establece la fecha en Tiempo Universal Coordinado (UTC)."
+            ],
+            [
+              "-d, --date 'CADENA'",
+              "",
+              "Muestra la hora descrita por una cadena relativa (ej. 'next Friday', '2 days ago')."
+            ],
+            [
+              "-s, --set 'FECHA'",
+              "",
+              "Fija la fecha y hora del sistema (requiere privilegios de root)."
+            ],
+            [
+              "+%FORMATO",
+              "",
+              "Formateo: %Y (año 4 dígitos), %m (mes), %d (día), %H (hora 24h), %M (minuto), %Z (zona)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Anteponer 'TZ=Region/Ciudad' a cualquier comando aplica esa zona horaria exclusivamente para la ejecución de ese proceso, sin tocar la configuración global."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-3-6",
+      "title": "Internacionalización (i18n) y Localización (l10n)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Internacionalización (i18n) y Localización (l10n)"
+        },
+        {
+          "type": "paragraph",
+          "text": "La infraestructura que permite que el software hable tu idioma y use tus convenios culturales."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Formato canónico de un locale: 'idioma[_TERRITORIO][.codificación][@modificador]', por ejemplo: 'es_ES.UTF-8@euro'."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-3-7",
+      "title": "Jerarquía de Variables de Locale: La Regla de Precedencia",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Jerarquía de Variables de Locale: La Regla de Precedencia"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué variable manda cuando se configuran LANG, LC_ALL y categorías individuales a la vez?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 1º LC_ALL (máxima prioridad) > 2º LC_* individuales > 3º LANG (valor por defecto). Si LC_ALL está definida, ignora TODO lo demás."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-3-8",
+      "title": "Las Categorías Individuales de Localización (LC_*)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Las Categorías Individuales de Localización (LC_*)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué aspecto exacto del comportamiento del sistema controla cada variable?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; font-size:11px;\">\n    <!-- LC_MESSAGES -->\n    <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#1D4ED8; font-size:11.5px;\">LC_MESSAGES</strong><br>\n      Idioma de los mensajes del sistema, textos de ayuda y respuestas afirmativas/negativas (ej. responder 's' o 'y').\n    </div>\n\n    <!-- LC_COLLATE -->\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#15803D; font-size:11.5px;\">LC_COLLATE</strong><br>\n      Ordenación alfabética y comparación de cadenas (afecta a <code>sort</code> y rangos de comodines como <code>[a-z]</code>).\n    </div>\n\n    <!-- LC_CTYPE -->\n    <div style=\"background:#FFFBEB; border:1px solid #FDE68A; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#B45309; font-size:11.5px;\">LC_CTYPE</strong><br>\n      Clasificación de caracteres (mayúsculas/minúsculas, qué caracteres se consideran letras, dígitos o signos de puntuación).\n    </div>\n\n    <!-- LC_TIME -->\n    <div style=\"background:#FAF5FF; border:1px solid #E9D5FF; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#7E22CE; font-size:11.5px;\">LC_TIME</strong><br>\n      Formato de fecha y hora (orden día/mes/año, reloj de 12 o 24 horas y nombres traducidos de días y meses).\n    </div>\n\n    <!-- LC_NUMERIC -->\n    <div style=\"background:#FEF2F2; border:1px solid #FECDD3; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#B91C1C; font-size:11.5px;\">LC_NUMERIC</strong><br>\n      Formato de números no monetarios: separador decimal (coma o punto) y símbolo separador de millares.\n    </div>\n\n    <!-- LC_MONETARY -->\n    <div style=\"background:#ECFDF5; border:1px solid #A7F3D0; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#059669; font-size:11.5px;\">LC_MONETARY</strong><br>\n      Formato de valores monetarios, símbolos de moneda (ej. € o $) y posición del símbolo respecto a la cifra.\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569;\">\n    🧪 <strong>Ejemplo de impacto de LC_COLLATE:</strong> En el locale <code>C</code>, las mayúsculas se ordenan ANTES que las minúsculas (A-Z luego a-z). En <code>es_ES</code>, se intercalan (a, A, b, B...).\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: LC_MESSAGES controla el idioma de salida de errores y avisos; LC_COLLATE controla el orden de clasificación (sorting) y patrones de shell."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-3-9",
+      "title": "Comandos locale y localectl: Consulta y Configuración",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comandos locale y localectl: Consulta y Configuración"
+        },
+        {
+          "type": "paragraph",
+          "text": "Auditoría en vivo de variables regionales y fijación de locales persistentes."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "LANG=es_ES.UTF-8\nLC_CTYPE=\"es_ES.UTF-8\"\nLC_NUMERIC=\"es_ES.UTF-8\"\nLC_TIME=\"es_ES.UTF-8\"\nLC_COLLATE=\"es_ES.UTF-8\"\nLC_MESSAGES=\"es_ES.UTF-8\"\nLC_ALL=\nes_ES.utf8\nes_ES@euro"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "locale",
+              "",
+              "Muestra todas las variables de entorno de localización activas en la sesión actual."
+            ],
+            [
+              "locale -a",
+              "",
+              "Lista todos los locales disponibles (all) instalados y compilados en el sistema."
+            ],
+            [
+              "locale -m",
+              "",
+              "Muestra todos los mapas de caracteres (charmaps) admitidos (ej. UTF-8, ISO-8859-1)."
+            ],
+            [
+              "localectl status",
+              "",
+              "Muestra la configuración permanente de systemd para Locale, VC Keymap y X11 Layout."
+            ],
+            [
+              "localectl set-locale LANG=...",
+              "",
+              "Fija el locale permanente del sistema en /etc/locale.conf o /etc/default/locale."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'locale -a' lista todos los locales instalados en el sistema; 'locale -m' lista los mapas de caracteres (charmaps). Para cambiarlo permanentemente: 'localectl set-locale LANG=...' ."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-3-10",
+      "title": "Codificación de Caracteres: Del Estándar ASCII a ISO-8859",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Codificación de Caracteres: Del Estándar ASCII a ISO-8859"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo representan los ordenadores las letras en secuencias binarias de bits?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: 1fr 1.2fr; gap:14px; font-size:11.5px;\">\n    <!-- ASCII -->\n    <div style=\"background:#F8FAFC; border:1.5px solid #CBD5E1; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#334155; font-size:12.5px;\">1. ASCII (7 bits · 1963)</strong>\n        <span style=\"background:#64748B; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">128 Símbolos</span>\n      </div>\n      <div style=\"color:#475569; line-height:1.4; font-size:11px;\">\n        • Códigos del <code>0</code> al <code>127</code> (0x00 a 0x7F).<br>\n        • Cubre el alfabeto inglés básico (A-Z, a-z), dígitos (0-9), signos comunes y caracteres de control (LF, CR, TAB).<br>\n        • ❌ <strong>Limitación:</strong> No soporta acentos (á, é), eñes (ñ), diéresis ni caracteres de otros alfabetos.\n      </div>\n    </div>\n\n    <!-- ISO-8859 -->\n    <div style=\"background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#B45309; font-size:12.5px;\">2. Familia ISO-8859 (8 bits)</strong>\n        <span style=\"background:#D97706; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">256 Símbolos</span>\n      </div>\n      <div style=\"color:#78350F; line-height:1.4; font-size:11px;\">\n        • Aprovecha el 8º bit (códigos 128 a 255) para lenguas específicas.<br>\n        • <strong>ISO-8859-1 (Latin-1):</strong> Europa Occidental (á, é, í, ó, ú, ñ, ç). ¡NO tiene el símbolo €!<br>\n        • <strong>ISO-8859-15 (Latin-9):</strong> Actualización que añade el símbolo <strong>€</strong>, œ, Œ y Ÿ.<br>\n        • ❌ <strong>Limitación:</strong> Incompatible entre países: un texto en ISO-8859-5 (ruso) se ve corrupto en Europa.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:6px 10px; font-size:11px; color:#1E3A8A;\">\n    💡 <strong>Problema histórico:</strong> El caos de decenas de codificaciones incompatibles de 8 bits impulsó la creación de un estándar único universal: <strong>Unicode</strong>.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: ASCII = 7 bits (128 caracteres, solo inglés). ISO-8859 = 8 bits (256 caracteres). ISO-8859-1 (Latin-1) NO tiene euro; ISO-8859-15 (Latin-9) SÍ tiene euro (€)."
+        }
+      ]
+    }
+  ]
+}

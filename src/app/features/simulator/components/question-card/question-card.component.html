@@ -1,0 +1,217 @@
+<article class="question-card" aria-labelledby="question-heading">
+  <!-- Cabecera de la tarjeta: subtema, tipo de pregunta y botón de marcar -->
+  <header class="card-header">
+    <div class="header-badges">
+      <span class="subtopic-badge question-topic" data-testid="question-topic">Subtema {{ question().subtopicId }}</span>
+      <span class="type-badge">{{ typeLabel() }}</span>
+    </div>
+
+    <button
+      type="button"
+      class="flag-button"
+      [class.flagged]="isFlagged()"
+      (click)="onFlagClick()"
+      [attr.aria-pressed]="isFlagged()"
+      aria-label="Marcar pregunta para revisar más tarde"
+    >
+      <svg
+        class="flag-icon"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+        <line x1="4" y1="22" x2="4" y2="15"></line>
+      </svg>
+      <span>{{ isFlagged() ? 'Marcada para revisar' : 'Marcar para revisar' }}</span>
+    </button>
+  </header>
+
+  <!-- Enunciado de la pregunta -->
+  <div class="question-body">
+    <h3 id="question-heading" class="prompt-text">
+      <span class="question-number-prefix">{{ questionNumber() }}.</span>
+      {{ question().prompt }}
+    </h3>
+
+    @if (question().type === 'multiple') {
+      <div class="multiple-instruction" role="note">
+        <svg
+          class="info-icon"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>Por favor, elige <strong>{{ requiredMultipleCount() }} respuestas</strong>.</span>
+      </div>
+    }
+
+    <!-- Opciones para tipo 'single' -->
+    @if (question().type === 'single' && question().options) {
+      <div
+        class="options-container"
+        role="radiogroup"
+        [attr.aria-label]="'Opciones para la pregunta ' + questionNumber"
+      >
+        @for (opt of question().options; track opt.id) {
+          <label
+            class="option-item"
+            [class.selected]="isOptionSelected(opt.id)"
+            [class.correct]="getOptionFeedbackClass(opt) === 'feedback-correct'"
+            [class.incorrect]="getOptionFeedbackClass(opt) === 'feedback-incorrect'"
+          >
+            <input
+              type="radio"
+              [name]="'question-' + question().id"
+              [value]="opt.id"
+              [checked]="isOptionSelected(opt.id)"
+              [disabled]="mode() === 'practice' && isPracticeChecked()"
+              (change)="onSelectSingle(opt.id)"
+              class="option-input"
+            />
+            <span class="option-identifier">{{ opt.id.toUpperCase() }}</span>
+            <span class="option-label">{{ opt.text }}</span>
+          </label>
+        }
+      </div>
+    }
+
+    <!-- Opciones para tipo 'multiple' -->
+    @if (question().type === 'multiple' && question().options) {
+      <div
+        class="options-container"
+        role="group"
+        [attr.aria-label]="'Opciones múltiples para la pregunta ' + questionNumber"
+      >
+        @for (opt of question().options; track opt.id) {
+          <label
+            class="option-item"
+            [class.selected]="isOptionSelected(opt.id)"
+            [class.correct]="getOptionFeedbackClass(opt) === 'feedback-correct'"
+            [class.incorrect]="getOptionFeedbackClass(opt) === 'feedback-incorrect'"
+          >
+            <input
+              type="checkbox"
+              [value]="opt.id"
+              [checked]="isOptionSelected(opt.id)"
+              [disabled]="mode() === 'practice' && isPracticeChecked()"
+              (change)="onToggleMultiple(opt.id)"
+              class="option-input"
+            />
+            <span class="option-identifier">{{ opt.id.toUpperCase() }}</span>
+            <span class="option-label">{{ opt.text }}</span>
+          </label>
+        }
+      </div>
+    }
+
+    <!-- Entrada para tipo 'fill' -->
+    @if (question().type === 'fill') {
+      <div class="fill-container">
+        <label [for]="'fill-input-' + question().id" class="fill-label">
+          Introduce la respuesta (comando o ruta exacta):
+        </label>
+        <input
+          [id]="'fill-input-' + question().id"
+          type="text"
+          class="fill-input"
+          [value]="textAnswer()"
+          [disabled]="mode() === 'practice' && isPracticeChecked()"
+          (input)="onTextInput($event)"
+          placeholder="p. ej. tar -xvf ..."
+          spellcheck="false"
+          autocomplete="off"
+          autocapitalize="off"
+        />
+      </div>
+    }
+  </div>
+
+  <!-- Pie de tarjeta: en modo práctica, botón de comprobar y retroalimentación didáctica -->
+  @if (mode() === 'practice') {
+    <footer class="practice-footer">
+      @if (!isPracticeChecked()) {
+        <app-button
+          variant="primary"
+          size="md"
+          (btnClick)="onCheckPracticeClick()"
+        >
+          Comprobar respuesta
+        </app-button>
+      } @else {
+        <!-- Retroalimentación didáctica inmediata -->
+        <div
+          class="feedback-banner"
+          [class.success]="isPracticeAnswerCorrect()"
+          [class.error]="!isPracticeAnswerCorrect()"
+          role="region"
+          aria-label="Resultado y explicación de la pregunta"
+        >
+          <div class="feedback-header">
+            @if (isPracticeAnswerCorrect()) {
+              <svg
+                class="feedback-icon"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <strong>¡Respuesta correcta!</strong>
+            } @else {
+              <svg
+                class="feedback-icon"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+              <strong>Respuesta incorrecta</strong>
+            }
+          </div>
+
+          @if (question().type === 'fill' && question().acceptedAnswers) {
+            <p class="accepted-answers">
+              Respuestas válidas:
+              <code>{{ question().acceptedAnswers?.join(' | ') }}</code>
+            </p>
+          }
+
+          <div class="feedback-explanation">
+            <h4>Explicación oficial</h4>
+            <p>{{ question().explanation }}</p>
+          </div>
+        </div>
+      }
+    </footer>
+  }
+</article>
+

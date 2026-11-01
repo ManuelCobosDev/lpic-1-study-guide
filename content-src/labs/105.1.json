@@ -1,0 +1,52 @@
+{
+  "id": "lab-105-1",
+  "subtopicId": "105.1",
+  "title": "Práctica 105.1 — Personalización del Entorno de Shell y Archivos de Inicio",
+  "estimatedMinutes": 30,
+  "difficulty": "basic",
+  "type": "subtopic",
+  "placeholder": false,
+  "source": "105.1#u066-u086, 105.1#u103-u231, 105.1#u232-u286, 105.1#u616-u765, 105.1#u1047-u1248",
+  "steps": [
+    {
+      "id": "step-105-1-1",
+      "stepNumber": 1,
+      "title": "Misión 1 — Variables Locales vs Variables Exportadas con export y unset",
+      "instruction": "En Bash, las variables son estrictamente privadas de la shell que las crea. Para que un script o comando hijo pueda ver su valor, deben ser promovidas al entorno del sistema mediante `export`. Con `unset` se eliminan por completo.",
+      "command": "# 1. Definir una variable estrictamente local\nAPP_ENV=\"desarrollo_local\"\necho \"Variable en shell actual: $APP_ENV\"\n\n# 2. Comprobar que aparece en set pero NO en env\nset | grep APP_ENV\nenv | grep APP_ENV || echo \"No está en env (es estrictamente local)\"\n\n# 3. Exportar la variable al entorno global\nexport APP_ENV\nenv | grep APP_ENV\n\n# 4. Probar su herencia en un subshell hijo\nbash -c 'echo \"En subshell hijo tras export: $APP_ENV\"'\n\n# 5. Eliminar la variable con unset\nunset APP_ENV\necho \"Tras unset: [$APP_ENV]\"",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-105-1-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Archivos de Inicialización de Login vs No-Login y shopt",
+      "instruction": "Bash lee distintos archivos según si la sesión requirió autenticación (SSH, TTY virtual) o si fue abierta desde una ventana de terminal gráfica. Comprueba con `shopt login_shell` y `$0` el estado de la shell.",
+      "command": "# 1. Comprobar si el shell actual es de inicio de sesión\nshopt login_shell\necho \"Nombre de llamada del shell: $0\"\n\n# 2. Auditar archivos de inicio globales del sistema\nls -ld /etc/profile /etc/profile.d /etc/bash.bashrc\n\n# 3. Listar dotfiles de configuración personal en tu home\nls -la ~/ | grep -E \"\\.bash|\\.profile\"\n\n# 4. Lanzar un subshell interactivo sin login y verificar su nivel\nbash -c 'echo \"Nivel de shell anidado: $SHLVL\"'",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-105-1-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Plantilla del Sistema /etc/skel y Nuevas Cuentas",
+      "instruction": "Cuando se ejecuta `useradd -m`, los archivos ocultos ubicados en `/etc/skel` se copian automáticamente al nuevo directorio `/home/usuario`. Modificar `/etc/skel` permite establecer configuraciones corporativas para todos los usuarios futuros.",
+      "command": "# 1. Examinar el contenido por defecto de /etc/skel\nls -la /etc/skel\n\n# 2. Añadir un archivo de bienvenida corporativo a la plantilla\nsudo sh -c 'echo \"Bienvenido al servidor de formación LPIC-1\" > /etc/skel/LEEME.txt'\n\n# 3. Crear un usuario de prueba llamado 'operador' con carpeta home (-m)\nsudo useradd -m -s /bin/bash operador 2>/dev/null || true\n\n# 4. Comprobar que el nuevo usuario recibió los dotfiles y el archivo LEEME.txt\nls -la /home/operador 2>/dev/null || ls -la /etc/skel",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-105-1-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Funciones, Alias, unalias y Recarga en caliente con source",
+      "instruction": "Los scripts ejecutados con `./script.sh` mueren en un subshell sin alterar tu sesión actual. El comando `source` (o `.`) ejecuta los comandos en la shell actual, permitiendo definir funciones, alias y variables en caliente.",
+      "command": "# 1. Crear un script con funciones y un alias personalizado\ncat << 'EOF' > ~/mis_herramientas.sh\nalias cls='clear'\nfunction lpic_info() {\n    local estado=\"OK\"\n    echo \"=== LPIC-1 Info: $USER en $HOSTNAME (Estado: $estado) ===\"\n}\nEOF\n\n# 2. Cargar el script en la shell actual utilizando source (o '.')\nsource ~/mis_herramientas.sh\n\n# 3. Probar la función y el alias\nlpic_info\nalias cls\n\n# 4. Eliminar el alias con unalias y la función con unset -f\nunalias cls\nunset -f lpic_info",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-105-1-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Ejecución en Entorno Modificado con env -i y Configuración de PATH",
+      "instruction": "El comando `env -i` permite iniciar procesos en un entorno completamente estéril sin heredar variables del padre. Comprueba cómo aislar ejecuciones y añadir directorios a PATH.",
+      "command": "# 1. Ejecutar una shell en un entorno completamente vacío con env -i\nenv -i HOME=/tmp bash -c 'echo \"Entorno aislado: HOME=[$HOME] PATH=[$PATH]\"'\n\n# 2. Crear una carpeta bin personal\nmkdir -p ~/bin\n\n# 3. Añadir ~/bin al principio de la variable PATH en la sesión actual\nexport PATH=\"$HOME/bin:$PATH\"\necho \"PATH actualizado: $PATH\"",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    }
+  ]
+}

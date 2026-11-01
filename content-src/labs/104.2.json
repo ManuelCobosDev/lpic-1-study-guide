@@ -1,0 +1,44 @@
+{
+  "id": "lab-104-2",
+  "subtopicId": "104.2",
+  "title": "Práctica 104.2 — Mantenimiento e Integridad de Sistemas de Archivos",
+  "estimatedMinutes": 30,
+  "difficulty": "basic",
+  "type": "subtopic",
+  "placeholder": false,
+  "steps": [
+    {
+      "id": "step-104-2-1",
+      "stepNumber": 1,
+      "title": "Misión 1 — Monitorización de Espacio e Inodos con df y du",
+      "instruction": "Un disco en Linux puede fallar por falta de espacio en bytes O por agotamiento de inodos (número máximo de archivos).",
+      "command": "# Consultar espacio en disco en formato humano legible (-h)\r\ndf -h /\r\n\r\n# Consultar el porcentaje de inodos libres (-i)\r\ndf -i /\r\n\r\n# Analizar qué directorios consumen más espacio en /var (resumen a 1 nivel de profundidad)\r\nsudo du -h -d 1 /var 2>/dev/null | sort -h | tail -n 8",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-104-2-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Inspección de Superbloques con dumpe2fs y tune2fs",
+      "instruction": "El superbloque almacena el estado de salud, UUID, tamaño de bloque y fecha de última comprobación de un sistema de archivos ext4.",
+      "command": "# Crear un disco de prueba temporal de 100 MB formateado en ext4\r\ntruncate -s 100M /tmp/fsck_test.raw\r\nsudo mkfs.ext4 -L \"INTEGRIDAD\" /tmp/fsck_test.raw\r\n\r\n# Inspeccionar la información del superbloque con tune2fs\r\nsudo tune2fs -l /tmp/fsck_test.raw | grep -E \"Filesystem volume name|Last mounted|Mount count|Check interval\"\r\n\r\n# Inspeccionar superbloques de respaldo con dumpe2fs (primeras líneas)\r\nsudo dumpe2fs /tmp/fsck_test.raw | head -n 15",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-104-2-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Modificación de Parámetros de Chequeo y Verificación con fsck",
+      "instruction": "Configuraremos el intervalo máximo de montajes antes de forzar un chequeo y pasaremos fsck sobre el disco desmontado.",
+      "command": "# Configurar para que chequee cada 20 montajes (-c 20) o cada 30 días (-i 30d)\r\nsudo tune2fs -c 20 -i 30d /tmp/fsck_test.raw\r\n\r\n# Comprobar la integridad del sistema de archivos con fsck en modo no destructivo\r\nsudo fsck -y /tmp/fsck_test.raw\r\n\r\n# Limpiar el archivo de pruebas\r\nrm /tmp/fsck_test.raw",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-104-2-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Herramientas de Mantenimiento para Sistemas XFS",
+      "instruction": "XFS no utiliza fsck ni tune2fs; dispone de su propia suite de herramientas especializadas.",
+      "command": "# Comprobar la presencia de herramientas nativas de XFS\r\nwhich xfs_repair xfs_fsr xfs_db || true",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
+      "examAlert": "Ver pista desplegable si te atascas</summary>"
+    }
+  ]
+}

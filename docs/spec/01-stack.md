@@ -1,0 +1,14 @@
+# 1. STACK Y HERRAMIENTAS
+
+- **Angular**: última versión estable (`npm view @angular/cli version`). Standalone components, **signals**, control flow `@if/@for/@switch`, `inject()`, `ChangeDetectionStrategy.OnPush` en todos los componentes, `input()/output()/model()/computed()/viewChild()`, `effect()` solo para persistencia o sincronización con el DOM, `afterNextRender` para tocar el DOM. Zoneless si es estable en esa versión. `@defer` para cargas diferidas pesadas.
+- **Router**: `provideRouter(routes, withComponentInputBinding(), withInMemoryScrolling({anchorScrolling:'enabled', scrollPositionRestoration:'enabled'}))`. Todas las features con `loadChildren`/`loadComponent`. Resolvers y guards funcionales.
+- **TypeScript** `strict`, `noImplicitOverride`, `noUncheckedIndexedAccess`, `noPropertyAccessFromIndexSignature`, `noImplicitReturns`. Angular `strictTemplates`, `strictInjectionParameters`.
+- **Estilos**: Tailwind CSS v4 + variables CSS (tokens, sección 5). **Sin Angular Material.** Componentes propios sobre **Angular CDK** (overlay, dialog, menu, a11y/focus-trap/LiveAnnouncer, layout/BreakpointObserver, clipboard, scrolling).
+- **Iconos**: `lucide-angular`.
+- **Librerías**: `marked` + `DOMPurify` (markdown y HTML sanitizado), `js-yaml`, `minisearch`, `zod`, `highlight.js` (core + bash, ini, yaml, json, plaintext, carga perezosa), `d3-hierarchy` y `d3-zoom` (mapa mental). Gráficas (anillo, mapa de calor, línea): SVG propios, sin librería de charts. Fuentes: `@fontsource-variable/inter`, `@fontsource/jetbrains-mono`.
+- **Tests**: Vitest (o el runner que genere la CLI, siendo Vitest preferido) para unitarios y de componentes; **Playwright** para e2e con `@axe-core/playwright` (a11y). Node en la versión que exija la última Angular (compruébalo con `ng version`), npm. **Entorno Windows/PowerShell**: todos los scripts en Node/TS, nada de bash.
+- **Presupuestos** en `angular.json`: bundle inicial ≤ 350 kB gzip (warning) / 500 kB (error); cada chunk de feature ≤ 150 kB gzip.
+- **Scripts npm obligatorios**: `start`, `build`, `build:content`, `validate:content`, `typecheck`, `lint`, `test`, `e2e`, `check:tokens`, `check:boundaries`, `new:subtopic`, `import:legacy` (ejecuta todos los importadores de `scripts/import-legacy/`), `check:stubs` (lista las páginas pendientes; con `--strict` falla si queda alguna: se usa en la Fase 12), `verify` (= build:content + validate:content + typecheck + lint + check:tokens + check:boundaries + test + build + e2e, en ese orden y abortando al primer fallo), `preview` (sirve `dist` con fallback SPA).
+- **Despliegue estático**: la salida de `ng build` es una SPA. Script `postbuild` que copia `index.html` a `404.html` para hosting estático. `docs/DEPLOY.md` con instrucciones para GitHub Pages / Netlify / Cloudflare Pages / servidor con reescritura a `index.html`.
+
+---

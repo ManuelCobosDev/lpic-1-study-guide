@@ -1,0 +1,76 @@
+<div class="heatmap-card">
+  <header class="heatmap-header">
+    <div class="title-wrap">
+      <h3 class="heatmap-title">Registro de Actividad</h3>
+      <p class="heatmap-subtitle">Constancia de estudio en las últimas 26 semanas</p>
+    </div>
+
+    <!-- Leyenda -->
+    <div class="heatmap-legend" aria-label="Leyenda de actividad">
+      <span class="legend-text">Menos</span>
+      <span class="legend-cell level-0" title="0 minutos"></span>
+      <span class="legend-cell level-1" title="1 a 15 minutos"></span>
+      <span class="legend-cell level-2" title="16 a 45 minutos"></span>
+      <span class="legend-cell level-3" title="Más de 45 minutos"></span>
+      <span class="legend-text">Más</span>
+    </div>
+  </header>
+
+  <div class="heatmap-container" tabindex="0" role="region" aria-label="Mapa de calor de actividad semanal">
+    <div class="month-labels-row">
+      <div class="day-label-placeholder"></div>
+      @for (w of weeks(); track w.weekNumber) {
+        <div class="month-label-col">
+          @if (w.monthLabel) {
+            <span class="month-label">{{ w.monthLabel }}</span>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="grid-wrap">
+      <!-- Días de la semana -->
+      <div class="days-column">
+        <span class="day-label">Lun</span>
+        <span class="day-label"></span>
+        <span class="day-label">Mié</span>
+        <span class="day-label"></span>
+        <span class="day-label">Vie</span>
+        <span class="day-label"></span>
+        <span class="day-label">Dom</span>
+      </div>
+
+      <!-- Semanas -->
+      <div class="weeks-grid">
+        @for (w of weeks(); track w.weekNumber) {
+          <div class="week-col">
+            @for (day of w.days; track day.dateStr) {
+              <div
+                class="day-cell level-{{ day.level }}"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="day.displayDate + ': ' + day.minutes + ' minutos'"
+                (mouseenter)="onDayHover(day)"
+                (mouseleave)="onDayHover(null)"
+                (focus)="onDayHover(day)"
+                (blur)="onDayHover(null)"
+              ></div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Tooltip Informativo -->
+    <div class="heatmap-tooltip-panel">
+      @if (hoveredDay(); as hd) {
+        <span class="tooltip-info">
+          <strong>{{ hd.displayDate }}</strong>: {{ hd.minutes }} minutos de estudio
+        </span>
+      } @else {
+        <span class="tooltip-hint">Pasa el cursor o selecciona un día para ver los detalles</span>
+      }
+    </div>
+  </div>
+</div>
+

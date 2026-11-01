@@ -1,0 +1,157 @@
+<div class="score-chart-container">
+  @if (chartPoints().length === 0) {
+    <div class="empty-state">
+      <p class="empty-text">Aún no has completado ningún simulacro de examen.</p>
+      <a routerLink="/simulador" class="empty-action">Ir al simulador de examen</a>
+    </div>
+  } @else {
+    <div class="chart-wrapper">
+      <svg
+        class="chart-svg"
+        [attr.viewBox]="'0 0 ' + width + ' ' + height"
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-label="Gráfica de evolución de puntuaciones en simulacros"
+      >
+        <!-- Ejes y marcas de fondo -->
+        <g class="chart-grid">
+          <!-- Línea 800 (máximo) -->
+          <line
+            [attr.x1]="padding.left"
+            [attr.y1]="padding.top"
+            [attr.x2]="width - padding.right"
+            [attr.y2]="padding.top"
+            class="grid-line"
+          />
+          <text
+            [attr.x]="padding.left - 8"
+            [attr.y]="padding.top + 4"
+            class="axis-label"
+            text-anchor="end"
+          >
+            800
+          </text>
+
+          <!-- Línea 500 (Aprobado) -->
+          <line
+            [attr.x1]="padding.left"
+            [attr.y1]="passingY()"
+            [attr.x2]="width - padding.right"
+            [attr.y2]="passingY()"
+            class="passing-line"
+          />
+          <text
+            [attr.x]="padding.left - 8"
+            [attr.y]="passingY() + 4"
+            class="axis-label passing-label"
+            text-anchor="end"
+          >
+            500
+          </text>
+
+          <!-- Línea 200 (mínimo) -->
+          <line
+            [attr.x1]="padding.left"
+            [attr.y1]="height - padding.bottom"
+            [attr.x2]="width - padding.right"
+            [attr.y2]="height - padding.bottom"
+            class="grid-line"
+          />
+          <text
+            [attr.x]="padding.left - 8"
+            [attr.y]="height - padding.bottom + 4"
+            class="axis-label"
+            text-anchor="end"
+          >
+            200
+          </text>
+        </g>
+
+        <!-- Leyenda / etiqueta de corte -->
+        <text
+          [attr.x]="width - padding.right"
+          [attr.y]="passingY() - 6"
+          class="passing-badge"
+          text-anchor="end"
+        >
+          Corte: 500 pts
+        </text>
+
+        <!-- Línea conectora -->
+        @if (polylinePoints(); as polyline) {
+          <polyline
+            [attr.points]="polyline"
+            fill="none"
+            class="trend-line"
+          />
+        }
+
+        <!-- Puntos interactivos -->
+        <g class="points-group">
+          @for (pt of chartPoints(); track pt.id) {
+            <g
+              class="point-wrapper"
+              [class.passed]="pt.passed"
+              [class.failed]="!pt.passed"
+              [class.active]="hoveredPoint()?.id === pt.id"
+              (mouseenter)="onPointHover(pt)"
+              (mouseleave)="onPointHover(null)"
+              (focus)="onPointHover(pt)"
+              (blur)="onPointHover(null)"
+              tabindex="0"
+              role="button"
+              [attr.aria-label]="pt.dateStr + ': ' + pt.score + ' puntos (' + (pt.passed ? 'Aprobado' : 'Suspenso') + ')'"
+            >
+              <!-- Círculo de interacción táctil grande invisible -->
+              <circle
+                [attr.cx]="pt.x"
+                [attr.cy]="pt.y"
+                r="14"
+                fill="transparent"
+                class="hit-area"
+              />
+              <!-- Círculo visible -->
+              <circle
+                [attr.cx]="pt.x"
+                [attr.cy]="pt.y"
+                r="5"
+                class="chart-dot"
+              />
+            </g>
+          }
+        </g>
+      </svg>
+
+      <!-- Tooltip superpuesto si hay hoveredPoint -->
+      @if (hoveredPoint(); as active) {
+        <div
+          class="chart-tooltip"
+          [style.left.px]="active.x"
+          [style.top.px]="active.y"
+        >
+          <div class="tooltip-header">
+            <span class="tooltip-date">{{ active.dateStr }}</span>
+            <span
+              class="tooltip-badge"
+              [class.badge-pass]="active.passed"
+              [class.badge-fail]="!active.passed"
+            >
+              {{ active.passed ? 'Aprobado' : 'Suspenso' }}
+            </span>
+          </div>
+          <div class="tooltip-score">
+            <span class="score-value">{{ active.score }}</span>
+            <span class="score-total">/ 800 pts</span>
+          </div>
+          <a
+            [routerLink]="['/examen', active.id, 'revisar']"
+            class="tooltip-link"
+          >
+            Ver revisión &rarr;
+          </a>
+        </div>
+      }
+    </div>
+  }
+</div>
+

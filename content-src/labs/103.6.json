@@ -1,0 +1,44 @@
+{
+  "id": "lab-103-6",
+  "subtopicId": "103.6",
+  "title": "Práctica 103.6 — Modificar la Prioridad de Procesos (Nice y Renice)",
+  "estimatedMinutes": 30,
+  "difficulty": "basic",
+  "type": "subtopic",
+  "placeholder": false,
+  "steps": [
+    {
+      "id": "step-103-6-1",
+      "stepNumber": 1,
+      "title": "Misión 1 — Lanzamiento con Prioridad Modificada mediante nice",
+      "instruction": "El valor Nice va de -20 (máxima prioridad) a +19 (mínima prioridad). El valor por defecto al nacer un proceso es 0.",
+      "command": "# Lanzar un proceso con menor prioridad (nice +10, 'más amable' con el resto)\r\nnice -n 10 sleep 300 &\r\n\r\n# Comprobar el PID y el valor Nice asignado mediante ps\r\nps -o pid,ni,pri,comm -C sleep",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-103-6-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Modificación en Vivo con renice y Privilegios de Root",
+      "instruction": "Regla de oro LPIC-1: un usuario normal puede SUBIR su valor Nice (hacerse menos prioritario), pero solo ROOT puede BAJARLO (prioridad negativa o mayor favoritismo).",
+      "command": "# Intentar como usuario normal subir la amabilidad a +15 (permitido)\r\nPID_SLEEP=$(pgrep -f \"sleep 300\" | head -n 1)\r\nrenice -n 15 -p $PID_SLEEP\r\n\r\n# Verificar el cambio con ps\r\nps -o pid,ni,pri,comm -p $PID_SLEEP\r\n\r\n# Asignar prioridad máxima (-5) usando sudo (requiere root)\r\nsudo renice -n -5 -p $PID_SLEEP\r\n\r\n# Verificar el nuevo valor negativo de alta prioridad\r\nps -o pid,ni,pri,comm -p $PID_SLEEP",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-103-6-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Inspección de Columnas NI y PR en top",
+      "instruction": "Aprenderás a supervisar las prioridades en el monitor en vivo top.",
+      "command": "# Lanzar top en modo por lotes (-b) extrayendo las líneas de sleep\r\ntop -b -n 1 | grep -E \"PID USER|sleep\"\r\n\r\n# Limpiar el proceso de prueba\r\nkillall sleep",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-103-6-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Sintaxis Histórica vs Estándar de nice",
+      "instruction": "El examen LPIC-1 puede formular preguntas con la sintaxis antigua de guiones.",
+      "command": "# Repaso de sintaxis para examen:\r\n# Sintaxis estándar: nice -n 5 comando   (Nice = 5)\r\n# Sintaxis estándar: nice -n -5 comando  (Nice = -5, requiere root)\r\n# Sintaxis antigua:  nice -5 comando     (Nice = 5)\r\n# Sintaxis antigua:  nice --5 comando    (Nice = -5, doble guión)",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
+      "examAlert": "Ver pista desplegable si te atascas</summary>"
+    }
+  ]
+}

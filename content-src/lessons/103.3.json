@@ -1,0 +1,1687 @@
+{
+  "id": "103.3",
+  "topicId": "103",
+  "examId": "101",
+  "title": "Administración básica de archivos",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 30,
+  "objectives": [
+    "ls, touch, cp, mv, rm, mkdir, comodines globbing, find, tar, cpio, dd y file (Alta Densidad LPIC-1)",
+    "Dominio técnico de las herramientas y configuración del subtema 103.3"
+  ],
+  "keyTerms": [
+    "Administración básica de archivos",
+    "Tema 103"
+  ],
+  "commands": [
+    "ls",
+    "mkdir",
+    "cp",
+    "find",
+    "tar",
+    "cpio",
+    "dd",
+    "file"
+  ],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "103.3-slide-1",
+      "slideNumber": 1,
+      "title": "Administración básica de archivos",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Administración básica de archivos"
+        },
+        {
+          "type": "paragraph",
+          "text": "ls, touch, cp, mv, rm, mkdir, comodines globbing, find, tar, cpio, dd y file (Modo Examen)"
+        }
+      ],
+      "notes": "Iniciamos el subtema 103.3 (peso 4). La gestión de archivos y directorios es una competencia nuclear. Analizaremos operaciones básicas (copia, borrado, movimiento), comodines avanzados (globbing), el potente buscador find, empaquetado con tar y cpio, y clonación por bloques con dd."
+    },
+    {
+      "id": "103.3-slide-2",
+      "slideNumber": 2,
+      "title": "Anatomía del Sistema de Archivos: El Inodo y el Directorio",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Anatomía del Sistema de Archivos: El Inodo y el Directorio"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Dónde se guardan realmente los nombres, los datos y los permisos de tus archivos?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin:8px 0;\">\n  <div style=\"font-size:16px; font-weight:800; color:var(--text); margin-bottom:12px;\">\n    🏨 La Analogía de la Consigna: ¿Cómo organiza Linux tus Archivos?\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1.35fr 1.15fr; gap:16px; align-items:stretch;\">\n    <!-- 1. El Directorio -->\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:12px; padding:3px 8px; border-radius:4px; text-align:center; margin-bottom:8px;\">\n          1. DIRECTORIO (El Cuaderno)\n        </div>\n        <div style=\"font-weight:800; color:#1E40AF; font-size:14.5px; margin-bottom:6px;\">Tabla de Nombres y Enlaces</div>\n        <div style=\"background:#FFFFFF; border:1px solid #BFDBFE; border-radius:6px; padding:8px 10px; font-family:monospace; font-size:13px; color:#1E3A8A; line-height:1.5;\">\n          informe.pdf ➔ Inodo #4012<br>\n          backup.tar  ➔ Inodo #4013<br>\n          script.sh   ➔ Inodo #5120\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:12px; color:#1E3A8A; line-height:1.4;\">\n        💡 El directorio solo asocia una <strong>etiqueta de texto</strong> con un <strong>número entero de inodo</strong>.\n      </div>\n    </div>\n\n    <!-- 2. El Inodo -->\n    <div style=\"background:#FEFCE8; border:2px solid #EAB308; border-radius:10px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"background:#CA8A04; color:#FFF; font-weight:800; font-size:12px; padding:3px 8px; border-radius:4px; text-align:center; margin-bottom:8px;\">\n          2. INODO #4012 (La Ficha / DNI)\n        </div>\n        <div style=\"font-weight:800; color:#854D0E; font-size:14.5px; margin-bottom:6px;\">Metadatos del Fichero</div>\n        <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:6px; font-size:12px; color:#713F12; line-height:1.45;\">\n          <div>• <strong>Tipo:</strong> Regular (-)</div>\n          <div>• <strong>Permisos:</strong> 0644 (rw-r--r--)</div>\n          <div>• <strong>Dueño:</strong> UID 1000 (alumno)</div>\n          <div>• <strong>Grupo:</strong> GID 1000 (alumnos)</div>\n          <div>• <strong>Tamaño:</strong> 8.192 bytes</div>\n          <div>• <strong>Marcas:</strong> atime, mtime, ctime</div>\n          <div>• <strong>Enlaces:</strong> 1 (nlink)</div>\n          <div>• <strong>Punteros:</strong> Bloques 501, 502</div>\n        </div>\n      </div>\n      <div style=\"margin-top:8px; background:#FEF08A; border:1px solid #EAB308; padding:4px 8px; border-radius:4px; font-size:11.5px; font-weight:800; color:#854D0E; text-align:center;\">\n        ❌ ¡EL NOMBRE DEL ARCHIVO NO RESIDE AQUÍ!\n      </div>\n    </div>\n\n    <!-- 3. Los Bloques -->\n    <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:3px 8px; border-radius:4px; text-align:center; margin-bottom:8px;\">\n          3. BLOQUES (El Disco Físico)\n        </div>\n        <div style=\"font-weight:800; color:#14532D; font-size:14.5px; margin-bottom:6px;\">Casilleros con Bytes Reales</div>\n        <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:6px; padding:8px 10px; font-family:monospace; font-size:12.5px; color:#14532D; line-height:1.5;\">\n          Bloque 501: [01011001... 4KB]<br>\n          Bloque 502: [11001010... 4KB]\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:12px; color:#14532D; line-height:1.4;\">\n        💾 Aquí se almacenan los bytes que lees al abrir el archivo.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:12px; background:#F8FAFC; border-left:4px solid #2563EB; border-radius:6px; padding:8px 14px; font-size:13px; color:#1E3A8A; line-height:1.45;\">\n    🚀 <strong>¿Por qué renombrar un archivo de 50 GB es instantáneo?</strong> Ejecutar <code>mv peli.mkv peli_final.mkv</code> dentro del mismo disco no mueve ni un solo byte físico: solo cambia la palabra en el cuaderno del directorio padre (el inodo #4012 y sus bloques siguen idénticos). Compruébalo con <code>ls -i</code>.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: El inodo almacena permisos, dueño, tamaño y punteros a bloques, pero NUNCA el nombre del archivo (reside exclusivamente en la tabla del directorio padre)."
+        }
+      ],
+      "notes": "Explica la metáfora del hotel: el directorio es el cuaderno de recepción (asocia nombres con número de habitación/inodo). El inodo es la ficha técnica del huésped."
+    },
+    {
+      "id": "103.3-slide-3",
+      "slideNumber": 3,
+      "title": "Inspección y Listado Detallado con ls",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Inspección y Listado Detallado con ls"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "ls [-l|-a|-h|-d|-i|-R|-t|-S] [ruta]",
+          "title": "Consultar permisos, propietarios, tamaños reales y metadatos de archivos y carpetas"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "ls -ld /var/log; ls -lh /var/log/syslog; ls -lai .bashrc",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "ls -l",
+              "Formato largo",
+              "🎯 Imprime 8 columnas: tipo, 9 permisos, enlaces, dueño UID, grupo GID, tamaño, fecha y nombre."
+            ],
+            [
+              "ls -a",
+              "Todos (ocultos)",
+              "🎯 Clave de Examen: Muestra todos los ficheros, incluidos los ocultos que inician por punto (.) y '.' / '..'"
+            ],
+            [
+              "ls -d",
+              "Solo el directorio",
+              "🎯 Clave de Examen: Lista las propiedades de la carpeta en sí, sin entrar a listar su contenido."
+            ],
+            [
+              "ls -h",
+              "Legible humanos",
+              "🎯 Convierte los bytes en unidades entendibles (K, M, G, T) junto con la opción -l."
+            ],
+            [
+              "ls -i",
+              "Número de inodo",
+              "🎯 Muestra el identificador numérico de inodo en la primera columna."
+            ],
+            [
+              "ls -t / -S",
+              "Ordenar tiempo / tamaño",
+              "'-t' ordena cronológicamente (más recientes primero); '-S' por tamaño descendente."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:15px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🔍 Anatomía de una Línea de Formato Largo (<code>ls -l</code>):\n  </div>\n\n  <div style=\"background:#0F172A; color:#F8FAFC; padding:10px 14px; border-radius:8px; font-family:monospace; font-size:15px; display:flex; flex-wrap:wrap; gap:12px; align-items:center;\">\n    <div><span style=\"color:#F43F5E; font-weight:800;\">-</span> <span style=\"font-size:11px; color:#94A3B8;\">(tipo: regular)</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:800;\">rw-r--r--</span> <span style=\"font-size:11px; color:#94A3B8;\">(permisos 644)</span></div>\n    <div><span style=\"color:#CBD5E1; font-weight:800;\">1</span> <span style=\"font-size:11px; color:#94A3B8;\">(enlaces)</span></div>\n    <div><span style=\"color:#FDE047; font-weight:800;\">root</span> <span style=\"font-size:11px; color:#94A3B8;\">(dueño)</span></div>\n    <div><span style=\"color:#4ADE80; font-weight:800;\">adm</span> <span style=\"font-size:11px; color:#94A3B8;\">(grupo)</span></div>\n    <div><span style=\"color:#A78BFA; font-weight:800;\">120K</span> <span style=\"font-size:11px; color:#94A3B8;\">(tamaño -h)</span></div>\n    <div><span style=\"color:#CBD5E1;\">oct 24 11:30</span> <span style=\"font-size:11px; color:#94A3B8;\">(fecha)</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:800;\">syslog</span></div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para consultar los permisos de una carpeta sin que la terminal se inunde con cientos de archivos internos, se usa OBLIGATORIAMENTE 'ls -ld /ruta'."
+        }
+      ],
+      "notes": "Muestra a los alumnos la enorme diferencia entre 'ls /etc' (200 líneas) y 'ls -ld /etc' (exactamente 1 línea)."
+    },
+    {
+      "id": "103.3-slide-4",
+      "slideNumber": 4,
+      "title": "Creación, Marcas Temporales y Directorios: touch y mkdir",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Creación, Marcas Temporales y Directorios: touch y mkdir"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "mkdir -p | touch [-t MMDDhhmm] | rmdir",
+          "title": "Crear ficheros vacíos, modificar fechas de acceso/modificación y construir árboles de carpetas"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "mkdir -p app/v1/src; touch -t 202610251200 app/v1/src/main.c; rmdir app/v1/src",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "mkdir -p",
+              "Jerarquía completa (Parents)",
+              "🎯 Clave de Examen: Crea directorios padre intermedios automáticamente sin error si ya existían."
+            ],
+            [
+              "mkdir -m <modo>",
+              "Fijar permisos",
+              "Define permisos octales al crear la carpeta (ej: 'mkdir -m 700 secreta')."
+            ],
+            [
+              "touch <archivo>",
+              "Crear / Actualizar sello",
+              "🎯 Si el archivo no existe lo crea vacío (0 bytes); si ya existe, actualiza su fecha al segundo actual."
+            ],
+            [
+              "touch -t YYYYMMDDhhmm",
+              "Fecha manual forzada",
+              "🎯 Clave de Examen: Sobrescribe la marca temporal con una fecha y hora exacta arbitraria."
+            ],
+            [
+              "rmdir <directorio>",
+              "Borrar solo vacíos",
+              "🎯 Comando defensivo: borra la carpeta ÚNICAMENTE si está 100% vacía. Falla si contiene archivos."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:8px; font-size:13px;\">\n  <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:10px; padding:12px;\">\n    <strong style=\"color:#1E40AF; font-size:14.5px;\">📁 mkdir -p (La Excavadora de Rutas)</strong>\n    <div style=\"color:#1E3A8A; line-height:1.45; margin-top:4px;\">\n      Si intentas hacer <code>mkdir a/b/c</code> sin la opción <code>-p</code>, fallará con <em>No such file or directory</em> si <code>a</code> no existe.<br>\n      Con <code>-p</code> comprueba cada nivel y lo crea si falta.\n    </div>\n  </div>\n\n  <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:10px; padding:12px;\">\n    <strong style=\"color:#991B1B; font-size:14.5px;\">🛡️ rmdir frente a rm -r</strong>\n    <div style=\"color:#7F1D1D; line-height:1.45; margin-top:4px;\">\n      • <code>rmdir</code> se niega en redondo a borrar carpetas con ficheros.<br>\n      • Si necesitas eliminar un árbol con contenido, se usa <code>rm -r</code> o <code>rm -rf</code>.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'mkdir -p a/b/c' jamás fallará aunque falte toda la ruta; 'rmdir' es un escudo de seguridad: nunca borrará una carpeta que contenga datos."
+        }
+      ],
+      "notes": "Enseña el formato de touch -t [[CC]YY]MMDDhhmm[.ss]. Para borrar carpetas con datos se utiliza rm -r."
+    },
+    {
+      "id": "103.3-slide-5",
+      "slideNumber": 5,
+      "title": "Copia, Movimiento y Borrado Seguro: cp, mv y rm",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Copia, Movimiento y Borrado Seguro: cp, mv y rm"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "cp [-a|-r|-p] | mv [-i] | rm [-rf]",
+          "title": "Duplicar árboles preservando permisos de seguridad, renombrar y purgar ficheros"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo cp -a /etc/nginx /backup/nginx_bkp; mv /backup/nginx_bkp /backup/nginx_2026; rm -rf /backup/nginx_2026",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "cp -a",
+              "Modo Archivo (Backup)",
+              "🎯 Clave Absoluta de Examen: Equivale a '-dpR'. Preserva permisos, dueños UID/GID, timestamps y enlaces simbólicos."
+            ],
+            [
+              "cp -r, -R",
+              "Recursivo simple",
+              "🎯 Copia carpetas pero cambia el dueño al usuario que ejecuta el comando y actualiza las fechas al momento actual."
+            ],
+            [
+              "cp -p",
+              "Preservar atributos",
+              "🎯 Preserva permisos originales, dueño y sellos de tiempo (incluido dentro de -a)."
+            ],
+            [
+              "mv origen dest",
+              "Mover o Renombrar",
+              "🎯 Si el destino es la misma carpeta, renombra. Si es otra carpeta, traslada el archivo."
+            ],
+            [
+              "rm -rf <dir>",
+              "Borrado Forzado Recursivo",
+              "🎯 '-r' desciende por todas las carpetas; '-f' fuerza el borrado sin preguntar ni avisar de errores."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:8px; font-size:13px;\">\n  <!-- cp -r -->\n  <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:14px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:11px; padding:2px 6px; border-radius:4px;\">❌ cp -r (Recursivo Ordinario)</span>\n      <code style=\"font-size:13.5px; font-weight:800; color:#991B1B;\">cp -r /etc /backup</code>\n    </div>\n    <div style=\"color:#7F1D1D; line-height:1.45; margin-top:6px;\">\n      • <strong>Propietario:</strong> Cambia al usuario que hace la copia.<br>\n      • <strong>Fechas:</strong> Se actualizan al segundo actual.<br>\n      • <strong>Enlaces simbólicos:</strong> Los duplica copiando el archivo real.<br>\n      <span style=\"color:#991B1B; font-weight:800;\">¡Arruina las copias de seguridad del sistema!</span>\n    </div>\n  </div>\n\n  <!-- cp -a -->\n  <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:14px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:11px; padding:2px 6px; border-radius:4px;\">✅ cp -a (Modo Archivo / Backup)</span>\n      <code style=\"font-size:13.5px; font-weight:800; color:#14532D;\">cp -a /etc /backup</code>\n    </div>\n    <div style=\"color:#14532D; line-height:1.45; margin-top:6px;\">\n      • <strong>Propietario:</strong> Clona exactamente el UID y GID de origen.<br>\n      • <strong>Fechas:</strong> Preserva los sellos originales de modificación.<br>\n      • <strong>Enlaces simbólicos:</strong> Se copian como enlaces sin gastar disco.<br>\n      <span style=\"color:#15803D; font-weight:800;\">¡Opción estándar oficial obligatoria en LPIC-1!</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 LA PREGUNTA DE EXAMEN MÁS REPETIDA: Para hacer un respaldo de un directorio del sistema conservando los permisos y propietarios originales, la respuesta correcta SIEMPRE es 'cp -a' (o 'cp -p'), NUNCA 'cp -r'."
+        }
+      ],
+      "notes": "Explica a la clase: si usas 'cp -r /home /backup', todos los archivos pasan a ser del usuario que hizo la copia, rompiendo la seguridad al restaurar."
+    },
+    {
+      "id": "103.3-slide-6",
+      "slideNumber": 6,
+      "title": "Comodines de Shell (Globbing) y Expansión de Llaves",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comodines de Shell (Globbing) y Expansión de Llaves"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo selecciona la Shell múltiples archivos mediante patrones antes de ejecutar el comando?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin-top:6px;\">\n  <!-- Gráfico de Funcionamiento del Globbing -->\n  <div style=\"font-size:16px; font-weight:800; color:var(--text); margin-bottom:10px;\">\n    ⚙️ ¿Qué es el Globbing y cómo funciona internamente? (Expansión previa de la Shell en 3 Fases):\n  </div>\n\n  <div style=\"display:flex; justify-content:space-between; align-items:center; font-size:13.5px; text-align:center; gap:12px; margin-bottom:16px;\">\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:10px 14px; flex:1;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:11px; padding:2px 6px; border-radius:4px;\">1. USUARIO ESCRIBE</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#1E40AF; font-size:15px; margin-top:4px;\">rm *.log</div>\n      <span style=\"font-size:11.5px; color:#1E3A8A;\">Usa un patrón comodín</span>\n    </div>\n\n    <span style=\"font-size:24px; color:#2563EB; font-weight:900;\">➔</span>\n\n    <div style=\"background:#FEFCE8; border:2px solid #EAB308; border-radius:10px; padding:10px 14px; flex:1.4;\">\n      <span style=\"background:#CA8A04; color:#FFF; font-weight:800; font-size:11px; padding:2px 6px; border-radius:4px;\">2. LA SHELL BUSCA EN DISCO</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#854D0E; font-size:13px; margin-top:4px;\">access.log error.log auth.log</div>\n      <span style=\"font-size:11.5px; color:#713F12;\">Sustituye el patrón antes de llamar al comando</span>\n    </div>\n\n    <span style=\"font-size:24px; color:#2563EB; font-weight:900;\">➔</span>\n\n    <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:10px 14px; flex:1.4;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:11px; padding:2px 6px; border-radius:4px;\">3. EJECUCIÓN DEL COMANDO</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#14532D; font-size:14px; margin-top:4px;\">rm access.log error.log ...</div>\n      <span style=\"font-size:11.5px; color:#15803D;\">rm recibe la lista de archivos ya resuelta</span>\n    </div>\n  </div>\n\n  <!-- Los 4 Comodines Explicados Visualmente con Ejemplo Real y Objetivo -->\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; font-size:13px;\">\n    <!-- * -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:10px; padding:12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <strong style=\"color:#1E40AF; font-size:15px;\">* (Asterisco)</strong>\n          <span style=\"background:#2563EB; color:#FFF; font-size:10.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">0 O MÁS</span>\n        </div>\n        <div style=\"color:#1E3A8A; font-size:12px; margin-bottom:6px;\">Coincide con cualquier cadena de texto.</div>\n        <div style=\"background:#DBEAFE; border-radius:6px; padding:6px 8px; font-family:monospace; font-size:12px; color:#1E40AF;\">ls *.tar.gz</div>\n      </div>\n      <div style=\"margin-top:6px; font-size:11.5px; color:#1E3A8A; line-height:1.35;\">\n        🎯 <strong>Objetivo:</strong> Procesar todos los archivos de una extensión sin importar su nombre.\n      </div>\n    </div>\n\n    <!-- ? -->\n    <div style=\"background:#FEFCE8; border:1.5px solid #FDE047; border-radius:10px; padding:12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <strong style=\"color:#854D0E; font-size:15px;\">? (Interrogante)</strong>\n          <span style=\"background:#CA8A04; color:#FFF; font-size:10.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">EXACTO 1</span>\n        </div>\n        <div style=\"color:#713F12; font-size:12px; margin-bottom:6px;\">Exactamente 1 solo carácter obligatorio.</div>\n        <div style=\"background:#FEF08A; border-radius:6px; padding:6px 8px; font-family:monospace; font-size:12px; color:#854D0E;\">cat conf_?.cfg</div>\n      </div>\n      <div style=\"margin-top:6px; font-size:11.5px; color:#713F12; line-height:1.35;\">\n        🎯 <strong>Objetivo:</strong> Coincide con <code>conf_1.cfg</code> o <code>conf_A.cfg</code>, pero jamás con <code>conf_10.cfg</code>.\n      </div>\n    </div>\n\n    <!-- [...] -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:10px; padding:12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <strong style=\"color:#15803D; font-size:15px;\">[...] (Rangos)</strong>\n          <span style=\"background:#16A34A; color:#FFF; font-size:10.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">CONJUNTOS</span>\n        </div>\n        <div style=\"color:#14532D; font-size:12px; margin-bottom:6px;\">1 carácter dentro de una lista o rango.</div>\n        <div style=\"background:#DCFCE7; border-radius:6px; padding:6px 8px; font-family:monospace; font-size:12px; color:#15803D;\">rm log[1-3].txt</div>\n      </div>\n      <div style=\"margin-top:6px; font-size:11.5px; color:#14532D; line-height:1.35;\">\n        🎯 <strong>Objetivo:</strong> Solo borra logs 1, 2 y 3. Con <code>[!0-9]</code> niega (archivos sin dígitos).\n      </div>\n    </div>\n\n    <!-- {...} -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:10px; padding:12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <strong style=\"color:#6B21A8; font-size:15px;\">{...} (Llaves)</strong>\n          <span style=\"background:#9333EA; color:#FFF; font-size:10.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">FABRICA TEXTO</span>\n        </div>\n        <div style=\"color:#581C87; font-size:12px; margin-bottom:6px;\">¡No busca en disco! Genera cadenas.</div>\n        <div style=\"background:#F3E8FF; border-radius:6px; padding:6px 8px; font-family:monospace; font-size:12px; color:#6B21A8;\">mkdir {src,bin,doc}</div>\n      </div>\n      <div style=\"margin-top:6px; font-size:11.5px; color:#581C87; line-height:1.35;\">\n        🎯 <strong>Objetivo:</strong> Crear carpetas o nombres combinados (ej: <code>bkp_{lun,mar}.sql</code>) sin teclear uno a uno.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: El globbing lo resuelve la SHELL en disco antes de invocar el comando. Si ningún archivo coincide, la shell suele enviar el patrón literal salvo configuración en contrario."
+        }
+      ],
+      "notes": "Diferencia claramente los comodines de globbing (*, ?, []) de las expresiones regulares de grep (tema 103.7)."
+    },
+    {
+      "id": "103.3-slide-7",
+      "slideNumber": 7,
+      "title": "Búsqueda Exhaustiva con find: Nombres, Tipos y Tamaños",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Búsqueda Exhaustiva con find: Nombres, Tipos y Tamaños"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "find [ruta] [-name|-type|-size|-maxdepth]",
+          "title": "Rastrear recursivamente el árbol de archivos en tiempo real según criterios precisos"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "find /etc -maxdepth 1 -name '*.conf' | head -n 2; find /var/log -type f -size +10M",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "find <ruta>",
+              "Ruta de inicio",
+              "Punto de partida recursivo (por defecto '.' si no indicas ruta)."
+            ],
+            [
+              "-name '<patrón>'",
+              "Nombre exacto",
+              "🎯 Sensible a mayúsculas. ¡OBLIGATORIO entrecomillar los comodines ('*.log')!"
+            ],
+            [
+              "-iname '<patrón>'",
+              "Ignorar mayúsculas",
+              "Case-insensitive: coincide tanto con '.log' como con '.LOG' o '.Log'."
+            ],
+            [
+              "-type [f|d|l]",
+              "Tipo de archivo",
+              "🎯 Clave de Examen: 'f' = fichero regular, 'd' = carpeta/directorio, 'l' = enlace simbólico."
+            ],
+            [
+              "-size [+|-]N[k|M|G]",
+              "Por tamaño",
+              "🎯 Clave de Examen: '+50M' = mayor de 50 MB, '-100k' = menor de 100 KB, '500c' = exactamente 500 bytes."
+            ],
+            [
+              "-maxdepth N",
+              "Profundidad máxima",
+              "🎯 Limita el rastreo a N niveles de subcarpetas (evita búsquedas infinitas)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:15px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🧩 Anatomía de un Comando <code>find</code> Estándar de Examen:\n  </div>\n\n  <div style=\"background:#0F172A; color:#F8FAFC; padding:10px 16px; border-radius:8px; font-family:monospace; font-size:16px; display:flex; flex-wrap:wrap; gap:16px;\">\n    <span style=\"color:#38BDF8; font-weight:800;\">find</span>\n    <span style=\"color:#A78BFA; font-weight:800;\">/var/log</span>\n    <span style=\"color:#F43F5E; font-weight:800;\">-type f</span>\n    <span style=\"color:#4ADE80; font-weight:800;\">-name '*.log'</span>\n    <span style=\"color:#FDE047; font-weight:800;\">-size +10M</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-top:8px; font-size:12px;\">\n    <div style=\"background:#F5F3FF; border:1px solid #DDD6FE; padding:6px 8px; border-radius:6px;\">\n      <strong style=\"color:#6D28D9;\">/var/log</strong><br>Directorio raíz de búsqueda.\n    </div>\n    <div style=\"background:#FFF1F2; border:1px solid #FECDD3; padding:6px 8px; border-radius:6px;\">\n      <strong style=\"color:#BE123C;\">-type f</strong><br>Solo archivos (descarta carpetas).\n    </div>\n    <div style=\"background:#ECFDF5; border:1px solid #A7F3D0; padding:6px 8px; border-radius:6px;\">\n      <strong style=\"color:#047857;\">-name '*.log'</strong><br>Nombre entrecomillado.\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FEF08A; padding:6px 8px; border-radius:6px;\">\n      <strong style=\"color:#A16207;\">-size +10M</strong><br>Mayores de 10 Megabytes.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Si omites las comillas en '-name *.log', la shell expandirá el asterisco antes de llamar a find y dará error de sintaxis si hay más de un log. Siempre escribe: -name '*.log'."
+        }
+      ],
+      "notes": "Explica la diferencia entre find (rastreo físico directo en disco en tiempo real) y locate (consulta de base de datos indexada con updatedb)."
+    },
+    {
+      "id": "103.3-slide-8",
+      "slideNumber": 8,
+      "title": "find Avanzado: Marcas Temporales, Usuarios y -exec",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "find Avanzado: Marcas Temporales, Usuarios y -exec"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "find <ruta> [-mtime|-user] -exec <cmd> {} \\;",
+          "title": "Filtrar por fechas de modificación y disparar acciones automáticas sobre cada resultado"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "find /var/log -name '*.log' -exec ls -lh {} \\; | head -n 2",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-mtime [+|-]N",
+              "Modificación en días",
+              "🎯 '-mtime -2' = últimas 48h; '-mtime +30' = hace más de 30 días."
+            ],
+            [
+              "-mmin [+|-]N",
+              "Modificación en minutos",
+              "🎯 '-mmin -60' = modificado en la última hora (vital para auditoría forense)."
+            ],
+            [
+              "-user / -group",
+              "Dueño UID o GID",
+              "🎯 Filtra por el usuario o grupo propietario (ej: '-user www-data' o '-user root')."
+            ],
+            [
+              "-exec <cmd> {} \\;",
+              "Ejecutar comando uno a uno",
+              "🎯 Clave Absoluta de Examen: Inyecta la ruta en '{}' y cierra obligatoriamente con ' \\;'."
+            ],
+            [
+              "-delete",
+              "Borrado directo",
+              "🎯 Elimina directamente los ficheros encontrados sin necesidad de invocar 'rm'."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🎯 Desglose Visual: ¿Cómo funciona exactamente <code>-exec ls -lh {} \\;</code>?</span>\n    <span style=\"font-size:11px; background:#EEF2FF; color:#4338CA; padding:2px 8px; border-radius:12px; font-weight:700;\">Regla de Oro LPIC-1</span>\n  </div>\n\n  <!-- 4 Piezas Clave -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1.25fr 1fr; gap:10px; font-size:12px; margin-bottom:8px;\">\n    <!-- 1. -exec -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:8px 10px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10.5px; padding:2px 6px; border-radius:4px;\">1. DISPARADOR</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#1E40AF; font-size:15px; margin:3px 0;\">-exec</div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">Ordena a <code>find</code>: <em>«No solo listes el archivo; ejecuta una orden sobre él»</em>.</div>\n    </div>\n\n    <!-- 2. ls -lh -->\n    <div style=\"background:#FEFCE8; border:1.5px solid #EAB308; border-radius:8px; padding:8px 10px;\">\n      <span style=\"background:#CA8A04; color:#FFF; font-weight:800; font-size:10.5px; padding:2px 6px; border-radius:4px;\">2. LA ORDEN</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#854D0E; font-size:15px; margin:3px 0;\">ls -lh</div>\n      <div style=\"color:#713F12; line-height:1.35;\">La acción externa a aplicar (ver tamaño humano, dueño y permisos).</div>\n    </div>\n\n    <!-- 3. {} -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:8px 10px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10.5px; padding:2px 6px; border-radius:4px;\">3. EL ARCHIVO</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#14532D; font-size:15px; margin:3px 0;\">{}</div>\n      <div style=\"color:#14532D; line-height:1.35;\">Variable/hueco donde <code>find</code> inyecta la ruta de cada fichero encontrado.</div>\n    </div>\n\n    <!-- 4. \\; -->\n    <div style=\"background:#FFF1F2; border:1.5px solid #FCA5A5; border-radius:8px; padding:8px 10px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10.5px; padding:2px 6px; border-radius:4px;\">4. FIN ESCAPADO</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#991B1B; font-size:15px; margin:3px 0;\">\\;</div>\n      <div style=\"color:#7F1D1D; line-height:1.35;\">La barra <code>\\</code> frena a la Shell para que no confunda <code>;</code> con fin de línea.</div>\n    </div>\n  </div>\n\n  <!-- Bucle de Sustitución en Tiempo Real -->\n  <div style=\"background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:7px 12px; margin-bottom:8px; font-size:11.5px;\">\n    <strong style=\"color:#0F172A;\">🔄 ¿Cómo trabaja por dentro en cada coincidencia? (Bucle de sustitución automática):</strong>\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:5px; font-family:monospace; font-size:12px;\">\n      <div style=\"background:#FFFFFF; border:1px dashed #3B82F6; padding:5px 9px; border-radius:6px; color:#1E3A8A;\">\n        ① Encuentra <code>/var/log/dpkg.log</code> ➔ Ejecuta: <strong>ls -lh /var/log/dpkg.log</strong>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px dashed #16A34A; padding:5px 9px; border-radius:6px; color:#14532D;\">\n        ② Encuentra <code>/var/log/auth.log</code> ➔ Ejecuta: <strong>ls -lh /var/log/auth.log</strong>\n      </div>\n    </div>\n  </div>\n\n  <!-- Situación de la vida real -->\n  <div style=\"background:#EFF6FF; border-left:4px solid #2563EB; border-radius:6px; padding:6px 12px; font-size:12px; color:#1E3A8A; line-height:1.4;\">\n    💡 <strong>¿Por qué harías esto en la vida real?</strong> <code>find /var/log -name '*.log'</code> solo imprime una lista muda de nombres de archivo (<code>/var/log/dpkg.log</code>). Con <code>-exec ls -lh {} \\;</code> sabes al instante cuánto pesa cada uno (45K, 120K), quién es su dueño y si alguien lo modificó hoy, sin tener que consultar archivo por archivo manualmente.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 FÓRMULA SAGRADA DE EXAMEN: 'find ... -exec comando {} \\;'. Las llaves '{}' son la variable donde se inyecta el archivo; y '\\;' escapa el punto y coma para que la Shell no corte el comando antes de tiempo."
+        }
+      ],
+      "notes": "Advierte: si pones -exec rm {} ; (sin contrabarra), la shell procesa el punto y coma como fin de línea y find devuelve el error fatal: missing argument to -exec."
+    },
+    {
+      "id": "103.3-slide-9",
+      "slideNumber": 9,
+      "title": "Empaquetado y Compresión con tar",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Empaquetado y Compresión con tar"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "tar -[c|x|t][v][f archivo.tar] [-z|-j|-J] [rutas]",
+          "title": "Crear, listar y restaurar archivos empaquetados preservando permisos y directorios"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "tar -czvf /backup/nginx.tar.gz /etc/nginx; tar -tvf /backup/nginx.tar.gz | head -n 2",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "tar -c / -x / -t",
+              "Crear / Extraer / Listar",
+              "🎯 Operaciones: '-c' (Create / nuevo tar), '-x' (eXtract / restaurar), '-t' (Test / listar contenido sin extraer)."
+            ],
+            [
+              "tar -f <archivo>",
+              "Nombre del archivo (Obligatorio)",
+              "🎯 ¡OBLIGATORIO! Especifica el fichero contenedor. Debe ir siempre inmediatamente pegado al nombre del archivo."
+            ],
+            [
+              "tar -z",
+              "gzip (.tar.gz / .tgz)",
+              "🎯 Compresión gzip estándar: rápida y ultracompatible en todos los Unix."
+            ],
+            [
+              "tar -j",
+              "bzip2 (.tar.bz2 / .tbz2)",
+              "🎯 Compresión bzip2: archivos más pequeños a costa de mayor uso de CPU."
+            ],
+            [
+              "tar -J (Mayúscula)",
+              "xz (.tar.xz)",
+              "🎯 Compresión xz: máxima tasa de compresión moderna con algoritmo LZMA2."
+            ],
+            [
+              "tar -C <directorio>",
+              "Carpeta de destino",
+              "🎯 Cambia a la carpeta indicada antes de extraer (ej: 'tar -xvf bkp.tar.gz -C /var/www')."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:15px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    📦 Matriz de Banderas de Compresión y Operación en <code>tar</code>:\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:12.5px; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF; font-size:14.5px;\">-z (gzip)</strong><br>\n      <code>.tar.gz</code> o <code>.tgz</code><br>\n      <span style=\"color:#1E3A8A; font-size:11.5px;\">Rápido y estándar universal</span>\n    </div>\n\n    <div style=\"background:#FEFCE8; border:1.5px solid #EAB308; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#854D0E; font-size:14.5px;\">-j (bzip2)</strong><br>\n      <code>.tar.bz2</code> o <code>.tbz2</code><br>\n      <span style=\"color:#713F12; font-size:11.5px;\">Mayor tasa de compresión</span>\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#15803D; font-size:14.5px;\">-J (xz) [Mayúscula]</strong><br>\n      <code>.tar.xz</code><br>\n      <span style=\"color:#14532D; font-size:11.5px;\">Máxima compresión moderna</span>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; padding:6px 12px; background:#FEF2F2; border-left:4px solid #EF4444; border-radius:4px; font-size:12px; color:#991B1B;\">\n    ⚠️ <strong>REGLA DE SINTAXIS:</strong> <code>-f</code> SIEMPRE va junto al nombre: <code>tar -czvf archivo.tar.gz /ruta</code>.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 LA TRAMPA DE SINTAXIS DE TAR: El flag '-f' exige que el siguiente texto sea el nombre del archivo. 'tar -czvf bkp.tar.gz /etc' es CORRECTO; pero 'tar -cfzv bkp.tar.gz ...' dará ERROR porque tar creerá que el archivo se llama 'z'."
+        }
+      ],
+      "notes": "Pide a todos los alumnos que memoricen: z = gzip, j = bzip2, J mayúscula = xz. f SIEMPRE va pegado al nombre."
+    },
+    {
+      "id": "103.3-slide-10",
+      "slideNumber": 10,
+      "title": "Empaquetado Flexible con cpio",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Empaquetado Flexible con cpio"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "cpio -o | cpio -i | cpio -p",
+          "title": "Archivar, restaurar o migrar árboles de archivos leídos desde la entrada estándar (stdin)"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "find /etc/nginx -name '*.conf' | cpio -ov > /tmp/confs.cpio; cpio -it < /tmp/confs.cpio",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "cpio -o, --create",
+              "Modo Crear (Copy-out)",
+              "🎯 Lee la lista de rutas por 'stdin' y escribe el archivo empaquetado resultante en 'stdout'."
+            ],
+            [
+              "cpio -i, --extract",
+              "Modo Extraer (Copy-in)",
+              "🎯 Lee el archivo empaquetado por 'stdin' y extrae los archivos en el disco duro."
+            ],
+            [
+              "cpio -p",
+              "Copia en vuelo (Pass-through)",
+              "🎯 Copia un árbol de directorios directamente a otra carpeta sin crear fichero intermedio."
+            ],
+            [
+              "cpio -d",
+              "Crear directorios",
+              "🎯 Crea automáticamente las carpetas intermedias necesarias al restaurar los ficheros."
+            ],
+            [
+              "cpio -t",
+              "Listar contenido",
+              "Muestra la lista de ficheros contenidos en el archivo sin extraerlos en disco."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:15px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🔄 Los 3 Modos Operativos de <code>cpio</code>:\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:12.5px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF; font-size:14px;\">-o (Copy-out / Crear)</strong><br>\n      <code>find . | cpio -ov &gt; arch.cpio</code><br>\n      <span style=\"color:#1E3A8A; font-size:11.5px;\">Lee nombres de stdin y empaqueta en stdout.</span>\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#15803D; font-size:14px;\">-i (Copy-in / Extraer)</strong><br>\n      <code>cpio -idv &lt; arch.cpio</code><br>\n      <span style=\"color:#14532D; font-size:11.5px;\">Extrae creando carpetas con <code>-d</code>.</span>\n    </div>\n\n    <div style=\"background:#FAF5FF; border:1.5px solid #A855F7; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#6B21A8; font-size:14px;\">-p (Pass / En vuelo)</strong><br>\n      <code>find . | cpio -pdm /backup/</code><br>\n      <span style=\"color:#581C87; font-size:11.5px;\">Copia directa sin crear archivo contenedor.</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: cpio funciona mediante flujos de tuberías (| y < >). Tiene 3 modos: '-o' (crear/empaquetar), '-i' (extraer) y '-p' (copia directa en vuelo). Se usa en el arranque Linux dentro del archivo 'initramfs'."
+        }
+      ],
+      "notes": "Muestra que el comando 'rpm2cpio paquete.rpm | cpio -idmv' permite desempacar un paquete RPM sin instalarlo."
+    },
+    {
+      "id": "103.3-slide-11",
+      "slideNumber": 11,
+      "title": "Copia a Bajo Nivel por Bloques con dd",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Copia a Bajo Nivel por Bloques con dd"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "dd if=<origen> of=<destino> [bs=<bloque>] [count=<n>]",
+          "title": "Clonar discos, crear imágenes binarias idénticas y respaldar el MBR sector a sector"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo dd if=/dev/sda of=/backup/mbr.bin bs=512 count=1 status=progress",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "if=<ruta>",
+              "Input File (Origen)",
+              "🎯 Fichero o dispositivo físico origen (ej: 'if=/dev/sda', 'if=/dev/zero', 'if=debian.iso')."
+            ],
+            [
+              "of=<ruta>",
+              "Output File (Destino)",
+              "🎯 Fichero o dispositivo físico destino (ej: 'of=/dev/sdb', 'of=/backup/disco.img')."
+            ],
+            [
+              "bs=<tamaño>",
+              "Block Size (Bloque)",
+              "🎯 Tamaño de cada bloque a transferir (ej: 'bs=512', 'bs=4k', 'bs=1M')."
+            ],
+            [
+              "count=<N>",
+              "Cantidad de bloques",
+              "🎯 Número total de bloques a copiar antes de detenerse (ej: 'count=1')."
+            ],
+            [
+              "status=progress",
+              "Progreso en tiempo real",
+              "Muestra la velocidad de transferencia y bytes copiados en directo."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:15px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    💾 ¿Por qué respaldar el MBR (Primeros 512 Bytes) con <code>dd</code>?\n  </div>\n\n  <div style=\"display:flex; justify-content:space-between; align-items:center; font-size:12.5px; gap:8px;\">\n    <div style=\"background:#0F172A; color:#F8FAFC; padding:8px 12px; border-radius:6px; font-family:monospace; flex:1;\">\n      dd if=/dev/sda of=mbr.bin <span style=\"color:#FDE047; font-weight:800;\">bs=512 count=1</span>\n    </div>\n    <span style=\"font-size:18px; color:#2563EB; font-weight:900;\">➔</span>\n    <div style=\"display:flex; gap:6px; flex:2.2;\">\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:6px 8px; border-radius:6px; flex:2; text-align:center;\">\n        <strong style=\"color:#1E40AF;\">446 Bytes</strong><br>\n        <span style=\"font-size:11px; color:#1E3A8A;\">Bootloader (GRUB)</span>\n      </div>\n      <div style=\"background:#FEFCE8; border:1px solid #FDE047; padding:6px 8px; border-radius:6px; flex:1.2; text-align:center;\">\n        <strong style=\"color:#854D0E;\">64 Bytes</strong><br>\n        <span style=\"font-size:11px; color:#713F12;\">4 Particiones (16B c/u)</span>\n      </div>\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:6px 8px; border-radius:6px; flex:1; text-align:center;\">\n        <strong style=\"color:#15803D;\">2 Bytes</strong><br>\n        <span style=\"font-size:11px; color:#14532D;\">Firma 0x55AA</span>\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:8px; font-size:12px; color:#475569; line-height:1.4;\">\n    💡 <strong>¿Cuándo usarlo?</strong> Antes de particionar con fdisk o instalar un arranque dual. Si se daña el arranque, restaurar con <code>dd if=mbr.bin of=/dev/sda bs=512 count=1</code> devuelve el equipo a la vida en 1 segundo.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA CLÁSICA DE EXAMEN: ¿Cómo se respalda el Master Boot Record (MBR)? 'dd if=/dev/sda of=mbr.bin bs=512 count=1'. Contiene el cargador de arranque (446 B) y la tabla de particiones (64 B)."
+        }
+      ],
+      "notes": "Advierte seriamente: 'dd' suele apodarse 'Disk Destroyer'. Si te equivocas en 'of=/dev/sda' en lugar de 'sdb', sobrescribirás tu sistema operativo de forma irreversible."
+    },
+    {
+      "id": "103.3-slide-12",
+      "slideNumber": 12,
+      "title": "Identificación de Tipos de Contenido con file",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Identificación de Tipos de Contenido con file"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "file [-b|-i|-z] <fichero>",
+          "title": "Inspeccionar las cabeceras (Magic Numbers) para descubrir el formato real de cualquier archivo"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "file /bin/bash; file /etc/passwd; file factura.pdf; file -b -i /etc/issue",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "file <archivo>",
+              "Identificación completa",
+              "🎯 Lee los primeros bytes (números mágicos) comparándolos con la base de datos de firmas (/etc/magic)."
+            ],
+            [
+              "file -b, --brief",
+              "Modo Breve (sin nombre)",
+              "🎯 Omite el nombre del archivo al inicio de la salida, imprimiendo solo el tipo de archivo."
+            ],
+            [
+              "file -i, --mime",
+              "Tipo MIME oficial",
+              "🎯 Clave de Examen: Devuelve el tipo MIME estándar (ej: 'text/plain', 'application/x-executable')."
+            ],
+            [
+              "file -z, --uncompress",
+              "Mirar dentro de comprimidos",
+              "Intenta examinar el interior de ficheros comprimidos para averiguar qué formato albergan."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:8px; font-size:13px;\">\n  <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:10px; padding:12px 14px;\">\n    <strong style=\"color:#1E40AF; font-size:14.5px;\">🔍 El Concepto de Magic Numbers</strong>\n    <div style=\"color:#1E3A8A; line-height:1.45; margin-top:4px;\">\n      Los primeros 2 a 8 bytes de un archivo identifican su formato:<br>\n      • Un script empieza por <code>#!</code> (0x23 0x21).<br>\n      • Un ejecutable Linux empieza por <code>\\x7FELF</code>.<br>\n      • Un archivo PNG empieza por <code>\\x89PNG</code>.<br>\n      <code>file</code> lee estos bytes para no dejarse engañar por la extensión.\n    </div>\n  </div>\n\n  <div style=\"background:#FEFCE8; border:1.5px solid #EAB308; border-radius:10px; padding:12px 14px;\">\n    <strong style=\"color:#854D0E; font-size:14.5px;\">🛡️ Utilidad en Ciberseguridad y Scripts</strong>\n    <div style=\"color:#713F12; line-height:1.45; margin-top:4px;\">\n      • Detectar malware que se disfraza con nombres inofensivos (ej: <code>foto.jpg</code> que en realidad es un binario ELF).<br>\n      • Con <code>file -i</code> se obtienen tipos MIME (<code>image/jpeg</code>, <code>application/pdf</code>) esenciales para scripts web.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: En Linux las extensiones (.txt, .exe, .sh) son puramente decorativas para el usuario. El sistema operativo utiliza 'file' y los 'Magic Numbers' de cabecera para saber qué tipo de archivo es en realidad."
+        }
+      ],
+      "notes": "Muestra que si renombras 'foto.jpg' a 'foto.mp3', el comando 'file foto.mp3' sigue diciendo 'JPEG image data'."
+    },
+    {
+      "id": "103.3-slide-13",
+      "slideNumber": 13,
+      "title": "Trampas Clásicas de Examen en Gestión de Archivos",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Trampas Clásicas de Examen en Gestión de Archivos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 4 errores más castigados en las preguntas de administración de archivos en LPIC-1:"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:8px; font-size:13px;\">\n  <!-- Trampa 1: Posición de -f en tar -->\n  <div style=\"background:#FFF1F2; border:2px solid #FCA5A5; border-radius:10px; padding:12px 14px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:14.5px; margin-bottom:4px;\">1. Posición de -f en tar</div>\n    <div style=\"color:#7F1D1D; line-height:1.4;\">\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa:</span> <code>tar -cfz bkp.tar.gz /etc</code><br>\n      <span style=\"color:#16A34A; font-weight:800;\">✅ Realidad:</span> <code>tar -czf bkp.tar.gz /etc</code><br>\n      <span style=\"color:#475569; font-size:12px;\">💡 <strong>¿Por qué?</strong> <code>-f</code> exige que el siguiente texto sea el nombre del archivo. En <code>-cfz</code> intentará abrir un archivo llamado 'z'.</span>\n    </div>\n  </div>\n\n  <!-- Trampa 2: Escapar \\; en find -exec -->\n  <div style=\"background:#FFF1F2; border:2px solid #FCA5A5; border-radius:10px; padding:12px 14px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:14.5px; margin-bottom:4px;\">2. Olvidar la contrabarra en find -exec</div>\n    <div style=\"color:#7F1D1D; line-height:1.4;\">\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa:</span> <code>find . -name '*.log' -exec rm {} ;</code><br>\n      <span style=\"color:#16A34A; font-weight:800;\">✅ Realidad:</span> <code>find . -name '*.log' -exec rm {} \\;</code><br>\n      <span style=\"color:#475569; font-size:12px;\">💡 <strong>¿Por qué?</strong> Sin la contrabarra <code>\\</code>, la Shell se come el <code>;</code> como fin de línea y find devuelve error.</span>\n    </div>\n  </div>\n\n  <!-- Trampa 3: cp -r frente a cp -a -->\n  <div style=\"background:#FFF1F2; border:2px solid #FCA5A5; border-radius:10px; padding:12px 14px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:14.5px; margin-bottom:4px;\">3. cp -r frente a cp -a para backups</div>\n    <div style=\"color:#7F1D1D; line-height:1.4;\">\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa:</span> Para respaldar /etc o /home usar <code>cp -r</code>.<br>\n      <span style=\"color:#16A34A; font-weight:800;\">✅ Realidad:</span> La respuesta oficial siempre es <code>cp -a</code> (o <code>cp -p</code>).<br>\n      <span style=\"color:#475569; font-size:12px;\">💡 <strong>¿Por qué?</strong> <code>cp -r</code> cambia el dueño al usuario que copia; <code>cp -a</code> preserva UID, GID y fechas exactas.</span>\n    </div>\n  </div>\n\n  <!-- Trampa 4: Letras de los compresores de tar -->\n  <div style=\"background:#FFF1F2; border:2px solid #FCA5A5; border-radius:10px; padding:12px 14px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:14.5px; margin-bottom:4px;\">4. Compresores de tar cruzados</div>\n    <div style=\"color:#7F1D1D; line-height:1.4;\">\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa:</span> Creer que <code>-J</code> comprime bzip2 o <code>-j</code> xz.<br>\n      <span style=\"color:#16A34A; font-weight:800;\">✅ Realidad:</span> <code>-z</code> = gzip, <code>-j</code> = bzip2, <code>-J</code> = xz (mayúscula).<br>\n      <span style=\"color:#475569; font-size:12px;\">💡 <strong>¿Por qué?</strong> Pregunta clásica de opción múltiple con respuestas casi idénticas.</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla Mnemotécnica de Examen: En tar, '-f' siempre va pegado al nombre del archivo; en find, '-exec ... {} \\;' con contrabarra obligatoria; y para respaldar sistemas, siempre 'cp -a'."
+        }
+      ],
+      "notes": "Pide a los alumnos que anoten estas 4 trampas en grande en sus cuadernos: son fijas en todas las convocatorias."
+    },
+    {
+      "id": "103.3-slide-14",
+      "slideNumber": 14,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Jerarquías y Copia)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Jerarquías y Copia)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 1 (Oficial Pág 280): ¿Cuál es el comando exacto para crear de una sola vez la jerarquía de directorios '/tmp/backup/2026/octubre' asegurando que no dé error si alguna carpeta ya existe? — Comando: `mkdir -p /tmp/backup/2026/octubre` (La opción -p (--parents) crea todas las carpetas intermedias necesarias en un solo paso y no genera errores si ya existían.)",
+            "Caso 2 (Oficial Pág 280): ¿Qué comando copia recursivamente todo el directorio '/var/log' a '/tmp/log_backup' garantizando que se conserven exactamente los mismos propietarios, permisos y marcas temporales? — Comando: `sudo cp -a /var/log /tmp/log_backup (o cp -dpR)` (La opción -a (--archive) preserva todos los atributos de archivos, propietarios, sellos de tiempo y enlaces simbólicos.)",
+            "Caso 3 (Oficial Pág 280): ¿Cómo puedes actualizar la fecha de modificación del archivo 'version.h' a una fecha arbitraria (ej: 1 de enero de 2026 a las 10:00)? — Comando: `touch -t 202601011000 version.h` (La opción -t de touch permite forzar una marca temporal manual en formato [[CC]YY]MMDDhhmm.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "mkdir -p resuelve árboles completos; cp -a garantiza la fidelidad de copias de seguridad administrativas; y touch -t manipula marcas temporales."
+        }
+      ],
+      "notes": "Recuerda que cp -a requiere privilegios de superusuario para poder conservar propietarios de otros usuarios."
+    },
+    {
+      "id": "103.3-slide-15",
+      "slideNumber": 15,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: find y tar)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: find y tar)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 4 (Oficial Pág 280): Escribe el comando completo con 'find' para localizar todos los directorios (y solo directorios) dentro de '/home' que pertenezcan al usuario 'alumno'. — Comando: `find /home -type d -user alumno` (-type d limita la búsqueda a carpetas; -user alumno filtra por el propietario especificado.)",
+            "Caso 5 (Oficial Pág 280): ¿Qué comando empaqueta y comprime con 'bzip2' todo el contenido del directorio '/etc' guardándolo en '/tmp/etc.tar.bz2'? — Comando: `sudo tar -cjvf /tmp/etc.tar.bz2 /etc` (La opción -c crea el paquete, -j activa la compresión bzip2, -v activa el modo detallado y -f especifica la ruta del archivo de salida.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "find permite combinaciones precisas de tipo y propietario; tar -j integra la compresión bzip2 de forma nativa."
+        }
+      ],
+      "notes": "Recuerda que para descomprimir ese archivo se usaría 'tar -xjvf /tmp/etc.tar.bz2'."
+    },
+    {
+      "id": "103.3-slide-16",
+      "slideNumber": 16,
+      "title": "Retos de Exploración Oficiales (find -exec, dd y MBR)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Retos de Exploración Oficiales (find -exec, dd y MBR)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. Un administrador necesita buscar todos los archivos con extensión '.log' en '/var/log' que superen los 5 MB de tamaño y comprimirlos con gzip uno por uno usando find y -exec.\n2. ¿Qué comando con 'dd' permite clonar de forma idéntica los primeros 512 bytes del disco '/dev/sdb' (el Master Boot Record) al archivo '/backup/mbr.img'?\n3. ¿Cómo listarías los contenidos del archivo empaquetado '/root/backup.tar.xz' sin descomprimirlo ni extraer ningún fichero en el disco?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Pista",
+          "content": "Recuerda: find con -exec gzip {} \\;; dd con if=/dev/sdb of=... bs=512 count=1; y tar -tvf (o -tJf)."
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Desafío",
+          "content": "1. Se ejecuta: find /var/log -type f -name '*.log' -size +5M -exec gzip {} \\;\n2. Se ejecuta: sudo dd if=/dev/sdb of=/backup/mbr.img bs=512 count=1\n3. Se ejecuta: tar -tvf /root/backup.tar.xz (o tar -tJf /root/backup.tar.xz)."
+        }
+      ],
+      "notes": "La combinación de find con -exec gzip es un clásico de rotación de logs manual en tareas de mantenimiento."
+    },
+    {
+      "id": "103.3-slide-17",
+      "slideNumber": 17,
+      "title": "Pregunta de Examen LPIC-1: Búsqueda y Ejecución con find",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Búsqueda y Ejecución con find"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-103-3-17",
+          "question": "¿Cuál es la sintaxis correcta del comando 'find' para buscar todos los archivos que terminen en '.bak' en el directorio actual y eliminarlos de forma automática mediante la acción -exec?",
+          "options": [
+            {
+              "key": "a",
+              "text": "find . -name '*.bak' -exec rm () ;"
+            },
+            {
+              "key": "b",
+              "text": "find . -name '*.bak' -exec rm {} \\;"
+            },
+            {
+              "key": "c",
+              "text": "find . -name '*.bak' -exec rm [] \\;"
+            },
+            {
+              "key": "d",
+              "text": "find . -name *.bak -exec rm {} ;"
+            }
+          ],
+          "correct": [
+            "b"
+          ],
+          "explanation": "En la opción -exec de 'find', la pareja de llaves vacías '{}' representa el marcador de posición donde se inyecta cada ruta de archivo encontrada, y la secuencia ' \\;' (barra invertida y punto y coma) escapa el delimitador de finalización del comando para que la shell no lo interprete antes de tiempo."
+        }
+      ],
+      "notes": "Pregunta imprescindible de examen. La sintaxis de -exec debe ser automática para cualquier alumno."
+    },
+    {
+      "id": "103.3-slide-18",
+      "slideNumber": 18,
+      "title": "Tarjetas Nemotécnicas: Gestión de Archivos 103.3",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tarjetas Nemotécnicas: Gestión de Archivos 103.3"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto",
+            "Significado / Uso"
+          ],
+          "rows": [
+            [
+              "¿Qué comando y opción crea carpetas padre intermedias automáticamente?",
+              "mkdir -p /ruta/completa."
+            ],
+            [
+              "¿Qué opción de 'cp' preserva todos los atributos originales (modo archivador)?",
+              "cp -a (o cp -p)."
+            ],
+            [
+              "¿Qué opción de 'ls' muestra la información del directorio en sí y no de su interior?",
+              "ls -d (habitualmente combinado como ls -ld)."
+            ],
+            [
+              "¿Qué opción de 'find' filtra exclusivamente archivos ordinarios y cuál directorios?",
+              "-type f para archivos; -type d para directorios."
+            ],
+            [
+              "¿Cómo termina obligatoriamente la cláusula '-exec' en el comando find?",
+              "Termina con: {} \\; (llaves, espacio, barra invertida y punto y coma)."
+            ],
+            [
+              "¿Qué banderas de 'tar' corresponden a gzip, bzip2 y xz respectivamente?",
+              "-z (gzip), -j (bzip2) y -J mayúscula (xz)."
+            ],
+            [
+              "¿Qué comando con 'dd' copia los 512 bytes del MBR de un disco?",
+              "dd if=/dev/sda of=mbr.bin bs=512 count=1."
+            ],
+            [
+              "¿Qué comando determina el tipo real de un archivo sin importar su extensión?",
+              "file <archivo>."
+            ]
+          ],
+          "caption": "Tarjetas de memorización"
+        }
+      ],
+      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 103.3."
+    },
+    {
+      "id": "103.3-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen y Claves de Examen: Subtema 103.3",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen y Claves de Examen: Subtema 103.3"
+        }
+      ],
+      "notes": "Concluimos el subtema 103.3. Los alumnos dominan ahora la administración básica de archivos en Linux."
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-103-3-1",
+      "title": "Anatomía del Sistema de Archivos: El Inodo y el Directorio",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Anatomía del Sistema de Archivos: El Inodo y el Directorio"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Dónde se guardan realmente los nombres, los datos y los permisos de tus archivos?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin:8px 0;\">\n  <div style=\"font-size:16px; font-weight:800; color:var(--text); margin-bottom:12px;\">\n    🏨 La Analogía de la Consigna: ¿Cómo organiza Linux tus Archivos?\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1.35fr 1.15fr; gap:16px; align-items:stretch;\">\n    <!-- 1. El Directorio -->\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:12px; padding:3px 8px; border-radius:4px; text-align:center; margin-bottom:8px;\">\n          1. DIRECTORIO (El Cuaderno)\n        </div>\n        <div style=\"font-weight:800; color:#1E40AF; font-size:14.5px; margin-bottom:6px;\">Tabla de Nombres y Enlaces</div>\n        <div style=\"background:#FFFFFF; border:1px solid #BFDBFE; border-radius:6px; padding:8px 10px; font-family:monospace; font-size:13px; color:#1E3A8A; line-height:1.5;\">\n          informe.pdf ➔ Inodo #4012<br>\n          backup.tar  ➔ Inodo #4013<br>\n          script.sh   ➔ Inodo #5120\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:12px; color:#1E3A8A; line-height:1.4;\">\n        💡 El directorio solo asocia una <strong>etiqueta de texto</strong> con un <strong>número entero de inodo</strong>.\n      </div>\n    </div>\n\n    <!-- 2. El Inodo -->\n    <div style=\"background:#FEFCE8; border:2px solid #EAB308; border-radius:10px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"background:#CA8A04; color:#FFF; font-weight:800; font-size:12px; padding:3px 8px; border-radius:4px; text-align:center; margin-bottom:8px;\">\n          2. INODO #4012 (La Ficha / DNI)\n        </div>\n        <div style=\"font-weight:800; color:#854D0E; font-size:14.5px; margin-bottom:6px;\">Metadatos del Fichero</div>\n        <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:6px; font-size:12px; color:#713F12; line-height:1.45;\">\n          <div>• <strong>Tipo:</strong> Regular (-)</div>\n          <div>• <strong>Permisos:</strong> 0644 (rw-r--r--)</div>\n          <div>• <strong>Dueño:</strong> UID 1000 (alumno)</div>\n          <div>• <strong>Grupo:</strong> GID 1000 (alumnos)</div>\n          <div>• <strong>Tamaño:</strong> 8.192 bytes</div>\n          <div>• <strong>Marcas:</strong> atime, mtime, ctime</div>\n          <div>• <strong>Enlaces:</strong> 1 (nlink)</div>\n          <div>• <strong>Punteros:</strong> Bloques 501, 502</div>\n        </div>\n      </div>\n      <div style=\"margin-top:8px; background:#FEF08A; border:1px solid #EAB308; padding:4px 8px; border-radius:4px; font-size:11.5px; font-weight:800; color:#854D0E; text-align:center;\">\n        ❌ ¡EL NOMBRE DEL ARCHIVO NO RESIDE AQUÍ!\n      </div>\n    </div>\n\n    <!-- 3. Los Bloques -->\n    <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:3px 8px; border-radius:4px; text-align:center; margin-bottom:8px;\">\n          3. BLOQUES (El Disco Físico)\n        </div>\n        <div style=\"font-weight:800; color:#14532D; font-size:14.5px; margin-bottom:6px;\">Casilleros con Bytes Reales</div>\n        <div style=\"background:#FFFFFF; border:1px solid #BBF7D0; border-radius:6px; padding:8px 10px; font-family:monospace; font-size:12.5px; color:#14532D; line-height:1.5;\">\n          Bloque 501: [01011001... 4KB]<br>\n          Bloque 502: [11001010... 4KB]\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:12px; color:#14532D; line-height:1.4;\">\n        💾 Aquí se almacenan los bytes que lees al abrir el archivo.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:12px; background:#F8FAFC; border-left:4px solid #2563EB; border-radius:6px; padding:8px 14px; font-size:13px; color:#1E3A8A; line-height:1.45;\">\n    🚀 <strong>¿Por qué renombrar un archivo de 50 GB es instantáneo?</strong> Ejecutar <code>mv peli.mkv peli_final.mkv</code> dentro del mismo disco no mueve ni un solo byte físico: solo cambia la palabra en el cuaderno del directorio padre (el inodo #4012 y sus bloques siguen idénticos). Compruébalo con <code>ls -i</code>.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: El inodo almacena permisos, dueño, tamaño y punteros a bloques, pero NUNCA el nombre del archivo (reside exclusivamente en la tabla del directorio padre)."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-3-2",
+      "title": "Inspección y Listado Detallado con ls",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Inspección y Listado Detallado con ls"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "ls [-l|-a|-h|-d|-i|-R|-t|-S] [ruta]",
+          "title": "Consultar permisos, propietarios, tamaños reales y metadatos de archivos y carpetas"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "ls -ld /var/log; ls -lh /var/log/syslog; ls -lai .bashrc",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "ls -l",
+              "Formato largo",
+              "🎯 Imprime 8 columnas: tipo, 9 permisos, enlaces, dueño UID, grupo GID, tamaño, fecha y nombre."
+            ],
+            [
+              "ls -a",
+              "Todos (ocultos)",
+              "🎯 Clave de Examen: Muestra todos los ficheros, incluidos los ocultos que inician por punto (.) y '.' / '..'"
+            ],
+            [
+              "ls -d",
+              "Solo el directorio",
+              "🎯 Clave de Examen: Lista las propiedades de la carpeta en sí, sin entrar a listar su contenido."
+            ],
+            [
+              "ls -h",
+              "Legible humanos",
+              "🎯 Convierte los bytes en unidades entendibles (K, M, G, T) junto con la opción -l."
+            ],
+            [
+              "ls -i",
+              "Número de inodo",
+              "🎯 Muestra el identificador numérico de inodo en la primera columna."
+            ],
+            [
+              "ls -t / -S",
+              "Ordenar tiempo / tamaño",
+              "'-t' ordena cronológicamente (más recientes primero); '-S' por tamaño descendente."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:15px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🔍 Anatomía de una Línea de Formato Largo (<code>ls -l</code>):\n  </div>\n\n  <div style=\"background:#0F172A; color:#F8FAFC; padding:10px 14px; border-radius:8px; font-family:monospace; font-size:15px; display:flex; flex-wrap:wrap; gap:12px; align-items:center;\">\n    <div><span style=\"color:#F43F5E; font-weight:800;\">-</span> <span style=\"font-size:11px; color:#94A3B8;\">(tipo: regular)</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:800;\">rw-r--r--</span> <span style=\"font-size:11px; color:#94A3B8;\">(permisos 644)</span></div>\n    <div><span style=\"color:#CBD5E1; font-weight:800;\">1</span> <span style=\"font-size:11px; color:#94A3B8;\">(enlaces)</span></div>\n    <div><span style=\"color:#FDE047; font-weight:800;\">root</span> <span style=\"font-size:11px; color:#94A3B8;\">(dueño)</span></div>\n    <div><span style=\"color:#4ADE80; font-weight:800;\">adm</span> <span style=\"font-size:11px; color:#94A3B8;\">(grupo)</span></div>\n    <div><span style=\"color:#A78BFA; font-weight:800;\">120K</span> <span style=\"font-size:11px; color:#94A3B8;\">(tamaño -h)</span></div>\n    <div><span style=\"color:#CBD5E1;\">oct 24 11:30</span> <span style=\"font-size:11px; color:#94A3B8;\">(fecha)</span></div>\n    <div><span style=\"color:#38BDF8; font-weight:800;\">syslog</span></div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para consultar los permisos de una carpeta sin que la terminal se inunde con cientos de archivos internos, se usa OBLIGATORIAMENTE 'ls -ld /ruta'."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-3-3",
+      "title": "Creación, Marcas Temporales y Directorios: touch y mkdir",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Creación, Marcas Temporales y Directorios: touch y mkdir"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "mkdir -p | touch [-t MMDDhhmm] | rmdir",
+          "title": "Crear ficheros vacíos, modificar fechas de acceso/modificación y construir árboles de carpetas"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "mkdir -p app/v1/src; touch -t 202610251200 app/v1/src/main.c; rmdir app/v1/src",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "mkdir -p",
+              "Jerarquía completa (Parents)",
+              "🎯 Clave de Examen: Crea directorios padre intermedios automáticamente sin error si ya existían."
+            ],
+            [
+              "mkdir -m <modo>",
+              "Fijar permisos",
+              "Define permisos octales al crear la carpeta (ej: 'mkdir -m 700 secreta')."
+            ],
+            [
+              "touch <archivo>",
+              "Crear / Actualizar sello",
+              "🎯 Si el archivo no existe lo crea vacío (0 bytes); si ya existe, actualiza su fecha al segundo actual."
+            ],
+            [
+              "touch -t YYYYMMDDhhmm",
+              "Fecha manual forzada",
+              "🎯 Clave de Examen: Sobrescribe la marca temporal con una fecha y hora exacta arbitraria."
+            ],
+            [
+              "rmdir <directorio>",
+              "Borrar solo vacíos",
+              "🎯 Comando defensivo: borra la carpeta ÚNICAMENTE si está 100% vacía. Falla si contiene archivos."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:8px; font-size:13px;\">\n  <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:10px; padding:12px;\">\n    <strong style=\"color:#1E40AF; font-size:14.5px;\">📁 mkdir -p (La Excavadora de Rutas)</strong>\n    <div style=\"color:#1E3A8A; line-height:1.45; margin-top:4px;\">\n      Si intentas hacer <code>mkdir a/b/c</code> sin la opción <code>-p</code>, fallará con <em>No such file or directory</em> si <code>a</code> no existe.<br>\n      Con <code>-p</code> comprueba cada nivel y lo crea si falta.\n    </div>\n  </div>\n\n  <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:10px; padding:12px;\">\n    <strong style=\"color:#991B1B; font-size:14.5px;\">🛡️ rmdir frente a rm -r</strong>\n    <div style=\"color:#7F1D1D; line-height:1.45; margin-top:4px;\">\n      • <code>rmdir</code> se niega en redondo a borrar carpetas con ficheros.<br>\n      • Si necesitas eliminar un árbol con contenido, se usa <code>rm -r</code> o <code>rm -rf</code>.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'mkdir -p a/b/c' jamás fallará aunque falte toda la ruta; 'rmdir' es un escudo de seguridad: nunca borrará una carpeta que contenga datos."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-3-4",
+      "title": "Copia, Movimiento y Borrado Seguro: cp, mv y rm",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Copia, Movimiento y Borrado Seguro: cp, mv y rm"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "cp [-a|-r|-p] | mv [-i] | rm [-rf]",
+          "title": "Duplicar árboles preservando permisos de seguridad, renombrar y purgar ficheros"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo cp -a /etc/nginx /backup/nginx_bkp; mv /backup/nginx_bkp /backup/nginx_2026; rm -rf /backup/nginx_2026",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "cp -a",
+              "Modo Archivo (Backup)",
+              "🎯 Clave Absoluta de Examen: Equivale a '-dpR'. Preserva permisos, dueños UID/GID, timestamps y enlaces simbólicos."
+            ],
+            [
+              "cp -r, -R",
+              "Recursivo simple",
+              "🎯 Copia carpetas pero cambia el dueño al usuario que ejecuta el comando y actualiza las fechas al momento actual."
+            ],
+            [
+              "cp -p",
+              "Preservar atributos",
+              "🎯 Preserva permisos originales, dueño y sellos de tiempo (incluido dentro de -a)."
+            ],
+            [
+              "mv origen dest",
+              "Mover o Renombrar",
+              "🎯 Si el destino es la misma carpeta, renombra. Si es otra carpeta, traslada el archivo."
+            ],
+            [
+              "rm -rf <dir>",
+              "Borrado Forzado Recursivo",
+              "🎯 '-r' desciende por todas las carpetas; '-f' fuerza el borrado sin preguntar ni avisar de errores."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:8px; font-size:13px;\">\n  <!-- cp -r -->\n  <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:14px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:11px; padding:2px 6px; border-radius:4px;\">❌ cp -r (Recursivo Ordinario)</span>\n      <code style=\"font-size:13.5px; font-weight:800; color:#991B1B;\">cp -r /etc /backup</code>\n    </div>\n    <div style=\"color:#7F1D1D; line-height:1.45; margin-top:6px;\">\n      • <strong>Propietario:</strong> Cambia al usuario que hace la copia.<br>\n      • <strong>Fechas:</strong> Se actualizan al segundo actual.<br>\n      • <strong>Enlaces simbólicos:</strong> Los duplica copiando el archivo real.<br>\n      <span style=\"color:#991B1B; font-weight:800;\">¡Arruina las copias de seguridad del sistema!</span>\n    </div>\n  </div>\n\n  <!-- cp -a -->\n  <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:14px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:11px; padding:2px 6px; border-radius:4px;\">✅ cp -a (Modo Archivo / Backup)</span>\n      <code style=\"font-size:13.5px; font-weight:800; color:#14532D;\">cp -a /etc /backup</code>\n    </div>\n    <div style=\"color:#14532D; line-height:1.45; margin-top:6px;\">\n      • <strong>Propietario:</strong> Clona exactamente el UID y GID de origen.<br>\n      • <strong>Fechas:</strong> Preserva los sellos originales de modificación.<br>\n      • <strong>Enlaces simbólicos:</strong> Se copian como enlaces sin gastar disco.<br>\n      <span style=\"color:#15803D; font-weight:800;\">¡Opción estándar oficial obligatoria en LPIC-1!</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 LA PREGUNTA DE EXAMEN MÁS REPETIDA: Para hacer un respaldo de un directorio del sistema conservando los permisos y propietarios originales, la respuesta correcta SIEMPRE es 'cp -a' (o 'cp -p'), NUNCA 'cp -r'."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-3-5",
+      "title": "Comodines de Shell (Globbing) y Expansión de Llaves",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comodines de Shell (Globbing) y Expansión de Llaves"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo selecciona la Shell múltiples archivos mediante patrones antes de ejecutar el comando?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:18px 24px; margin-top:6px;\">\n  <!-- Gráfico de Funcionamiento del Globbing -->\n  <div style=\"font-size:16px; font-weight:800; color:var(--text); margin-bottom:10px;\">\n    ⚙️ ¿Qué es el Globbing y cómo funciona internamente? (Expansión previa de la Shell en 3 Fases):\n  </div>\n\n  <div style=\"display:flex; justify-content:space-between; align-items:center; font-size:13.5px; text-align:center; gap:12px; margin-bottom:16px;\">\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:10px 14px; flex:1;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:11px; padding:2px 6px; border-radius:4px;\">1. USUARIO ESCRIBE</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#1E40AF; font-size:15px; margin-top:4px;\">rm *.log</div>\n      <span style=\"font-size:11.5px; color:#1E3A8A;\">Usa un patrón comodín</span>\n    </div>\n\n    <span style=\"font-size:24px; color:#2563EB; font-weight:900;\">➔</span>\n\n    <div style=\"background:#FEFCE8; border:2px solid #EAB308; border-radius:10px; padding:10px 14px; flex:1.4;\">\n      <span style=\"background:#CA8A04; color:#FFF; font-weight:800; font-size:11px; padding:2px 6px; border-radius:4px;\">2. LA SHELL BUSCA EN DISCO</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#854D0E; font-size:13px; margin-top:4px;\">access.log error.log auth.log</div>\n      <span style=\"font-size:11.5px; color:#713F12;\">Sustituye el patrón antes de llamar al comando</span>\n    </div>\n\n    <span style=\"font-size:24px; color:#2563EB; font-weight:900;\">➔</span>\n\n    <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:10px 14px; flex:1.4;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:11px; padding:2px 6px; border-radius:4px;\">3. EJECUCIÓN DEL COMANDO</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#14532D; font-size:14px; margin-top:4px;\">rm access.log error.log ...</div>\n      <span style=\"font-size:11.5px; color:#15803D;\">rm recibe la lista de archivos ya resuelta</span>\n    </div>\n  </div>\n\n  <!-- Los 4 Comodines Explicados Visualmente con Ejemplo Real y Objetivo -->\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; font-size:13px;\">\n    <!-- * -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:10px; padding:12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <strong style=\"color:#1E40AF; font-size:15px;\">* (Asterisco)</strong>\n          <span style=\"background:#2563EB; color:#FFF; font-size:10.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">0 O MÁS</span>\n        </div>\n        <div style=\"color:#1E3A8A; font-size:12px; margin-bottom:6px;\">Coincide con cualquier cadena de texto.</div>\n        <div style=\"background:#DBEAFE; border-radius:6px; padding:6px 8px; font-family:monospace; font-size:12px; color:#1E40AF;\">ls *.tar.gz</div>\n      </div>\n      <div style=\"margin-top:6px; font-size:11.5px; color:#1E3A8A; line-height:1.35;\">\n        🎯 <strong>Objetivo:</strong> Procesar todos los archivos de una extensión sin importar su nombre.\n      </div>\n    </div>\n\n    <!-- ? -->\n    <div style=\"background:#FEFCE8; border:1.5px solid #FDE047; border-radius:10px; padding:12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <strong style=\"color:#854D0E; font-size:15px;\">? (Interrogante)</strong>\n          <span style=\"background:#CA8A04; color:#FFF; font-size:10.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">EXACTO 1</span>\n        </div>\n        <div style=\"color:#713F12; font-size:12px; margin-bottom:6px;\">Exactamente 1 solo carácter obligatorio.</div>\n        <div style=\"background:#FEF08A; border-radius:6px; padding:6px 8px; font-family:monospace; font-size:12px; color:#854D0E;\">cat conf_?.cfg</div>\n      </div>\n      <div style=\"margin-top:6px; font-size:11.5px; color:#713F12; line-height:1.35;\">\n        🎯 <strong>Objetivo:</strong> Coincide con <code>conf_1.cfg</code> o <code>conf_A.cfg</code>, pero jamás con <code>conf_10.cfg</code>.\n      </div>\n    </div>\n\n    <!-- [...] -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:10px; padding:12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <strong style=\"color:#15803D; font-size:15px;\">[...] (Rangos)</strong>\n          <span style=\"background:#16A34A; color:#FFF; font-size:10.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">CONJUNTOS</span>\n        </div>\n        <div style=\"color:#14532D; font-size:12px; margin-bottom:6px;\">1 carácter dentro de una lista o rango.</div>\n        <div style=\"background:#DCFCE7; border-radius:6px; padding:6px 8px; font-family:monospace; font-size:12px; color:#15803D;\">rm log[1-3].txt</div>\n      </div>\n      <div style=\"margin-top:6px; font-size:11.5px; color:#14532D; line-height:1.35;\">\n        🎯 <strong>Objetivo:</strong> Solo borra logs 1, 2 y 3. Con <code>[!0-9]</code> niega (archivos sin dígitos).\n      </div>\n    </div>\n\n    <!-- {...} -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:10px; padding:12px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n          <strong style=\"color:#6B21A8; font-size:15px;\">{...} (Llaves)</strong>\n          <span style=\"background:#9333EA; color:#FFF; font-size:10.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">FABRICA TEXTO</span>\n        </div>\n        <div style=\"color:#581C87; font-size:12px; margin-bottom:6px;\">¡No busca en disco! Genera cadenas.</div>\n        <div style=\"background:#F3E8FF; border-radius:6px; padding:6px 8px; font-family:monospace; font-size:12px; color:#6B21A8;\">mkdir {src,bin,doc}</div>\n      </div>\n      <div style=\"margin-top:6px; font-size:11.5px; color:#581C87; line-height:1.35;\">\n        🎯 <strong>Objetivo:</strong> Crear carpetas o nombres combinados (ej: <code>bkp_{lun,mar}.sql</code>) sin teclear uno a uno.\n      </div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: El globbing lo resuelve la SHELL en disco antes de invocar el comando. Si ningún archivo coincide, la shell suele enviar el patrón literal salvo configuración en contrario."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-3-6",
+      "title": "Búsqueda Exhaustiva con find: Nombres, Tipos y Tamaños",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Búsqueda Exhaustiva con find: Nombres, Tipos y Tamaños"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "find [ruta] [-name|-type|-size|-maxdepth]",
+          "title": "Rastrear recursivamente el árbol de archivos en tiempo real según criterios precisos"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "find /etc -maxdepth 1 -name '*.conf' | head -n 2; find /var/log -type f -size +10M",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "find <ruta>",
+              "Ruta de inicio",
+              "Punto de partida recursivo (por defecto '.' si no indicas ruta)."
+            ],
+            [
+              "-name '<patrón>'",
+              "Nombre exacto",
+              "🎯 Sensible a mayúsculas. ¡OBLIGATORIO entrecomillar los comodines ('*.log')!"
+            ],
+            [
+              "-iname '<patrón>'",
+              "Ignorar mayúsculas",
+              "Case-insensitive: coincide tanto con '.log' como con '.LOG' o '.Log'."
+            ],
+            [
+              "-type [f|d|l]",
+              "Tipo de archivo",
+              "🎯 Clave de Examen: 'f' = fichero regular, 'd' = carpeta/directorio, 'l' = enlace simbólico."
+            ],
+            [
+              "-size [+|-]N[k|M|G]",
+              "Por tamaño",
+              "🎯 Clave de Examen: '+50M' = mayor de 50 MB, '-100k' = menor de 100 KB, '500c' = exactamente 500 bytes."
+            ],
+            [
+              "-maxdepth N",
+              "Profundidad máxima",
+              "🎯 Limita el rastreo a N niveles de subcarpetas (evita búsquedas infinitas)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:15px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🧩 Anatomía de un Comando <code>find</code> Estándar de Examen:\n  </div>\n\n  <div style=\"background:#0F172A; color:#F8FAFC; padding:10px 16px; border-radius:8px; font-family:monospace; font-size:16px; display:flex; flex-wrap:wrap; gap:16px;\">\n    <span style=\"color:#38BDF8; font-weight:800;\">find</span>\n    <span style=\"color:#A78BFA; font-weight:800;\">/var/log</span>\n    <span style=\"color:#F43F5E; font-weight:800;\">-type f</span>\n    <span style=\"color:#4ADE80; font-weight:800;\">-name '*.log'</span>\n    <span style=\"color:#FDE047; font-weight:800;\">-size +10M</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-top:8px; font-size:12px;\">\n    <div style=\"background:#F5F3FF; border:1px solid #DDD6FE; padding:6px 8px; border-radius:6px;\">\n      <strong style=\"color:#6D28D9;\">/var/log</strong><br>Directorio raíz de búsqueda.\n    </div>\n    <div style=\"background:#FFF1F2; border:1px solid #FECDD3; padding:6px 8px; border-radius:6px;\">\n      <strong style=\"color:#BE123C;\">-type f</strong><br>Solo archivos (descarta carpetas).\n    </div>\n    <div style=\"background:#ECFDF5; border:1px solid #A7F3D0; padding:6px 8px; border-radius:6px;\">\n      <strong style=\"color:#047857;\">-name '*.log'</strong><br>Nombre entrecomillado.\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FEF08A; padding:6px 8px; border-radius:6px;\">\n      <strong style=\"color:#A16207;\">-size +10M</strong><br>Mayores de 10 Megabytes.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Si omites las comillas en '-name *.log', la shell expandirá el asterisco antes de llamar a find y dará error de sintaxis si hay más de un log. Siempre escribe: -name '*.log'."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-3-7",
+      "title": "find Avanzado: Marcas Temporales, Usuarios y -exec",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "find Avanzado: Marcas Temporales, Usuarios y -exec"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "find <ruta> [-mtime|-user] -exec <cmd> {} \\;",
+          "title": "Filtrar por fechas de modificación y disparar acciones automáticas sobre cada resultado"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "find /var/log -name '*.log' -exec ls -lh {} \\; | head -n 2",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-mtime [+|-]N",
+              "Modificación en días",
+              "🎯 '-mtime -2' = últimas 48h; '-mtime +30' = hace más de 30 días."
+            ],
+            [
+              "-mmin [+|-]N",
+              "Modificación en minutos",
+              "🎯 '-mmin -60' = modificado en la última hora (vital para auditoría forense)."
+            ],
+            [
+              "-user / -group",
+              "Dueño UID o GID",
+              "🎯 Filtra por el usuario o grupo propietario (ej: '-user www-data' o '-user root')."
+            ],
+            [
+              "-exec <cmd> {} \\;",
+              "Ejecutar comando uno a uno",
+              "🎯 Clave Absoluta de Examen: Inyecta la ruta en '{}' y cierra obligatoriamente con ' \\;'."
+            ],
+            [
+              "-delete",
+              "Borrado directo",
+              "🎯 Elimina directamente los ficheros encontrados sin necesidad de invocar 'rm'."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🎯 Desglose Visual: ¿Cómo funciona exactamente <code>-exec ls -lh {} \\;</code>?</span>\n    <span style=\"font-size:11px; background:#EEF2FF; color:#4338CA; padding:2px 8px; border-radius:12px; font-weight:700;\">Regla de Oro LPIC-1</span>\n  </div>\n\n  <!-- 4 Piezas Clave -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1.25fr 1fr; gap:10px; font-size:12px; margin-bottom:8px;\">\n    <!-- 1. -exec -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:8px 10px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10.5px; padding:2px 6px; border-radius:4px;\">1. DISPARADOR</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#1E40AF; font-size:15px; margin:3px 0;\">-exec</div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">Ordena a <code>find</code>: <em>«No solo listes el archivo; ejecuta una orden sobre él»</em>.</div>\n    </div>\n\n    <!-- 2. ls -lh -->\n    <div style=\"background:#FEFCE8; border:1.5px solid #EAB308; border-radius:8px; padding:8px 10px;\">\n      <span style=\"background:#CA8A04; color:#FFF; font-weight:800; font-size:10.5px; padding:2px 6px; border-radius:4px;\">2. LA ORDEN</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#854D0E; font-size:15px; margin:3px 0;\">ls -lh</div>\n      <div style=\"color:#713F12; line-height:1.35;\">La acción externa a aplicar (ver tamaño humano, dueño y permisos).</div>\n    </div>\n\n    <!-- 3. {} -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:8px 10px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10.5px; padding:2px 6px; border-radius:4px;\">3. EL ARCHIVO</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#14532D; font-size:15px; margin:3px 0;\">{}</div>\n      <div style=\"color:#14532D; line-height:1.35;\">Variable/hueco donde <code>find</code> inyecta la ruta de cada fichero encontrado.</div>\n    </div>\n\n    <!-- 4. \\; -->\n    <div style=\"background:#FFF1F2; border:1.5px solid #FCA5A5; border-radius:8px; padding:8px 10px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:10.5px; padding:2px 6px; border-radius:4px;\">4. FIN ESCAPADO</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#991B1B; font-size:15px; margin:3px 0;\">\\;</div>\n      <div style=\"color:#7F1D1D; line-height:1.35;\">La barra <code>\\</code> frena a la Shell para que no confunda <code>;</code> con fin de línea.</div>\n    </div>\n  </div>\n\n  <!-- Bucle de Sustitución en Tiempo Real -->\n  <div style=\"background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:7px 12px; margin-bottom:8px; font-size:11.5px;\">\n    <strong style=\"color:#0F172A;\">🔄 ¿Cómo trabaja por dentro en cada coincidencia? (Bucle de sustitución automática):</strong>\n    <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:5px; font-family:monospace; font-size:12px;\">\n      <div style=\"background:#FFFFFF; border:1px dashed #3B82F6; padding:5px 9px; border-radius:6px; color:#1E3A8A;\">\n        ① Encuentra <code>/var/log/dpkg.log</code> ➔ Ejecuta: <strong>ls -lh /var/log/dpkg.log</strong>\n      </div>\n      <div style=\"background:#FFFFFF; border:1px dashed #16A34A; padding:5px 9px; border-radius:6px; color:#14532D;\">\n        ② Encuentra <code>/var/log/auth.log</code> ➔ Ejecuta: <strong>ls -lh /var/log/auth.log</strong>\n      </div>\n    </div>\n  </div>\n\n  <!-- Situación de la vida real -->\n  <div style=\"background:#EFF6FF; border-left:4px solid #2563EB; border-radius:6px; padding:6px 12px; font-size:12px; color:#1E3A8A; line-height:1.4;\">\n    💡 <strong>¿Por qué harías esto en la vida real?</strong> <code>find /var/log -name '*.log'</code> solo imprime una lista muda de nombres de archivo (<code>/var/log/dpkg.log</code>). Con <code>-exec ls -lh {} \\;</code> sabes al instante cuánto pesa cada uno (45K, 120K), quién es su dueño y si alguien lo modificó hoy, sin tener que consultar archivo por archivo manualmente.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 FÓRMULA SAGRADA DE EXAMEN: 'find ... -exec comando {} \\;'. Las llaves '{}' son la variable donde se inyecta el archivo; y '\\;' escapa el punto y coma para que la Shell no corte el comando antes de tiempo."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-3-8",
+      "title": "Empaquetado y Compresión con tar",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Empaquetado y Compresión con tar"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "tar -[c|x|t][v][f archivo.tar] [-z|-j|-J] [rutas]",
+          "title": "Crear, listar y restaurar archivos empaquetados preservando permisos y directorios"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "tar -czvf /backup/nginx.tar.gz /etc/nginx; tar -tvf /backup/nginx.tar.gz | head -n 2",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "tar -c / -x / -t",
+              "Crear / Extraer / Listar",
+              "🎯 Operaciones: '-c' (Create / nuevo tar), '-x' (eXtract / restaurar), '-t' (Test / listar contenido sin extraer)."
+            ],
+            [
+              "tar -f <archivo>",
+              "Nombre del archivo (Obligatorio)",
+              "🎯 ¡OBLIGATORIO! Especifica el fichero contenedor. Debe ir siempre inmediatamente pegado al nombre del archivo."
+            ],
+            [
+              "tar -z",
+              "gzip (.tar.gz / .tgz)",
+              "🎯 Compresión gzip estándar: rápida y ultracompatible en todos los Unix."
+            ],
+            [
+              "tar -j",
+              "bzip2 (.tar.bz2 / .tbz2)",
+              "🎯 Compresión bzip2: archivos más pequeños a costa de mayor uso de CPU."
+            ],
+            [
+              "tar -J (Mayúscula)",
+              "xz (.tar.xz)",
+              "🎯 Compresión xz: máxima tasa de compresión moderna con algoritmo LZMA2."
+            ],
+            [
+              "tar -C <directorio>",
+              "Carpeta de destino",
+              "🎯 Cambia a la carpeta indicada antes de extraer (ej: 'tar -xvf bkp.tar.gz -C /var/www')."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:15px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    📦 Matriz de Banderas de Compresión y Operación en <code>tar</code>:\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:12.5px; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF; font-size:14.5px;\">-z (gzip)</strong><br>\n      <code>.tar.gz</code> o <code>.tgz</code><br>\n      <span style=\"color:#1E3A8A; font-size:11.5px;\">Rápido y estándar universal</span>\n    </div>\n\n    <div style=\"background:#FEFCE8; border:1.5px solid #EAB308; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#854D0E; font-size:14.5px;\">-j (bzip2)</strong><br>\n      <code>.tar.bz2</code> o <code>.tbz2</code><br>\n      <span style=\"color:#713F12; font-size:11.5px;\">Mayor tasa de compresión</span>\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#15803D; font-size:14.5px;\">-J (xz) [Mayúscula]</strong><br>\n      <code>.tar.xz</code><br>\n      <span style=\"color:#14532D; font-size:11.5px;\">Máxima compresión moderna</span>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; padding:6px 12px; background:#FEF2F2; border-left:4px solid #EF4444; border-radius:4px; font-size:12px; color:#991B1B;\">\n    ⚠️ <strong>REGLA DE SINTAXIS:</strong> <code>-f</code> SIEMPRE va junto al nombre: <code>tar -czvf archivo.tar.gz /ruta</code>.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 LA TRAMPA DE SINTAXIS DE TAR: El flag '-f' exige que el siguiente texto sea el nombre del archivo. 'tar -czvf bkp.tar.gz /etc' es CORRECTO; pero 'tar -cfzv bkp.tar.gz ...' dará ERROR porque tar creerá que el archivo se llama 'z'."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-3-9",
+      "title": "Empaquetado Flexible con cpio",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Empaquetado Flexible con cpio"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "cpio -o | cpio -i | cpio -p",
+          "title": "Archivar, restaurar o migrar árboles de archivos leídos desde la entrada estándar (stdin)"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "find /etc/nginx -name '*.conf' | cpio -ov > /tmp/confs.cpio; cpio -it < /tmp/confs.cpio",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "cpio -o, --create",
+              "Modo Crear (Copy-out)",
+              "🎯 Lee la lista de rutas por 'stdin' y escribe el archivo empaquetado resultante en 'stdout'."
+            ],
+            [
+              "cpio -i, --extract",
+              "Modo Extraer (Copy-in)",
+              "🎯 Lee el archivo empaquetado por 'stdin' y extrae los archivos en el disco duro."
+            ],
+            [
+              "cpio -p",
+              "Copia en vuelo (Pass-through)",
+              "🎯 Copia un árbol de directorios directamente a otra carpeta sin crear fichero intermedio."
+            ],
+            [
+              "cpio -d",
+              "Crear directorios",
+              "🎯 Crea automáticamente las carpetas intermedias necesarias al restaurar los ficheros."
+            ],
+            [
+              "cpio -t",
+              "Listar contenido",
+              "Muestra la lista de ficheros contenidos en el archivo sin extraerlos en disco."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:15px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🔄 Los 3 Modos Operativos de <code>cpio</code>:\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:12.5px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF; font-size:14px;\">-o (Copy-out / Crear)</strong><br>\n      <code>find . | cpio -ov &gt; arch.cpio</code><br>\n      <span style=\"color:#1E3A8A; font-size:11.5px;\">Lee nombres de stdin y empaqueta en stdout.</span>\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#15803D; font-size:14px;\">-i (Copy-in / Extraer)</strong><br>\n      <code>cpio -idv &lt; arch.cpio</code><br>\n      <span style=\"color:#14532D; font-size:11.5px;\">Extrae creando carpetas con <code>-d</code>.</span>\n    </div>\n\n    <div style=\"background:#FAF5FF; border:1.5px solid #A855F7; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#6B21A8; font-size:14px;\">-p (Pass / En vuelo)</strong><br>\n      <code>find . | cpio -pdm /backup/</code><br>\n      <span style=\"color:#581C87; font-size:11.5px;\">Copia directa sin crear archivo contenedor.</span>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: cpio funciona mediante flujos de tuberías (| y < >). Tiene 3 modos: '-o' (crear/empaquetar), '-i' (extraer) y '-p' (copia directa en vuelo). Se usa en el arranque Linux dentro del archivo 'initramfs'."
+        }
+      ]
+    },
+    {
+      "id": "sec-103-3-10",
+      "title": "Copia a Bajo Nivel por Bloques con dd",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Copia a Bajo Nivel por Bloques con dd"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "dd if=<origen> of=<destino> [bs=<bloque>] [count=<n>]",
+          "title": "Clonar discos, crear imágenes binarias idénticas y respaldar el MBR sector a sector"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo dd if=/dev/sda of=/backup/mbr.bin bs=512 count=1 status=progress",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "if=<ruta>",
+              "Input File (Origen)",
+              "🎯 Fichero o dispositivo físico origen (ej: 'if=/dev/sda', 'if=/dev/zero', 'if=debian.iso')."
+            ],
+            [
+              "of=<ruta>",
+              "Output File (Destino)",
+              "🎯 Fichero o dispositivo físico destino (ej: 'of=/dev/sdb', 'of=/backup/disco.img')."
+            ],
+            [
+              "bs=<tamaño>",
+              "Block Size (Bloque)",
+              "🎯 Tamaño de cada bloque a transferir (ej: 'bs=512', 'bs=4k', 'bs=1M')."
+            ],
+            [
+              "count=<N>",
+              "Cantidad de bloques",
+              "🎯 Número total de bloques a copiar antes de detenerse (ej: 'count=1')."
+            ],
+            [
+              "status=progress",
+              "Progreso en tiempo real",
+              "Muestra la velocidad de transferencia y bytes copiados en directo."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:15px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    💾 ¿Por qué respaldar el MBR (Primeros 512 Bytes) con <code>dd</code>?\n  </div>\n\n  <div style=\"display:flex; justify-content:space-between; align-items:center; font-size:12.5px; gap:8px;\">\n    <div style=\"background:#0F172A; color:#F8FAFC; padding:8px 12px; border-radius:6px; font-family:monospace; flex:1;\">\n      dd if=/dev/sda of=mbr.bin <span style=\"color:#FDE047; font-weight:800;\">bs=512 count=1</span>\n    </div>\n    <span style=\"font-size:18px; color:#2563EB; font-weight:900;\">➔</span>\n    <div style=\"display:flex; gap:6px; flex:2.2;\">\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:6px 8px; border-radius:6px; flex:2; text-align:center;\">\n        <strong style=\"color:#1E40AF;\">446 Bytes</strong><br>\n        <span style=\"font-size:11px; color:#1E3A8A;\">Bootloader (GRUB)</span>\n      </div>\n      <div style=\"background:#FEFCE8; border:1px solid #FDE047; padding:6px 8px; border-radius:6px; flex:1.2; text-align:center;\">\n        <strong style=\"color:#854D0E;\">64 Bytes</strong><br>\n        <span style=\"font-size:11px; color:#713F12;\">4 Particiones (16B c/u)</span>\n      </div>\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:6px 8px; border-radius:6px; flex:1; text-align:center;\">\n        <strong style=\"color:#15803D;\">2 Bytes</strong><br>\n        <span style=\"font-size:11px; color:#14532D;\">Firma 0x55AA</span>\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:8px; font-size:12px; color:#475569; line-height:1.4;\">\n    💡 <strong>¿Cuándo usarlo?</strong> Antes de particionar con fdisk o instalar un arranque dual. Si se daña el arranque, restaurar con <code>dd if=mbr.bin of=/dev/sda bs=512 count=1</code> devuelve el equipo a la vida en 1 segundo.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 PREGUNTA CLÁSICA DE EXAMEN: ¿Cómo se respalda el Master Boot Record (MBR)? 'dd if=/dev/sda of=mbr.bin bs=512 count=1'. Contiene el cargador de arranque (446 B) y la tabla de particiones (64 B)."
+        }
+      ]
+    }
+  ]
+}

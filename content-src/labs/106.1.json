@@ -1,0 +1,44 @@
+{
+  "id": "lab-106-1",
+  "subtopicId": "106.1",
+  "title": "Práctica 106.1 — Instalación y Configuración del Servidor Gráfico X11",
+  "estimatedMinutes": 30,
+  "difficulty": "basic",
+  "type": "subtopic",
+  "placeholder": false,
+  "steps": [
+    {
+      "id": "step-106-1-1",
+      "stepNumber": 1,
+      "title": "Misión 1 — Inspección del Servidor X y la Variable $DISPLAY",
+      "instruction": "En el modelo X11, el servidor gráfico se ejecuta en la máquina con la pantalla y el teclado físicos, mientras que los clientes son las aplicaciones que se conectan a él. La variable `$DISPLAY` indica a qué servidor y pantalla debe enviar sus ventanas cada aplicación cliente.",
+      "command": "# 1. Comprobar el valor actual de la variable DISPLAY\r\necho \"Display activo: [$DISPLAY]\"\r\n\r\n# 2. Diagnosticar las características del servidor gráfico con xdpyinfo\r\nxdpyinfo | head -n 25\r\n\r\n# 3. Filtrar la resolución actual de pantalla y profundidad de color (bits)\r\nxdpyinfo | grep -E \"dimensions|depth of root window\"\r\n\r\n# 4. Probar la sintaxis de DISPLAY ejecutando una utilidad X en el display local\r\nDISPLAY=:0.0 xdpyinfo | grep \"name of display\"",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-106-1-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Configuración Modular en /etc/X11/xorg.conf.d/ y Mapa de Teclado",
+      "instruction": "En los sistemas modernos Xorg se autoconfigura mediante udev y KMS sin requerir un archivo monolítico `/etc/X11/xorg.conf`. Sin embargo, para personalizar comportamientos se utilizan fragmentos modulares `.conf` dentro de `/etc/X11/xorg.conf.d/`. Además, `localectl` permite fijar la distribución de teclado de forma permanente en systemd y X11.",
+      "command": "# 1. Consultar el estado del teclado y la configuración regional con localectl\r\nlocalectl status\r\n\r\n# 2. Cambiar la distribución de teclado de X11 a español ('es') de forma permanente\r\nsudo localectl set-x11-keymap es\r\n\r\n# 3. Verificar el archivo generado automáticamente en /etc/X11/xorg.conf.d/\r\ncat /etc/X11/xorg.conf.d/00-keyboard.conf 2>/dev/null || localectl status\r\n\r\n# 4. Probar el cambio temporal de distribución en la sesión activa con setxkbmap\r\nsetxkbmap -query\r\nsetxkbmap es\r\nsetxkbmap -query",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-106-1-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Seguridad en X11: Autenticación con xhost y xauth",
+      "instruction": "X11 no incluye cifrado nativo ni aislamiento fuerte por sí solo. Para controlar quién puede abrir ventanas o registrar pulsaciones de teclas en tu servidor X se utilizan dos mecanismos: `xhost` (control por IP/nombre de host, obsoleto e inseguro) y `xauth` (autenticación criptográfica mediante cookies de sesión compartidas en `~/.Xauthority`).",
+      "command": "# 1. Comprobar la lista de control de acceso por host con xhost\r\nxhost\r\n\r\n# 2. Comprender la advertencia crítica de xhost + (¡Trampa de examen!)\r\n# xhost + deshabilita completamente el control de acceso, permitiendo que CUALQUIER\r\n# host de la red capture pantallas o inyecte pulsaciones (keylogger).\r\n# Simulamos añadir y retirar localhost de forma segura:\r\nxhost +local:\r\nxhost -local:\r\n\r\n# 3. Inspeccionar el archivo de cookies de autenticación con xauth\r\nxauth list\r\n\r\n# 4. Inspeccionar la ubicación y permisos del archivo .Xauthority\r\nls -la ~/.Xauthority",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-106-1-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Auditoría de Logs de Xorg y Detección de Wayland",
+      "instruction": "Cuando el entorno gráfico no arranca o la resolución es incorrecta, el registro principal a consultar es `/var/log/Xorg.0.log`. Además, las distribuciones modernas pueden utilizar Wayland en lugar de Xorg tradicional.",
+      "command": "# 1. Analizar advertencias (WW) y errores críticos (EE) en el log de Xorg\r\ngrep -E \"\\((EE|WW)\\)\" /var/log/Xorg.0.log 2>/dev/null || journalctl -u display-manager --no-pager | tail -n 20\r\n\r\n# 2. Comprobar si la sesión actual corre bajo X11 o bajo Wayland\r\necho \"Tipo de sesión (XDG_SESSION_TYPE): $XDG_SESSION_TYPE\"\r\necho \"Variable WAYLAND_DISPLAY: [$WAYLAND_DISPLAY]\"\r\n\r\n# 3. Verificar el tipo de sesión registrado en systemd-logind\r\nloginctl show-session $(loginctl | awk '/seat0/ {print $1; exit}') -p Type",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
+      "examAlert": "Ver pista desplegable si te atascas</summary>"
+    }
+  ]
+}

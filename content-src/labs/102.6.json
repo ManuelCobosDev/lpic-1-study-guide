@@ -1,0 +1,44 @@
+{
+  "id": "lab-102-6",
+  "subtopicId": "102.6",
+  "title": "Práctica 102.6 — Linux como Sistema Virtualizado y Cloud",
+  "estimatedMinutes": 30,
+  "difficulty": "basic",
+  "type": "subtopic",
+  "placeholder": false,
+  "steps": [
+    {
+      "id": "step-102-6-1",
+      "stepNumber": 1,
+      "title": "Misión 1 — Detección del Hipervisor con systemd-detect-virt",
+      "instruction": "Un administrador debe verificar si el sistema corre sobre hardware físico (bare-metal), máquina virtual o contenedor.",
+      "command": "# Detectar si estamos en máquina virtual e identificar el hipervisor\r\nsystemd-detect-virt\r\n\r\n# Detectar si estamos en un contenedor (LXC, Docker, Podman)\r\nsystemd-detect-virt -c\r\n\r\n# Consultar datos de chasis y virtualización mediante hostnamectl\r\nhostnamectl status",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-102-6-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Auditoría de Identificadores Únicos (/etc/machine-id)",
+      "instruction": "Al clonar máquinas virtuales o desplegar plantillas en la nube, es crítico regenerar el machine-id para evitar colisiones de DHCP y D-Bus.",
+      "command": "# Consultar el identificador único del sistema\r\ncat /etc/machine-id\r\n\r\n# Comprobar el identificador de D-Bus\r\ncat /var/lib/dbus/machine-id 2>/dev/null || echo \"Usa el enlace simbólico hacia /etc/machine-id\"\r\n\r\n# Verificar la herramienta de inicialización de IDs\r\nman -f systemd-machine-id-setup",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-102-6-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Configuración de Hora, Zona Horaria y Sincronización NTP",
+      "instruction": "Las instancias en la nube deben mantener la hora perfectamente sincronizada con servidores de tiempo.",
+      "command": "# Consultar el estado de sincronización horaria con timedatectl\r\ntimedatectl status\r\n\r\n# Ver el enlace simbólico de la zona horaria en /etc/localtime\r\nls -l /etc/localtime\r\n\r\n# Ver el contenido del archivo de texto /etc/timezone\r\ncat /etc/timezone 2>/dev/null || timedatectl | grep \"Time zone\"",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-102-6-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Estructura de Aprovisionamiento con cloud-init",
+      "instruction": "En entornos cloud (AWS, Azure, GCP, OpenStack), las máquinas se configuran al primer arranque mediante cloud-init y metadatos user-data.",
+      "command": "# Comprobar si cloud-init está instalado en la máquina\r\nwhich cloud-init || echo \"cloud-init no instalado (típico en VMs de escritorio/aula)\"\r\n\r\n# Crear un ejemplo de directiva #cloud-config para estudiar su sintaxis\r\ncat << 'EOF' | tee /tmp/cloud-config-ejemplo.yaml\r\n#cloud-config\r\nhostname: lpic1-servidor-cloud\r\nmanage_etc_hosts: true\r\nusers:\r\n  - name: admincloud\r\n    groups: sudo\r\n    shell: /bin/bash\r\n    sudo: ALL=(ALL) NOPASSWD:ALL\r\n    ssh_authorized_keys:\r\n      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGclavePublicaEjemplo usuario@admin\r\nEOF\r\nrm /tmp/cloud-config-ejemplo.yaml",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
+      "examAlert": "Ver pista desplegable si te atascas</summary>"
+    }
+  ]
+}

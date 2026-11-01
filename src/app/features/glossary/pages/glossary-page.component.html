@@ -1,0 +1,154 @@
+<app-container size="wide">
+  <div class="glossary-page">
+    <!-- Encabezado -->
+    <header class="page-header">
+      <div class="header-titles">
+        <h1 class="page-title">Glosario de Términos LPIC-1</h1>
+        <p class="page-subtitle">
+          Definiciones técnicas esenciales, conceptos clave de arquitectura GNU/Linux y referencias a las lecciones del temario.
+        </p>
+      </div>
+      <div class="header-counter">
+        <app-badge variant="info" class="glossary-counter-badge">
+          <span class="counter-text">{{ counterText() }}</span>
+        </app-badge>
+      </div>
+    </header>
+
+    <!-- Barra de Búsqueda -->
+    <section class="search-section" aria-label="Búsqueda en el glosario">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          type="search"
+          class="search-input"
+          placeholder="Buscar concepto o definición técnica..."
+          aria-label="Buscar en el glosario"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearchInput($event)"
+        />
+        @if (searchQuery()) {
+          <button
+            type="button"
+            class="clear-btn"
+            aria-label="Borrar búsqueda"
+            (click)="resetSearch()"
+          >
+            ×
+          </button>
+        }
+      </div>
+    </section>
+
+    <!-- Componente Sticky AlphaIndex A-Z -->
+    <section class="alpha-index-wrapper" aria-label="Navegación alfabética">
+      <app-alpha-index
+        [items]="alphaIndex()"
+        [activeLetter]="activeLetter()"
+        (letterClick)="scrollToLetter($event)"
+      />
+    </section>
+
+    <!-- Estado de Carga -->
+    @if (loading()) {
+      <div class="loading-skeleton">
+        <app-skeleton variant="text" height="2.5rem" class="skeleton-item"></app-skeleton>
+        <app-skeleton variant="rectangular" height="15rem" class="skeleton-item"></app-skeleton>
+      </div>
+    }
+
+    <!-- Estado Vacío -->
+    @if (!loading() && filteredCount() === 0) {
+      <app-empty-state
+        title="No se encontraron términos"
+        description="No hay conceptos en el glosario que coincidan con la búsqueda actual."
+      >
+        <app-button variant="secondary" (btnClick)="resetSearch()">
+          Ver todos los términos
+        </app-button>
+      </app-empty-state>
+    }
+
+    <!-- Lista de Términos Agrupados por Letra -->
+    @if (!loading() && filteredCount() > 0) {
+      <div class="glossary-groups">
+        @for (letter of availableLetters(); track letter) {
+          <section [id]="'letter-' + letter" class="letter-group">
+            <header class="letter-header">
+              <h2 class="letter-title font-mono">{{ letter }}</h2>
+              <span class="letter-count">{{ groupedTerms()[letter]?.length }} conceptos</span>
+            </header>
+
+            <div class="terms-grid">
+              @for (term of groupedTerms()[letter]; track term.id) {
+                <article [id]="'term-' + term.id" class="term-card">
+                  <header class="term-header">
+                    <h3 class="term-name font-mono">{{ term.term }}</h3>
+                    <div class="subtopic-tags">
+                      @for (sub of term.subtopicIds; track sub) {
+                        <a
+                          [routerLink]="['/estudiar', sub]"
+                          class="subtopic-tag"
+                          title="Estudiar lección {{ sub }}"
+                        >
+                          {{ sub }}
+                        </a>
+                      }
+                    </div>
+                  </header>
+
+                  <p class="term-definition">{{ term.definition }}</p>
+
+                  <!-- Indicador de ubicación donde se explica -->
+                  @if (term.explainedIn && term.explainedIn.length > 0) {
+                    <div class="mt-2 flex items-center gap-1.5 flex-wrap">
+                      <span class="text-xs text-[var(--text-muted)] font-semibold">Se explica en:</span>
+                      @for (loc of term.explainedIn.slice(0, 2); track loc) {
+                        <a
+                          [routerLink]="['/estudiar', parseSubtopic(loc)]"
+                          [queryParams]="{ slide: parseSlide(loc), q: term.term }"
+                          class="explained-in-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[var(--info-soft)] text-[var(--info-text)] hover:opacity-80 transition-opacity"
+                          data-testid="explained-in"
+                          title="Ver explicación en {{ loc }}"
+                        >
+                          📍 {{ loc }}
+                        </a>
+                      }
+                    </div>
+                  } @else if (term.sinExplicacion) {
+                    <div class="mt-2 text-xs text-[var(--text-muted)] italic">
+                      <span class="explained-in-badge" data-testid="explained-in">{{ term.sinExplicacion }}</span>
+                    </div>
+                  }
+
+                  <!-- Términos relacionados -->
+                  @if (term.related && term.related.length > 0) {
+                    <footer class="term-footer">
+                      <span class="related-label">Relacionados:</span>
+                      <div class="related-chips">
+                        @for (rel of term.related; track rel) {
+                          <button
+                            type="button"
+                            class="related-chip font-mono"
+                            (click)="scrollToTerm(rel)"
+                            title="Ver definición de {{ rel }}"
+                          >
+                            {{ rel }}
+                          </button>
+                        }
+                      </div>
+                    </footer>
+                  }
+                </article>
+              }
+            </div>
+          </section>
+        }
+      </div>
+    }
+  </div>
+</app-container>
+

@@ -1,0 +1,163 @@
+<app-container>
+  <div class="practice-page-layout">
+    <!-- Migas de pan -->
+    <nav class="breadcrumbs" aria-label="Migas de pan">
+      <ol class="breadcrumbs-list">
+        <li><a routerLink="/" class="breadcrumb-link">Home</a></li>
+        <li class="separator" aria-hidden="true">/</li>
+        <li><a routerLink="/simulador" class="breadcrumb-link">Simulador</a></li>
+        <li class="separator" aria-hidden="true">/</li>
+        <li class="current" aria-current="page">Práctica libre</li>
+      </ol>
+    </nav>
+
+    <!-- Encabezado de práctica -->
+    <header class="practice-header">
+      <div class="header-badge">
+        <app-badge variant="primary">Entrenamiento libre</app-badge>
+      </div>
+      <h1 class="practice-title">Práctica libre de preguntas</h1>
+      <p class="practice-subtitle">
+        Entrena a tu propio ritmo sin límite de tiempo. Comprueba cada respuesta en el acto y revisa la justificación oficial para asimilar los conceptos de LPIC-1.
+      </p>
+    </header>
+
+    <!-- Barra de filtros interactivos -->
+    <section class="filters-bar" aria-label="Filtros de preguntas">
+      <!-- Filtro por Tema -->
+      <div class="filter-group">
+        <label for="topic-filter" class="filter-label">Tema:</label>
+        <select
+          id="topic-filter"
+          class="filter-select"
+          [value]="selectedTopicId()"
+          (change)="onTopicChange($event)"
+        >
+          <option value="all">Todos los temas</option>
+          @for (topic of filteredTopics(); track topic.id) {
+            <option [value]="topic.id">Tema {{ topic.id }} - {{ topic.title }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Filtro por Tipo -->
+      <div class="filter-group">
+        <label for="type-filter" class="filter-label">Tipo de pregunta:</label>
+        <select
+          id="type-filter"
+          class="filter-select"
+          [value]="selectedType()"
+          (change)="onTypeChange($event)"
+        >
+          <option value="all">Todos los tipos</option>
+          <option value="single">Opción única</option>
+          <option value="multiple">Opción múltiple</option>
+          <option value="fill">Respuesta abierta</option>
+        </select>
+      </div>
+
+      <!-- Filtro por Dificultad -->
+      <div class="filter-group">
+        <label for="diff-filter" class="filter-label">Dificultad:</label>
+        <select
+          id="diff-filter"
+          class="filter-select"
+          [value]="selectedDifficulty()"
+          (change)="onDifficultyChange($event)"
+        >
+          <option value="all">Todas</option>
+          <option value="easy">Fácil</option>
+          <option value="medium">Media</option>
+          <option value="hard">Difícil</option>
+        </select>
+      </div>
+
+      <!-- Checkbox solo marcadas -->
+      <div class="filter-group checkbox-group">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            [checked]="onlyFlagged()"
+            (change)="onFlaggedToggle($event)"
+            class="filter-checkbox"
+          />
+          <span>Solo marcadas</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Área de contenido interactivo -->
+    @if (isLoading()) {
+      <div class="loading-state" role="status" aria-live="polite">
+        <p>Cargando banco de preguntas...</p>
+      </div>
+    } @else if (filteredQuestions().length === 0) {
+      <div class="empty-state-card" role="region" aria-label="Sin resultados de preguntas">
+        <h3 class="empty-title">No hay preguntas que coincidan con estos filtros</h3>
+        <p class="empty-desc">Prueba a seleccionar otro tema o a restablecer los filtros para ver más preguntas.</p>
+        <app-button variant="secondary" size="md" (btnClick)="resetFilters()">
+          Restablecer filtros
+        </app-button>
+      </div>
+    } @else if (currentQuestion()) {
+      <main class="practice-main-content">
+        <!-- Contador de preguntas e indicador de progreso -->
+        <div class="practice-counter-bar">
+          <span class="counter-text">
+            Pregunta <strong>{{ currentIndex() + 1 }}</strong> de <strong>{{ filteredQuestions().length }}</strong>
+          </span>
+          <span class="difficulty-indicator">
+            Dificultad: <strong class="capitalize">{{ currentQuestion()!.difficulty }}</strong>
+          </span>
+        </div>
+
+        <!-- Tarjeta de pregunta con comprobación didáctica -->
+        <app-question-card
+          [question]="currentQuestion()!"
+          [questionNumber]="currentIndex() + 1"
+          [totalQuestions]="filteredQuestions().length"
+          [answer]="currentAnswer()"
+          [isFlagged]="isCurrentFlagged()"
+          [mode]="'practice'"
+          [isPracticeChecked]="isCurrentChecked()"
+          (answerChanged)="handleAnswerChange($event)"
+          (toggleFlag)="handleToggleFlag()"
+          (checkPractice)="handleCheckPractice()"
+        />
+
+        <!-- Barra inferior de navegación pregunta a pregunta -->
+        <nav class="navigation-footer" aria-label="Navegación entre preguntas de práctica">
+          <app-button
+            variant="secondary"
+            size="md"
+            [disabled]="currentIndex() === 0"
+            (btnClick)="prevQuestion()"
+            aria-label="Ir a la pregunta anterior"
+          >
+            ← Anterior
+          </app-button>
+
+          <app-button
+            variant="ghost"
+            size="md"
+            routerLink="/simulador"
+            aria-label="Volver al inicio del simulador"
+          >
+            Salir al simulador
+          </app-button>
+
+          <app-button
+            variant="primary"
+            size="md"
+            [disabled]="currentIndex() >= filteredQuestions().length - 1"
+            (btnClick)="nextQuestion()"
+            aria-label="Ir a la pregunta siguiente"
+          >
+            Siguiente →
+          </app-button>
+        </nav>
+      </main>
+    }
+  </div>
+</app-container>
+

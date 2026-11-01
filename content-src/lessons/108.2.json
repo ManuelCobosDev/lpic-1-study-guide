@@ -1,0 +1,1156 @@
+{
+  "id": "108.2",
+  "topicId": "108",
+  "examId": "102",
+  "title": "Registros del sistema",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 45,
+  "objectives": [
+    "Gestión integral de bitácoras en Linux: rsyslog (facilities, prioridades, selectores y acciones), systemd-journald (consultas con journalctl, almacenamiento persistente y limpieza vacuum), inyección con logger/systemd-cat y rotación automatizada con logrotate.",
+    "Dominio técnico de las herramientas y configuración del subtema 108.2"
+  ],
+  "keyTerms": [
+    "rsyslog",
+    "systemd-journald",
+    "journalctl",
+    "logger",
+    "logrotate",
+    "Facility (Subsistema)",
+    "Priority (Severidad)",
+    "systemd-cat"
+  ],
+  "commands": [],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "108.2-slide-1",
+      "slideNumber": 1,
+      "title": "Registros del sistema",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Registros del sistema"
+        },
+        {
+          "type": "paragraph",
+          "text": "Subtema 108.2 · Peso LPI: 4 · Examen LPIC-1 102-500"
+        }
+      ],
+      "notes": "Bienvenido al Subtema 108.2. Cubre los dos subsistemas de registro de Linux: rsyslog tradicional basado en texto y systemd-journald binario e indexado, además de inyección con logger y rotación con logrotate."
+    },
+    {
+      "id": "108.2-slide-2",
+      "slideNumber": 2,
+      "title": "La Pila de Registro en Linux: rsyslog vs systemd-journald",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "La Pila de Registro en Linux: rsyslog vs systemd-journald"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo conviven el registro binario en memoria de systemd y los archivos tradicionales en /var/log?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔄 Flujo de Eventos y Mensajes en Linux Moderno</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Dual Logging Architecture</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- systemd-journald -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #A855F7; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#7E22CE; font-size:12.5px;\">1. systemd-journald (Binario)</strong>\n        <span style=\"background:#9333EA; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Indexado</span>\n      </div>\n      <div style=\"color:#581C87; line-height:1.4;\">\n        • Recoge eventos del kernel (/dev/kmsg), stdout/stderr de servicios systemd y socket /dev/log.<br>\n        • Metadatos enriquecidos automáticos: PID, UID, Unidad systemd, SELinux context.<br>\n        • Se consulta con la orden <code>journalctl</code>.\n      </div>\n    </div>\n\n    <!-- rsyslog -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:12.5px;\">2. rsyslog (Archivos de Texto)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">/var/log/*</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • Recibe los eventos reenviados desde journald.<br>\n        • Clasifica por <strong>Facility</strong> y <strong>Priority</strong> según reglas en <code>/etc/rsyslog.conf</code>.<br>\n        • Escribe en archivos de texto legibles: <code>/var/log/syslog</code>, <code>auth.log</code>, o reenvía por red.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569; display:flex; justify-content:space-between; align-items:center;\">\n    <span>📜 <strong>Ciclo de vida:</strong> Los archivos de texto en <code>/var/log/</code> son rotados y comprimidos periódicamente por <code>logrotate</code>.</span>\n    <span style=\"font-weight:700; color:#1E40AF;\">/etc/logrotate.d/</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: systemd-journald captura TODO al arrancar en formato binario estructurado y, por defecto, reenvía una copia a rsyslog, quien a su vez escribe en archivos planos de /var/log/."
+        }
+      ],
+      "notes": "journald escribe en /run/log/journal/ (volátil) o /var/log/journal/ (persistente). rsyslog clasifica en texto plano para compatibilidad."
+    },
+    {
+      "id": "108.2-slide-3",
+      "slideNumber": 3,
+      "title": "Anatomía de /etc/rsyslog.conf: Selector y Acción",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Anatomía de /etc/rsyslog.conf: Selector y Acción"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo decide rsyslog dónde enviar cada mensaje?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>📄 Estructura de Regla en /etc/rsyslog.conf</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Selector + Acción</span>\n  </div>\n\n  <div style=\"background:#0F172A; color:#E2E8F0; padding:10px 14px; border-radius:8px; font-family:monospace; font-size:13px; letter-spacing:0.5px; margin-bottom:10px;\">\n    <span style=\"color:#38BDF8; font-weight:bold;\">auth,authpriv.*</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style=\"color:#4ADE80;\">/var/log/auth.log</span><br>\n    <span style=\"color:#F59E0B; font-weight:bold;\">mail.err</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style=\"color:#4ADE80;\">-/var/log/mail.err</span><br>\n    <span style=\"color:#F43F5E; font-weight:bold;\">*.emerg</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style=\"color:#F43F5E; font-weight:bold;\">:omusrmsg:*</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1.2fr 1fr; gap:12px; font-size:11px;\">\n    <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#0284C7; font-size:11.5px;\">1. Selector: facility.priority</strong><br>\n      • <strong>Facility:</strong> ¿Quién origina el mensaje? (<code>auth</code>, <code>mail</code>, <code>cron</code>...).<br>\n      • <strong>Priority:</strong> ¿Qué tan grave es? (<code>emerg</code>, <code>err</code>, <code>info</code>...).\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#15803D; font-size:11.5px;\">2. Acción: Destino del Mensaje</strong><br>\n      • <strong>Ruta de archivo:</strong> <code>/var/log/auth.log</code>.<br>\n      • <strong>Con guión '-':</strong> <code>-/var/log/mail.err</code> (asíncrono).<br>\n      • <strong>Usuarios:</strong> <code>*</code> (imprime en todas las consolas).\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Cada regla de rsyslog consta de dos partes separadas por espacios o tabulaciones: el SELECTOR (facility.priority) y la ACCIÓN (fichero, usuario o servidor remoto)."
+        }
+      ],
+      "notes": "Los archivos modulares adicionales se ubican en /etc/rsyslog.d/*.conf."
+    },
+    {
+      "id": "108.2-slide-4",
+      "slideNumber": 4,
+      "title": "Los Subsistemas (Facilities) de Syslog",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Los Subsistemas (Facilities) de Syslog"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué categorías oficiales de origen contempla el estándar?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Las instalaciones 'local0' a 'local7' están reservadas para uso personalizado de administradores y scripts. 'auth' y 'authpriv' gestionan seguridad y accesos."
+        }
+      ],
+      "notes": "kern emite mensajes del kernel; mail el subsistema de correo; cron las tareas programadas."
+    },
+    {
+      "id": "108.2-slide-5",
+      "slideNumber": 5,
+      "title": "Niveles de Prioridad y Severidad (0 a 7)",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Niveles de Prioridad y Severidad (0 a 7)"
+        },
+        {
+          "type": "paragraph",
+          "text": "De la catástrofe total a la depuración minuciosa paso a paso."
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>🚨 Escala Oficial de Severidades RFC 5424</span>\n    <span style=\"font-size:10.5px; background:#FEF2F2; color:#DC2626; padding:2px 8px; border-radius:10px; font-weight:700;\">0 (Más Grave) a 7 (Menos Grave)</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:10.5px;\">\n    <!-- emerg -->\n    <div style=\"background:#7F1D1D; color:#FFF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#FECDD3;\">0 · emerg / panic</strong><br>\n      Sistema inutilizable. Pánico del kernel o fallo catastrófico de hardware.\n    </div>\n\n    <!-- alert -->\n    <div style=\"background:#991B1B; color:#FFF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#FECDD3;\">1 · alert</strong><br>\n      Acción inmediata requerida. Base de datos corrupta o intrusión de seguridad.\n    </div>\n\n    <!-- crit -->\n    <div style=\"background:#B91C1C; color:#FFF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#FED7AA;\">2 · crit</strong><br>\n      Condición crítica. Fallo en disco de almacenamiento o pérdida de nodo en clúster.\n    </div>\n\n    <!-- err -->\n    <div style=\"background:#C2410C; color:#FFF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#FFEDD5;\">3 · err / error</strong><br>\n      Condición de error. Un servicio no pudo arrancar o dispositivo no encontrado.\n    </div>\n\n    <!-- warning -->\n    <div style=\"background:#B45309; color:#FFF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#FEF08A;\">4 · warning / warn</strong><br>\n      Advertencia. Espacio en disco bajo o certificado próximo a caducar.\n    </div>\n\n    <!-- notice -->\n    <div style=\"background:#15803D; color:#FFF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#DCFCE7;\">5 · notice</strong><br>\n      Condición normal pero significativa. Reinicio planeado o login correcto de root.\n    </div>\n\n    <!-- info -->\n    <div style=\"background:#0284C7; color:#FFF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#E0F2FE;\">6 · info</strong><br>\n      Mensajes puramente informativos de actividad cotidiana de servicios.\n    </div>\n\n    <!-- debug -->\n    <div style=\"background:#475569; color:#FFF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#F1F5F9;\">7 · debug</strong><br>\n      Mensajes de bajo nivel para depuración de código de programadores.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave Mnemotécnica: 'EM-AL-CRI-ER-WA-NO-IN-DE' -> emerg (0), alert (1), crit (2), err (3), warning (4), notice (5), info (6), debug (7). Mínimo número = Máxima gravedad."
+        }
+      ],
+      "notes": "none no tiene número: significa ignorar por completo esa facility (ej. mail.none)."
+    },
+    {
+      "id": "108.2-slide-6",
+      "slideNumber": 6,
+      "title": "Operadores de Selección en Reglas de rsyslog",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Operadores de Selección en Reglas de rsyslog"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo filtrar exactamente los niveles deseados sin capturar ruido?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'kern.crit' captura crit, alert y emerg. 'kern.=crit' captura ÚNICAMENTE crit. 'mail.none' excluye el correo por completo."
+        }
+      ],
+      "notes": "El punto y coma ';' une selectores independientes para una misma acción."
+    },
+    {
+      "id": "108.2-slide-7",
+      "slideNumber": 7,
+      "title": "Acciones de Destino en rsyslog: De Archivos a Red Centralizada",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Acciones de Destino en rsyslog: De Archivos a Red Centralizada"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Hacia dónde pueden canalizarse los eventos registrados?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Tipo de Destino",
+            "Sintaxis en rsyslog.conf",
+            "Comportamiento Técnico"
+          ],
+          "rows": [
+            [
+              "Archivo Regular Síncrono",
+              "<code>/var/log/auth.log</code>",
+              "Escribe y fuerza vaciado inmediato a disco (sync) para garantizar que el log no se pierda ante cortes de luz."
+            ],
+            [
+              "Archivo Asíncrono en Buffer",
+              "<code>-/var/log/mail.log</code>",
+              "El prefijo guión (<code>-</code>) almacena en buffer RAM antes de volcar a disco, multiplicando el rendimiento de E/S."
+            ],
+            [
+              "Servidor Remoto por UDP",
+              "<code>@192.168.1.50</code>",
+              "Envía los datagramas syslog por el protocolo UDP en el puerto 514 (rápido, sin confirmación de entrega)."
+            ],
+            [
+              "Servidor Remoto por TCP",
+              "<code>@@logserver.empresa.com</code>",
+              "Establece una conexión TCP fiable en el puerto 514 con retransmisión garantizada ante pérdidas de red."
+            ],
+            [
+              "Todas las Terminales Activas",
+              "<code>*</code> (o <code>:omusrmsg:*</code>)",
+              "Emite una alerta emergente en todas las consolas virtuales y terminales donde haya usuarios con sesión iniciada."
+            ]
+          ],
+          "caption": "Acciones de Destino en rsyslog: De Archivos a Red Centralizada"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: '@ip' = reenvío UDP (puerto 514); '@@ip' = reenvío TCP (puerto 514). '-/ruta/fichero' = escritura sin sync inmediata."
+        }
+      ]
+    },
+    {
+      "id": "108.2-slide-8",
+      "slideNumber": 8,
+      "title": "systemd-journald: Almacenamiento Volátil vs Persistente",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "systemd-journald: Almacenamiento Volátil vs Persistente"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Dónde se guardan los diarios binarios y cómo hacer que sobrevivan a los reinicios?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- Volátil -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px 12px;\">\n      <div style=\"color:#B91C1C; font-weight:bold; font-size:12.5px; margin-bottom:6px;\">\n        💨 Modo Volátil (/run/log/journal/)\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.4; font-size:11px;\">\n        • Configuración: <code>Storage=volatile</code>.<br>\n        • Reside exclusivamente en memoria RAM (sistema de archivos <code>tmpfs</code>).<br>\n        • ❌ <strong>Limitación:</strong> Al reiniciar o apagar el servidor, todos los logs anteriores se destruyen permanentemente.\n      </div>\n    </div>\n\n    <!-- Persistente -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"color:#15803D; font-weight:bold; font-size:12.5px; margin-bottom:6px;\">\n        💾 Modo Persistente (/var/log/journal/)\n      </div>\n      <div style=\"color:#14532D; line-height:1.4; font-size:11px;\">\n        • Configuración: <code>Storage=persistent</code> (en <code>/etc/systemd/journald.conf</code>).<br>\n        • Se almacena en disco dentro de <code>/var/log/journal/&lt;machine-id&gt;/</code>.<br>\n        • ✅ <strong>Ventaja:</strong> Permite consultar arranques anteriores con <code>journalctl -b -1</code>.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#FFFBEB; border:1px solid #FCD34D; border-radius:6px; padding:6px 10px; font-size:11px; color:#92400E;\">\n    💡 <strong>Modo 'auto' predeterminado:</strong> Si <code>Storage=auto</code>, systemd guarda en disco solo si el directorio <code>/var/log/journal/</code> ya existe previamente; si no existe, recurre al modo volátil en <code>/run/log/journal/</code>.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para activar el almacenamiento persistente en systemd-journald se fija 'Storage=persistent' en /etc/systemd/journald.conf o se crea el directorio /var/log/journal/."
+        }
+      ],
+      "notes": "Si Storage=volatile, los logs se guardan en /run/log/journal/ (tmpfs en memoria RAM) y se borran al reiniciar."
+    },
+    {
+      "id": "108.2-slide-9",
+      "slideNumber": 9,
+      "title": "Comando journalctl: Navegación Básica y Filtro por Arranques",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando journalctl: Navegación Básica y Filtro por Arranques"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo consultar bitácoras de sesiones anteriores tras un reinicio inesperado?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "-2 8b3c4f92... Thu 2026-10-29 08:00:10 CET—Thu 2026-10-29 18:30:22 CET\n-1 a14e59b1... Thu 2026-10-29 18:31:05 CET—Fri 2026-10-30 07:15:00 CET\n 0 d981c204... Fri 2026-10-30 07:15:45 CET—Fri 2026-10-30 08:25:12 CET"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-b, --boot [ID]",
+              "",
+              "Muestra los mensajes del arranque especificado (0=actual, -1=anterior, o por hash de boot)."
+            ],
+            [
+              "--list-boots",
+              "",
+              "Muestra la lista de todos los inicios registrados con su fecha y hash de máquina."
+            ],
+            [
+              "-f, --follow",
+              "",
+              "Sigue los registros en tiempo real (equivalente a tail -f en archivos planos)."
+            ],
+            [
+              "-n [LÍNEAS]",
+              "",
+              "Muestra las últimas N líneas registradas (por defecto 10)."
+            ],
+            [
+              "-r, --reverse",
+              "",
+              "Imprime las entradas en orden cronológico inverso (los eventos más recientes primero)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'journalctl -b' (o -b 0) muestra el arranque actual. 'journalctl -b -1' muestra el arranque inmediatamente anterior. 'journalctl --list-boots' enumera los arranques guardados."
+        }
+      ],
+      "notes": "journalctl abre por defecto la salida en un paginador interactivo estilo less. Con --no-pager se desactiva."
+    },
+    {
+      "id": "108.2-slide-10",
+      "slideNumber": 10,
+      "title": "Comando journalctl: Filtros por Unidad, Prioridad y Fecha",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando journalctl: Filtros por Unidad, Prioridad y Fecha"
+        },
+        {
+          "type": "paragraph",
+          "text": "Aislar con precisión quirúrgica el problema entre millones de líneas de log."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "Oct 30 07:45:12 debian12 sshd[4120]: error: Bind to port 22 on 0.0.0.0 failed: Address already in use.\nOct 30 07:45:12 debian12 sshd[4120]: fatal: Cannot bind any address."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-u, --unit=SERVICIO",
+              "",
+              "Filtra los mensajes generados por la unidad de systemd especificada (ej. ssh.service)."
+            ],
+            [
+              "-p, --priority=NIVEL",
+              "",
+              "Filtra por prioridad mínima (ej. 'err', 'warning', o rangos numéricos como '0..3')."
+            ],
+            [
+              "-k, --dmesg",
+              "",
+              "Muestra exclusivamente los mensajes del buffer del kernel (equivalente a dmesg)."
+            ],
+            [
+              "--since / --until",
+              "",
+              "Filtra por ventana de tiempo (ej. --since '2026-10-30 08:00', --since '1 hour ago')."
+            ],
+            [
+              "_PID=1234 / _UID=1000",
+              "",
+              "Filtra por variables internas de metadatos de proceso o usuario de systemd."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: '-u' filtra por unidad de systemd; '-p' filtra por prioridad (texto o número 0-7); '-k' muestra eventos del kernel; '--since' y '--until' filtran por ventana temporal."
+        }
+      ],
+      "notes": "Los filtros se pueden combinar libremente: journalctl -u nginx -p err --since yesterday."
+    },
+    {
+      "id": "108.2-slide-11",
+      "slideNumber": 11,
+      "title": "journalctl Avanzado: Formatos de Salida y Análisis Offline (-D)",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "journalctl Avanzado: Formatos de Salida y Análisis Offline (-D)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo inspeccionar logs de un disco montado desde un Live CD o exportar a JSON?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "Oct 29 23:59:01 srv-caido CRON[8102]: (root) CMD (/usr/local/bin/backup-nocturno.sh)\nOct 30 00:00:01 srv-caido CRON[8120]: (root) CMD (test -x /usr/sbin/anacron || ...)"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-o short",
+              "",
+              "Formato predeterminado idéntico al syslog tradicional clásico."
+            ],
+            [
+              "-o verbose",
+              "",
+              "Desglose exhaustivo de todos los campos estructurados internos de systemd."
+            ],
+            [
+              "-o json / json-pretty",
+              "",
+              "Exporta las entradas en objetos JSON válidos para análisis e indexación."
+            ],
+            [
+              "-D DIRECTORY",
+              "",
+              "Abre y consulta los archivos de journal ubicados en un directorio externo (modo rescate/forense)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'journalctl -D /ruta/' lee el diario binario de un sistema de archivos externo o desmontado (análisis forense o rescate). '-o json' exporta todos los campos para SIEM."
+        }
+      ],
+      "notes": "El formato -o verbose muestra todos los metadatos de seguridad y contexto del proceso emisor."
+    },
+    {
+      "id": "108.2-slide-12",
+      "slideNumber": 12,
+      "title": "Mantenimiento del Diario: Control de Cuota y Limpieza (vacuum)",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Mantenimiento del Diario: Control de Cuota y Limpieza (vacuum)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo evitar que journald llene la partición /var?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "Archived and active journals take up 1.2G in the file system.\nDeleted archived journal /var/log/journal/d981.../system@0005a...journal (128.0M).\nDeleted archived journal /var/log/journal/d981.../system@0005b...journal (128.0M).\nVacuuming done, freed 1024.0M of archived journals from /var/log/journal/d981..."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "--disk-usage",
+              "",
+              "Calcula y muestra el espacio total consumido en disco por los diarios activos y archivados."
+            ],
+            [
+              "--vacuum-size=TAMAÑO",
+              "",
+              "Borra los archivos de diario más antiguos hasta que el tamaño total sea inferior al fijado (ej. 500M, 1G)."
+            ],
+            [
+              "--vacuum-time=TIEMPO",
+              "",
+              "Elimina todos los archivos de diario que no contengan eventos posteriores al tiempo fijado (ej. 10d, 2weeks)."
+            ],
+            [
+              "--vacuum-files=N",
+              "",
+              "Conserva únicamente un número máximo de N archivos de diario rotados."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'journalctl --disk-usage' consulta el espacio consumido. Para purgar logs antiguos: 'journalctl --vacuum-size=500M' o 'journalctl --vacuum-time=2weeks'."
+        }
+      ],
+      "notes": "En /etc/systemd/journald.conf las directivas SystemMaxUse y SystemKeepFree limitan el tamaño automático."
+    },
+    {
+      "id": "108.2-slide-13",
+      "slideNumber": 13,
+      "title": "Inyección Manual de Eventos: logger y systemd-cat",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Inyección Manual de Eventos: logger y systemd-cat"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo registrar eventos personalizados desde nuestros propios scripts de administración?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "Oct 30 08:28:15 debian12 BACKUP_SCRIPT: Espacio libre bajo en /backup"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-p, --priority FAC.PRI",
+              "",
+              "Especifica el subsistema y severidad (ej. local0.err, auth.notice). Por defecto es user.notice."
+            ],
+            [
+              "-t, --tag ETIQUETA",
+              "",
+              "Marca cada línea de log con una etiqueta identificativa de la aplicación o script."
+            ],
+            [
+              "-s, --stderr",
+              "",
+              "Imprime el mensaje por la salida estándar de error además de registrarlo en el log."
+            ],
+            [
+              "systemd-cat -t TAG cmd",
+              "",
+              "Lanza un ejecutable enviando toda su salida directamente a systemd-journald."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'logger -p facility.priority -t ETIQUETA \"Mensaje\"' inyecta en syslog. 'systemd-cat' ejecuta un comando y redirige su stdout/stderr al journal."
+        }
+      ],
+      "notes": "logger es la utilidad estándar POSIX para escribir en /dev/log desde la consola."
+    },
+    {
+      "id": "108.2-slide-14",
+      "slideNumber": 14,
+      "title": "Rotación de Archivos con logrotate: /etc/logrotate.conf",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Rotación de Archivos con logrotate: /etc/logrotate.conf"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo impedir que los archivos de texto de /var/log/ agoten el espacio en disco?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>🔄 Mecanismo de Rotación Cíclica de Archivos</span>\n    <span style=\"font-size:10.5px; background:#F0FDF4; color:#16A34A; padding:2px 8px; border-radius:10px; font-weight:700;\">rotate 4 · compress</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11px;\">\n    <!-- Activo -->\n    <div style=\"background:#EFF6FF; border:1px solid #BAE6FD; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#0284C7;\">1. syslog (Activo)</strong><br>\n      • Archivo donde rsyslog escribe los eventos de hoy.<br>\n      • Permisos rw-r----- (0640).\n    </div>\n\n    <!-- Rotado 1 -->\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#15803D;\">2. syslog.1</strong><br>\n      • Log de la semana anterior renombrado.<br>\n      • Sin comprimir temporalmente si hay <code>delaycompress</code>.\n    </div>\n\n    <!-- Comprimidos -->\n    <div style=\"background:#FFFBEB; border:1px solid #FDE68A; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#B45309;\">3. syslog.2.gz ... .4.gz</strong><br>\n      • Comprimidos con gzip (<code>compress</code>).<br>\n      • Máximo ahorro de espacio en disco.\n    </div>\n\n    <!-- Purgado -->\n    <div style=\"background:#FEF2F2; border:1px solid #FECDD3; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#B91C1C;\">4. Purgado Automático</strong><br>\n      • Al rotar el 5º ciclo, el archivo <code>.4.gz</code> se elimina definitivamente de disco.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: logrotate se ejecuta típicamente a través de cron (/etc/cron.daily/logrotate). Sus ajustes generales residen en /etc/logrotate.conf y los específicos en /etc/logrotate.d/."
+        }
+      ],
+      "notes": "logrotate no es un demonio permanente; es un comando por lotes invocado una vez al día."
+    },
+    {
+      "id": "108.2-slide-15",
+      "slideNumber": 15,
+      "title": "Directivas Fundamentales de Configuración de logrotate",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Directivas Fundamentales de Configuración de logrotate"
+        },
+        {
+          "type": "paragraph",
+          "text": "Sintaxis de bloques de servicio en /etc/logrotate.d/."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'postrotate ... endscript' ejecuta órdenes tras rotar el log (ej. recargar el servicio con kill -HUP o systemctl reload). 'sharedscripts' evita ejecutar postrotate múltiples veces si hay comodines."
+        }
+      ],
+      "notes": "logrotate -f fuerza la rotación inmediata ignorando la fecha de última rotación en /var/lib/logrotate/status."
+    },
+    {
+      "id": "108.2-slide-16",
+      "slideNumber": 16,
+      "title": "Ejercicio Guiado LPI: Análisis de Reglas y Consultas de Diario",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicio Guiado LPI: Análisis de Reglas y Consultas de Diario"
+        },
+        {
+          "type": "paragraph",
+          "text": "Descifra reglas de rsyslog y construye consultas avanzadas con journalctl."
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "\n<strong>1. Respuesta:</strong> Captura <strong>ÚNICAMENTE</strong> los mensajes de severidad <code>warning</code> (nivel 4) de cualquier subsistema, descartando tanto los más graves (err, crit, alert, emerg) como los menos graves.<br><br>\n<strong>2. Respuesta:</strong> El guión (<code>-</code>) indica que la escritura en el archivo <code>/var/log/maillog</code> se realiza de forma <strong>asíncrona (en buffer de memoria)</strong>, omitiendo la llamada síncrona a disco tras cada línea.<br><br>\n<strong>3. Comando journalctl:</strong><br>\n<code>journalctl -u apache2.service -p err --since \"08:00:00\"</code><br><br>\n<strong>4. Comando de limpieza vacuum:</strong><br>\n<code>journalctl --vacuum-size=300M</code>\n",
+          "title": "Solución del ejercicio"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pista: La escala numérica va de 0 (emerg) a 7 (debug). -p err captura del 0 al 3."
+        }
+      ]
+    },
+    {
+      "id": "108.2-slide-17",
+      "slideNumber": 17,
+      "title": "Reto Práctico LPI: Despliegue de Auditoría y Rotación de Logs",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Reto Práctico LPI: Despliegue de Auditoría y Rotación de Logs"
+        },
+        {
+          "type": "paragraph",
+          "text": "Crea una regla en rsyslog, inyecta con logger y configura la rotación con logrotate."
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Un equipo de desarrollo crea un script crítico que emitirá eventos con el subsistema <code>local5</code>:<br>1. Crear un archivo en <code>/etc/rsyslog.d/99-app.conf</code> para que todos los eventos de <code>local5</code> se guarden en <code>/var/log/app_critica.log</code> de forma asíncrona.<br>2. Inyectar un mensaje de advertencia con <code>logger</code> para verificar la regla.<br>3. Crear un bloque en <code>/etc/logrotate.d/app_critica</code> para rotar semanalmente, mantener 4 copias comprimidas y no arrojar error si falta el fichero."
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "\n<pre style=\"background:#0F172A; color:#E2E8F0; padding:10px; border-radius:6px; font-size:12px;\">\n# 1. Configurar regla en rsyslog:\necho \"local5.* -/var/log/app_critica.log\" | sudo tee /etc/rsyslog.d/99-app.conf\nsudo systemctl restart rsyslog\n\n# 2. Inyectar mensaje de prueba con logger:\nlogger -p local5.warn -t APP_DEV \"Alerta de prueba en local5\"\ntail -n 1 /var/log/app_critica.log\n\n# 3. Configurar rotación en /etc/logrotate.d/app_critica:\nsudo tee /etc/logrotate.d/app_critica << 'EOF'\n/var/log/app_critica.log {\n    weekly\n    rotate 4\n    compress\n    delaycompress\n    missingok\n    notifempty\n    create 0640 root adm\n    postrotate\n        /usr/lib/rsyslog/rsyslog-rotate\n    endscript\n}\nEOF\n\n# 4. Probar la configuración de logrotate en modo simulación:\nsudo logrotate -d /etc/logrotate.d/app_critica\n</pre>\n",
+          "title": "Solución del desafío"
+        }
+      ]
+    },
+    {
+      "id": "108.2-slide-18",
+      "slideNumber": 18,
+      "title": "Checklist de Examen: Trampas Críticas en el Subtema 108.2",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Checklist de Examen: Trampas Críticas en el Subtema 108.2"
+        },
+        {
+          "type": "paragraph",
+          "text": "Puntos clave donde más alumnos tropiezan en las preguntas de bitácoras."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Oro: En syslog, menor número = mayor gravedad. @ = UDP, @@ = TCP. journald almacena en binario estructurado."
+        }
+      ]
+    },
+    {
+      "id": "108.2-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen del Subtema 108.2 y Preparación para el Laboratorio",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen del Subtema 108.2 y Preparación para el Laboratorio"
+        },
+        {
+          "type": "paragraph",
+          "text": "Bitácoras dominadas, comandos clave y enlace a la práctica en máquina virtual."
+        }
+      ]
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-108-2-1",
+      "title": "La Pila de Registro en Linux: rsyslog vs systemd-journald",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "La Pila de Registro en Linux: rsyslog vs systemd-journald"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo conviven el registro binario en memoria de systemd y los archivos tradicionales en /var/log?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔄 Flujo de Eventos y Mensajes en Linux Moderno</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Dual Logging Architecture</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- systemd-journald -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #A855F7; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#7E22CE; font-size:12.5px;\">1. systemd-journald (Binario)</strong>\n        <span style=\"background:#9333EA; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Indexado</span>\n      </div>\n      <div style=\"color:#581C87; line-height:1.4;\">\n        • Recoge eventos del kernel (/dev/kmsg), stdout/stderr de servicios systemd y socket /dev/log.<br>\n        • Metadatos enriquecidos automáticos: PID, UID, Unidad systemd, SELinux context.<br>\n        • Se consulta con la orden <code>journalctl</code>.\n      </div>\n    </div>\n\n    <!-- rsyslog -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:12.5px;\">2. rsyslog (Archivos de Texto)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">/var/log/*</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • Recibe los eventos reenviados desde journald.<br>\n        • Clasifica por <strong>Facility</strong> y <strong>Priority</strong> según reglas en <code>/etc/rsyslog.conf</code>.<br>\n        • Escribe en archivos de texto legibles: <code>/var/log/syslog</code>, <code>auth.log</code>, o reenvía por red.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569; display:flex; justify-content:space-between; align-items:center;\">\n    <span>📜 <strong>Ciclo de vida:</strong> Los archivos de texto en <code>/var/log/</code> son rotados y comprimidos periódicamente por <code>logrotate</code>.</span>\n    <span style=\"font-weight:700; color:#1E40AF;\">/etc/logrotate.d/</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: systemd-journald captura TODO al arrancar en formato binario estructurado y, por defecto, reenvía una copia a rsyslog, quien a su vez escribe en archivos planos de /var/log/."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-2-2",
+      "title": "Anatomía de /etc/rsyslog.conf: Selector y Acción",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Anatomía de /etc/rsyslog.conf: Selector y Acción"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo decide rsyslog dónde enviar cada mensaje?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>📄 Estructura de Regla en /etc/rsyslog.conf</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Selector + Acción</span>\n  </div>\n\n  <div style=\"background:#0F172A; color:#E2E8F0; padding:10px 14px; border-radius:8px; font-family:monospace; font-size:13px; letter-spacing:0.5px; margin-bottom:10px;\">\n    <span style=\"color:#38BDF8; font-weight:bold;\">auth,authpriv.*</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style=\"color:#4ADE80;\">/var/log/auth.log</span><br>\n    <span style=\"color:#F59E0B; font-weight:bold;\">mail.err</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style=\"color:#4ADE80;\">-/var/log/mail.err</span><br>\n    <span style=\"color:#F43F5E; font-weight:bold;\">*.emerg</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style=\"color:#F43F5E; font-weight:bold;\">:omusrmsg:*</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1.2fr 1fr; gap:12px; font-size:11px;\">\n    <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#0284C7; font-size:11.5px;\">1. Selector: facility.priority</strong><br>\n      • <strong>Facility:</strong> ¿Quién origina el mensaje? (<code>auth</code>, <code>mail</code>, <code>cron</code>...).<br>\n      • <strong>Priority:</strong> ¿Qué tan grave es? (<code>emerg</code>, <code>err</code>, <code>info</code>...).\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#15803D; font-size:11.5px;\">2. Acción: Destino del Mensaje</strong><br>\n      • <strong>Ruta de archivo:</strong> <code>/var/log/auth.log</code>.<br>\n      • <strong>Con guión '-':</strong> <code>-/var/log/mail.err</code> (asíncrono).<br>\n      • <strong>Usuarios:</strong> <code>*</code> (imprime en todas las consolas).\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Cada regla de rsyslog consta de dos partes separadas por espacios o tabulaciones: el SELECTOR (facility.priority) y la ACCIÓN (fichero, usuario o servidor remoto)."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-2-3",
+      "title": "Los Subsistemas (Facilities) de Syslog",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Los Subsistemas (Facilities) de Syslog"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué categorías oficiales de origen contempla el estándar?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Las instalaciones 'local0' a 'local7' están reservadas para uso personalizado de administradores y scripts. 'auth' y 'authpriv' gestionan seguridad y accesos."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-2-4",
+      "title": "Niveles de Prioridad y Severidad (0 a 7)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Niveles de Prioridad y Severidad (0 a 7)"
+        },
+        {
+          "type": "paragraph",
+          "text": "De la catástrofe total a la depuración minuciosa paso a paso."
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>🚨 Escala Oficial de Severidades RFC 5424</span>\n    <span style=\"font-size:10.5px; background:#FEF2F2; color:#DC2626; padding:2px 8px; border-radius:10px; font-weight:700;\">0 (Más Grave) a 7 (Menos Grave)</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:10.5px;\">\n    <!-- emerg -->\n    <div style=\"background:#7F1D1D; color:#FFF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#FECDD3;\">0 · emerg / panic</strong><br>\n      Sistema inutilizable. Pánico del kernel o fallo catastrófico de hardware.\n    </div>\n\n    <!-- alert -->\n    <div style=\"background:#991B1B; color:#FFF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#FECDD3;\">1 · alert</strong><br>\n      Acción inmediata requerida. Base de datos corrupta o intrusión de seguridad.\n    </div>\n\n    <!-- crit -->\n    <div style=\"background:#B91C1C; color:#FFF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#FED7AA;\">2 · crit</strong><br>\n      Condición crítica. Fallo en disco de almacenamiento o pérdida de nodo en clúster.\n    </div>\n\n    <!-- err -->\n    <div style=\"background:#C2410C; color:#FFF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#FFEDD5;\">3 · err / error</strong><br>\n      Condición de error. Un servicio no pudo arrancar o dispositivo no encontrado.\n    </div>\n\n    <!-- warning -->\n    <div style=\"background:#B45309; color:#FFF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#FEF08A;\">4 · warning / warn</strong><br>\n      Advertencia. Espacio en disco bajo o certificado próximo a caducar.\n    </div>\n\n    <!-- notice -->\n    <div style=\"background:#15803D; color:#FFF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#DCFCE7;\">5 · notice</strong><br>\n      Condición normal pero significativa. Reinicio planeado o login correcto de root.\n    </div>\n\n    <!-- info -->\n    <div style=\"background:#0284C7; color:#FFF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#E0F2FE;\">6 · info</strong><br>\n      Mensajes puramente informativos de actividad cotidiana de servicios.\n    </div>\n\n    <!-- debug -->\n    <div style=\"background:#475569; color:#FFF; padding:8px; border-radius:6px;\">\n      <strong style=\"color:#F1F5F9;\">7 · debug</strong><br>\n      Mensajes de bajo nivel para depuración de código de programadores.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave Mnemotécnica: 'EM-AL-CRI-ER-WA-NO-IN-DE' -> emerg (0), alert (1), crit (2), err (3), warning (4), notice (5), info (6), debug (7). Mínimo número = Máxima gravedad."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-2-5",
+      "title": "Operadores de Selección en Reglas de rsyslog",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Operadores de Selección en Reglas de rsyslog"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo filtrar exactamente los niveles deseados sin capturar ruido?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'kern.crit' captura crit, alert y emerg. 'kern.=crit' captura ÚNICAMENTE crit. 'mail.none' excluye el correo por completo."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-2-6",
+      "title": "Acciones de Destino en rsyslog: De Archivos a Red Centralizada",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Acciones de Destino en rsyslog: De Archivos a Red Centralizada"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Hacia dónde pueden canalizarse los eventos registrados?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Tipo de Destino",
+            "Sintaxis en rsyslog.conf",
+            "Comportamiento Técnico"
+          ],
+          "rows": [
+            [
+              "Archivo Regular Síncrono",
+              "<code>/var/log/auth.log</code>",
+              "Escribe y fuerza vaciado inmediato a disco (sync) para garantizar que el log no se pierda ante cortes de luz."
+            ],
+            [
+              "Archivo Asíncrono en Buffer",
+              "<code>-/var/log/mail.log</code>",
+              "El prefijo guión (<code>-</code>) almacena en buffer RAM antes de volcar a disco, multiplicando el rendimiento de E/S."
+            ],
+            [
+              "Servidor Remoto por UDP",
+              "<code>@192.168.1.50</code>",
+              "Envía los datagramas syslog por el protocolo UDP en el puerto 514 (rápido, sin confirmación de entrega)."
+            ],
+            [
+              "Servidor Remoto por TCP",
+              "<code>@@logserver.empresa.com</code>",
+              "Establece una conexión TCP fiable en el puerto 514 con retransmisión garantizada ante pérdidas de red."
+            ],
+            [
+              "Todas las Terminales Activas",
+              "<code>*</code> (o <code>:omusrmsg:*</code>)",
+              "Emite una alerta emergente en todas las consolas virtuales y terminales donde haya usuarios con sesión iniciada."
+            ]
+          ],
+          "caption": "Acciones de Destino en rsyslog: De Archivos a Red Centralizada"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: '@ip' = reenvío UDP (puerto 514); '@@ip' = reenvío TCP (puerto 514). '-/ruta/fichero' = escritura sin sync inmediata."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-2-7",
+      "title": "systemd-journald: Almacenamiento Volátil vs Persistente",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "systemd-journald: Almacenamiento Volátil vs Persistente"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Dónde se guardan los diarios binarios y cómo hacer que sobrevivan a los reinicios?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- Volátil -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px 12px;\">\n      <div style=\"color:#B91C1C; font-weight:bold; font-size:12.5px; margin-bottom:6px;\">\n        💨 Modo Volátil (/run/log/journal/)\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.4; font-size:11px;\">\n        • Configuración: <code>Storage=volatile</code>.<br>\n        • Reside exclusivamente en memoria RAM (sistema de archivos <code>tmpfs</code>).<br>\n        • ❌ <strong>Limitación:</strong> Al reiniciar o apagar el servidor, todos los logs anteriores se destruyen permanentemente.\n      </div>\n    </div>\n\n    <!-- Persistente -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"color:#15803D; font-weight:bold; font-size:12.5px; margin-bottom:6px;\">\n        💾 Modo Persistente (/var/log/journal/)\n      </div>\n      <div style=\"color:#14532D; line-height:1.4; font-size:11px;\">\n        • Configuración: <code>Storage=persistent</code> (en <code>/etc/systemd/journald.conf</code>).<br>\n        • Se almacena en disco dentro de <code>/var/log/journal/&lt;machine-id&gt;/</code>.<br>\n        • ✅ <strong>Ventaja:</strong> Permite consultar arranques anteriores con <code>journalctl -b -1</code>.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#FFFBEB; border:1px solid #FCD34D; border-radius:6px; padding:6px 10px; font-size:11px; color:#92400E;\">\n    💡 <strong>Modo 'auto' predeterminado:</strong> Si <code>Storage=auto</code>, systemd guarda en disco solo si el directorio <code>/var/log/journal/</code> ya existe previamente; si no existe, recurre al modo volátil en <code>/run/log/journal/</code>.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para activar el almacenamiento persistente en systemd-journald se fija 'Storage=persistent' en /etc/systemd/journald.conf o se crea el directorio /var/log/journal/."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-2-8",
+      "title": "Comando journalctl: Navegación Básica y Filtro por Arranques",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando journalctl: Navegación Básica y Filtro por Arranques"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo consultar bitácoras de sesiones anteriores tras un reinicio inesperado?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "-2 8b3c4f92... Thu 2026-10-29 08:00:10 CET—Thu 2026-10-29 18:30:22 CET\n-1 a14e59b1... Thu 2026-10-29 18:31:05 CET—Fri 2026-10-30 07:15:00 CET\n 0 d981c204... Fri 2026-10-30 07:15:45 CET—Fri 2026-10-30 08:25:12 CET"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-b, --boot [ID]",
+              "",
+              "Muestra los mensajes del arranque especificado (0=actual, -1=anterior, o por hash de boot)."
+            ],
+            [
+              "--list-boots",
+              "",
+              "Muestra la lista de todos los inicios registrados con su fecha y hash de máquina."
+            ],
+            [
+              "-f, --follow",
+              "",
+              "Sigue los registros en tiempo real (equivalente a tail -f en archivos planos)."
+            ],
+            [
+              "-n [LÍNEAS]",
+              "",
+              "Muestra las últimas N líneas registradas (por defecto 10)."
+            ],
+            [
+              "-r, --reverse",
+              "",
+              "Imprime las entradas en orden cronológico inverso (los eventos más recientes primero)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'journalctl -b' (o -b 0) muestra el arranque actual. 'journalctl -b -1' muestra el arranque inmediatamente anterior. 'journalctl --list-boots' enumera los arranques guardados."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-2-9",
+      "title": "Comando journalctl: Filtros por Unidad, Prioridad y Fecha",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando journalctl: Filtros por Unidad, Prioridad y Fecha"
+        },
+        {
+          "type": "paragraph",
+          "text": "Aislar con precisión quirúrgica el problema entre millones de líneas de log."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "Oct 30 07:45:12 debian12 sshd[4120]: error: Bind to port 22 on 0.0.0.0 failed: Address already in use.\nOct 30 07:45:12 debian12 sshd[4120]: fatal: Cannot bind any address."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-u, --unit=SERVICIO",
+              "",
+              "Filtra los mensajes generados por la unidad de systemd especificada (ej. ssh.service)."
+            ],
+            [
+              "-p, --priority=NIVEL",
+              "",
+              "Filtra por prioridad mínima (ej. 'err', 'warning', o rangos numéricos como '0..3')."
+            ],
+            [
+              "-k, --dmesg",
+              "",
+              "Muestra exclusivamente los mensajes del buffer del kernel (equivalente a dmesg)."
+            ],
+            [
+              "--since / --until",
+              "",
+              "Filtra por ventana de tiempo (ej. --since '2026-10-30 08:00', --since '1 hour ago')."
+            ],
+            [
+              "_PID=1234 / _UID=1000",
+              "",
+              "Filtra por variables internas de metadatos de proceso o usuario de systemd."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: '-u' filtra por unidad de systemd; '-p' filtra por prioridad (texto o número 0-7); '-k' muestra eventos del kernel; '--since' y '--until' filtran por ventana temporal."
+        }
+      ]
+    },
+    {
+      "id": "sec-108-2-10",
+      "title": "journalctl Avanzado: Formatos de Salida y Análisis Offline (-D)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "journalctl Avanzado: Formatos de Salida y Análisis Offline (-D)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo inspeccionar logs de un disco montado desde un Live CD o exportar a JSON?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "Oct 29 23:59:01 srv-caido CRON[8102]: (root) CMD (/usr/local/bin/backup-nocturno.sh)\nOct 30 00:00:01 srv-caido CRON[8120]: (root) CMD (test -x /usr/sbin/anacron || ...)"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-o short",
+              "",
+              "Formato predeterminado idéntico al syslog tradicional clásico."
+            ],
+            [
+              "-o verbose",
+              "",
+              "Desglose exhaustivo de todos los campos estructurados internos de systemd."
+            ],
+            [
+              "-o json / json-pretty",
+              "",
+              "Exporta las entradas en objetos JSON válidos para análisis e indexación."
+            ],
+            [
+              "-D DIRECTORY",
+              "",
+              "Abre y consulta los archivos de journal ubicados en un directorio externo (modo rescate/forense)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'journalctl -D /ruta/' lee el diario binario de un sistema de archivos externo o desmontado (análisis forense o rescate). '-o json' exporta todos los campos para SIEM."
+        }
+      ]
+    }
+  ]
+}

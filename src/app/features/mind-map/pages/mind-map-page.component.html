@@ -1,0 +1,383 @@
+<div class="mind-map-wrapper">
+  <!-- Barra de herramientas superior -->
+  <header class="map-toolbar">
+    <div class="toolbar-left">
+      <h1 class="map-title">Mapa mental LPIC-1</h1>
+      <div class="status-legend">
+        <span class="legend-item legend-completed">
+          <span class="legend-dot"></span> Completado
+        </span>
+        <span class="legend-item legend-in-progress">
+          <span class="legend-dot"></span> En curso
+        </span>
+        <span class="legend-item legend-pending">
+          <span class="legend-dot"></span> Pendiente
+        </span>
+      </div>
+    </div>
+
+    <div class="toolbar-center">
+      <!-- Buscador interactivo de nodos -->
+      <div class="search-box">
+        <input
+          type="search"
+          class="search-input"
+          placeholder="Buscar nodo (ej. 103.4, fstab)..."
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+          aria-label="Buscar nodo en el mapa mental"
+          data-testid="search-nodes"
+        />
+        @if (searchResults().length > 0) {
+          <div class="search-dropdown" role="listbox" aria-label="Resultados de búsqueda">
+            @for (item of searchResults().slice(0, 8); track item.id) {
+              <button
+                type="button"
+                class="dropdown-item"
+                role="option"
+                [attr.aria-selected]="selectedNode()?.id === item.id"
+                (click)="focusNode(item)"
+              >
+                <span class="item-code">{{ item.code || item.id }}</span>
+                <span class="item-name">{{ item.name }}</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Filtro solo pendientes -->
+      <button
+        type="button"
+        class="filter-toggle"
+        [class.active]="onlyPending()"
+        [attr.aria-pressed]="onlyPending()"
+        (click)="toggleOnlyPending()"
+        data-testid="toggle-only-pending"
+      >
+        Solo pendientes
+      </button>
+
+      <!-- Interruptor mostrar comandos y términos -->
+      <button
+        type="button"
+        class="filter-toggle"
+        [class.active]="showCommandsTerms()"
+        [attr.aria-pressed]="showCommandsTerms()"
+        (click)="toggleCommandsTerms()"
+        data-testid="toggle-commands-terms"
+      >
+        Comandos y términos
+      </button>
+
+      <!-- Contador dinámico de nodos -->
+      <span class="nodes-badge" data-testid="total-nodes-count">
+        {{ totalNodesCount() }} nodos
+      </span>
+    </div>
+
+    <!-- Controles de Zoom -->
+    <div class="toolbar-right">
+      <div class="zoom-controls" role="group" aria-label="Controles de zoom">
+        <button
+          type="button"
+          class="zoom-btn"
+          (click)="zoomIn()"
+          title="Acercar (+)"
+          aria-label="Acercar (+)"
+          data-testid="zoom-in"
+        >
+          +
+        </button>
+        <button
+          type="button"
+          class="zoom-btn"
+          (click)="zoomOut()"
+          title="Alejar (-)"
+          aria-label="Alejar (-)"
+          data-testid="zoom-out"
+        >
+          &minus;
+        </button>
+        <button
+          type="button"
+          class="zoom-btn text-btn"
+          (click)="resetZoom()"
+          title="Restablecer (100%)"
+          aria-label="1:1 Restablecer escala"
+          data-testid="zoom-reset"
+        >
+          1:1
+        </button>
+        <button
+          type="button"
+          class="zoom-btn text-btn"
+          (click)="fitToScreen()"
+          title="Ajustar a pantalla"
+          aria-label="Ajustar mapa a pantalla"
+          data-testid="zoom-fit"
+        >
+          Ajustar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Lienzo interactivo SVG -->
+  <main class="canvas-container">
+    <svg
+      #svgContainer
+      class="mind-map-svg"
+      role="application"
+      aria-label="Lienzo interactivo del mapa mental de certificación LPIC-1"
+      tabindex="0"
+    >
+      <g [attr.transform]="currentTransform().toString()">
+        <!-- Capa de enlaces (curvas Bézier suaves) -->
+        <g class="links-layer">
+          @for (link of layoutTree().links; track link.id) {
+            <path
+              [attr.d]="link.path"
+              class="tree-link"
+              [class.is-dimmed]="link.isDimmed"
+            />
+          }
+        </g>
+
+        <!-- Capa de nodos -->
+        <g class="nodes-layer">
+          @for (node of layoutTree().nodes; track node.id) {
+            <g
+              class="tree-node depth-{{ node.depth }}"
+              [class.completed]="node.data.status === 'completed'"
+              [class.in-progress]="node.data.status === 'in_progress'"
+              [class.pending]="node.data.status === 'pending'"
+              [class.is-match]="node.isMatch"
+              [class.is-dimmed]="node.isDimmed"
+              [class.is-selected]="selectedNode()?.id === node.id"
+              [class.node-command]="node.data.type === 'command'"
+              [class.node-term]="node.data.type === 'term'"
+              [attr.transform]="'translate(' + node.x + ',' + (node.y - (node.depth === 4 ? 14 : 18)) + ')'"
+              (click)="selectNode(node.data)"
+              (keydown.enter)="selectNode(node.data)"
+              (keydown.space)="selectNode(node.data)"
+              role="button"
+              tabindex="0"
+              [attr.aria-label]="(node.data.type === 'command' ? ('$ ' + node.data.name) : node.data.type === 'term' ? ('📖 ' + node.data.name) : (node.data.code ? node.data.code + ': ' : '') + node.data.name) + ' (' + node.data.status + ')'"
+            >
+              <title>{{ (node.data.code ? node.data.code + ': ' : '') + node.data.name }} ({{ node.data.status }})</title>
+              <!-- Fondo del nodo -->
+              <rect
+                x="0"
+                y="0"
+                [attr.width]="node.depth === 0 ? 280 : node.depth === 1 ? 210 : node.depth === 2 ? 220 : node.depth === 3 ? 240 : 190"
+                [attr.height]="node.depth === 4 ? 28 : 36"
+                rx="6"
+                class="node-rect"
+              />
+
+              <!-- Indicador de estado -->
+              <circle
+                cx="14"
+                [attr.cy]="node.depth === 4 ? 14 : 18"
+                [attr.r]="node.depth === 4 ? 4 : 5"
+                class="node-status-dot"
+              />
+
+              <!-- Código y título del nodo -->
+              <text
+                x="26"
+                [attr.y]="node.depth === 4 ? 18 : 22"
+                class="node-text"
+              >
+                @if (node.depth === 4 && node.data.type === 'command') {
+                  <tspan class="text-cmd font-mono">$ {{ node.data.name }}</tspan>
+                } @else if (node.depth === 4 && node.data.type === 'term') {
+                  <tspan class="text-term">📖 {{ node.data.name }}</tspan>
+                } @else {
+                  @if (node.data.code) {
+                    <tspan class="text-code">{{ node.data.code }}: </tspan>
+                  }
+                  <tspan class="text-name">{{ node.data.name }}</tspan>
+                }
+              </text>
+            </g>
+          }
+        </g>
+      </g>
+    </svg>
+
+    <!-- Minimapa -->
+    <div class="minimap-box" aria-hidden="true">
+      <svg class="minimap-svg" viewBox="0 0 240 180" preserveAspectRatio="xMidYMid meet">
+        @for (node of layoutTree().nodes; track node.id) {
+          <circle
+            [attr.cx]="node.x * 0.08"
+            [attr.cy]="node.y * 0.08"
+            r="1.5"
+            [class.mini-completed]="node.data.status === 'completed'"
+            [class.mini-progress]="node.data.status === 'in_progress'"
+            [class.mini-pending]="node.data.status === 'pending'"
+          />
+        }
+        <!-- Rectángulo del visor actual -->
+        <rect
+          [attr.x]="minimapaViewport().x"
+          [attr.y]="minimapaViewport().y"
+          [attr.width]="minimapaViewport().width"
+          [attr.height]="minimapaViewport().height"
+          class="minimap-viewport"
+        />
+      </svg>
+    </div>
+
+    <!-- Panel lateral de detalle (Drawer) -->
+    @if (selectedNode(); as node) {
+      <aside
+        class="node-drawer"
+        role="complementary"
+        aria-label="Detalle del nodo seleccionado"
+        data-testid="node-drawer"
+      >
+        <div class="drawer-header">
+          <div class="drawer-type-badge">
+            @if (node.type === 'subtopic') {
+              Subtema oficial
+            } @else if (node.type === 'command') {
+              Comando del sistema
+            } @else if (node.type === 'term') {
+              Término del glosario
+            } @else if (node.type === 'topic') {
+              Tema de estudio
+            } @else if (node.type === 'exam') {
+              Examen oficial
+            } @else {
+              Certificación
+            }
+          </div>
+          <button
+            type="button"
+            class="close-btn"
+            (click)="closeDrawer()"
+            aria-label="Cerrar detalle"
+            data-testid="close-drawer-btn"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div class="drawer-body">
+          <div class="drawer-status-row">
+            <span
+              class="status-pill"
+              [class.status-completed]="node.status === 'completed'"
+              [class.status-progress]="node.status === 'in_progress'"
+              [class.status-pending]="node.status === 'pending'"
+            >
+              @if (node.status === 'completed') {
+                ✓ Completado
+              } @else if (node.status === 'in_progress') {
+                ◔ En curso
+              } @else {
+                ○ Pendiente
+              }
+            </span>
+            @if (node.code) {
+              <span class="code-pill">{{ node.code }}</span>
+            }
+          </div>
+
+          <h2 class="drawer-title">{{ node.name }}</h2>
+
+          <div class="drawer-meta-list">
+            @if (node.weight) {
+              <div class="meta-row">
+                <span class="meta-label">Ponderación LPI:</span>
+                <span class="meta-val">Peso {{ node.weight }}</span>
+              </div>
+            }
+            @if (node.estimatedMinutes) {
+              <div class="meta-row">
+                <span class="meta-label">Tiempo estimado:</span>
+                <span class="meta-val">{{ node.estimatedMinutes }} minutos</span>
+              </div>
+            }
+            @if (node.examId) {
+              <div class="meta-row">
+                <span class="meta-label">Examen correspondiente:</span>
+                <span class="meta-val">LPIC-1 {{ node.examId }}</span>
+              </div>
+            }
+          </div>
+
+          @if (node.description) {
+            <div class="drawer-description">
+              <p>{{ node.description }}</p>
+            </div>
+          }
+
+          <div class="drawer-actions">
+            @if (node.type === 'subtopic') {
+              <a [routerLink]="['/estudiar', node.code]" class="btn-primary" data-testid="drawer-action-btn">
+                Ir a estudiar &rarr;
+              </a>
+            } @else if (node.type === 'command' || node.type === 'term') {
+              <a [routerLink]="['/estudiar', node.explainedIn || node.subtopicId]" class="btn-primary" data-testid="drawer-action-btn">
+                Ir a estudiar &rarr;
+              </a>
+            } @else if (node.type === 'topic') {
+              <a [routerLink]="['/temario']" class="btn-primary" data-testid="drawer-action-btn">
+                Ver en el temario &rarr;
+              </a>
+            } @else if (node.type === 'exam') {
+              <a [routerLink]="['/temario']" class="btn-primary" data-testid="drawer-action-btn">
+                Ver examen completo &rarr;
+              </a>
+            }
+          </div>
+        </div>
+      </aside>
+    }
+  </main>
+
+  <!-- Navegación accesible alternativa oculta para lectores de pantalla -->
+  <nav class="sr-only" aria-label="Estructura jerárquica del mapa mental LPIC-1">
+    @if (rawHierarchyData(); as root) {
+      <ul>
+        <li>
+          <span>{{ root.name }} ({{ root.status }})</span>
+          @if (root.children) {
+            <ul>
+              @for (exam of root.children; track exam.id) {
+                <li>
+                  <span>{{ exam.code }}: {{ exam.name }} ({{ exam.status }})</span>
+                  @if (exam.children) {
+                    <ul>
+                      @for (topic of exam.children; track topic.id) {
+                        <li>
+                          <span>{{ topic.code }}: {{ topic.name }} ({{ topic.status }})</span>
+                          @if (topic.children) {
+                            <ul>
+                              @for (sub of topic.children; track sub.id) {
+                                <li>
+                                  <a [routerLink]="['/estudiar', sub.code]">
+                                    {{ sub.code }} - {{ sub.name }} ({{ sub.status }})
+                                  </a>
+                                </li>
+                              }
+                            </ul>
+                          }
+                        </li>
+                      }
+                    </ul>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </li>
+      </ul>
+    }
+  </nav>
+</div>
+

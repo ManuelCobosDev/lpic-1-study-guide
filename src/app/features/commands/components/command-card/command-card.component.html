@@ -1,0 +1,105 @@
+<article class="command-card">
+  <header class="card-header">
+    <div class="card-title-row">
+      <h2 class="card-name font-mono">{{ command.name }}</h2>
+      <span class="category-pill">{{ command.category }}</span>
+    </div>
+    <p class="card-desc">{{ command.description }}</p>
+
+    <!-- Indicador de ubicación donde se explica -->
+    @if (command.explainedIn && command.explainedIn.length > 0) {
+      <div class="mt-2 flex items-center gap-1.5 flex-wrap">
+        <span class="text-xs text-[var(--text-muted)] font-semibold">Se explica en:</span>
+        @for (loc of command.explainedIn.slice(0, 2); track loc) {
+          <a
+            [routerLink]="['/estudiar', parseSubtopic(loc)]"
+            [queryParams]="{ slide: parseSlide(loc), q: command.name }"
+            class="explained-in-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[var(--primary-soft)] text-[var(--primary-text)] hover:opacity-80 transition-opacity"
+            data-testid="explained-in"
+            title="Ver explicación en {{ loc }}"
+          >
+            📍 {{ loc }}
+          </a>
+        }
+      </div>
+    } @else if (command.sinExplicacion) {
+      <div class="mt-2 text-xs text-[var(--text-muted)] italic">
+        <span class="explained-in-badge" data-testid="explained-in">{{ command.sinExplicacion }}</span>
+      </div>
+    }
+  </header>
+
+  <div class="card-body">
+    <div class="card-code-block">
+      <div class="code-header">
+        <span class="code-tag">Sinopsis</span>
+        <button
+          type="button"
+          class="copy-btn-mini"
+          (click)="onCopy(command.synopsis, 'syn-' + command.id)"
+          aria-label="Copiar sinopsis"
+        >
+          @if (copiedTargetId === 'syn-' + command.id) {
+            <span>✓</span>
+          } @else {
+            <span>Copiar</span>
+          }
+        </button>
+      </div>
+      <code class="font-mono block-code">{{ command.synopsis }}</code>
+    </div>
+
+    @if (command.example) {
+      <div class="card-code-block">
+        <div class="code-header">
+          <span class="code-tag">Ejemplo</span>
+          <button
+            type="button"
+            class="copy-btn-mini"
+            (click)="onCopy(command.example, 'ex-' + command.id)"
+            aria-label="Copiar ejemplo"
+          >
+            @if (copiedTargetId === 'ex-' + command.id) {
+              <span>✓</span>
+            } @else {
+              <span>Copiar</span>
+            }
+          </button>
+        </div>
+        <code class="font-mono block-code">{{ command.example }}</code>
+      </div>
+    }
+
+    @if (isExpanded && command.flags.length > 0) {
+      <div class="card-flags-expanded">
+        <span class="flags-title">Opciones:</span>
+        <ul class="card-flags-list">
+          @for (f of command.flags; track f.flag) {
+            <li>
+              <code class="font-mono">{{ f.flag }}</code>: {{ f.description }}
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </div>
+
+  <footer class="card-footer">
+    <button
+      type="button"
+      class="card-expand-toggle"
+      (click)="onToggle()"
+    >
+      {{ isExpanded ? 'Menos detalles' : 'Más detalles (' + command.flags.length + ' flags)' }}
+    </button>
+
+    <div class="card-subtopics">
+      @for (sub of command.subtopicIds; track sub) {
+        <a [routerLink]="['/estudiar', sub]" class="subtopic-link">
+          {{ sub }}
+        </a>
+      }
+    </div>
+  </footer>
+</article>
+

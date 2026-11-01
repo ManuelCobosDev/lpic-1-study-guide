@@ -1,0 +1,1470 @@
+{
+  "id": "104.5",
+  "topicId": "104",
+  "examId": "101",
+  "title": "Administración de los permisos y los propietarios de los archivos",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 30,
+  "objectives": [
+    "Modelo DAC, chmod (simbólico/octal), chown, chgrp, permisos especiales (SUID, SGID, Sticky) y umask (Alta Densidad LPIC-1)",
+    "Dominio técnico de las herramientas y configuración del subtema 104.5"
+  ],
+  "keyTerms": [
+    "Administración de los permisos y los propietarios de los archivos",
+    "Tema 104"
+  ],
+  "commands": [
+    "chmod",
+    "sudo"
+  ],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "104.5-slide-1",
+      "slideNumber": 1,
+      "title": "Administración de permisos y propietarios de archivos",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Administración de permisos y propietarios de archivos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Modelo DAC, chmod (simbólico/octal), chown, chgrp, permisos especiales (SUID, SGID, Sticky) y umask (Modo Examen)"
+        }
+      ],
+      "notes": "Iniciamos el subtema 104.5 (peso 3). La seguridad de archivos es obligatoria en LPIC-1. Dominaremos el modelo de permisos Unix tradicional (r, w, x para usuario, grupo y otros), la asignación con chmod, chown y chgrp, los tres permisos especiales (SUID, SGID, Sticky Bit) y el cálculo matemático de la máscara umask."
+    },
+    {
+      "id": "104.5-slide-2",
+      "slideNumber": 2,
+      "title": "El Modelo DAC: Permisos en Archivos frente a Directorios",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Modelo DAC: Permisos en Archivos frente a Directorios"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los bits r, w, x tienen un significado radicalmente diferente si se aplican a un archivo o a un directorio:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Permisos sobre un Archivo Ordinario** — 🎯 'r' (read) = leer el contenido del archivo. 'w' (write) = modificar o sobreescribir el contenido del archivo. 'x' (execute) = ejecutar el archivo como un programa o script.",
+            "**Permisos sobre un Directorio (¡Diferencia de Examen!)** — 🎯 'r' = listar los nombres de los archivos que contiene (con ls). 'w' = CREAR, BORRAR o RENOMBRAR archivos dentro de esa carpeta. 'x' = ATRAVESAR / ENTRAR en el directorio (hacer cd) y acceder a los inodos de sus archivos.",
+            "**⚠️ La Gran Trampa de Borrado de Archivos** — 🎯 Pregunta de Examen: ¿Quién tiene derecho a borrar un archivo? La capacidad de borrar un archivo NO DEPENDE de los permisos del archivo, sino de tener permiso 'w' en el DIRECTORIO PADRE donde reside el archivo."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Grid Comparativa Archivo vs Directorio -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px;\">\n    \n    <!-- Archivo -->\n    <div style=\"background:#F8FAFC; border:2px solid #3B82F6; border-radius:12px; padding:14px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:10px;\">\n        <span style=\"background:#3B82F6; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">ARCHIVO ORDINARIO</span>\n        <span style=\"font-size:12px; font-weight:700; color:#1E40AF;\">Contenido de Datos</span>\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:13px; color:#334155;\">\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#1D4ED8;\">r (Read):</strong> Abrir y leer el contenido (cat, less).\n        </div>\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#1D4ED8;\">w (Write):</strong> Modificar, sobreescribir o truncar el contenido.\n        </div>\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#1D4ED8;\">x (Execute):</strong> Ejecutar como programa binario o script bash.\n        </div>\n      </div>\n    </div>\n\n    <!-- Directorio -->\n    <div style=\"background:#F8FAFC; border:2px solid #10B981; border-radius:12px; padding:14px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:10px;\">\n        <span style=\"background:#10B981; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">DIRECTORIO (CARPETA)</span>\n        <span style=\"font-size:12px; font-weight:700; color:#065F46;\">Tabla de Inodos</span>\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:13px; color:#334155;\">\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#047857;\">r (Read):</strong> Listar los nombres de archivos en la carpeta (ls).\n        </div>\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#047857;\">w (Write):</strong> CREAR, BORRAR o RENOMBRAR archivos dentro.\n        </div>\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#047857;\">x (Execute):</strong> ATRAVESAR / ENTRAR con cd y acceder a inodos.\n        </div>\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Alerta de examen: Trampa de Borrado -->\n  <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:14px;\">\n    <span style=\"font-size:26px;\">⚠️</span>\n    <div style=\"font-size:13px; color:#991B1B; line-height:1.45;\">\n      <strong>La Gran Trampa de Borrado de LPIC-1:</strong> La capacidad de borrar un archivo <strong>NO DEPENDE</strong> de los permisos del archivo, sino de tener permiso <strong>'w' (escritura) en el DIRECTORIO PADRE</strong>. Aunque un archivo tenga permisos <code style=\"background:#FEE2E2; color:#B91C1C; padding:2px 4px; border-radius:4px; font-weight:700;\">0000 (---------)</code>, si el usuario tiene permiso 'w' en la carpeta, ¡puede borrar el archivo sin problemas!\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para poder entrar en una carpeta con 'cd' se necesita obligatoriamente permiso de ejecución 'x'; para borrar un archivo se necesita permiso de escritura 'w' en la carpeta."
+        }
+      ],
+      "notes": "Muestra que si un archivo tiene permisos 0000 (sin permisos) pero la carpeta tiene 777, el usuario puede borrar el archivo sin problemas."
+    },
+    {
+      "id": "104.5-slide-3",
+      "slideNumber": 3,
+      "title": "Correspondencia entre Notación Simbólica y Octal",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Correspondencia entre Notación Simbólica y Octal"
+        },
+        {
+          "type": "paragraph",
+          "text": "El sistema binario de 3 bits que define los permisos en el inodo:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Valor Octal",
+            "Valor Binario (rwx)",
+            "Cadena Simbólica",
+            "Significado Operativo"
+          ],
+          "rows": [
+            [
+              "7",
+              "111",
+              "rwx",
+              "Lectura (4) + Escritura (2) + Ejecución (1) = Control total."
+            ],
+            [
+              "6",
+              "110",
+              "rw-",
+              "🎯 Lectura (4) + Escritura (2) = Permiso estándar de edición de archivos de datos."
+            ],
+            [
+              "5",
+              "101",
+              "r-x",
+              "🎯 Lectura (4) + Ejecución (1) = Permiso estándar de lectura y travesía en directorios."
+            ],
+            [
+              "4",
+              "100",
+              "r--",
+              "Solo lectura."
+            ],
+            [
+              "0",
+              "000",
+              "---",
+              "Sin ningún permiso de acceso (acceso denegado)."
+            ],
+            [
+              "755",
+              "111 101 101",
+              "rwxr-xr-x",
+              "🎯 Directorios estándar o programas ejecutables (root edita, todos leen y entran)."
+            ],
+            [
+              "644",
+              "110 100 100",
+              "rw-r--r--",
+              "🎯 Archivos de configuración y documentos públicos (dueño edita, otros solo leen)."
+            ],
+            [
+              "700 / 600",
+              "111 000 000",
+              "rwx------ / rw-------",
+              "🎯 Acceso privado exclusivo para el propietario (clave SSH id_rsa, swapfile)."
+            ]
+          ],
+          "caption": "Correspondencia entre Notación Simbólica y Octal"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #CBD5E1; border-radius:8px; padding:8px 14px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;\">\n  <div style=\"font-size:12px; color:#334155;\">\n    <strong>Fórmula Octal de 3 Bits:</strong> <span style=\"font-family:monospace; color:#2563EB; font-weight:800;\">r = 4 (100)</span> &bull; <span style=\"font-family:monospace; color:#16A34A; font-weight:800;\">w = 2 (010)</span> &bull; <span style=\"font-family:monospace; color:#D97706; font-weight:800;\">x = 1 (001)</span>\n  </div>\n  <div style=\"font-size:12px; font-family:monospace; color:#0F172A; background:#E2E8F0; padding:2px 8px; border-radius:4px; font-weight:700;\">\n    [Dueño: 3 bits] [Grupo: 3 bits] [Otros: 3 bits] = 9 bits\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Conversión: r = 4, w = 2, x = 1. Para calcular el total basta sumar los valores: r + w = 6; r + x = 5; r + w + x = 7."
+        }
+      ],
+      "notes": "Haz que los alumnos practiquen sumas mentales rápidas: rw-r--r-- es 4+2=6, 4=4, 4=4 -> 644."
+    },
+    {
+      "id": "104.5-slide-4",
+      "slideNumber": 4,
+      "title": "Modificación de Permisos con chmod: Simbólico y Octal",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Modificación de Permisos con chmod: Simbólico y Octal"
+        },
+        {
+          "type": "paragraph",
+          "text": "Ajustar permisos de acceso de forma quirúrgica en archivos y árboles completos:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "chmod [-R] <modo_octal|modo_simbólico> <archivo_o_dir>",
+          "title": "Change Mode: modificar los bits de permiso discrecionales en el inodo"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "touch script.sh; chmod 755 script.sh; chmod g-w,o-rwx script.sh; ls -l script.sh",
+              "output": "-rwxr-x--- 1 alumno alumno 0 Oct 20 11:30 script.sh"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "chmod 755",
+              "Modo Octal",
+              "🎯 Modo Octal: fija los permisos exactos directos (ej: chmod 644 documento.txt)."
+            ],
+            [
+              "Categorías u/g/o/a",
+              "u, g, o, a",
+              "🎯 'u' = user (dueño); 'g' = group (grupo); 'o' = others (otros); 'a' = all (todos, u+g+o)."
+            ],
+            [
+              "Operadores +/-/=",
+              "+, -, =",
+              "🎯 '+' añade el permiso; '-' retira el permiso; '=' fija exactamente el permiso sustituyendo el anterior."
+            ],
+            [
+              "chmod -R",
+              "-R (Recursivo)",
+              "🎯 Clave de Examen: Aplica la modificación de permisos de forma RECURSIVA a todo el directorio y sus contenidos."
+            ],
+            [
+              "chmod a+X",
+              "+X (Condicional)",
+              "'X' (mayúscula) condicional: añade ejecución ÚNICAMENTE a directorios o a archivos que ya tenían 'x' previo."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; gap:12px; margin-top:10px;\">\n  <div style=\"flex:1; background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:10px 14px;\">\n    <div style=\"font-size:12px; font-weight:800; color:#1E40AF; margin-bottom:4px; text-transform:uppercase;\">\n      Sintaxis Simbólica Desglosada\n    </div>\n    <div style=\"font-family:monospace; font-size:13px; color:#1D4ED8; background:#DBEAFE; padding:4px 8px; border-radius:4px; font-weight:700;\">\n      chmod u=rwx,g=rx,o=r archivo.txt\n    </div>\n    <div style=\"font-size:11.5px; color:#1E3A8A; margin-top:4px;\">\n      Equivale exactamente al modo octal <code>chmod 754 archivo.txt</code>.\n    </div>\n  </div>\n  <div style=\"flex:1; background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:10px 14px;\">\n    <div style=\"font-size:12px; font-weight:800; color:#166534; margin-bottom:4px; text-transform:uppercase;\">\n      El Atajo +X (Mayúscula)\n    </div>\n    <div style=\"font-family:monospace; font-size:13px; color:#15803D; background:#DCFCE7; padding:4px 8px; border-radius:4px; font-weight:700;\">\n      chmod -R a+rX /var/www\n    </div>\n    <div style=\"font-size:11.5px; color:#14532D; margin-top:4px;\">\n      Permite recorrer subcarpetas sin convertir erróneamente en ejecutables los ficheros .html o .txt.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'chmod 755' = modo octal; 'chmod u=rwx,go=rx' = modo simbólico. Ambos consiguen el mismo resultado."
+        }
+      ],
+      "notes": "Muestra la ventaja de 'chmod a+X' al procesar carpetas recursivas para no hacer ejecutables los documentos de texto por error."
+    },
+    {
+      "id": "104.5-slide-5",
+      "slideNumber": 5,
+      "title": "Los Tres Permisos Especiales: SUID, SGID y Sticky Bit",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Los Tres Permisos Especiales: SUID, SGID y Sticky Bit"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los bits especiales modifican las reglas normales de ejecución, herencia y borrado en Linux:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. SUID (Set User ID - Octal 4000)** — 🎯 Se aplica sobre BINARIOS EJECUTABLES. Cuando un usuario ordinario ejecuta el programa, el proceso se ejecuta temporalmente con los privilegios del PROPIETARIO DEL ARCHIVO (habitualmente root). Ejemplo oficial: /usr/bin/passwd (para modificar /etc/shadow).",
+            "**2. SGID (Set Group ID - Octal 2000)** — 🎯 En binarios: ejecuta con privilegios del grupo del archivo. En DIRECTORIOS: 🎯 ¡Clave de Examen! Todo archivo o subcarpeta creado dentro HEREDA AUTOMÁTICAMENTE EL GRUPO del directorio padre (esencial para carpetas de trabajo colaborativo).",
+            "**3. Sticky Bit (Bit de Permanencia - Octal 1000)** — 🎯 Se aplica sobre DIRECTORIOS COMPARTIDOS (como /tmp y /var/tmp). Permite a cualquiera crear archivos, pero IMPIDE que un usuario borre o renombre archivos de otros. Solo el dueño del archivo o root pueden borrarlo."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Grid 3 Permisos Especiales -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:14px;\">\n    \n    <!-- SUID (4000) -->\n    <div style=\"background:#F8FAFC; border:2px solid #EF4444; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#EF4444; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">SUID</span>\n          <span style=\"font-family:monospace; font-weight:800; color:#991B1B; font-size:14px;\">Octal 4000</span>\n        </div>\n        <div style=\"font-size:13px; color:#334155; line-height:1.45; margin-bottom:8px;\">\n          <strong>En Binarios Ejecutables:</strong> El programa se ejecuta con la identidad y privilegios del <strong>propietario del archivo</strong> (habitualmente root), no del usuario que lo invoca.\n        </div>\n        <div style=\"background:#FEE2E2; border-left:3px solid #EF4444; padding:6px 8px; font-family:monospace; font-size:11.5px; color:#991B1B; border-radius:4px;\">\n          <div>/usr/bin/passwd</div>\n          <div style=\"font-weight:700;\">-rwsr-xr-x (root:root)</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:11.5px; color:#991B1B; font-weight:700; background:#FEE2E2; padding:4px 8px; border-radius:6px;\">\n        chmod 4755 &bull; chmod u+s\n      </div>\n    </div>\n\n    <!-- SGID (2000) -->\n    <div style=\"background:#F8FAFC; border:2px solid #3B82F6; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#3B82F6; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">SGID</span>\n          <span style=\"font-family:monospace; font-weight:800; color:#1E40AF; font-size:14px;\">Octal 2000</span>\n        </div>\n        <div style=\"font-size:13px; color:#334155; line-height:1.45; margin-bottom:8px;\">\n          <strong>En Directorios (¡Examen!):</strong> Todo archivo o subcarpeta creado dentro <strong>hereda automáticamente el grupo</strong> del directorio padre, facilitando el trabajo en equipo.\n        </div>\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:6px 8px; font-family:monospace; font-size:11.5px; color:#1E40AF; border-radius:4px;\">\n          <div>/shared/devs/</div>\n          <div style=\"font-weight:700;\">drwxrwsr-x (root:devs)</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:11.5px; color:#1E40AF; font-weight:700; background:#DBEAFE; padding:4px 8px; border-radius:6px;\">\n        chmod 2775 &bull; chmod g+s\n      </div>\n    </div>\n\n    <!-- Sticky Bit (1000) -->\n    <div style=\"background:#F8FAFC; border:2px solid #10B981; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#10B981; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">STICKY BIT</span>\n          <span style=\"font-family:monospace; font-weight:800; color:#065F46; font-size:14px;\">Octal 1000</span>\n        </div>\n        <div style=\"font-size:13px; color:#334155; line-height:1.45; margin-bottom:8px;\">\n          <strong>En Directorios Compartidos:</strong> Todos los usuarios pueden crear archivos, pero <strong>SOLO el creador del archivo</strong> (o root) puede borrarlo o renombrarlo.\n        </div>\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:6px 8px; font-family:monospace; font-size:11.5px; color:#065F46; border-radius:4px;\">\n          <div>/tmp y /var/tmp</div>\n          <div style=\"font-weight:700;\">drwxrwxrwt (root:root)</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:11.5px; color:#065F46; font-weight:700; background:#D1FAE5; padding:4px 8px; border-radius:6px;\">\n        chmod 1777 &bull; chmod +t\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Resumen de 4 dígitos -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:8px 16px; display:flex; align-items:center; justify-content:space-between;\">\n    <span style=\"font-size:13px; color:#92400E; font-weight:700;\">\n      Formato Octal de 4 Dígitos: <code style=\"font-size:15px; background:#FEF3C7; padding:2px 8px; border-radius:4px;\">[Especiales] [Dueño] [Grupo] [Otros]</code>\n    </span>\n    <span style=\"font-size:12.5px; color:#B45309;\">\n      Ejemplo: <strong>chmod 2775</strong> = SGID (2) + Dueño (7) + Grupo (7) + Otros (5)\n    </span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Los 3 Bits Especiales en Memoria: 4000 = SUID (ejecuta como dueño); 2000 = SGID (hereda grupo en directorios); 1000 = Sticky Bit (protege borrado en /tmp)."
+        }
+      ],
+      "notes": "Explica la analogía de la taquilla pública en /tmp gracias al Sticky Bit: todos pueden meter cosas, pero solo tú puedes llevarte lo tuyo."
+    },
+    {
+      "id": "104.5-slide-6",
+      "slideNumber": 6,
+      "title": "Representación Simbólica: minúsculas (s, t) frente a MAYÚSCULAS (S, T)",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Representación Simbólica: minúsculas (s, t) frente a MAYÚSCULAS (S, T)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué a veces se ve una 'S' o una 'T' mayúscula en ls -l y qué significa en el examen?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Permiso Especial",
+            "Posición en ls -l",
+            "Letra Minúscula (Correcto)",
+            "Letra MAYÚSCULA (⚠️ Error de Configuración)"
+          ],
+          "rows": [
+            [
+              "SUID (4000)",
+              "Campo 'x' del dueño (rws / rwS)",
+              "🎯 's' minúscula: SUID activo Y tiene permiso 'x' de ejecución.",
+              "🎯 'S' mayúscula: SUID activo pero ¡NO tiene permiso 'x'! (el binario no se puede ejecutar)."
+            ],
+            [
+              "SGID (2000)",
+              "Campo 'x' del grupo (rws / rwS)",
+              "🎯 's' minúscula: SGID activo Y tiene permiso 'x' de ejecución/travesía.",
+              "🎯 'S' mayúscula: SGID activo pero ¡NO tiene permiso 'x'! en el grupo."
+            ],
+            [
+              "Sticky Bit (1000)",
+              "Campo 'x' de otros (rwt / rwT)",
+              "🎯 't' minúscula: Sticky activo Y tiene permiso 'x' de ejecución/travesía (/tmp).",
+              "🎯 'T' mayúscula: Sticky activo pero ¡NO tiene permiso 'x'! para otros usuarios."
+            ]
+          ],
+          "caption": "Representación Simbólica: minúsculas (s, t) frente a MAYÚSCULAS (S, T)"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; gap:12px; margin-bottom:10px;\">\n  <div style=\"flex:1; background:#F0FDF4; border:2px solid #22C55E; border-radius:8px; padding:8px 12px; text-align:center;\">\n    <span style=\"font-weight:800; color:#166534; font-size:13px;\">MINÚSCULA (s, t) = TIENE PERMISO 'x'</span>\n    <div style=\"font-size:11.5px; color:#15803D;\">Ejemplo: <code>-rwsr-xr-x</code> &rarr; SUID activo y ejecutable con normalidad.</div>\n  </div>\n  <div style=\"flex:1; background:#FEF2F2; border:2px solid #EF4444; border-radius:8px; padding:8px 12px; text-align:center;\">\n    <span style=\"font-weight:800; color:#991B1B; font-size:13px;\">MAYÚSCULA (S, T) = LE FALTA PERMISO 'x'</span>\n    <div style=\"font-size:11.5px; color:#7F1D1D;\">Ejemplo: <code>-rwSr-xr-x</code> &rarr; SUID activo pero ¡NO es ejecutable! (Fallo).</div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 La Regla Nemotécnica Inflexible: Minúscula (s, t) = TIENE permiso de ejecución 'x'. MAYÚSCULA (S, T) = LE FALTA el permiso de ejecución 'x'."
+        }
+      ],
+      "notes": "Pregunta típica de certificación: '¿Qué significa que un archivo tenga permisos -rwSr--r--?'. Respuesta: Tiene el bit SUID activo pero carece de permiso de ejecución para el dueño."
+    },
+    {
+      "id": "104.5-slide-7",
+      "slideNumber": 7,
+      "title": "Asignación Práctica de Permisos Especiales con chmod",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Asignación Práctica de Permisos Especiales con chmod"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo configurar SUID, SGID y Sticky Bit en modo numérico y simbólico?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "chmod 4755 | chmod 2775 | chmod 1777 | chmod u+s | chmod g+s | chmod +t",
+          "title": "Activar o desactivar bits de permisos especiales sobre binarios y directorios"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "mkdir /tmp/colaborativo; chmod 2775 /tmp/colaborativo; ls -ld /tmp/colaborativo /tmp",
+              "output": "drwxrwsr-x 2 alumno alumno 4096 Oct 20 11:35 /tmp/colaborativo\ndrwxrwxrwt 9 root   root   4096 Oct 20 11:30 /tmp"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "chmod 4755",
+              "4755 (SUID)",
+              "🎯 Asigna SUID: el primer dígito octal '4' activa SUID (ej: -rwsr-xr-x)."
+            ],
+            [
+              "chmod 2775",
+              "2775 (SGID)",
+              "🎯 Asigna SGID en directorio: el primer dígito '2' fuerza la herencia de grupo (ej: drwxrwsr-x)."
+            ],
+            [
+              "chmod 1777",
+              "1777 (Sticky)",
+              "🎯 Asigna Sticky Bit: el primer dígito '1' activa la protección de borrado en /tmp (ej: drwxrwxrwt)."
+            ],
+            [
+              "chmod u+s / g+s / +t",
+              "Modo Simbólico",
+              "🎯 Activa permisos especiales en modo simbólico (u+s SUID, g+s SGID, +t Sticky)."
+            ],
+            [
+              "chmod 0755",
+              "0xxx (Reset)",
+              "El cero '0' inicial retira todos los permisos especiales restableciendo permisos estándar."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Los Tres Prefijos Octales de Examen: 4xxx para SUID; 2xxx para SGID; 1xxx para Sticky Bit."
+        }
+      ],
+      "notes": "Muestra que si sumas SGID (2) y Sticky (1) sobre una carpeta, el prefijo es 3xxx (chmod 3777)."
+    },
+    {
+      "id": "104.5-slide-8",
+      "slideNumber": 8,
+      "title": "Gestión de Propietarios y Grupos: chown y chgrp",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Gestión de Propietarios y Grupos: chown y chgrp"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo transferir la titularidad de archivos y carpetas a otros usuarios o equipos de trabajo?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sudo chown [-R] <usuario>[:grupo] <archivo> | sudo chgrp [-R] <grupo> <archivo>",
+          "title": "Cambiar el propietario (UID) y el grupo de pertenencia (GID) de archivos y directorios"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo chown www-data:www-data /var/www/html; sudo chown -R alumno:devs /opt/proyecto; ls -ld /var/www/html",
+              "output": "drwxr-xr-x 2 www-data www-data 4096 Oct 20 11:40 /var/www/html"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "chown user file",
+              "chown (Dueño)",
+              "🎯 Cambia únicamente el propietario del archivo."
+            ],
+            [
+              "chown user:group",
+              "user:group (Ambos)",
+              "🎯 Clave de Examen: Cambia el propietario Y el grupo simultáneamente (admite también 'user.group')."
+            ],
+            [
+              "chown :group",
+              ":group (Solo grupo)",
+              "Si se omite el usuario poniendo solo dos puntos, cambia únicamente el grupo (equivale a chgrp)."
+            ],
+            [
+              "chgrp group",
+              "chgrp",
+              "🎯 Cambia exclusivamente el grupo propietario del archivo."
+            ],
+            [
+              "chown -R",
+              "-R (Recursivo)",
+              "🎯 Clave de Examen: Aplica el cambio de propietario y grupo de forma recursiva a todo el árbol."
+            ],
+            [
+              "chown -h",
+              "-h (Symlinks)",
+              "🎯 Clave de Examen: Modifica el propietario del propio enlace simbólico en lugar del archivo apuntado."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'chown usuario:grupo archivo' cambia ambos en un solo paso; 'chown -h' modifica el dueño de un enlace simbólico."
+        }
+      ],
+      "notes": "Recuerda que solo el superusuario root puede cambiar el propietario de un archivo con chown."
+    },
+    {
+      "id": "104.5-slide-9",
+      "slideNumber": 9,
+      "title": "La Máscara de Creación umask: Cálculo Matemático",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "La Máscara de Creación umask: Cálculo Matemático"
+        },
+        {
+          "type": "paragraph",
+          "text": "En Linux ningún archivo nuevo nace ejecutable por seguridad. umask define los bits que se sustraen a la base:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Los Permisos Base Máximos Iniciales** — 🎯 En Linux, los programas solicitan permisos máximos de partida: para ARCHIVOS ORDINARIOS la base es 666 (rw-rw-rw-, ningún archivo nace ejecutable por seguridad). Para DIRECTORIOS la base es 777 (rwxrwxrwx, para permitir entrar y listar).",
+            "**umask: La máscara que RECORTA permisos** — 🎯 umask define los bits que se DESACTIVAN (se sustraen) de los permisos base en el momento de crear el archivo. Los permisos resultantes se calculan mediante la operación lógica a nivel de bits: 'Permiso = Base AND NOT(umask)'.",
+            "**El comando umask en la consola** — 'umask' sin argumentos muestra el valor actual (ej: 0022). 'umask 027' cambia la máscara para la sesión actual."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Cálculo Comparativo Ficheros vs Directorios -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px;\">\n    \n    <!-- Ficheros -->\n    <div style=\"background:#F8FAFC; border:2px solid #3B82F6; border-radius:12px; padding:14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n        <span style=\"font-weight:800; color:#1E40AF; font-size:13.5px;\">ARCHIVOS ORDINARIOS</span>\n        <span style=\"background:#DBEAFE; color:#1D4ED8; font-size:11px; font-weight:700; padding:2px 6px; border-radius:4px;\">Base: 666 (rw-rw-rw-)</span>\n      </div>\n      <div style=\"background:#EFF6FF; border-radius:8px; padding:10px; font-family:monospace; font-size:13px; line-height:1.6; color:#1E3A8A;\">\n        <div>Base:   666 (rw-rw-rw-)</div>\n        <div>umask: -022 (-------w-)</div>\n        <div style=\"border-top:2px solid #BFDBFE; margin-top:4px; font-weight:800; color:#1D4ED8;\">\n          Final:  644 (rw-r--r--)\n        </div>\n      </div>\n      <div style=\"margin-top:8px; font-size:11.5px; color:#2563EB;\">\n        🔒 Los ficheros <strong>NUNCA</strong> nacen con bit 'x' de ejecución.\n      </div>\n    </div>\n\n    <!-- Directorios -->\n    <div style=\"background:#F8FAFC; border:2px solid #10B981; border-radius:12px; padding:14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n        <span style=\"font-weight:800; color:#065F46; font-size:13.5px;\">DIRECTORIOS (CARPETAS)</span>\n        <span style=\"background:#DCFCE7; color:#15803D; font-size:11px; font-weight:700; padding:2px 6px; border-radius:4px;\">Base: 777 (rwxrwxrwx)</span>\n      </div>\n      <div style=\"background:#ECFDF5; border-radius:8px; padding:10px; font-family:monospace; font-size:13px; line-height:1.6; color:#064E3B;\">\n        <div>Base:   777 (rwxrwxrwx)</div>\n        <div>umask: -022 (----w--w-)</div>\n        <div style=\"border-top:2px solid #A7F3D0; margin-top:4px; font-weight:800; color:#047857;\">\n          Final:  755 (rwxr-xr-x)\n        </div>\n      </div>\n      <div style=\"margin-top:8px; font-size:11.5px; color:#047857;\">\n        📁 Las carpetas <strong>SIEMPRE</strong> necesitan 'x' para poder entrar.\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Alerta de examen: Imposibilidad de nacer ejecutable -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:14px;\">\n    <span style=\"font-size:24px;\">⚠️</span>\n    <div style=\"font-size:12.5px; color:#92400E; line-height:1.45;\">\n      <strong>Pregunta Trampa Típica de Examen:</strong> \"¿Qué valor de umask debo poner para que un archivo creado con <code style=\"background:#FEF3C7; padding:2px 4px; border-radius:4px;\">touch script.sh</code> nazca siendo ejecutable (755)?\". Respuesta: <strong>¡ES IMPOSIBLE!</strong> Ninguna máscara umask puede otorgar permisos de ejecución a un archivo nuevo porque la base máxima es 666 (no contiene 'x'). Se debe usar obligatoriamente <code style=\"font-weight:700;\">chmod +x</code> después de crearlo.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Permisos Base Oficiales: Archivos = 666 (rw-rw-rw-); Directorios = 777 (rwxrwxrwx). umask RESTA bits a esa base."
+        }
+      ],
+      "notes": "Enseña a los alumnos que para la mayoría de casos ordinarios, basta con restar matemáticamente dígito a dígito."
+    },
+    {
+      "id": "104.5-slide-10",
+      "slideNumber": 10,
+      "title": "Matriz de Valores umask Evaluados en el Examen",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Matriz de Valores umask Evaluados en el Examen"
+        },
+        {
+          "type": "paragraph",
+          "text": "El cálculo exacto paso a paso para resolver las preguntas matemáticas de umask:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Valor umask",
+            "Permisos en ARCHIVOS (Base 666 - umask)",
+            "Permisos en DIRECTORIOS (Base 777 - umask)",
+            "Propósito en Examen LPIC-1"
+          ],
+          "rows": [
+            [
+              "022 (o 0022)",
+              "🎯 644 (rw-r--r--)",
+              "🎯 755 (rwxr-xr-x)",
+              "🎯 Máscara ESTÁNDAR de Linux: otros pueden leer pero no escribir."
+            ],
+            [
+              "002 (o 0002)",
+              "664 (rw-rw-r--)",
+              "775 (rwxrwxr-x)",
+              "Entornos de desarrollo colaborativo con User Private Groups (UPG)."
+            ],
+            [
+              "027 (o 0027)",
+              "🎯 640 (rw-r-----)",
+              "🎯 750 (rwxr-x---)",
+              "🎯 Entornos restringidos: el grupo lee pero 'otros' no tienen ningún acceso."
+            ],
+            [
+              "077 (o 0077)",
+              "🎯 600 (rw-------)",
+              "🎯 700 (rwx------)",
+              "🎯 Máxima privacidad: solo el propietario tiene acceso; grupo y otros tienen 0."
+            ]
+          ],
+          "caption": "Matriz de Valores umask Evaluados en el Examen"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #CBD5E1; border-radius:8px; padding:8px 14px; margin-bottom:10px; display:flex; justify-content:space-around; text-align:center; font-family:monospace;\">\n  <div><span style=\"background:#3B82F6; color:#FFF; font-weight:800; padding:2px 6px; border-radius:4px;\">022</span> <span style=\"font-size:12px; color:#1E40AF; font-weight:700;\">644 / 755 (Estándar)</span></div>\n  <div><span style=\"background:#10B981; color:#FFF; font-weight:800; padding:2px 6px; border-radius:4px;\">002</span> <span style=\"font-size:12px; color:#065F46; font-weight:700;\">664 / 775 (Colaborativo)</span></div>\n  <div><span style=\"background:#F59E0B; color:#FFF; font-weight:800; padding:2px 6px; border-radius:4px;\">027</span> <span style=\"font-size:12px; color:#92400E; font-weight:700;\">640 / 750 (Restringido)</span></div>\n  <div><span style=\"background:#EF4444; color:#FFF; font-weight:800; padding:2px 6px; border-radius:4px;\">077</span> <span style=\"font-size:12px; color:#991B1B; font-weight:700;\">600 / 700 (Privado Total)</span></div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 La Regla Matemática de Examen con umask 027: Archivo = 666 - 027 = 640 (rw-r-----). Directorio = 777 - 027 = 750 (rwxr-x---)."
+        }
+      ],
+      "notes": "Alerta sobre el cálculo lógico si la máscara tiene un número impar como 023: 666 - 023 = 644 (porque el archivo no tenía bit '1' que quitar)."
+    },
+    {
+      "id": "104.5-slide-11",
+      "slideNumber": 11,
+      "title": "Persistencia de umask: /etc/login.defs y Configuración de Usuario",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Persistencia de umask: /etc/login.defs y Configuración de Usuario"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Dónde se configura la máscara umask para que sea permanente en el sistema o para un usuario?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <!-- Jerarquía en 3 niveles -->\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>📂 Los 3 Archivos Reales donde se configura umask en Linux</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Jerarquía del Sistema</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:11.5px; margin-bottom:12px;\">\n    <!-- Nivel 1: login.defs -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:12.5px;\">1. /etc/login.defs</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Global Sistema</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.35;\">\n        • <strong>Qué es:</strong> Configuración general de cuentas y usuarios.<br>\n        • <strong>Directiva real:</strong> <code>UMASK 022</code> (en mayúsculas).<br>\n        • <strong>Cuándo actúa:</strong> Al hacer login y al crear usuarios con <code>useradd</code>.\n      </div>\n    </div>\n\n    <!-- Nivel 2: profile -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">2. /etc/profile</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Shells Login</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">\n        • <strong>Qué es:</strong> Script global que lee Bash al iniciar sesión.<br>\n        • <strong>Comando real:</strong> <code>umask 022</code>.<br>\n        • <strong>Cuándo actúa:</strong> Se aplica a <strong>todos</strong> los usuarios del sistema.\n      </div>\n    </div>\n\n    <!-- Nivel 3: ~/.bashrc -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #A855F7; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#7E22CE; font-size:12.5px;\">3. ~/.bashrc</strong>\n        <span style=\"background:#9333EA; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Usuario Personal</span>\n      </div>\n      <div style=\"color:#6B21A8; line-height:1.35;\">\n        • <strong>Qué es:</strong> Archivo privado en la carpeta <code>/home/usuario</code>.<br>\n        • <strong>Comando real:</strong> Añadir al final <code>umask 027</code>.<br>\n        • <strong>Cuándo actúa:</strong> Solo para ese usuario (sobrescribe lo global).\n      </div>\n    </div>\n  </div>\n\n  <!-- Ejemplo de terminal realista y tangible -->\n  <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:8px; padding:8px 12px;\">\n    <div style=\"font-size:11px; font-weight:800; color:#475569; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.04em;\">\n      💻 Ejemplo Real en Terminal: Comprobar la umask global y personalizar la tuya\n    </div>\n    <pre style=\"margin:0; font-family:monospace; font-size:11px; line-height:1.45; color:#0F172A; background:transparent;\">\n<span style=\"color:#64748B;\"># 1. Comprobar la umask por defecto del sistema en /etc/login.defs:</span>\n$ grep -i \"^UMASK\" /etc/login.defs\nUMASK           022\n\n<span style=\"color:#64748B;\"># 2. Si quieres una máscara más privada (027) para TU usuario de forma permanente:</span>\n$ echo \"umask 027\" >> ~/.bashrc\n$ source ~/.bashrc\n\n<span style=\"color:#64748B;\"># 3. Verificar que ya se aplica automáticamente en tu cuenta:</span>\n$ umask\n0027</pre>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Examen: La directiva global del sistema se escribe en mayúsculas: 'UMASK 022' en /etc/login.defs (y en /etc/profile). Para hacerla permanente en un único usuario, se añade 'umask 027' al final de su ~/.bashrc."
+        }
+      ],
+      "notes": "Explica con claridad los 3 niveles: 1) /etc/login.defs fija la política global; 2) /etc/profile inicializa la shell; 3) ~/.bashrc permite que cada usuario tenga su propia máscara."
+    },
+    {
+      "id": "104.5-slide-12",
+      "slideNumber": 12,
+      "title": "Trampas Clásicas de Examen en Permisos y umask",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Trampas Clásicas de Examen en Permisos y umask"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 3 errores conceptuales que más puntos restan en el objetivo 104.5:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. Creer que un archivo nuevo puede nacer ejecutable con umask** — 🎯 Pregunta trampa: '¿Qué umask debo poner para que los archivos creados con touch nazcan con permisos 755?'. ¡IMPOSIBLE! La base de archivos es 666 (no tiene bit 'x'). NINGÚN archivo nace ejecutable por umask; para hacerlo ejecutable es obligatorio usar 'chmod +x' a posteriori.",
+            "**2. Confundir el orden de usuario y grupo en chown** — La sintaxis es 'chown usuario:grupo archivo'. Si escribes 'chown grupo:usuario archivo', chown intentará buscar un usuario llamado 'grupo' y fallará.",
+            "**3. Creer que para borrar un archivo se necesita permiso en el archivo** — Aunque un archivo tenga permisos de solo lectura (r--r--r--) o incluso 000, cualquier usuario que tenga permiso de escritura 'w' en el directorio contenedor puede borrarlo sin problemas."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Mnemotecnia Rápida: Los archivos nunca nacen con 'x' por umask. Para borrar se mira la carpeta. En chown primero usuario, luego grupo."
+        }
+      ],
+      "notes": "Repite estos tres conceptos antes de los ejercicios prácticos."
+    },
+    {
+      "id": "104.5-slide-13",
+      "slideNumber": 13,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: chmod y umask)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: chmod y umask)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 1 (Oficial Pág 514): Un usuario tiene configurada la máscara 'umask 027'. ¿Cuáles serán los permisos exactos en notación octal y simbólica de un nuevo archivo creado con touch y de un nuevo directorio creado con mkdir? — Comando: `Archivo: 640 (rw-r-----). Directorio: 750 (rwxr-x---)` (Para archivos: 666 - 027 = 640 (rw-r-----). Para directorios: 777 - 027 = 750 (rwxr-x---).)",
+            "Caso 2 (Oficial Pág 514): ¿Cuál es el comando exacto en modo simbólico para retirar los permisos de escritura al grupo y retirar absolutamente todos los permisos a otros en el archivo 'informe.txt' en una sola orden? — Comando: `chmod g-w,o-rwx informe.txt (o chmod go-w,o-rx informe.txt)` (La notación simbólica permite combinar acciones en una lista separada por comas sin espacios.)",
+            "Caso 3 (Oficial Pág 514): ¿Qué comando cambia el propietario a 'nginx' y el grupo a 'www-data' de todo el directorio '/var/www' y todos sus subdirectorios de forma recursiva? — Comando: `sudo chown -R nginx:www-data /var/www` (La opción -R aplica la modificación recursiva y la sintaxis 'usuario:grupo' actualiza ambas identidades.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "umask 027 produce 640 y 750; chmod simbólico con comas; y chown -R para propiedad recursiva."
+        }
+      ],
+      "notes": "Recuerda que umask 027 es la máscara más recomendada en auditorías de seguridad."
+    },
+    {
+      "id": "104.5-slide-14",
+      "slideNumber": 14,
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: Permisos Especiales)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: Permisos Especiales)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 4 (Oficial Pág 514): Un administrador crea un directorio de proyectos compartidos '/srv/proyecto'. ¿Qué comando en modo octal asigna control total al dueño, lectura/escritura/herencia de grupo al grupo y ningún acceso a otros? — Comando: `sudo chmod 2770 /srv/proyecto` (El primer dígito '2' activa el permiso especial SGID para que todos los ficheros nuevos hereden el grupo; '770' da rwx al dueño, rwx al grupo y nada a otros.)",
+            "Caso 5 (Oficial Pág 514): Al listar un archivo se observa '-rwsr-xr-x 1 root root /usr/bin/passwd'. ¿Qué permiso especial tiene asignado y qué función cumple? — Comando: `Tiene asignado el permiso SUID (Set User ID)` (La 's' en el lugar de la 'x' del propietario indica que cualquier usuario que lo ejecute asumirá temporalmente los privilegios del dueño (root) durante la ejecución.)"
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "2770 configura colaboración perfecta con SGID; SUID en passwd permite elevar privilegios de forma controlada."
+        }
+      ],
+      "notes": "Muestra cómo en /srv/proyecto con 2770, si un usuario crea un archivo, el grupo asignado no es el suyo personal, sino el del directorio."
+    },
+    {
+      "id": "104.5-slide-15",
+      "slideNumber": 15,
+      "title": "Retos de Exploración Oficiales (SUID, Enlaces y umask Impar)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Retos de Exploración Oficiales (SUID, Enlaces y umask Impar)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. Un administrador configura 'umask 003'. ¿Con qué permisos octales exactos nacerá un nuevo archivo de texto creado con touch?\n2. Si ejecutas 'chmod 4644 binario.sh' y luego 'ls -l binario.sh', ¿qué letra aparecerá en la posición del permiso de ejecución del propietario y por qué?\n3. ¿Qué comando de auditoría con 'find' localiza todos los archivos del sistema que tengan activado el bit especial SUID pertenecientes a root?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Pista",
+          "content": "Recuerda: operación lógica AND NOT en umask impar; 'S' mayúscula cuando no hay 'x'; y find con -perm -4000."
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Desafío",
+          "content": "1. Nacerá con permisos 664 (rw-rw-r--). Como los archivos parten de base 666 (no tienen bit 'x' de ejecución de valor 1), el '3' de la umask (que es 2+1) solo puede sustraer el bit '2' (escritura). Por tanto: 666 & ~003 = 664.\n2. Aparecerá una 'S' MAYÚSCULA (-rwSr--r--), porque el bit SUID está activo pero el dueño NO tiene permiso de ejecución (el modo 644 carece de 'x' para el dueño).\n3. Se ejecuta: sudo find / -perm -4000 -user root -type f 2>/dev/null"
+        }
+      ],
+      "notes": "El reto 1 y el reto 2 demuestran un dominio matemático y conceptual absoluto del sistema de permisos Unix."
+    },
+    {
+      "id": "104.5-slide-16",
+      "slideNumber": 16,
+      "title": "Pregunta de Examen LPIC-1: Cálculo de Permisos con umask",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Cálculo de Permisos con umask"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-104-5-16",
+          "question": "Si un usuario tiene configurada en su entorno una máscara 'umask 027', ¿cuáles serán los permisos octales resultantes de un nuevo archivo ordinario creado con el comando 'touch prueba.txt'?",
+          "options": [
+            {
+              "key": "a",
+              "text": "750"
+            },
+            {
+              "key": "b",
+              "text": "640"
+            },
+            {
+              "key": "c",
+              "text": "644"
+            },
+            {
+              "key": "d",
+              "text": "600"
+            }
+          ],
+          "correct": [
+            "b"
+          ],
+          "explanation": "Los archivos ordinarios parten de unos permisos base máximos de 666 (rw-rw-rw-). Al aplicar una máscara umask de 027, se resta: (6-0=6), (6-2=4) y (6-7 -> el archivo no tiene bit de ejecución '1', por lo que solo se puede sustraer los bits '4' y '2', quedando en 0). Por tanto, los permisos octales son exactamente 640 (rw-r-----)."
+        }
+      ],
+      "notes": "Pregunta clásica e indispensable de certificación."
+    },
+    {
+      "id": "104.5-slide-17",
+      "slideNumber": 17,
+      "title": "Pregunta de Examen LPIC-1: Bit Especial en Directorios Compartidos",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Pregunta de Examen LPIC-1: Bit Especial en Directorios Compartidos"
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-104-5-17",
+          "question": "¿Qué permiso especial debe configurarse sobre el directorio '/tmp' para permitir que todos los usuarios puedan crear y modificar sus propios archivos, pero impidiendo que borren los archivos creados por otros usuarios?",
+          "options": [
+            {
+              "key": "a",
+              "text": "Permiso SUID (Set User ID)"
+            },
+            {
+              "key": "b",
+              "text": "Permiso SGID (Set Group ID)"
+            },
+            {
+              "key": "c",
+              "text": "Sticky Bit (Bit de permanencia)"
+            },
+            {
+              "key": "d",
+              "text": "Permiso inmutable (chattr +i)"
+            }
+          ],
+          "correct": [
+            "c"
+          ],
+          "explanation": "El Sticky Bit (representado por el valor octal 1000 y la letra 't' al final de los permisos) se diseñó específicamente para directorios de uso común compartido (como /tmp). Garantiza que solo el propietario de un archivo o el superusuario root puedan eliminarlo o renombrarlo."
+        }
+      ],
+      "notes": "Pregunta directa y fundamental sobre la seguridad de /tmp."
+    },
+    {
+      "id": "104.5-slide-18",
+      "slideNumber": 18,
+      "title": "Tarjetas Nemotécnicas: Permisos y Propietarios 104.5",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Tarjetas Nemotécnicas: Permisos y Propietarios 104.5"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto",
+            "Significado / Uso"
+          ],
+          "rows": [
+            [
+              "¿Cuáles son los permisos base máximos de archivos y de directorios?",
+              "666 para archivos (ninguno nace con 'x'); 777 para directorios."
+            ],
+            [
+              "¿Qué permisos produce 'umask 022' en un archivo y en un directorio?",
+              "644 en archivos (rw-r--r--); 755 en directorios (rwxr-xr-x)."
+            ],
+            [
+              "¿Qué permisos produce 'umask 027' en un archivo y en un directorio?",
+              "640 en archivos (rw-r-----); 750 en directorios (rwxr-x---)."
+            ],
+            [
+              "¿Qué valor octal tiene el permiso SUID y sobre qué se aplica?",
+              "Valor 4000 (se aplica sobre binarios para ejecutar con privilegios del dueño)."
+            ],
+            [
+              "¿Qué función cumple el permiso SGID (2000) en un directorio?",
+              "Hace que todos los archivos nuevos creados dentro hereden el grupo del directorio."
+            ],
+            [
+              "¿Qué función cumple el Sticky Bit (1000) en /tmp?",
+              "Impide que un usuario borre o renombre los archivos de otros usuarios."
+            ],
+            [
+              "¿Qué diferencia hay entre ver 's' minúscula o 'S' mayúscula en ls -l?",
+              "'s' minúscula = tiene 'x' de ejecución; 'S' mayúscula = le falta el permiso 'x'."
+            ],
+            [
+              "¿Qué comando cambia el propietario y el grupo a la vez?",
+              "chown usuario:grupo <archivo>."
+            ]
+          ],
+          "caption": "Tarjetas de memorización"
+        }
+      ],
+      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 104.5."
+    },
+    {
+      "id": "104.5-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen y Claves de Examen: Subtema 104.5",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen y Claves de Examen: Subtema 104.5"
+        }
+      ],
+      "notes": "Concluimos el subtema 104.5. Los alumnos dominan ahora los permisos y la titularidad en Linux."
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-104-5-1",
+      "title": "El Modelo DAC: Permisos en Archivos frente a Directorios",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "El Modelo DAC: Permisos en Archivos frente a Directorios"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los bits r, w, x tienen un significado radicalmente diferente si se aplican a un archivo o a un directorio:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Permisos sobre un Archivo Ordinario** — 🎯 'r' (read) = leer el contenido del archivo. 'w' (write) = modificar o sobreescribir el contenido del archivo. 'x' (execute) = ejecutar el archivo como un programa o script.",
+            "**Permisos sobre un Directorio (¡Diferencia de Examen!)** — 🎯 'r' = listar los nombres de los archivos que contiene (con ls). 'w' = CREAR, BORRAR o RENOMBRAR archivos dentro de esa carpeta. 'x' = ATRAVESAR / ENTRAR en el directorio (hacer cd) y acceder a los inodos de sus archivos.",
+            "**⚠️ La Gran Trampa de Borrado de Archivos** — 🎯 Pregunta de Examen: ¿Quién tiene derecho a borrar un archivo? La capacidad de borrar un archivo NO DEPENDE de los permisos del archivo, sino de tener permiso 'w' en el DIRECTORIO PADRE donde reside el archivo."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Grid Comparativa Archivo vs Directorio -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px;\">\n    \n    <!-- Archivo -->\n    <div style=\"background:#F8FAFC; border:2px solid #3B82F6; border-radius:12px; padding:14px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:10px;\">\n        <span style=\"background:#3B82F6; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">ARCHIVO ORDINARIO</span>\n        <span style=\"font-size:12px; font-weight:700; color:#1E40AF;\">Contenido de Datos</span>\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:13px; color:#334155;\">\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#1D4ED8;\">r (Read):</strong> Abrir y leer el contenido (cat, less).\n        </div>\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#1D4ED8;\">w (Write):</strong> Modificar, sobreescribir o truncar el contenido.\n        </div>\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#1D4ED8;\">x (Execute):</strong> Ejecutar como programa binario o script bash.\n        </div>\n      </div>\n    </div>\n\n    <!-- Directorio -->\n    <div style=\"background:#F8FAFC; border:2px solid #10B981; border-radius:12px; padding:14px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:10px;\">\n        <span style=\"background:#10B981; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">DIRECTORIO (CARPETA)</span>\n        <span style=\"font-size:12px; font-weight:700; color:#065F46;\">Tabla de Inodos</span>\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:13px; color:#334155;\">\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#047857;\">r (Read):</strong> Listar los nombres de archivos en la carpeta (ls).\n        </div>\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#047857;\">w (Write):</strong> CREAR, BORRAR o RENOMBRAR archivos dentro.\n        </div>\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#047857;\">x (Execute):</strong> ATRAVESAR / ENTRAR con cd y acceder a inodos.\n        </div>\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Alerta de examen: Trampa de Borrado -->\n  <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:14px;\">\n    <span style=\"font-size:26px;\">⚠️</span>\n    <div style=\"font-size:13px; color:#991B1B; line-height:1.45;\">\n      <strong>La Gran Trampa de Borrado de LPIC-1:</strong> La capacidad de borrar un archivo <strong>NO DEPENDE</strong> de los permisos del archivo, sino de tener permiso <strong>'w' (escritura) en el DIRECTORIO PADRE</strong>. Aunque un archivo tenga permisos <code style=\"background:#FEE2E2; color:#B91C1C; padding:2px 4px; border-radius:4px; font-weight:700;\">0000 (---------)</code>, si el usuario tiene permiso 'w' en la carpeta, ¡puede borrar el archivo sin problemas!\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para poder entrar en una carpeta con 'cd' se necesita obligatoriamente permiso de ejecución 'x'; para borrar un archivo se necesita permiso de escritura 'w' en la carpeta."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-5-2",
+      "title": "Correspondencia entre Notación Simbólica y Octal",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Correspondencia entre Notación Simbólica y Octal"
+        },
+        {
+          "type": "paragraph",
+          "text": "El sistema binario de 3 bits que define los permisos en el inodo:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Valor Octal",
+            "Valor Binario (rwx)",
+            "Cadena Simbólica",
+            "Significado Operativo"
+          ],
+          "rows": [
+            [
+              "7",
+              "111",
+              "rwx",
+              "Lectura (4) + Escritura (2) + Ejecución (1) = Control total."
+            ],
+            [
+              "6",
+              "110",
+              "rw-",
+              "🎯 Lectura (4) + Escritura (2) = Permiso estándar de edición de archivos de datos."
+            ],
+            [
+              "5",
+              "101",
+              "r-x",
+              "🎯 Lectura (4) + Ejecución (1) = Permiso estándar de lectura y travesía en directorios."
+            ],
+            [
+              "4",
+              "100",
+              "r--",
+              "Solo lectura."
+            ],
+            [
+              "0",
+              "000",
+              "---",
+              "Sin ningún permiso de acceso (acceso denegado)."
+            ],
+            [
+              "755",
+              "111 101 101",
+              "rwxr-xr-x",
+              "🎯 Directorios estándar o programas ejecutables (root edita, todos leen y entran)."
+            ],
+            [
+              "644",
+              "110 100 100",
+              "rw-r--r--",
+              "🎯 Archivos de configuración y documentos públicos (dueño edita, otros solo leen)."
+            ],
+            [
+              "700 / 600",
+              "111 000 000",
+              "rwx------ / rw-------",
+              "🎯 Acceso privado exclusivo para el propietario (clave SSH id_rsa, swapfile)."
+            ]
+          ],
+          "caption": "Correspondencia entre Notación Simbólica y Octal"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #CBD5E1; border-radius:8px; padding:8px 14px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;\">\n  <div style=\"font-size:12px; color:#334155;\">\n    <strong>Fórmula Octal de 3 Bits:</strong> <span style=\"font-family:monospace; color:#2563EB; font-weight:800;\">r = 4 (100)</span> &bull; <span style=\"font-family:monospace; color:#16A34A; font-weight:800;\">w = 2 (010)</span> &bull; <span style=\"font-family:monospace; color:#D97706; font-weight:800;\">x = 1 (001)</span>\n  </div>\n  <div style=\"font-size:12px; font-family:monospace; color:#0F172A; background:#E2E8F0; padding:2px 8px; border-radius:4px; font-weight:700;\">\n    [Dueño: 3 bits] [Grupo: 3 bits] [Otros: 3 bits] = 9 bits\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Conversión: r = 4, w = 2, x = 1. Para calcular el total basta sumar los valores: r + w = 6; r + x = 5; r + w + x = 7."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-5-3",
+      "title": "Modificación de Permisos con chmod: Simbólico y Octal",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Modificación de Permisos con chmod: Simbólico y Octal"
+        },
+        {
+          "type": "paragraph",
+          "text": "Ajustar permisos de acceso de forma quirúrgica en archivos y árboles completos:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "chmod [-R] <modo_octal|modo_simbólico> <archivo_o_dir>",
+          "title": "Change Mode: modificar los bits de permiso discrecionales en el inodo"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "touch script.sh; chmod 755 script.sh; chmod g-w,o-rwx script.sh; ls -l script.sh",
+              "output": "-rwxr-x--- 1 alumno alumno 0 Oct 20 11:30 script.sh"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "chmod 755",
+              "Modo Octal",
+              "🎯 Modo Octal: fija los permisos exactos directos (ej: chmod 644 documento.txt)."
+            ],
+            [
+              "Categorías u/g/o/a",
+              "u, g, o, a",
+              "🎯 'u' = user (dueño); 'g' = group (grupo); 'o' = others (otros); 'a' = all (todos, u+g+o)."
+            ],
+            [
+              "Operadores +/-/=",
+              "+, -, =",
+              "🎯 '+' añade el permiso; '-' retira el permiso; '=' fija exactamente el permiso sustituyendo el anterior."
+            ],
+            [
+              "chmod -R",
+              "-R (Recursivo)",
+              "🎯 Clave de Examen: Aplica la modificación de permisos de forma RECURSIVA a todo el directorio y sus contenidos."
+            ],
+            [
+              "chmod a+X",
+              "+X (Condicional)",
+              "'X' (mayúscula) condicional: añade ejecución ÚNICAMENTE a directorios o a archivos que ya tenían 'x' previo."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; gap:12px; margin-top:10px;\">\n  <div style=\"flex:1; background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:10px 14px;\">\n    <div style=\"font-size:12px; font-weight:800; color:#1E40AF; margin-bottom:4px; text-transform:uppercase;\">\n      Sintaxis Simbólica Desglosada\n    </div>\n    <div style=\"font-family:monospace; font-size:13px; color:#1D4ED8; background:#DBEAFE; padding:4px 8px; border-radius:4px; font-weight:700;\">\n      chmod u=rwx,g=rx,o=r archivo.txt\n    </div>\n    <div style=\"font-size:11.5px; color:#1E3A8A; margin-top:4px;\">\n      Equivale exactamente al modo octal <code>chmod 754 archivo.txt</code>.\n    </div>\n  </div>\n  <div style=\"flex:1; background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:10px 14px;\">\n    <div style=\"font-size:12px; font-weight:800; color:#166534; margin-bottom:4px; text-transform:uppercase;\">\n      El Atajo +X (Mayúscula)\n    </div>\n    <div style=\"font-family:monospace; font-size:13px; color:#15803D; background:#DCFCE7; padding:4px 8px; border-radius:4px; font-weight:700;\">\n      chmod -R a+rX /var/www\n    </div>\n    <div style=\"font-size:11.5px; color:#14532D; margin-top:4px;\">\n      Permite recorrer subcarpetas sin convertir erróneamente en ejecutables los ficheros .html o .txt.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'chmod 755' = modo octal; 'chmod u=rwx,go=rx' = modo simbólico. Ambos consiguen el mismo resultado."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-5-4",
+      "title": "Los Tres Permisos Especiales: SUID, SGID y Sticky Bit",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Los Tres Permisos Especiales: SUID, SGID y Sticky Bit"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los bits especiales modifican las reglas normales de ejecución, herencia y borrado en Linux:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**1. SUID (Set User ID - Octal 4000)** — 🎯 Se aplica sobre BINARIOS EJECUTABLES. Cuando un usuario ordinario ejecuta el programa, el proceso se ejecuta temporalmente con los privilegios del PROPIETARIO DEL ARCHIVO (habitualmente root). Ejemplo oficial: /usr/bin/passwd (para modificar /etc/shadow).",
+            "**2. SGID (Set Group ID - Octal 2000)** — 🎯 En binarios: ejecuta con privilegios del grupo del archivo. En DIRECTORIOS: 🎯 ¡Clave de Examen! Todo archivo o subcarpeta creado dentro HEREDA AUTOMÁTICAMENTE EL GRUPO del directorio padre (esencial para carpetas de trabajo colaborativo).",
+            "**3. Sticky Bit (Bit de Permanencia - Octal 1000)** — 🎯 Se aplica sobre DIRECTORIOS COMPARTIDOS (como /tmp y /var/tmp). Permite a cualquiera crear archivos, pero IMPIDE que un usuario borre o renombre archivos de otros. Solo el dueño del archivo o root pueden borrarlo."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Grid 3 Permisos Especiales -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:14px;\">\n    \n    <!-- SUID (4000) -->\n    <div style=\"background:#F8FAFC; border:2px solid #EF4444; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#EF4444; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">SUID</span>\n          <span style=\"font-family:monospace; font-weight:800; color:#991B1B; font-size:14px;\">Octal 4000</span>\n        </div>\n        <div style=\"font-size:13px; color:#334155; line-height:1.45; margin-bottom:8px;\">\n          <strong>En Binarios Ejecutables:</strong> El programa se ejecuta con la identidad y privilegios del <strong>propietario del archivo</strong> (habitualmente root), no del usuario que lo invoca.\n        </div>\n        <div style=\"background:#FEE2E2; border-left:3px solid #EF4444; padding:6px 8px; font-family:monospace; font-size:11.5px; color:#991B1B; border-radius:4px;\">\n          <div>/usr/bin/passwd</div>\n          <div style=\"font-weight:700;\">-rwsr-xr-x (root:root)</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:11.5px; color:#991B1B; font-weight:700; background:#FEE2E2; padding:4px 8px; border-radius:6px;\">\n        chmod 4755 &bull; chmod u+s\n      </div>\n    </div>\n\n    <!-- SGID (2000) -->\n    <div style=\"background:#F8FAFC; border:2px solid #3B82F6; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#3B82F6; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">SGID</span>\n          <span style=\"font-family:monospace; font-weight:800; color:#1E40AF; font-size:14px;\">Octal 2000</span>\n        </div>\n        <div style=\"font-size:13px; color:#334155; line-height:1.45; margin-bottom:8px;\">\n          <strong>En Directorios (¡Examen!):</strong> Todo archivo o subcarpeta creado dentro <strong>hereda automáticamente el grupo</strong> del directorio padre, facilitando el trabajo en equipo.\n        </div>\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:6px 8px; font-family:monospace; font-size:11.5px; color:#1E40AF; border-radius:4px;\">\n          <div>/shared/devs/</div>\n          <div style=\"font-weight:700;\">drwxrwsr-x (root:devs)</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:11.5px; color:#1E40AF; font-weight:700; background:#DBEAFE; padding:4px 8px; border-radius:6px;\">\n        chmod 2775 &bull; chmod g+s\n      </div>\n    </div>\n\n    <!-- Sticky Bit (1000) -->\n    <div style=\"background:#F8FAFC; border:2px solid #10B981; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#10B981; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">STICKY BIT</span>\n          <span style=\"font-family:monospace; font-weight:800; color:#065F46; font-size:14px;\">Octal 1000</span>\n        </div>\n        <div style=\"font-size:13px; color:#334155; line-height:1.45; margin-bottom:8px;\">\n          <strong>En Directorios Compartidos:</strong> Todos los usuarios pueden crear archivos, pero <strong>SOLO el creador del archivo</strong> (o root) puede borrarlo o renombrarlo.\n        </div>\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:6px 8px; font-family:monospace; font-size:11.5px; color:#065F46; border-radius:4px;\">\n          <div>/tmp y /var/tmp</div>\n          <div style=\"font-weight:700;\">drwxrwxrwt (root:root)</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:11.5px; color:#065F46; font-weight:700; background:#D1FAE5; padding:4px 8px; border-radius:6px;\">\n        chmod 1777 &bull; chmod +t\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Resumen de 4 dígitos -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:8px 16px; display:flex; align-items:center; justify-content:space-between;\">\n    <span style=\"font-size:13px; color:#92400E; font-weight:700;\">\n      Formato Octal de 4 Dígitos: <code style=\"font-size:15px; background:#FEF3C7; padding:2px 8px; border-radius:4px;\">[Especiales] [Dueño] [Grupo] [Otros]</code>\n    </span>\n    <span style=\"font-size:12.5px; color:#B45309;\">\n      Ejemplo: <strong>chmod 2775</strong> = SGID (2) + Dueño (7) + Grupo (7) + Otros (5)\n    </span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Los 3 Bits Especiales en Memoria: 4000 = SUID (ejecuta como dueño); 2000 = SGID (hereda grupo en directorios); 1000 = Sticky Bit (protege borrado en /tmp)."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-5-5",
+      "title": "Representación Simbólica: minúsculas (s, t) frente a MAYÚSCULAS (S, T)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Representación Simbólica: minúsculas (s, t) frente a MAYÚSCULAS (S, T)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué a veces se ve una 'S' o una 'T' mayúscula en ls -l y qué significa en el examen?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Permiso Especial",
+            "Posición en ls -l",
+            "Letra Minúscula (Correcto)",
+            "Letra MAYÚSCULA (⚠️ Error de Configuración)"
+          ],
+          "rows": [
+            [
+              "SUID (4000)",
+              "Campo 'x' del dueño (rws / rwS)",
+              "🎯 's' minúscula: SUID activo Y tiene permiso 'x' de ejecución.",
+              "🎯 'S' mayúscula: SUID activo pero ¡NO tiene permiso 'x'! (el binario no se puede ejecutar)."
+            ],
+            [
+              "SGID (2000)",
+              "Campo 'x' del grupo (rws / rwS)",
+              "🎯 's' minúscula: SGID activo Y tiene permiso 'x' de ejecución/travesía.",
+              "🎯 'S' mayúscula: SGID activo pero ¡NO tiene permiso 'x'! en el grupo."
+            ],
+            [
+              "Sticky Bit (1000)",
+              "Campo 'x' de otros (rwt / rwT)",
+              "🎯 't' minúscula: Sticky activo Y tiene permiso 'x' de ejecución/travesía (/tmp).",
+              "🎯 'T' mayúscula: Sticky activo pero ¡NO tiene permiso 'x'! para otros usuarios."
+            ]
+          ],
+          "caption": "Representación Simbólica: minúsculas (s, t) frente a MAYÚSCULAS (S, T)"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; gap:12px; margin-bottom:10px;\">\n  <div style=\"flex:1; background:#F0FDF4; border:2px solid #22C55E; border-radius:8px; padding:8px 12px; text-align:center;\">\n    <span style=\"font-weight:800; color:#166534; font-size:13px;\">MINÚSCULA (s, t) = TIENE PERMISO 'x'</span>\n    <div style=\"font-size:11.5px; color:#15803D;\">Ejemplo: <code>-rwsr-xr-x</code> &rarr; SUID activo y ejecutable con normalidad.</div>\n  </div>\n  <div style=\"flex:1; background:#FEF2F2; border:2px solid #EF4444; border-radius:8px; padding:8px 12px; text-align:center;\">\n    <span style=\"font-weight:800; color:#991B1B; font-size:13px;\">MAYÚSCULA (S, T) = LE FALTA PERMISO 'x'</span>\n    <div style=\"font-size:11.5px; color:#7F1D1D;\">Ejemplo: <code>-rwSr-xr-x</code> &rarr; SUID activo pero ¡NO es ejecutable! (Fallo).</div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 La Regla Nemotécnica Inflexible: Minúscula (s, t) = TIENE permiso de ejecución 'x'. MAYÚSCULA (S, T) = LE FALTA el permiso de ejecución 'x'."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-5-6",
+      "title": "Asignación Práctica de Permisos Especiales con chmod",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Asignación Práctica de Permisos Especiales con chmod"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo configurar SUID, SGID y Sticky Bit en modo numérico y simbólico?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "chmod 4755 | chmod 2775 | chmod 1777 | chmod u+s | chmod g+s | chmod +t",
+          "title": "Activar o desactivar bits de permisos especiales sobre binarios y directorios"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "mkdir /tmp/colaborativo; chmod 2775 /tmp/colaborativo; ls -ld /tmp/colaborativo /tmp",
+              "output": "drwxrwsr-x 2 alumno alumno 4096 Oct 20 11:35 /tmp/colaborativo\ndrwxrwxrwt 9 root   root   4096 Oct 20 11:30 /tmp"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "chmod 4755",
+              "4755 (SUID)",
+              "🎯 Asigna SUID: el primer dígito octal '4' activa SUID (ej: -rwsr-xr-x)."
+            ],
+            [
+              "chmod 2775",
+              "2775 (SGID)",
+              "🎯 Asigna SGID en directorio: el primer dígito '2' fuerza la herencia de grupo (ej: drwxrwsr-x)."
+            ],
+            [
+              "chmod 1777",
+              "1777 (Sticky)",
+              "🎯 Asigna Sticky Bit: el primer dígito '1' activa la protección de borrado en /tmp (ej: drwxrwxrwt)."
+            ],
+            [
+              "chmod u+s / g+s / +t",
+              "Modo Simbólico",
+              "🎯 Activa permisos especiales en modo simbólico (u+s SUID, g+s SGID, +t Sticky)."
+            ],
+            [
+              "chmod 0755",
+              "0xxx (Reset)",
+              "El cero '0' inicial retira todos los permisos especiales restableciendo permisos estándar."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Los Tres Prefijos Octales de Examen: 4xxx para SUID; 2xxx para SGID; 1xxx para Sticky Bit."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-5-7",
+      "title": "Gestión de Propietarios y Grupos: chown y chgrp",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Gestión de Propietarios y Grupos: chown y chgrp"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo transferir la titularidad de archivos y carpetas a otros usuarios o equipos de trabajo?"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "sudo chown [-R] <usuario>[:grupo] <archivo> | sudo chgrp [-R] <grupo> <archivo>",
+          "title": "Cambiar el propietario (UID) y el grupo de pertenencia (GID) de archivos y directorios"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo chown www-data:www-data /var/www/html; sudo chown -R alumno:devs /opt/proyecto; ls -ld /var/www/html",
+              "output": "drwxr-xr-x 2 www-data www-data 4096 Oct 20 11:40 /var/www/html"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "chown user file",
+              "chown (Dueño)",
+              "🎯 Cambia únicamente el propietario del archivo."
+            ],
+            [
+              "chown user:group",
+              "user:group (Ambos)",
+              "🎯 Clave de Examen: Cambia el propietario Y el grupo simultáneamente (admite también 'user.group')."
+            ],
+            [
+              "chown :group",
+              ":group (Solo grupo)",
+              "Si se omite el usuario poniendo solo dos puntos, cambia únicamente el grupo (equivale a chgrp)."
+            ],
+            [
+              "chgrp group",
+              "chgrp",
+              "🎯 Cambia exclusivamente el grupo propietario del archivo."
+            ],
+            [
+              "chown -R",
+              "-R (Recursivo)",
+              "🎯 Clave de Examen: Aplica el cambio de propietario y grupo de forma recursiva a todo el árbol."
+            ],
+            [
+              "chown -h",
+              "-h (Symlinks)",
+              "🎯 Clave de Examen: Modifica el propietario del propio enlace simbólico en lugar del archivo apuntado."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'chown usuario:grupo archivo' cambia ambos en un solo paso; 'chown -h' modifica el dueño de un enlace simbólico."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-5-8",
+      "title": "La Máscara de Creación umask: Cálculo Matemático",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "La Máscara de Creación umask: Cálculo Matemático"
+        },
+        {
+          "type": "paragraph",
+          "text": "En Linux ningún archivo nuevo nace ejecutable por seguridad. umask define los bits que se sustraen a la base:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Los Permisos Base Máximos Iniciales** — 🎯 En Linux, los programas solicitan permisos máximos de partida: para ARCHIVOS ORDINARIOS la base es 666 (rw-rw-rw-, ningún archivo nace ejecutable por seguridad). Para DIRECTORIOS la base es 777 (rwxrwxrwx, para permitir entrar y listar).",
+            "**umask: La máscara que RECORTA permisos** — 🎯 umask define los bits que se DESACTIVAN (se sustraen) de los permisos base en el momento de crear el archivo. Los permisos resultantes se calculan mediante la operación lógica a nivel de bits: 'Permiso = Base AND NOT(umask)'.",
+            "**El comando umask en la consola** — 'umask' sin argumentos muestra el valor actual (ej: 0022). 'umask 027' cambia la máscara para la sesión actual."
+          ]
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Cálculo Comparativo Ficheros vs Directorios -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px;\">\n    \n    <!-- Ficheros -->\n    <div style=\"background:#F8FAFC; border:2px solid #3B82F6; border-radius:12px; padding:14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n        <span style=\"font-weight:800; color:#1E40AF; font-size:13.5px;\">ARCHIVOS ORDINARIOS</span>\n        <span style=\"background:#DBEAFE; color:#1D4ED8; font-size:11px; font-weight:700; padding:2px 6px; border-radius:4px;\">Base: 666 (rw-rw-rw-)</span>\n      </div>\n      <div style=\"background:#EFF6FF; border-radius:8px; padding:10px; font-family:monospace; font-size:13px; line-height:1.6; color:#1E3A8A;\">\n        <div>Base:   666 (rw-rw-rw-)</div>\n        <div>umask: -022 (-------w-)</div>\n        <div style=\"border-top:2px solid #BFDBFE; margin-top:4px; font-weight:800; color:#1D4ED8;\">\n          Final:  644 (rw-r--r--)\n        </div>\n      </div>\n      <div style=\"margin-top:8px; font-size:11.5px; color:#2563EB;\">\n        🔒 Los ficheros <strong>NUNCA</strong> nacen con bit 'x' de ejecución.\n      </div>\n    </div>\n\n    <!-- Directorios -->\n    <div style=\"background:#F8FAFC; border:2px solid #10B981; border-radius:12px; padding:14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n        <span style=\"font-weight:800; color:#065F46; font-size:13.5px;\">DIRECTORIOS (CARPETAS)</span>\n        <span style=\"background:#DCFCE7; color:#15803D; font-size:11px; font-weight:700; padding:2px 6px; border-radius:4px;\">Base: 777 (rwxrwxrwx)</span>\n      </div>\n      <div style=\"background:#ECFDF5; border-radius:8px; padding:10px; font-family:monospace; font-size:13px; line-height:1.6; color:#064E3B;\">\n        <div>Base:   777 (rwxrwxrwx)</div>\n        <div>umask: -022 (----w--w-)</div>\n        <div style=\"border-top:2px solid #A7F3D0; margin-top:4px; font-weight:800; color:#047857;\">\n          Final:  755 (rwxr-xr-x)\n        </div>\n      </div>\n      <div style=\"margin-top:8px; font-size:11.5px; color:#047857;\">\n        📁 Las carpetas <strong>SIEMPRE</strong> necesitan 'x' para poder entrar.\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Alerta de examen: Imposibilidad de nacer ejecutable -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:14px;\">\n    <span style=\"font-size:24px;\">⚠️</span>\n    <div style=\"font-size:12.5px; color:#92400E; line-height:1.45;\">\n      <strong>Pregunta Trampa Típica de Examen:</strong> \"¿Qué valor de umask debo poner para que un archivo creado con <code style=\"background:#FEF3C7; padding:2px 4px; border-radius:4px;\">touch script.sh</code> nazca siendo ejecutable (755)?\". Respuesta: <strong>¡ES IMPOSIBLE!</strong> Ninguna máscara umask puede otorgar permisos de ejecución a un archivo nuevo porque la base máxima es 666 (no contiene 'x'). Se debe usar obligatoriamente <code style=\"font-weight:700;\">chmod +x</code> después de crearlo.\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Permisos Base Oficiales: Archivos = 666 (rw-rw-rw-); Directorios = 777 (rwxrwxrwx). umask RESTA bits a esa base."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-5-9",
+      "title": "Matriz de Valores umask Evaluados en el Examen",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Matriz de Valores umask Evaluados en el Examen"
+        },
+        {
+          "type": "paragraph",
+          "text": "El cálculo exacto paso a paso para resolver las preguntas matemáticas de umask:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Valor umask",
+            "Permisos en ARCHIVOS (Base 666 - umask)",
+            "Permisos en DIRECTORIOS (Base 777 - umask)",
+            "Propósito en Examen LPIC-1"
+          ],
+          "rows": [
+            [
+              "022 (o 0022)",
+              "🎯 644 (rw-r--r--)",
+              "🎯 755 (rwxr-xr-x)",
+              "🎯 Máscara ESTÁNDAR de Linux: otros pueden leer pero no escribir."
+            ],
+            [
+              "002 (o 0002)",
+              "664 (rw-rw-r--)",
+              "775 (rwxrwxr-x)",
+              "Entornos de desarrollo colaborativo con User Private Groups (UPG)."
+            ],
+            [
+              "027 (o 0027)",
+              "🎯 640 (rw-r-----)",
+              "🎯 750 (rwxr-x---)",
+              "🎯 Entornos restringidos: el grupo lee pero 'otros' no tienen ningún acceso."
+            ],
+            [
+              "077 (o 0077)",
+              "🎯 600 (rw-------)",
+              "🎯 700 (rwx------)",
+              "🎯 Máxima privacidad: solo el propietario tiene acceso; grupo y otros tienen 0."
+            ]
+          ],
+          "caption": "Matriz de Valores umask Evaluados en el Examen"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #CBD5E1; border-radius:8px; padding:8px 14px; margin-bottom:10px; display:flex; justify-content:space-around; text-align:center; font-family:monospace;\">\n  <div><span style=\"background:#3B82F6; color:#FFF; font-weight:800; padding:2px 6px; border-radius:4px;\">022</span> <span style=\"font-size:12px; color:#1E40AF; font-weight:700;\">644 / 755 (Estándar)</span></div>\n  <div><span style=\"background:#10B981; color:#FFF; font-weight:800; padding:2px 6px; border-radius:4px;\">002</span> <span style=\"font-size:12px; color:#065F46; font-weight:700;\">664 / 775 (Colaborativo)</span></div>\n  <div><span style=\"background:#F59E0B; color:#FFF; font-weight:800; padding:2px 6px; border-radius:4px;\">027</span> <span style=\"font-size:12px; color:#92400E; font-weight:700;\">640 / 750 (Restringido)</span></div>\n  <div><span style=\"background:#EF4444; color:#FFF; font-weight:800; padding:2px 6px; border-radius:4px;\">077</span> <span style=\"font-size:12px; color:#991B1B; font-weight:700;\">600 / 700 (Privado Total)</span></div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 La Regla Matemática de Examen con umask 027: Archivo = 666 - 027 = 640 (rw-r-----). Directorio = 777 - 027 = 750 (rwxr-x---)."
+        }
+      ]
+    },
+    {
+      "id": "sec-104-5-10",
+      "title": "Persistencia de umask: /etc/login.defs y Configuración de Usuario",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Persistencia de umask: /etc/login.defs y Configuración de Usuario"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Dónde se configura la máscara umask para que sea permanente en el sistema o para un usuario?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <!-- Jerarquía en 3 niveles -->\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>📂 Los 3 Archivos Reales donde se configura umask en Linux</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Jerarquía del Sistema</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:11.5px; margin-bottom:12px;\">\n    <!-- Nivel 1: login.defs -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:12.5px;\">1. /etc/login.defs</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Global Sistema</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.35;\">\n        • <strong>Qué es:</strong> Configuración general de cuentas y usuarios.<br>\n        • <strong>Directiva real:</strong> <code>UMASK 022</code> (en mayúsculas).<br>\n        • <strong>Cuándo actúa:</strong> Al hacer login y al crear usuarios con <code>useradd</code>.\n      </div>\n    </div>\n\n    <!-- Nivel 2: profile -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">2. /etc/profile</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Shells Login</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">\n        • <strong>Qué es:</strong> Script global que lee Bash al iniciar sesión.<br>\n        • <strong>Comando real:</strong> <code>umask 022</code>.<br>\n        • <strong>Cuándo actúa:</strong> Se aplica a <strong>todos</strong> los usuarios del sistema.\n      </div>\n    </div>\n\n    <!-- Nivel 3: ~/.bashrc -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #A855F7; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#7E22CE; font-size:12.5px;\">3. ~/.bashrc</strong>\n        <span style=\"background:#9333EA; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Usuario Personal</span>\n      </div>\n      <div style=\"color:#6B21A8; line-height:1.35;\">\n        • <strong>Qué es:</strong> Archivo privado en la carpeta <code>/home/usuario</code>.<br>\n        • <strong>Comando real:</strong> Añadir al final <code>umask 027</code>.<br>\n        • <strong>Cuándo actúa:</strong> Solo para ese usuario (sobrescribe lo global).\n      </div>\n    </div>\n  </div>\n\n  <!-- Ejemplo de terminal realista y tangible -->\n  <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:8px; padding:8px 12px;\">\n    <div style=\"font-size:11px; font-weight:800; color:#475569; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.04em;\">\n      💻 Ejemplo Real en Terminal: Comprobar la umask global y personalizar la tuya\n    </div>\n    <pre style=\"margin:0; font-family:monospace; font-size:11px; line-height:1.45; color:#0F172A; background:transparent;\">\n<span style=\"color:#64748B;\"># 1. Comprobar la umask por defecto del sistema en /etc/login.defs:</span>\n$ grep -i \"^UMASK\" /etc/login.defs\nUMASK           022\n\n<span style=\"color:#64748B;\"># 2. Si quieres una máscara más privada (027) para TU usuario de forma permanente:</span>\n$ echo \"umask 027\" >> ~/.bashrc\n$ source ~/.bashrc\n\n<span style=\"color:#64748B;\"># 3. Verificar que ya se aplica automáticamente en tu cuenta:</span>\n$ umask\n0027</pre>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Examen: La directiva global del sistema se escribe en mayúsculas: 'UMASK 022' en /etc/login.defs (y en /etc/profile). Para hacerla permanente en un único usuario, se añade 'umask 027' al final de su ~/.bashrc."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,864 @@
+# Catálogo de flashcards complementarias oficiales y curriculares
+# Cubre archivos clave, conceptos y áreas de conocimiento para garantizar >= 10 tarjetas por subtema
+
+- id: fc-102-1-esp
+  subtopicId: '102.1'
+  kind: archivo
+  frontTitle: Partición EFI System Partition (ESP)
+  prompt: '¿En qué ruta del sistema de archivos se monta habitualmente la partición ESP y qué formato requiere?'
+  backTitle: /boot/efi (Formato FAT32)
+  backDescription: 'La partición ESP debe formatearse como FAT32 (tipo EFI System en GPT) y se monta habitualmente en /boot/efi para que la placa base UEFI cargue los ejecutables .efi de arranque.'
+  source: ['curriculum:102.1']
+
+- id: fc-102-1-swap
+  subtopicId: '102.1'
+  kind: concepto
+  frontTitle: Partición o Archivo Swap
+  prompt: '¿Cuál es el propósito del espacio Swap y qué comando inicializa una partición como swap?'
+  backTitle: Memoria Virtual y mkswap
+  backDescription: 'El espacio swap extiende la memoria RAM cuando se agota y permite hibernación. Se prepara con el comando `mkswap` y se activa con `swapon`.'
+  source: ['curriculum:102.1']
+
+- id: fc-102-1-boot-dir
+  subtopicId: '102.1'
+  kind: archivo
+  frontTitle: Directorio /boot
+  prompt: '¿Por qué suele recomendarse tener /boot en una partición separada en esquemas clásicos?'
+  backTitle: Núcleo y Gestor de Arranque Aislados
+  backDescription: 'Garantiza que el gestor de arranque pueda acceder al kernel (vmlinuz) e initramfs incluso si la partición raíz utiliza cifrado (LUKS) o sistemas de archivos complejos (RAID/LVM).'
+  source: ['curriculum:102.1']
+
+- id: fc-102-1-var-log
+  subtopicId: '102.1'
+  kind: archivo
+  frontTitle: Partición /var
+  prompt: '¿Cuál es el riesgo de que /var no esté en una partición separada en servidores en producción?'
+  backTitle: Agotamiento de Espacio por Logs
+  backDescription: 'El crecimiento descontrolado de ficheros de registro en /var/log puede llenar el disco raíz (/), provocando bloqueos de servicios críticos y fallos de inicio de sesión.'
+  source: ['curriculum:102.1']
+
+- id: fc-102-2-grub-cfg
+  subtopicId: '102.2'
+  kind: archivo
+  frontTitle: /boot/grub/grub.cfg (o grub2.cfg)
+  prompt: '¿Se debe editar directamente el archivo grub.cfg y qué comando lo regenera?'
+  backTitle: No editar directamente (usar grub-mkconfig)
+  backDescription: 'No debe editarse manualmente porque se sobrescribe. Se genera mediante `grub-mkconfig -o /boot/grub/grub.cfg` leyendo `/etc/default/grub` y `/etc/grub.d/*`.'
+  source: ['curriculum:102.2']
+
+- id: fc-102-2-etc-default-grub
+  subtopicId: '102.2'
+  kind: archivo
+  frontTitle: /etc/default/grub
+  prompt: '¿Qué parámetros clave se configuran en /etc/default/grub?'
+  backTitle: Parámetros del Kernel y Tiempo de Espera
+  backDescription: 'Configura el tiempo de espera del menú (GRUB_TIMEOUT), la entrada por defecto (GRUB_DEFAULT) y los parámetros pasados al kernel (GRUB_CMDLINE_LINUX).'
+  source: ['curriculum:102.2']
+
+- id: fc-102-2-grub-install
+  subtopicId: '102.2'
+  kind: comando
+  frontTitle: grub-install
+  prompt: '¿Cuál es la función del comando grub-install y qué argumento principal requiere en BIOS?'
+  backTitle: Instalación del gestor en disco
+  backDescription: 'Instala los archivos de arranque de GRUB en el dispositivo de almacenamiento indicado (ej: `grub-install /dev/sda` en BIOS/MBR).'
+  source: ['curriculum:102.2']
+
+- id: fc-102-2-initramfs
+  subtopicId: '102.2'
+  kind: concepto
+  frontTitle: initramfs / initrd
+  prompt: '¿Qué rol desempeña el archivo initramfs cargado por GRUB?'
+  backTitle: Sistema de Archivos Temporal en RAM
+  backDescription: 'Proporciona un sistema raíz mínimo en memoria con los módulos del kernel necesarios (controladoras SATA, NVMe, LVM, RAID) para poder montar el sistema de archivos raíz real.'
+  source: ['curriculum:102.2']
+
+- id: fc-102-3-ldconfig
+  subtopicId: '102.3'
+  kind: comando
+  frontTitle: ldconfig
+  prompt: '¿Qué acción realiza el comando ldconfig tras instalar una nueva biblioteca dinámica?'
+  backTitle: Actualizar caché /etc/ld.so.cache
+  backDescription: 'Explora los directorios confiables y los listados en /etc/ld.so.conf para crear los enlaces simbólicos adecuados y actualizar la caché binaria /etc/ld.so.cache.'
+  source: ['curriculum:102.3']
+
+- id: fc-102-3-ld-so-conf
+  subtopicId: '102.3'
+  kind: archivo
+  frontTitle: /etc/ld.so.conf y /etc/ld.so.conf.d/
+  prompt: '¿Qué información almacenan los ficheros de configuración /etc/ld.so.conf?'
+  backTitle: Directorios de Búsqueda de Bibliotecas
+  backDescription: 'Contienen la lista de rutas de directorios donde el enlazador dinámico (ld.so) debe buscar bibliotecas compartidas adicionales a /lib y /usr/lib.'
+  source: ['curriculum:102.3']
+
+- id: fc-102-3-ld-library-path
+  subtopicId: '102.3'
+  kind: concepto
+  frontTitle: Variable de entorno LD_LIBRARY_PATH
+  prompt: '¿Qué efecto tiene definir la variable LD_LIBRARY_PATH en una sesión?'
+  backTitle: Sobrescritura de Búsqueda en Tiempo de Ejecución
+  backDescription: 'Indica al enlazador dinámico que busque bibliotecas compartidas en los directorios especificados antes de consultar la caché del sistema (/etc/ld.so.cache).'
+  source: ['curriculum:102.3']
+
+- id: fc-102-3-ldd
+  subtopicId: '102.3'
+  kind: comando
+  frontTitle: ldd (List Dynamic Dependencies)
+  prompt: '¿Qué muestra el comando ldd ejecutado sobre un binario ejecutable?'
+  backTitle: Dependencias de Bibliotecas Compartidas
+  backDescription: 'Muestra las bibliotecas compartidas (.so) requeridas por el binario y las rutas absolutas donde han sido resueltas en el sistema.'
+  source: ['curriculum:102.3']
+
+- id: fc-107-1-etc-skel
+  subtopicId: '107.1'
+  kind: archivo
+  frontTitle: Directorio /etc/skel/
+  prompt: '¿Para qué sirve el directorio /etc/skel/ al crear nuevos usuarios?'
+  backTitle: Plantilla del Directorio Home
+  backDescription: 'Sus archivos y directorios ocultos (como .bashrc o .profile) se copian automáticamente al directorio personal del usuario creado con useradd -m.'
+  source: ['curriculum:107.1']
+
+- id: fc-107-1-login-defs
+  subtopicId: '107.1'
+  kind: archivo
+  frontTitle: /etc/login.defs
+  prompt: '¿Qué directivas globales de cuentas se configuran en /etc/login.defs?'
+  backTitle: Parámetros por Defecto de Cuentas
+  backDescription: 'Define rangos de UID/GID para usuarios normales y de sistema (UID_MIN, UID_MAX), política de caducidad de contraseñas y algoritmo de hash (SHA512).'
+  source: ['curriculum:107.1']
+
+- id: fc-107-1-useradd-default
+  subtopicId: '107.1'
+  kind: archivo
+  frontTitle: /etc/default/useradd
+  prompt: '¿Qué comando muestra o edita los valores predeterminados de /etc/default/useradd?'
+  backTitle: useradd -D
+  backDescription: 'El comando `useradd -D` muestra la configuración por defecto (shell, grupo, directorio base, expiración); añadiendo opciones modifica dichos valores.'
+  source: ['curriculum:107.1']
+
+- id: fc-107-2-etc-crontab
+  subtopicId: '107.2'
+  kind: archivo
+  frontTitle: /etc/crontab vs crontab de usuario
+  prompt: '¿Qué campo adicional obligatorio tiene el archivo /etc/crontab respecto a los crontabs de usuario?'
+  backTitle: Campo de Usuario (6º campo)
+  backDescription: 'En /etc/crontab el 6º campo especifica el usuario con cuyos privilegios se ejecuta el comando (`minuto hora dia mes diasemana usuario comando`).'
+  source: ['curriculum:107.2']
+
+- id: fc-107-2-anacron
+  subtopicId: '107.2'
+  kind: concepto
+  frontTitle: anacron (/etc/anacrontab)
+  prompt: '¿Cuál es la ventaja de anacron sobre cron en portátiles o equipos apagados por las noches?'
+  backTitle: Ejecución de Trabajos Perdidos
+  backDescription: 'anacron no asume que el sistema esté encendido 24/7; si una tarea diaria, semanal o mensual no se ejecutó porque el equipo estaba apagado, la lanza al arrancar.'
+  source: ['curriculum:107.2']
+
+- id: fc-107-2-cron-allow-deny
+  subtopicId: '107.2'
+  kind: archivo
+  frontTitle: /etc/cron.allow y /etc/cron.deny
+  prompt: '¿Qué sucede si existen simultáneamente /etc/cron.allow y /etc/cron.deny?'
+  backTitle: Prevalece cron.allow
+  backDescription: 'Si cron.allow existe, solo los usuarios listados en él pueden usar crontab, ignorándose por completo cron.deny.'
+  source: ['curriculum:107.2']
+
+- id: fc-107-3-lc-all
+  subtopicId: '107.3'
+  kind: concepto
+  frontTitle: Variable de entorno LC_ALL
+  prompt: '¿Qué prioridad tiene LC_ALL sobre las demás variables de localización (LC_*) y LANG?'
+  backTitle: Prioridad Máxima (Sobrescribe Todo)
+  backDescription: 'LC_ALL anula y sobrescribe el valor de todas las categorías individuales de LC_* y de LANG, imponiendo la localización especificada en todos los aspectos.'
+  source: ['curriculum:107.3']
+
+- id: fc-107-3-zoneinfo
+  subtopicId: '107.3'
+  kind: archivo
+  frontTitle: /usr/share/zoneinfo/ y /etc/localtime
+  prompt: '¿Cómo se define manualmente la zona horaria del sistema a partir de /usr/share/zoneinfo/?'
+  backTitle: Enlace Simbólico a /etc/localtime
+  backDescription: 'Creando un enlace simbólico desde la zona deseada hacia /etc/localtime (ej: `ln -sf /usr/share/zoneinfo/Europe/Madrid /etc/localtime`).'
+  source: ['curriculum:107.3']
+
+- id: fc-108-1-timedatectl
+  subtopicId: '108.1'
+  kind: comando
+  frontTitle: timedatectl
+  prompt: '¿Qué comando de systemd permite sincronizar la hora con NTP y cambiar la zona horaria?'
+  backTitle: timedatectl set-ntp / set-timezone
+  backDescription: '`timedatectl` muestra la hora local, UTC y RTC; `timedatectl set-timezone Zona` cambia la zona y `timedatectl set-ntp true` activa la sincronización de red.'
+  source: ['curriculum:108.1']
+
+- id: fc-108-1-etc-localtime
+  subtopicId: '108.1'
+  kind: archivo
+  frontTitle: /etc/timezone vs /etc/localtime
+  prompt: '¿Qué diferencia hay entre /etc/timezone y /etc/localtime?'
+  backTitle: Texto Plano vs Archivo Binario tz
+  backDescription: '`/etc/timezone` contiene una cadena de texto (ej. "Europe/Madrid") en distros Debian, mientras que `/etc/localtime` es un enlace o copia binaria tzdata leída por la biblioteca C.'
+  source: ['curriculum:108.1']
+
+- id: fc-108-1-hwclock
+  subtopicId: '108.1'
+  kind: comando
+  frontTitle: hwclock --systohc
+  prompt: '¿Qué efecto tiene ejecutar hwclock --systohc?'
+  backTitle: Escribe la hora del sistema en el RTC
+  backDescription: 'Sincroniza el reloj de hardware en tiempo real (RTC/BIOS) con el reloj actual del kernel del sistema operativo.'
+  source: ['curriculum:108.1']
+
+- id: fc-108-2-rsyslog-conf
+  subtopicId: '108.2'
+  kind: archivo
+  frontTitle: /etc/rsyslog.conf (Facilidad.Prioridad Acción)
+  prompt: '¿Qué formato de regla sigue la configuración clásica de rsyslog?'
+  backTitle: selector (facilidad.nivel) y acción
+  backDescription: 'Cada regla especifica un selector de origen y severidad (ej: `authpriv.*` o `mail.err`) seguido del destino o archivo de log (ej: `/var/log/auth.log`).'
+  source: ['curriculum:108.2']
+
+- id: fc-108-2-journalctl-u
+  subtopicId: '108.2'
+  kind: comando
+  frontTitle: journalctl -u <unidad>
+  prompt: '¿Para qué sirve la opción -u en journalctl?'
+  backTitle: Filtrar registros por unidad systemd
+  backDescription: 'Muestra únicamente las entradas del journal generadas por el servicio o unidad especificada (ej: `journalctl -u sshd.service`).'
+  source: ['curriculum:108.2']
+
+- id: fc-108-2-logrotate
+  subtopicId: '108.2'
+  kind: archivo
+  frontTitle: /etc/logrotate.conf y /etc/logrotate.d/
+  prompt: '¿Cuál es la función del subsistema logrotate en Linux?'
+  backTitle: Rotación, Compresión y Depuración de Logs
+  backDescription: 'Automatiza la rotación periódica (diaria, semanal), compresión gzip y eliminación de archivos de registro antiguos para prevenir el desbordamiento de disco.'
+  source: ['curriculum:108.2']
+
+# Subtema 110.1 (Seguridad - Administración de seguridad)
+- id: fc-110-1-suid-bit
+  subtopicId: '110.1'
+  kind: concepto
+  frontTitle: Bit SUID (Set User ID - 4000)
+  prompt: '¿Qué efecto tiene el bit SUID sobre un archivo binario ejecutable?'
+  backTitle: Ejecución con privilegios del propietario
+  backDescription: 'Permite que cualquier usuario ejecute el programa con los privilegios del usuario propietario del archivo (por ejemplo, `passwd` propiedad de root).'
+  source: ['110.1#u005']
+
+- id: fc-110-1-sgid-bit
+  subtopicId: '110.1'
+  kind: concepto
+  frontTitle: Bit SGID en Directorios (2000)
+  prompt: '¿Qué ocurre al crear archivos dentro de un directorio que tiene el bit SGID activo?'
+  backTitle: Herencia del grupo propietario
+  backDescription: 'Los nuevos archivos y subdirectorios creados heredan automáticamente el grupo propietario del directorio padre, facilitando la colaboración grupal.'
+  source: ['110.1#u005']
+
+- id: fc-110-1-find-suid
+  subtopicId: '110.1'
+  kind: comando
+  frontTitle: find / -perm -4000
+  prompt: '¿Qué busca el comando find con la opción -perm -4000 o -perm /4000?'
+  backTitle: Localizar archivos con SUID activo
+  backDescription: 'Audita el sistema buscando todos los ficheros que tengan activado el bit de permiso especial SUID (clave en auditorías de seguridad).'
+  source: ['110.1#u005', '110.1#u011']
+
+- id: fc-110-1-passwd-status
+  subtopicId: '110.1'
+  kind: comando
+  frontTitle: passwd -S usuario
+  prompt: '¿Qué información devuelve la opción -S del comando passwd?'
+  backTitle: Estado de la cuenta y contraseña
+  backDescription: 'Muestra si la contraseña está activa (P), bloqueada (L) o vacía (NP), junto a la fecha de última modificación y parámetros de caducidad.'
+  source: ['110.1#u006', '110.1#u012']
+
+- id: fc-110-1-chage-l
+  subtopicId: '110.1'
+  kind: comando
+  frontTitle: chage -l usuario
+  prompt: '¿Qué muestra el comando chage con el modificador -l?'
+  backTitle: Detalle de expiración y caducidad
+  backDescription: 'Muestra la fecha del último cambio de contraseña, días mínimos y máximos entre cambios, advertencia previa y fecha de expiración de la cuenta.'
+  source: ['110.1#u006', '110.1#u016']
+
+- id: fc-110-1-nmap
+  subtopicId: '110.1'
+  kind: comando
+  frontTitle: nmap localhost
+  prompt: '¿Cuál es la función principal de nmap en tareas de seguridad?'
+  backTitle: Escaneo de red y detección de puertos
+  backDescription: 'Descubre hosts en la red y analiza puertos TCP/UDP abiertos para identificar servicios escuchando y evaluar posibles vulnerabilidades.'
+  source: ['110.1#u007', '110.1#u015']
+
+- id: fc-110-1-netstat-tulnp
+  subtopicId: '110.1'
+  kind: comando
+  frontTitle: netstat -tulnp
+  prompt: '¿Qué puertos y sockets muestra netstat -tulnp (o ss -tulnp)?'
+  backTitle: Puertos TCP/UDP a la escucha con proceso
+  backDescription: 'Lista conexiones TCP (-t) y UDP (-u), en estado listening (-l), con direcciones numéricas (-n) y el PID/nombre del programa propietario (-p).'
+  source: ['110.1#u007', '110.1#u017']
+
+- id: fc-110-1-limits-conf
+  subtopicId: '110.1'
+  kind: archivo
+  frontTitle: /etc/security/limits.conf
+  prompt: '¿Qué límites de recursos se definen en /etc/security/limits.conf para los usuarios?'
+  backTitle: Límites PAM (nproc, nofile, memlock)
+  backDescription: 'Define límites duros (hard) y blandos (soft) para número máximo de procesos (nproc), descriptores de archivo abiertos (nofile) y uso de memoria.'
+  source: ['110.1#u008']
+
+- id: fc-110-1-sudo-visudo
+  subtopicId: '110.1'
+  kind: comando
+  frontTitle: visudo y /etc/sudoers
+  prompt: '¿Por qué se debe utilizar exclusivamente visudo para editar /etc/sudoers?'
+  backTitle: Bloqueo exclusivo y validación de sintaxis
+  backDescription: 'Bloquea el archivo contra ediciones concurrentes y valida la sintaxis antes de guardar, evitando que un error deje a los administradores sin acceso root.'
+  source: ['110.1#u010', '110.1#u018']
+
+- id: fc-110-1-lsof-fuser
+  subtopicId: '110.1'
+  kind: comando
+  frontTitle: lsof y fuser
+  prompt: '¿Para qué se utilizan los comandos lsof y fuser en auditoría de procesos?'
+  backTitle: Identificar procesos y archivos en uso
+  backDescription: '`lsof` lista todos los archivos y sockets abiertos por procesos; `fuser` identifica qué procesos específicos están accediendo a un archivo o punto de montaje.'
+  source: ['110.1#u013', '110.1#u014']
+
+# Subtema 110.2 (Seguridad del host)
+- id: fc-110-2-etc-shadow
+  subtopicId: '110.2'
+  kind: archivo
+  frontTitle: /etc/shadow
+  prompt: '¿Qué información sensible guarda /etc/shadow y qué permisos posee?'
+  backTitle: Hashes de contraseñas (solo root)
+  backDescription: 'Almacena los hashes cifrados de contraseñas de usuarios con permisos restrictivos (generalmente 640 o 600 propiedad de root) para evitar ataques offline.'
+  source: ['110.2#u004', '110.2#u009']
+
+- id: fc-110-2-etc-nologin
+  subtopicId: '110.2'
+  kind: archivo
+  frontTitle: /etc/nologin
+  prompt: '¿Qué efecto tiene la presencia del archivo /etc/nologin en el sistema?'
+  backTitle: Bloquea accesos a usuarios no-root
+  backDescription: 'Impide que los usuarios sin privilegios inicien sesión en el sistema, mostrando el contenido del archivo como mensaje informativo.'
+  source: ['110.2#u007']
+
+- id: fc-110-2-hosts-allow-deny
+  subtopicId: '110.2'
+  kind: archivo
+  frontTitle: /etc/hosts.allow y /etc/hosts.deny
+  prompt: '¿Cómo evalúa TCP Wrappers (libwrap) las peticiones de servicio entrantes?'
+  backTitle: hosts.allow primero, luego hosts.deny
+  backDescription: '1º Comprueba /etc/hosts.allow; si coincide, permite el acceso. 2º Comprueba /etc/hosts.deny; si coincide, deniega. 3º Si no coincide ninguno, permite.'
+  source: ['110.2#u006', '110.2#u015', '110.2#u016']
+
+- id: fc-110-2-tcp-wrappers-syntax
+  subtopicId: '110.2'
+  kind: concepto
+  frontTitle: Sintaxis de reglas en TCP Wrappers
+  prompt: '¿Cuál es la sintaxis de una regla en /etc/hosts.allow o hosts.deny?'
+  backTitle: 'demonio : clientes [: opciones]'
+  backDescription: 'Formato `servicio : lista_clientes` (ej: `sshd : 192.168.1.0/255.255.255.0` o `ALL : ALL`). Acepta comodines como ALL, LOCAL y EXCEPT.'
+  source: ['110.2#u006', '110.2#u015']
+
+- id: fc-110-2-xinetd
+  subtopicId: '110.2'
+  kind: archivo
+  frontTitle: /etc/xinetd.conf y /etc/xinetd.d/
+  prompt: '¿Cuál es el rol del superdemonio xinetd en la seguridad de servicios de red?'
+  backTitle: Demonio de escucha y control de acceso
+  backDescription: 'Escucha en puertos de servicios bajo demanda y aplica controles de seguridad: restricciones de IP (only_from/no_access), límites de conexiones y horarios.'
+  source: ['110.2#u010', '110.2#u011']
+
+- id: fc-110-2-systemd-socket
+  subtopicId: '110.2'
+  kind: concepto
+  frontTitle: Unidades systemd.socket
+  prompt: '¿Cómo sustituyen las unidades .socket de systemd a superdemonios como inetd/xinetd?'
+  backTitle: Activación por socket bajo demanda
+  backDescription: 'systemd escucha en el puerto de red definido en .socket y activa el servicio correspondiente (.service) en el momento en que llega una conexión entrante.'
+  source: ['110.2#u012']
+
+- id: fc-110-2-disable-services
+  subtopicId: '110.2'
+  kind: comando
+  frontTitle: systemctl disable --now servicio
+  prompt: '¿Cuál es la buena práctica de seguridad para reducir la superficie de ataque?'
+  backTitle: Desactivar servicios no indispensables
+  backDescription: 'Detener y deshabilitar del arranque cualquier demonio de red innecesario (`systemctl disable --now <servicio>`) para cerrar vectores potenciales de explotación.'
+  source: ['110.2#u005']
+
+- id: fc-110-2-etc-passwd-fields
+  subtopicId: '110.2'
+  kind: archivo
+  frontTitle: /etc/passwd (Estructura de 7 campos)
+  prompt: '¿Qué indica una "x" en el segundo campo de una línea en /etc/passwd?'
+  backTitle: Contraseña almacenada en /etc/shadow
+  backDescription: 'Indica que la contraseña del usuario está oculta y almacenada cifrada en /etc/shadow (mecanismo shadow passwords).'
+  source: ['110.2#u004', '110.2#u008']
+
+- id: fc-110-2-sysv-init-d
+  subtopicId: '110.2'
+  kind: archivo
+  frontTitle: /etc/init.d/ e /etc/inittab
+  prompt: '¿Qué función desempeñan /etc/inittab y /etc/init.d/ en sistemas SysVinit clásicos?'
+  backTitle: Nivel de ejecución y scripts de servicio
+  backDescription: '`/etc/inittab` define el nivel de ejecución predeterminado (runlevel) y `/etc/init.d/` aloja los scripts para iniciar, detener o recargar servicios del sistema.'
+  source: ['110.2#u013', '110.2#u014']
+
+- id: fc-110-2-pwconv-pwunconv
+  subtopicId: '110.2'
+  kind: comando
+  frontTitle: pwconv y pwunconv
+  prompt: '¿Qué hacen las utilidades pwconv y pwunconv?'
+  backTitle: Conversión a/desde contraseñas shadow
+  backDescription: '`pwconv` traslada las contraseñas de /etc/passwd hacia /etc/shadow activando el sistema shadow; `pwunconv` revierte el proceso copiando los hashes de vuelta a /etc/passwd.'
+  source: ['110.2#u004']
+
+# Subtema 110.3 (Cifrado de datos y OpenSSH / GPG)
+- id: fc-110-3-ssh-keys-files
+  subtopicId: '110.3'
+  kind: archivo
+  frontTitle: ~/.ssh/id_rsa vs ~/.ssh/id_rsa.pub
+  prompt: '¿Qué archivo del par de claves SSH nunca debe compartirse ni enviarse por la red?'
+  backTitle: Clave privada (~/.ssh/id_rsa)
+  backDescription: 'La clave privada (id_rsa o id_ed25519) debe permanecer secreta y protegida con permisos 600. La clave pública (.pub) es la que se comparte y copia en servidores.'
+  source: ['110.3#u004', '110.3#u013']
+
+- id: fc-110-3-authorized-keys
+  subtopicId: '110.3'
+  kind: archivo
+  frontTitle: ~/.ssh/authorized_keys
+  prompt: '¿Cuál es la función del archivo ~/.ssh/authorized_keys en el servidor remoto?'
+  backTitle: Claves públicas permitidas para iniciar sesión
+  backDescription: 'Contiene las claves públicas de los clientes autorizados para acceder a esa cuenta de usuario sin necesidad de introducir la contraseña del sistema.'
+  source: ['110.3#u004', '110.3#u021']
+
+- id: fc-110-3-known-hosts
+  subtopicId: '110.3'
+  kind: archivo
+  frontTitle: ~/.ssh/known_hosts y /etc/ssh/ssh_known_hosts
+  prompt: '¿Qué previene el archivo known_hosts al verificar la huella digital del servidor?'
+  backTitle: Ataques de tipo Man-in-the-Middle (MitM)
+  backDescription: 'Guarda la clave pública del host servidor; si la clave del servidor cambia inesperadamente, SSH emite una advertencia de seguridad crítica bloqueando la conexión.'
+  source: ['110.3#u005', '110.3#u022']
+
+- id: fc-110-3-ssh-keygen
+  subtopicId: '110.3'
+  kind: comando
+  frontTitle: ssh-keygen -t ed25519
+  prompt: '¿Qué hace el comando ssh-keygen -t ed25519?'
+  backTitle: Genera un par de claves Ed25519
+  backDescription: 'Crea un nuevo par de claves criptográficas asimétricas utilizando el algoritmo moderno de curva elíptica Ed25519, más rápido y seguro que RSA tradicional.'
+  source: ['110.3#u004', '110.3#u010']
+
+- id: fc-110-3-ssh-agent-add
+  subtopicId: '110.3'
+  kind: comando
+  frontTitle: ssh-agent y ssh-add
+  prompt: '¿Cómo evitan ssh-agent y ssh-add tener que teclear la frase de paso (passphrase) en cada conexión?'
+  backTitle: Almacén de claves privadas descifradas en memoria
+  backDescription: '`ssh-agent` ejecuta un demonio en segundo plano y `ssh-add` carga la clave privada descifrada tras pedir la frase de paso una única vez por sesión.'
+  source: ['110.3#u004', '110.3#u011', '110.3#u012']
+
+- id: fc-110-3-ssh-tunnel-local
+  subtopicId: '110.3'
+  kind: comando
+  frontTitle: 'Túnel SSH Local: ssh -L puerto_loc:host_remoto:puerto_remoto'
+  prompt: '¿Qué hace el reenvío de puertos local (-L) en SSH?'
+  backTitle: Abre un puerto local reenviado al destino remoto
+  backDescription: 'Permite acceder de forma cifrada a un servicio situado en la red del servidor SSH conectándose a un puerto local de la máquina cliente (ej: `ssh -L 8080:localhost:80`).'
+  source: ['110.3#u008']
+
+- id: fc-110-3-ssh-tunnel-remote
+  subtopicId: '110.3'
+  kind: comando
+  frontTitle: 'Túnel SSH Remoto: ssh -R puerto_remoto:host_local:puerto_local'
+  prompt: '¿Para qué sirve el reenvío de puertos remoto (-R) en SSH?'
+  backTitle: Expone un puerto de la máquina local en el servidor remoto
+  backDescription: 'Abre un puerto de escucha en el servidor remoto que reenvía el tráfico entrante de vuelta hacia un servicio local de la máquina cliente.'
+  source: ['110.3#u008']
+
+- id: fc-110-3-ssh-x11
+  subtopicId: '110.3'
+  kind: comando
+  frontTitle: Reenvío X11 en SSH (ssh -X / ssh -Y)
+  prompt: '¿Qué permite la opción -X (o -Y) en el cliente SSH?'
+  backTitle: Ejecutar aplicaciones gráficas remotas cifradas
+  backDescription: 'Túneliza el protocolo X11 a través de la conexión SSH cifrada, permitiendo que una aplicación gráfica del servidor se visualice en la pantalla del cliente local.'
+  source: ['110.3#u008']
+
+- id: fc-110-3-gpg-gen-key
+  subtopicId: '110.3'
+  kind: comando
+  frontTitle: gpg --gen-key (o --full-generate-key)
+  prompt: '¿Qué realiza el comando gpg --gen-key?'
+  backTitle: Generación de par de claves PGP/GPG
+  backDescription: 'Genera un nuevo par de claves (pública y privada) asociadas a una identidad (nombre y correo electrónico) para cifrado y firma de documentos.'
+  source: ['110.3#u006', '110.3#u023']
+
+- id: fc-110-3-gpg-gen-revoke
+  subtopicId: '110.3'
+  kind: comando
+  frontTitle: gpg --gen-revoke usuario
+  prompt: '¿Por qué es indispensable generar un certificado de revocación en GPG al crear la clave?'
+  backTitle: Invalidar la clave en caso de pérdida o compromiso
+  backDescription: 'Permite revocar la clave pública en los servidores de claves si la clave privada se ve comprometida, se pierde la contraseña o deja de utilizarse.'
+  source: ['110.3#u006', '110.3#u023']
+
+- id: fc-110-3-gpg-encrypt
+  subtopicId: '110.3'
+  kind: comando
+  frontTitle: gpg -e -r destinatario archivo
+  prompt: '¿Qué comando cifra un archivo para un destinatario en GPG y qué clave se emplea?'
+  backTitle: Cifrado con la clave PÚBLICA del receptor
+  backDescription: '`gpg -e -r <correo> archivo` cifra el archivo empleando la clave pública del destinatario, de modo que solo este pueda descifrarlo con su clave privada.'
+  source: ['110.3#u007', '110.3#u023']
+
+- id: fc-110-3-gpg-sign-verify
+  subtopicId: '110.3'
+  kind: comando
+  frontTitle: gpg --sign / gpg --verify
+  prompt: '¿Qué garantizan la firma digital (--sign) y verificación (--verify) en GPG?'
+  backTitle: Autenticidad, Integridad y No Repudio
+  backDescription: 'La firma con la clave privada demuestra que el autor es quien dice ser y que el contenido del archivo no ha sido alterado desde su emisión.'
+  source: ['110.3#u007', '110.3#u023']
+
+# Subtema 105.2 (Scripts de shell)
+- id: fc-105-2-shebang
+  subtopicId: '105.2'
+  kind: concepto
+  frontTitle: Shebang (#! /bin/bash)
+  prompt: '¿Cuál es la función de la primera línea #! en un script de shell?'
+  backTitle: Selección del intérprete ejecutor
+  backDescription: 'Indica al kernel el binario que debe interpretar el script (ej: `#!/bin/bash` o `#!/bin/sh`) cuando el archivo se invoca directamente con permisos de ejecución.'
+  source: ['105.2#u009']
+
+- id: fc-105-2-exit-code
+  subtopicId: '105.2'
+  kind: concepto
+  frontTitle: 'Código de retorno ($?)'
+  prompt: '¿Qué valor indica éxito en la variable especial $? y qué significan otros valores?'
+  backTitle: '0 = Éxito, 1-255 = Error'
+  backDescription: 'En Linux un valor 0 indica ejecución correcta del comando previo; cualquier valor entre 1 y 255 señala un tipo de fallo o condición de error.'
+  source: ['105.2#u006']
+
+- id: fc-105-2-logic-ops
+  subtopicId: '105.2'
+  kind: concepto
+  frontTitle: Operadores de encadenamiento && y ||
+  prompt: '¿Cómo condicionan la ejecución de comandos los operadores && y ||?'
+  backTitle: Evaluación en cortocircuito
+  backDescription: '`cmd1 && cmd2` ejecuta cmd2 solo si cmd1 finaliza con éxito ($? = 0); `cmd1 || cmd2` ejecuta cmd2 solo si cmd1 falla ($? != 0).'
+  source: ['105.2#u007', '105.2#u018', '105.2#u019']
+
+- id: fc-105-2-read-cmd
+  subtopicId: '105.2'
+  kind: comando
+  frontTitle: 'Comando read (read -p "Prompt: " var)'
+  prompt: '¿Para qué sirve el comando interno read en scripts de shell?'
+  backTitle: Capturar entrada estándar en variables
+  backDescription: 'Lee una línea desde la entrada estándar (teclado o redirección) y asigna los datos leídos a una o más variables para su procesamiento.'
+  source: ['105.2#u015']
+
+- id: fc-105-2-test-brackets
+  subtopicId: '105.2'
+  kind: comando
+  frontTitle: Comando test y corchetes [ ... ]
+  prompt: '¿Qué evalúa la expresión [ -f archivo ] en una condición if?'
+  backTitle: Comprueba si existe y es fichero regular
+  backDescription: 'Devuelve 0 si la ruta existe y corresponde a un fichero común (no directorio ni dispositivo); `[ -d ruta ]` evalúa si es un directorio.'
+  source: ['105.2#u004', '105.2#u013']
+
+# Subtema 106.1 (Arquitectura y configuración de X11)
+- id: fc-106-1-display-var
+  subtopicId: '106.1'
+  kind: archivo
+  frontTitle: Variable de entorno DISPLAY
+  prompt: '¿Qué formato tiene la variable DISPLAY (ej: :0.0 o host:0.0)?'
+  backTitle: hostname:displaynumber.screennumber
+  backDescription: 'Indica a las aplicaciones gráficas a qué servidor X y pantalla conectarse. Si hostname está vacío (ej: `:0.0`), se conecta por socket UNIX local.'
+  source: ['106.1#u015']
+
+- id: fc-106-1-xsession-errors
+  subtopicId: '106.1'
+  kind: archivo
+  frontTitle: ~/.xsession-errors
+  prompt: '¿Qué información se registra en el archivo ~/.xsession-errors?'
+  backTitle: Registro de errores de la sesión gráfica X
+  backDescription: 'Contiene los mensajes de error y advertencia emitidos por el gestor de ventanas, gestor de pantalla y aplicaciones X11 iniciadas en la sesión.'
+  source: ['106.1#u012']
+
+- id: fc-106-1-xorg-conf-d
+  subtopicId: '106.1'
+  kind: archivo
+  frontTitle: /etc/X11/xorg.conf.d/
+  prompt: '¿Cuál es la ventaja de los ficheros en /etc/X11/xorg.conf.d/ frente al fichero único xorg.conf?'
+  backTitle: Configuración modular por dispositivos
+  backDescription: 'Permite configurar de forma aislada secciones concretas (pantalla, teclado, ratón, gráfica) con snippets numéricos (ej: 10-keyboard.conf) sin editar un archivo monolítico.'
+  source: ['106.1#u006', '106.1#u011']
+
+- id: fc-106-1-xauth-xhost
+  subtopicId: '106.1'
+  kind: comando
+  frontTitle: xauth vs xhost
+  prompt: '¿Qué diferencia a xauth de xhost en el control de acceso a la pantalla X?'
+  backTitle: Cookies MIT-MAGIC vs Control por IP/Host
+  backDescription: '`xauth` gestiona cookies de autenticación cifradas (~/.Xauthority), siendo mucho más seguro que `xhost`, que concede permisos basados en IP o nombre de host.'
+  source: ['106.1#u009', '106.1#u013', '106.1#u014']
+
+# Subtema 106.2 (Entornos de escritorio y acceso remoto)
+- id: fc-106-2-rdp-protocol
+  subtopicId: '106.2'
+  kind: concepto
+  frontTitle: Protocolo RDP (Remote Desktop Protocol)
+  prompt: '¿Qué puerto TCP estándar utiliza RDP y qué paquete provee un servidor RDP en Linux?'
+  backTitle: Puerto 3389 (xrdp)
+  backDescription: 'RDP opera en el puerto 3389. En Linux el demonio `xrdp` permite recibir conexiones remotas desde clientes Windows o clientes Linux como `xfreerdp`.'
+  source: ['106.2#u005', '106.2#u013']
+
+- id: fc-106-2-vnc-protocol
+  subtopicId: '106.2'
+  kind: concepto
+  frontTitle: Protocolo VNC (Virtual Network Computing)
+  prompt: '¿Qué puerto base utiliza VNC para la pantalla :0 y cómo se calcula para otras pantallas?'
+  backTitle: Puerto 5900 + N de pantalla (RFB)
+  backDescription: 'VNC utiliza el protocolo RFB en el puerto base 5900; la pantalla :1 escucha en 5901, la pantalla :2 en 5902, y así sucesivamente.'
+  source: ['106.2#u005', '106.2#u011']
+
+- id: fc-106-2-spice-protocol
+  subtopicId: '106.2'
+  kind: concepto
+  frontTitle: Protocolo SPICE
+  prompt: '¿En qué entorno destaca el protocolo SPICE frente a VNC?'
+  backTitle: Virtualización (QEMU/KVM) de alto rendimiento
+  backDescription: 'Diseñado específicamente para máquinas virtuales, ofrece aceleración de vídeo, audio bidireccional y mejor integración de ratón y portapapeles.'
+  source: ['106.2#u005', '106.2#u012']
+
+- id: fc-106-2-xdmcp
+  subtopicId: '106.2'
+  kind: concepto
+  frontTitle: Protocolo XDMCP
+  prompt: '¿Qué función cumple XDMCP en terminales X y qué puerto UDP utiliza?'
+  backTitle: Autenticación remota en puerto UDP 177
+  backDescription: 'Permite a un terminal o cliente X solicitar un inicio de sesión gráfico (pantalla de bienvenida) a un gestor de pantalla remoto (XDM/GDM/LightDM).'
+  source: ['106.2#u005', '106.2#u010']
+
+# Subtema 106.3 (Accesibilidad y tecnologías de asistencia)
+- id: fc-106-3-orca-screen-reader
+  subtopicId: '106.3'
+  kind: concepto
+  frontTitle: Lector de pantalla Orca
+  prompt: '¿Qué tecnología de asistencia proporciona Orca en entornos de escritorio Linux?'
+  backTitle: Síntesis de voz y soporte braille
+  backDescription: 'Orca permite a personas con discapacidad visual usar el escritorio mediante síntesis de voz y salida hacia terminales o pantallas braille actualizables.'
+  source: ['106.3#u005', '106.3#u007', '106.3#u008']
+
+- id: fc-106-3-sticky-keys
+  subtopicId: '106.3'
+  kind: concepto
+  frontTitle: Teclas adhesivas / pegajosas (Sticky Keys)
+  prompt: '¿Cómo ayudan las teclas adhesivas a personas con movilidad reducida en las manos?'
+  backTitle: Pulsación secuencial de modificadores
+  backDescription: 'Permite pulsar teclas modificadoras (Shift, Ctrl, Alt) de forma consecutiva en lugar de simultánea, reteniendo el estado activo hasta la siguiente tecla.'
+  source: ['106.3#u005', '106.3#u011']
+
+- id: fc-106-3-slow-bounce-keys
+  subtopicId: '106.3'
+  kind: concepto
+  frontTitle: Teclas lentas y de rebote (Slow & Bounce Keys)
+  prompt: '¿Qué problema corrigen las teclas de rebote (Bounce Keys)?'
+  backTitle: Ignora pulsaciones repetidas accidentales
+  backDescription: 'Ignora pulsaciones rápidas e involuntarias de la misma tecla provocadas por temblores musculares, exigiendo una pausa mínima entre pulsaciones repetidas.'
+  source: ['106.3#u005', '106.3#u012']
+
+- id: fc-106-3-screen-magnifier
+  subtopicId: '106.3'
+  kind: concepto
+  frontTitle: Lupa de pantalla y alto contraste
+  prompt: '¿Qué ajustes visuales facilitan el uso del escritorio a usuarios con baja visión?'
+  backTitle: Ampliación de área y temas de contraste inverso
+  backDescription: 'Lupa de seguimiento del cursor para aumentar zonas de la pantalla y temas de alto contraste con tipografía ampliada para maximizar legibilidad.'
+  source: ['106.3#u004', '106.3#u006', '106.3#u009']
+
+- id: fc-105-1-etc-profile
+  subtopicId: '105.1'
+  kind: archivo
+  frontTitle: Archivo /etc/profile
+  prompt: '¿En qué tipo de sesión se lee /etc/profile y qué configuración suele inicializar?'
+  backTitle: Sesiones interactivas de login para todos los usuarios
+  backDescription: 'Es el primer archivo leído por cualquier shell interactivo de inicio de sesión (login shell). Establece variables globales del sistema como PATH, límites umask y ejecuta scripts modulares en /etc/profile.d/*.sh.'
+  source: ['105.1#u012', '105.1#u105']
+
+- id: fc-105-1-etc-bash-bashrc
+  subtopicId: '105.1'
+  kind: archivo
+  frontTitle: Archivo /etc/bash.bashrc
+  prompt: '¿Cuándo se ejecuta /etc/bash.bashrc y a quién afecta?'
+  backTitle: Shells interactivos sin login para todo el sistema
+  backDescription: 'Se ejecuta en shells interactivos que no son de inicio de sesión (non-login), como al abrir un emulador de terminal gráfico (GNOME Terminal, Konsole). Aplica configuraciones globales de Bash para todos los usuarios.'
+  source: ['105.1#u011', '105.1#u156']
+
+- id: fc-105-1-bash-profile
+  subtopicId: '105.1'
+  kind: archivo
+  frontTitle: Archivo ~/.bash_profile
+  prompt: '¿Cuál es la prioridad de ~/.bash_profile en una login shell frente a ~/.bash_login y ~/.profile?'
+  backTitle: Primera opción personal evaluada
+  backDescription: 'Al iniciar una login shell, Bash busca en el HOME del usuario en estricto orden: ~/.bash_profile, ~/.bash_login y ~/.profile. Se ejecuta ÚNICAMENTE el primero que encuentre y se ignoran los demás.'
+  source: ['105.1#u017', '105.1#u110']
+
+- id: fc-105-1-bash-login
+  subtopicId: '105.1'
+  kind: archivo
+  frontTitle: Archivo ~/.bash_login
+  prompt: '¿Bajo qué condición Bash lee e interpreta ~/.bash_login?'
+  backTitle: Si ~/.bash_profile no existe
+  backDescription: 'Es el segundo archivo evaluado en la cadena de inicio de login shell. Solo se lee si ~/.bash_profile NO existe en el directorio personal del usuario.'
+  source: ['105.1#u018', '105.1#u115']
+
+- id: fc-105-1-profile
+  subtopicId: '105.1'
+  kind: archivo
+  frontTitle: Archivo ~/.profile
+  prompt: '¿Por qué ~/.profile es el archivo más compatible entre distintos shells?'
+  backTitle: Estándar POSIX compatible con sh y Bash
+  backDescription: 'Es el archivo de inicio personal estándar compatible con /bin/sh y Bourne Shell. Bash lo lee en login shells si no existen ~/.bash_profile ni ~/.bash_login.'
+  source: ['105.1#u019', '105.1#u120']
+
+- id: fc-105-1-bashrc
+  subtopicId: '105.1'
+  kind: archivo
+  frontTitle: Archivo ~/.bashrc
+  prompt: '¿Qué tipo de configuraciones se colocan típicamente en ~/.bashrc?'
+  backTitle: Alias, funciones y ajustes de prompt interactivos
+  backDescription: 'Se ejecuta en cada subshell interactivo sin login. Aloja alias personales, funciones, colores del prompt ($PS1) y configuraciones que no deben depender de una sesión de login.'
+  source: ['105.1#u020', '105.1#u160']
+
+- id: fc-105-1-bash-logout
+  subtopicId: '105.1'
+  kind: archivo
+  frontTitle: Archivo ~/.bash_logout
+  prompt: '¿Cuándo se ejecuta ~/.bash_logout y qué tareas suele realizar?'
+  backTitle: Al cerrar una sesión de login interactiva
+  backDescription: 'Bash lo ejecuta automáticamente al terminar una login shell (con exit o logout). Suele limpiar la pantalla (clear) o eliminar ficheros temporales por seguridad.'
+  source: ['105.1#u021', '105.1#u180']
+
+- id: fc-105-1-etc-skel
+  subtopicId: '105.1'
+  kind: archivo
+  frontTitle: Directorio /etc/skel
+  prompt: '¿Cómo interviene /etc/skel en la creación de nuevos usuarios con useradd -m?'
+  backTitle: Plantilla automática de dotfiles
+  backDescription: 'El comando useradd con la opción -m copia todo el contenido oculto y visible de /etc/skel al nuevo directorio personal del usuario, asegurando que cuente con .bashrc y .profile por defecto.'
+  source: ['105.1#u007', '105.1#u232']
+
+- id: fc-105-1-source-cmd
+  subtopicId: '105.1'
+  kind: comando
+  frontTitle: Comando source y punto (.)
+  prompt: '¿Cuál es la diferencia entre ejecutar ./script.sh y source script.sh?'
+  backTitle: Ejecución en proceso actual vs subproceso hijo
+  backDescription: './script.sh lanza un subshell secundario y sus variables mueren al salir. `source script.sh` (o `. script.sh`) ejecuta los comandos directamente en el proceso del shell actual, conservando variables y alias.'
+  source: ['105.1#u009', '105.1#u010', '105.1#u202']
+
+- id: fc-105-1-export-cmd
+  subtopicId: '105.1'
+  kind: comando
+  frontTitle: Comando export
+  prompt: '¿Qué ocurre con una variable local de shell si no se ejecuta export?'
+  backTitle: No es visible para los comandos hijos
+  backDescription: 'Una variable asignada como VAR=val es privada del shell actual. Solo tras ejecutar `export VAR` o `export VAR=val` se convierte en variable de entorno y se hereda a los subprocesos y comandos hijos.'
+  source: ['105.1#u014', '105.1#u616']
+
+- id: fc-105-1-env-i
+  subtopicId: '105.1'
+  kind: opcion
+  frontTitle: Opción env -i
+  prompt: '¿Qué efecto produce ejecutar un programa con env -i o env --ignore-environment?'
+  backTitle: Ejecución en entorno completamente vacío
+  backDescription: 'Descarta todas las variables de entorno heredadas del shell padre, iniciando el comando con una tabla de entorno limpia y sin interferencias de variables previas.'
+  source: ['105.1#u013', '105.1#u687']
+
+- id: fc-105-1-set-unset
+  subtopicId: '105.1'
+  kind: comando
+  frontTitle: Comandos set y unset
+  prompt: '¿Cuál es la diferencia de consulta entre `set` y `env`, y qué hace `unset`?'
+  backTitle: Todas las variables vs solo exportadas
+  backDescription: '`set` lista variables locales, de entorno y funciones. `env` lista ÚNICAMENTE variables de entorno exportadas. `unset NOMBRE` elimina la variable de la memoria del shell.'
+  source: ['105.1#u015', '105.1#u016', '105.1#u650']
+
+- id: fc-105-1-alias-unalias
+  subtopicId: '105.1'
+  kind: comando
+  frontTitle: Comandos alias y unalias
+  prompt: '¿Cómo se define un alias con espacios y cómo se borran todos los alias activos?'
+  backTitle: alias nombre='comando' y unalias -a
+  backDescription: 'Se definen con comillas obligatorias: `alias ll="ls -la"`. Para borrar un alias específico se usa `unalias nombre`, y para borrar todos los alias activos se usa `unalias -a`.'
+  source: ['105.1#u023', '105.1#u1047', '105.1#u1080']
+
+- id: fc-105-1-function-keyword
+  subtopicId: '105.1'
+  kind: termino
+  frontTitle: Sintaxis de funciones en Bash
+  prompt: '¿Cuáles son las dos sintaxis válidas para declarar una función en Bash?'
+  backTitle: nombre() { ...; } y function nombre { ...; }
+  backDescription: 'La estándar POSIX: `nombre() { comandos; }`. La específica de Bash: `function nombre { comandos; }` (los paréntesis son opcionales si se usa la palabra clave function).'
+  source: ['105.1#u022', '105.1#u1149']
+
+- id: fc-105-1-local-keyword
+  subtopicId: '105.1'
+  kind: concepto
+  frontTitle: Palabra clave local en funciones
+  prompt: '¿Qué ocurre si se asigna una variable dentro de una función sin la palabra local?'
+  backTitle: Se convierte en variable global del shell
+  backDescription: 'En Bash, todas las variables dentro de funciones son globales por defecto. Para confinar el ámbito exclusivamente a la función y no sobreescribir variables externas, debe declararse con `local VAR=valor`.'
+  source: ['105.1#u1249']
+
+- id: fc-105-1-path-var
+  subtopicId: '105.1'
+  kind: areaClave
+  frontTitle: Estructura de la variable PATH
+  prompt: '¿Cómo se añade ~/bin al principio de la variable PATH respetando los directorios existentes?'
+  backTitle: PATH="$HOME/bin:$PATH"
+  backDescription: 'Los directorios se separan por dos puntos (:). Al colocar `$HOME/bin` antes de `$PATH`, el shell buscará primero los ejecutables personales antes que los binarios del sistema.'
+  source: ['105.1#u008', '105.1#u720']
+
+- id: fc-105-1-histcontrol
+  subtopicId: '105.1'
+  kind: termino
+  frontTitle: Variable HISTCONTROL
+  prompt: '¿Qué significa el valor HISTCONTROL=ignoreboth?'
+  backTitle: Ignora duplicados consecutivos y comandos con espacio inicial
+  backDescription: 'Combina `ignorespace` (no guarda comandos que comiencen con espacio en blanco) e `ignoredups` (no guarda dos comandos idénticos consecutivos en el historial).'
+  source: ['105.1#u780']
+
+- id: fc-105-1-shopt-login
+  subtopicId: '105.1'
+  kind: opcion
+  frontTitle: Detección de login shell con shopt
+  prompt: '¿Cómo se comprueba programáticamente si el shell actual es de inicio de sesión?'
+  backTitle: shopt login_shell o comprobando si $0 empieza por guion
+  backDescription: 'El comando `shopt login_shell` devuelve on/off (código de salida 0 si es login shell). Alternativamente, `echo $0` devuelve `-bash` en una login shell frente a `bash` en una non-login shell.'
+  source: ['105.1#u087']
+
+- id: fc-105-1-special-vars
+  subtopicId: '105.1'
+  kind: concepto
+  frontTitle: 'Variables especiales de Bash: $?, $$, $#, $@'
+  prompt: '¿Qué significan las variables especiales $?, $$, $# y $@ en Bash?'
+  backTitle: Salida, PID, cantidad de argumentos y lista de argumentos
+  backDescription: '$? es el código de retorno del último comando (0 = éxito). $$ es el PID del shell actual. $# es el número de argumentos recibidos. $@ es la lista de todos los argumentos como palabras independientes.'
+  source: ['105.1#u1189']
+
+- id: fc-105-1-su-login
+  subtopicId: '105.1'
+  kind: areaClave
+  frontTitle: Lanzar login shell con su vs su -
+  prompt: '¿Cuál es la diferencia crucial entre ejecutar `su user2` y `su - user2`?'
+  backTitle: Entorno limpio de login vs conservar variables del usuario anterior
+  backDescription: '`su user2` abre un shell interactivo SIN login conservando el HOME, PATH y variables del usuario original. `su - user2` (o `su -l user2`) simula un login real, cargando el HOME, PATH y dotfiles de user2.'
+  source: ['105.1#u066']

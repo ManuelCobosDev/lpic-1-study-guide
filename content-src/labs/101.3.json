@@ -1,0 +1,44 @@
+{
+  "id": "lab-101-3",
+  "subtopicId": "101.3",
+  "title": "Práctica 101.3 — Cambio de Runlevels, Targets de Systemd y Apagado Seguro",
+  "estimatedMinutes": 30,
+  "difficulty": "basic",
+  "type": "subtopic",
+  "placeholder": false,
+  "steps": [
+    {
+      "id": "step-101-3-1",
+      "stepNumber": 1,
+      "title": "Misión 1 — Inspección de Runlevels y Targets Predeterminados",
+      "instruction": "Debes verificar en qué modo arranca el servidor (modo texto multiusuario sin entorno gráfico o modo gráfico completo).",
+      "command": "# Consultar el target predeterminado del sistema\r\nsystemctl get-default\r\n\r\n# Comprobar el nivel de ejecución tradicional equivalente\r\nrunlevel\r\n\r\n# Ver qué enlace simbólico define el default.target\r\nls -l /etc/systemd/system/default.target",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-101-3-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Avisos Masivos con wall y Programación de Apagado con shutdown",
+      "instruction": "Antes de reiniciar un servidor en producción, se debe avisar a todos los usuarios conectados y programar un apagado con margen de tiempo cancelable.",
+      "command": "# Enviar un aviso inmediato a todas las terminales abiertas\r\necho \"AVISO: Mantenimiento programado de kernel en 15 min.\" | sudo wall\r\n\r\n# Programar un reinicio para dentro de 15 minutos con mensaje explicativo\r\nsudo shutdown -r +15 \"Reinicio por actualización de seguridad LPIC-1\"\r\n\r\n# Cancelar inmediatamente el apagado programado para evitar cortar el servicio\r\nsudo shutdown -c \"Mantenimiento pospuesto. Continuad trabajando.\"",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-101-3-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Aislamiento de Targets en Vivo (systemctl isolate)",
+      "instruction": "Practicaremos cómo cambiar de estado en vivo usando isolate hacia un target seguro y comprobando las unidades activas.",
+      "command": "# Listar todos los targets disponibles y su estado\r\nsystemctl list-units --type=target\r\n\r\n# Comprobar las equivalencias tradicionales con telinit e init\r\nwhich telinit init\r\n\r\n# Inspeccionar qué servicios dependen de multi-user.target\r\nsystemctl list-dependencies multi-user.target | head -n 12",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-101-3-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Comandos de Apagado de Bajo Nivel vs Systemd",
+      "instruction": "Conoceremos los comandos evaluados en el examen para apagar y apagar de emergencia la máquina.",
+      "command": "# Comprobar qué binarios de apagado apuntan a systemctl en Debian\r\nls -l /sbin/reboot /sbin/poweroff /sbin/halt /sbin/shutdown\r\n\r\n# Ver el manual de systemd-halt.service para entender el apagado de bajo nivel\r\nman -f poweroff halt reboot",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
+      "examAlert": "Ver pista desplegable si te atascas</summary>"
+    }
+  ]
+}

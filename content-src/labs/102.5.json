@@ -1,0 +1,44 @@
+{
+  "id": "lab-102-5",
+  "subtopicId": "102.5",
+  "title": "Práctica 102.5 — Gestión de Paquetes RPM, YUM, DNF y Zypper",
+  "estimatedMinutes": 30,
+  "difficulty": "basic",
+  "type": "subtopic",
+  "placeholder": false,
+  "steps": [
+    {
+      "id": "step-102-5-1",
+      "stepNumber": 1,
+      "title": "Misión 1 — Inspección de Paquetes .rpm con rpm2cpio y cpio en Debian",
+      "instruction": "Aunque estemos en Debian, LPIC-1 evalúa la extracción de paquetes RPM. Descargaremos un RPM oficial de prueba para analizar su interior con rpm2cpio.",
+      "command": "# Instalar utilidades de análisis rpm2cpio y cpio si no estuvieran\r\nsudo apt update && sudo apt install -y rpm2cpio cpio curl\r\n\r\n# Crear directorio de trabajo y descargar un RPM ligero oficial (ej: fedora-release o nano)\r\nmkdir -p /tmp/rpm-lab && cd /tmp/rpm-lab\r\ncurl -sLO https://dl.fedoraproject.org/pub/fedora/linux/releases/39/Everything/x86_64/os/Packages/n/nano-7.2-3.fc39.x86_64.rpm || curl -sLO https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/38/Everything/x86_64/os/Packages/n/nano-7.2-1.fc38.x86_64.rpm\r\n\r\n# Inspeccionar la lista de archivos contenidos en el RPM mediante rpm2cpio y cpio\r\nrpm2cpio nano-*.rpm | cpio -tv | head -n 12",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-102-5-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Matriz de Opciones Críticas de Examen: Comando rpm",
+      "instruction": "Aprenderás a distinguir las flags de instalación (-i, -U, -F), consulta (-q, -qa, -qi, -ql, -qf, -qpl) y verificación (-V).",
+      "command": "# Demostración práctica de sintaxis evaluada en el examen LPIC-1:\r\n# Consultas en el sistema instalado:\r\n#   rpm -qa                  -> Lista TODOS los paquetes instalados en la BD\r\n#   rpm -qi <nombre>         -> Muestra información detallada de un paquete instalado\r\n#   rpm -ql <nombre>         -> Lista archivos instalados por dicho paquete\r\n#   rpm -qf /ruta/archivo    -> Averigua qué paquete instaló ese archivo\r\n# Consultas sobre un archivo no instalado en disco:\r\n#   rpm -qpl paquete.rpm     -> Lista archivos contenidos en el archivo .rpm\r\n#   rpm -qpi paquete.rpm     -> Información detallada del archivo .rpm\r\n\r\necho \"Comprobación de flags de consulta de RPM asimiladas.\"",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-102-5-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Estructura de Repositorios YUM / DNF (/etc/yum.repos.d/)",
+      "instruction": "Los gestores de alto nivel YUM y DNF (en RHEL, CentOS, Fedora) leen los repositorios desde archivos con extensión .repo.",
+      "command": "# Crear una plantilla oficial de repositorio YUM/DNF para analizar sus directivas\r\ncat << 'EOF' | tee /tmp/rpm-lab/ejemplo.repo\r\n[baseos]\r\nname=Red Hat Enterprise Linux 9 - BaseOS\r\nbaseurl=https://repo.almalinux.org/almalinux/9/BaseOS/x86_64/os/\r\nenabled=1\r\ngpgcheck=1\r\ngpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux\r\nEOF\r\n\r\n# Comprobar la sintaxis del archivo .repo\r\ncat /tmp/rpm-lab/ejemplo.repo",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-102-5-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Comandos de Alto Nivel: YUM, DNF y Zypper",
+      "instruction": "Conocerás la equivalencia exacta de comandos entre administradores de paquetes de la familia RPM.",
+      "command": "# Tabla de equivalencias de examen LPIC-1:\r\n# Buscar paquete:      yum search nginx   | dnf search nginx   | zypper search nginx\r\n# Instalar paquete:    yum install -y foo | dnf install -y foo | zypper in -y foo\r\n# Actualizar sistema:  yum update         | dnf upgrade        | zypper update (o up)\r\n# Eliminar paquete:    yum remove foo     | dnf remove foo     | zypper rm foo\r\n\r\n# Limpiar directorio temporal\r\ncd ~ && rm -rf /tmp/rpm-lab",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
+      "examAlert": "Ver pista desplegable si te atascas</summary>"
+    }
+  ]
+}

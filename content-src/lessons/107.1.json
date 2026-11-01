@@ -1,0 +1,1404 @@
+{
+  "id": "107.1",
+  "topicId": "107",
+  "examId": "102",
+  "title": "Administrar cuentas de usuario y de grupo",
+  "version": "1.0.0",
+  "language": "es",
+  "estimatedMinutes": 45,
+  "objectives": [
+    "Gestión integral de usuarios y grupos en Linux: archivos /etc/passwd, /etc/shadow, /etc/group, /etc/gshadow, comandos useradd, usermod, userdel, groupadd, groupmod, groupdel, passwd, chage, getent y políticas de contraseñas.",
+    "Dominio técnico de las herramientas y configuración del subtema 107.1"
+  ],
+  "keyTerms": [
+    "/etc/passwd",
+    "/etc/shadow",
+    "/etc/group",
+    "/etc/gshadow",
+    "/etc/skel/",
+    "/etc/login.defs",
+    "/etc/default/useradd",
+    "getent",
+    "chage"
+  ],
+  "commands": [],
+  "placeholder": false,
+  "slides": [
+    {
+      "id": "107.1-slide-1",
+      "slideNumber": 1,
+      "title": "Administrar cuentas de usuario y de grupo",
+      "layout": "cover",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Administrar cuentas de usuario y de grupo"
+        },
+        {
+          "type": "paragraph",
+          "text": "Subtema 107.1 · Peso LPI: 5 · Examen LPIC-1 102-500"
+        }
+      ],
+      "notes": "Bienvenido al Tema 107 (Tareas administrativas). El subtema 107.1 tiene el mayor peso de todo el examen 102 (5 puntos). Cubre la gestión de identidades, bases de datos locales, envejecimiento de claves y comandos esenciales."
+    },
+    {
+      "id": "107.1-slide-2",
+      "slideNumber": 2,
+      "title": "Identidad en Linux: Usuarios, Grupos y Jerarquía de IDs",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Identidad en Linux: Usuarios, Grupos y Jerarquía de IDs"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo distingue el kernel a un usuario humano de un proceso o del superadministrador?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>👤 Jerarquía de Identificadores de Usuario (UID) y Grupos (GID)</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">/etc/login.defs</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1.1fr; gap:12px; font-size:11.5px;\">\n    <!-- Root -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#B91C1C; font-size:12.5px;\">UID 0 : Superusuario</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">root</span>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.4;\">\n        • Privilegios ilimitados sobre el kernel, hardware y archivos.<br>\n        • Si otra cuenta tiene UID 0, adquiere automáticamente poder total de root.\n      </div>\n    </div>\n\n    <!-- Sistema -->\n    <div style=\"background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#B45309; font-size:12.5px;\">UID 1 - 999 : Sistema</strong>\n        <span style=\"background:#D97706; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Servicios</span>\n      </div>\n      <div style=\"color:#78350F; line-height:1.4;\">\n        • Cuentas para daemons y servicios aislados (<code>daemon</code>, <code>bin</code>, <code>nobody</code>, <code>sshd</code>, <code>mail</code>).<br>\n        • Shells no interactivas (<code>/usr/sbin/nologin</code> o <code>/bin/false</code>).\n      </div>\n    </div>\n\n    <!-- Regulares -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:12.5px;\">UID 1000+ : Regulares</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Usuarios</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • Usuarios humanos creados con <code>useradd -m</code>.<br>\n        • En distribuciones antiguas (RHEL 5/6) empezaba en 500; en Debian y distribuciones modernas parte de 1000 hasta 60000.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569; display:flex; justify-content:space-between; align-items:center;\">\n    <span>👥 <strong>Grupos:</strong> Cada usuario tiene exactamente <strong>1 Grupo Primario</strong> (GID principal) y <strong>0 o más Grupos Suplementarios</strong> (secundarios).</span>\n    <span style=\"font-weight:700; color:#1E40AF;\">id [usuario]</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para el kernel Linux los nombres de usuario son meras etiquetas decorativas; los permisos, pertenencia y cuotas se basan estrictamente en números enteros (UID y GID)."
+        }
+      ],
+      "notes": "UID 0 es siempre root, sin importar el nombre en /etc/passwd. Los rangos se definen en /etc/login.defs."
+    },
+    {
+      "id": "107.1-slide-3",
+      "slideNumber": 3,
+      "title": "Anatomía de /etc/passwd: Los 7 Campos Fundamentales",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Anatomía de /etc/passwd: Los 7 Campos Fundamentales"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué información almacena la base de datos pública de cuentas de usuario?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>📄 Estructura de línea en /etc/passwd (Permisos 644 rw-r--r--)</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">7 Campos</span>\n  </div>\n\n  <div style=\"background:#0F172A; color:#E2E8F0; padding:10px 14px; border-radius:8px; font-family:monospace; font-size:13.5px; letter-spacing:0.5px; margin-bottom:10px;\">\n    <span style=\"color:#38BDF8; font-weight:bold;\">frank</span>:<span style=\"color:#F43F5E;\">x</span>:<span style=\"color:#A855F7; font-weight:bold;\">1001</span>:<span style=\"color:#EAB308; font-weight:bold;\">1001</span>:<span style=\"color:#22C55E;\">Frank Miller,Edificio B</span>:<span style=\"color:#FB923C;\">/home/frank</span>:<span style=\"color:#4ADE80;\">/bin/bash</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:10.5px;\">\n    <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#0284C7;\">1. Login Name</strong><br>\n      <code>frank</code><br>\n      Nombre de inicio de sesión único.\n    </div>\n    <div style=\"background:#FFF1F2; border:1px solid #FECDD3; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#E11D48;\">2. Contraseña ('x')</strong><br>\n      <code>x</code><br>\n      Puntero a <code>/etc/shadow</code> por seguridad.\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #E9D5FF; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#9333EA;\">3. UID</strong><br>\n      <code>1001</code><br>\n      Identificador numérico de usuario.\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FEF08A; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#CA8A04;\">4. GID Primario</strong><br>\n      <code>1001</code><br>\n      Grupo principal por defecto al crear archivos.\n    </div>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap:8px; font-size:10.5px; margin-top:8px;\">\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#16A34A;\">5. Campo GECOS / Comentario</strong><br>\n      <code>Frank Miller,Edificio B</code><br>\n      Nombre completo, oficina, teléfono (editable con <code>chfn</code>).\n    </div>\n    <div style=\"background:#FFF7ED; border:1px solid #FFEDD5; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#EA580C;\">6. Directorio Home</strong><br>\n      <code>/home/frank</code><br>\n      Carpeta personal del usuario al ingresar.\n    </div>\n    <div style=\"background:#ECFDF5; border:1px solid #A7F3D0; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#059669;\">7. Shell de Inicio</strong><br>\n      <code>/bin/bash</code><br>\n      Intérprete ejecutado al conectar (o <code>/usr/sbin/nologin</code>).\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: /etc/passwd tiene 7 campos separados por dos puntos (':'). La contraseña nunca se guarda aquí; se coloca una 'x' indicando que el hash reside en /etc/shadow."
+        }
+      ],
+      "notes": "Permisos 644 (rw-r--r--). Todos los programas del sistema necesitan leerlo para mapear números UID a nombres."
+    },
+    {
+      "id": "107.1-slide-4",
+      "slideNumber": 4,
+      "title": "Anatomía de /etc/shadow: Hash y Envejecimiento (Aging)",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Anatomía de /etc/shadow: Hash y Envejecimiento (Aging)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Dónde se protegen los hashes de contraseñas y cómo se calculan las fechas de caducidad?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>🔒 Registro de /etc/shadow (Permisos 640 root:shadow)</span>\n    <span style=\"font-size:10.5px; background:#FEF2F2; color:#DC2626; padding:2px 8px; border-radius:10px; font-weight:700;\">9 Campos</span>\n  </div>\n\n  <div style=\"background:#0F172A; color:#E2E8F0; padding:8px 12px; border-radius:8px; font-family:monospace; font-size:12px; letter-spacing:0.3px; margin-bottom:8px; overflow-x:auto;\">\n    <span style=\"color:#38BDF8;\">frank</span>:<span style=\"color:#F43F5E;\">$6$qZ7...hash...</span>:<span style=\"color:#A855F7;\">18900</span>:<span style=\"color:#EAB308;\">7</span>:<span style=\"color:#22C55E;\">90</span>:<span style=\"color:#FB923C;\">14</span>:<span style=\"color:#38BDF8;\">30</span>:<span style=\"color:#F43F5E;\">19500</span>:<span style=\"color:#94A3B8;\"></span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:10.5px;\">\n    <div style=\"background:#F8FAFC; border:1px solid #E2E8F0; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#1E293B;\">1. Nombre de Usuario</strong>: <code>frank</code><br>\n      <strong style=\"color:#E11D48;\">2. Hash Criptográfico</strong>:\n      <div style=\"font-size:9.5px; color:#64748B; margin-top:2px;\">\n        • <code>$1$</code> = MD5 · <code>$5$</code> = SHA-256<br>\n        • <code>$6$</code> = SHA-512 · <code>$y$</code> = yescrypt<br>\n        • <code>*</code> o <code>!</code> = Cuenta bloqueada/sin clave\n      </div>\n    </div>\n\n    <div style=\"background:#F8FAFC; border:1px solid #E2E8F0; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#7C3AED;\">3. Último cambio</strong>: <code>18900</code> (días epoch)<br>\n      <strong style=\"color:#CA8A04;\">4. Días Mínimos</strong>: <code>7</code> (espera para volver a cambiar)<br>\n      <strong style=\"color:#16A34A;\">5. Días Máximos</strong>: <code>90</code> (validez de la contraseña)\n    </div>\n\n    <div style=\"background:#F8FAFC; border:1px solid #E2E8F0; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#EA580C;\">6. Días de Aviso</strong>: <code>14</code> (aviso antes de caducar)<br>\n      <strong style=\"color:#0284C7;\">7. Días de Inactividad</strong>: <code>30</code> (gracia tras expirar)<br>\n      <strong style=\"color:#DC2626;\">8. Expiración de Cuenta</strong>: <code>19500</code> (días epoch)<br>\n      <strong style=\"color:#64748B;\">9. Reservado</strong>: Vacío\n    </div>\n  </div>\n\n  <div style=\"margin-top:8px; background:#FEF3C7; border:1px solid #FCD34D; border-radius:6px; padding:5px 8px; font-size:10.5px; color:#92400E;\">\n    💡 <strong>Días Epoch:</strong> El día <code>1</code> corresponde al 2 de enero de 1970. El valor <code>18900</code> corresponde aproximadamente al año 2021.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: /etc/shadow tiene 9 campos. Las fechas son números enteros que representan los DÍAS transcurridos desde el Epoch Unix (1 de enero de 1970)."
+        }
+      ],
+      "notes": "Permisos 640 o 600 propiedad de root:shadow. Si el hash empieza por !, la cuenta está bloqueada."
+    },
+    {
+      "id": "107.1-slide-5",
+      "slideNumber": 5,
+      "title": "Bases de Datos de Grupos: /etc/group y /etc/gshadow",
+      "layout": "diagram",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Bases de Datos de Grupos: /etc/group y /etc/gshadow"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo organiza Linux las membresías colaborativas y los privilegios compartidos?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- /etc/group -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#15803D; font-size:12.5px;\">📄 /etc/group (Permisos 644)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">4 Campos</span>\n      </div>\n      <div style=\"background:#0F172A; color:#E2E8F0; padding:6px 8px; border-radius:6px; font-family:monospace; font-size:11px; margin-bottom:6px;\">\n        <span style=\"color:#38BDF8;\">desarrollo</span>:<span style=\"color:#F43F5E;\">x</span>:<span style=\"color:#A855F7;\">1050</span>:<span style=\"color:#22C55E;\">ana,pedro,lucia</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.4; font-size:10.5px;\">\n        <strong>1. group_name:</strong> Nombre del grupo (ej. desarrollo).<br>\n        <strong>2. password:</strong> Marcador 'x' (hash en /etc/gshadow).<br>\n        <strong>3. GID:</strong> Identificador numérico único del grupo.<br>\n        <strong>4. user_list:</strong> Nombres de miembros suplementarios separados por comas.\n      </div>\n    </div>\n\n    <!-- /etc/gshadow -->\n    <div style=\"background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#B45309; font-size:12.5px;\">🔒 /etc/gshadow (Permisos 640)</strong>\n        <span style=\"background:#D97706; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">4 Campos</span>\n      </div>\n      <div style=\"background:#0F172A; color:#E2E8F0; padding:6px 8px; border-radius:6px; font-family:monospace; font-size:11px; margin-bottom:6px;\">\n        <span style=\"color:#38BDF8;\">desarrollo</span>:<span style=\"color:#F43F5E;\">$6$...</span>:<span style=\"color:#EAB308;\">ana</span>:<span style=\"color:#22C55E;\">pedro,lucia</span>\n      </div>\n      <div style=\"color:#78350F; line-height:1.4; font-size:10.5px;\">\n        <strong>1. group_name:</strong> Nombre del grupo.<br>\n        <strong>2. encrypted_password:</strong> Contraseña cifrada del grupo.<br>\n        <strong>3. administrators:</strong> Usuarios autorizados a gestionar el grupo con <code>gpasswd</code> sin ser root.<br>\n        <strong>4. members:</strong> Miembros regulares del grupo.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:6px 10px; font-size:11px; color:#1E3A8A;\">\n    ⚠️ <strong>Regla de Examen:</strong> Para unirse temporalmente a un grupo cuya contraseña se conoce se usa el comando <code>newgrp [grupo]</code>.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Si 'frank' tiene como GID primario 1001 (grupo frank), 'frank' NO aparecerá en el 4º campo de 'frank:x:1001:'. Solo los miembros suplementarios aparecen listados."
+        }
+      ],
+      "notes": "gshadow permite designar administradores de grupo para que usuarios no-root gestionen miembros con gpasswd."
+    },
+    {
+      "id": "107.1-slide-6",
+      "slideNumber": 6,
+      "title": "Configuración Predeterminada: /etc/skel y Archivos Definitorios",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Configuración Predeterminada: /etc/skel y Archivos Definitorios"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿De dónde obtiene el sistema los archivos y valores por defecto al registrar un usuario?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: /etc/default/useradd guarda los ajustes que useradd aplica si no se especifican flags. /etc/skel/ contiene los archivos copiados al home del usuario."
+        }
+      ],
+      "notes": "useradd -D muestra o modifica /etc/default/useradd. /etc/login.defs gestiona límites generales del subsistema shadow."
+    },
+    {
+      "id": "107.1-slide-7",
+      "slideNumber": 7,
+      "title": "Comando useradd: Creación de Cuentas de Usuario",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando useradd: Creación de Cuentas de Usuario"
+        },
+        {
+          "type": "paragraph",
+          "text": "Sintaxis oficial, opciones evaluadas en LPIC-1 y buenas prácticas de administración."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "root@debian12:~# id laura\nuid=1500(laura) gid=1000(alumnos) grupos=1000(alumnos),4(adm),27(sudo)\nroot@debian12:~# ls -ld /home/laura\ndrwxr-xr-x 2 laura alumnos 4096 oct 30 08:15 /home/laura"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-m, --create-home",
+              "",
+              "Crea el directorio personal (/home/usuario) y copia el contenido de /etc/skel/."
+            ],
+            [
+              "-s, --shell SHELL",
+              "",
+              "Define el intérprete de comandos de inicio (ej. /bin/bash, /usr/sbin/nologin)."
+            ],
+            [
+              "-u, --uid UID",
+              "",
+              "Asigna un identificador numérico de usuario específico en lugar del siguiente libre."
+            ],
+            [
+              "-g, --gid GID_O_GRUPO",
+              "",
+              "Define el nombre o número del grupo PRIMARIO inicial del usuario."
+            ],
+            [
+              "-G, --groups G1,G2",
+              "",
+              "Lista de grupos SECUNDARIOS o suplementarios separados por comas."
+            ],
+            [
+              "-c, --comment COMENTARIO",
+              "",
+              "Texto para el campo GECOS (nombre completo, teléfono, oficina)."
+            ],
+            [
+              "-d, --home-dir RUTA",
+              "",
+              "Especifica una ruta personalizada para el directorio personal."
+            ],
+            [
+              "-e, --expiredate FECHA",
+              "",
+              "Fecha en que se desactivará la cuenta en formato YYYY-MM-DD."
+            ],
+            [
+              "-D",
+              "",
+              "Muestra la configuración predeterminada de /etc/default/useradd o la modifica si se combina con opciones."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'useradd' (bajo nivel estándar) NO crea el directorio home a menos que se indique explícitamente la opción '-m' (o '--create-home')."
+        }
+      ],
+      "notes": "En Debian existe 'adduser' (script interactivo perl de alto nivel), pero el comando estándar y exigido por la certificación LPI es useradd."
+    },
+    {
+      "id": "107.1-slide-8",
+      "slideNumber": 8,
+      "title": "Comando usermod: Modificación de Cuentas Existentes",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando usermod: Modificación de Cuentas Existentes"
+        },
+        {
+          "type": "paragraph",
+          "text": "Alteración de grupos, cambios de nombre, traslados de home y bloqueo de accesos."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "root@debian12:~# id laura\nuid=1500(laura) gid=1000(alumnos) grupos=1000(alumnos),4(adm),27(sudo),998(docker)\nroot@debian12:~# grep laura /etc/passwd\nlaura:x:1500:1000:Laura Gómez,Sistemas:/var/home/laura:/bin/bash"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-a, --append",
+              "",
+              "Añade el usuario a grupos suplementarios. SOLO se usa combinado con -G."
+            ],
+            [
+              "-G, --groups G1,G2",
+              "",
+              "Especifica la lista de grupos suplementarios (¡Ojo! Sin -a sobrescribe la lista anterior)."
+            ],
+            [
+              "-l, --login NUEVO_LOGIN",
+              "",
+              "Cambia el nombre de usuario de la cuenta (login name)."
+            ],
+            [
+              "-d, --home RUTA",
+              "",
+              "Asigna un nuevo directorio home en /etc/passwd."
+            ],
+            [
+              "-m, --move-home",
+              "",
+              "Mueve físicamente los archivos del home antiguo a la nueva ruta indicada con -d."
+            ],
+            [
+              "-s, --shell SHELL",
+              "",
+              "Cambia el shell de inicio asignado al usuario."
+            ],
+            [
+              "-L, --lock",
+              "",
+              "Bloquea la contraseña del usuario (añade '!' al inicio del hash en /etc/shadow)."
+            ],
+            [
+              "-U, --unlock",
+              "",
+              "Desbloquea la cuenta (retira el signo '!' del hash en /etc/shadow)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para mover el home físicamente hay que usar '-d NUEVA_RUTA -m' juntos. Para añadir grupos suplementarios sin borrar los actuales: '-a -G GRUPOS'."
+        }
+      ],
+      "notes": "usermod no puede modificar una cuenta si el usuario tiene procesos en ejecución."
+    },
+    {
+      "id": "107.1-slide-9",
+      "slideNumber": 9,
+      "title": "Comando userdel: Eliminación Segura de Cuentas",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando userdel: Eliminación Segura de Cuentas"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué ocurre con los archivos del usuario cuando se elimina su cuenta?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "root@debian12:~# ls /home/laura\nls: no se puede acceder a '/home/laura': No existe el archivo o el directorio\nroot@debian12:~# grep laura /etc/passwd\n(sin salida: cuenta eliminada con éxito)"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-r, --remove",
+              "",
+              "Elimina el directorio personal (home) del usuario y su cola de correo (/var/mail/usuario)."
+            ],
+            [
+              "-f, --force",
+              "",
+              "Fuerza la eliminación de la cuenta incluso si el usuario ha iniciado sesión actualmente."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Por defecto 'userdel usuario' elimina la cuenta de /etc/passwd y /etc/shadow pero DEJA intacto el directorio home. Para borrar el home y el correo se DEBE usar '-r'."
+        }
+      ],
+      "notes": "Los archivos que queden huérfanos tras un userdel sin -r mantendrán el UID numérico como propietario."
+    },
+    {
+      "id": "107.1-slide-10",
+      "slideNumber": 10,
+      "title": "Administración de Grupos: groupadd, groupmod y groupdel",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Administración de Grupos: groupadd, groupmod y groupdel"
+        },
+        {
+          "type": "paragraph",
+          "text": "Creación, renombramiento y supresión de grupos en /etc/group."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "cloud:x:2500:\nroot@debian12:~# groupdel cloud\nroot@debian12:~# getent group cloud\n(sin salida: grupo eliminado)"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "groupadd -g GID",
+              "",
+              "Asigna un número GID explícito al nuevo grupo."
+            ],
+            [
+              "groupadd -r",
+              "",
+              "Crea un grupo de sistema (GID en rango SYS_GID_MIN a SYS_GID_MAX)."
+            ],
+            [
+              "groupmod -n NUEVO",
+              "",
+              "Cambia el nombre del grupo (new name)."
+            ],
+            [
+              "groupmod -g GID",
+              "",
+              "Cambia el identificador GID del grupo existente."
+            ],
+            [
+              "groupdel GRUPO",
+              "",
+              "Elimina el grupo (falla si es el grupo primario de algún usuario en /etc/passwd)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'groupmod -n NUEVO_NOMBRE antiguo' cambia el nombre del grupo; 'groupmod -g NUEVO_GID grupo' cambia el GID. No se puede eliminar el grupo primario de un usuario existente."
+        }
+      ],
+      "notes": "groupadd -r crea un grupo de sistema con GID inferior a 1000."
+    },
+    {
+      "id": "107.1-slide-11",
+      "slideNumber": 11,
+      "title": "Comando passwd: Claves, Bloqueos y Envejecimiento",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando passwd: Claves, Bloqueos y Envejecimiento"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo cambian contraseñas los usuarios y cómo gestiona root el bloqueo de cuentas?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "frank P 10/28/2026 0 90 7 -1 (contraseña activa)\npasswd: password expiry information changed.\nfrank L 10/28/2026 0 90 7 -1 (cuenta bloqueada con 'L')"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-l, --lock",
+              "",
+              "Bloquea la contraseña anteponiendo '!' al hash en /etc/shadow."
+            ],
+            [
+              "-u, --unlock",
+              "",
+              "Desbloquea la contraseña eliminando el signo '!' de /etc/shadow."
+            ],
+            [
+              "-d, --delete",
+              "",
+              "Elimina la contraseña (deja la cuenta sin clave; login sin password si se permite)."
+            ],
+            [
+              "-S, --status",
+              "",
+              "Muestra el estado de la contraseña: P (válida), L (bloqueada), NP (sin clave)."
+            ],
+            [
+              "-e, --expire",
+              "",
+              "Fuerza la expiración inmediata de la clave; el usuario debe cambiarla en el próximo inicio."
+            ],
+            [
+              "-n MIN, -x MAX",
+              "",
+              "Establece los días mínimos (-n) y máximos (-x) de validez de la contraseña."
+            ],
+            [
+              "-w AVISO, -i INACTIVO",
+              "",
+              "Define días de aviso previo (-w) y días de gracia tras caducar (-i)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Un usuario ordinario sólo puede ejecutar 'passwd' para cambiar su propia clave. Sólo root puede cambiar claves ajenas o usar opciones como '-l', '-u', '-d' o '-S'."
+        }
+      ],
+      "notes": "passwd tiene el bit SUID activo (permisos 4755) para poder escribir en /etc/shadow cuando un usuario cambia su clave."
+    },
+    {
+      "id": "107.1-slide-12",
+      "slideNumber": 12,
+      "title": "Comando chage: Gestión Experta de Envejecimiento (Aging)",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando chage: Gestión Experta de Envejecimiento (Aging)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Inspección y ajuste de caducidad de cuentas y contraseñas en /etc/shadow."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "Último cambio de contraseña                         : oct 28, 2026\nLa contraseña caduca                                : ene 26, 2027\nContraseña inactiva                                 : nunca\nLa cuenta caduca                                    : dic 31, 2026\nNúmero mínimo de días entre cambio de contraseñas   : 0\nNúmero máximo de días entre cambio de contraseñas   : 90\nNúmero de días de aviso antes de que caduque        : 14"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-l, --list",
+              "",
+              "Lista detallada del estado de envejecimiento de la cuenta y la clave."
+            ],
+            [
+              "-m DÍAS",
+              "",
+              "Días MÍNIMOS entre cambios de contraseña (campo 4 shadow; equiv. passwd -n)."
+            ],
+            [
+              "-M DÍAS",
+              "",
+              "Días MÁXIMOS de validez de la contraseña (campo 5 shadow; equiv. passwd -x)."
+            ],
+            [
+              "-W DÍAS",
+              "",
+              "Días de AVISO antes de que expire la clave (campo 6 shadow; equiv. passwd -w)."
+            ],
+            [
+              "-I DÍAS",
+              "",
+              "Días de INACTIVIDAD antes de bloquearse tras expirar (campo 7 shadow; equiv. passwd -i)."
+            ],
+            [
+              "-E FECHA",
+              "",
+              "Fecha de CADUCIDAD de la cuenta (formato YYYY-MM-DD o días epoch)."
+            ],
+            [
+              "-d DÍAS",
+              "",
+              "Establece la fecha del último cambio de contraseña. '-d 0' fuerza cambio inmediato."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'chage -l usuario' es el comando estándar para auditar cuándo caduca la contraseña, cuándo se cambió por última vez y cuándo expira la cuenta."
+        }
+      ],
+      "notes": "chage modifica los campos numéricos 3 a 8 de /etc/shadow. chage -d 0 fuerza el cambio de clave en el próximo login."
+    },
+    {
+      "id": "107.1-slide-13",
+      "slideNumber": 13,
+      "title": "Mapeo Oficial LPIC-1: Equivalencias passwd frente a chage",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Mapeo Oficial LPIC-1: Equivalencias passwd frente a chage"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué comando usar según la sintaxis planteada en las preguntas de certificación?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Acción de Envejecimiento (Aging)",
+            "Comando passwd",
+            "Comando chage",
+            "Campo /etc/shadow"
+          ],
+          "rows": [
+            [
+              "Días mínimos entre cambios de clave",
+              "<code>passwd -n &lt;días&gt;</code>",
+              "<code>chage -m &lt;días&gt;</code>",
+              "Campo 4 (min_days)"
+            ],
+            [
+              "Días máximos de validez de clave",
+              "<code>passwd -x &lt;días&gt;</code>",
+              "<code>chage -M &lt;días&gt;</code>",
+              "Campo 5 (max_days)"
+            ],
+            [
+              "Días de aviso previos a la expiración",
+              "<code>passwd -w &lt;días&gt;</code>",
+              "<code>chage -W &lt;días&gt;</code>",
+              "Campo 6 (warn_days)"
+            ],
+            [
+              "Días de inactividad de gracia tras vencer",
+              "<code>passwd -i &lt;días&gt;</code>",
+              "<code>chage -I &lt;días&gt;</code>",
+              "Campo 7 (inactive_days)"
+            ],
+            [
+              "Consultar estado de la contraseña / cuenta",
+              "<code>passwd -S &lt;usuario&gt;</code>",
+              "<code>chage -l &lt;usuario&gt;</code>",
+              "Campos 2 a 8"
+            ],
+            [
+              "Fijar fecha de caducidad de la cuenta",
+              "<em>No soportado directamente</em>",
+              "<code>chage -E YYYY-MM-DD</code>",
+              "Campo 8 (expire_date)"
+            ],
+            [
+              "Forzar cambio de clave en próximo login",
+              "<code>passwd -e &lt;usuario&gt;</code>",
+              "<code>chage -d 0 &lt;usuario&gt;</code>",
+              "Campo 3 fijado a 0"
+            ]
+          ],
+          "caption": "Mapeo Oficial LPIC-1: Equivalencias passwd frente a chage"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave Mnemotécnica: Las opciones de passwd usan letras minúsculas (-n, -x, -w, -i, -S); sus equivalentes en chage usan casi siempre MAYÚSCULAS (-m, -M, -W, -I, -l)."
+        }
+      ]
+    },
+    {
+      "id": "107.1-slide-14",
+      "slideNumber": 14,
+      "title": "Comando getent: Consulta Unificada a Bases de Datos NSS",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando getent: Consulta Unificada a Bases de Datos NSS"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Por qué no basta con hacer grep en /etc/passwd en entornos corporativos?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "frank:x:1001:1001:Frank Miller:/home/frank:/bin/bash\nsudo:x:27:alumno,frank"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "getent passwd [user]",
+              "",
+              "Consulta la base de datos de usuarios (local o de red)."
+            ],
+            [
+              "getent group [group]",
+              "",
+              "Consulta la base de datos de grupos y sus miembros."
+            ],
+            [
+              "getent shadow [user]",
+              "",
+              "Consulta la base de datos shadow (requiere permisos de root)."
+            ],
+            [
+              "getent hosts [hostname]",
+              "",
+              "Resuelve nombres mediante DNS y /etc/hosts unificadamente."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'getent' consulta las fuentes configuradas en '/etc/nsswitch.conf'. Permite consultar 'passwd', 'group', 'shadow', 'hosts', 'services', etc., unificando archivos locales y servidores LDAP/AD."
+        }
+      ],
+      "notes": "Sintaxis: getent base_de_datos [clave]. Si no se especifica clave, vuelca toda la base de datos."
+    },
+    {
+      "id": "107.1-slide-15",
+      "slideNumber": 15,
+      "title": "Cuentas de Servicio y Métodos de Bloqueo Seguro",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Cuentas de Servicio y Métodos de Bloqueo Seguro"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo impedir que una cuenta de servicio o un usuario despedido inicie sesión en el sistema?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Hay dos formas de bloquear: a nivel de contraseña (añadiendo '!' con 'passwd -l' o 'usermod -L') o a nivel de shell (asignando '/usr/sbin/nologin' o '/bin/false')."
+        }
+      ],
+      "notes": "Cuidado: el bloqueo con 'passwd -l' no impide el acceso mediante claves públicas SSH a menos que se cambie también la shell."
+    },
+    {
+      "id": "107.1-slide-16",
+      "slideNumber": 16,
+      "title": "Ejercicio Guiado LPI: Propósito de Opciones y Comandos",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicio Guiado LPI: Propósito de Opciones y Comandos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Pon a prueba tu dominio identificando la función exacta de cada comando extraído del manual oficial."
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "\n<strong>1. Propósito de comandos fundamentales:</strong><br>\n• <code>usermod -L</code>: Bloquea la contraseña de una cuenta de usuario (Lock).<br>\n• <code>passwd -u</code>: Desbloquea la contraseña de una cuenta de usuario (Unlock).<br>\n• <code>chage -E &lt;fecha&gt;</code>: Establece la fecha de expiración/caducidad de una cuenta.<br>\n• <code>groupdel &lt;grupo&gt;</code>: Elimina un grupo del sistema.<br>\n• <code>useradd -s &lt;shell&gt;</code>: Define la shell de inicio de sesión de la cuenta.<br>\n• <code>groupadd -g &lt;GID&gt;</code>: Crea un nuevo grupo con un identificador GID específico.<br>\n• <code>userdel -r &lt;usuario&gt;</code>: Elimina la cuenta, su carpeta home y su buzón de correo.<br>\n• <code>usermod -l &lt;login&gt;</code>: Cambia el nombre de usuario de una cuenta (login name).<br>\n• <code>groupmod -n &lt;nombre&gt;</code>: Cambia el nombre de un grupo existente.<br>\n• <code>useradd -m</code>: Crea la cuenta y genera físicamente su directorio home clonando /etc/skel/.<br><br>\n<strong>2. Equivalencias passwd vs chage:</strong><br>\n• <code>passwd -n</code> = <code>chage -m</code> (Días mínimos)<br>\n• <code>passwd -x</code> = <code>chage -M</code> (Días máximos)<br>\n• <code>passwd -w</code> = <code>chage -W</code> (Días de advertencia)<br>\n• <code>passwd -i</code> = <code>chage -I</code> (Días de inactividad)<br>\n• <code>passwd -S</code> = <code>chage -l</code> (Mostrar estado)\n",
+          "title": "Solución del ejercicio"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Pista: Observa con mucha atención si la opción está en mayúsculas o minúsculas."
+        }
+      ]
+    },
+    {
+      "id": "107.1-slide-17",
+      "slideNumber": 17,
+      "title": "Reto Práctico LPI: Creación de Cuenta de Auditoría Corporativa",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Reto Práctico LPI: Creación de Cuenta de Auditoría Corporativa"
+        },
+        {
+          "type": "paragraph",
+          "text": "Aplica de forma combinada los comandos useradd, usermod, chage y verificación de shadow."
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Escenario del Desafío",
+          "content": "Como administrador de sistemas, debes crear una cuenta para un auditor externo llamado 'auditor24'. Debe tener UID 1600, grupo primario 'seguridad' (GID 2000), pertenecer a los grupos suplementarios 'adm' y 'systemd-journal', su home en '/home/auditor24', expirar el 31 de diciembre de 2026 y obligarle a cambiar su contraseña en el primer acceso."
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "\n<pre style=\"background:#0F172A; color:#E2E8F0; padding:10px; border-radius:6px; font-size:12px;\">\n# 1. Crear el grupo primario si no existe:\ngroupadd -g 2000 seguridad\n\n# 2. Crear la cuenta con todos los atributos requeridos:\nuseradd -m -u 1600 -g 2000 -G adm,systemd-journal -e 2026-12-31 -c \"Auditor Externo 2026\" auditor24\n\n# 3. Asignar contraseña inicial temporal:\npasswd auditor24\n\n# 4. Forzar el cambio de contraseña en el próximo inicio de sesión:\npasswd -e auditor24\n# (o alternativamente: chage -d 0 auditor24)\n\n# 5. Verificación de bases de datos:\ngetent passwd auditor24\nchage -l auditor24\n</pre>\n",
+          "title": "Solución del desafío"
+        }
+      ]
+    },
+    {
+      "id": "107.1-slide-18",
+      "slideNumber": 18,
+      "title": "Checklist de Examen: Trampas Críticas en el Subtema 107.1",
+      "layout": "checkpoint",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Checklist de Examen: Trampas Críticas en el Subtema 107.1"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los 4 errores que más puntos restan a los candidatos en las preguntas de cuentas y grupos."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Oro: En comandos usermod, NUNCA uses '-G' solo si el enunciado dice 'añadir' o 'incorporar'; usa siempre '-aG' o '-a -G'."
+        }
+      ]
+    },
+    {
+      "id": "107.1-slide-19",
+      "slideNumber": 19,
+      "title": "Resumen del Subtema 107.1 y Preparación para el Laboratorio",
+      "layout": "summary",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Resumen del Subtema 107.1 y Preparación para el Laboratorio"
+        },
+        {
+          "type": "paragraph",
+          "text": "Conceptos dominados, archivos clave y puente hacia la práctica en máquina virtual."
+        }
+      ]
+    }
+  ],
+  "webDocument": [
+    {
+      "id": "sec-107-1-1",
+      "title": "Identidad en Linux: Usuarios, Grupos y Jerarquía de IDs",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Identidad en Linux: Usuarios, Grupos y Jerarquía de IDs"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo distingue el kernel a un usuario humano de un proceso o del superadministrador?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>👤 Jerarquía de Identificadores de Usuario (UID) y Grupos (GID)</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">/etc/login.defs</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1.1fr; gap:12px; font-size:11.5px;\">\n    <!-- Root -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#B91C1C; font-size:12.5px;\">UID 0 : Superusuario</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">root</span>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.4;\">\n        • Privilegios ilimitados sobre el kernel, hardware y archivos.<br>\n        • Si otra cuenta tiene UID 0, adquiere automáticamente poder total de root.\n      </div>\n    </div>\n\n    <!-- Sistema -->\n    <div style=\"background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#B45309; font-size:12.5px;\">UID 1 - 999 : Sistema</strong>\n        <span style=\"background:#D97706; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Servicios</span>\n      </div>\n      <div style=\"color:#78350F; line-height:1.4;\">\n        • Cuentas para daemons y servicios aislados (<code>daemon</code>, <code>bin</code>, <code>nobody</code>, <code>sshd</code>, <code>mail</code>).<br>\n        • Shells no interactivas (<code>/usr/sbin/nologin</code> o <code>/bin/false</code>).\n      </div>\n    </div>\n\n    <!-- Regulares -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#15803D; font-size:12.5px;\">UID 1000+ : Regulares</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Usuarios</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • Usuarios humanos creados con <code>useradd -m</code>.<br>\n        • En distribuciones antiguas (RHEL 5/6) empezaba en 500; en Debian y distribuciones modernas parte de 1000 hasta 60000.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569; display:flex; justify-content:space-between; align-items:center;\">\n    <span>👥 <strong>Grupos:</strong> Cada usuario tiene exactamente <strong>1 Grupo Primario</strong> (GID principal) y <strong>0 o más Grupos Suplementarios</strong> (secundarios).</span>\n    <span style=\"font-weight:700; color:#1E40AF;\">id [usuario]</span>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para el kernel Linux los nombres de usuario son meras etiquetas decorativas; los permisos, pertenencia y cuotas se basan estrictamente en números enteros (UID y GID)."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-1-2",
+      "title": "Anatomía de /etc/passwd: Los 7 Campos Fundamentales",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Anatomía de /etc/passwd: Los 7 Campos Fundamentales"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué información almacena la base de datos pública de cuentas de usuario?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>📄 Estructura de línea en /etc/passwd (Permisos 644 rw-r--r--)</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">7 Campos</span>\n  </div>\n\n  <div style=\"background:#0F172A; color:#E2E8F0; padding:10px 14px; border-radius:8px; font-family:monospace; font-size:13.5px; letter-spacing:0.5px; margin-bottom:10px;\">\n    <span style=\"color:#38BDF8; font-weight:bold;\">frank</span>:<span style=\"color:#F43F5E;\">x</span>:<span style=\"color:#A855F7; font-weight:bold;\">1001</span>:<span style=\"color:#EAB308; font-weight:bold;\">1001</span>:<span style=\"color:#22C55E;\">Frank Miller,Edificio B</span>:<span style=\"color:#FB923C;\">/home/frank</span>:<span style=\"color:#4ADE80;\">/bin/bash</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:10.5px;\">\n    <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#0284C7;\">1. Login Name</strong><br>\n      <code>frank</code><br>\n      Nombre de inicio de sesión único.\n    </div>\n    <div style=\"background:#FFF1F2; border:1px solid #FECDD3; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#E11D48;\">2. Contraseña ('x')</strong><br>\n      <code>x</code><br>\n      Puntero a <code>/etc/shadow</code> por seguridad.\n    </div>\n    <div style=\"background:#FAF5FF; border:1px solid #E9D5FF; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#9333EA;\">3. UID</strong><br>\n      <code>1001</code><br>\n      Identificador numérico de usuario.\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FEF08A; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#CA8A04;\">4. GID Primario</strong><br>\n      <code>1001</code><br>\n      Grupo principal por defecto al crear archivos.\n    </div>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap:8px; font-size:10.5px; margin-top:8px;\">\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#16A34A;\">5. Campo GECOS / Comentario</strong><br>\n      <code>Frank Miller,Edificio B</code><br>\n      Nombre completo, oficina, teléfono (editable con <code>chfn</code>).\n    </div>\n    <div style=\"background:#FFF7ED; border:1px solid #FFEDD5; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#EA580C;\">6. Directorio Home</strong><br>\n      <code>/home/frank</code><br>\n      Carpeta personal del usuario al ingresar.\n    </div>\n    <div style=\"background:#ECFDF5; border:1px solid #A7F3D0; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#059669;\">7. Shell de Inicio</strong><br>\n      <code>/bin/bash</code><br>\n      Intérprete ejecutado al conectar (o <code>/usr/sbin/nologin</code>).\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: /etc/passwd tiene 7 campos separados por dos puntos (':'). La contraseña nunca se guarda aquí; se coloca una 'x' indicando que el hash reside en /etc/shadow."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-1-3",
+      "title": "Anatomía de /etc/shadow: Hash y Envejecimiento (Aging)",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Anatomía de /etc/shadow: Hash y Envejecimiento (Aging)"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Dónde se protegen los hashes de contraseñas y cómo se calculan las fechas de caducidad?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>🔒 Registro de /etc/shadow (Permisos 640 root:shadow)</span>\n    <span style=\"font-size:10.5px; background:#FEF2F2; color:#DC2626; padding:2px 8px; border-radius:10px; font-weight:700;\">9 Campos</span>\n  </div>\n\n  <div style=\"background:#0F172A; color:#E2E8F0; padding:8px 12px; border-radius:8px; font-family:monospace; font-size:12px; letter-spacing:0.3px; margin-bottom:8px; overflow-x:auto;\">\n    <span style=\"color:#38BDF8;\">frank</span>:<span style=\"color:#F43F5E;\">$6$qZ7...hash...</span>:<span style=\"color:#A855F7;\">18900</span>:<span style=\"color:#EAB308;\">7</span>:<span style=\"color:#22C55E;\">90</span>:<span style=\"color:#FB923C;\">14</span>:<span style=\"color:#38BDF8;\">30</span>:<span style=\"color:#F43F5E;\">19500</span>:<span style=\"color:#94A3B8;\"></span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:10.5px;\">\n    <div style=\"background:#F8FAFC; border:1px solid #E2E8F0; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#1E293B;\">1. Nombre de Usuario</strong>: <code>frank</code><br>\n      <strong style=\"color:#E11D48;\">2. Hash Criptográfico</strong>:\n      <div style=\"font-size:9.5px; color:#64748B; margin-top:2px;\">\n        • <code>$1$</code> = MD5 · <code>$5$</code> = SHA-256<br>\n        • <code>$6$</code> = SHA-512 · <code>$y$</code> = yescrypt<br>\n        • <code>*</code> o <code>!</code> = Cuenta bloqueada/sin clave\n      </div>\n    </div>\n\n    <div style=\"background:#F8FAFC; border:1px solid #E2E8F0; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#7C3AED;\">3. Último cambio</strong>: <code>18900</code> (días epoch)<br>\n      <strong style=\"color:#CA8A04;\">4. Días Mínimos</strong>: <code>7</code> (espera para volver a cambiar)<br>\n      <strong style=\"color:#16A34A;\">5. Días Máximos</strong>: <code>90</code> (validez de la contraseña)\n    </div>\n\n    <div style=\"background:#F8FAFC; border:1px solid #E2E8F0; padding:6px; border-radius:6px;\">\n      <strong style=\"color:#EA580C;\">6. Días de Aviso</strong>: <code>14</code> (aviso antes de caducar)<br>\n      <strong style=\"color:#0284C7;\">7. Días de Inactividad</strong>: <code>30</code> (gracia tras expirar)<br>\n      <strong style=\"color:#DC2626;\">8. Expiración de Cuenta</strong>: <code>19500</code> (días epoch)<br>\n      <strong style=\"color:#64748B;\">9. Reservado</strong>: Vacío\n    </div>\n  </div>\n\n  <div style=\"margin-top:8px; background:#FEF3C7; border:1px solid #FCD34D; border-radius:6px; padding:5px 8px; font-size:10.5px; color:#92400E;\">\n    💡 <strong>Días Epoch:</strong> El día <code>1</code> corresponde al 2 de enero de 1970. El valor <code>18900</code> corresponde aproximadamente al año 2021.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: /etc/shadow tiene 9 campos. Las fechas son números enteros que representan los DÍAS transcurridos desde el Epoch Unix (1 de enero de 1970)."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-1-4",
+      "title": "Bases de Datos de Grupos: /etc/group y /etc/gshadow",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Bases de Datos de Grupos: /etc/group y /etc/gshadow"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo organiza Linux las membresías colaborativas y los privilegios compartidos?"
+        },
+        {
+          "type": "html",
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- /etc/group -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#15803D; font-size:12.5px;\">📄 /etc/group (Permisos 644)</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">4 Campos</span>\n      </div>\n      <div style=\"background:#0F172A; color:#E2E8F0; padding:6px 8px; border-radius:6px; font-family:monospace; font-size:11px; margin-bottom:6px;\">\n        <span style=\"color:#38BDF8;\">desarrollo</span>:<span style=\"color:#F43F5E;\">x</span>:<span style=\"color:#A855F7;\">1050</span>:<span style=\"color:#22C55E;\">ana,pedro,lucia</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.4; font-size:10.5px;\">\n        <strong>1. group_name:</strong> Nombre del grupo (ej. desarrollo).<br>\n        <strong>2. password:</strong> Marcador 'x' (hash en /etc/gshadow).<br>\n        <strong>3. GID:</strong> Identificador numérico único del grupo.<br>\n        <strong>4. user_list:</strong> Nombres de miembros suplementarios separados por comas.\n      </div>\n    </div>\n\n    <!-- /etc/gshadow -->\n    <div style=\"background:#FFFBEB; border:1.5px solid #F59E0B; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#B45309; font-size:12.5px;\">🔒 /etc/gshadow (Permisos 640)</strong>\n        <span style=\"background:#D97706; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">4 Campos</span>\n      </div>\n      <div style=\"background:#0F172A; color:#E2E8F0; padding:6px 8px; border-radius:6px; font-family:monospace; font-size:11px; margin-bottom:6px;\">\n        <span style=\"color:#38BDF8;\">desarrollo</span>:<span style=\"color:#F43F5E;\">$6$...</span>:<span style=\"color:#EAB308;\">ana</span>:<span style=\"color:#22C55E;\">pedro,lucia</span>\n      </div>\n      <div style=\"color:#78350F; line-height:1.4; font-size:10.5px;\">\n        <strong>1. group_name:</strong> Nombre del grupo.<br>\n        <strong>2. encrypted_password:</strong> Contraseña cifrada del grupo.<br>\n        <strong>3. administrators:</strong> Usuarios autorizados a gestionar el grupo con <code>gpasswd</code> sin ser root.<br>\n        <strong>4. members:</strong> Miembros regulares del grupo.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:6px 10px; font-size:11px; color:#1E3A8A;\">\n    ⚠️ <strong>Regla de Examen:</strong> Para unirse temporalmente a un grupo cuya contraseña se conoce se usa el comando <code>newgrp [grupo]</code>.\n  </div>\n</div>\n"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Si 'frank' tiene como GID primario 1001 (grupo frank), 'frank' NO aparecerá en el 4º campo de 'frank:x:1001:'. Solo los miembros suplementarios aparecen listados."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-1-5",
+      "title": "Configuración Predeterminada: /etc/skel y Archivos Definitorios",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Configuración Predeterminada: /etc/skel y Archivos Definitorios"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿De dónde obtiene el sistema los archivos y valores por defecto al registrar un usuario?"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: /etc/default/useradd guarda los ajustes que useradd aplica si no se especifican flags. /etc/skel/ contiene los archivos copiados al home del usuario."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-1-6",
+      "title": "Comando useradd: Creación de Cuentas de Usuario",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando useradd: Creación de Cuentas de Usuario"
+        },
+        {
+          "type": "paragraph",
+          "text": "Sintaxis oficial, opciones evaluadas en LPIC-1 y buenas prácticas de administración."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "root@debian12:~# id laura\nuid=1500(laura) gid=1000(alumnos) grupos=1000(alumnos),4(adm),27(sudo)\nroot@debian12:~# ls -ld /home/laura\ndrwxr-xr-x 2 laura alumnos 4096 oct 30 08:15 /home/laura"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-m, --create-home",
+              "",
+              "Crea el directorio personal (/home/usuario) y copia el contenido de /etc/skel/."
+            ],
+            [
+              "-s, --shell SHELL",
+              "",
+              "Define el intérprete de comandos de inicio (ej. /bin/bash, /usr/sbin/nologin)."
+            ],
+            [
+              "-u, --uid UID",
+              "",
+              "Asigna un identificador numérico de usuario específico en lugar del siguiente libre."
+            ],
+            [
+              "-g, --gid GID_O_GRUPO",
+              "",
+              "Define el nombre o número del grupo PRIMARIO inicial del usuario."
+            ],
+            [
+              "-G, --groups G1,G2",
+              "",
+              "Lista de grupos SECUNDARIOS o suplementarios separados por comas."
+            ],
+            [
+              "-c, --comment COMENTARIO",
+              "",
+              "Texto para el campo GECOS (nombre completo, teléfono, oficina)."
+            ],
+            [
+              "-d, --home-dir RUTA",
+              "",
+              "Especifica una ruta personalizada para el directorio personal."
+            ],
+            [
+              "-e, --expiredate FECHA",
+              "",
+              "Fecha en que se desactivará la cuenta en formato YYYY-MM-DD."
+            ],
+            [
+              "-D",
+              "",
+              "Muestra la configuración predeterminada de /etc/default/useradd o la modifica si se combina con opciones."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'useradd' (bajo nivel estándar) NO crea el directorio home a menos que se indique explícitamente la opción '-m' (o '--create-home')."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-1-7",
+      "title": "Comando usermod: Modificación de Cuentas Existentes",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando usermod: Modificación de Cuentas Existentes"
+        },
+        {
+          "type": "paragraph",
+          "text": "Alteración de grupos, cambios de nombre, traslados de home y bloqueo de accesos."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "root@debian12:~# id laura\nuid=1500(laura) gid=1000(alumnos) grupos=1000(alumnos),4(adm),27(sudo),998(docker)\nroot@debian12:~# grep laura /etc/passwd\nlaura:x:1500:1000:Laura Gómez,Sistemas:/var/home/laura:/bin/bash"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-a, --append",
+              "",
+              "Añade el usuario a grupos suplementarios. SOLO se usa combinado con -G."
+            ],
+            [
+              "-G, --groups G1,G2",
+              "",
+              "Especifica la lista de grupos suplementarios (¡Ojo! Sin -a sobrescribe la lista anterior)."
+            ],
+            [
+              "-l, --login NUEVO_LOGIN",
+              "",
+              "Cambia el nombre de usuario de la cuenta (login name)."
+            ],
+            [
+              "-d, --home RUTA",
+              "",
+              "Asigna un nuevo directorio home en /etc/passwd."
+            ],
+            [
+              "-m, --move-home",
+              "",
+              "Mueve físicamente los archivos del home antiguo a la nueva ruta indicada con -d."
+            ],
+            [
+              "-s, --shell SHELL",
+              "",
+              "Cambia el shell de inicio asignado al usuario."
+            ],
+            [
+              "-L, --lock",
+              "",
+              "Bloquea la contraseña del usuario (añade '!' al inicio del hash en /etc/shadow)."
+            ],
+            [
+              "-U, --unlock",
+              "",
+              "Desbloquea la cuenta (retira el signo '!' del hash en /etc/shadow)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Para mover el home físicamente hay que usar '-d NUEVA_RUTA -m' juntos. Para añadir grupos suplementarios sin borrar los actuales: '-a -G GRUPOS'."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-1-8",
+      "title": "Comando userdel: Eliminación Segura de Cuentas",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando userdel: Eliminación Segura de Cuentas"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Qué ocurre con los archivos del usuario cuando se elimina su cuenta?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "root@debian12:~# ls /home/laura\nls: no se puede acceder a '/home/laura': No existe el archivo o el directorio\nroot@debian12:~# grep laura /etc/passwd\n(sin salida: cuenta eliminada con éxito)"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-r, --remove",
+              "",
+              "Elimina el directorio personal (home) del usuario y su cola de correo (/var/mail/usuario)."
+            ],
+            [
+              "-f, --force",
+              "",
+              "Fuerza la eliminación de la cuenta incluso si el usuario ha iniciado sesión actualmente."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Por defecto 'userdel usuario' elimina la cuenta de /etc/passwd y /etc/shadow pero DEJA intacto el directorio home. Para borrar el home y el correo se DEBE usar '-r'."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-1-9",
+      "title": "Administración de Grupos: groupadd, groupmod y groupdel",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Administración de Grupos: groupadd, groupmod y groupdel"
+        },
+        {
+          "type": "paragraph",
+          "text": "Creación, renombramiento y supresión de grupos en /etc/group."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "cloud:x:2500:\nroot@debian12:~# groupdel cloud\nroot@debian12:~# getent group cloud\n(sin salida: grupo eliminado)"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "groupadd -g GID",
+              "",
+              "Asigna un número GID explícito al nuevo grupo."
+            ],
+            [
+              "groupadd -r",
+              "",
+              "Crea un grupo de sistema (GID en rango SYS_GID_MIN a SYS_GID_MAX)."
+            ],
+            [
+              "groupmod -n NUEVO",
+              "",
+              "Cambia el nombre del grupo (new name)."
+            ],
+            [
+              "groupmod -g GID",
+              "",
+              "Cambia el identificador GID del grupo existente."
+            ],
+            [
+              "groupdel GRUPO",
+              "",
+              "Elimina el grupo (falla si es el grupo primario de algún usuario en /etc/passwd)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: 'groupmod -n NUEVO_NOMBRE antiguo' cambia el nombre del grupo; 'groupmod -g NUEVO_GID grupo' cambia el GID. No se puede eliminar el grupo primario de un usuario existente."
+        }
+      ]
+    },
+    {
+      "id": "sec-107-1-10",
+      "title": "Comando passwd: Claves, Bloqueos y Envejecimiento",
+      "level": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Comando passwd: Claves, Bloqueos y Envejecimiento"
+        },
+        {
+          "type": "paragraph",
+          "text": "¿Cómo cambian contraseñas los usuarios y cómo gestiona root el bloqueo de cuentas?"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "",
+              "output": "frank P 10/28/2026 0 90 7 -1 (contraseña activa)\npasswd: password expiry information changed.\nfrank L 10/28/2026 0 90 7 -1 (cuenta bloqueada con 'L')"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "-l, --lock",
+              "",
+              "Bloquea la contraseña anteponiendo '!' al hash en /etc/shadow."
+            ],
+            [
+              "-u, --unlock",
+              "",
+              "Desbloquea la contraseña eliminando el signo '!' de /etc/shadow."
+            ],
+            [
+              "-d, --delete",
+              "",
+              "Elimina la contraseña (deja la cuenta sin clave; login sin password si se permite)."
+            ],
+            [
+              "-S, --status",
+              "",
+              "Muestra el estado de la contraseña: P (válida), L (bloqueada), NP (sin clave)."
+            ],
+            [
+              "-e, --expire",
+              "",
+              "Fuerza la expiración inmediata de la clave; el usuario debe cambiarla en el próximo inicio."
+            ],
+            [
+              "-n MIN, -x MAX",
+              "",
+              "Establece los días mínimos (-n) y máximos (-x) de validez de la contraseña."
+            ],
+            [
+              "-w AVISO, -i INACTIVO",
+              "",
+              "Define días de aviso previo (-w) y días de gracia tras caducar (-i)."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: Un usuario ordinario sólo puede ejecutar 'passwd' para cambiar su propia clave. Sólo root puede cambiar claves ajenas o usar opciones como '-l', '-u', '-d' o '-S'."
+        }
+      ]
+    }
+  ]
+}
