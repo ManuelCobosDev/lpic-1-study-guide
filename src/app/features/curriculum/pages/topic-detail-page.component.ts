@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { ContentService } from '../../../core/services/content.service';
 import { ProgressService } from '../../../core/services/progress.service';
+import { PracticeService } from '../../../core/services/practice.service';
 import { selectSubtopicProgress, selectTopicProgress } from '../../../core/selectors/progress.selectors';
 import {
   BadgeComponent,
@@ -129,13 +130,32 @@ import { CurriculumTreeSidebarComponent } from '../../../shared/layout/curriculu
                               <span class="subtopic-name">{{ sub.title }}</span>
                             </a>
                           </h3>
-                          <div class="subtopic-card-meta font-mono text-[var(--text-muted)]">
+                          <div class="subtopic-card-meta font-mono text-[var(--text-muted)] flex-wrap">
                             <span>Peso {{ sub.weight }}</span>
                             <span>·</span>
                             <span>{{ sub.estimatedMinutes }} min</span>
                             <span>·</span>
                             <span>{{ sub.slideCount ?? 0 }} diapositivas</span>
+                            @if (getPracticeQuizBadge(sub.id); as badge) {
+                              <span>·</span>
+                              <span class="practice-quiz-badge inline-flex items-center gap-1 font-bold text-[var(--primary-text)]" data-testid="practice-quiz-badge">
+                                🎯 Test {{ badge }}
+                              </span>
+                            }
                           </div>
+
+                          @if (sub.keyAreas && sub.keyAreas.length > 0) {
+                            <details class="key-areas-dropdown mt-2 text-xs text-[var(--text-muted)]" data-testid="key-areas-dropdown">
+                              <summary class="cursor-pointer font-medium hover:text-[var(--text)] transition-colors select-none py-1">
+                                Áreas de conocimiento clave ({{ sub.keyAreas.length }})
+                              </summary>
+                              <ul class="list-disc list-inside mt-1.5 space-y-1 pl-2 text-[var(--text-secondary)]">
+                                @for (area of sub.keyAreas; track area) {
+                                  <li>{{ area }}</li>
+                                }
+                              </ul>
+                            </details>
+                          }
                         </div>
                       </div>
 
@@ -748,6 +768,7 @@ export class TopicDetailPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly contentService = inject(ContentService);
   private readonly progressService = inject(ProgressService);
+  private readonly practiceService = inject(PracticeService);
 
   readonly Math = Math;
 
@@ -848,5 +869,11 @@ export class TopicDetailPageComponent implements OnInit {
   isSubtopicCompleted(subtopicId: string): boolean {
     const progress = selectSubtopicProgress(subtopicId, this.progress(), 0);
     return progress === 100;
+  }
+
+  getPracticeQuizBadge(subtopicId: string): string | null {
+    const res = this.practiceService.getQuickQuizResult(subtopicId);
+    if (!res) return null;
+    return `${res.best}/${res.totalQuestions}`;
   }
 }

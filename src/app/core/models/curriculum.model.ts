@@ -31,6 +31,7 @@ export interface Subtopic {
   placeholder: boolean;
   labId?: string;
   slideCount?: number;
+  keyAreas?: string[];
 }
 
 export interface CurriculumStats {

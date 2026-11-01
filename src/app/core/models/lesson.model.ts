@@ -1,5 +1,6 @@
 import { Block } from './block.model';
 import { Slide } from './slide.model';
+import { LessonExercise } from './practice.model';
 
 export interface WikiReference {
   id: string;
@@ -31,5 +32,7 @@ export interface Lesson {
   slides: Slide[];
   webDocument?: WebSection[];
   wikiReferences?: WikiReference[];
+  exercises?: LessonExercise[];
+  keyAreas?: string[];
 }
 

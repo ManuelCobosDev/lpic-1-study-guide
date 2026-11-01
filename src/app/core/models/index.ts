@@ -12,4 +12,6 @@ export * from './progress.model';
 export * from './attempt.model';
 export * from './flashcard.model';
 export * from './backup.model';
+export * from './wiki-ref.model';
+export * from './practice.model';
 

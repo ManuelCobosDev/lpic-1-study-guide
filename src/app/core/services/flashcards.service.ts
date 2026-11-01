@@ -100,6 +100,27 @@ export class FlashcardsService {
   }
 
   /**
+   * Obtiene hasta `limit` tarjetas de un subtema concreto respetando Leitner:
+   * primero las tarjetas vencidas (dueCards), luego las nuevas (newCards).
+   */
+  async getSubtopicCards(
+    subtopicId: string,
+    limit = 10
+  ): Promise<{
+    dueCards: FlashcardItem[];
+    newCards: FlashcardItem[];
+    sessionCards: FlashcardItem[];
+  }> {
+    const items = await this.loadDeckItems('mixed');
+    const filtered = items.filter(
+      (item) => item.subtopicIds && item.subtopicIds.includes(subtopicId)
+    );
+    return selectCardsForSession(filtered, this.progress(), {
+      dailyNewCardsLimit: limit
+    });
+  }
+
+  /**
    * Califica una tarjeta y persiste el cambio inmediatamente en StorageService a través de PersistedStore.
    */
   rateCard(cardId: string, rating: LeitnerRating): CardProgress {

@@ -29,7 +29,8 @@ export const SubtopicSchema = z.object({
   status: z.enum(['available', 'planned']),
   placeholder: z.boolean(),
   labId: z.string().optional(),
-  slideCount: z.number().int().nonnegative().optional()
+  slideCount: z.number().int().nonnegative().optional(),
+  keyAreas: z.array(z.string()).optional()
 });
 
 export const CurriculumManifestSchema = z.object({

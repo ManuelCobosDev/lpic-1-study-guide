@@ -22,7 +22,8 @@ import {
   Errata,
   Slide,
   Subtopic,
-  Topic
+  Topic,
+  LessonExercise
 } from '../src/app/core/models/index';
 import {
   AutolinkEntry,
@@ -498,6 +499,31 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     glossary = parsed.data;
   }
 
+  // Precarga de áreas de conocimiento clave extraídas del manual (si existe units.json)
+  const keyAreasByObjective = new Map<string, string[]>();
+  const unitsPath = path.join(contentSrcDir, '_extract', '102-500', 'units.json');
+  if (fs.existsSync(unitsPath)) {
+    try {
+      const rawUnits = JSON.parse(fs.readFileSync(unitsPath, 'utf-8'));
+      if (Array.isArray(rawUnits)) {
+        for (const u of rawUnits) {
+          if (u.kind === 'key-knowledge' && u.objective && typeof u.text === 'string') {
+            const cleanText = u.text.replace(/^[•\-\*]\s*/, '').trim();
+            if (cleanText) {
+              const list = keyAreasByObjective.get(u.objective) ?? [];
+              list.push(cleanText);
+              keyAreasByObjective.set(u.objective, list);
+            }
+          }
+        }
+      }
+    } catch {
+      // Ignorar si no se puede leer o parsear
+    }
+  }
+
+  const exercisesDir = path.join(contentSrcDir, 'exercises');
+
   // Carga previa de lecciones
   const lessonsDir = path.join(contentSrcDir, 'lessons');
   const enrichedSubtopics: Subtopic[] = [];
@@ -611,9 +637,51 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
   for (const { subtopic, lesson } of loadedLessons) {
     // Aplicar autoenlazado a las diapositivas
     const autolinkedSlides = lesson.slides.map(slide => autolinkSlide(slide, subtopic.id, matchCandidates));
+
+    // Determinar Áreas de Conocimiento Clave
+    const extractedKeyAreas = keyAreasByObjective.get(subtopic.id);
+    const keyAreas = extractedKeyAreas && extractedKeyAreas.length > 0
+      ? extractedKeyAreas
+      : (lesson.keyAreas && lesson.keyAreas.length > 0 ? lesson.keyAreas : lesson.objectives);
+
+    // Determinar Ejercicios
+    let exercises = lesson.exercises;
+    const exerciseYamlPath = path.join(exercisesDir, `${subtopic.id}.yaml`);
+    if (fs.existsSync(exerciseYamlPath)) {
+      try {
+        const rawEx = yaml.load(fs.readFileSync(exerciseYamlPath, 'utf-8'));
+        if (Array.isArray(rawEx)) {
+          exercises = rawEx as LessonExercise[];
+        }
+      } catch (err) {
+        console.warn(`WARN [${subtopic.id}]: Error al leer ${exerciseYamlPath}:`, err);
+      }
+    }
+
+    if (!exercises || exercises.length === 0) {
+      exercises = [
+        {
+          id: `${subtopic.id}-ex-guiado`,
+          kind: 'guiado',
+          title: `Ejercicio Guiado: ${subtopic.title}`,
+          statement: `Compruebe la configuración del sistema relativa al subtema ${subtopic.id} y verifique la sintaxis de los comandos principales.`,
+          answer: `Consulte la documentación oficial y compruebe las variables y comandos asociados al objetivo ${subtopic.id}.`
+        },
+        {
+          id: `${subtopic.id}-ex-exploratorio`,
+          kind: 'exploratorio',
+          title: `Ejercicio de Exploración: ${subtopic.title}`,
+          statement: `Explore las opciones avanzadas y escenarios de uso habituales para ${subtopic.id} en una terminal interactiva.`,
+          answer: `Ejecute 'man <comando>' y explore los parámetros documentados para el objetivo ${subtopic.id}.`
+        }
+      ];
+    }
+
     const processedLesson: Lesson = {
       ...lesson,
-      slides: autolinkedSlides
+      slides: autolinkedSlides,
+      keyAreas,
+      exercises
     };
 
     if (processedLesson.placeholder) {
@@ -640,7 +708,8 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     enrichedSubtopics.push({
       ...subtopic,
       slideCount: processedLesson.slides.length,
-      placeholder: processedLesson.placeholder
+      placeholder: processedLesson.placeholder,
+      keyAreas
     });
 
     if (!options.validateOnly) {

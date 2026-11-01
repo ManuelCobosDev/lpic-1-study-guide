@@ -135,6 +135,31 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
                 }
               </div>
 
+              @if (currentIndex() === totalSlides() - 1 && totalSlides() > 0) {
+                <div
+                  class="completion-panel mt-6 p-4 rounded-xl border border-[var(--primary)] bg-[var(--primary-soft)] flex items-center justify-between gap-4 select-none shrink-0"
+                  data-testid="slides-completion-panel"
+                >
+                  <div class="space-y-0.5">
+                    <div class="text-sm font-bold text-[var(--text)] flex items-center gap-1.5">
+                      <span>🎉</span>
+                      <span>Has terminado las diapositivas</span>
+                    </div>
+                    <div class="text-xs text-[var(--text-muted)]">
+                      Continúa afianzando conocimientos con el test rápido, mini-flashcards y ejercicios oficiales del manual.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-hover)] transition-all cursor-pointer shrink-0 shadow-xs"
+                    data-testid="go-to-practice-btn"
+                    (click)="goToPractice()"
+                  >
+                    Practica lo aprendido →
+                  </button>
+                </div>
+              }
+
               <!-- Pie interno sutil de la diapositiva -->
               <footer class="slide-footer pt-6 mt-4 border-t border-[var(--border)] flex items-center justify-between text-xs text-[var(--text-subtle)] font-mono">
                 <span>LPIC-1 Study Guide</span>
@@ -289,7 +314,7 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
                 [class.border-[var(--primary)]]="idx === currentIndex()"
                 [class.bg-[var(--primary-soft)]]="idx === currentIndex()"
                 [class.border-[var(--border)]]="idx !== currentIndex()"
-                (click)="goToSlide(idx + 1)"
+                (click)="goToSlide(idx + 1); showThumbnails.set(false)"
               >
                 <span
                   class="w-5 h-5 rounded-md font-mono text-[11px] font-bold flex items-center justify-center shrink-0"
@@ -465,6 +490,7 @@ export class SlideViewerComponent implements OnInit, OnDestroy {
 
   readonly slideChange = output<number>();
   readonly slideViewed = output<number>();
+  readonly practiceRequested = output<void>();
 
   readonly viewerContainer = viewChild<ElementRef<HTMLElement>>('viewerContainer');
   readonly stageWrapper = viewChild<ElementRef<HTMLElement>>('stageWrapper');
@@ -630,6 +656,13 @@ export class SlideViewerComponent implements OnInit, OnDestroy {
     const bounded = Math.max(1, Math.min(num, this.totalSlides()));
     this.currentSlideNumber.set(bounded);
     this.slideChange.emit(bounded);
+  }
+
+  goToPractice(): void {
+    if (this.isFullscreen()) {
+      this.exitFullscreen();
+    }
+    this.practiceRequested.emit();
   }
 
   isViewed(slideNumber: number): boolean {

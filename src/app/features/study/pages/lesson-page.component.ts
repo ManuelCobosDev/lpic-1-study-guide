@@ -15,10 +15,14 @@ import { ContentService } from '../../../core/services/content.service';
 import { ProgressService } from '../../../core/services/progress.service';
 import { NotesService } from '../../../core/services/notes.service';
 import { PreferencesService } from '../../../core/services/preferences.service';
+import { FlashcardsService } from '../../../core/services/flashcards.service';
 import { DefaultStudyView } from '../../../core/models/preferences.model';
 import { Lesson } from '../../../core/models/lesson.model';
+import { Question } from '../../../core/models/question.model';
+import { FlashcardItem, LeitnerRating } from '../../../core/models/flashcard.model';
 import { SlideViewerComponent } from '../components/slide-viewer/slide-viewer.component';
 import { LessonWebViewComponent } from '../components/lesson-web-view/lesson-web-view.component';
+import { PracticeTabComponent } from '../components/practice-tab/practice-tab.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
 
@@ -30,6 +34,7 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
     RouterLink,
     SlideViewerComponent,
     LessonWebViewComponent,
+    PracticeTabComponent,
     ButtonComponent,
     TabsComponent
   ],
@@ -178,6 +183,7 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
               [currentSlideNumber]="currentSlideNumber()"
               [highlightQuery]="highlightQuery()"
               (slideChange)="onSlideChange($event)"
+              (practiceRequested)="onPracticeRequested()"
             />
           } @else if (vista() === 'web') {
             <app-lesson-web-view
@@ -347,6 +353,20 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
               </div>
             </div>
           }
+
+          <!-- Pestaña 4: Practica lo aprendido -->
+          @if (activeTab() === 'practice') {
+            <div class="tab-panel-practice">
+              <app-practice-tab
+                [subtopicId]="l.id"
+                [questions]="subtopicQuestions()"
+                [flashcards]="subtopicFlashcards()"
+                [exercises]="l.exercises ?? []"
+                (jumpToSlide)="onJumpToSlideFromPractice($event)"
+                (rateCard)="onRateFlashcard($event)"
+              />
+            </div>
+          }
         </section>
 
         <!-- 5. Navegación Inferior Adyacente entre Subtemas -->
@@ -394,6 +414,7 @@ export class LessonPageComponent implements OnInit, OnDestroy {
   private readonly progressService = inject(ProgressService);
   private readonly notesService = inject(NotesService);
   private readonly preferencesService = inject(PreferencesService);
+  private readonly flashcardsService = inject(FlashcardsService);
 
   readonly subtopicId = signal<string>('');
   readonly lesson = signal<Lesson | null>(null);
@@ -403,13 +424,16 @@ export class LessonPageComponent implements OnInit, OnDestroy {
   readonly currentSlideNumber = signal<number>(1);
   readonly vista = signal<DefaultStudyView>('slides');
   readonly highlightQuery = signal<string>('');
-  readonly activeTab = signal<'lab' | 'notes' | 'reference'>('notes');
+  readonly activeTab = signal<'lab' | 'notes' | 'reference' | 'practice'>('notes');
   readonly subtopicNote = signal<string>('');
+  readonly subtopicQuestions = signal<Question[]>([]);
+  readonly subtopicFlashcards = signal<FlashcardItem[]>([]);
 
   readonly secondaryTabs: TabItem[] = [
     { id: 'notes', label: 'Mis Notas Personales', badge: '📝' },
     { id: 'lab', label: 'Laboratorio Práctico', badge: '🧪' },
-    { id: 'reference', label: 'Comandos y Glosario', badge: '📚' }
+    { id: 'reference', label: 'Comandos y Glosario', badge: '📚' },
+    { id: 'practice', label: 'Practica lo aprendido', badge: '🎯' }
   ];
 
   readonly isCompleted = computed(() => {
@@ -497,6 +521,23 @@ export class LessonPageComponent implements OnInit, OnDestroy {
 
       // Registrar visita en historial
       this.progressService.recordLastVisited(`/estudiar/${subtopicId}`, data.title);
+
+      // Cargar preguntas para la sección de práctica
+      try {
+        const topicQuestions = await this.contentService.getQuestions(data.topicId);
+        const subtopicQ = topicQuestions.filter((q) => q.subtopicId === data.id);
+        this.subtopicQuestions.set(subtopicQ);
+      } catch {
+        this.subtopicQuestions.set([]);
+      }
+
+      // Cargar flashcards para la sección de práctica
+      try {
+        const fcRes = await this.flashcardsService.getSubtopicCards(data.id, 10);
+        this.subtopicFlashcards.set(fcRes.sessionCards);
+      } catch {
+        this.subtopicFlashcards.set([]);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al cargar la lección.';
       this.error.set(msg);
@@ -551,9 +592,30 @@ export class LessonPageComponent implements OnInit, OnDestroy {
   }
 
   onTabChange(tabId: string): void {
-    if (tabId === 'lab' || tabId === 'notes' || tabId === 'reference') {
+    if (tabId === 'lab' || tabId === 'notes' || tabId === 'reference' || tabId === 'practice') {
       this.activeTab.set(tabId);
     }
+  }
+
+  onPracticeRequested(): void {
+    this.activeTab.set('practice');
+    setTimeout(() => {
+      const tabElement = document.getElementById('tab-practice');
+      if (tabElement) {
+        tabElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        tabElement.focus();
+      }
+    }, 100);
+  }
+
+  onJumpToSlideFromPractice(slideNum: number): void {
+    this.currentSlideNumber.set(slideNum);
+    this.vista.set('slides');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  onRateFlashcard(event: { cardId: string; rating: LeitnerRating }): void {
+    this.flashcardsService.rateCard(event.cardId, event.rating);
   }
 
   onNoteInput(event: Event): void {

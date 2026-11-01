@@ -17,6 +17,15 @@ export const WebSectionSchema = z.object({
   blocks: z.array(BlockSchema)
 });
 
+export const LessonExerciseSchema = z.object({
+  id: z.string().min(1),
+  kind: z.enum(['guiado', 'exploratorio']),
+  title: z.string().optional(),
+  statement: z.string().min(1),
+  answer: z.string().min(1),
+  source: z.array(z.string()).optional()
+});
+
 export const LessonSchema = z.object({
   id: z.string().min(1),
   topicId: z.string().min(1),
@@ -31,6 +40,8 @@ export const LessonSchema = z.object({
   placeholder: z.boolean(),
   slides: z.array(SlideSchema),
   webDocument: z.array(WebSectionSchema).optional(),
-  wikiReferences: z.array(WikiReferenceSchema).optional()
+  wikiReferences: z.array(WikiReferenceSchema).optional(),
+  exercises: z.array(LessonExerciseSchema).optional(),
+  keyAreas: z.array(z.string().min(1)).optional()
 });
 

@@ -20,6 +20,7 @@ export interface Question {
   placeholder: boolean;
   src?: string;
   source?: string;
+  explainedIn?: string;
 }
 
 export interface TopicQuestions {

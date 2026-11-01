@@ -21,6 +21,7 @@ export interface TabItem {
           [class.tab-active]="tab.id === activeId()"
           [class.tab-disabled]="tab.disabled"
           [attr.aria-selected]="tab.id === activeId()"
+          [attr.data-testid]="'tab-' + tab.id"
           [id]="'tab-' + tab.id"
           [disabled]="tab.disabled"
           (click)="selectTab(tab.id)"
