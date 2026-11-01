@@ -13,7 +13,11 @@ export const CommandSchema = z.object({
   category: z.string().min(1),
   subtopicIds: z.array(z.string().min(1)),
   example: z.string(),
-  flags: z.array(CommandFlagSchema)
+  flags: z.array(CommandFlagSchema),
+  short: z.string().optional(),
+  aliases: z.array(z.string()).optional(),
+  explainedIn: z.array(z.string()).optional(),
+  sinExplicacion: z.string().optional()
 });
 
 export const CommandsListSchema = z.array(CommandSchema);

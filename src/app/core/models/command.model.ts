@@ -12,5 +12,9 @@ export interface Command {
   subtopicIds: string[];
   example: string;
   flags: CommandFlag[];
+  short?: string;
+  aliases?: string[];
+  explainedIn?: string[];
+  sinExplicacion?: string;
 }
 

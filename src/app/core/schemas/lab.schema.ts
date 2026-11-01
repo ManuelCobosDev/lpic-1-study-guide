@@ -8,7 +8,9 @@ export const LabStepSchema = z.object({
   command: z.string().optional(),
   expectedOutput: z.string().optional(),
   hint: z.string().optional(),
-  examAlert: z.string().optional()
+  examAlert: z.string().optional(),
+  src: z.string().optional(),
+  source: z.string().optional()
 });
 
 export const LabSchema = z.object({
@@ -21,6 +23,8 @@ export const LabSchema = z.object({
   type: z.enum(['subtopic', 'global']),
   steps: z.array(LabStepSchema).min(1),
   solutionNotes: z.string().optional(),
-  placeholder: z.boolean().optional()
+  placeholder: z.boolean().optional(),
+  src: z.string().optional(),
+  source: z.string().optional()
 });
 

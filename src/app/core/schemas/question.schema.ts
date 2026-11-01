@@ -16,7 +16,9 @@ export const QuestionSchema = z.object({
   acceptedAnswers: z.array(z.string().min(1)).optional(),
   explanation: z.string().min(1),
   difficulty: z.enum(['easy', 'medium', 'hard']),
-  placeholder: z.boolean()
+  placeholder: z.boolean(),
+  src: z.string().optional(),
+  source: z.string().optional()
 }).refine(data => {
   // Para single o multiple, las opciones deben existir y las respuestas correctas deben estar en las opciones
   if (data.type === 'single' || data.type === 'multiple') {

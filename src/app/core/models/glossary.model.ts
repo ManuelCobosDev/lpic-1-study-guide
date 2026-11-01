@@ -4,5 +4,9 @@ export interface GlossaryTerm {
   definition: string;
   related: string[];
   subtopicIds: string[];
+  short?: string;
+  aliases?: string[];
+  explainedIn?: string[];
+  sinExplicacion?: string;
 }
 

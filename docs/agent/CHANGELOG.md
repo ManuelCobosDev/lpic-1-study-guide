@@ -500,3 +500,26 @@
 - Archivos: scripts/extract-pdf/extract.py, scripts/extract-pdf/tokenizer.py, scripts/extract-pdf/accounting.py, scripts/extract-pdf/html_report.py, scripts/extract-pdf/config.py, scripts/extract-pdf/test_extract.py, scripts/extract-pdf.spec.ts, docs/agent/EXTRACCION_NOTAS.md, docs/agent/PROGRESO_R2.md, docs/agent/STATUS.md, docs/agent/CHANGELOG.md, package.json, eslint.config.js, .gitignore.
 - Verificación: npm run extract:pdf (exitoso), python -m unittest scripts/extract-pdf/test_extract.py (6/6 OK), npx vitest run scripts/extract-pdf.spec.ts (5/5 OK), npm run verify (9 etapas completas en verde, 75 tests E2E y 18 tests unitarios pasando).
 - Pendiente / deuda: Validación humana del visor `content-src/_extract/102-500/extract-overview.html`. Siguiente paso: Paso R2 (Herramientas de cobertura y validación).
+
+
+## C-0067 · 2026-11-01 · Ronda 2 · R2: Herramientas de cobertura, trazabilidad y validación oficial
+- Qué: implementación completa del motor de verificación y reporte de cobertura, registro de validaciones y seguimiento de progreso de la Ronda 2 (Spec 10 §R2 y Spec 11 §11.4–11.8):
+  (1) Soporte de trazabilidad `src` en modelos y esquemas Zod:
+      - `Slide` y `SlideBlock` (`src?: string`) en `src/app/core/models/slide.model.ts`, `slide.schema.ts`, `block.model.ts`, `block.schema.ts`.
+      - `Question` y `QuestionSchema` (`src?: string`, `source?: string`) en `question.model.ts` y `question.schema.ts`.
+      - `Lab` y `LabSchema` (`src?: string`, `source?: string`) en `lab.model.ts` y `lab.schema.ts`.
+      - Extensión de `Command` y `GlossaryTerm` (`short`, `aliases`, `explainedIn`, `sinExplicacion`) para soporte de enlaces contextuales e integración con Spec 13.
+  (2) Suite completa de herramientas CLI en `scripts/coverage/`:
+      - `verify:coverage -- <id>` (`verify-coverage.ts`): evalúa las 10 reglas de la especificación 11 §11.6 (unidades sin mapear, tokens técnicos ausentes, bloques/diapositivas sin trazabilidad, src inválido o inexistente, límite de 20 diapositivas, ejercicios guiados/exploratorios, pool de preguntas proporcional, explainedIn válido, mínimos de práctica y tope estricto de 3% para exenciones justificadas con `tokenWaivers`).
+      - `report:coverage -- <id>` (`report-coverage.ts`): genera informe HTML navegable y autónomo (`docs/agent/cobertura/<id>.html`) con diseño visual de tokens, unidades cubiertas (verde), omitidas (naranja), sin cubrir (rojo), bloques del autor (amarillo), filtro de problemas e interacciones dinámicas con lista de comprobación de validación humana.
+      - `progress:r2` (`progress-r2.ts`): recalcula la cobertura real de los 19 subtemas del examen 102 y actualiza de forma determinista la tabla `<!-- AUTO:BEGIN -->` en `docs/agent/PROGRESO_R2.md`.
+      - `validation:register -- <id>` (`validation-register.ts`): calcula un hash SHA-256 canónico y determinista sobre todos los archivos del subtema y lo persiste en `docs/agent/validaciones.json`.
+      - `verify:validations` (`verify-validations.ts`): verifica la integridad criptográfica de todos los subtemas registrados contra modificaciones no autorizadas; integrado como etapa oficial en `npm run verify`.
+  (3) Suite exhaustiva de pruebas unitarias Vitest en `scripts/coverage.spec.ts`:
+      - 14 tests comprobando las 10 reglas contra fixtures sintéticos (omisiones, tokens ausentes, exenciones justificadas, exceso de 3%, bloques sin src, IDs inválidos, >20 slides), determinismo del cálculo SHA-256, registro y verificación de validaciones, e invalidación inmediata ante mutaciones arbitrarias en archivos de contenido.
+  (4) Actualización de `.gitignore` para asegurar seguimiento de `scripts/coverage/` manteniendo ignorado `docs/agent/cobertura/` y `/coverage/`.
+  (5) Actualización de `docs/agent/PROGRESO_R2.md` y `docs/agent/STATUS.md` reflejando el paso R2 completado con éxito.
+- Por qué: requisito de infraestructura para garantizar el 100% de cobertura y fidelidad al manual oficial LPI 102 según `docs/spec/10-ronda2-plan.md` y `docs/spec/11-extraccion-y-cobertura.md`.
+- Archivos: scripts/coverage/types.ts, scripts/coverage/parser-utils.ts, scripts/coverage/ledger-loader.ts, scripts/coverage/hash-utils.ts, scripts/coverage/verify-coverage.ts, scripts/coverage/report-coverage.ts, scripts/coverage/validation-register.ts, scripts/coverage/verify-validations.ts, scripts/coverage/progress-r2.ts, scripts/coverage.spec.ts, scripts/verify.ts, src/app/core/models/slide.model.ts, src/app/core/models/block.model.ts, src/app/core/models/question.model.ts, src/app/core/models/lab.model.ts, src/app/core/models/command.model.ts, src/app/core/models/glossary.model.ts, src/app/core/schemas/slide.schema.ts, src/app/core/schemas/block.schema.ts, src/app/core/schemas/question.schema.ts, src/app/core/schemas/lab.schema.ts, src/app/core/schemas/command.schema.ts, src/app/core/schemas/glossary.schema.ts, package.json, .gitignore, docs/agent/PROGRESO_R2.md, docs/agent/STATUS.md, docs/agent/CHANGELOG.md.
+- Verificación: npx vitest run scripts/coverage.spec.ts (14/14 pasando), npm run progress:r2 (exitoso), npm run verify:validations (PASS), npm run verify (9 etapas completas en verde, 75 tests E2E y 19 tests unitarios pasando), npm run e2e:pendientes (5 fallos esperados verificados).
+- Pendiente / deuda: Paso R3 (Enlaces tipo Wikipedia y referencias contextuales).

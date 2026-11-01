@@ -18,6 +18,8 @@ export interface Question {
   explanation: string;
   difficulty: QuestionDifficulty;
   placeholder: boolean;
+  src?: string;
+  source?: string;
 }
 
 export interface TopicQuestions {

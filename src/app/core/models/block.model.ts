@@ -1,17 +1,21 @@
 export type CalloutType = 'tip' | 'info' | 'warning' | 'exam';
 
-export interface HeadingBlock {
+export interface BaseBlock {
+  src?: string;
+}
+
+export interface HeadingBlock extends BaseBlock {
   type: 'heading';
   level: 1 | 2 | 3 | 4 | 5 | 6;
   text: string;
 }
 
-export interface ParagraphBlock {
+export interface ParagraphBlock extends BaseBlock {
   type: 'paragraph';
   text: string; // Puede incluir sintaxis markdown y enlaces cmd:id, term:id
 }
 
-export interface ListBlock {
+export interface ListBlock extends BaseBlock {
   type: 'list';
   ordered?: boolean;
   items: string[];
@@ -23,12 +27,12 @@ export interface StepItem {
   description: string;
 }
 
-export interface StepsBlock {
+export interface StepsBlock extends BaseBlock {
   type: 'steps';
   items: StepItem[];
 }
 
-export interface CodeBlock {
+export interface CodeBlock extends BaseBlock {
   type: 'code';
   language: string;
   code: string;
@@ -42,33 +46,33 @@ export interface TerminalLine {
   output?: string;
 }
 
-export interface TerminalBlock {
+export interface TerminalBlock extends BaseBlock {
   type: 'terminal';
   lines: TerminalLine[];
 }
 
-export interface CalloutBlock {
+export interface CalloutBlock extends BaseBlock {
   type: 'callout';
   calloutType: CalloutType;
   title?: string;
   content: string;
 }
 
-export interface TableBlock {
+export interface TableBlock extends BaseBlock {
   type: 'table';
   headers: string[];
   rows: string[][];
   caption?: string;
 }
 
-export interface ImageBlock {
+export interface ImageBlock extends BaseBlock {
   type: 'image';
   src: string;
   alt: string;
   caption?: string;
 }
 
-export interface DiagramBlock {
+export interface DiagramBlock extends BaseBlock {
   type: 'diagram';
   kind: 'flow' | 'layers' | 'tree' | 'segments' | 'streams' | 'matrix' | 'states';
   title?: string;
@@ -77,14 +81,14 @@ export interface DiagramBlock {
   spec: Record<string, unknown>;
 }
 
-export interface KeytermBlock {
+export interface KeytermBlock extends BaseBlock {
   type: 'keyterm';
   termId: string;
   term: string;
   definition: string;
 }
 
-export interface CommandRefBlock {
+export interface CommandRefBlock extends BaseBlock {
   type: 'command-ref';
   commandId: string;
   name: string;
@@ -92,13 +96,13 @@ export interface CommandRefBlock {
   description: string;
 }
 
-export interface KbdBlock {
+export interface KbdBlock extends BaseBlock {
   type: 'kbd';
   keys: string[];
   description?: string;
 }
 
-export interface QuizInlineBlock {
+export interface QuizInlineBlock extends BaseBlock {
   type: 'quiz-inline';
   id: string;
   question: string;
@@ -107,12 +111,12 @@ export interface QuizInlineBlock {
   explanation: string;
 }
 
-export interface HtmlBlock {
+export interface HtmlBlock extends BaseBlock {
   type: 'html';
   sanitizedHtml: string;
 }
 
-export interface SlideHtmlBlock {
+export interface SlideHtmlBlock extends BaseBlock {
   type: 'slide-html';
   assetPath: string;
   title: string;

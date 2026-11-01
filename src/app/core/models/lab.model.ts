@@ -11,6 +11,8 @@ export interface LabStep {
   expectedOutput?: string;
   hint?: string;
   examAlert?: string;
+  src?: string;
+  source?: string;
 }
 
 export interface Lab {
@@ -24,6 +26,8 @@ export interface Lab {
   steps: LabStep[];
   solutionNotes?: string;
   placeholder?: boolean;
+  src?: string;
+  source?: string;
 }
 
 export interface LabSummary {

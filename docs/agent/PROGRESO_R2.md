@@ -12,7 +12,7 @@ Reglas: un paso o subtema solo pasa a "hecho" con su gate en PASS (spec 10). Los
 |---|---|---|---|---|---|
 | R0 | Diagnóstico y línea base | hecho | 2026-11-01 | be19c8a | DIAGNOSTICO_R2.md + 5 tests en rojo |
 | R1 | Extracción completa del PDF 102 | hecho | 2026-11-01 | 535d72f | units.json (9405 un), 594 pág (100% contabilidad), 4 figuras, tests Vitest y Python en verde |
-| R2 | Herramientas de cobertura y validación | pendiente | | | |
+| R2 | Herramientas de cobertura y validación | hecho | 2026-11-01 | f12ede6 | CLI cobertura (verify, report, progress, validation:register, verify:validations), 14 tests vitest OK |
 | R3 | Enlaces tipo Wikipedia | pendiente | | | |
 | R4 | Pestaña Practica lo aprendido | pendiente | | | |
 | R5 | Flashcards masivas | pendiente | | | |
@@ -48,8 +48,28 @@ Reglas: un paso o subtema solo pasa a "hecho" con su gate en PASS (spec 10). Los
 
 ## Cifras automáticas
 <!-- AUTO:BEGIN -->
-(sin datos: ejecuta `npm run progress:r2` cuando existan las herramientas del paso R2)
+| Subtema | Unidades (Map/Tot) | Tokens % | Diapositivas | Preguntas | Flashcards | Validación |
+|---|---|---|---|---|---|---|
+| 105.1 | 0 / 1606 | 0% | 19 | 0 | 0 | ⏳ Pendiente |
+| 105.2 | 0 / 530 | 0% | 19 | 0 | 0 | ⏳ Pendiente |
+| 106.1 | 0 / 245 | 0% | 19 | 0 | 0 | ⏳ Pendiente |
+| 106.2 | 0 / 121 | 0% | 16 | 0 | 0 | ⏳ Pendiente |
+| 106.3 | 0 / 96 | 0% | 15 | 0 | 0 | ⏳ Pendiente |
+| 107.1 | 0 / 525 | 0% | 19 | 0 | 0 | ⏳ Pendiente |
+| 107.2 | 0 / 433 | 0% | 19 | 0 | 0 | ⏳ Pendiente |
+| 107.3 | 0 / 241 | 0% | 18 | 0 | 0 | ⏳ Pendiente |
+| 108.1 | 0 / 611 | 0% | 16 | 0 | 0 | ⏳ Pendiente |
+| 108.2 | 0 / 1180 | 0% | 19 | 0 | 0 | ⏳ Pendiente |
+| 108.3 | 0 / 187 | 0% | 16 | 0 | 0 | ⏳ Pendiente |
+| 108.4 | 0 / 299 | 0% | 16 | 0 | 0 | ⏳ Pendiente |
+| 109.1 | 0 / 333 | 0% | 18 | 0 | 0 | ⏳ Pendiente |
+| 109.2 | 0 / 341 | 0% | 18 | 0 | 0 | ⏳ Pendiente |
+| 109.3 | 0 / 568 | 0% | 18 | 0 | 0 | ⏳ Pendiente |
+| 109.4 | 0 / 293 | 0% | 16 | 0 | 0 | ⏳ Pendiente |
+| 110.1 | 0 / 751 | 0% | 18 | 0 | 0 | ⏳ Pendiente |
+| 110.2 | 0 / 290 | 0% | 16 | 0 | 0 | ⏳ Pendiente |
+| 110.3 | 0 / 755 | 0% | 19 | 0 | 0 | ⏳ Pendiente |
 <!-- AUTO:END -->
 
 ## Siguiente paso exacto
-R1: abre una conversación nueva y escribe `/ejecutar-paso-r2 R1`.
+R3: abre una conversación nueva y escribe `/ejecutar-paso-r2 R3`.

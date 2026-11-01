@@ -20,6 +20,7 @@ export const SlideSchema = z.object({
   layout: SlideLayoutSchema,
   blocks: z.array(BlockSchema),
   secondaryBlocks: z.array(BlockSchema).optional(),
-  notes: z.string().optional()
+  notes: z.string().optional(),
+  src: z.string().optional()
 });
 

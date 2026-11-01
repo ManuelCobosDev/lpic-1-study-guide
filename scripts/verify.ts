@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 const STAGES = [
   { name: 'build:content', cmd: 'npm', args: ['run', 'build:content'] },
   { name: 'validate:content', cmd: 'npm', args: ['run', 'validate:content'] },
+  { name: 'verify:validations', cmd: 'npm', args: ['run', 'verify:validations'] },
   { name: 'typecheck', cmd: 'npm', args: ['run', 'typecheck'] },
   { name: 'lint', cmd: 'npm', args: ['run', 'lint'] },
   { name: 'check:tokens', cmd: 'npm', args: ['run', 'check:tokens'] },
