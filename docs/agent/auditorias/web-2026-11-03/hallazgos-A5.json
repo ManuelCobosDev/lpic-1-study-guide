@@ -1,0 +1,212 @@
+[
+  {
+    "id": "A5-001",
+    "agente": "A5",
+    "severidad": "P0",
+    "categoria": "tecnico-lpi",
+    "titulo": "Claves de respuesta erróneas o invertidas en el banco de preguntas del simulador",
+    "descripcion": "Se identificaron 7 preguntas de certificación donde la opción marcada como correcta en el JSON contradice la realidad técnica de Linux y la propia explicación pedagógica de la pregunta, penalizando al estudiante que conoce la materia: 1) q-103-82 (103.json): pide 2 comandos para imprimir el directorio actual; marca ['a', 'e'] (echo ${PWD} y echo ${pwd} en minúsculas, inexistente por defecto); la respuesta correcta es ['a', 'd'] (echo ${PWD} y pwd). 2) q-103-32 (103.json): pide 2 comandos para ejecutar un script sin subshell; marca ['a', 'b'] (source y ./runme.sh); la ejecución directa ./ inicia subshell; la correcta es ['a', 'd'] (source y .). 3) q-102-21 (107.json): pregunta por /etc/localtime; marca ['a'] (archivo de texto plano); /etc/localtime es un archivo binario TZif o symlink (opción 'e'). 4) q-102-8 (109.json): pregunta por qué el comando route tarda en responder; marca ['a'] (tabla de rutas corrupta); la causa real es timeout de resolución inversa DNS (opción 'e'). 5) q-102-50 (110.json): regla de sudo con PASSWD; marca ['b'] (exige contraseña de root); sudo exige la contraseña del propio usuario (opción 'c'). 6) q-102-84 (110.json): efectividad de cambios en TCP wrappers; marca ['b'] (al reiniciar el sistema); los cambios son inmediatos por conexión (opción 'e'). 7) q-102-85 (110.json): claves SSH; marca ['b', 'c'] ('c' afirma falsamente que se pueden generar varias claves públicas para una misma clave privada); la correcta es ['b', 'd']. Además, q-102-80 (102.json) evalúa Ctrl+Z y marca SIGSTOP (19) en vez de SIGTSTP (20), admitiendo en la explicación que SIGTSTP es la señal real pero omitiéndola de las opciones.",
+    "evidencia": [
+      "content-src/questions/103.json:q-103-82 (correct: ['a', 'e'])",
+      "content-src/questions/103.json:q-103-32 (correct: ['a', 'b'])",
+      "content-src/questions/107.json:q-102-21 (correct: ['a'])",
+      "content-src/questions/109.json:q-102-8 (correct: ['a'])",
+      "content-src/questions/110.json:q-102-50 (correct: ['b', 'd', 'e'])",
+      "content-src/questions/110.json:q-102-84 (correct: ['b'])",
+      "content-src/questions/110.json:q-102-85 (correct: ['b', 'c'])",
+      "content-src/questions/102.json:q-102-80 (correct: ['c'])"
+    ],
+    "ubicacion": "content-src/questions/{102,103,107,109,110}.json · /simulador",
+    "reproduccion": "node -e \"const q=require('./content-src/questions/103.json').questions.find(x=>x.id==='q-103-82'); console.log(q.correct, q.explanation);\"",
+    "propuesta": "Corregir inmediatamente los arrays 'correct' de las 7 preguntas afectadas para alinear la clave con la realidad técnica y con el texto de sus propias explicaciones. Añadir la opción SIGTSTP en q-102-80.",
+    "esfuerzo": "S",
+    "riesgo": "medio",
+    "estado": "CONFIRMADO",
+    "cruces": ["A8"]
+  },
+  {
+    "id": "A5-002",
+    "agente": "A5",
+    "severidad": "P0",
+    "categoria": "funcional",
+    "titulo": "Preguntas de tipo 'fill' con texto aclaratorio incrustado provocan fallo del 100% en el motor de puntuación",
+    "descripcion": "8 preguntas de respuesta abierta (fill) tienen texto explicativo en español incrustado dentro del array 'correct' o 'acceptedAnswers': q-102-52 ('/etc/yum.repos.d (también aceptado /etc/yum.repos.d/ )'), q-102-72 ('/usr/local/bin (también aceptado /usr/local/bin/ )'), q-104-64 ('/proc/mounts (también es válido /proc/self/mounts )'), q-102-107 ('-m (o --create-home )'), q-102-34 ('/etc/cups (o /etc/cups/ )'), q-102-37 ('server (también aceptado pool en versiones recientes)'), q-102-1 ('hostname (también válido en entornos modernos: hostnamectl )'), q-102-88 ('/etc/xinetd.d (o /etc/xinetd.d/ )'). El motor de puntuación (src/app/core/engines/scoring/scoring.engine.ts:66-76) compara la entrada del alumno directamente contra los elementos del array tras normalizar espacios/minúsculas. Como ninguna entrada de usuario coincidirá con el texto explicativo entre paréntesis, el simulador marca automáticamente como INCORRECTA cualquier respuesta válida de los alumnos.",
+    "evidencia": [
+      "content-src/questions/102.json (q-102-52, q-102-72)",
+      "content-src/questions/104.json (q-104-64)",
+      "content-src/questions/105.json (q-102-107)",
+      "content-src/questions/108.json (q-102-34, q-102-37)",
+      "content-src/questions/109.json (q-102-1)",
+      "content-src/questions/110.json (q-102-88)",
+      "src/app/core/engines/scoring/scoring.engine.ts:66-76"
+    ],
+    "ubicacion": "content-src/questions/*.json · src/app/core/engines/scoring/scoring.engine.ts · /simulador",
+    "reproduccion": "node -e \"const s=require('./src/app/core/engines/scoring/scoring.engine.ts'); // o verificar en scoring.engine.ts:75 que acceptedList.some(accepted => accepted === userText)\"",
+    "propuesta": "Limpiar los arrays 'correct' dejando únicamente el término exacto (ej. ['/etc/yum.repos.d']) y mover los alias puros al array 'acceptedAnswers' (ej. ['/etc/yum.repos.d/', '/etc/yum.repos.d']). Retirar cualquier texto explicativo en lenguaje natural de los arrays de validación.",
+    "esfuerzo": "S",
+    "riesgo": "bajo",
+    "estado": "CONFIRMADO",
+    "cruces": ["A8"]
+  },
+  {
+    "id": "A5-003",
+    "agente": "A5",
+    "severidad": "P0",
+    "categoria": "contenido",
+    "titulo": "Corrupción de opciones de preguntas por parseo ciego de tuberías (|) y caracteres (<)",
+    "descripcion": "El importador legacy generó corrupciones críticas al procesar HTML antiguo con split('|'): 1) q-103-37 (103.json): las opciones originales contenían comandos con tuberías ('foo | tee /tmp/foodata', 'foo | less /tmp/foodata'). El script troceó las opciones, generando tres opciones idénticas con texto 'foo', una opción con ID anómalo 'opt-7' ('foo > stdout >> /tmp/foodata') y una opción 'g' mutilada ('tee /tmp/foodata' sin el comando inicial). 2) q-103-30 (103.json): la opción '<' se perdió al parsear tags HTML, desplazando las opciones y dejando marcada como correcta 'a' ('#>'), que es sintaxis inválida en Bash. 3) q-103-49 (103.json): las opciones 'a' y 'e' tienen exactamente el mismo texto ('grep -E \":08:[0-9]+:[0-9]+\" loga.log'), pero la clave solo acepta 'a'; si el usuario escoge 'e', falla.",
+    "evidencia": [
+      "content-src/questions/103.json:q-103-37 (opciones: a:'foo', b:'less /tmp/foodata', c:'foo', f:'foo', g:'tee /tmp/foodata', opt-7)",
+      "content-src/questions/103.json:q-103-30 (opciones: a:'#>', b:'%>', c:'>>>', d:'2>&1')",
+      "content-src/questions/103.json:q-103-49 (opciones 'a' y 'e' idénticas)",
+      "_legacy/Recurso Final Definitivo/preguntas 101.html:1239-1244, :1436-1442"
+    ],
+    "ubicacion": "content-src/questions/103.json · /simulador",
+    "reproduccion": "node -e \"const q=require('./content-src/questions/103.json').questions.find(x=>x.id==='q-103-37'); console.log(q.options);\"",
+    "propuesta": "Restaurar las opciones correctas desde _legacy/Recurso Final Definitivo/preguntas 101.html: para q-103-37 las opciones deben incluir el comando completo con tubería ('foo | tee /tmp/foodata'); para q-103-30 restaurar la opción '<'; para q-103-49 corregir la opción duplicada.",
+    "esfuerzo": "S",
+    "riesgo": "bajo",
+    "estado": "CONFIRMADO",
+    "cruces": ["A4", "A8"]
+  },
+  {
+    "id": "A5-004",
+    "agente": "A5",
+    "severidad": "P1",
+    "categoria": "contenido",
+    "titulo": "Pérdida del 95% del repositorio de erratas técnicas y trampas de examen oficiales",
+    "descripcion": "content-src/errata.yaml contiene únicamente 3 erratas sintéticas breves (err-001 a err-003). En cambio, el proyecto legacy original (_legacy/Recurso Final Definitivo/app/erratas.html y state/ERRATAS.md) contenía 58 fichas estructuradas que advertían al estudiante de errores tipográficos y discrepancias conceptuales presentes en los manuales oficiales de LPI (ej. ERR-102.1-01 fdisk vs GPT en LPIC-1; ERR-102.2-01 grub-install en disco MBR vs VBR de partición; ERR-102.3-01 ldconfig regenerando la caché sin modificar /etc/ld.so.conf; ERR-102.4-01 dpkg -r conservando configuración frente a -P; ERR-102.6-01 KVM como Tipo 1 en Linux; E-007 zcat asociado erróneamente a xz en el manual; E-003 journalctl y formato binario). El contenido pedagógico de mayor valor añadido para el examen quedó descartado.",
+    "evidencia": [
+      "content-src/errata.yaml (3 entradas)",
+      "_legacy/Recurso Final Definitivo/app/erratas.html (58 tarjetas con box-manual y box-reality)",
+      "_legacy/Recurso Final Definitivo/state/ERRATAS.md:1-12 (E-001 a E-007)"
+    ],
+    "ubicacion": "content-src/errata.yaml · /erratas",
+    "reproduccion": "Get-Content content-src/errata.yaml ; Select-String -Path '_legacy/Recurso Final Definitivo/app/erratas.html' -Pattern 'errata-id-badge' | Measure-Object",
+    "propuesta": "Importar las 58 erratas y notas de advertencia del manual oficial desde el material legacy a content-src/errata.yaml, clasificándolas por subtema y severidad.",
+    "esfuerzo": "M",
+    "riesgo": "bajo",
+    "estado": "CONFIRMADO",
+    "cruces": ["A2", "A4"]
+  },
+  {
+    "id": "A5-005",
+    "agente": "A5",
+    "severidad": "P1",
+    "categoria": "tecnico-lpi",
+    "titulo": "commands.yaml tiene 206 flags truncados como '-' y 14 subtemas completos sin comandos",
+    "descripcion": "1) En 76 de los 197 comandos de commands.yaml (38%), hay 206 flags con el nombre literal '-', perdiendo la opción real (ej. lspci -s y -d aparecen como flag:'-', subcomandos de systemctl start/stop/restart aparecen como flag:'-'). 2) 14 subtemas completos (del 107.1 al 110.3) no tienen ni un solo comando asignado en commands.yaml (subtopicIds vacíos), de modo que utilidades obligatorias de examen como useradd, usermod, userdel, groupadd, passwd, chage (107.1), crontab, at (107.2), locale, localectl (107.3), date, hwclock, timedatectl, chronyc (108.1), journalctl, logger, logrotate (108.2), newaliases, mailq (108.3), lpq, lpstat (108.4), ip, ping, traceroute, dig, nmcli (109.1-109.4), ulimit, sudo, chage, ssh, ssh-keygen, gpg (110.1-110.3) no existen en el diccionario de comandos. 3) En el tema 103.2 faltan utilidades explícitas del examen oficial: zcat, bzcat, xzcat, md5sum, sha512sum, nl, pr, split.",
+    "evidencia": [
+      "content-src/commands.yaml:20,22,70 (flag: '-')",
+      "docs/agent/auditorias/web-2026-11-03/scripts/a5-check-commands.cjs (206 flags '-' en 76 cmds; 0 cmds en subtemas 107.1-110.3)",
+      "Objetivos oficiales LPI 101-500 (Tema 103.2: zcat, bzcat, xzcat, md5sum, sha512sum)"
+    ],
+    "ubicacion": "content-src/commands.yaml · /comandos",
+    "reproduccion": "node docs/agent/auditorias/web-2026-11-03/scripts/a5-check-commands.cjs",
+    "propuesta": "Reimportar commands.yaml preservando el nombre de las banderas desde la fuente legacy; añadir los comandos correspondientes a los subtemas 107.1 a 110.3 y las utilidades faltantes de 103.2; validar con script que ningún flag sea '-'.",
+    "esfuerzo": "M",
+    "riesgo": "medio",
+    "estado": "CONFIRMADO",
+    "cruces": ["A4", "A8"]
+  },
+  {
+    "id": "A5-006",
+    "agente": "A5",
+    "severidad": "P1",
+    "categoria": "contenido",
+    "titulo": "Asignación defectuosa de subtemas en el banco de preguntas destruye el modo práctica",
+    "descripcion": "Todas las 120 preguntas de los temas 101 a 104 fueron asignadas automáticamente al primer subtema de cada tema (101.1=19 preguntas, 102.1=27, 103.1=43, 104.1=31). Como resultado, 19 subtemas carecen por completo de preguntas en la pestaña 'Practica lo aprendido' del visor de lecciones, mientras que al estudiar 101.1 el estudiante recibe preguntas sobre 'tune2fs', 'nice', 'sources.list' o '1>&2', y al estudiar 102.1 recibe preguntas sobre 'tar', 'chmod' o 'SIGSTOP'. En 105.1 ocurre lo mismo: 5 de 12 preguntas corresponden a redes (puerto 443), NTP o usuarios/grupos.",
+    "evidencia": [
+      "content-src/questions/101.json (todas con subtopicId: '101.1')",
+      "content-src/questions/102.json (todas con subtopicId: '102.1')",
+      "content-src/questions/103.json (todas con subtopicId: '103.1')",
+      "content-src/questions/104.json (todas con subtopicId: '104.1')",
+      "content-src/questions/105.json (q-102-25, q-102-72, q-102-104, q-102-106, q-102-107 con subtopicId: '105.1')"
+    ],
+    "ubicacion": "content-src/questions/*.json · /estudiar/<id> (pestaña Práctica)",
+    "reproduccion": "node -e \"const fs=require('fs'); ['101','102','103','104'].forEach(t=>console.log(t, [...new Set(require('./content-src/questions/'+t+'.json').questions.map(q=>q.subtopicId))]));\"",
+    "propuesta": "Reclasificar el campo subtopicId de cada una de las 240 preguntas asignándolo a su objetivo LPI correspondiente.",
+    "esfuerzo": "M",
+    "riesgo": "bajo",
+    "estado": "CONFIRMADO",
+    "cruces": ["A3", "A4", "A8"]
+  },
+  {
+    "id": "A5-007",
+    "agente": "A5",
+    "severidad": "P1",
+    "categoria": "contenido",
+    "titulo": "Enunciados de preguntas en inglés contradicen la promesa de la portada 'redactadas en español'",
+    "descripcion": "208 de las 240 preguntas (87%) tienen su enunciado (prompt) íntegramente en inglés (ej. 'Which of the following files assigns a user to its primary group?'), manteniendo únicamente las explicaciones en español. Sin embargo, la home de la aplicación afirma textualmente en home-page.component.ts:375 '240+ preguntas reales de examen redactadas en español'. Esta contradicción descoloca al alumno que espera un simulador en español.",
+    "evidencia": [
+      "content-src/questions/*.json (208 preguntas con prompt en inglés)",
+      "src/app/features/home/pages/home-page.component.ts:375"
+    ],
+    "ubicacion": "/simulador · home-page",
+    "reproduccion": "Select-String -Path 'src/app/features/home/pages/home-page.component.ts' -Pattern 'redactadas en español'",
+    "propuesta": "Traducir los enunciados de las preguntas al español con terminología oficial LPI, o bien modificar el copy de la home aclarando 'Enunciados en inglés (formato de examen real) con explicaciones detalladas en español'.",
+    "esfuerzo": "L",
+    "riesgo": "bajo",
+    "estado": "CONFIRMADO",
+    "cruces": ["A2", "A4"]
+  },
+  {
+    "id": "A5-008",
+    "agente": "A5",
+    "severidad": "P2",
+    "categoria": "contenido",
+    "titulo": "Artefactos tipográficos y OCR en textos de examen degradan la calidad del curso",
+    "descripcion": "Se detectaron más de 20 casos de palabras partidas con espacios internos o uniones defectuosas debidas a extracción descuidada de OCR/PDF: 'witheach' (101.json:q-101-12), 'th e' (q-101-106, q-101-116), 'har d' (q-101-116), 'f ile' / 'fil e' (q-102-66, q-102-21), 'o n disk' y 'redundan t' (q-104-63), 'file syst em' (q-104-63), 'EndSect ion' (q-102-59), 'comma nd' (q-102-62), 'tim ezone' (q-102-21), 't o the' (q-102-108), 'Frida y' (q-102-113), 'me ssage' (q-102-28), 'WIFIo I' (q-102-92), 'X1 1' (q-102-54), 'connectio ns' (q-102-84), 'mus t' / 'serv er' (q-102-85). Además en q-102-119 figura 'KMD' en lugar de 'KDM' (KDE Display Manager).",
+    "evidencia": [
+      "docs/agent/auditorias/web-2026-11-03/scripts/a5-find-typos.cjs (listado de 20 preguntas con erratas OCR)",
+      "content-src/questions/{101,102,104,106,107,108,109,110}.json"
+    ],
+    "ubicacion": "content-src/questions/*.json",
+    "reproduccion": "node docs/agent/auditorias/web-2026-11-03/scripts/a5-find-typos.cjs",
+    "propuesta": "Ejecutar script de limpieza ortográfica y corrección de espacios espurios sobre los ficheros JSON de preguntas.",
+    "esfuerzo": "S",
+    "riesgo": "bajo",
+    "estado": "CONFIRMADO",
+    "cruces": ["A2"]
+  },
+  {
+    "id": "A5-009",
+    "agente": "A5",
+    "severidad": "P2",
+    "categoria": "tecnico-lpi",
+    "titulo": "Abuso de 3 528 emojis decorativos y mezcla del falso amigo 'librería' vs 'biblioteca compartida'",
+    "descripcion": "1) En 34 lecciones se encontraron 3 528 emojis (📍, 🧠, 🔄, ➔, 🎯, 👶, ⚡, 💻, 🧩, 📦), con densidades de más de 200 emojis por lección (ej. 102.1 con 214 emojis), lo cual distrae visualmente y merma el tono profesional exigido por una preparación de certificación oficial. 2) Se detectó el uso sistemático del anglicismo 'librería' (falso amigo de 'library') en lugar del término técnico oficial de LPI en español 'biblioteca compartida' (130 ocurrencias en 102.3, más apariciones en 102.1, 102.4, 102.5, 104.2, 104.7).",
+    "evidencia": [
+      "docs/agent/auditorias/web-2026-11-03/scripts/a5-check-style.cjs",
+      "content-src/lessons/102.3.json (130 usos de 'librería')"
+    ],
+    "ubicacion": "content-src/lessons/*.json",
+    "reproduccion": "node docs/agent/auditorias/web-2026-11-03/scripts/a5-check-style.cjs",
+    "propuesta": "Reemplazar los emojis en títulos y bloques de texto por diseño basado en tokens tipográficos e iconos SVG estándar; unificar el término técnico a 'biblioteca compartida' respetando el estándar oficial de LPI.",
+    "esfuerzo": "M",
+    "riesgo": "bajo",
+    "estado": "CONFIRMADO",
+    "cruces": ["A2", "A6"]
+  },
+  {
+    "id": "A5-010",
+    "agente": "A5",
+    "severidad": "P0",
+    "categoria": "contenido",
+    "titulo": "Lecciones esqueleto 108.3 a 110.3 carecen de contenido pedagógico y técnico real",
+    "descripcion": "Las lecciones 108.3, 108.4, 109.1, 109.2, 109.3, 109.4, 110.1, 110.2 y 110.3 (155 diapositivas, 20% del curso) no ofrecen valor formativo: 110.1 a 110.3 constan únicamente de títulos h2 en diapositivas vacías sin texto explicativo; 108.3 a 109.4 constan de un título y una sola frase de texto genérico, sin código, ejemplos de terminal ni tablas de opciones. En el glosario, el tema 110 tiene 0 términos. Presentar este contenido con placeholder:false sin avisar al estudiante de que está en construcción es engañoso e invalida la preparación de la mitad del examen 102-500.",
+    "evidencia": [
+      "content-src/lessons/110.1.json (todas las diapositivas son solo bloque heading)",
+      "content-src/lessons/108.3.json (diapositivas con 1 frase)",
+      "content-src/glossary.yaml (0 términos para tema 110)"
+    ],
+    "ubicacion": "content-src/lessons/{108.3,108.4,109.1,109.2,109.3,109.4,110.1,110.2,110.3}.json",
+    "reproduccion": "node -e \"const l=require('./content-src/lessons/110.1.json'); console.log(l.slides.map(s=>s.blocks.length));\"",
+    "propuesta": "Marcar inmediatamente placeholder:true en el currículo y en las lecciones 108.3 a 110.3 para advertir al usuario en la interfaz, e incluirlas como bloque prioritario de desarrollo en la Fase 2 mediante /procesar-subtema.",
+    "esfuerzo": "L",
+    "riesgo": "medio",
+    "estado": "CONFIRMADO",
+    "semilla": "S-02",
+    "cruces": ["A2", "A3", "A4"]
+  }
+]

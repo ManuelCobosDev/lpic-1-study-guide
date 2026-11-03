@@ -12,9 +12,9 @@
 
 ## 🎯 Características Principales
 
-- **Temario Oficial Completo (100% Cobertura Real, 0 Placeholders)**:
+- **Temario Oficial Completo**:
   - **42 subtemas oficiales** distribuidos en 10 temas: 4 temas para el Examen 101 (Temas 101 a 104) y 6 temas para el Examen 102 (Temas 105 a 110).
-  - **770 diapositivas interactivas** con diseño 16:9 escalado, bloques didácticos de alta densidad (código con resaltado de sintaxis, terminales simuladas, llamadas de examen, tablas comparativas y diagramas vectoriales).
+  - **771 diapositivas interactivas** con diseño 16:9 escalado, bloques didácticos de alta densidad (código con resaltado de sintaxis, terminales simuladas, llamadas de examen, tablas comparativas y diagramas vectoriales).
   - **Triple formato de estudio**: modo Diapositivas con atajos de teclado (`←`, `→`, `F` pantalla completa, `T` miniaturas), vista Web continua de lectura y exportación limpia para impresión / PDF.
   - **Auto-vinculación contextual**: popovers informativos estilo Wikipedia al pulsar sobre comandos y términos técnicos dentro del texto.
 
@@ -30,8 +30,8 @@
 
 - **Herramientas de Estudio Avanzadas**:
   - **Buscador Global Unificado**: paleta modal accesible (`Ctrl+K` o `/`) y página dedicada `/buscar` con búsqueda difusa sinónima, acentos transparentes y resaltado con `<mark>`.
-  - **Catálogo de 193 Comandos**: búsqueda instantánea, filtros por tema/categoría, vista dual (tabla / tarjetas) y paneles expandibles con flags y sintaxis.
-  - **Glosario de 230 Términos Técnicos**: navegación alfabética interactiva A-Z con indicador de disponibilidad de términos y enlaces al temario.
+  - **Catálogo de 197 Comandos**: búsqueda instantánea, filtros por tema/categoría, vista dual (tabla / tarjetas) y paneles expandibles con flags y sintaxis.
+  - **Glosario de 238 Términos Técnicos**: navegación alfabética interactiva A-Z con indicador de disponibilidad de términos y enlaces al temario.
   - **42 Mazos de Flashcards**: algoritmo de repetición espaciada Leitner (cajas 1 a 5) con evaluación subjetiva (Bien / Difícil / Repetir) y persistencia local.
   - **Mapa Mental Jerárquico D3**: visualización en árbol SVG con zoom, paneo interactivo, filtro de pendientes y panel lateral de navegación.
   - **Panel de Progreso y Métricas**: tarjetas de estado, desglose por temas con anillos porcentuales, historial de simulacros con gráfica de evolución y mapa de calor de estudio (heatmap de 12 semanas).
@@ -52,7 +52,7 @@
 | **Validación de Datos** | Zod (esquemas de lecciones, labs, preguntas, comandos y glosario) |
 | **Visualización** | D3.js (árbol jerárquico SVG y zoom) |
 | **Buscador** | MiniSearch (motor de búsqueda en memoria con tokenización en español) |
-| **Pruebas Unitarias** | Angular Karma / Jasmin + Vitest para scripts de toolchain |
+| **Pruebas Unitarias** | Angular Karma / Jasmine + Vitest para scripts de toolchain |
 | **Pruebas E2E & A11y** | Playwright + `@axe-core/playwright` (WCAG 2.1 AA sin violaciones) |
 
 ---

@@ -4,6 +4,7 @@ import { PreferencesService } from './preferences.service';
 import { ProgressService } from './progress.service';
 import { ClockService } from './clock.service';
 import { ContentService } from './content.service';
+import { PersistedStore } from '../state/persisted-store';
 import {
   BACKUP_FORMAT,
   CURRENT_SCHEMA_VERSION,
@@ -183,6 +184,9 @@ export class BackupService {
       // Modo 'merge': fusiona respetando marcas temporales e históricos
       this.mergeStores(payload.data);
     }
+
+    // Recarga todos los almacenes reactivos en memoria para evitar estados sucios
+    PersistedStore.reloadAll();
   }
 
   hasRollbackSnapshot(): boolean {
@@ -205,6 +209,7 @@ export class BackupService {
         }
       }
       this.storage.removeItem(PRE_IMPORT_SNAPSHOT_KEY);
+      PersistedStore.reloadAll();
       return true;
     } catch {
       return false;
@@ -241,6 +246,7 @@ export class BackupService {
         break;
     }
 
+    PersistedStore.reloadAll();
     return true;
   }
 
@@ -289,8 +295,9 @@ export class BackupService {
     const backupLabs = this.extractStoreData<{ completedSteps?: Record<string, number[]> }>(payload.data['labs_progress']);
     const backupLabsCount = Object.keys(backupLabs?.completedSteps ?? {}).length;
 
-    const backupFlashcards = this.extractStoreData<{ cards?: Record<string, unknown> }>(payload.data['flashcards_progress']);
-    const backupFlashcardsCount = Object.keys(backupFlashcards?.cards ?? {}).length;
+    const backupFlashcards = this.extractStoreData<{ progress?: Record<string, unknown>; cards?: Record<string, unknown> }>(payload.data['flashcards_progress']);
+    const backupCards = backupFlashcards?.progress ?? backupFlashcards?.cards ?? {};
+    const backupFlashcardsCount = Object.keys(backupCards).length;
 
     // Estadísticas actuales
     const currentProgress = this.progressService.progress();
@@ -334,7 +341,9 @@ export class BackupService {
     if (currentFlashcardsRaw) {
       try {
         const parsed = JSON.parse(currentFlashcardsRaw);
-        currentFlashcardsCount = Object.keys(parsed.data?.cards ?? {}).length;
+        const cData = parsed.data ?? parsed;
+        const cards = cData?.progress ?? cData?.cards ?? {};
+        currentFlashcardsCount = Object.keys(cards).length;
       } catch {
         // Ignorar
       }
@@ -527,7 +536,7 @@ export class BackupService {
 
     // 5. Fusionar flashcards
     if ('flashcards_progress' in backupData) {
-      const bFlashcards = this.extractStoreData<{ cards?: Record<string, { box: number }> }>(backupData['flashcards_progress']);
+      const bFlashcards = this.extractStoreData<{ progress?: Record<string, { box: number }>; cards?: Record<string, { box: number }> }>(backupData['flashcards_progress']);
       const currentRaw = this.storage.getItem('flashcards_progress');
       let cCards: Record<string, { box: number }> = {};
       let cEnvelope: Record<string, unknown> = { schemaVersion: 1, updatedAt: this.clock.nowIso() };
@@ -537,14 +546,15 @@ export class BackupService {
           const parsed = JSON.parse(currentRaw);
           if (parsed && typeof parsed === 'object' && 'data' in parsed) {
             cEnvelope = parsed;
-            cCards = parsed.data?.cards ?? {};
+            const cData = parsed.data;
+            cCards = cData?.progress ?? cData?.cards ?? {};
           }
         } catch {
           // Fallback
         }
       }
 
-      const bCards = bFlashcards?.cards ?? {};
+      const bCards = bFlashcards?.progress ?? bFlashcards?.cards ?? {};
       const mergedCards: Record<string, { box: number }> = { ...cCards };
       for (const [cardId, bCard] of Object.entries(bCards)) {
         const cCard = mergedCards[cardId];
@@ -563,7 +573,7 @@ export class BackupService {
         'flashcards_progress',
         JSON.stringify({
           ...cEnvelope,
-          data: { cards: mergedCards },
+          data: { progress: mergedCards },
           updatedAt: this.clock.nowIso()
         })
       );

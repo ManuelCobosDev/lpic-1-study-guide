@@ -82,16 +82,25 @@ export function parseCommandsHtml(htmlContent: string): Command[] {
 
       for (const pill of optPillMatches) {
         const titleAttr = pill.match(/title=["']([^"']*)["']/i)?.[1] || '';
-        const codeMatch = pill.match(/<code class=["']pill-code["']>([^<]+)<\/code>/i);
-        const descMatch = pill.match(/<span class=["']pill-desc["']>([^<]+)<\/span>/i);
+        const codeMatch = pill.match(/<code class=["']pill-code["']>([\s\S]*?)<\/code>/i);
+        const descMatch = pill.match(/<span class=["']pill-desc["']>([\s\S]*?)<\/span>/i);
 
-        const flagCode = codeMatch && codeMatch[1] ? cleanHtml(codeMatch[1]) : '-';
+        let flagCode = codeMatch && codeMatch[1] ? codeMatch[1].trim() : '-';
+        flagCode = flagCode
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"');
+
         const flagDesc = titleAttr.trim() || (descMatch && descMatch[1] ? cleanHtml(descMatch[1]) : 'Opción del comando');
 
-        flags.push({
-          flag: flagCode,
-          description: flagDesc
-        });
+        if (flagCode !== '-' && flagCode !== '' && flagCode !== '--') {
+          flags.push({
+            flag: flagCode,
+            description: flagDesc
+          });
+        }
       }
 
       if (cmdName === 'tee') {
@@ -216,10 +225,13 @@ export function importAllCommandsAndGlossary(
                   if (s.options && Array.isArray(s.options)) {
                     for (const opt of s.options) {
                       if (typeof opt === 'object' && opt !== null) {
-                        flags.push({
-                          flag: opt.flag || opt.short || '-',
-                          description: opt.desc || 'Opción del comando'
-                        });
+                        const rawFlag = opt.flag || opt.short;
+                        if (rawFlag && rawFlag !== '-' && rawFlag.trim() !== '') {
+                          flags.push({
+                            flag: rawFlag.trim(),
+                            description: opt.desc || 'Opción del comando'
+                          });
+                        }
                       }
                     }
                   }

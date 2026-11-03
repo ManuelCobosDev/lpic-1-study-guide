@@ -485,6 +485,18 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
       process.exit(1);
     }
     commands = parsed.data;
+
+    // Validación estricta anti-flags truncados o vacíos
+    for (const cmd of commands) {
+      if (cmd.flags) {
+        for (const f of cmd.flags) {
+          if (f.flag === '-' || f.flag === '--' || !f.flag || f.flag.trim() === '') {
+            console.error(`FAIL: El comando "${cmd.name}" contiene una bandera inválida o vacía: "${f.flag}"`);
+            process.exit(1);
+          }
+        }
+      }
+    }
   }
 
   // Glosario (precarga para autolink y explainedIn)
@@ -529,6 +541,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
   const lessonsDir = path.join(contentSrcDir, 'lessons');
   const enrichedSubtopics: Subtopic[] = [];
   const loadedLessons: { subtopic: Subtopic; lesson: Lesson }[] = [];
+  const globalSlideIds = new Set<string>();
 
   for (const subtopic of curriculum.subtopics) {
     const topic = curriculum.topics.find(t => t.id === subtopic.topicId);
@@ -551,9 +564,22 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     } else {
       lesson = generatePlaceholderLesson(subtopic, topic);
     }
-    // Normalizar numeración 1-based correlativa en las diapositivas
+
+    // Validación estricta anti-IDs duplicados y numeración 1-based correlativa en las diapositivas
+    const lessonSlideIds = new Set<string>();
     lesson.slides.forEach((s, idx) => {
       s.slideNumber = idx + 1;
+      if (lessonSlideIds.has(s.id)) {
+        console.error(`FAIL: ID de diapositiva duplicado internamente en la lección ${subtopic.id}: "${s.id}"`);
+        process.exit(1);
+      }
+      lessonSlideIds.add(s.id);
+
+      if (globalSlideIds.has(s.id)) {
+        console.error(`FAIL: Colisión global de ID de diapositiva: "${s.id}" en el subtema ${subtopic.id}`);
+        process.exit(1);
+      }
+      globalSlideIds.add(s.id);
     });
     loadedLessons.push({ subtopic, lesson });
   }
@@ -764,6 +790,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
 
   // Procesamos preguntas por tema
   const questionsDir = path.join(contentSrcDir, 'questions');
+  const globalQuestionIds = new Set<string>();
   for (const topic of curriculum.topics) {
     let questions: Question[];
     const yamlQuestionsPath = path.join(questionsDir, `${topic.id}.yaml`);
@@ -792,6 +819,15 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     } else {
       questions = generatePlaceholderQuestions(topic.id);
       totalQuestionsPlaceholder += questions.length;
+    }
+
+    // Validación estricta anti-IDs duplicados de preguntas
+    for (const q of questions) {
+      if (globalQuestionIds.has(q.id)) {
+        console.error(`FAIL: Colisión global de ID de pregunta: "${q.id}" en el tema ${topic.id}`);
+        process.exit(1);
+      }
+      globalQuestionIds.add(q.id);
     }
 
     if (!options.validateOnly) {

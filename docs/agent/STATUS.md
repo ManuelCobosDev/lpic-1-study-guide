@@ -2,43 +2,28 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-11-01 · **Última entrada**: C-0073
+**Última actualización**: 2026-11-03 · **Última entrada**: C-0074
 
 ## Estado
-- **Fase actual**: Ronda 2 (Fidelidad y Cobertura Oficial Examen 102).
-- **Último hito superado**: Auto-verificación de Cobertura 100% Subtema 105.1 (Estado 4: Auto-verificado).
-- **Trabajo en curso**: Ninguno. Subtema 105.1 auto-verificado y detenido para auditoría independiente.
+- **Rama actual**: `audit/o1-integridad`
+- **Fase actual**: Fase 2 de Auditoría Integral (Oleadas de Corrección).
+- **Último hito superado**: **Oleada O1 (Integridad Estructural y Datos Base)** completada y verificada.
+- **Trabajo en curso**: Ninguno. Oleada O1 concluida con pipeline en verde y capturas registradas.
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-- **Auditoría independiente de 105.1**: Abrir una conversación nueva y ejecutar `/auditar-subtema 105.1`. (No avanzar a 105.2 ni validar sin `VALIDADO 105.1` explícito del usuario).
+- **Aprobación de la siguiente oleada**: Esperar aprobación explícita del usuario (`APROBADO O2`) para iniciar la Oleada O2 (Honestidad, Navegación y SEO Base: 404s en erratas/topic-detail/breadcrumbs, copy offline honesto, lang="es", metas).
 
-## Ronda 2 · Pasos de Herramientas (R0 - R7)
-| Paso | Descripción | Estado |
-|---|---|---|
-| R0 | Diagnóstico, línea base y tests pendientes | completado (Gate R0 OK) |
-| R1 | Extracción completa del PDF 102 | completado (Gate R1 OK) |
-| R2 | Herramientas de cobertura y validación | completado (Gate R2 OK) |
-| R3 | Enlaces tipo Wikipedia y referencias contextuales | completado (Gate R3 OK) |
-| R4 | Pestaña Practica lo aprendido | completado (Gate R4 OK) |
-| R5 | Flashcards masivas | completado (Gate R5 OK) |
-| R6 | Simulador examen 102 | completado (Gate R6 OK) |
-| R7 | Mapa mental interactivo y robusto | completado (Gate R7 OK) |
-
-## Subtema 105.1 · Auto-verificado (100% Cobertura)
-- **Unidades PDF**: 1606 / 1606 (1576 mapeadas, 30 omitidas con motivo en ledger, 0 sin cubrir).
-- **Tokens técnicos**: 2640 / 2640 cubiertos (100%), 2 exenciones justificadas por erratas tipográficas del manual (0.08% << 3% máx).
-- **Lección**: 20 diapositivas estructuradas con trazabilidad estricta y presupuestos de densidad respetados.
-- **Ejercicios oficiales**: 42 ejercicios guiados y exploratorios con sus respuestas íntegras en `content-src/exercises/105.1.yaml`.
-- **Laboratorio**: 5 misiones completas y verificadas en `content-src/labs/105.1.json`.
-- **Comandos y glosario**: `source`, `env`, `unset`, `unalias`, `shopt`, `export`, `set` y 8 términos de glosario oficiales.
-- **Preguntas**: 12 preguntas oficiales en pool verificado para 105.1.
-- **Flashcards**: 20 flashcards específicas en `content-src/flashcards-extra.yaml`.
-- **Informe HTML**: generado en `docs/agent/cobertura/105.1.html`.
-- **Pipeline maestro**: `npm run verify` verde (10/10 etapas, 98 E2E, 377 Karma + 46 Vitest).
+## Oleada O1 · Logros Verificados
+- **100% IDs únicos de diapositivas**: 771/771 diapositivas con identificadores y `slideNumber` correlativos 1..N (resuelto en 108.3–110.3).
+- **100% IDs únicos de preguntas**: 240/240 preguntas con namespace canónico (`q-101-X` a `q-110-X`), eliminadas 27 colisiones con Tema 102.
+- **Flashcards y persistencia**: `BackupService` fusiona bajo `data.progress` (fin al `TypeError` por `data.cards`); nuevo `PersistedStore.reloadAll()` para refresco reactivo en memoria sin requerir F5.
+- **Comandos oficiales íntegros**: 186 banderas técnicas recuperadas en `commands.yaml`, eliminados todos los flags vacíos o con `-`.
+- **Validaciones automáticas en CI**: `build-content` falla de inmediato ante diapositivas/preguntas con IDs duplicados o banderas vacías.
+- **Pipeline maestro**: `npm run verify` verde (10/10 etapas, 98 E2E, 390 Karma + 47 Vitest).
+- **Capturas visuales**: generadas en `docs/agent/auditorias/web-2026-11-03/capturas/o1-after/`.
 
 ## Comandos útiles
-- `npm run verify:coverage -- 105.1`: evalúa las 10 reglas de cobertura del subtema 105.1.
-- `npm run report:coverage -- 105.1`: genera informe HTML autónomo con lista de verificación.
-- `npm run progress:r2`: recalcula y actualiza la tabla de cobertura en `PROGRESO_R2.md`.
-- `npm run verify`: pipeline completo de 10 etapas en verde (98 E2E specs + 46 Vitest specs + 377 Karma specs).
+- `npm run verify`: pipeline completo de 10 etapas en verde (98 E2E specs + 47 Vitest specs + 390 Karma specs).
+- `npm run build:content`: compila y valida la integridad estricta del currículo y sus recursos.
+- `npm run preview`: arranca el servidor local de previsualización estática en `http://localhost:4200`.

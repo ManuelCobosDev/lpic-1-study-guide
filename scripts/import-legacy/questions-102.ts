@@ -120,7 +120,7 @@ export function import102Questions(
 
   for (const leg of raw102) {
     const topicId = String(leg.tema);
-    const qId = `q-102-${leg.id}`;
+    const qId = `q-${topicId}-${leg.id}`;
     const subtopicId = classify102QuestionSubtopic(leg);
 
     bySubtopic[subtopicId] = (bySubtopic[subtopicId] ?? 0) + 1;

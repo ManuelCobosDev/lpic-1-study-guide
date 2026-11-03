@@ -94,7 +94,7 @@ function parseDuracion(duracion?: string): number {
 }
 
 function convertSlide(leg: LegacySlide, subtopicId: string, index: number): Slide {
-  const slideNum = typeof leg.id === 'number' ? leg.id : (parseInt(String(leg.id), 10) || (index + 1));
+  const slideNum = index + 1;
   const blocks: Block[] = [];
 
   // Heading

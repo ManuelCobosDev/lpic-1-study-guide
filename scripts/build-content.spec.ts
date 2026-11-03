@@ -79,5 +79,43 @@ subtopics: []
     exitSpy.mockRestore();
     errorSpy.mockRestore();
   });
+
+  it('debe fallar (process.exit) si hay comandos con flags vacios o guion solitario', () => {
+    // Clonamos curriculum basico valido
+    fs.cpSync(path.resolve(process.cwd(), 'content-src/curriculum.yaml'), path.join(tmpSrc, 'curriculum.yaml'));
+
+    // Escribimos un commands.yaml con flag "-"
+    const badCommands = `
+- id: "test-cmd"
+  name: "test-cmd"
+  synopsis: "test-cmd [flags]"
+  description: "Comando de prueba"
+  category: "Tema 101"
+  subtopicIds: ["101.1"]
+  example: "test-cmd"
+  flags:
+    - flag: "-"
+      description: "Flag invalido"
+`;
+    fs.writeFileSync(path.join(tmpSrc, 'commands.yaml'), badCommands, 'utf-8');
+
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {
+      throw new Error('PROCESS_EXIT_CALLED');
+    }) as unknown as (code?: string | number | null | undefined) => never);
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    expect(() => {
+      buildContent({
+        contentSrcDir: tmpSrc,
+        outputDir: tmpOut
+      });
+    }).toThrow('PROCESS_EXIT_CALLED');
+
+    expect(exitSpy).toHaveBeenCalledWith(1);
+    expect(errorSpy).toHaveBeenCalled();
+
+    exitSpy.mockRestore();
+    errorSpy.mockRestore();
+  });
 });
 
