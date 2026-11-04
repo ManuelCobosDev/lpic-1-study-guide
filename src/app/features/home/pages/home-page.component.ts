@@ -64,9 +64,9 @@ interface FaqItem {
               <app-button
                 variant="secondary"
                 size="lg"
-                routerLink="/simulador"
+                routerLink="/temario"
               >
-                Hacer un simulacro
+                Explorar temario
               </app-button>
             </div>
           </div>
@@ -129,7 +129,7 @@ interface FaqItem {
     <section class="metrics-section" aria-label="Métricas del curso">
       <app-container>
         <div class="metrics-grid">
-          <a routerLink="/temario" class="metric-card">
+          <a [routerLink]="primaryCtaLink()" class="metric-card" title="Ir a la lección actual">
             <span class="metric-number font-mono">{{ totalSlides() }}</span>
             <span class="metric-label">Diapositivas</span>
           </a>
@@ -237,36 +237,38 @@ interface FaqItem {
           </app-card>
 
           <!-- Examen 102 -->
-          <div class="exam-card-planned">
-            <div class="flex items-center justify-between mb-4">
-              <app-badge variant="neutral">Examen 102-500</app-badge>
-              <span class="text-xs font-semibold text-[var(--text-subtle)]">Próximamente</span>
-            </div>
-            <h3 class="text-xl font-bold mb-2 text-[var(--text)]">LPIC-1 Exam 102</h3>
-            <p class="text-sm text-[var(--text-muted)] mb-6">
-              Shells y scripts, interfaces de usuario, tareas administrativas, servicios del sistema, fundamentos de redes y seguridad.
-            </p>
+          <app-card>
+            <div class="exam-card-inner-102">
+              <div class="flex items-center justify-between mb-4">
+                <app-badge variant="neutral">Examen 102-500</app-badge>
+                <span class="text-xs font-semibold text-[var(--primary-text)]">Disponible</span>
+              </div>
+              <h3 class="text-xl font-bold mb-2">LPIC-1 Exam 102</h3>
+              <p class="text-sm text-[var(--text-muted)] mb-6">
+                Shells y scripts, interfaces de usuario, tareas administrativas, servicios del sistema, fundamentos de redes y seguridad.
+              </p>
 
-            <div class="exam-meta-row mb-6">
-              <div>
-                <span class="text-xs text-[var(--text-muted)] block">Peso oficial</span>
-                <span class="font-mono font-bold text-sm">60 / 60</span>
+              <div class="exam-meta-row mb-6">
+                <div>
+                  <span class="text-xs text-[var(--text-muted)] block">Peso oficial</span>
+                  <span class="font-mono font-bold text-sm">60 / 60</span>
+                </div>
+                <div>
+                  <span class="text-xs text-[var(--text-muted)] block">Temas</span>
+                  <span class="font-mono font-bold text-sm">6 temas (105–110)</span>
+                </div>
+                <div>
+                  <span class="text-xs text-[var(--text-muted)] block">Subtemas</span>
+                  <span class="font-mono font-bold text-sm">19 subtemas</span>
+                </div>
               </div>
-              <div>
-                <span class="text-xs text-[var(--text-muted)] block">Temas</span>
-                <span class="font-mono font-bold text-sm">6 temas (105–110)</span>
-              </div>
-              <div>
-                <span class="text-xs text-[var(--text-muted)] block">Subtemas</span>
-                <span class="font-mono font-bold text-sm">19 subtemas</span>
-              </div>
-            </div>
 
-            <div class="mt-auto pt-4 border-t border-[var(--border)] flex items-center justify-between">
-              <span class="text-xs text-[var(--text-muted)] font-mono">Planificado para Fase 11</span>
-              <app-button variant="secondary" size="md" [disabled]="true">Próximamente</app-button>
+              <div class="mt-auto pt-4 border-t border-[var(--border)] flex items-center justify-between">
+                <span class="text-xs text-[var(--text-muted)] font-mono">Progreso: {{ exam102Progress() }}%</span>
+                <app-button variant="secondary" size="md" routerLink="/temario/102">Ver temario →</app-button>
+              </div>
             </div>
-          </div>
+          </app-card>
         </div>
       </app-container>
     </section>
@@ -413,10 +415,9 @@ interface FaqItem {
           <div class="sim-chips-row">
             <span class="text-xs text-[var(--text-muted)]">Entrenar por tema específico:</span>
             <div class="flex flex-wrap gap-2">
-              <app-chip [routerLink]="['/simulador/practica']" [queryParams]="{ tema: '101' }">Tema 101</app-chip>
-              <app-chip [routerLink]="['/simulador/practica']" [queryParams]="{ tema: '102' }">Tema 102</app-chip>
-              <app-chip [routerLink]="['/simulador/practica']" [queryParams]="{ tema: '103' }">Tema 103</app-chip>
-              <app-chip [routerLink]="['/simulador/practica']" [queryParams]="{ tema: '104' }">Tema 104</app-chip>
+              @for (t of topics(); track t.id) {
+                <app-chip [routerLink]="['/simulador/practica']" [queryParams]="{ tema: t.id }">Tema {{ t.id }}</app-chip>
+              }
             </div>
           </div>
         </div>
@@ -745,7 +746,8 @@ interface FaqItem {
       }
     }
 
-    .exam-card-inner {
+    .exam-card-inner,
+    .exam-card-inner-102 {
       display: flex;
       flex-direction: column;
       height: 100%;
@@ -974,7 +976,7 @@ export class HomePageComponent implements OnInit {
     {
       id: 'faq3',
       question: '¿Puedo estudiar sin conexión a Internet (offline)?',
-      answer: 'Sí. Una vez cargada la aplicación, todos los contenidos, lecciones teóricas, comandos y preguntas quedan en caché en el navegador para permitir el estudio completo sin conexión.'
+      answer: 'El progreso, las respuestas y las notas se guardan de forma local en tu navegador con total privacidad sin necesidad de cuenta. La aplicación se ejecuta en el cliente, pero requiere conexión a Internet para descargar las lecciones, laboratorios y preguntas conforme los vas explorando.'
     },
     {
       id: 'faq4',
@@ -1031,6 +1033,8 @@ export class HomePageComponent implements OnInit {
     }
     return '/estudiar/101.1';
   });
+
+  readonly topics = computed(() => this.manifest()?.topics ?? []);
 
   // Métricas dinámicas calculadas desde el manifiesto
   readonly totalSlides = computed(() => {

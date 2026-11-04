@@ -153,5 +153,79 @@ test.describe('Gate 12: Auditoría Integral, Crawler de Rutas, Rendimiento y Acc
     const stubs = page.locator('.stub-card, .not-implemented-stub');
     await expect(stubs).toHaveCount(0);
   });
+
+  test('Oleada O2: Navegación, Enlaces, Migas de Pan, SEO y robots/sitemap sin 404s', async ({ page }) => {
+    test.setTimeout(60000);
+
+    // 1. Verificación SEO index.html
+    await page.goto('/');
+    const htmlLang = await page.getAttribute('html', 'lang');
+    expect(htmlLang, 'index.html debe tener lang="es"').toBe('es');
+
+    const metaDesc = await page.getAttribute('meta[name="description"]', 'content');
+    expect(metaDesc, 'meta description debe existir y estar en español').toBeTruthy();
+    expect(metaDesc).toContain('LPIC-1');
+
+    const ogTitle = await page.getAttribute('meta[property="og:title"]', 'content');
+    expect(ogTitle).toContain('LPIC-1');
+
+    // 2. Verificación Fe de Erratas (enlace corregido a /estudiar/:id, no /leccion/:id)
+    await page.goto('/erratas');
+    await page.waitForSelector('.subtopic-link');
+    const firstErrataLink = page.locator('.subtopic-link').first();
+    const href = await firstErrataLink.getAttribute('href');
+    expect(href, 'El enlace de erratas debe apuntar a /estudiar/...').toMatch(/^\/estudiar\//);
+    await firstErrataLink.click();
+    await page.waitForURL(/\/estudiar\//);
+    await expect(page.locator('app-not-found-page')).toHaveCount(0);
+
+    // 3. Verificación Topic Detail (Misión Integradora apunta a un lab existente)
+    await page.goto('/temario/101/101');
+    const globalLabBtn = page.locator('app-button', { hasText: 'Iniciar misión integradora' });
+    await expect(globalLabBtn).toBeVisible();
+    await globalLabBtn.click();
+    await page.waitForURL(/\/laboratorios\/lab-101/);
+    await expect(page.locator('app-not-found-page')).toHaveCount(0);
+    await expect(page.locator('.lab-error, app-callout[variant="error"]')).toHaveCount(0);
+
+    // 4. Verificación Migas de Pan en /estudiar/:id (el segmento Temario no lleva a 404)
+    await page.goto('/estudiar/105.1');
+    await page.waitForSelector('app-breadcrumbs');
+    const temarioCrumb = page.locator('app-breadcrumbs a', { hasText: 'Temario' });
+    await expect(temarioCrumb).toHaveAttribute('href', '/temario');
+    await temarioCrumb.click();
+    await page.waitForURL(/\/temario/);
+    await expect(page.locator('app-not-found-page')).toHaveCount(0);
+
+    // 5. Verificación de robots.txt y sitemap.xml
+    const robotsRes = await page.request.get('/robots.txt');
+    expect(robotsRes.status(), '/robots.txt debe responder 200').toBe(200);
+    const robotsText = await robotsRes.text();
+    expect(robotsText).toContain('Sitemap:');
+
+    const sitemapRes = await page.request.get('/sitemap.xml');
+    expect(sitemapRes.status(), '/sitemap.xml debe responder 200').toBe(200);
+    const sitemapXml = await sitemapRes.text();
+    expect(sitemapXml).toContain('https://lpic1.manuelcobos.dev/estudiar/105.1');
+
+    // 6. Verificación Footer: /guia-estilos no expuesto
+    await page.goto('/');
+    const footerStyleLink = page.locator('app-footer a[href="/guia-estilos"]');
+    await expect(footerStyleLink).toHaveCount(0);
+
+    // 7. Verificación Wiki-Popover: queryParams limpios sin %3F
+    await page.goto('/estudiar/105.1?vista=slides');
+    await page.waitForLoadState('networkidle');
+    const termLink = page.locator('app-term-link, a.term-link, [data-term-ref]').first();
+    if (await termLink.isVisible()) {
+      await termLink.hover();
+      const previewCard = page.locator('.term-link-card');
+      await expect(previewCard).toBeVisible({ timeout: 5000 });
+      const footerLink = previewCard.locator('a', { hasText: 'Ver en' });
+      const popoverHref = await footerLink.getAttribute('href');
+      expect(popoverHref, 'El enlace del popover no debe contener %3F ni %3D').not.toContain('%3F');
+      expect(popoverHref).toMatch(/^\/(comandos|glosario)\?q=/);
+    }
+  });
 });
 

@@ -21,7 +21,6 @@ import { ContainerComponent } from '../../ui/container/container.component';
             <a routerLink="/acerca-de" class="hover:text-[var(--text)] transition-colors">Acerca de</a>
             <a routerLink="/erratas" class="hover:text-[var(--text)] transition-colors">Erratas</a>
             <a routerLink="/ajustes" class="hover:text-[var(--text)] transition-colors">Ajustes</a>
-            <a routerLink="/guia-estilos" class="hover:text-[var(--text)] transition-colors">Guía de estilos</a>
             <span class="text-[var(--text-subtle)]">v0.1.0</span>
           </div>
         </div>

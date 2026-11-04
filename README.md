@@ -65,7 +65,7 @@
 
 ### 1. Clonar e Instalar
 ```bash
-git clone https://github.com/usuario/lpic-1-study-guide.git
+git clone https://github.com/ManuelCobosDev/lpic-1-study-guide.git
 cd lpic-1-study-guide
 npm install
 ```

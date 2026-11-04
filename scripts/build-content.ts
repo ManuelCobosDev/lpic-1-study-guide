@@ -428,6 +428,62 @@ export function generatePlaceholderQuestions(topicId: string): Question[] {
   ];
 }
 
+function generateSitemap(subtopics: Subtopic[], publicDir: string): void {
+  const baseUrl = 'https://lpic1.manuelcobos.dev';
+  const staticRoutes = [
+    { path: '', priority: '1.0', changefreq: 'daily' },
+    { path: '/temario', priority: '0.9', changefreq: 'weekly' },
+    { path: '/temario/101', priority: '0.8', changefreq: 'weekly' },
+    { path: '/temario/102', priority: '0.8', changefreq: 'weekly' },
+    { path: '/laboratorios', priority: '0.8', changefreq: 'weekly' },
+    { path: '/simulador', priority: '0.8', changefreq: 'weekly' },
+    { path: '/simulador/examen', priority: '0.7', changefreq: 'monthly' },
+    { path: '/simulador/practica', priority: '0.7', changefreq: 'monthly' },
+    { path: '/comandos', priority: '0.8', changefreq: 'weekly' },
+    { path: '/glosario', priority: '0.8', changefreq: 'weekly' },
+    { path: '/flashcards', priority: '0.7', changefreq: 'weekly' },
+    { path: '/mapa-mental', priority: '0.7', changefreq: 'monthly' },
+    { path: '/buscar', priority: '0.6', changefreq: 'monthly' },
+    { path: '/progreso', priority: '0.6', changefreq: 'monthly' },
+    { path: '/erratas', priority: '0.5', changefreq: 'weekly' },
+    { path: '/acerca-de', priority: '0.5', changefreq: 'monthly' }
+  ];
+
+  const lines: string[] = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+  ];
+
+  for (const r of staticRoutes) {
+    lines.push('  <url>');
+    lines.push(`    <loc>${baseUrl}${r.path}</loc>`);
+    lines.push(`    <changefreq>${r.changefreq}</changefreq>`);
+    lines.push(`    <priority>${r.priority}</priority>`);
+    lines.push('  </url>');
+  }
+
+  for (const s of subtopics) {
+    lines.push('  <url>');
+    lines.push(`    <loc>${baseUrl}/estudiar/${s.id}</loc>`);
+    lines.push('    <changefreq>weekly</changefreq>');
+    lines.push('    <priority>0.8</priority>');
+    lines.push('  </url>');
+
+    const labId = s.labId || `lab-${s.id.replace('.', '-')}`;
+    lines.push('  <url>');
+    lines.push(`    <loc>${baseUrl}/laboratorios/${labId}</loc>`);
+    lines.push('    <changefreq>weekly</changefreq>');
+    lines.push('    <priority>0.7</priority>');
+    lines.push('  </url>');
+  }
+
+  lines.push('</urlset>');
+  lines.push('');
+
+  const sitemapXmlPath = path.join(publicDir, 'sitemap.xml');
+  fs.writeFileSync(sitemapXmlPath, lines.join('\n'), 'utf-8');
+}
+
 export function buildContent(options: BuildContentOptions = {}): CurriculumManifest {
   const rootDir = process.cwd();
   const contentSrcDir = options.contentSrcDir ?? path.resolve(rootDir, 'content-src');
@@ -924,7 +980,11 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
       JSON.stringify(manifest, null, 2),
       'utf-8'
     );
-    console.log(`PASS: build-content genero con exito el manifiesto y ${enrichedSubtopics.length} lecciones en ${outputDir}.`);
+    const publicDir = path.resolve(rootDir, 'public');
+    if (fs.existsSync(publicDir)) {
+      generateSitemap(enrichedSubtopics, publicDir);
+    }
+    console.log(`PASS: build-content genero con exito el manifiesto, sitemap.xml y ${enrichedSubtopics.length} lecciones en ${outputDir}.`);
   } else {
     console.log('PASS: validate:content valido correctamente todo el contenido del curriculo.');
   }

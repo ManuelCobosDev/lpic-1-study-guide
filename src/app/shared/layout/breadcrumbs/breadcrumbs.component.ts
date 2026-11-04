@@ -4,10 +4,31 @@ import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { ContainerComponent } from '../../ui/container/container.component';
 
-interface Crumb {
+export interface Crumb {
   label: string;
   url: string;
 }
+
+const KNOWN_LABELS: Record<string, string> = {
+  temario: 'Temario',
+  estudiar: 'Temario',
+  laboratorios: 'Laboratorios',
+  simulador: 'Simulador',
+  examen: 'Simulacro',
+  practica: 'Práctica',
+  resultados: 'Resultados',
+  comandos: 'Comandos',
+  glosario: 'Glosario',
+  flashcards: 'Flashcards',
+  'mapa-mental': 'Mapa mental',
+  buscar: 'Búsqueda',
+  progreso: 'Progreso',
+  erratas: 'Fe de erratas',
+  ajustes: 'Ajustes',
+  'acerca-de': 'Acerca de',
+  'guia-estilos': 'Guía de estilos',
+  imprimir: 'Imprimir'
+};
 
 @Component({
   selector: 'app-breadcrumbs',
@@ -16,13 +37,16 @@ interface Crumb {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (crumbs().length > 1) {
-      <nav aria-label="Miga de pan" class="py-2.5 border-b border-[var(--border)] bg-[var(--surface-muted)]/50">
+      <nav aria-label="Migas de pan" class="w-full border-b border-[var(--border)] bg-[var(--surface-muted)] py-2 text-xs">
         <app-container>
-          <ol class="flex items-center gap-1.5 text-xs text-[var(--text-muted)] flex-wrap">
-            @for (crumb of crumbs(); track crumb.url; let isLast = $last) {
-              <li class="flex items-center gap-1.5">
-                @if (!isLast) {
-                  <a [routerLink]="crumb.url" class="hover:text-[var(--text)] transition-colors">
+          <ol class="flex items-center gap-2 flex-wrap">
+            @for (crumb of crumbs(); track crumb.url; let last = $last) {
+              <li class="flex items-center gap-2">
+                @if (!last) {
+                  <a
+                    [routerLink]="crumb.url"
+                    class="text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+                  >
                     {{ crumb.label }}
                   </a>
                   <span class="text-[var(--text-subtle)]" aria-hidden="true">/</span>
@@ -58,16 +82,55 @@ export class BreadcrumbsComponent {
     const result: Crumb[] = [{ label: 'Inicio', url: '/' }];
 
     let accUrl = '';
-    for (const segment of segments) {
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
+      if (!segment) {
+        continue;
+      }
       accUrl += `/${segment}`;
-      const capitalized = segment.charAt(0).toUpperCase() + segment.slice(1);
+
+      // Si es el segmento virtual 'estudiar', redirigir el enlace de la miga a '/temario'
+      const targetUrl = segment === 'estudiar' ? '/temario' : accUrl;
+      const label = this.formatSegmentLabel(segment, segments, i);
+
       result.push({
-        label: decodeURIComponent(capitalized),
-        url: accUrl
+        label,
+        url: targetUrl
       });
     }
 
     return result;
   });
-}
 
+  private formatSegmentLabel(segment: string, allSegments: string[], index: number): string {
+    const lower = segment.toLowerCase();
+    if (KNOWN_LABELS[lower]) {
+      return KNOWN_LABELS[lower];
+    }
+
+    // Caso de laboratorios con slug: 'lab-101-1' -> 'Lab 101.1'
+    if (lower.startsWith('lab-')) {
+      const rest = segment.slice(4).replace('-', '.');
+      return `Lab ${rest}`;
+    }
+
+    // Subtemas con punto: '105.1' -> 'Subtema 105.1'
+    if (/^\d+\.\d+$/.test(segment)) {
+      return `Subtema ${segment}`;
+    }
+
+    // Segmentos numéricos en temario: /temario/101 -> 'Examen 101', /temario/101/101 -> 'Tema 101'
+    if (/^\d{3}$/.test(segment)) {
+      if (index === 1 && allSegments[0] === 'temario') {
+        return `Examen ${segment}`;
+      }
+      if (index === 2 && allSegments[0] === 'temario') {
+        return `Tema ${segment}`;
+      }
+    }
+
+    // Formateo por defecto: reemplazo de guiones por espacios y capitalización inicial
+    const clean = decodeURIComponent(segment).replace(/-/g, ' ');
+    return clean.charAt(0).toUpperCase() + clean.slice(1);
+  }
+}

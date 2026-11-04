@@ -7,7 +7,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/home/pages/home-page.component').then((m) => m.HomePageComponent),
     title: 'LPIC-1 Study Guide · Aula Virtual',
-    data: { title: 'Inicio · LPIC-1 Study Guide', breadcrumb: 'Inicio', phase: 'Fase 4' }
+    data: { title: 'Inicio · LPIC-1 Study Guide', breadcrumb: 'Inicio' }
   },
   {
     path: 'temario',
@@ -19,14 +19,14 @@ export const routes: Routes = [
             (m) => m.CurriculumPageComponent
           ),
         title: 'Temario Oficial LPIC-1',
-        data: { title: 'Temario LPIC-1', breadcrumb: 'Temario', phase: 'Fase 4' }
+        data: { title: 'Temario LPIC-1', breadcrumb: 'Temario' }
       },
       {
         path: ':examen',
         loadComponent: () =>
           import('./features/curriculum/pages/exam-page.component').then((m) => m.ExamPageComponent),
         title: 'Examen LPIC-1',
-        data: { title: 'Examen', breadcrumb: 'Examen', phase: 'Fase 4' }
+        data: { title: 'Examen', breadcrumb: 'Examen' }
       },
       {
         path: ':examen/:tema',
@@ -35,9 +35,14 @@ export const routes: Routes = [
             (m) => m.TopicDetailPageComponent
           ),
         title: 'Tema de Estudio',
-        data: { title: 'Tema', breadcrumb: 'Tema', phase: 'Fase 4' }
+        data: { title: 'Tema', breadcrumb: 'Tema' }
       }
     ]
+  },
+  {
+    path: 'estudiar',
+    redirectTo: 'temario',
+    pathMatch: 'full'
   },
   {
     path: 'estudiar/:subtema',
@@ -49,7 +54,7 @@ export const routes: Routes = [
             (m) => m.LessonPageComponent
           ),
         title: 'Estudiar Subtema',
-        data: { title: 'Estudiar', breadcrumb: 'Estudiar', phase: 'Fase 5' }
+        data: { title: 'Estudiar', breadcrumb: 'Estudiar' }
       },
       {
         path: 'imprimir',
@@ -58,7 +63,7 @@ export const routes: Routes = [
             (m) => m.LessonPrintPageComponent
           ),
         title: 'Imprimir Lección / PDF',
-        data: { title: 'Imprimir', breadcrumb: 'Imprimir', phase: 'Fase 5' }
+        data: { title: 'Imprimir', breadcrumb: 'Imprimir' }
       }
     ]
   },
@@ -72,7 +77,7 @@ export const routes: Routes = [
             (m) => m.LabsPageComponent
           ),
         title: 'Laboratorios y Prácticas LPIC-1',
-        data: { title: 'Laboratorios', breadcrumb: 'Laboratorios', phase: 'Fase 7' }
+        data: { title: 'Laboratorios', breadcrumb: 'Laboratorios' }
       },
       {
         path: ':id',
@@ -81,7 +86,7 @@ export const routes: Routes = [
             (m) => m.LabDetailPageComponent
           ),
         title: 'Práctica de Laboratorio',
-        data: { title: 'Práctica', breadcrumb: 'Práctica', phase: 'Fase 7' }
+        data: { title: 'Práctica', breadcrumb: 'Práctica' }
       }
     ]
   },
@@ -95,7 +100,7 @@ export const routes: Routes = [
             (m) => m.SimulatorHubPageComponent
           ),
         title: 'Simulador de Examen LPIC-1',
-        data: { title: 'Simulador', breadcrumb: 'Simulador', phase: 'Fase 8' }
+        data: { title: 'Simulador', breadcrumb: 'Simulador' }
       },
       {
         path: 'examen',
@@ -105,7 +110,7 @@ export const routes: Routes = [
           ),
         canActivate: [canStartExamGuard],
         title: 'Modo Simulacro Real',
-        data: { title: 'Simulacro', breadcrumb: 'Simulacro', phase: 'Fase 8' }
+        data: { title: 'Simulacro', breadcrumb: 'Simulacro' }
       },
       {
         path: 'practica',
@@ -114,7 +119,7 @@ export const routes: Routes = [
             (m) => m.SimulatorPracticePageComponent
           ),
         title: 'Modo Práctica Guiada',
-        data: { title: 'Práctica', breadcrumb: 'Práctica', phase: 'Fase 8' }
+        data: { title: 'Práctica', breadcrumb: 'Práctica' }
       },
       {
         path: 'resultados',
@@ -123,7 +128,7 @@ export const routes: Routes = [
             (m) => m.SimulatorResultsPageComponent
           ),
         title: 'Resultados del Examen',
-        data: { title: 'Resultados', breadcrumb: 'Resultados', phase: 'Fase 8' }
+        data: { title: 'Resultados', breadcrumb: 'Resultados' }
       }
     ]
   },
@@ -134,7 +139,7 @@ export const routes: Routes = [
         (m) => m.CommandsPageComponent
       ),
     title: 'Comandos Linux LPIC-1',
-    data: { title: 'Comandos', breadcrumb: 'Comandos', phase: 'Fase 9' }
+    data: { title: 'Comandos', breadcrumb: 'Comandos' }
   },
   {
     path: 'glosario',
@@ -143,7 +148,7 @@ export const routes: Routes = [
         (m) => m.GlossaryPageComponent
       ),
     title: 'Glosario de Términos',
-    data: { title: 'Glosario', breadcrumb: 'Glosario', phase: 'Fase 9' }
+    data: { title: 'Glosario', breadcrumb: 'Glosario' }
   },
   {
     path: 'flashcards',
@@ -152,7 +157,7 @@ export const routes: Routes = [
         (m) => m.FlashcardsPageComponent
       ),
     title: 'Flashcards de Repaso (Leitner)',
-    data: { title: 'Flashcards', breadcrumb: 'Flashcards', phase: 'Fase 9' }
+    data: { title: 'Flashcards', breadcrumb: 'Flashcards' }
   },
   {
     path: 'mapa-mental',
@@ -161,7 +166,7 @@ export const routes: Routes = [
         (m) => m.MindMapPageComponent
       ),
     title: 'Mapa Mental Interactivo',
-    data: { title: 'Mapa Mental', breadcrumb: 'Mapa Mental', phase: 'Fase 10' }
+    data: { title: 'Mapa Mental', breadcrumb: 'Mapa Mental' }
   },
   {
     path: 'buscar',
@@ -170,7 +175,7 @@ export const routes: Routes = [
         (m) => m.SearchPageComponent
       ),
     title: 'Buscador Global LPIC-1',
-    data: { title: 'Buscador', breadcrumb: 'Buscar', phase: 'Fase 6' }
+    data: { title: 'Buscador', breadcrumb: 'Buscar' }
   },
   {
     path: 'progreso',
@@ -179,7 +184,7 @@ export const routes: Routes = [
         (m) => m.ProgressPageComponent
       ),
     title: 'Progreso de Estudio',
-    data: { title: 'Progreso', breadcrumb: 'Progreso', phase: 'Fase 10' }
+    data: { title: 'Progreso', breadcrumb: 'Progreso' }
   },
   {
     path: 'erratas',
@@ -188,7 +193,7 @@ export const routes: Routes = [
         (m) => m.ErrataPageComponent
       ),
     title: 'Fe de Erratas',
-    data: { title: 'Erratas', breadcrumb: 'Erratas', phase: 'Fase 10' }
+    data: { title: 'Erratas', breadcrumb: 'Erratas' }
   },
   {
     path: 'ajustes',
@@ -197,7 +202,7 @@ export const routes: Routes = [
         (m) => m.SettingsPageComponent
       ),
     title: 'Ajustes y Copia de Seguridad',
-    data: { title: 'Ajustes', breadcrumb: 'Ajustes', phase: 'Fase 10' }
+    data: { title: 'Ajustes', breadcrumb: 'Ajustes' }
   },
   {
     path: 'acerca-de',
@@ -206,7 +211,7 @@ export const routes: Routes = [
         (m) => m.AboutPageComponent
       ),
     title: 'Acerca de LPIC-1 Study Guide',
-    data: { title: 'Acerca de', breadcrumb: 'Acerca de', phase: 'Fase 10' }
+    data: { title: 'Acerca de', breadcrumb: 'Acerca de' }
   },
   {
     path: 'guia-estilos',
@@ -215,7 +220,7 @@ export const routes: Routes = [
         (m) => m.StyleGuidePageComponent
       ),
     title: 'Guía de Estilos y Componentes · LPIC-1',
-    data: { title: 'Guía de Estilos', breadcrumb: 'Guía de Estilos', phase: 'Fase 3' }
+    data: { title: 'Guía de Estilos', breadcrumb: 'Guía de Estilos' }
   },
   {
     path: '**',
@@ -224,6 +229,6 @@ export const routes: Routes = [
         (m) => m.NotFoundPageComponent
       ),
     title: 'Página no encontrada (404)',
-    data: { title: '404 · Página no encontrada', breadcrumb: '404', phase: 'Fase 10' }
+    data: { title: '404 · Página no encontrada', breadcrumb: '404' }
   }
 ];

@@ -207,7 +207,7 @@ import { CurriculumTreeSidebarComponent } from '../../../shared/layout/curriculu
                       <app-button
                         variant="warning"
                         size="sm"
-                        [routerLink]="['/laboratorios', 'tema-' + topic.id]"
+                        [routerLink]="['/laboratorios', subtopicsWithLabs()[0]?.labId ?? ('lab-' + topic.id + '-1')]"
                       >
                         Iniciar misión integradora →
                       </app-button>

@@ -718,3 +718,37 @@
 - Archivos: src/app/core/state/persisted-store.ts, src/app/core/services/backup.service.ts, src/app/core/services/backup.service.spec.ts, scripts/build-content.ts, scripts/build-content.spec.ts, scripts/import-legacy/import-lessons.ts, scripts/import-legacy/import-commands-glossary.ts, scripts/import-legacy/questions-102.ts, content-src/commands.yaml, content-src/lessons/108.3.json a 110.3.json, content-src/questions/105.json a 110.json, README.md, docs/agent/CHANGELOG.md, docs/agent/STATUS.md.
 - Verificación: npm run typecheck (código 0), npm run build:content (código 0), npm test (390 specs Karma + 47 specs Vitest en verde), npm run verify (10/10 etapas en verde, 98 E2E).
 - Pendiente / deuda: Oleada O2 (Honestidad, Navegación y SEO Base: 404s en erratas/topic-detail/breadcrumbs, copy offline honesto, lang="es", metas).
+
+## C-0075 · 2026-11-04 · Auditoría Web · Oleada O2: Honestidad, Navegación y SEO Base
+- Qué: corrección integral de los 22 hallazgos de navegación, enlaces rotos, honestidad de copy y SEO base de la Oleada O2:
+  (1) Corrección de enlaces rotos y 404s (`A2-001`, `A2-002`, `A2-003`, `A2-013`):
+      - `errata-page.component.html`: enlace de subtema corregido de `['/leccion', id]` a `['/estudiar', id]`.
+      - `topic-detail-page.component.ts`: "Iniciar misión integradora" corregido de `['/laboratorios', 'tema-' + topic.id]` al primer laboratorio válido del tema (`subtopicsWithLabs()[0]?.labId ?? 'lab-' + topic.id + '-1'`), eliminando error 404/JSON.
+      - `app.routes.ts`: añadida redirección `{ path: 'estudiar', redirectTo: 'temario', pathMatch: 'full' }` para evitar 404 al navegar directamente a `/estudiar`.
+      - `errata-page.component.ts` y `README.md`: actualización del enlace de reporte en GitHub al repositorio real `https://github.com/ManuelCobosDev/lpic-1-study-guide`.
+  (2) Enlaces y Popover Wiki (`A2-004`):
+      - `wiki-ref.model.ts` y `wiki-ref.service.ts`: desacoplamiento de `targetPath` y `queryParams` (`{ q: term }`) para evitar el encodeo de `?` como `%3F` en los enlaces de "Ver en Comandos / Glosario".
+      - `wiki-popover.component.ts`: enlace enrutado con `[routerLink]="item.targetPath || item.link" [queryParams]="item.queryParams"`.
+  (3) Migas de pan legibles (`A2-003`, `A2-008`):
+      - `breadcrumbs.component.ts`: mapeo exhaustivo de slugs a etiquetas legibles en español (`KNOWN_LABELS`), formateo automático de identificadores (`lab-101-1` -> `Lab 101.1`, `105.1` -> `Subtema 105.1`), y reescritura del segmento virtual `estudiar` como enlace a `/temario` ("Temario"). Test unitario completo añadido en `breadcrumbs.component.spec.ts`.
+  (4) Retirada de jerga interna y honestidad en la Home (`A2-005`, `A2-006`, `A2-010`, `A6-007`, `A6-008`, `A7-001`):
+      - Eliminada la propiedad interna `phase: 'Fase N'` de las 23 rutas en `app.routes.ts`.
+      - Tarjeta de Examen 102 en la Home (`home-page.component.ts`): activada como tarjeta real interactiva con progreso dinámico y enlace al temario (`routerLink="/temario/102"`), retirando el texto obsoleto "Planificado para Fase 11". Eliminada jerga en `curriculum-card.component.ts` y `exam-page.component.ts`.
+      - Selector de simulador en la Home: ampliación de los chips temáticos para cubrir los 10 temas oficiales (101 a 110) en vez de solo 101-104.
+      - Home CTAs: botón secundario enlazado a `/temario` ("Explorar temario") y tarjeta de diapositivas enlazada a la acción primaria.
+      - Copy honesto de almacenamiento local: FAQ3 y Ajustes actualizados para explicar con claridad que los datos se guardan privadamente en el navegador (LocalStorage) y el contenido se descarga bajo demanda por red, sin prometer falsamente soporte offline completo PWA.
+  (5) Footer público (`A2-011`, `A1-012`):
+      - Retirado el enlace a `/guia-estilos` del pie de página público en `footer.component.ts`.
+  (6) SEO Base y Rastreo (`A7-002`, `A7-003`, `A7-004`):
+      - `src/index.html`: corregido atributo `lang="es"`; añadidos metadatos canónicos: `<meta name="description">`, Open Graph (`og:title`, `og:description`, `og:type`, `og:url`, `og:image`, `og:locale`), Twitter Cards (`twitter:card`, `twitter:title`, `twitter:description`). Cero colores hexadecimales literales (conforme con `check:tokens`).
+      - Creado `public/robots.txt` permitiendo rastreo general con directiva de Sitemap.
+      - `scripts/build-content.ts`: generación automática de `public/sitemap.xml` con todas las rutas fijas y los 42 subtopics oficiales (`/estudiar/:id`).
+  (7) Verificación y Capturas:
+      - Test E2E específico añadido en `e2e/fase-12.spec.ts` validando meta tags, lang="es", erratas -> estudiar, topic detail lab, breadcrumbs en estudio, robots.txt, sitemap.xml y footer.
+      - Pipeline completo `npm run verify` en verde (10/10 etapas, 99 tests Playwright E2E, 396 tests unitarios).
+      - Capturas visuales registradas en `docs/agent/auditorias/web-2026-11-03/capturas/o2-after/` (`01-home.png`, `02-erratas.png`, `03-tema-101.png`, `04-estudiar-105-1-breadcrumbs.png`).
+- Por qué: resolución de los hallazgos de Navegación, Honestidad y SEO aprobada por el usuario en Oleada O2 (`APROBADO O2`).
+- Archivos: src/index.html, src/app/app.routes.ts, src/app/core/models/wiki-ref.model.ts, src/app/core/services/wiki-ref.service.ts, src/app/shared/layout/breadcrumbs/breadcrumbs.component.ts, src/app/shared/layout/breadcrumbs/breadcrumbs.component.spec.ts, src/app/shared/layout/footer/footer.component.ts, src/app/shared/ui/wiki-popover/wiki-popover.component.ts, src/app/features/errata/pages/errata-page.component.html, src/app/features/errata/pages/errata-page.component.ts, src/app/features/curriculum/pages/topic-detail-page.component.ts, src/app/features/curriculum/pages/exam-page.component.ts, src/app/features/curriculum/components/curriculum-card/curriculum-card.component.ts, src/app/features/home/pages/home-page.component.ts, src/app/features/settings/pages/settings-page.component.html, scripts/build-content.ts, public/robots.txt, public/sitemap.xml, README.md, e2e/fase-12.spec.ts, docs/agent/auditorias/web-2026-11-03/backlog.md, docs/agent/CHANGELOG.md, docs/agent/STATUS.md.
+- Verificación: npm run verify (10/10 etapas en verde, 99 specs E2E, 396 unit tests), inspección visual R5 en docs/agent/auditorias/web-2026-11-03/capturas/o2-after/.
+- Pendiente / deuda: Aprobación y ejecución de la Oleada O3 (Visor de Lecciones y Sistema Visual: bloques HTML no renderizados, títulos duplicados en portadas, overflows 16:9, responsive cabecera 768px-1280px).
+
