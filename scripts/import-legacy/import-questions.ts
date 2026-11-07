@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import { TopicQuestionsSchema } from '../../src/app/core/schemas/index';
 import { Question } from '../../src/app/core/models/index';
 import { classify102QuestionSubtopic } from './questions-102';
+import { curate101Questions, curate102Questions } from './curate-questions';
 
 interface LegacyQuestion {
   id: number;
@@ -110,6 +111,24 @@ export function importAllQuestions(
     };
 
     byTopic[topicId]?.push(question);
+  }
+
+  // Curar pedagógicamente las preguntas de ambos exámenes
+  const all101Questions = [
+    ...(byTopic['101'] ?? []),
+    ...(byTopic['102'] ?? []),
+    ...(byTopic['103'] ?? []),
+    ...(byTopic['104'] ?? [])
+  ];
+  const curated101 = curate101Questions(all101Questions);
+  byTopic['101'] = curated101['101'] ?? [];
+  byTopic['102'] = curated101['102'] ?? [];
+  byTopic['103'] = curated101['103'] ?? [];
+  byTopic['104'] = curated101['104'] ?? [];
+
+  const curated102 = curate102Questions(byTopic);
+  for (const t of ['105', '106', '107', '108', '109', '110']) {
+    byTopic[t] = curated102[t] ?? [];
   }
 
   // Validar cada tema con TopicQuestionsSchema y guardar

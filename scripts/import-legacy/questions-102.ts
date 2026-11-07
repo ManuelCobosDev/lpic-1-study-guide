@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { TopicQuestionsSchema } from '../../src/app/core/schemas/index';
 import { Question } from '../../src/app/core/models/index';
+import { curate102Questions } from './curate-questions';
 
 export interface Legacy102Question {
   id: number;
@@ -186,6 +187,19 @@ export function import102Questions(
     questionsByTopic[topicId]?.push(question);
   }
 
+  // Curar pedagógicamente las preguntas del 102 (reubicación de preguntas y corrección de claves)
+  const curatedByTopic = curate102Questions(questionsByTopic);
+
+  // Recalcular desglose por subtema con los datos curados
+  for (const s of Object.keys(bySubtopic)) {
+    bySubtopic[s] = 0;
+  }
+  for (const topicId of Object.keys(curatedByTopic)) {
+    for (const q of curatedByTopic[topicId] ?? []) {
+      bySubtopic[q.subtopicId] = (bySubtopic[q.subtopicId] ?? 0) + 1;
+    }
+  }
+
   // Comprobar que los 19 subtemas tengan >= 1 pregunta
   const emptySubtopics = Object.keys(bySubtopic).filter((s) => (bySubtopic[s] ?? 0) === 0);
   if (emptySubtopics.length > 0) {
@@ -202,8 +216,8 @@ export function import102Questions(
   }
 
   const byTopic: Record<string, number> = {};
-  for (const topicId of Object.keys(questionsByTopic)) {
-    const questions = questionsByTopic[topicId] ?? [];
+  for (const topicId of Object.keys(curatedByTopic)) {
+    const questions = curatedByTopic[topicId] ?? [];
     byTopic[topicId] = questions.length;
 
     const topicData = { topicId, questions };
@@ -224,7 +238,7 @@ export function import102Questions(
     total: raw102.length,
     byTopic,
     bySubtopic,
-    questionsByTopic
+    questionsByTopic: curatedByTopic
   };
 }
 

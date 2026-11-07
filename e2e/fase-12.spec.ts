@@ -275,5 +275,45 @@ test.describe('Gate 12: Auditoría Integral, Crawler de Rutas, Rendimiento y Acc
       expect(drawerHref, 'El enlace debe apuntar a la ruta específica del tema').toMatch(/^\/temario\/101\/101/);
     }
   });
+
+  test('Oleada O4: Fidelidad LPI, Preguntas Clasificadas y Transparencia de Placeholders', async ({ page }) => {
+    test.setTimeout(60000);
+
+    // 1. Verificación de transparencia en lección esqueleto (108.3)
+    await page.goto('/estudiar/108.3');
+    await page.waitForLoadState('networkidle');
+    const skeletonBadge = page.locator('span:has-text("En preparación (Esqueleto)")');
+    await expect(skeletonBadge).toBeVisible({ timeout: 5000 });
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'o4-skeleton-lesson-108-3.png') });
+
+    // 2. Verificación de transparencia en laboratorio provisional (108.1)
+    await page.goto('/laboratorios/108.1');
+    await page.waitForLoadState('networkidle');
+    const labBanner = page.locator('.lab-placeholder-banner');
+    await expect(labBanner).toBeVisible({ timeout: 5000 });
+    await expect(labBanner).toContainText('Práctica en preparación');
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'o4-skeleton-lab-108-1.png') });
+
+    // 3. Verificación de badge provisional en listado de laboratorios
+    await page.goto('/laboratorios');
+    await page.waitForLoadState('networkidle');
+    const placeholderBadge = page.locator('span:has-text("En preparación")').first();
+    await expect(placeholderBadge).toBeVisible({ timeout: 5000 });
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'o4-labs-catalog-placeholders.png') });
+
+    // 4. Verificación de preguntas clasificadas en pestaña de práctica (101.2)
+    await page.goto('/estudiar/101.2');
+    await page.waitForLoadState('networkidle');
+    const practiceTabBtn = page.locator('button[role="tab"]:has-text("Practica lo aprendido")');
+    await practiceTabBtn.click();
+    const practiceTab = page.locator('app-practice-tab');
+    await expect(practiceTab).toBeVisible({ timeout: 5000 });
+    // Debe tener tarjeta de pregunta activa (no vacío)
+    const questionCard = practiceTab.locator('.question-card');
+    await expect(questionCard).toBeVisible({ timeout: 5000 });
+    const questionPrompt = practiceTab.locator('.question-prompt');
+    await expect(questionPrompt).not.toBeEmpty();
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'o4-practice-tab-101-2.png') });
+  });
 });
 

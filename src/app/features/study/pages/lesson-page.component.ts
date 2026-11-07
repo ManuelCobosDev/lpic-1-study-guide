@@ -84,7 +84,7 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
                 · ~{{ l.estimatedMinutes }} min
               </span>
               @if (l.placeholder) {
-                <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/30">
+                <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-[var(--warning-soft)] text-[var(--warning-text)] font-bold border border-[var(--warning)]">
                   En preparación (Esqueleto)
                 </span>
               }

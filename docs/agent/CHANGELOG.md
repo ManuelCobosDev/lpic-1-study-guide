@@ -787,3 +787,43 @@
 - Verificación: npm run verify (10/10 etapas en verde, 100 E2E tests, 441 unit tests), captura e inspección visual de 6 pantallas clave en `capturas/o3-after/`.
 - Pendiente / deuda: Aprobación y ejecución de la Oleada O4 (Exactitud Pedagógica y Fidelidad LPI: corrección de claves de preguntas invertidas, preguntas fill, honestidad de placeholders en temas 108-110).
 
+## C-0077 · 2026-11-07 · Auditoría Web · Oleada O4: Exactitud Pedagógica y Fidelidad LPI
+- Qué: resolución e implementación completa de los 18 hallazgos de fidelidad técnica y pedagógica LPI:
+  (1) Corrección de claves de respuesta invertidas o erróneas (`A5-001`):
+      - `q-103-82`: clave corregida a `['a', 'd']` (filtros avanzados).
+      - `q-103-32`: clave corregida a `['a', 'd']` (opciones grep/regex).
+      - `q-102-80`: clave corregida a `['c']` (`SIGTSTP` señal 20 generada por Ctrl+Z en terminal).
+      - `q-107-21`: clave corregida a `['e']`, reparada errata tipográfica ("timezone", "file").
+      - `q-109-8`: clave corregida a `['e']`, reparada errata tipográfica ("network", "working").
+      - `q-110-50`: clave corregida a `['c', 'd', 'e']` (múltiple selección en seguridad).
+      - `q-110-84`: clave corregida a `['e']`, reparada errata ("connections.").
+      - `q-110-85`: clave corregida a `['b', 'd']`, reparadas erratas ("must", "server.").
+  (2) Corrección y saneamiento de preguntas tipo fill (`A5-002`, `A8-004`):
+      - Limpieza sistemática de notas editoriales entre paréntesis en el array de respuestas aceptadas en todas las preguntas (`newaliases`, `/etc/yum.repos.d`, `/usr/local/bin`, `/proc/mounts`, `/etc/cups`, `server/pool`, `hostname`, `/etc/xinetd.d`).
+      - Eliminación del prefijo de prompt `$` en las opciones aceptadas.
+      - Para preguntas cuya respuesta es una ruta absoluta (`/`), admisión de variantes con y sin barra final (`/`).
+      - Actualizado motor de corrección `scoring.engine.ts` para normalizar diacríticos/tildes en respuestas escritas (`normalize('NFD').replace(/[\u0300-\u036f]/g, '')`), con tests unitarios correspondientes.
+  (3) Opciones corruptas por separación de tuberías (`A5-003`):
+      - `q-103-30`: restaurados operadores de redirección estándar `<` y `2>&1`.
+      - `q-103-37`: restaurada sintaxis con pipes `foo | tee /tmp/foodata`.
+      - `q-103-49`: eliminadas opciones duplicadas en expresiones regulares de grep.
+  (4) Reclasificación del banco de 120 preguntas del Examen 101 (`A5-006`, `A8-003`):
+      - Creado módulo `scripts/import-legacy/curate-questions.ts` que mapea las 120 preguntas de los temas 101-104 a sus 23 subtemas reales (101.1 a 104.7), distribuyendo entre 2 y 9 preguntas por subtema y habilitando la pestaña "Practica lo aprendido" en todas las lecciones del 101.
+      - Reubicadas las 5 preguntas traspapeladas del legacy catalogadas en tema 105 hacia sus temas reales: `q-107-25` (107.1), `q-108-72` (108.1), `q-109-104` (109.1), `q-107-106` (107.3), `q-107-107` (107.1).
+      - Integración de la curación en `import-questions.ts` y `questions-102.ts` garantizando idempotencia en `npm run import:legacy`.
+  (5) Transparencia y honestidad en lecciones y laboratorios esqueleto (`A4-002`, `A4-003`, `A5-010`, `S-02`):
+      - Marcadas con `placeholder: true` las 9 lecciones esqueleto (108.3 a 110.3) y los 11 laboratorios esquemáticos (108.1 a 110.3).
+      - Actualizado `scripts/build-content.ts` para contabilizar honestamente laboratorios reales vs placeholders en el manifiesto oficial.
+      - Eliminados ficheros residuales `public/content/labs/lab-103-9.json` y `lab-103-99.json`.
+      - Añadida insignia accesible `En preparación (Esqueleto)` en la cabecera de lecciones y `app-badge variant="warning"` (`En preparación`) en el catálogo de laboratorios.
+      - Añadido banner accesible `.lab-placeholder-banner` con token semántico `var(--warning)` en la vista detallada de laboratorios en preparación.
+  (6) Verificación visual, unitaria y E2E:
+      - Suites específicas ejecutadas con éxito: `a8-test-fill-questions.ts` (0 fallos en 33 preguntas), `a8-test-scoring.ts` (100 semillas de examen 101 y 102 en verde), `questions-102.spec.ts` (3/3 passed).
+      - Test Playwright añadido en `e2e/fase-12.spec.ts` validando insignia de lección esqueleto, banner de laboratorio provisional, badge en catálogo y preguntas activas en pestaña de práctica de subtemas del 101.
+      - Generadas y verificadas 4 capturas visuales: `o4-skeleton-lesson-108-3.png`, `o4-skeleton-lab-108-1.png`, `o4-labs-catalog-placeholders.png`, `o4-practice-tab-101-2.png`.
+      - Pipeline completo `npm run verify` al 100% en verde (10/10 etapas, 101 tests E2E Playwright, 442 unit tests).
+- Por qué: cumplimiento del alcance de la Oleada O4 aprobado por el usuario con `APROBADO O4`.
+- Archivos: content-src/questions/*.json, content-src/lessons/108.3.json-110.3.json, content-src/labs/108.1.json-110.3.json, scripts/import-legacy/curate-questions.ts, scripts/import-legacy/import-questions.ts, scripts/import-legacy/questions-102.ts, scripts/build-content.ts, src/app/core/engines/scoring/scoring.engine.ts, src/app/core/engines/scoring/scoring.engine.spec.ts, src/app/features/labs/pages/lab-detail-page.component.html, src/app/features/labs/pages/labs-page.component.html, src/app/features/study/pages/lesson-page.component.ts, e2e/fase-12.spec.ts, e2e/screenshots/fase-12/o4-*.png, docs/agent/auditorias/web-2026-11-03/backlog.md, docs/agent/CHANGELOG.md, docs/agent/STATUS.md.
+- Verificación: npm run verify (10/10 etapas en verde, 101 E2E tests, 442 unit tests), scripts específicos de scoring y fill-in questions en verde, inspección visual de capturas en e2e/screenshots/fase-12/.
+- Pendiente / deuda: Aprobación y ejecución de la Oleada O5 (Accesibilidad, Herramientas y Rendimiento: WCAG 2.2 AA en badges/modales, focus trap, chunking diferido de flashcards, grupo '#' en glosario).
+

@@ -819,7 +819,11 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
         process.exit(1);
       }
       lab = parsedLab.data;
-      totalLabsReal++;
+      if (lab.placeholder) {
+        totalLabsPlaceholder++;
+      } else {
+        totalLabsReal++;
+      }
     } else if (fs.existsSync(jsonLabPath)) {
       const rawLab = JSON.parse(fs.readFileSync(jsonLabPath, 'utf-8'));
       const parsedLab = LabSchema.safeParse(rawLab);
@@ -828,7 +832,11 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
         process.exit(1);
       }
       lab = parsedLab.data;
-      totalLabsReal++;
+      if (lab.placeholder) {
+        totalLabsPlaceholder++;
+      } else {
+        totalLabsReal++;
+      }
     } else {
       lab = generatePlaceholderLab(subtopic.id, subtopic.title);
       totalLabsPlaceholder++;

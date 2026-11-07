@@ -35,7 +35,12 @@ export interface ExamScoreResult {
  */
 export function normalizeAnswer(text?: string | null): string {
   if (!text) return '';
-  return text.toLowerCase().trim().replace(/\s+/g, ' ');
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ');
 }
 
 /**
