@@ -227,5 +227,53 @@ test.describe('Gate 12: Auditoría Integral, Crawler de Rutas, Rendimiento y Acc
       expect(popoverHref).toMatch(/^\/(comandos|glosario)\?q=/);
     }
   });
+
+  test('Oleada O3: Visor de Lecciones, Diagramas HTML, Sin Títulos Duplicados y Cabecera', async ({ page }) => {
+    test.setTimeout(60000);
+
+    // 1. Verificación Bloques HTML visibles (A6-001, A1-001)
+    await page.goto('/estudiar/101.1?slide=2&vista=slides');
+    await page.waitForLoadState('networkidle');
+    const htmlBlock = page.locator('app-html-block');
+    await expect(htmlBlock).toBeVisible({ timeout: 5000 });
+    await expect(htmlBlock).toContainText('BIOS / UEFI');
+
+    // 2. Verificación Portada sin títulos duplicados (A3-003, A1-002, S-04)
+    await page.goto('/estudiar/101.1?slide=1&vista=slides');
+    await page.waitForLoadState('networkidle');
+    const headerTitle = page.locator('.slide-header h1');
+    await expect(headerTitle).toBeVisible();
+    // En el área de bloques no debe haber un app-heading-block repitiendo el título
+    const duplicateHeadings = page.locator('.slide-blocks-area app-heading-block');
+    await expect(duplicateHeadings).toHaveCount(0);
+
+    // 3. Verificación de bloques de lista con Markdown y wikilinks procesados (A1-006)
+    // En slide 2 de 101.1 hay listas con conceptos destacados
+    await page.goto('/estudiar/101.1?slide=2&vista=slides');
+    await page.waitForLoadState('networkidle');
+    const listBlock = page.locator('app-list-block');
+    if (await listBlock.count() > 0) {
+      const listHtml = await listBlock.first().innerHTML();
+      expect(listHtml, 'No debe haber asteriscos crudos en los elementos de lista').not.toContain('**');
+    }
+
+    // 4. Verificación Cabecera responsive (A1-004, A2-009, A2-012)
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    const brandText = page.locator('app-header a span').first();
+    await expect(brandText).toContainText('LPIC-1 Study Guide');
+
+    // 5. Verificación Cajón Mapa Mental enlaces específicos a temas (A2-014)
+    await page.goto('/mapa-mental');
+    await page.waitForLoadState('networkidle');
+    const topicNode = page.locator('svg.mind-map-svg g.tree-node[aria-label*="Tema 101"]').first();
+    if (await topicNode.isVisible()) {
+      await topicNode.click();
+      const drawerBtn = page.locator('[data-testid="drawer-action-btn"]');
+      await expect(drawerBtn).toBeVisible({ timeout: 5000 });
+      const drawerHref = await drawerBtn.getAttribute('href');
+      expect(drawerHref, 'El enlace debe apuntar a la ruta específica del tema').toMatch(/^\/temario\/101\/101/);
+    }
+  });
 });
 

@@ -9,6 +9,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ContentService } from '../../../core/services/content.service';
 import { Lesson } from '../../../core/models/lesson.model';
+import { Slide, getVisibleSlideBlocks } from '../../../core/models/slide.model';
 import { BlockRendererComponent } from '../../../shared/content-blocks/block-renderer.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 
@@ -159,7 +160,7 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
 
               <!-- Bloques de contenido -->
               <div class="space-y-4">
-                @for (block of slide.blocks; track $index) {
+                @for (block of getVisibleBlocks(slide); track $index) {
                   <app-block-renderer [block]="block" />
                 }
               </div>
@@ -189,12 +190,13 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
       display: block;
       width: 100%;
       min-height: 100vh;
-      background: var(--background);
+      background: var(--bg-app);
     }
 
     @media print {
       :host {
-        background: transparent !important;
+        background: var(--color-white) !important;
+        color: var(--color-slate-900) !important;
       }
       .no-print {
         display: none !important;
@@ -205,6 +207,14 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
         margin-bottom: 0 !important;
         padding-bottom: 0 !important;
         border-bottom: none !important;
+      }
+      :host, article, h1, h2, h3, p, span, div, li, td, th {
+        color: var(--color-slate-900) !important;
+        text-shadow: none !important;
+      }
+      .instructor-note {
+        background: var(--color-slate-50) !important;
+        border-color: var(--color-slate-300) !important;
       }
     }
   `],
@@ -222,6 +232,10 @@ export class LessonPrintPageComponent implements OnInit {
   readonly lesson = signal<Lesson | null>(null);
   readonly loading = signal<boolean>(true);
   readonly error = signal<string | null>(null);
+
+  getVisibleBlocks(slide: Slide) {
+    return getVisibleSlideBlocks(slide);
+  }
 
   ngOnInit(): void {
     const params = this.route.snapshot.params;

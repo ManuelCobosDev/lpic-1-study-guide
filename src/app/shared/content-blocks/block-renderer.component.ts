@@ -11,6 +11,8 @@ import { TableBlockComponent } from './table-block.component';
 import { DiagramViewComponent } from '../diagram/diagram-view.component';
 import { QuizInlineBlockComponent } from './quiz-inline-block.component';
 import { SlideHtmlBlockComponent } from './slide-html-block.component';
+import { HtmlBlockComponent } from './html-block.component';
+import { ListBlockComponent } from './list-block.component';
 import { DiagramSpec } from '../../core/models/diagram.model';
 
 @Component({
@@ -27,7 +29,9 @@ import { DiagramSpec } from '../../core/models/diagram.model';
     TableBlockComponent,
     DiagramViewComponent,
     QuizInlineBlockComponent,
-    SlideHtmlBlockComponent
+    SlideHtmlBlockComponent,
+    HtmlBlockComponent,
+    ListBlockComponent
   ],
   template: `
     @switch (block().type) {
@@ -91,21 +95,17 @@ import { DiagramSpec } from '../../core/models/diagram.model';
           [title]="b.title"
         />
       }
+      @case ('html') {
+        @let b = asHtml(block());
+        <app-html-block [html]="b.sanitizedHtml" />
+      }
       @case ('list') {
         @let b = asList(block());
-        @if (b.ordered) {
-          <ol class="list-decimal pl-5 my-3 space-y-1 text-sm sm:text-base text-[var(--text)]">
-            @for (item of b.items; track $index) {
-              <li>{{ item }}</li>
-            }
-          </ol>
-        } @else {
-          <ul class="list-disc pl-5 my-3 space-y-1 text-sm sm:text-base text-[var(--text)]">
-            @for (item of b.items; track $index) {
-              <li>{{ item }}</li>
-            }
-          </ul>
-        }
+        <app-list-block
+          [items]="b.items"
+          [ordered]="b.ordered ?? false"
+          [highlightQuery]="highlightQuery()"
+        />
       }
     }
   `,
@@ -126,6 +126,7 @@ export class BlockRendererComponent {
   asDiagram(b: Block) { return b as Extract<Block, { type: 'diagram' }>; }
   asQuizInline(b: Block) { return b as Extract<Block, { type: 'quiz-inline' }>; }
   asSlideHtml(b: Block) { return b as Extract<Block, { type: 'slide-html' }>; }
+  asHtml(b: Block) { return b as Extract<Block, { type: 'html' }>; }
   asList(b: Block) { return b as Extract<Block, { type: 'list' }>; }
 
   getCalloutType(type: string): CalloutType {

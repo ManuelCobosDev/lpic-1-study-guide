@@ -6,7 +6,7 @@ export const APP_VERSION = '0.1.0';
 
 export const BackupPayloadSchema = z.object({
   format: z.literal(BACKUP_FORMAT, {
-    message: 'Formato de archivo no válido. Se esperaba una copia de seguridad oficial de LPIC-1 Aula.'
+    message: 'Formato de archivo no válido. Se esperaba una copia de seguridad oficial de LPIC-1 Study Guide.'
   }),
   schemaVersion: z.number().int().min(1),
   appVersion: z.string(),

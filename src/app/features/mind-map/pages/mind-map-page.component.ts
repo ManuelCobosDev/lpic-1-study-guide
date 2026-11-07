@@ -423,9 +423,11 @@ export class MindMapPageComponent implements OnInit, AfterViewInit {
     const treeW = maxX - minX + 350;
     const treeH = maxY - minY + 100;
 
-    const scale = Math.min(width / treeW, height / treeH, 0.9);
-    const tx = (width - treeW * scale) / 2 - minX * scale + 40;
-    const ty = (height - treeH * scale) / 2 - minY * scale + 20;
+    // Garantizar escala legible mínima para evitar colapso a texto microscópico (A8-006, S-10)
+    const rawScale = Math.min(width / treeW, height / treeH, 0.9);
+    const scale = Math.max(0.55, rawScale);
+    const tx = Math.max(20, (width - treeW * scale) / 2 - minX * scale + 40);
+    const ty = Math.max(20, (height - treeH * scale) / 2 - minY * scale + 20);
 
     const initialTransform = zoomIdentity.translate(tx, ty).scale(scale);
 

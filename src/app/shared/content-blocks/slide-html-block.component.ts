@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
         [src]="assetPath()"
         [title]="title()"
         class="w-full aspect-video border-none block"
-        sandbox="allow-scripts allow-same-origin"
+        sandbox="allow-scripts"
         loading="lazy"
       ></iframe>
     </div>

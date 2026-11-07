@@ -14,7 +14,8 @@ import {
   viewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Slide } from '../../../../core/models/slide.model';
+import { Slide, getVisibleSlideBlocks } from '../../../../core/models/slide.model';
+import { Block } from '../../../../core/models/block.model';
 import { BlockRendererComponent } from '../../../../shared/content-blocks/block-renderer.component';
 import { KbdComponent } from '../../../../shared/ui/kbd/kbd.component';
 import { WikiRefService } from '../../../../core/services/wiki-ref.service';
@@ -94,7 +95,7 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
           [style.zoom]="textZoom() !== 100 ? textZoom() + '%' : null"
         >
           @if (currentSlide(); as slide) {
-            <article class="slide-content-wrapper flex-1 p-12 lg:p-16 flex flex-col justify-between overflow-y-auto">
+            <article class="slide-content-wrapper flex-1 px-8 py-7 lg:px-12 lg:py-8 flex flex-col justify-between overflow-y-auto">
               <!-- Cabecera de la diapositiva -->
               <header class="slide-header mb-6">
                 @if (slide.layout === 'cover') {
@@ -130,7 +131,7 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
                 [class.grid-cols-2]="slide.layout === 'two-column'"
                 [class.gap-8]="slide.layout === 'two-column'"
               >
-                @for (block of slide.blocks; track $index) {
+                @for (block of getVisibleBlocks(slide); track $index) {
                   <app-block-renderer [block]="block" [highlightQuery]="highlightQuery()" />
                 }
               </div>
@@ -509,6 +510,10 @@ export class SlideViewerComponent implements OnInit, OnDestroy {
   private viewTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly totalSlides = computed(() => this.slides().length);
+
+  getVisibleBlocks(slide: Slide): Block[] {
+    return getVisibleSlideBlocks(slide);
+  }
 
   private readonly wikiRefService = inject(WikiRefService);
 

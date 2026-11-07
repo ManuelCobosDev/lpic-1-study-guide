@@ -750,5 +750,40 @@
 - Por qué: resolución de los hallazgos de Navegación, Honestidad y SEO aprobada por el usuario en Oleada O2 (`APROBADO O2`).
 - Archivos: src/index.html, src/app/app.routes.ts, src/app/core/models/wiki-ref.model.ts, src/app/core/services/wiki-ref.service.ts, src/app/shared/layout/breadcrumbs/breadcrumbs.component.ts, src/app/shared/layout/breadcrumbs/breadcrumbs.component.spec.ts, src/app/shared/layout/footer/footer.component.ts, src/app/shared/ui/wiki-popover/wiki-popover.component.ts, src/app/features/errata/pages/errata-page.component.html, src/app/features/errata/pages/errata-page.component.ts, src/app/features/curriculum/pages/topic-detail-page.component.ts, src/app/features/curriculum/pages/exam-page.component.ts, src/app/features/curriculum/components/curriculum-card/curriculum-card.component.ts, src/app/features/home/pages/home-page.component.ts, src/app/features/settings/pages/settings-page.component.html, scripts/build-content.ts, public/robots.txt, public/sitemap.xml, README.md, e2e/fase-12.spec.ts, docs/agent/auditorias/web-2026-11-03/backlog.md, docs/agent/CHANGELOG.md, docs/agent/STATUS.md.
 - Verificación: npm run verify (10/10 etapas en verde, 99 specs E2E, 396 unit tests), inspección visual R5 en docs/agent/auditorias/web-2026-11-03/capturas/o2-after/.
-- Pendiente / deuda: Aprobación y ejecución de la Oleada O3 (Visor de Lecciones y Sistema Visual: bloques HTML no renderizados, títulos duplicados en portadas, overflows 16:9, responsive cabecera 768px-1280px).
+- Pendiente / deuda: Oleada O3 (Visor de Lecciones y Sistema Visual: bloques HTML no renderizados, títulos duplicados en portadas, overflows 16:9, responsive cabecera 768px-1280px).
+
+## C-0076 · 2026-11-04 · Auditoría Web · Oleada O3: Visor de Lecciones y Sistema Visual
+- Qué: resolución e implementación completa de los 24 hallazgos visuales y de experiencia de estudio de la Oleada O3:
+  (1) Renderizado de bloques HTML y contenido técnico enriquecido (`A6-001`, `A1-001`, `A6-009`):
+      - Creado `src/app/shared/content-blocks/html-block.component.ts` con sanitización mediante DOMPurify (permitiendo estilos en línea seguros y tags semánticos) y `DomSanitizer.bypassSecurityTrustHtml`.
+      - Registrado `@case ('html')` en `block-renderer.component.ts`.
+      - Corregido sandbox de iframes en `slide-html-block.component.ts` eliminando `allow-same-origin` y manteniendo `sandbox="allow-scripts"` para prevenir vulnerabilidades de escape.
+  (2) Renderizado Markdown y wikilinks en bloques de lista (`A1-006`):
+      - Creado `src/app/shared/content-blocks/list-block.component.ts` con soporte para negrita, cursiva, código monoespaciado y enlaces reactivos a Comandos/Glosario (`parseInlineMarkdown` integrado con `WikiRefService`).
+  (3) Supresión de títulos duplicados en portadas y diapositivas (`A3-003`, `A1-002`, `S-04`):
+      - Implementada función canónica `getVisibleSlideBlocks(slide: Slide)` en `src/app/core/models/slide.model.ts` que omite el encabezado inicial redundante cuando repite exactamente `slide.title` (presente en 752 de 771 diapositivas).
+      - Integrado en `slide-viewer.component.ts`, `lesson-web-view.component.ts` y `lesson-print-page.component.ts`, recuperando 40-60px verticales y dejando las portadas limpias.
+  (4) Control de desbordes 16:9 y densidad vertical (`A3-004`):
+      - En `table-block.component.ts`: añadido contenedor `max-h-[380px] overflow-auto` con cabecera `sticky top-0 bg-[var(--surface-sunken)]`.
+      - En `slide-viewer.component.ts`: optimizado padding de diapositiva de `p-12 lg:p-16` a `px-8 py-7 lg:px-12 lg:py-8` para asegurar que tablas de hasta 15 filas y diapositivas densas quepan sin recortar contenido.
+  (5) Impresión en modo oscuro y corrección de tokens CSS (`A3-005`):
+      - Sustituido token inexistente `var(--background)` por `var(--bg-app)` en `lesson-print-page.component.ts`.
+      - Actualizado `src/styles/print.css` para forzar variables en modo claro (`--text: var(--color-slate-900)`, `--surface: var(--color-white)`) garantizando texto negro legible sobre papel blanco al imprimir desde tema oscuro.
+  (6) Reestructuración responsive de cabecera (`A1-004`, `A2-009`, `A2-012`):
+      - En `header.component.ts`: navegación de escritorio adaptada a `lg:flex` (≥1024px) y menú móvil/tablet a `<1024px` (`lg:hidden`), evitando roturas de línea de navegación a 768px.
+      - Logotipo unificado "LPIC-1 Study Guide" en escritorio y "LPIC-1" en móvil con `whitespace-nowrap shrink-0`.
+      - Botón de búsqueda compacto en móvil con icono accesible y texto en pantallas mayores.
+  (7) Mapa mental: tipografía mínima, escala inicial y enlaces profundos (`A8-006`, `A2-014`):
+      - En `mind-map-page.component.ts`: zoom `fitToScreen()` acotado con mínimo de 0.55 (`Math.max(0.55, rawScale)`) para evitar colapso de texto microscópico en pantallas pequeñas.
+      - En `mind-map-page.component.css`: tamaños de nodo, comandos y términos fijados con mínimo de 12px.
+      - En `mind-map-page.component.html`: acciones del cajón lateral ("Ver tema", "Ver subtema") enlazadas directamente a `/temario/:examId` y `/temario/:examId/:topicId`.
+  (8) Tests y verificación visual:
+      - Unit tests añadidos para renderizado de bloques HTML y Listas en `block-renderer.component.spec.ts`.
+      - Test E2E de verificación de Oleada O3 añadido a `e2e/fase-12.spec.ts`.
+      - Pipeline `npm run verify` pasando al 100% (10 etapas, 100 E2E specs, 441 unit tests).
+      - Capturas visuales registradas en `docs/agent/auditorias/web-2026-11-03/capturas/o3-after/` inspeccionadas según regla R5.
+- Por qué: resolución de los hallazgos de Visor de Lecciones y Sistema Visual aprobada por el usuario en Oleada O3 (`APROBADO O3`).
+- Archivos: src/app/shared/content-blocks/html-block.component.ts, src/app/shared/content-blocks/list-block.component.ts, src/app/shared/content-blocks/block-renderer.component.ts, src/app/shared/content-blocks/block-renderer.component.spec.ts, src/app/shared/content-blocks/slide-html-block.component.ts, src/app/shared/content-blocks/table-block.component.ts, src/app/core/models/slide.model.ts, src/app/features/study/components/slide-viewer/slide-viewer.component.ts, src/app/features/study/components/lesson-web-view/lesson-web-view.component.ts, src/app/features/study/pages/lesson-print-page.component.ts, src/app/shared/layout/header/header.component.ts, src/app/features/mind-map/pages/mind-map-page.component.ts, src/app/features/mind-map/pages/mind-map-page.component.css, src/app/features/mind-map/pages/mind-map-page.component.html, src/styles/print.css, e2e/fase-12.spec.ts, docs/agent/auditorias/web-2026-11-03/scripts/capture-o3.ts, docs/agent/auditorias/web-2026-11-03/capturas/o3-after/*.png.
+- Verificación: npm run verify (10/10 etapas en verde, 100 E2E tests, 441 unit tests), captura e inspección visual de 6 pantallas clave en `capturas/o3-after/`.
+- Pendiente / deuda: Aprobación y ejecución de la Oleada O4 (Exactitud Pedagógica y Fidelidad LPI: corrección de claves de preguntas invertidas, preguntas fill, honestidad de placeholders en temas 108-110).
 
