@@ -5,7 +5,7 @@ import { ProgressService } from './progress.service';
 import { PreferencesService } from './preferences.service';
 import { ClockService } from './clock.service';
 import { ContentService } from './content.service';
-import { BACKUP_FORMAT, CURRENT_SCHEMA_VERSION, BackupPayload } from '../models/backup.model';
+import { BACKUP_FORMAT, CURRENT_SCHEMA_VERSION, APP_VERSION, BackupPayload } from '../models/backup.model';
 
 describe('BackupService', () => {
   let service: BackupService;
@@ -59,7 +59,7 @@ describe('BackupService', () => {
 
       expect(payload.format).toBe(BACKUP_FORMAT);
       expect(payload.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
-      expect(payload.appVersion).toBe('0.1.0');
+      expect(payload.appVersion).toBe(APP_VERSION);
       expect(payload.exportedAt).toBeTruthy();
       expect(payload.data).toBeTruthy();
       expect(payload.checksum.length).toBe(64);

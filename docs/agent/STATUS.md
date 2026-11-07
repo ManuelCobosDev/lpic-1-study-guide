@@ -2,28 +2,26 @@
 
 > Se reescribe al cerrar cada tarea (`/cerrar-sesion`). Máx. ~60 líneas. El historial completo está en `CHANGELOG.md` y en `git log`.
 
-**Última actualización**: 2026-11-07 · **Última entrada**: C-0079
+**Última actualización**: 2026-11-08 · **Última entrada**: C-0080
 
 ## Estado
-- **Rama actual**: `development` (tras merge de `audit/o6-higiene-repo-refactorizacion`)
-- **Fase actual**: Auditoría Integral Web (Completada al 100% las 6 oleadas O1–O6).
-- **Último hito superado**: **Oleada O6 (Higiene del Repositorio y Refactorización)** completada y verificada al 100%.
-- **Trabajo en curso**: Ninguno. Auditoría integral completada con pipeline en verde en todas las etapas.
+- **Rama actual**: `development`
+- **Versión de la plataforma**: `v0.2.0-preview` (Demo Funcional Pre-Release · Bug Hunting)
+- **Fase actual**: Pre-Release 0.2.0 en `development` para testeo y detección de fallos.
+- **Último hito superado**: **Versión 0.2.0-preview publicada en `development`** con toda la suite de auditoría y controles en verde.
+- **Trabajo en curso**: Ninguno. Listo para pruebas de usuario.
 - **Bloqueos**: ninguno.
 
 ## Siguiente paso exacto
-- **Confirmación con el usuario**: Notificar la conclusión total de las 6 oleadas de la Auditoría Integral y consultar la siguiente dirección del proyecto (ej. reanudar la Ronda 2 de subtemas LPI 102 o preparar el despliegue).
+- **Testeo interactivo y búsqueda de bugs**: Recoger feedback de navegación, uso del simulador, visor de diapositivas y herramientas en la versión `0.2.0-preview`.
 
-## Oleada O6 · Logros Verificados
-- **Eliminación de `round_2/` residual** (`A9-001`, S-16): suprimidos los 20 archivos que duplicaban la raíz del proyecto.
-- **Exclusión de capturas huérfanas** (`A9-002`, `A9-005`): añadido `/e2e/screenshots/` a `.gitignore` y desversionados 97 archivos PNG obsoletos del historial de git.
-- **Integración Continua y cabeceras de seguridad** (`A9-003`): workflow `.github/workflows/ci.yml` configurado con pipeline completo y `public/_headers` con CSP y cabeceras Cloudflare Pages.
-- **README actualizado y honesto** (`A9-004`): corregidas menciones a Karma/Jasmine por Angular CLI + Vitest, 10 etapas del gate y estadísticas sincronizadas desde el manifiesto.
-- **Supresión de `webDocument` vestigial** (`A9-004`, `A3-008`, `A9-006`): eliminada clave redundante en esquemas, modelos, build y 41 archivos JSON de lecciones, ahorrando ~1.5 MB.
-- **Descomposición modular de `home-page.component.ts`** (`A6-003`, S-14): modularizado en `HomeHeroComponent`, `HomeMetricsComponent` y `HomeFaqComponent`, reduciendo el componente principal de 1.096 a 150 líneas.
-- **Verificación completa**: `npm run verify` al 100% en verde (10/10 etapas, 102 tests E2E Playwright, 444 tests unitarios).
+## Registro Reciente
+- **Versión 0.2.0-preview** (`C-0080`): Bump de versión en `package.json`, footer (`v0.2.0-preview`), acerca-de y sistema de backups desacoplado.
+- **Oleada O6 completada** (`C-0079`): Higiene de repo, CI GitHub Actions, cabeceras CSP, supresión de `round_2/` y modularización de Home.
+- **Auditoría Integral (O1–O6)**: 105 hallazgos resueltos, 0 violaciones WCAG 2.2 AA (Axe), 102 E2E specs y 444 unit tests en verde.
 
 ## Comandos útiles
 - `npm run verify`: pipeline completo de 10 etapas en verde (102 E2E specs + 47 Vitest specs + 397 Karma specs).
 - `npm run build:content`: compila currículo, valida integridad y genera `public/sitemap.xml`.
-- `npm run preview`: arranca el servidor local de previsualización estática en `http://localhost:4200`.
+- `npm run dev`: arranca el servidor local de desarrollo en `http://localhost:4200`.
+- `npm run preview`: previsualización de producción en `http://localhost:4200`.

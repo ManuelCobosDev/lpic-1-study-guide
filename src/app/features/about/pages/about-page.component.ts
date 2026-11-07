@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ContentService } from '../../../core/services/content.service';
 import { CurriculumManifest } from '../../../core/models/curriculum.model';
+import { APP_VERSION } from '../../../core/constants/version';
 
 @Component({
   selector: 'app-about-page',
@@ -15,7 +16,7 @@ import { CurriculumManifest } from '../../../core/models/curriculum.model';
 export class AboutPageComponent {
   private readonly contentService = inject(ContentService);
 
-  readonly appVersion = '0.1.0';
+  readonly appVersion = APP_VERSION;
   readonly manifestVersion = signal<string>('1.0.0');
   readonly lpiVersion = '5.0';
 

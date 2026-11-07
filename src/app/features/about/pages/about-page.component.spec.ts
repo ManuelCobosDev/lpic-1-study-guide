@@ -4,6 +4,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { AboutPageComponent } from './about-page.component';
 import { ContentService } from '../../../core/services/content.service';
 import { CurriculumManifest } from '../../../core/models/curriculum.model';
+import { APP_VERSION } from '../../../core/models/backup.model';
 
 const mockManifest: CurriculumManifest = {
   version: '1.2.3',
@@ -50,7 +51,7 @@ describe('AboutPageComponent', () => {
 
   it('debe crearse correctamente', () => {
     expect(component).toBeTruthy();
-    expect(component.appVersion).toBe('0.1.0');
+    expect(component.appVersion).toBe(APP_VERSION);
     expect(component.lpiVersion).toBe('5.0');
   });
 

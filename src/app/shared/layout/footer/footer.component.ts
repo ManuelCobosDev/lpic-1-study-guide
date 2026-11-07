@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ContainerComponent } from '../../ui/container/container.component';
+import { APP_VERSION } from '../../../core/constants/version';
 
 @Component({
   selector: 'app-footer',
@@ -21,12 +22,14 @@ import { ContainerComponent } from '../../ui/container/container.component';
             <a routerLink="/acerca-de" class="hover:text-[var(--text)] transition-colors">Acerca de</a>
             <a routerLink="/erratas" class="hover:text-[var(--text)] transition-colors">Erratas</a>
             <a routerLink="/ajustes" class="hover:text-[var(--text)] transition-colors">Ajustes</a>
-            <span class="text-[var(--text-subtle)]">v0.1.0</span>
+            <span class="text-[var(--text-subtle)]">v{{ appVersion }}</span>
           </div>
         </div>
       </app-container>
     </footer>
   `
 })
-export class FooterComponent {}
+export class FooterComponent {
+  readonly appVersion = APP_VERSION;
+}
 

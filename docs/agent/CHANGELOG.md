@@ -868,3 +868,15 @@
 - Verificación: npm run verify (10/10 etapas completas en verde, 102 tests E2E Playwright, 444 unit tests), npx playwright test e2e/fase-0.spec.ts e2e/fase-4.spec.ts (14/14 tests pasando, 0 violaciones Axe).
 - Pendiente / deuda: Auditoría Integral web finalizada al 100% (todas las 6 oleadas O1–O6 completadas). Proceder a la siguiente fase del proyecto según el usuario (ej. reanudar la Ronda 2 de fidelidad LPI o despliegue).
 
+## C-0080 · 2026-11-08 · Versión 0.2.0-preview: Demo Funcional Pre-Release (Bug Hunting)
+- Qué: actualización de versión del proyecto a `0.2.0-preview`:
+  (1) Bump de versión a `0.2.0-preview` en `package.json` y `package-lock.json`.
+  (2) Creación de constante centralizada y desacoplada de Zod en `src/app/core/constants/version.ts` (`APP_VERSION = '0.2.0-preview'`), evitando la fuga del validador de esquemas al bundle inicial.
+  (3) Sincronización reactiva de la versión en `src/app/shared/layout/footer/footer.component.ts` (`v{{ appVersion }}`) y `src/app/features/about/pages/about-page.component.ts`.
+  (4) Actualización de tests unitarios asociados en `about-page.component.spec.ts` y `backup.service.spec.ts`.
+  (5) Verificación completa: `npm run typecheck`, `npm run lint`, `npm test` y `npm run build` en verde.
+- Por qué: solicitud explícita del usuario para publicar una versión de pre-release/demo funcional (`0.2.0-preview`) en `development` para testeo intensivo y búsqueda de bugs.
+- Archivos: package.json, package-lock.json, src/app/core/constants/version.ts, src/app/core/models/backup.model.ts, src/app/shared/layout/footer/footer.component.ts, src/app/features/about/pages/about-page.component.ts, src/app/features/about/pages/about-page.component.spec.ts, src/app/core/services/backup.service.spec.ts, docs/agent/CHANGELOG.md, docs/agent/STATUS.md.
+- Verificación: npm run typecheck (OK), npm run lint (OK), npm test (444 tests en verde), npm run build (OK, bundle initial 439 kB < 500 kB budget).
+- Pendiente / deuda: Feedback de testeo del usuario y continuación de la Ronda 2 de fidelidad LPI para subtemas pendientes.
+

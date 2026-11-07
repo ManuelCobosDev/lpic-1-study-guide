@@ -1,8 +1,9 @@
 import { z } from 'zod';
+import { APP_VERSION } from '../constants/version';
 
+export { APP_VERSION };
 export const BACKUP_FORMAT = 'lpic1-aula-backup';
 export const CURRENT_SCHEMA_VERSION = 1;
-export const APP_VERSION = '0.1.0';
 
 export const BackupPayloadSchema = z.object({
   format: z.literal(BACKUP_FORMAT, {
