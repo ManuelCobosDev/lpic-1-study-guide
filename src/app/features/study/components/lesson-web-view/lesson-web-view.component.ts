@@ -18,7 +18,7 @@ import { BlockRendererComponent } from '../../../../shared/content-blocks/block-
   template: `
     <div class="lesson-web-view relative flex flex-col lg:flex-row gap-8 items-start my-6">
       <!-- Columna Principal: Documento de Lectura Continuo (760 px de ancho) -->
-      <main class="web-reading-column flex-1 max-w-[760px] w-full mx-auto space-y-12 select-text font-sans">
+      <article class="web-reading-column flex-1 max-w-[760px] w-full mx-auto space-y-12 select-text font-sans">
         @for (slide of slides(); track slide.slideNumber; let idx = $index) {
           <section
             [id]="'section-' + slide.slideNumber"
@@ -72,7 +72,7 @@ import { BlockRendererComponent } from '../../../../shared/content-blocks/block-
             }
           </section>
         }
-      </main>
+      </article>
 
       <!-- Columna Lateral Derecha Sticky (240 px): Índice "En esta página" con Scrollspy -->
       <aside

@@ -315,5 +315,59 @@ test.describe('Gate 12: Auditoría Integral, Crawler de Rutas, Rendimiento y Acc
     await expect(questionPrompt).not.toBeEmpty();
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'o4-practice-tab-101-2.png') });
   });
+
+  test('Oleada O5: Accesibilidad WCAG 2.2 AA, Herramientas Interactivas y Rendimiento', async ({ page }) => {
+    test.setTimeout(60000);
+
+    // 1. Verificación de landmark único <main> en todas las vistas críticas (A7-006)
+    const testRoutes = ['/laboratorios', '/buscar', '/erratas', '/ajustes', '/glosario', '/simulador/practica'];
+    for (const route of testRoutes) {
+      await page.goto(route);
+      await page.waitForLoadState('networkidle');
+      const mainCount = await page.locator('main').count();
+      expect(mainCount, `La ruta ${route} debe contener exactamente un único landmark <main>`).toBe(1);
+    }
+
+    // 2. Verificación de modal interactivo con tecla Escape y Focus Trap (A7-008)
+    await page.goto('/laboratorios/103.4');
+    await page.waitForLoadState('networkidle');
+    const vmGuideBtn = page.locator('button:has-text("Guía de preparación")');
+    await expect(vmGuideBtn).toBeVisible({ timeout: 5000 });
+    await vmGuideBtn.click();
+
+    const dialog = page.locator('div[role="dialog"]');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'o5-lab-modal-solution.png') });
+
+    // Cerrar con Escape
+    await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible({ timeout: 5000 });
+
+    // 3. Verificación de grupo '#' en índice A-Z del glosario (A8-007)
+    await page.goto('/glosario');
+    await page.waitForLoadState('networkidle');
+    const hashBtn = page.locator('.alpha-letter-btn:has-text("#")');
+    await expect(hashBtn).toBeVisible({ timeout: 5000 });
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'o5-glossary-hash-index.png') });
+
+    // 4. Verificación de expansión de sinónimos técnicos en búsqueda (A8-008)
+    await page.goto('/buscar?q=particionar');
+    await page.waitForLoadState('networkidle');
+    const resultsContainer = page.locator('.search-results-list');
+    await expect(resultsContainer).toBeVisible({ timeout: 5000 });
+    const hasFdiskResult = await page.locator('text=fdisk').first().isVisible();
+    expect(hasFdiskResult, 'La búsqueda de "particionar" debe retornar fdisk gracias a la expansión de sinónimos').toBe(true);
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'o5-search-synonyms.png') });
+
+    // 5. Verificación de consolidación de categorías de comandos (A8-011)
+    await page.goto('/comandos');
+    await page.waitForLoadState('networkidle');
+    const categorySelect = page.locator('select').first();
+    await expect(categorySelect).toBeVisible({ timeout: 5000 });
+    const optionsText = await categorySelect.innerText();
+    expect(optionsText).toContain('Gestión de procesos');
+    expect(optionsText).toContain('Hardware del sistema');
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'o5-commands-canonical-categories.png') });
+  });
 });
 

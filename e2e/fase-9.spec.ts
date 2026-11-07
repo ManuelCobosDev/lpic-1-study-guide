@@ -20,9 +20,9 @@ test.describe('Gate 9: Comandos, Glosario y Flashcards', () => {
     const searchInput = page.locator('.search-input');
     await searchInput.fill('tee');
 
-    // 3. Seleccionar categoría y tema
+    // 3. Seleccionar categoría y tema (categoría canónica tras consolidación A8-011)
     const categorySelect = page.locator('.category-filter');
-    await categorySelect.selectOption({ label: 'Uso de secuencias de texto, tuberías y redireccionamientos' });
+    await categorySelect.selectOption({ label: 'Línea de comandos y filtros' });
 
     const topicSelect = page.locator('.topic-filter');
     await topicSelect.selectOption({ value: '103' });
@@ -40,7 +40,7 @@ test.describe('Gate 9: Comandos, Glosario y Flashcards', () => {
     await page.waitForSelector('app-commands-page');
 
     await expect(searchInput).toHaveValue('tee');
-    await expect(categorySelect).toHaveValue('Uso de secuencias de texto, tuberías y redireccionamientos');
+    await expect(categorySelect).toHaveValue('Línea de comandos y filtros');
     await expect(topicSelect).toHaveValue('103');
     await expect(counterBadge).toContainText(/de.*comandos/);
 

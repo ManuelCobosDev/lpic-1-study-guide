@@ -22,6 +22,8 @@ export class ContentService {
   private cachedCommands: Command[] | null = null;
   private cachedGlossary: GlossaryTerm[] | null = null;
   private cachedFlashcards: FlashcardItem[] | null = null;
+  private cachedFlashcards101: FlashcardItem[] | null = null;
+  private cachedFlashcards102: FlashcardItem[] | null = null;
   private cachedErrata: Errata[] | null = null;
 
   readonly manifest = signal<CurriculumManifest | null>(null);
@@ -160,9 +162,37 @@ export class ContentService {
     }
   }
 
-  async getFlashcards(): Promise<FlashcardItem[]> {
+  async getFlashcards(examId?: '101' | '102'): Promise<FlashcardItem[]> {
+    if (examId === '101') {
+      if (this.cachedFlashcards101) return this.cachedFlashcards101;
+      try {
+        const res = await fetch(`${this.baseUrl}/flashcards-101.json`);
+        if (res.ok) {
+          const data = (await res.json()) as FlashcardItem[];
+          this.cachedFlashcards101 = data;
+          return data;
+        }
+      } catch {
+        // Fallback al archivo general
+      }
+    } else if (examId === '102') {
+      if (this.cachedFlashcards102) return this.cachedFlashcards102;
+      try {
+        const res = await fetch(`${this.baseUrl}/flashcards-102.json`);
+        if (res.ok) {
+          const data = (await res.json()) as FlashcardItem[];
+          this.cachedFlashcards102 = data;
+          return data;
+        }
+      } catch {
+        // Fallback al archivo general
+      }
+    }
+
     if (this.cachedFlashcards) {
-      return this.cachedFlashcards;
+      return examId
+        ? this.cachedFlashcards.filter((f) => f.examId === examId)
+        : this.cachedFlashcards;
     }
 
     try {
@@ -172,7 +202,9 @@ export class ContentService {
       }
       const data = (await res.json()) as FlashcardItem[];
       this.cachedFlashcards = data;
-      return data;
+      return examId
+        ? data.filter((f) => f.examId === examId)
+        : data;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error al cargar flashcards';
       this.error.set(msg);

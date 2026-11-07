@@ -2,7 +2,9 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   SearchEngine,
   normalizeSearchText,
-  highlightTextSnippet
+  highlightTextSnippet,
+  expandQueryWithSynonyms,
+  TECHNICAL_SYNONYMS
 } from './search.engine';
 import { SearchIndexSource } from '../../models/search.model';
 
@@ -67,6 +69,11 @@ describe('SearchEngine (Gate 6)', () => {
         summary: 'Imprime líneas que coinciden con un patrón',
         flags: ['-i', '-v', '-n'],
         subtopicId: '103.4'
+      },
+      {
+        name: 'fdisk',
+        summary: 'Manipulador de tablas de almacenamiento MBR y GPT',
+        subtopicId: '104.1'
       }
     ],
     terms: [
@@ -178,6 +185,17 @@ describe('SearchEngine (Gate 6)', () => {
       const results = engine.search('pregunta simulador opciones respuesta');
       const questionResults = results.filter((r) => (r.type as string) === 'question');
       expect(questionResults).toHaveLength(0);
+    });
+
+    it('expande sinónimos técnicos en la búsqueda (ej. "particionar" -> encuentra fdisk)', () => {
+      expect(TECHNICAL_SYNONYMS['particionar']).toContain('fdisk');
+      const expanded = expandQueryWithSynonyms('particionar');
+      expect(expanded).toContain('fdisk');
+
+      const results = engine.search('particionar');
+      expect(results.length).toBeGreaterThan(0);
+      const fdiskMatch = results.find((r) => r.title === 'fdisk');
+      expect(fdiskMatch).toBeDefined();
     });
   });
 });

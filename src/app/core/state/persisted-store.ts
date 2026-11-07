@@ -43,6 +43,15 @@ export class PersistedStore<T> {
 
     PersistedStore.activeStores.add(this as unknown as PersistedStore<unknown>);
 
+    // Sincronización reactiva entre pestañas concurrentes (A8-010)
+    if (typeof this.storage?.onStorageChange === 'function') {
+      this.storage.onStorageChange((changedKey) => {
+        if (changedKey === null || changedKey === this.key) {
+          this.reload();
+        }
+      });
+    }
+
     // Si se proporciona un injector o estamos en un contexto de inyeccion, podemos enlazar un effect
     if (options.injector) {
       runInInjectionContext(options.injector, () => {

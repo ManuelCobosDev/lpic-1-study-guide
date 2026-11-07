@@ -250,7 +250,7 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
 
           <!-- Pestaña 1: Laboratorio Práctico -->
           @if (activeTab() === 'lab') {
-            <div class="tab-panel-lab p-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div id="tabpanel-lab" role="tabpanel" aria-labelledby="tab-lab" class="tab-panel-lab p-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
               <div class="space-y-2 max-w-2xl">
                 <div class="flex items-center gap-2">
                   <span class="text-lg" aria-hidden="true">🧪</span>
@@ -275,7 +275,7 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
 
           <!-- Pestaña 2: Notas Personales con Autoguardado -->
           @if (activeTab() === 'notes') {
-            <div class="tab-panel-notes p-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xs space-y-4">
+            <div id="tabpanel-notes" role="tabpanel" aria-labelledby="tab-notes" class="tab-panel-notes p-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xs space-y-4">
               <div class="flex items-center justify-between gap-4 flex-wrap">
                 <div class="flex items-center gap-2">
                   <span class="text-base" aria-hidden="true">📝</span>
@@ -308,7 +308,7 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
 
           <!-- Pestaña 3: Comandos y Glosario Filtrados -->
           @if (activeTab() === 'reference') {
-            <div class="tab-panel-reference grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div id="tabpanel-reference" role="tabpanel" aria-labelledby="tab-reference" class="tab-panel-reference grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- Comandos clave -->
               <div class="p-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xs space-y-4">
                 <div class="flex items-center gap-2 border-b border-[var(--border)] pb-3">
@@ -356,7 +356,7 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
 
           <!-- Pestaña 4: Practica lo aprendido -->
           @if (activeTab() === 'practice') {
-            <div class="tab-panel-practice">
+            <div id="tabpanel-practice" role="tabpanel" aria-labelledby="tab-practice" class="tab-panel-practice">
               <app-practice-tab
                 [subtopicId]="l.id"
                 [questions]="subtopicQuestions()"
@@ -430,10 +430,10 @@ export class LessonPageComponent implements OnInit, OnDestroy {
   readonly subtopicFlashcards = signal<FlashcardItem[]>([]);
 
   readonly secondaryTabs: TabItem[] = [
-    { id: 'notes', label: 'Mis Notas Personales', badge: '📝' },
-    { id: 'lab', label: 'Laboratorio Práctico', badge: '🧪' },
-    { id: 'reference', label: 'Comandos y Glosario', badge: '📚' },
-    { id: 'practice', label: 'Practica lo aprendido', badge: '🎯' }
+    { id: 'notes', label: 'Mis Notas Personales', badge: '📝', panelId: 'tabpanel-notes' },
+    { id: 'lab', label: 'Laboratorio Práctico', badge: '🧪', panelId: 'tabpanel-lab' },
+    { id: 'reference', label: 'Comandos y Glosario', badge: '📚', panelId: 'tabpanel-reference' },
+    { id: 'practice', label: 'Practica lo aprendido', badge: '🎯', panelId: 'tabpanel-practice' }
   ];
 
   readonly isCompleted = computed(() => {

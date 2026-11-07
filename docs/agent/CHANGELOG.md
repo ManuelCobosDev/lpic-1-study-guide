@@ -827,3 +827,25 @@
 - Verificación: npm run verify (10/10 etapas en verde, 101 E2E tests, 442 unit tests), scripts específicos de scoring y fill-in questions en verde, inspección visual de capturas en e2e/screenshots/fase-12/.
 - Pendiente / deuda: Aprobación y ejecución de la Oleada O5 (Accesibilidad, Herramientas y Rendimiento: WCAG 2.2 AA en badges/modales, focus trap, chunking diferido de flashcards, grupo '#' en glosario).
 
+## C-0078 · 2026-11-07 · Auditoría Web · Oleada O5: Accesibilidad WCAG 2.2 AA, Herramientas Interactivas y Rendimiento
+- Qué: resolución completa de los hallazgos de accesibilidad, interactividad de herramientas y rendimiento de la Oleada O5:
+  (1) Eliminación de landmarks `<main>` duplicados (`A7-006`): sustituidos por `<section>` o `<article>` semánticos en las 9 páginas hijas (`errata-page`, `flashcards-page`, `lab-detail-page`, `labs-page`, `mind-map-page`, `search-page`, `settings-page`, `simulator-exam-page`, `simulator-practice-page`, `lesson-web-view`, `lesson-print-page`), dejando un único `<main id="main-content">` de nivel superior en `app-shell`.
+  (2) Corrección de celdas interactivas en mapa de calor (`A7-007`, WCAG 2.5.8): eliminados `tabindex="0"` y `role="button"` de las 728 celdas de días en `activity-heatmap`, preservando `title` nativo y panel de tooltip explicativo.
+  (3) Trampa de foco y cierre accesible por Escape en modales de laboratorio (`A7-008`): incorporado `A11yModule` (`cdkTrapFocus`, `cdkTrapFocusAutoCapture`), listener de Escape global y click en backdrop en los 4 modales de `lab-detail-page`.
+  (4) Estructura ARIA en pestañas y visor (`A7-009`):
+      - `TabsComponent`: encapsulado de `<nav class="tabs-container">` con `<div role="tablist">` interno y vinculación opcional `aria-controls` / `panelId` para evitar dangling attributes en pestañas sin contenedor.
+      - `SlideViewerComponent`: añadido `role="region" aria-roledescription="carousel"` y `aria-expanded` dinámico en botones desplegables.
+  (5) Accesibilidad por teclado en Mapa Mental (`A7-010`): eliminada trampa de foco en nodos hoja limitando `tabindex="0"` exclusivamente a nodos con hijos (`node.depth < 4`).
+  (6) Botón hamburguesa móvil accesible (`A7-014`): dimensiones ampliadas a 44×44px (`min-w-[44px] min-h-[44px]`) con `aria-expanded` dinámico y `aria-label` informativo.
+  (7) Ratios de contraste WCAG AA en tema oscuro y badges (`A7-005`): corregidos colores de texto y fondos con variables semánticas (`--success-text`, `--warning-text`, `--danger-text`, `--primary-text`) en `errata-page`, `about-page`, `not-found-page`, `question-card` y `search-page`.
+  (8) Grupo '#' en índice alfabético A-Z del Glosario (`A8-007`): añadido grupo especial `#` para términos que inician con `/` o `.` (`/etc/passwd`, `.bashrc`) en `GlossaryService` y `alpha-index`.
+  (9) Expansión reactiva de sinónimos técnicos en buscador (`A8-008`): diccionario `TECHNICAL_SYNONYMS` integrado en `SearchEngine` para términos equivalentes (ej. 'particionar' -> 'fdisk', 'gdisk', 'parted').
+  (10) Sincronización multi-pestaña reactiva en Storage (`A8-010`): listener de eventos `storage` en `StorageService` y recarga reactiva automática en `PersistedStore`.
+  (11) Consolidación canónica de categorías de comandos (`A8-011`, D-007): unificadas las 35 categorías fragmentadas en 12 categorías canónicas limpias en `CommandService` y actualizado test E2E `fase-9.spec.ts`.
+  (12) Particionado optimizado de flashcards (`A7-011`): generación y carga bajo demanda de mazos particionados `flashcards-101.json` y `flashcards-102.json` en `scripts/build-content.ts` y `FlashcardsService`.
+  (13) Verificación E2E y Axe: añadida suite de pruebas para O5 en `e2e/fase-12.spec.ts` con 4 capturas visuales generadas (`o5-lab-modal-solution.png`, `o5-glossary-hash-index.png`, `o5-search-synonyms.png`, `o5-commands-canonical-categories.png`) y 0 violaciones graves/críticas de Axe en modo claro y oscuro en todas las rutas.
+- Por qué: cumplimiento del alcance de la Oleada O5 aprobado por el usuario con `APROBADO O5`.
+- Archivos: src/app/features/**, src/app/shared/**, src/app/core/**, scripts/build-content.ts, e2e/fase-12.spec.ts, e2e/fase-9.spec.ts, e2e/screenshots/fase-12/o5-*.png, docs/agent/DECISIONS.md, docs/agent/auditorias/web-2026-11-03/backlog.md, docs/agent/CHANGELOG.md, docs/agent/STATUS.md.
+- Verificación: npm run verify (10/10 etapas completas en verde, 102 tests E2E Playwright, 444 unit tests), npx playwright test e2e/fase-12.spec.ts (8/8 tests pasando, 0 violaciones Axe), inspección visual de capturas en e2e/screenshots/fase-12/.
+- Pendiente / deuda: Aprobación y ejecución de la Oleada O6 (Higiene del Repositorio y Refactorización: eliminación de `round_2/`, depuración de capturas viejas, modularización de `home-page.component.ts`).
+

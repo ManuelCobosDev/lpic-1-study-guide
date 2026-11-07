@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, HostListener, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { A11yModule } from '@angular/cdk/a11y';
 import { ContainerComponent } from '../../../shared/ui/container/container.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { BadgeComponent, BadgeVariant } from '../../../shared/ui/badge/badge.component';
@@ -17,6 +18,7 @@ import { Lab, LabStep } from '../../../core/models/lab.model';
   imports: [
     CommonModule,
     RouterLink,
+    A11yModule,
     ContainerComponent,
     ButtonComponent,
     BadgeComponent,
@@ -242,6 +244,28 @@ export class LabDetailPageComponent {
         return 'Avanzada';
       default:
         return difficulty;
+    }
+  }
+
+  onBackdropClick(event: MouseEvent, action: () => void): void {
+    if (event.target === event.currentTarget) {
+      action();
+    }
+  }
+
+  @HostListener('window:keydown.escape')
+  onEscape(): void {
+    if (this.showVmGuideModal()) {
+      this.closeVmGuideModal();
+    }
+    if (this.showSolutionModal()) {
+      this.closeSolutionModal();
+    }
+    if (this.showSuccessModal()) {
+      this.closeSuccessModal();
+    }
+    if (this.showResetConfirmModal()) {
+      this.cancelResetLab();
     }
   }
 }

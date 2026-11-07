@@ -93,7 +93,7 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
         </a>
       </div>
     } @else if (lesson(); as l) {
-      <main class="print-container max-w-4xl mx-auto p-6 sm:p-12 text-[var(--text)] select-text font-sans">
+      <article class="print-container max-w-4xl mx-auto p-6 sm:p-12 text-[var(--text)] select-text font-sans">
         <!-- Portada / Cabecera imprimible -->
         <header class="document-header mb-12 pb-8 border-b-2 border-[var(--border)] avoid-break">
           <div class="flex items-center justify-between text-xs font-mono text-[var(--text-muted)] mb-4">
@@ -182,7 +182,7 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
         <footer class="document-footer pt-6 border-t border-[var(--border)] text-center text-xs font-mono text-[var(--text-muted)] avoid-break">
           <span>LPIC-1 Study Guide · Subtema {{ l.id }} · {{ l.title }}</span>
         </footer>
-      </main>
+      </article>
     }
   `,
   styles: [`

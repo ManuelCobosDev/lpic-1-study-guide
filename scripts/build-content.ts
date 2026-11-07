@@ -938,12 +938,39 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     );
   }
 
-  // Generación de Flashcards Masivas
+  // Generación de Flashcards Masivas (con particionado optimizado por examen A7-011)
   const flashcards = generateFlashcards(rootDir);
   if (!options.validateOnly) {
     fs.writeFileSync(
       path.join(outputDir, 'flashcards.json'),
       JSON.stringify(flashcards, null, 2),
+      'utf-8'
+    );
+
+    const flashcards101 = flashcards.filter(f => {
+      if (f.examId === '101') return true;
+      return f.subtopicIds.some(s => {
+        const num = parseInt(s.split('.')[0] || '0', 10);
+        return num >= 101 && num <= 104;
+      });
+    });
+
+    const flashcards102 = flashcards.filter(f => {
+      if (f.examId === '102') return true;
+      return f.subtopicIds.some(s => {
+        const num = parseInt(s.split('.')[0] || '0', 10);
+        return num >= 105 && num <= 110;
+      });
+    });
+
+    fs.writeFileSync(
+      path.join(outputDir, 'flashcards-101.json'),
+      JSON.stringify(flashcards101, null, 2),
+      'utf-8'
+    );
+    fs.writeFileSync(
+      path.join(outputDir, 'flashcards-102.json'),
+      JSON.stringify(flashcards102, null, 2),
       'utf-8'
     );
   }

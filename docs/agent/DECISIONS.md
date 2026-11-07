@@ -52,3 +52,12 @@
 - Decisión: B · Decidió: agente (conforme a R3 y D-004).
 - Consecuencias: `curriculum.spec.ts` valida que ambos exámenes tienen `status: 'available'`; `fase-9.spec.ts` utiliza la categoría real `Uso de secuencias de texto, tuberías y redireccionamientos` y comprueba la interactividad del índice A-Z con datos completos; `fase-10.spec.ts` espera a que las tarjetas de erratas se rendericen tras la resolución asíncrona.
 - Revisable si: se añade un nuevo examen o versión que empiece en estado planificado.
+
+## D-007 · 2026-11-07 · Consolidación canónica de categorías de comandos y actualización de tests bajo R3
+- Contexto: El hallazgo A8-011 de la auditoría identificó 35 categorías fragmentadas de comandos en `commands.yaml` / `content/`, muchas de ellas redundantes o con variaciones tipográficas menores. Se consolidaron en 12 categorías canónicas limpias mediante `CANONICAL_CATEGORIES_MAP` en `CommandService`.
+- Opciones:
+  A) Mantener las 35 categorías fragmentadas para no alterar tests anteriores (incompatible con la resolución de A8-011).
+  B) Consolidar a las 12 categorías canónicas en `command.service.ts` y actualizar la aserción de `e2e/fase-9.spec.ts` para seleccionar la categoría canónica correspondiente ('Línea de comandos y filtros' en vez del texto legacy 'Uso de secuencias de texto, tuberías y redireccionamientos'), conforme a la Regla R3.
+- Decisión: B · Decidió: agente (conforme a R3 y la resolución de la Oleada O5 / A8-011).
+- Consecuencias: La interfaz de comandos expone un conjunto consistente de 12 categorías organizadas, y los tests E2E verifican la selección y persistencia con las nuevas opciones canónicas.
+- Revisable si: LPI publica una nueva versión del examen con áreas temáticas adicionales.

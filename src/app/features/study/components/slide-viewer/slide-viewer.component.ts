@@ -32,6 +32,9 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
     <div
       #viewerContainer
       tabindex="0"
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Visor interactivo de diapositivas de la lección"
       class="slide-viewer-container relative select-none rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] overflow-hidden shadow-md flex flex-col focus:outline-hidden"
       [class.fullscreen-active]="isFullscreen()"
       [class.cursor-none]="isFullscreen() && !showControls()"
@@ -223,6 +226,7 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
             class="icon-tool-btn p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-muted)] transition-colors cursor-pointer"
             [class.text-[var(--primary-text)]]="showThumbnails()"
             [class.bg-[var(--primary-soft)]]="showThumbnails()"
+            [attr.aria-expanded]="showThumbnails()"
             (click)="toggleThumbnails()"
             title="Miniaturas (T)"
             aria-label="Alternar miniaturas de diapositivas"
@@ -235,6 +239,7 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
             class="icon-tool-btn p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-muted)] transition-colors cursor-pointer"
             [class.text-[var(--primary-text)]]="showNotes()"
             [class.bg-[var(--primary-soft)]]="showNotes()"
+            [attr.aria-expanded]="showNotes()"
             (click)="toggleNotes()"
             title="Notas del instructor (N)"
             aria-label="Alternar notas del instructor"
@@ -267,6 +272,7 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
             type="button"
             class="icon-tool-btn p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-muted)] transition-colors cursor-pointer"
             [class.text-[var(--primary-text)]]="isFullscreen()"
+            [attr.aria-expanded]="isFullscreen()"
             (click)="toggleFullscreen()"
             title="Pantalla completa (F)"
             aria-label="Alternar pantalla completa"
@@ -278,6 +284,7 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
           <button
             type="button"
             class="icon-tool-btn p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-muted)] transition-colors cursor-pointer"
+            [attr.aria-expanded]="showHelp()"
             (click)="toggleHelp()"
             title="Atajos de teclado (?)"
             aria-label="Ver atajos de teclado"

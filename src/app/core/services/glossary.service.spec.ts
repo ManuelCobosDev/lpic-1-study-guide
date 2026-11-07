@@ -8,6 +8,13 @@ describe('GlossaryService', () => {
 
   const mockTerms: GlossaryTerm[] = [
     {
+      id: 'etc-passwd',
+      term: '/etc/passwd',
+      definition: 'Archivo de cuentas de usuario del sistema.',
+      related: ['shadow'],
+      subtopicIds: ['103.1']
+    },
+    {
       id: 'descriptor-de-archivo',
       term: 'descriptor de archivo',
       definition: 'Índice entero asignado por el kernel a archivos abiertos.',
@@ -50,15 +57,20 @@ describe('GlossaryService', () => {
 
   it('getTerms devuelve términos ordenados alfabéticamente', async () => {
     const list = await service.getTerms();
-    expect(list.length).toBe(3);
-    expect(list[0]?.id).toBe('descriptor-de-archivo');
-    expect(list[1]?.id).toBe('stderr');
-    expect(list[2]?.id).toBe('stdin');
+    expect(list.length).toBe(4);
+    expect(list[0]?.id).toBe('etc-passwd');
+    expect(list[1]?.id).toBe('descriptor-de-archivo');
+    expect(list[2]?.id).toBe('stderr');
+    expect(list[3]?.id).toBe('stdin');
   });
 
-  it('getAlphabetIndex devuelve el índice A-Z con flags y recuentos correctos', () => {
+  it('getAlphabetIndex devuelve el índice A-Z con flags y recuentos correctos, incluyendo grupo #', () => {
     const index = service.getAlphabetIndex(mockTerms);
-    expect(index.length).toBe(26);
+    expect(index.length).toBe(27);
+
+    const hashItem = index.find((i) => i.letter === '#');
+    expect(hashItem?.hasTerms).toBe(true);
+    expect(hashItem?.count).toBe(1);
 
     const dItem = index.find((i) => i.letter === 'D');
     expect(dItem?.hasTerms).toBe(true);
@@ -75,6 +87,7 @@ describe('GlossaryService', () => {
 
   it('groupTermsByLetter agrupa los términos por inicial mayúscula', () => {
     const groups = service.groupTermsByLetter(mockTerms);
+    expect(groups['#']?.length).toBe(1);
     expect(groups['D']?.length).toBe(1);
     expect(groups['S']?.length).toBe(2);
     expect(groups['A']).toBeUndefined();
