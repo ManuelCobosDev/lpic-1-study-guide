@@ -14,8 +14,8 @@ while ((m = regex.exec(txt)) !== null) {
   if (count <= 12) {
     const id = m[1].trim();
     const ref = m[2].trim();
-    const manual = m[3].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-    const reality = m[4].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+    const manual = m[3].replace(/[<>]/g, '').replace(/\s+/g, ' ').trim();
+    const reality = m[4].replace(/[<>]/g, '').replace(/\s+/g, ' ').trim();
     console.log(`\n[${id}] ${ref}`);
     console.log(`  Manual: ${manual}`);
     console.log(`  Realidad: ${reality}`);
