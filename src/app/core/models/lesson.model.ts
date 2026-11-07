@@ -1,4 +1,3 @@
-import { Block } from './block.model';
 import { Slide } from './slide.model';
 import { LessonExercise } from './practice.model';
 
@@ -8,13 +7,6 @@ export interface WikiReference {
   name: string;
   shortDescription: string;
   url?: string;
-}
-
-export interface WebSection {
-  id: string;
-  title: string;
-  level: number;
-  blocks: Block[];
 }
 
 export interface Lesson {
@@ -30,7 +22,6 @@ export interface Lesson {
   commands: string[];
   placeholder: boolean;
   slides: Slide[];
-  webDocument?: WebSection[];
   wikiReferences?: WikiReference[];
   exercises?: LessonExercise[];
   keyAreas?: string[];

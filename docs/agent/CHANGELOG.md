@@ -849,3 +849,22 @@
 - Verificación: npm run verify (10/10 etapas completas en verde, 102 tests E2E Playwright, 444 unit tests), npx playwright test e2e/fase-12.spec.ts (8/8 tests pasando, 0 violaciones Axe), inspección visual de capturas en e2e/screenshots/fase-12/.
 - Pendiente / deuda: Aprobación y ejecución de la Oleada O6 (Higiene del Repositorio y Refactorización: eliminación de `round_2/`, depuración de capturas viejas, modularización de `home-page.component.ts`).
 
+## C-0079 · 2026-11-07 · Auditoría Web · Oleada O6: Higiene del Repositorio y Refactorización
+- Qué: resolución completa de los hallazgos de higiene, refactorización y configuración de la Oleada O6, completando la Fase 2 de Auditoría Integral:
+  (1) Eliminación de duplicados de configuración (`A9-001`, S-16): suprimida la carpeta residual `round_2/` (20 archivos que duplicaban la raíz del proyecto).
+  (2) Purgado y exclusión de capturas huérfanas (`A9-002`, `A9-005`): añadido `/e2e/screenshots/` a `.gitignore` y desversionadas 97 imágenes PNG obsoletas (`git rm -r --cached`), eliminando ruido binario en el historial git.
+  (3) Configuración de CI y cabeceras de seguridad (`A9-003`):
+      - Creado `.github/workflows/ci.yml` con pipeline automático de GitHub Actions (instalación limpia con `npm ci`, verificación de contenido, typecheck, lint, tokens, fronteras, suite unitaria y build de producción).
+      - Creado `public/_headers` con cabeceras de seguridad CSP (`Content-Security-Policy`), `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin` y `Permissions-Policy`.
+  (4) Corrección y actualización del `README.md` (`A9-004`): suprimidas menciones desfasadas de Karma/Jasmine, actualizada la descripción del test runner a Angular CLI + Vitest, reflejadas las 10 etapas del gate y sincronizadas las cifras exactas del manifiesto (`totalCommands: 197`, `totalTerms: 238`, `totalFlashcards: 1411`, `totalQuestions: 240`).
+  (5) Eliminación de la clave vestigial `webDocument` (`A9-004`, `A3-008`, `A9-006`): eliminada de `Lesson` y `LessonSchema`, de `build-content.ts`, importadores legacy y de las 41 lecciones en `content-src/lessons/*.json`, reduciendo el peso del catálogo en ~1.5 MB de JSONs redundantes.
+  (6) Descomposición modular de `home-page.component.ts` (`A6-003`, S-14):
+      - Creados componentes especializados `HomeHeroComponent`, `HomeMetricsComponent` y `HomeFaqComponent` en `src/app/features/home/components/`.
+      - Extraídos template (`home-page.component.html`) y estilos (`home-page.component.css`), reduciendo `home-page.component.ts` de 1.096 líneas a 150 líneas.
+      - Garantizados contrastes WCAG AA en la banda del simulador y pasos de metodología mediante tokens semánticos (`--primary`, `--color-slate-800`, `--color-slate-700`, `--color-amber-400`, `--color-slate-300`).
+  (7) Verificación completa: `npm run verify` al 100% en verde (10/10 etapas, 102 tests E2E Playwright, 444 tests unitarios).
+- Por qué: cumplimiento del alcance de la Oleada O6 aprobado por el usuario con `APROBADO O6`.
+- Archivos: round_2/, e2e/screenshots/, .gitignore, .github/workflows/ci.yml, public/_headers, README.md, src/app/core/models/lesson.model.ts, src/app/core/schemas/lesson.schema.ts, scripts/build-content.ts, scripts/import-legacy/**, content-src/lessons/*.json, src/app/features/home/**, docs/agent/auditorias/web-2026-11-03/backlog.md, docs/agent/CHANGELOG.md, docs/agent/STATUS.md.
+- Verificación: npm run verify (10/10 etapas completas en verde, 102 tests E2E Playwright, 444 unit tests), npx playwright test e2e/fase-0.spec.ts e2e/fase-4.spec.ts (14/14 tests pasando, 0 violaciones Axe).
+- Pendiente / deuda: Auditoría Integral web finalizada al 100% (todas las 6 oleadas O1–O6 completadas). Proceder a la siguiente fase del proyecto según el usuario (ej. reanudar la Ronda 2 de fidelidad LPI o despliegue).
+

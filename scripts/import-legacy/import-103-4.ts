@@ -365,38 +365,6 @@ export function import1034Lesson(legacyContentDir: string, destLessonsDir: strin
     commands: ['tee', 'xargs', 'cat', 'head', 'tail', 'wc', 'grep', 'sort', 'uniq', 'tr', 'sed', 'cut'],
     placeholder: false,
     slides,
-    webDocument: [
-      {
-        id: 'sec-descriptores',
-        title: '1. Los Tres Descriptores Estándar: stdin, stdout y stderr',
-        level: 2,
-        blocks: slides[1]?.blocks ?? []
-      },
-      {
-        id: 'sec-redirecciones',
-        title: '2. Operadores de Redirección y Descarte en /dev/null',
-        level: 2,
-        blocks: slides[2]?.blocks ?? []
-      },
-      {
-        id: 'sec-fusion-errores',
-        title: '3. Fusión de Flujos y Manejo de Errores (2>&1, &>)',
-        level: 2,
-        blocks: slides[3]?.blocks ?? []
-      },
-      {
-        id: 'sec-tuberias-tee',
-        title: '4. Canalización con Tuberías (|) y Bifurcación con tee',
-        level: 2,
-        blocks: slides[5]?.blocks ?? []
-      },
-      {
-        id: 'sec-xargs',
-        title: '5. Procesamiento Masivo con xargs y Delimitación Nula (-print0)',
-        level: 2,
-        blocks: slides[7]?.blocks ?? []
-      }
-    ],
     wikiReferences: [
       {
         id: 'cmd-tee',

@@ -23,7 +23,7 @@ Cada oleada cuenta con alcance definido, estimación de esfuerzo, archivos afect
 | **O3** | **Completada** | **Visor de Lecciones y Sistema Visual** | Bloques `html` invisibles, doble título en portada, desbordes 16:9, cabecera | 24 | **L** | Medio |
 | **O4** | **Completada** | **Exactitud Pedagógica y Fidelidad LPI** | Claves de examen invertidas, preguntas `fill` rotas, lecciones/labs esqueleto | 18 | **L** | Alto |
 | **O5** | **Completada** | **Accesibilidad, Herramientas y Rendimiento** | WCAG 2.2 AA (Axe), modales con focus-trap, división de flashcards | 18 | **M** | Bajo |
-| **O6** | **Pendiente** | **Higiene del Repositorio y Refactorización** | Eliminación de `round_2/`, limpieza de capturas viejas, división de `home-page` | 11 | **M** | Bajo |
+| **O6** | **Completada** | **Higiene del Repositorio y Refactorización** | Eliminación de `round_2/`, limpieza de capturas viejas, división de `home-page` | 11 | **M** | Bajo |
 
 ---
 

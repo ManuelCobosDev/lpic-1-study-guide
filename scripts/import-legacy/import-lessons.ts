@@ -467,17 +467,6 @@ export function importAllLessons(legacyContentDir: string, destLessonsDir: strin
       }
     }
 
-    // Construir webDocument agrupando bloques de slides en secciones
-    const webDocument = slides
-      .filter(s => s.layout !== 'cover')
-      .slice(0, 10)
-      .map((s, idx) => ({
-        id: `sec-${subtopicId.replace('.', '-')}-${idx + 1}`,
-        title: s.title,
-        level: 2 as const,
-        blocks: s.blocks
-      }));
-
     const lesson: Lesson = {
       id: subtopicId,
       topicId,
@@ -493,8 +482,7 @@ export function importAllLessons(legacyContentDir: string, destLessonsDir: strin
       keyTerms,
       commands,
       placeholder: false,
-      slides,
-      webDocument
+      slides
     };
 
     // Validar con LessonSchema

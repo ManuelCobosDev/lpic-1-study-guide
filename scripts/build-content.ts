@@ -267,26 +267,6 @@ export function generatePlaceholderLesson(subtopic: Subtopic, topic: Topic): Les
     commands: ['ls', 'cat', 'man'],
     placeholder: true,
     slides,
-    webDocument: [
-      {
-        id: 'sec-1',
-        title: 'Introducción y Fundamentos',
-        level: 2,
-        blocks: slides[1]?.blocks ?? []
-      },
-      {
-        id: 'sec-2',
-        title: 'Comandos y Demostración Práctica',
-        level: 2,
-        blocks: [...(slides[2]?.blocks ?? []), ...(slides[2]?.secondaryBlocks ?? [])]
-      },
-      {
-        id: 'sec-3',
-        title: 'Resumen y Consejos de Examen',
-        level: 2,
-        blocks: slides[7]?.blocks ?? []
-      }
-    ],
     wikiReferences: [
       {
         id: 'cmd-ls',

@@ -5,8 +5,8 @@
 ![Licencia](https://img.shields.io/badge/licencia-MIT-blue.svg)
 ![Angular](https://img.shields.io/badge/Angular-21.1-red.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)
-![Tests](https://img.shields.io/badge/tests-Karma%20%7C%20Vitest%20%7C%20Playwright-brightgreen.svg)
-![Accesibilidad](https://img.shields.io/badge/WCAG-2.1%20AA%20(Axe%200%20errores)-success.svg)
+![Tests](https://img.shields.io/badge/tests-Angular%20%7C%20Vitest%20%7C%20Playwright-brightgreen.svg)
+![Accesibilidad](https://img.shields.io/badge/WCAG-2.2%20AA%20(Axe%200%20errores)-success.svg)
 
 ---
 
@@ -14,12 +14,12 @@
 
 - **Temario Oficial Completo**:
   - **42 subtemas oficiales** distribuidos en 10 temas: 4 temas para el Examen 101 (Temas 101 a 104) y 6 temas para el Examen 102 (Temas 105 a 110).
-  - **771 diapositivas interactivas** con diseño 16:9 escalado, bloques didácticos de alta densidad (código con resaltado de sintaxis, terminales simuladas, llamadas de examen, tablas comparativas y diagramas vectoriales).
+  - **771 diapositivas interactivas** (616 completas y 155 en preparación) con diseño 16:9 escalado, bloques didácticos de alta densidad (código con resaltado de sintaxis, terminales simuladas, llamadas de examen, tablas comparativas y diagramas vectoriales).
   - **Triple formato de estudio**: modo Diapositivas con atajos de teclado (`←`, `→`, `F` pantalla completa, `T` miniaturas), vista Web continua de lectura y exportación limpia para impresión / PDF.
   - **Auto-vinculación contextual**: popovers informativos estilo Wikipedia al pulsar sobre comandos y términos técnicos dentro del texto.
 
 - **42 Laboratorios Guiados con Terminal Debian 12**:
-  - **131 misiones paso a paso** con instrucciones, órdenes reproducibles para máquina virtual Debian 12 (Bookworm), salidas esperadas y botón de copiado rápido al portapapeles.
+  - **42 laboratorios prácticos** (31 completos y 11 en preparación) con instrucciones paso a paso, órdenes reproducibles para máquina virtual Debian 12 (Bookworm), salidas esperadas y botón de copiado rápido al portapapeles.
   - Seguimiento de progreso por paso, banner descartable de entorno y diálogo de celebración al finalizar la práctica.
 
 - **Simulador Oficial de Examen LPIC-1**:
@@ -30,11 +30,11 @@
 
 - **Herramientas de Estudio Avanzadas**:
   - **Buscador Global Unificado**: paleta modal accesible (`Ctrl+K` o `/`) y página dedicada `/buscar` con búsqueda difusa sinónima, acentos transparentes y resaltado con `<mark>`.
-  - **Catálogo de 197 Comandos**: búsqueda instantánea, filtros por tema/categoría, vista dual (tabla / tarjetas) y paneles expandibles con flags y sintaxis.
-  - **Glosario de 238 Términos Técnicos**: navegación alfabética interactiva A-Z con indicador de disponibilidad de términos y enlaces al temario.
-  - **42 Mazos de Flashcards**: algoritmo de repetición espaciada Leitner (cajas 1 a 5) con evaluación subjetiva (Bien / Difícil / Repetir) y persistencia local.
+  - **Catálogo de 197 Comandos**: búsqueda instantánea, 12 categorías canónicas, filtros por tema/categoría, vista dual (tabla / tarjetas) y paneles expandibles con flags y sintaxis.
+  - **Glosario de 238 Términos Técnicos**: navegación alfabética interactiva A-Z con grupo especial `#` para rutas y archivos ocultos, e indicadores de disponibilidad.
+  - **1 411 Flashcards**: algoritmo de repetición espaciada Leitner (cajas 1 a 5) con evaluación subjetiva (Bien / Difícil / Repetir), mazos por examen y biblioteca con buscador en tiempo real.
   - **Mapa Mental Jerárquico D3**: visualización en árbol SVG con zoom, paneo interactivo, filtro de pendientes y panel lateral de navegación.
-  - **Panel de Progreso y Métricas**: tarjetas de estado, desglose por temas con anillos porcentuales, historial de simulacros con gráfica de evolución y mapa de calor de estudio (heatmap de 12 semanas).
+  - **Panel de Progreso y Métricas**: tarjetas de estado, desglose por temas con anillos porcentuales, historial de simulacros con gráfica de evolución y mapa de calor de estudio (heatmap de 26 semanas).
 
 - **Persistencia Segura y Privacidad**:
   - **100% del lado del cliente**: sin backend, sin cookies invasivas ni telemetría.
@@ -51,9 +51,9 @@
 | **Estilos** | CSS moderno con Custom Properties semánticas, paleta Slate/Azure y soporte Dark/Light Theme |
 | **Validación de Datos** | Zod (esquemas de lecciones, labs, preguntas, comandos y glosario) |
 | **Visualización** | D3.js (árbol jerárquico SVG y zoom) |
-| **Buscador** | MiniSearch (motor de búsqueda en memoria con tokenización en español) |
-| **Pruebas Unitarias** | Angular Karma / Jasmine + Vitest para scripts de toolchain |
-| **Pruebas E2E & A11y** | Playwright + `@axe-core/playwright` (WCAG 2.1 AA sin violaciones) |
+| **Buscador** | MiniSearch (motor de búsqueda en memoria con tokenización en español y sinónimos) |
+| **Pruebas Unitarias** | Angular Unit Testing (`@angular/build:unit-test`) + Vitest para scripts y motores desacoplados |
+| **Pruebas E2E & A11y** | Playwright + `@axe-core/playwright` (WCAG 2.2 AA sin violaciones críticas/serias) |
 
 ---
 
@@ -77,7 +77,7 @@ npm run dev
 La aplicación estará disponible en `http://localhost:4200/`.
 
 ### 3. Pipeline de Verificación Riguroso (Gate de Calidad)
-Ejecuta con un único comando la validación completa en 9 etapas (contenido, tipos, linteo, tokens, fronteras, tests unitarios, build de producción y tests E2E):
+Ejecuta con un único comando la validación completa en 10 etapas (contenido, validación, integridad criptográfica, tipos, linteo, tokens, fronteras, tests unitarios, build de producción y tests E2E):
 ```bash
 npm run verify
 ```
@@ -91,10 +91,10 @@ npm run verify
 | `npm run dev` | Inicia el servidor de desarrollo Angular en `localhost:4200`. |
 | `npm run build` | Compila la aplicación para producción en `dist/lpic1-study-guide/browser/` y genera `404.html`. |
 | `npm run preview` | Sirve la compilación estática de producción localmente para pruebas de despliegue. |
-| `npm run verify` | Ejecuta las 9 etapas de control de calidad obligatorio. |
+| `npm run verify` | Ejecuta las 10 etapas de control de calidad obligatorio. |
 | `npm run typecheck` | Comprueba tipos estrictos en la aplicación, tests y scripts (`tsc --noEmit`). |
 | `npm run lint` | Ejecuta ESLint con reglas de fronteras arquitectónicas. |
-| `npm run test` | Ejecuta los tests unitarios con Karma y Vitest. |
+| `npm run test` | Ejecuta los tests unitarios con Angular CLI y Vitest. |
 | `npm run e2e` | Ejecuta la suite completa de pruebas end-to-end con Playwright. |
 | `npm run build:content` | Compila y valida el contenido de `content-src/` hacia `public/content/`. |
 | `npm run import:legacy` | Orquestador reproducible e idempotente para reimportar todo el contenido original. |
