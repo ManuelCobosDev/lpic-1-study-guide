@@ -293,4 +293,14 @@ describe('ExamService (Servicio de Gestión de Exámenes y Persistencia)', () =>
     service.setSelectedExamId('102');
     expect(service.selectedExamId()).toBe('102');
   });
+
+  it('debe eliminar un intento del historial con deleteAttempt', async () => {
+    await service.startExam({ mode: 'exam', examId: '101' });
+    const finished = await service.finishCurrentExam();
+    expect(finished).not.toBeNull();
+    expect(service.getRecentAttempts().length).toBeGreaterThan(0);
+
+    service.deleteAttempt(finished!.id);
+    expect(service.getAttemptById(finished!.id)).toBeUndefined();
+  });
 });

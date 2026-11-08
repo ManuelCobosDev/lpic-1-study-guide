@@ -53,7 +53,7 @@
           <app-button
             variant="ghost"
             size="md"
-            (btnClick)="abandonActiveExam()"
+            (btnClick)="confirmAbandonActiveExam()"
             aria-label="Descartar el examen actual sin guardar"
           >
             Descartar
@@ -126,6 +126,15 @@
             />
             <span>Usar solo preguntas verificadas</span>
           </label>
+        </div>
+      } @else if (verifiedStats().total > 0) {
+        <div class="revision-notice-banner verified-bank-banner" role="status" aria-label="Estado del banco de preguntas">
+          <div class="revision-notice-content">
+            <span class="text-sm select-none" aria-hidden="true">✅</span>
+            <span class="notice-text">
+              Banco oficial 100% verificado: {{ verifiedStats().total }} de {{ verifiedStats().total }} preguntas oficiales validadas
+            </span>
+          </div>
         </div>
       }
     </section>
@@ -288,15 +297,27 @@
                       <app-badge variant="danger">Suspendido</app-badge>
                     }
                   </td>
-                  <td>
-                    <a
-                      [routerLink]="['/simulador/resultados']"
-                      [queryParams]="{ id: attempt.id }"
-                      class="results-link"
-                      [attr.aria-label]="'Ver resultados del intento del ' + (attempt.startedAt | date:'shortDate')"
-                    >
-                      Ver resultados →
-                    </a>
+                  <td class="action-cell">
+                    <div class="action-cell-content">
+                      <a
+                        [routerLink]="['/simulador/resultados']"
+                        [queryParams]="{ id: attempt.id }"
+                        class="results-link"
+                        [attr.aria-label]="'Ver resultados del intento del ' + (attempt.startedAt | date:'shortDate')"
+                      >
+                        Ver resultados →
+                      </a>
+                      <button
+                        type="button"
+                        class="delete-attempt-btn"
+                        (click)="confirmDeleteAttempt(attempt)"
+                        title="Eliminar este intento del historial"
+                        [attr.aria-label]="'Eliminar intento del ' + (attempt.startedAt | date:'shortDate')"
+                      >
+                        <span aria-hidden="true">🗑️</span>
+                        <span class="sr-only">Eliminar intento</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               }
@@ -305,6 +326,39 @@
         </div>
       }
     </section>
+
+    <!-- Modal de confirmación para eliminar intento / descartar simulacro -->
+    <app-dialog
+      [open]="isConfirmModalOpen()"
+      [title]="isDiscardingActiveSession() ? '¿Descartar simulacro en curso?' : '¿Eliminar intento del historial?'"
+      (closed)="closeModal()"
+    >
+      <div class="delete-modal-body space-y-3 py-2">
+        @if (isDiscardingActiveSession()) {
+          <p class="text-sm text-[var(--text)]">
+            Tienes un simulacro activo con respuestas registradas. Si lo descartas, se cancelará inmediatamente y no se guardará en tu historial.
+          </p>
+        } @else if (attemptToDelete(); as attempt) {
+          <p class="text-sm text-[var(--text)]">
+            Estás a punto de eliminar de forma permanente el intento del
+            <strong>{{ attempt.startedAt | date:'mediumDate' }}</strong>
+            con puntuación <strong>{{ attempt.score ?? '---' }}/800</strong>.
+          </p>
+          <p class="text-xs text-[var(--danger-text)] font-semibold">
+            Esta acción es irreversible y este intento no volverá a aparecer en tu historial.
+          </p>
+        }
+      </div>
+
+      <div actions class="modal-actions flex items-center justify-end gap-3 w-full pt-2">
+        <app-button variant="secondary" size="sm" (btnClick)="closeModal()">
+          Cancelar
+        </app-button>
+        <app-button variant="destructive" size="sm" (btnClick)="executeDelete()">
+          {{ isDiscardingActiveSession() ? 'Descartar simulacro' : 'Eliminar intento' }}
+        </app-button>
+      </div>
+    </app-dialog>
   </div>
 </app-container>
 

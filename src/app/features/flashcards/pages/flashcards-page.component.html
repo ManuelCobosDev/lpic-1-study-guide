@@ -14,40 +14,208 @@
         </p>
       </div>
 
-      <!-- Selector de Mazos Ampliados -->
-      <div class="deck-selector" role="group" aria-label="Seleccionar mazo de flashcards">
-        @for (deck of availableDecks; track deck.id) {
-          <button
-            type="button"
-            class="deck-btn"
-            [class.active]="selectedDeck() === deck.id"
-            [attr.aria-pressed]="selectedDeck() === deck.id"
-            [attr.data-testid]="'deck-' + deck.id"
-            (click)="selectDeck(deck.id)"
-          >
-            <span class="deck-icon" aria-hidden="true">{{ deck.icon }}</span>
-            <span class="deck-label">{{ deck.label }}</span>
-          </button>
-        }
+      <!-- Selector de Modo de Mazos: Por Temas vs Globales -->
+      <div class="deck-mode-tabs" role="tablist" aria-label="Modo de selección de mazo">
+        <button
+          type="button"
+          role="tab"
+          class="mode-tab-btn"
+          [class.active]="activeCategoryTab() === 'topics'"
+          [attr.aria-selected]="activeCategoryTab() === 'topics'"
+          (click)="setActiveCategoryTab('topics')"
+        >
+          <span>🎯 Por Temas LPIC-1 (Recomendado)</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="mode-tab-btn"
+          [class.active]="activeCategoryTab() === 'general'"
+          [attr.aria-selected]="activeCategoryTab() === 'general'"
+          (click)="setActiveCategoryTab('general')"
+        >
+          <span>🌐 Mazos Globales y Tipos</span>
+        </button>
       </div>
+
+      <!-- Selector por Temas LPIC-1 -->
+      @if (activeCategoryTab() === 'topics') {
+        <div class="topics-deck-container" role="region" aria-label="Selección de tema oficial">
+          <!-- Opción General: Todo el catálogo -->
+          <div class="global-all-row">
+            <button
+              type="button"
+              class="topic-btn topic-btn-all"
+              [class.active]="selectedDeck() === 'all'"
+              [attr.aria-pressed]="selectedDeck() === 'all'"
+              data-testid="deck-all"
+              (click)="selectDeck('all')"
+            >
+              <span class="topic-num font-mono">ALL</span>
+              <span class="topic-name">Todo el Catálogo LPIC-1 (Catálogo completo)</span>
+            </button>
+          </div>
+
+          <!-- Examen 101 -->
+          <div class="exam-topics-group">
+            <span class="exam-group-badge">Examen LPIC-1 101</span>
+            <div class="topic-buttons-grid">
+              @for (topic of exam101Topics(); track topic.id) {
+                <button
+                  type="button"
+                  class="topic-btn"
+                  [class.active]="selectedDeck() === topic.id"
+                  [attr.aria-pressed]="selectedDeck() === topic.id"
+                  [attr.data-testid]="'deck-' + topic.id"
+                  (click)="selectDeck(topic.id)"
+                  [title]="topic.title + ': ' + topic.name"
+                >
+                  <span class="topic-num font-mono">{{ topic.label }}</span>
+                  <span class="topic-name">{{ topic.name }}</span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Examen 102 -->
+          <div class="exam-topics-group">
+            <span class="exam-group-badge">Examen LPIC-1 102</span>
+            <div class="topic-buttons-grid">
+              @for (topic of exam102Topics(); track topic.id) {
+                <button
+                  type="button"
+                  class="topic-btn"
+                  [class.active]="selectedDeck() === topic.id"
+                  [attr.aria-pressed]="selectedDeck() === topic.id"
+                  [attr.data-testid]="'deck-' + topic.id"
+                  (click)="selectDeck(topic.id)"
+                  [title]="topic.title + ': ' + topic.name"
+                >
+                  <span class="topic-num font-mono">{{ topic.label }}</span>
+                  <span class="topic-name">{{ topic.name }}</span>
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Selector de Mazos Generales -->
+      @if (activeCategoryTab() === 'general') {
+        <div class="deck-selector" role="group" aria-label="Seleccionar mazo global de flashcards">
+          @for (deck of availableDecks; track deck.id) {
+            <button
+              type="button"
+              class="deck-btn"
+              [class.active]="selectedDeck() === deck.id"
+              [attr.aria-pressed]="selectedDeck() === deck.id"
+              [attr.data-testid]="'deck-' + deck.id"
+              (click)="selectDeck(deck.id)"
+            >
+              <span class="deck-icon" aria-hidden="true">{{ deck.icon }}</span>
+              <span class="deck-label">{{ deck.label }}</span>
+            </button>
+          }
+        </div>
+      }
     </header>
+
+    <!-- Guía Explicativa del Método Leitner (Colapsable y Educativa) -->
+    <div class="leitner-guide-card" role="region" aria-label="Explicación del método Leitner">
+      <button
+        type="button"
+        class="guide-header-btn"
+        (click)="toggleGuide()"
+        [attr.aria-expanded]="showGuide()"
+        aria-controls="leitner-guide-body"
+      >
+        <div class="guide-header-title">
+          <span class="guide-icon" aria-hidden="true">💡</span>
+          <span class="guide-title-text">¿Cómo funciona el método de repaso en 5 cajas?</span>
+        </div>
+        <span class="guide-toggle-badge">
+          {{ showGuide() ? 'Ocultar explicación ▲' : '¿No entiendes las cajas? Clic para ver cómo funciona ▼' }}
+        </span>
+      </button>
+
+      @if (showGuide()) {
+        <div id="leitner-guide-body" class="guide-body">
+          <p class="guide-intro">
+            El método Leitner optimiza tu memoria repitiendo con mayor frecuencia los conceptos que te resultan difíciles y espaciando en el tiempo aquellos que ya dominas:
+          </p>
+          <div class="leitner-boxes-diagram">
+            <div class="box-step-item box-step-1">
+              <div class="box-step-top">
+                <span class="box-step-pill">Caja 1</span>
+                <span class="box-step-time">Hoy</span>
+              </div>
+              <strong class="box-step-name">Nuevas / Difíciles</strong>
+              <p class="box-step-desc">Se repasan hoy mismo. Si fallas una tarjeta en cualquier caja, vuelve aquí.</p>
+            </div>
+            <div class="box-step-item box-step-2">
+              <div class="box-step-top">
+                <span class="box-step-pill">Caja 2</span>
+                <span class="box-step-time">1 día</span>
+              </div>
+              <strong class="box-step-name">En aprendizaje</strong>
+              <p class="box-step-desc">Primer nivel de consolidación. Se repasan al día siguiente.</p>
+            </div>
+            <div class="box-step-item box-step-3">
+              <div class="box-step-top">
+                <span class="box-step-pill">Caja 3</span>
+                <span class="box-step-time">3 días</span>
+              </div>
+              <strong class="box-step-name">Afianzando</strong>
+              <p class="box-step-desc">Memoria a corto plazo afianzada. Repaso cada 3 días.</p>
+            </div>
+            <div class="box-step-item box-step-4">
+              <div class="box-step-top">
+                <span class="box-step-pill">Caja 4</span>
+                <span class="box-step-time">7 días</span>
+              </div>
+              <strong class="box-step-name">Avanzada</strong>
+              <p class="box-step-desc">Retención a largo plazo. Repaso espaciado cada semana.</p>
+            </div>
+            <div class="box-step-item box-step-5">
+              <div class="box-step-top">
+                <span class="box-step-pill">Caja 5</span>
+                <span class="box-step-time">21 días</span>
+              </div>
+              <strong class="box-step-name">¡Dominada!</strong>
+              <p class="box-step-desc">Concepto fijado para el examen oficial LPIC-1.</p>
+            </div>
+          </div>
+          <div class="guide-rules-footer">
+            <span class="rule-title">⚡ Cómo calificar las tarjetas:</span>
+            <ul class="rule-list">
+              <li><strong>Bien (+1 caja)</strong> o <strong>Fácil (+2 cajas):</strong> La tarjeta asciende de caja y se espaciará en el tiempo.</li>
+              <li><strong>Difícil (0 cajas):</strong> Se queda en la caja actual para que no tardes en verla de nuevo.</li>
+              <li><strong>Otra vez (vuelve a Caja 1):</strong> Reinicia su ciclo para que nunca se quede en el olvido.</li>
+            </ul>
+          </div>
+        </div>
+      }
+    </div>
 
     <!-- Barra de Estado del Mazo Activo -->
     @if (deckStats(); as stats) {
       <div class="deck-metrics-bar">
         <div class="metrics-deck-name">
-          <span class="metrics-label">Mazo actual:</span>
+          <span class="metrics-label">Estudiando:</span>
           <strong>{{ activeDeckLabel() }}</strong>
         </div>
         <div class="metrics-counters">
-          <span class="metric-pill pill-due">
-            <strong>{{ stats.dueToday }}</strong> para hoy
+          <span class="metric-pill pill-session" title="Tarjetas preparadas para esta sesión de estudio">
+            <strong>{{ totalCardsInSession() }}</strong> en esta sesión
           </span>
-          <span class="metric-pill pill-new">
+          <span class="metric-pill pill-due" title="Tarjetas que toca repasar hoy según su intervalo Leitner">
+            <strong>{{ stats.dueToday }}</strong> pendientes hoy
+          </span>
+          <span class="metric-pill pill-new" title="Tarjetas nuevas que aún no has estudiado">
             <strong>{{ stats.unseen }}</strong> nuevas
           </span>
-          <span class="metric-pill pill-total">
-            <strong>{{ stats.total }}</strong> en este mazo
+          <span class="metric-pill pill-total" title="Total de tarjetas incluidas en este tema o mazo">
+            <strong>{{ stats.total }}</strong> en este tema
           </span>
         </div>
       </div>

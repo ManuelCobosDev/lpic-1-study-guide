@@ -349,4 +349,11 @@ describe('BackupService', () => {
       expect(service.isExportReminderDue()).toBe(false);
     });
   });
+
+  describe('printProgressReport', () => {
+    it('debe generar el informe estructurado sin lanzar errores', async () => {
+      progressService.markSubtopicCompleted('101.1');
+      await expect(service.printProgressReport()).resolves.toBeUndefined();
+    });
+  });
 });

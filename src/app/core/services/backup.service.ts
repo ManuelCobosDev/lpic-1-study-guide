@@ -126,9 +126,330 @@ export class BackupService {
     this.triggerFileDownload(csvContent, fileName, 'text/csv;charset=utf-8');
   }
 
-  printProgressReport(): void {
-    if (typeof window !== 'undefined') {
-      window.print();
+  async printProgressReport(): Promise<void> {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+    const manifest = await this.contentService.getManifest();
+    const progress = this.progressService.progress();
+    const notesRaw = this.storage.getItem('notes');
+    let notesMap: Record<string, string> = {};
+    if (notesRaw) {
+      try {
+        const parsed = JSON.parse(notesRaw);
+        notesMap = parsed.data ?? parsed;
+      } catch {
+        // Ignorar
+      }
+    }
+
+    const examHistoryRaw = this.storage.getItem('exam_history');
+    let examCount = 0;
+    let avgScore = 0;
+    let passRate = 0;
+    if (examHistoryRaw) {
+      try {
+        const parsed = JSON.parse(examHistoryRaw);
+        const attempts = Array.isArray(parsed) ? parsed : (parsed.data ?? []);
+        examCount = attempts.length;
+        if (examCount > 0) {
+          const totalScore = attempts.reduce((acc: number, a: { score?: number }) => acc + (a.score ?? 0), 0);
+          avgScore = Math.round(totalScore / examCount);
+          const passedCount = attempts.filter((a: { passed?: boolean }) => a.passed).length;
+          passRate = Math.round((passedCount / examCount) * 100);
+        }
+      } catch {
+        // Ignorar
+      }
+    }
+
+    const flashcardsRaw = this.storage.getItem('flashcards_progress');
+    let masteredCards = 0;
+    let totalCards = 0;
+    if (flashcardsRaw) {
+      try {
+        const parsed = JSON.parse(flashcardsRaw);
+        const cards = (parsed.cards ?? parsed.data?.cards ?? {}) as Record<string, { box?: number }>;
+        const cardEntries = Object.values(cards);
+        totalCards = cardEntries.length;
+        masteredCards = cardEntries.filter((c) => c.box === 5).length;
+      } catch {
+        // Ignorar
+      }
+    }
+
+    const completedSubsCount = Object.keys(progress.completedSubtopics || {}).length;
+    const totalSubsCount = manifest?.subtopics?.length || 42;
+    const completionPct = totalSubsCount > 0 ? Math.round((completedSubsCount / totalSubsCount) * 100) : 0;
+    
+    const dateSet = new Set<string>();
+    for (const d of Object.values(progress.completedSubtopics || {})) {
+      if (d) dateSet.add(d.slice(0, 10));
+    }
+    for (const d of Object.values(progress.completedLabs || {})) {
+      if (d) dateSet.add(d.slice(0, 10));
+    }
+    const activeStudyDays = dateSet.size;
+
+    const dateFormatted = new Intl.DateTimeFormat('es-ES', {
+      dateStyle: 'long',
+      timeStyle: 'short'
+    }).format(new Date());
+
+    const escape = (str: string) =>
+      str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    let tableRowsHtml = '';
+    if (manifest && manifest.subtopics) {
+      for (const sub of manifest.subtopics) {
+        const completedDate = progress.completedSubtopics[sub.id];
+        const isDone = Boolean(completedDate);
+        const note = notesMap[sub.id];
+        const formattedDate = completedDate
+          ? new Intl.DateTimeFormat('es-ES', { dateStyle: 'short' }).format(new Date(completedDate))
+          : '—';
+
+        tableRowsHtml += `
+          <tr>
+            <td class="font-mono text-center font-bold">${escape(sub.id)}</td>
+            <td><strong>${escape(sub.title)}</strong></td>
+            <td class="text-center font-mono">Tema ${escape(sub.topicId)}</td>
+            <td class="text-center font-mono">Peso ${sub.weight}</td>
+            <td class="text-center">
+              <span class="badge ${isDone ? 'badge-completed' : 'badge-pending'}">
+                ${isDone ? 'Completado' : 'Pendiente'}
+              </span>
+            </td>
+            <td class="text-center font-mono text-sm">${escape(formattedDate)}</td>
+            <td class="text-sm">${note ? escape(note.slice(0, 50) + (note.length > 50 ? '...' : '')) : '<span class="text-muted">Sin notas</span>'}</td>
+          </tr>
+        `;
+      }
+    }
+
+    const reportHtml = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>LPIC-1 Study Guide · Informe de Progreso</title>
+  <style>
+    @page {
+      margin: 14mm;
+      size: A4 portrait;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      padding: 16px;
+      font-size: 10pt;
+      line-height: 1.4;
+    }
+    .header {
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .title {
+      font-size: 18pt;
+      font-weight: 700;
+      color: #1e3a8a;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      font-size: 9.5pt;
+      color: #475569;
+      margin-top: 3px;
+    }
+    .meta-box {
+      text-align: right;
+      font-size: 8.5pt;
+      color: #64748b;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #f8fafc;
+    }
+    .stat-label {
+      font-size: 8pt;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-bottom: 2px;
+    }
+    .stat-value {
+      font-size: 15pt;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .stat-sub {
+      font-size: 8pt;
+      color: #475569;
+      margin-top: 2px;
+    }
+    .section-title {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 16px 0 8px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+      margin-bottom: 16px;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 5px 7px;
+      text-align: left;
+    }
+    th {
+      background-color: #f1f5f9;
+      font-weight: 600;
+      color: #334155;
+    }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .font-bold { font-weight: 700; }
+    .text-center { text-align: center; }
+    .text-sm { font-size: 8pt; }
+    .text-muted { color: #94a3b8; }
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 7.5pt;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-completed {
+      background-color: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    .badge-pending {
+      background-color: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+    .footer {
+      margin-top: 20px;
+      padding-top: 8px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 8pt;
+      color: #94a3b8;
+      display: flex;
+      justify-content: space-between;
+    }
+    @media print {
+      body { padding: 0; }
+      tr { break-inside: avoid; page-break-inside: avoid; }
+      .header, .stats-grid { break-inside: avoid; page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1 class="title">LPIC-1 Study Guide</h1>
+      <p class="subtitle">Informe Oficial de Progreso y Preparación para la Certificación Linux</p>
+    </div>
+    <div class="meta-box">
+      <div><strong>Emisión:</strong> ${escape(dateFormatted)}</div>
+      <div><strong>Exámenes:</strong> 101-500 y 102-500</div>
+      <div><strong>Versión:</strong> v0.2.0 (Temario completo)</div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Lecciones completadas</div>
+      <div class="stat-value">${completedSubsCount} / ${totalSubsCount}</div>
+      <div class="stat-sub">${completionPct}% del temario oficial</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Simulacros de examen</div>
+      <div class="stat-value">${examCount}</div>
+      <div class="stat-sub">Media: ${avgScore} pts · ${passRate}% aprobados</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Repaso Leitner</div>
+      <div class="stat-value">${masteredCards} dominadas</div>
+      <div class="stat-sub">${totalCards} tarjetas en estudio activo</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Días de estudio activo</div>
+      <div class="stat-value">${activeStudyDays} días</div>
+      <div class="stat-sub">Registros de actividad local</div>
+    </div>
+  </div>
+
+  <h2 class="section-title">Desglose Detallado de Subtemas LPIC-1</h2>
+  <table>
+    <thead>
+      <tr>
+        <th class="text-center" style="width: 55px;">Subtema</th>
+        <th>Título Oficial</th>
+        <th class="text-center" style="width: 75px;">Tema</th>
+        <th class="text-center" style="width: 65px;">Peso</th>
+        <th class="text-center" style="width: 85px;">Estado</th>
+        <th class="text-center" style="width: 80px;">Fecha</th>
+        <th>Notas de estudio</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${tableRowsHtml}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <span>LPIC-1 Study Guide · Aula Virtual Cliente</span>
+    <span>Documento de seguimiento personal generado localmente</span>
+  </div>
+</body>
+</html>`;
+
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(reportHtml);
+      doc.close();
+
+      setTimeout(() => {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+        setTimeout(() => {
+          if (iframe.parentNode) {
+            iframe.parentNode.removeChild(iframe);
+          }
+        }, 1500);
+      }, 250);
     }
   }
 
