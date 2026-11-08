@@ -103,6 +103,12 @@ export interface SelectOption {
       transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
       box-sizing: border-box;
       cursor: pointer;
+      color-scheme: inherit;
+    }
+
+    .select-element option {
+      background-color: var(--surface);
+      color: var(--text);
     }
 
     .select-element:focus-visible {

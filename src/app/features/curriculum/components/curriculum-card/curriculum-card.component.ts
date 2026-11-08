@@ -118,8 +118,7 @@ import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
           </div>
         } @else {
           <a
-            [routerLink]="['/temario', topic().examId, topic().id]"
-            [queryParams]="{ seccion: 'practicas' }"
+            [routerLink]="['/laboratorios', topic().globalLabId || ('lab-' + topic().id + '-global')]"
             class="global-practice-btn"
             title="Práctica global y retos integradores del tema"
           >

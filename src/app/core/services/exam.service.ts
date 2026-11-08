@@ -114,7 +114,7 @@ export class ExamService {
       : allQuestions.filter((q) => !q.placeholder);
 
     if (options.onlyVerified) {
-      const verifiedOnly = pool.filter((q) => q.status === 'verificada' || q.verified === true);
+      const verifiedOnly = pool.filter((q) => q.status === 'verificada' || q.verified === true || (!q.placeholder && q.status !== 'pendiente-verificacion'));
       if (verifiedOnly.length > 0) {
         pool = verifiedOnly;
       }
@@ -319,7 +319,8 @@ export class ExamService {
         for (const q of qList) {
           if (q.placeholder) continue;
           total++;
-          if (q.status === 'verificada' || q.verified === true) {
+          const isVerified = q.status === 'verificada' || q.verified === true || (!q.placeholder && q.status !== 'pendiente-verificacion');
+          if (isVerified) {
             verified++;
           } else {
             pending++;
@@ -343,6 +344,17 @@ export class ExamService {
   abandonCurrentExam(): void {
     this.sessionStore.set(null);
     this.sessionStore.flush();
+  }
+
+  /**
+   * Elimina un intento completado del historial por su ID.
+   */
+  deleteAttempt(attemptId: string): void {
+    this.historyStore.update((h) => ({
+      ...h,
+      attempts: h.attempts.filter((a) => a.id !== attemptId)
+    }));
+    this.historyStore.flush();
   }
 
   /**

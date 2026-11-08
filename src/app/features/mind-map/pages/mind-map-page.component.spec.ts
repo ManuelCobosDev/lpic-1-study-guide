@@ -147,6 +147,9 @@ describe('MindMapPageComponent', () => {
       const drawer = fixture.nativeElement.querySelector('[data-testid="node-drawer"]');
       expect(drawer).toBeTruthy();
       expect(drawer.textContent).toContain('Determinación y configuración del hardware');
+      expect(drawer.querySelector('.drawer-summary-card')).toBeTruthy();
+      expect(drawer.querySelector('.drawer-commands-section')).toBeTruthy();
+      expect(drawer.textContent).toContain('lspci');
 
       component.closeDrawer();
       fixture.detectChanges();

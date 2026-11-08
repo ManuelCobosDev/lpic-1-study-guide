@@ -32,6 +32,18 @@ export class PreferencesService {
   readonly density = computed(() => this.preferences().density);
   readonly privacyBannerDismissed = computed(() => this.preferences().privacyBannerDismissed);
 
+  constructor() {
+    this.applyDomPreferences();
+  }
+
+  private applyDomPreferences(): void {
+    if (typeof document === 'undefined') return;
+    const root = document.documentElement;
+    const current = this.preferences();
+    root.setAttribute('data-density', current.density ?? 'normal');
+    root.setAttribute('data-text-size', current.textSize ?? 'md');
+  }
+
   setTheme(theme: ThemeMode): void {
     this.store.update(p => ({ ...p, theme }));
   }
@@ -42,10 +54,12 @@ export class PreferencesService {
 
   setTextSize(textSize: TextSize): void {
     this.store.update(p => ({ ...p, textSize }));
+    this.applyDomPreferences();
   }
 
   setTextDensity(density: TextDensity): void {
     this.store.update(p => ({ ...p, density }));
+    this.applyDomPreferences();
   }
 
   setShowInstructorNotes(show: boolean): void {
@@ -66,10 +80,12 @@ export class PreferencesService {
 
   updatePreferences(partial: Partial<UserPreferences>): void {
     this.store.update(p => ({ ...p, ...partial }));
+    this.applyDomPreferences();
   }
 
   resetPreferences(): void {
     this.store.set(DEFAULT_PREFERENCES);
+    this.applyDomPreferences();
   }
 
   flush(): void {

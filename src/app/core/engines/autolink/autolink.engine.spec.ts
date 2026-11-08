@@ -155,6 +155,59 @@ describe('AutolinkEngine (Spec 13)', () => {
         lines: [{ command: 'chmod +x test.sh', output: '' }]
       });
     });
+
+    it('NO debe enlazar comandos ni términos que formen parte de rutas de archivos o directorios (/etc/modprobe.d/)', () => {
+      const extraEntries: AutolinkEntry[] = [
+        ...sampleEntries,
+        {
+          id: 'modprobe',
+          nameOrTerm: 'modprobe',
+          type: 'command',
+          explainedIn: ['101.2#1']
+        }
+      ];
+      const customCandidates = buildMatchCandidates(extraEntries);
+
+      const pathText = 'Muestra los parámetros admitidos para pasarlos luego a /etc/modprobe.d/.';
+      const result = autolinkText(pathText, customCandidates, { subtopicId: '101.1', slideNumber: 1 });
+      // No debe transformar /etc/modprobe.d/ en /etc/[modprobe](cmd:modprobe).d/
+      expect(result).toBe(pathText);
+      expect(result).not.toContain('[modprobe](cmd:modprobe)');
+    });
+
+    it('NO debe enlazar cuando el comando o término tiene extensión de archivo (ej: modprobe.conf)', () => {
+      const extraEntries: AutolinkEntry[] = [
+        ...sampleEntries,
+        {
+          id: 'modprobe',
+          nameOrTerm: 'modprobe',
+          type: 'command',
+          explainedIn: ['101.2#1']
+        }
+      ];
+      const customCandidates = buildMatchCandidates(extraEntries);
+
+      const extText = 'La configuración se almacena en modprobe.conf para los módulos.';
+      const result = autolinkText(extText, customCandidates, { subtopicId: '101.1', slideNumber: 1 });
+      expect(result).toBe(extText);
+    });
+
+    it('SÍ debe enlazar cuando el comando está al final de frase con punto gramatical', () => {
+      const extraEntries: AutolinkEntry[] = [
+        ...sampleEntries,
+        {
+          id: 'modprobe',
+          nameOrTerm: 'modprobe',
+          type: 'command',
+          explainedIn: ['101.2#1']
+        }
+      ];
+      const customCandidates = buildMatchCandidates(extraEntries);
+
+      const sentenceEndText = 'Para cargar el módulo use modprobe.';
+      const result = autolinkText(sentenceEndText, customCandidates, { subtopicId: '101.1', slideNumber: 1 });
+      expect(result).toContain('[modprobe](cmd:modprobe).');
+    });
   });
 
   describe('calculateExplainedInForEntry (Puntuación Spec 13 §13.1)', () => {

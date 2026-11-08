@@ -207,7 +207,7 @@ import { CurriculumTreeSidebarComponent } from '../../../shared/layout/curriculu
                       <app-button
                         variant="warning"
                         size="sm"
-                        [routerLink]="['/laboratorios', subtopicsWithLabs()[0]?.labId ?? ('lab-' + topic.id + '-1')]"
+                        [routerLink]="['/laboratorios', topic.globalLabId || ('lab-' + topic.id + '-global')]"
                       >
                         Iniciar misión integradora →
                       </app-button>
@@ -864,6 +864,17 @@ export class TopicDetailPageComponent implements OnInit {
         // Manejado en el servicio
       }
     }
+
+    this.route.queryParamMap?.subscribe?.((params) => {
+      if (params.get('seccion') === 'practicas') {
+        setTimeout(() => {
+          if (typeof document !== 'undefined') {
+            const el = document.getElementById('heading-practicas');
+            el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 150);
+      }
+    });
   }
 
   isSubtopicCompleted(subtopicId: string): boolean {

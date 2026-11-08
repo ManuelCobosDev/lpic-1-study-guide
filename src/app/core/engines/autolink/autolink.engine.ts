@@ -35,6 +35,10 @@ export function removeAccents(str: string): string {
 }
 
 const IGNORED_GENERIC_NAMES = new Set([
+  '.',
+  ':',
+  '[',
+  ']',
   'comando',
   'comando1',
   'comando2',
@@ -109,6 +113,48 @@ interface TextSlice {
 }
 
 /**
+ * Valida que un candidato de coincidencia no sea parte de una ruta de archivos,
+ * extensión, variable de shell o subpalabra (Spec 13 §13.2).
+ */
+export function isValidTokenBoundary(text: string, start: number, end: number): boolean {
+  // Comprobación de frontera anterior
+  if (start > 0) {
+    const charBefore = text[start - 1] ?? '';
+    // Rechazar si está precedido de alfanumérico, guion, barra, barra invertida, punto, virgulilla, dólar, arroba, porcentaje o almohadilla
+    if (charBefore && /[a-zA-Z0-9_\-/\.~$@%#]/.test(charBefore)) {
+      return false;
+    }
+  }
+
+  // Comprobación de frontera posterior
+  if (end < text.length) {
+    const charAfter = text[end] ?? '';
+    // Rechazar si está seguido directamente de alfanumérico, guion, barra, barra invertida, igual o arroba
+    if (charAfter && /[a-zA-Z0-9_\-/\\=@]/.test(charAfter)) {
+      return false;
+    }
+
+    // Si le sigue un punto, verificar si es una extensión o sufijo de fichero/directorio (ej: .d, .conf, .ko, .sh)
+    if (charAfter === '.') {
+      const remainderAfterDot = text.substring(end + 1);
+      if (/^[a-zA-Z0-9_\-]/.test(remainderAfterDot)) {
+        return false;
+      }
+    }
+
+    // Si le sigue dos puntos, verificar que sea puntuación gramatical y no separador de rutas o URLs
+    if (charAfter === ':') {
+      const charAfterColon = end + 1 < text.length ? (text[end + 1] ?? '') : '';
+      if (charAfterColon && !/\s/.test(charAfterColon)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+/**
  * Aplica el autoenlazado a un fragmento de texto markdown respetando todas las reglas de la Spec 13 §13.2.
  */
 export function autolinkText(
@@ -166,13 +212,23 @@ export function autolinkText(
 
       if (cand.isCommand) {
         const escaped = cand.phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`(?<=^|[^a-zA-Z0-9_-])(` + escaped + `)(?=$|[^a-zA-Z0-9_-])`, 'g');
-        const matchFound = regex.exec(slice.text);
+        const regex = new RegExp(escaped, 'g');
+        let matchFound: RegExpExecArray | null = null;
+        let validMatch: { str: string; start: number; end: number } | null = null;
 
-        if (matchFound && matchFound[1]) {
-          const matchedStr = matchFound[1];
+        while ((matchFound = regex.exec(slice.text)) !== null) {
           const start = matchFound.index;
+          const matchedStr = matchFound[0];
           const end = start + matchedStr.length;
+
+          if (isValidTokenBoundary(slice.text, start, end)) {
+            validMatch = { str: matchedStr, start, end };
+            break;
+          }
+        }
+
+        if (validMatch) {
+          const { str: matchedStr, start, end } = validMatch;
           const isBackticked = start > 0 && slice.text[start - 1] === '`' && end < slice.text.length && slice.text[end] === '`';
 
           const before = isBackticked ? slice.text.substring(0, start - 1) : slice.text.substring(0, start);
@@ -193,12 +249,23 @@ export function autolinkText(
         const normSeg = removeAccents(slice.text);
         const normCand = cand.normalizedPhrase;
         const escaped = normCand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`(?<=^|[^a-z0-9_-])(` + escaped + `)(?=$|[^a-z0-9_-])`, 'g');
-        const matchFound = regex.exec(normSeg);
+        const regex = new RegExp(escaped, 'g');
+        let matchFound: RegExpExecArray | null = null;
+        let validMatch: { start: number; len: number } | null = null;
 
-        if (matchFound && matchFound[1]) {
+        while ((matchFound = regex.exec(normSeg)) !== null) {
           const start = matchFound.index;
-          const len = matchFound[1].length;
+          const len = matchFound[0].length;
+          const end = start + len;
+
+          if (isValidTokenBoundary(normSeg, start, end)) {
+            validMatch = { start, len };
+            break;
+          }
+        }
+
+        if (validMatch) {
+          const { start, len } = validMatch;
           const originalMatchedStr = slice.text.substring(start, start + len);
 
           const before = slice.text.substring(0, start);

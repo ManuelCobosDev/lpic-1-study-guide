@@ -5,7 +5,7 @@ import { ContentService } from '../../../core/services/content.service';
 import { Router, provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
 import { CurriculumManifest } from '../../../core/models/curriculum.model';
-import { ActiveExamSession } from '../../../core/models/attempt.model';
+import { ActiveExamSession, ExamAttempt } from '../../../core/models/attempt.model';
 
 describe('SimulatorHubPageComponent', () => {
   let component: SimulatorHubPageComponent;
@@ -36,7 +36,8 @@ describe('SimulatorHubPageComponent', () => {
       getRecentAttempts: vi.fn().mockReturnValue([]),
       getRemainingSeconds: vi.fn().mockReturnValue(3600),
       startExam: vi.fn().mockResolvedValue({ id: 'test-session' } as unknown as ActiveExamSession),
-      abandonCurrentExam: vi.fn()
+      abandonCurrentExam: vi.fn(),
+      deleteAttempt: vi.fn()
     };
 
     contentServiceMock = {
@@ -97,5 +98,32 @@ describe('SimulatorHubPageComponent', () => {
   it('debe permitir descartar un examen activo', () => {
     component.abandonActiveExam();
     expect(examServiceMock.abandonCurrentExam).toHaveBeenCalled();
+  });
+
+  it('debe abrir modal de confirmación y eliminar un intento del historial', () => {
+    const mockAttempt: ExamAttempt = {
+      id: 'att-123',
+      mode: 'exam',
+      examId: '101',
+      startedAt: '2026-11-08T12:00:00Z',
+      finishedAt: '2026-11-08T13:00:00Z',
+      durationSeconds: 3600,
+      timeRemainingSeconds: 600,
+      seed: 12345,
+      questionIds: ['q1'],
+      questions: [],
+      answers: {},
+      score: 720,
+      passed: true,
+      topicScores: {}
+    };
+
+    component.confirmDeleteAttempt(mockAttempt);
+    expect(component.isConfirmModalOpen()).toBe(true);
+    expect(component.attemptToDelete()).toEqual(mockAttempt);
+
+    component.executeDelete();
+    expect(examServiceMock.deleteAttempt).toHaveBeenCalledWith('att-123');
+    expect(component.isConfirmModalOpen()).toBe(false);
   });
 });

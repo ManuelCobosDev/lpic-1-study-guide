@@ -12,10 +12,12 @@ import { FormsModule } from '@angular/forms';
 import { ExamService } from '../../../core/services/exam.service';
 import { ContentService } from '../../../core/services/content.service';
 import { Topic } from '../../../core/models/curriculum.model';
+import { ExamAttempt } from '../../../core/models/attempt.model';
 import { ContainerComponent } from '../../../shared/ui/container/container.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
 import { ChipComponent } from '../../../shared/ui/chip/chip.component';
+import { DialogComponent } from '../../../shared/ui/dialog/dialog.component';
 
 @Component({
   selector: 'app-simulator-hub-page',
@@ -27,7 +29,8 @@ import { ChipComponent } from '../../../shared/ui/chip/chip.component';
     ContainerComponent,
     ButtonComponent,
     BadgeComponent,
-    ChipComponent
+    ChipComponent,
+    DialogComponent
   ],
   templateUrl: './simulator-hub-page.component.html',
   styleUrls: ['./simulator-hub-page.component.css'],
@@ -48,6 +51,11 @@ export class SimulatorHubPageComponent implements OnInit {
     pending: number;
     hasPending: boolean;
   }>({ total: 0, verified: 0, pending: 0, hasPending: false });
+
+  // Modal de confirmación para eliminar intento o descartar sesión activa
+  readonly isConfirmModalOpen = signal<boolean>(false);
+  readonly attemptToDelete = signal<ExamAttempt | null>(null);
+  readonly isDiscardingActiveSession = signal<boolean>(false);
 
   readonly hasActiveSession = this.examService.hasActiveSession;
   readonly activeSession = this.examService.activeSession;
@@ -114,6 +122,33 @@ export class SimulatorHubPageComponent implements OnInit {
 
   abandonActiveExam(): void {
     this.examService.abandonCurrentExam();
+  }
+
+  confirmAbandonActiveExam(): void {
+    this.isDiscardingActiveSession.set(true);
+    this.attemptToDelete.set(null);
+    this.isConfirmModalOpen.set(true);
+  }
+
+  confirmDeleteAttempt(attempt: ExamAttempt): void {
+    this.isDiscardingActiveSession.set(false);
+    this.attemptToDelete.set(attempt);
+    this.isConfirmModalOpen.set(true);
+  }
+
+  executeDelete(): void {
+    if (this.isDiscardingActiveSession()) {
+      this.abandonActiveExam();
+    } else if (this.attemptToDelete()) {
+      this.examService.deleteAttempt(this.attemptToDelete()!.id);
+    }
+    this.closeModal();
+  }
+
+  closeModal(): void {
+    this.isConfirmModalOpen.set(false);
+    this.attemptToDelete.set(null);
+    this.isDiscardingActiveSession.set(false);
   }
 
   goToPractice(topicId?: string): void {

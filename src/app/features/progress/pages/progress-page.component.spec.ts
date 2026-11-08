@@ -120,5 +120,8 @@ describe('ProgressPageComponent', () => {
   it('debe renderizar la tabla de progreso con las filas correspondientes', () => {
     const rows = fixture.nativeElement.querySelectorAll('.progress-table tbody tr');
     expect(rows.length).toBe(3);
+    const firstWeightBadge = rows[0]?.querySelector('.weight-badge');
+    expect(firstWeightBadge?.textContent).toContain('Peso');
+    expect(firstWeightBadge?.textContent).toContain('8');
   });
 });

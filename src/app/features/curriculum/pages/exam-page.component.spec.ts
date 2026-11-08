@@ -56,6 +56,7 @@ describe('ExamPageComponent', () => {
   };
 
   beforeEach(async () => {
+    localStorage.clear();
     const fetchSpy = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockManifest

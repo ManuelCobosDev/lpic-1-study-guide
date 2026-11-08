@@ -24,6 +24,19 @@ import { GlossaryTerm } from '../../../core/models/glossary.model';
 export type NodeStatus = 'completed' | 'in_progress' | 'pending';
 export type NodeType = 'root' | 'exam' | 'topic' | 'subtopic' | 'command' | 'term';
 
+export const LPIC_TOPIC_SUMMARIES: Record<string, string> = {
+  '101': 'Arquitectura del sistema: hardware y configuración (BIOS/UEFI, PCI, USB), secuencia de arranque del kernel e initramfs, y niveles de ejecución (SysVinit, systemd targets, shutdown y reboot).',
+  '102': 'Instalación de Linux y paquetes: diseño del esquema de particiones, gestor de arranque GRUB 2, librerías compartidas (ldconfig, ldd), empaquetado Debian (dpkg, apt), RPM/YUM/DNF y virtualización.',
+  '103': 'Comandos GNU y Unix: línea de comandos Bash, variables de entorno, tuberías y redirecciones (pipes, tee), procesamiento de texto con filtros (grep, sed, awk, cut, sort) y gestión de procesos (ps, top, kill, nice).',
+  '104': 'Dispositivos y sistemas de archivos: particionamiento, formateo (mkfs, fsck), montaje (/etc/fstab, mount/umount), cuotas de disco, permisos tradicionales (chmod, chown, umask) y especiales (SUID, SGID, Sticky bit).',
+  '105': 'Shells y scripts: personalización del entorno Bash (.bashrc, .bash_profile), alias, funciones y desarrollo de scripts en shell estándar (condicionales if, bucles for/while, argumentos posicionales y códigos de salida).',
+  '106': 'Interfaces de usuario y escritorios: servidor gráfico X11 (configuración, display, xhost), protocolo Wayland, escritorios (GNOME, KDE) y tecnologías de accesibilidad (lectores de pantalla, lupa y teclados virtuales).',
+  '107': 'Tareas administrativas: gestión de cuentas de usuario y grupos (/etc/passwd, /etc/shadow, useradd, usermod), programación de tareas periódicas con Cron (crontab) y systemd timers, y localización (locales, tzselect, UTF-8).',
+  '108': 'Servicios esenciales: sincronización horaria del sistema (NTP, chrony, timedatectl), demonios de registro y logs (syslog, rsyslog, journalctl), agentes de transporte de correo MTA y gestión de impresión con CUPS.',
+  '109': 'Fundamentos de redes: arquitectura TCP/IP (IPv4, IPv6, CIDR, puertos estándar), configuración y diagnóstico de interfaces (ip, ifconfig, nmcli), resolución DNS (/etc/resolv.conf, /etc/hosts) y herramientas de red (ping, traceroute, netstat, ss).',
+  '110': 'Seguridad del sistema: auditoría de seguridad básica, límites de recursos (/etc/security/limits.conf), supervisión de puertos y conexiones (nmap, lsof), configuración de SSH seguro (claves, sshd_config) y cifrado GPG (claves, firmas y cifrado).'
+};
+
 export interface MindMapNodeData {
   id: string;
   name: string;
@@ -83,6 +96,105 @@ export class MindMapPageComponent implements OnInit, AfterViewInit {
   readonly onlyPending = signal<boolean>(false);
   readonly showCommandsTerms = signal<boolean>(false);
   readonly selectedNode = signal<MindMapNodeData | null>(null);
+
+  readonly selectedNodeSummary = computed<string>(() => {
+    const node = this.selectedNode();
+    if (!node) return '';
+    if (node.type === 'topic') {
+      const topicId = node.topicId || node.id.replace('topic-', '');
+      return LPIC_TOPIC_SUMMARIES[topicId] || node.description || 'Tema oficial del examen LPIC-1.';
+    }
+    if (node.type === 'subtopic') {
+      const m = this.manifest();
+      const sub = m?.subtopics.find((s) => s.id === node.id);
+      if (sub?.keyAreas && sub.keyAreas.length > 0) {
+        return sub.keyAreas.join(' · ');
+      }
+      return node.description || `Subtema oficial ${node.id} del temario LPIC-1.`;
+    }
+    if (node.type === 'exam') {
+      return node.description || 'Examen oficial de certificación Linux Professional Institute LPIC-1.';
+    }
+    return node.description || '';
+  });
+
+  readonly selectedNodeCommands = computed<Command[]>(() => {
+    const node = this.selectedNode();
+    if (!node) return [];
+    const allCmds = this.commands();
+    if (node.type === 'subtopic') {
+      return allCmds.filter((c) => c.subtopicIds?.includes(node.id));
+    }
+    if (node.type === 'topic') {
+      const topicId = node.topicId || node.id.replace('topic-', '');
+      const m = this.manifest();
+      const subs = m?.subtopics.filter((s) => s.topicId === topicId).map((s) => s.id) || [];
+      return allCmds.filter((c) => c.subtopicIds?.some((sid) => subs.includes(sid)));
+    }
+    if (node.type === 'exam') {
+      const examId = node.examId || node.id.replace('exam-', '');
+      const m = this.manifest();
+      const topics = m?.topics.filter((t) => t.examId === examId).map((t) => t.id) || [];
+      const subs = m?.subtopics.filter((s) => topics.includes(s.topicId)).map((s) => s.id) || [];
+      return allCmds.filter((c) => c.subtopicIds?.some((sid) => subs.includes(sid))).slice(0, 24);
+    }
+    if (node.type === 'command') {
+      return allCmds.filter((c) => c.name === node.name);
+    }
+    return [];
+  });
+
+  getNodeWidth(node: RenderNode): number {
+    switch (node.depth) {
+      case 0:
+        return 270;
+      case 1:
+        return 230;
+      case 2:
+        return 230;
+      case 3:
+        return 250;
+      case 4:
+      default:
+        return 190;
+    }
+  }
+
+  getNodeHeight(node: RenderNode): number {
+    return node.depth === 4 ? 28 : 36;
+  }
+
+  getTruncatedNodeLabel(node: RenderNode): { codePrefix?: string; name: string } {
+    const data = node.data;
+    if (node.depth === 4 && data.type === 'command') {
+      const name = data.name.length > 20 ? data.name.slice(0, 19) + '…' : data.name;
+      return { name: `$ ${name}` };
+    }
+    if (node.depth === 4 && data.type === 'term') {
+      const name = data.name.length > 18 ? data.name.slice(0, 17) + '…' : data.name;
+      return { name: `📖 ${name}` };
+    }
+
+    const maxChars = node.depth === 0 ? 32 : node.depth === 1 ? 26 : node.depth === 2 ? 26 : 30;
+    const code = data.code ? `${data.code}: ` : '';
+    const fullText = data.name || '';
+
+    const availableForName = Math.max(12, maxChars - code.length);
+    const truncatedName = fullText.length > availableForName
+      ? fullText.slice(0, availableForName - 1) + '…'
+      : fullText;
+
+    return {
+      codePrefix: code || undefined,
+      name: truncatedName
+    };
+  }
+
+  getFullNodeTitle(node: RenderNode): string {
+    const d = node.data;
+    const prefix = d.code ? `${d.code}: ` : '';
+    return `${prefix}${d.name} (${d.status})`;
+  }
 
   // Zoom y Pan
   readonly currentTransform = signal<ZoomTransform>(zoomIdentity);
@@ -219,18 +331,23 @@ export class MindMapPageComponent implements OnInit, AfterViewInit {
           code: `Tema ${t.id}`,
           examId: ex.id,
           weight: t.weight,
+          description: LPIC_TOPIC_SUMMARIES[t.id] || t.title,
           status: getTopicStatus(subNodes),
           children: subNodes
         };
       });
 
       const examStatus = getTopicStatus(topicNodes);
+      const shortExamName = ex.code === '101-500' || ex.id === '101'
+        ? 'Sistema, Paquetes y GNU/Unix'
+        : 'Shells, Redes y Seguridad';
 
       return {
         id: `exam-${ex.id}`,
-        name: ex.title,
+        name: shortExamName,
         type: 'exam',
         code: `Examen ${ex.code}`,
+        description: ex.title,
         status: examStatus,
         children: topicNodes
       };
