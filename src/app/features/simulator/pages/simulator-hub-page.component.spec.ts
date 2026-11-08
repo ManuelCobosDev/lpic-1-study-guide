@@ -5,7 +5,7 @@ import { ContentService } from '../../../core/services/content.service';
 import { Router, provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
 import { CurriculumManifest } from '../../../core/models/curriculum.model';
-import { ActiveExamSession } from '../../../core/models/attempt.model';
+import { ActiveExamSession, ExamAttempt } from '../../../core/models/attempt.model';
 
 describe('SimulatorHubPageComponent', () => {
   let component: SimulatorHubPageComponent;
@@ -101,7 +101,7 @@ describe('SimulatorHubPageComponent', () => {
   });
 
   it('debe abrir modal de confirmación y eliminar un intento del historial', () => {
-    const mockAttempt = {
+    const mockAttempt: ExamAttempt = {
       id: 'att-123',
       mode: 'exam',
       examId: '101',
@@ -115,10 +115,10 @@ describe('SimulatorHubPageComponent', () => {
       answers: {},
       score: 720,
       passed: true,
-      topicScores: []
+      topicScores: {}
     };
 
-    component.confirmDeleteAttempt(mockAttempt as any);
+    component.confirmDeleteAttempt(mockAttempt);
     expect(component.isConfirmModalOpen()).toBe(true);
     expect(component.attemptToDelete()).toEqual(mockAttempt);
 

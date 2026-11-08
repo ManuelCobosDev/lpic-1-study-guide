@@ -20,6 +20,7 @@ import { APP_VERSION } from '../../../core/constants/version';
           <!-- Enlaces de utilidad -->
           <div class="flex flex-wrap items-center justify-center gap-4 text-xs">
             <a routerLink="/acerca-de" class="hover:text-[var(--text)] transition-colors">Acerca de</a>
+            <a routerLink="/legal" class="hover:text-[var(--text)] transition-colors">Aviso Legal y Privacidad</a>
             <a routerLink="/erratas" class="hover:text-[var(--text)] transition-colors">Erratas</a>
             <a routerLink="/ajustes" class="hover:text-[var(--text)] transition-colors">Ajustes</a>
             <span class="text-[var(--text-subtle)]">v{{ appVersion }}</span>

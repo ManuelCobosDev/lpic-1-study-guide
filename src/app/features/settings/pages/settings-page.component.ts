@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ContainerComponent } from '../../../shared/ui/container/container.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { CalloutComponent } from '../../../shared/ui/callout/callout.component';
@@ -35,6 +36,7 @@ export type SettingsTab = 'apariencia' | 'estudio' | 'datos' | 'atajos' | 'priva
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     ContainerComponent,
     ButtonComponent,
     CalloutComponent

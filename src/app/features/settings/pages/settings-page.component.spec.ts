@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { SettingsPageComponent } from './settings-page.component';
 import { PreferencesService } from '../../../core/services/preferences.service';
@@ -20,6 +21,7 @@ describe('SettingsPageComponent', () => {
     await TestBed.configureTestingModule({
       imports: [SettingsPageComponent],
       providers: [
+        provideRouter([]),
         PreferencesService,
         ThemeService,
         BackupService,

@@ -214,6 +214,15 @@ export const routes: Routes = [
     data: { title: 'Acerca de', breadcrumb: 'Acerca de' }
   },
   {
+    path: 'legal',
+    loadComponent: () =>
+      import('./features/about/pages/legal-page.component').then(
+        (m) => m.LegalPageComponent
+      ),
+    title: 'Aviso Legal, Privacidad y Almacenamiento Local · LPIC-1',
+    data: { title: 'Aviso Legal y Privacidad', breadcrumb: 'Aviso Legal y Privacidad' }
+  },
+  {
     path: 'guia-estilos',
     loadComponent: () =>
       import('./features/style-guide/pages/style-guide-page.component').then(
