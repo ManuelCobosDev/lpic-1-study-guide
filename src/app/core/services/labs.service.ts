@@ -43,6 +43,7 @@ export class LabsService {
     const manifest = await this.contentService.getManifest();
     const list: LabSummary[] = [];
 
+    // Prácticas por subtema
     for (const sub of manifest.subtopics) {
       const labId = sub.labId || `lab-${sub.id.replace('.', '-')}`;
       list.push({
@@ -55,6 +56,22 @@ export class LabsService {
         type: 'subtopic',
         stepCount: sub.id === '103.4' ? 6 : 5,
         placeholder: sub.placeholder
+      });
+    }
+
+    // Prácticas globales integradoras por tema
+    for (const topic of manifest.topics) {
+      const globalLabId = topic.globalLabId || `lab-${topic.id}-global`;
+      list.push({
+        id: globalLabId,
+        subtopicId: topic.id,
+        topicId: topic.id,
+        title: `🏆 Misión Integradora Tema ${topic.id} — ${topic.title}`,
+        estimatedMinutes: 45,
+        difficulty: 'advanced',
+        type: 'global',
+        stepCount: 6,
+        placeholder: false
       });
     }
 
