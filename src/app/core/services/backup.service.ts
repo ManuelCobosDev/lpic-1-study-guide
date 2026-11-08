@@ -373,7 +373,7 @@ export class BackupService {
     <div class="meta-box">
       <div><strong>Emisión:</strong> ${escape(dateFormatted)}</div>
       <div><strong>Exámenes:</strong> 101-500 y 102-500</div>
-      <div><strong>Versión:</strong> v0.2.0 (Temario completo)</div>
+      <div><strong>Versión:</strong> v${APP_VERSION} (Temario completo)</div>
     </div>
   </div>
 
