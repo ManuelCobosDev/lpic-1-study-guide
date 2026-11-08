@@ -7,7 +7,7 @@
   "language": "es",
   "estimatedMinutes": 30,
   "objectives": [
-    "Configuración de la resolución de nombres del lado del cliente en Linux: resolver de glibc, orden en /etc/nsswitch.conf, ficheros /etc/hosts y /etc/resolv.conf, integración con systemd-resolved (127.0.0.53) y herramientas de consulta CLI con getent, host y dig (secciones de cabecera, registros y opciones).",
+    "Configuración de la resolución de nombres del lado del cliente en Linux: resolver de glibc, orden y sintaxis condicional [STATUS=ACTION] en /etc/nsswitch.conf, ficheros /etc/hosts y /etc/resolv.conf (directivas nameserver, search, domain y options), arquitectura de systemd-resolved (127.0.0.53), y herramientas de consulta CLI con getent (opción -s), host (opción -t) y dig (secciones, cabecera HEADER, status, flags y ~/.digrc).",
     "Dominio técnico de las herramientas y configuración del subtema 109.4"
   ],
   "keyTerms": [
@@ -15,47 +15,77 @@
     "Stub Resolver",
     "/etc/resolv.conf",
     "/etc/nsswitch.conf",
+    "/etc/hosts",
+    "systemd-resolved",
+    "127.0.0.53",
     "getent hosts",
     "host",
     "dig (Domain Information Groper)",
-    "NXDOMAIN (Non-Existent Domain)",
-    "Registro PTR (Pointer Record)",
-    "systemd-resolved"
+    "Clases DNS (IN, CH, HS)",
+    "HEADER de dig (flags qr, rd, ra, aa)",
+    "Status DNS (NOERROR, NXDOMAIN, SERVFAIL, REFUSED)",
+    "~/.digrc"
   ],
-  "commands": [],
-  "placeholder": true,
+  "commands": [
+    "getent",
+    "host",
+    "dig"
+  ],
+  "placeholder": false,
   "slides": [
     {
       "id": "109.4-slide-1",
       "slideNumber": 1,
-      "title": "109.4 Configuración DNS del cliente",
+      "title": "109.4 Configuración DNS en el lado del cliente",
       "layout": "cover",
       "blocks": [
         {
           "type": "heading",
           "level": 1,
-          "text": "109.4 Configuración DNS del cliente"
+          "text": "109.4 Configuración DNS en el lado del cliente"
         },
         {
           "type": "paragraph",
-          "text": "Fundamentos de redes · Peso 2"
+          "text": "Tema 109: Fundamentos de redes · Examen LPIC-1 (102-500) · Peso oficial: 2"
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Objetivo de Certificación LPI",
+          "content": "Comprende y configura los componentes del lado del cliente para la resolución de nombres en Linux: orden de búsqueda en /etc/nsswitch.conf (sintaxis condicional), mapeos en /etc/hosts, servidores y opciones en /etc/resolv.conf, arquitectura de systemd-resolved (127.0.0.53), y herramientas de consulta y diagnóstico con getent, host y dig (interpretación de cabeceras, flags, secciones y ~/.digrc)."
         }
       ]
     },
     {
       "id": "109.4-slide-2",
       "slideNumber": 2,
-      "title": "El Flujo de Resolución de Nombres en el Cliente",
+      "title": "El Flujo de Resolución de Nombres y Clases DNS",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "El Flujo de Resolución de Nombres en el Cliente"
+          "text": "Cómo Resuelve una Aplicación y Clases en DNS (IN, CH, HS)"
         },
         {
           "type": "paragraph",
-          "text": "Cómo una aplicación convierte 'www.lpi.org' en una IP mediante glibc"
+          "text": "Cuando una aplicación solicita resolver un nombre como 'www.lpi.org' a una dirección IP, no contacta directamente con servidores DNS remotos; invoca las funciones de la biblioteca C estándar (glibc resolver: getaddrinfo/gethostbyname), las cuales consultan '/etc/nsswitch.conf' para determinar las fuentes y su orden."
+        },
+        {
+          "type": "table",
+          "headers": ["Clase DNS", "Denominación", "Uso Técnico y Relevancia en LPIC-1"],
+          "rows": [
+            ["IN", "Internet", "La clase estándar utilizada por la pila TCP/IP para direcciones IPv4/IPv6 y nombres de dominio."],
+            ["CH", "ChaosNet", "Tecnología de red histórica de los laboratorios MIT, actualmente en desuso en tráfico de red real."],
+            ["HS", "Hesiod", "Mecanismo desarrollado en el MIT para almacenar bases de datos de sistema (usuarios y grupos) en DNS."]
+          ],
+          "caption": "Clases oficiales de registros DNS explicadas en el manual LPI"
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Clase Predeterminada en el Examen",
+          "content": "En el examen LPIC-1 y en la administración de sistemas moderna, todas las consultas y zonas DNS pertenecen exclusivamente a la clase 'IN' (Internet)."
         }
       ]
     },
@@ -68,181 +98,368 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Fichero Maestro de DNS: /etc/resolv.conf"
+          "text": "Directivas Principales y Opciones del Resolver"
         },
         {
           "type": "paragraph",
-          "text": "Servidores de nombres, dominios de búsqueda y parámetros de temporización"
+          "text": "El archivo '/etc/resolv.conf' define los servidores DNS que utilizarán las funciones de resolución del sistema y cómo se gestionan los nombres de host no calificados (sin FQDN)."
+        },
+        {
+          "type": "table",
+          "headers": ["Directiva / Opción", "Función Técnica", "Límites y Sintaxis"],
+          "rows": [
+            ["nameserver <IP>", "Dirección IPv4 o IPv6 del servidor DNS a consultar.", "Hasta 3 servidores como máximo. Si se omite, usa 127.0.0.1."],
+            ["search <dominios>", "Lista de dominios de búsqueda para completar nombres cortos.", "Hasta 6 dominios o 256 caracteres separados por espacios."],
+            ["domain <dominio>", "Define el nombre de dominio local del equipo.", "Obsoleto frente a 'search'. Si ambos existen, el último prevalece."],
+            ["options timeout:<seg>", "Segundos de espera antes de reintentar con el siguiente servidor.", "Por defecto suele ser 5 segundos."],
+            ["options attempts:<n>", "Número máximo de intentos de consulta por servidor.", "Por defecto suele ser 2 intentos."],
+            ["options rotate", "Distribución de consultas round-robin entre los nameservers.", "Reparte la carga entre los servidores configurados."],
+            ["options ndots:<n>", "Umbral de puntos en un nombre para considerarlo FQDN directo.", "Por defecto ndots:1 (si tiene menos de n puntos, aplica search primero)."]
+          ],
+          "caption": "Directivas canónicas de configuración en /etc/resolv.conf"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Soporte de Comentarios en /etc/resolv.conf",
+          "content": "Los comentarios en '/etc/resolv.conf' pueden comenzar tanto con '#' como con ';'. Si todos los servidores 'nameserver' están comentados y no corre un servidor DNS local, la resolución fallará por completo."
         }
       ]
     },
     {
       "id": "109.4-slide-4",
       "slideNumber": 4,
-      "title": "/etc/resolv.conf Moderno y systemd-resolved",
+      "title": "Moderno /etc/resolv.conf y systemd-resolved",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "/etc/resolv.conf Moderno y systemd-resolved"
+          "text": "El Stub Resolver Local en 127.0.0.53"
         },
         {
           "type": "paragraph",
-          "text": "El intermediario stub resolver local en la IP de bucle 127.0.0.53"
+          "text": "En distribuciones modernas con systemd, el servicio 'systemd-resolved' actúa como un intermediario o resolvedor de talón (stub resolver) local, escuchando en '127.0.0.53:53'."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Enlace simbólico en /etc/resolv.conf**: Apunta habitualmente a '/run/systemd/resolve/stub-resolv.conf' (que contiene 'nameserver 127.0.0.53') o a '/run/systemd/resolve/resolv.conf' (con los servidores ascendentes reales).",
+            "**Archivo de configuración /etc/systemd/resolved.conf**: Permite configurar servidores DNS globales ('DNS='), servidores de respaldo ('FallbackDNS='), y activar 'DNSSEC='.",
+            "**Protocolos adicionales**: Ofrece soporte integrado para mDNS (Multicast DNS), LLMNR (Link-Local Multicast Name Resolution) y DNS-over-TLS.",
+            "**Integración con NSS**: Para que las aplicaciones utilicen systemd-resolved directamente, se incluye el módulo 'resolve' en '/etc/nsswitch.conf'."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Sobreescritura por NetworkManager",
+          "content": "Si editas a mano '/etc/resolv.conf' en un sistema gestionado por NetworkManager o systemd-resolved, tus cambios serán sobrescritos en el próximo reinicio o reconexión de red. Debes configurar los DNS mediante herramientas como 'nmcli' o en '/etc/systemd/resolved.conf'."
         }
       ]
     },
     {
       "id": "109.4-slide-5",
       "slideNumber": 5,
-      "title": "Control de Búsqueda: /etc/nsswitch.conf",
+      "title": "Mapeo Estático Local: /etc/hosts",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Control de Búsqueda: /etc/nsswitch.conf"
+          "text": "Sintaxis Canónica y Mapeos IPv4 e IPv6"
         },
         {
           "type": "paragraph",
-          "text": "Acciones condicionales y conmutación entre fuentes de nombres"
+          "text": "El archivo '/etc/hosts' proporciona una tabla de búsqueda estática local. Se consulta habitualmente antes que el DNS para nombres que no están disponibles públicamente o para interfaces de loopback."
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "code": "# Sintaxis canónica: <Dirección IP> <Nombre_Canónico_FQDN> [Alias ...]\n# La columna izquierda DEBE ser siempre una dirección IP válida (IPv4 o IPv6):\n\n127.0.0.1       localhost\n127.0.1.1       proxy.lab.internal proxy\n10.0.0.1        gateway.lpi.org gateway gw\n10.0.1.53       dns1.lpi.org\n\n# Mapeos estándar para IPv6:\n::1             localhost ip6-localhost ip6-loopback\nff02::1         ip6-allnodes\nff02::2         ip6-allrouters\nfd00:ffff::1    gateway.lpi.org gateway gw",
+          "title": "Ejemplo de archivo /etc/hosts estándar"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "🎯 Trampa de Examen: Orden de Columnas en /etc/hosts",
+          "content": "'::1 localhost' frente a 'localhost 127.0.0.1'. La columna izquierda SIEMPRE debe ser la dirección IP (sea IPv4 o IPv6), y la columna derecha el nombre de host y sus alias. Colocar el nombre a la izquierda genera un error de sintaxis."
         }
       ]
     },
     {
       "id": "109.4-slide-6",
       "slideNumber": 6,
-      "title": "Resolución Respetando NSS: comando getent hosts",
+      "title": "Control de Fuentes: /etc/nsswitch.conf",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Resolución Respetando NSS: comando getent hosts"
+          "text": "Sintaxis Condicional [STATUS=ACTION] en la base 'hosts:'"
         },
         {
           "type": "paragraph",
-          "text": "La forma correcta de probar cómo resuelve exactamente una aplicación del sistema"
+          "text": "El Name Service Switch ('/etc/nsswitch.conf') determina en qué orden se consultan las fuentes de información del sistema (como 'passwd:', 'group:', 'services:' y 'hosts:')."
+        },
+        {
+          "type": "table",
+          "headers": ["Estado (STATUS)", "Significado Técnico", "Condición"],
+          "rows": [
+            ["SUCCESS", "Éxito", "La entrada se encontró en la fuente consultada."],
+            ["NOTFOUND", "No encontrada", "La fuente está operativa pero no contiene el registro buscado."],
+            ["UNAVAIL", "No disponible", "La fuente no responde o el servicio no está accesible (ej. DNS caído)."],
+            ["TRYAGAIN", "Reintentar", "La fuente está ocupada o bloqueada temporalmente."]
+          ],
+          "caption": "Estados de retorno posibles en /etc/nsswitch.conf"
+        },
+        {
+          "type": "table",
+          "headers": ["Acción (ACTION)", "Efecto en el Flujo de Búsqueda"],
+          "rows": [
+            ["return", "Detiene la búsqueda de inmediato y devuelve el resultado actual (éxito o fallo)."],
+            ["continue", "Pasa a la siguiente fuente listada en la línea ignorando el estado actual."]
+          ],
+          "caption": "Acciones condicionales en /etc/nsswitch.conf"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "🎯 Trampa Clásica de Examen: [SUCCESS=continue]",
+          "content": "La sintaxis estándar es 'hosts: files dns' (implica [SUCCESS=return]). Si en el examen aparece 'hosts: files [SUCCESS=continue] dns', el resolver busca en /etc/hosts y, aunque encuentre el host con éxito, continuará hacia el DNS. Si el DNS responde, su respuesta reemplaza a la local."
         }
       ]
     },
     {
       "id": "109.4-slide-7",
       "slideNumber": 7,
-      "title": "Consultas Rápidas con host: Tipos de Registros (-t)",
-      "layout": "content",
+      "title": "Resolución con NSS: comando getent",
+      "layout": "code-explain",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Consultas Rápidas con host: Tipos de Registros (-t)"
+          "text": "Comprobar la Resolución Real del Sistema y Opción -s"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# Consultar todas las entradas de hosts según nsswitch.conf:\ngetent hosts\n\n# Resolver un host específico usando las librerías glibc:\ngetent hosts dns1.lpi.org\n# Salida: 10.0.1.53 dns1.lpi.org\n\n# Forzar una fuente de datos específica con la opción -s (glibc 2.2.5+):\ngetent -s files hosts localhost      # Consulta exclusivamente /etc/hosts\ngetent -s dns hosts lpi.org          # Consulta exclusivamente el servicio DNS\n\n# Consultar otras bases de datos de nsswitch.conf (ej. grupo openldap):\ngetent group openldap\n# Lee /etc/nsswitch.conf, busca 'openldap' en 'group:' y muestra su GID/miembros",
+          "title": "Uso de getent para consultar bases de nombres"
         },
         {
           "type": "paragraph",
-          "text": "Herramienta directa para obtener registros A, AAAA, MX, NS y TXT"
+          "text": "'getent' es la única herramienta de línea de comandos que emula con absoluta fidelidad cómo una aplicación cualquiera resuelve nombres, ya que utiliza internamente las funciones del resolver de glibc respetando '/etc/nsswitch.conf'."
         }
       ]
     },
     {
       "id": "109.4-slide-8",
       "slideNumber": 8,
-      "title": "Búsqueda Inversa y Servidores Específicos con host",
+      "title": "Consultas Rápidas con host: Sintaxis y Registros",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Búsqueda Inversa y Servidores Específicos con host"
+          "text": "Herramienta CLI Directa para Consultas DNS Básicas"
         },
         {
           "type": "paragraph",
-          "text": "Resolución PTR (IP a nombre) y bypass de /etc/resolv.conf"
+          "text": "'host' es un cliente DNS ligero diseñado para consultas directas y rápidas. Por defecto, si se le pasa un nombre de host, devuelve sus registros A (IPv4), AAAA (IPv6) y MX (servidores de correo)."
+        },
+        {
+          "type": "table",
+          "headers": ["Tipo de Registro (-t)", "Descripción", "Ejemplo de Comando"],
+          "rows": [
+            ["A", "Dirección IPv4 de 32 bits de un host.", "host -t A lpi.org"],
+            ["AAAA", "Dirección IPv6 de 128 bits de un host.", "host -t AAAA lpi.org"],
+            ["MX", "Mail Exchanger (servidor de correo y prioridad).", "host -t MX lpi.org"],
+            ["NS", "Name Server (servidores autoritativos del dominio).", "host -t NS lpi.org"],
+            ["SOA", "Start of Authority (número de serie y temporizadores).", "host -t SOA lpi.org"],
+            ["TXT", "Texto arbitrario (usado para SPF, DKIM, verificación).", "host -t TXT lpi.org"],
+            ["CNAME", "Canonical Name (alias hacia otro nombre canónico).", "host -t CNAME www.lpi.org"]
+          ],
+          "caption": "Tipos de registros más frecuentes evaluados con host -t"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            { "prompt": "$", "command": "host -t NS lpi.org", "output": "lpi.org name server dns1.easydns.com.\nlpi.org name server dns2.easydns.net.\nlpi.org name server dns3.easydns.ca." }
+          ]
         }
       ]
     },
     {
       "id": "109.4-slide-9",
       "slideNumber": 9,
-      "title": "Diagnóstico Exhaustivo: anatomía del comando dig",
+      "title": "Búsqueda Inversa y Servidores Específicos con host",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Diagnóstico Exhaustivo: anatomía del comando dig"
+          "text": "Resolución PTR y Consulta a Servidores Alternativos"
         },
         {
           "type": "paragraph",
-          "text": "La herramienta estándar de depuración DNS y sus 4 secciones de salida"
+          "text": "Cuando a 'host' se le proporciona una dirección IP en lugar de un nombre, realiza automáticamente una búsqueda inversa solicitando el registro PTR mediante la zona especial in-addr.arpa (IPv4) o ip6.arpa (IPv6)."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            { "prompt": "$", "command": "host 208.80.154.224", "output": "224.154.80.208.in-addr.arpa domain name pointer text-lb.eqiad.wikimedia.org." },
+            { "prompt": "$", "command": "host -t MX lpi.org dns1.easydns.com", "output": "Using domain server:\nName: dns1.easydns.com\nAddress: 64.68.192.10#53\nlpi.org mail is handled by 10 aspmx4.googlemail.com." }
+          ]
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Bypass de /etc/resolv.conf**: Añadiendo el nombre o IP de un servidor DNS al final del comando, 'host' consulta directamente a ese servidor, ignorando los definidos en '/etc/resolv.conf'.",
+            "**Opción -v (Verbose)**: Despliega los detalles completos de la transacción, incluyendo cabeceras y registros devueltos.",
+            "**host ignora /etc/hosts**: Al ser un cliente de red puro, 'host' jamás consulta '/etc/hosts' ni respeta '/etc/nsswitch.conf'."
+          ]
         }
       ]
     },
     {
       "id": "109.4-slide-10",
       "slideNumber": 10,
-      "title": "Interpretación de Códigos y Flags en dig",
+      "title": "Diagnóstico Exhaustivo: Anatomía del comando dig",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Interpretación de Códigos y Flags en dig"
+          "text": "Domain Information Groper y sus 4 Secciones Principales"
         },
         {
           "type": "paragraph",
-          "text": "Comprender la cabecera HEADER para identificar fallos en el examen"
+          "text": "'dig' es la herramienta estándar más potente para depurar servidores y configuraciones DNS. Por defecto consulta registros A e imprime un informe estructurado en secciones:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**1. Cabecera (HEADER)**: Indica la versión de dig, el opcode ('QUERY'), el código de estado ('status: NOERROR'), identificador y contadores de registros.",
+            "**2. OPT PSEUDOSECTION**: Datos de extensiones EDNS (versión, tamaño de buffer UDP y cookie de transacción).",
+            "**3. QUESTION SECTION**: La consulta exacta enviada al servidor (ej. ';lpi.org. IN A').",
+            "**4. ANSWER SECTION**: Los registros devueltos correspondientes a la consulta con su TTL, clase y valor.",
+            "**5. AUTHORITY SECTION**: Servidores autoritativos (registros NS o SOA) responsables de la zona.",
+            "**6. ADDITIONAL SECTION**: Direcciones IP (A y AAAA) de los servidores de nombres listados en AUTHORITY.",
+            "**7. Estadísticas finales**: 'Query time' (latencia en ms), 'SERVER' (IP y puerto del servidor que respondió, ej. '192.168.1.20#53'), 'WHEN' (fecha/hora) y 'MSG SIZE rcvd'."
+          ]
         }
       ]
     },
     {
       "id": "109.4-slide-11",
       "slideNumber": 11,
-      "title": "Opciones Avanzadas de dig (+short, -x, @servidor)",
-      "layout": "content",
+      "title": "Interpretación de Códigos y Flags en la Cabecera de dig",
+      "layout": "comparison",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Opciones Avanzadas de dig (+short, -x, @servidor)"
+          "text": "Análisis de la línea HEADER: Códigos de Estado y Flags"
         },
         {
-          "type": "paragraph",
-          "text": "Filtrar la salida verbosa para scripts y consultas rápidas"
+          "type": "code",
+          "language": "text",
+          "code": ";; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 63004\n;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 3, ADDITIONAL: 5",
+          "title": "Línea de cabecera HEADER generada por dig"
+        },
+        {
+          "type": "table",
+          "headers": ["Código status", "Significado", "Causa en Diagnóstico"],
+          "rows": [
+            ["NOERROR", "Sin errores", "La consulta se completó con éxito (pudo o no encontrar datos)."],
+            ["NXDOMAIN", "Non-Existent Domain", "El dominio o nombre de host consultado no existe en el DNS."],
+            ["SERVFAIL", "Server Failure", "El servidor DNS tuvo un fallo interno o no pudo contactar con la zona autoritativa."],
+            ["REFUSED", "Consulta Rechazada", "El servidor denegó la consulta (por política de recursión, ACL o zona privada)."]
+          ],
+          "caption": "Códigos de estado DNS devueltos en la cabecera de dig"
+        },
+        {
+          "type": "table",
+          "headers": ["Bandera (Flag)", "Nombre Completo", "Significado"],
+          "rows": [
+            ["qr", "Query Response", "El mensaje recibido es una respuesta a una consulta, no una solicitud."],
+            ["rd", "Recursion Desired", "El cliente solicitó al servidor que realice resolución recursiva."],
+            ["ra", "Recursion Available", "El servidor DNS confirma que ofrece y tiene habilitada la recursión."],
+            ["aa", "Authoritative Answer", "La respuesta proviene directamente de un servidor con autoridad para esa zona."]
+          ],
+          "caption": "Flags de cabecera en respuestas DNS evaluadas en LPIC-1"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "🎯 Pregunta de Examen: Flag 'aa'",
+          "content": "Si una respuesta de dig incluye el flag 'aa', significa que el servidor consultado aloja la zona original (es autoritativo), no que haya recuperado el dato de una caché."
         }
       ]
     },
     {
       "id": "109.4-slide-12",
       "slideNumber": 12,
-      "title": "Matriz Comparativa: getent frente a host y dig",
+      "title": "Modificadores Avanzados de dig y Archivo ~/.digrc",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Matriz Comparativa: getent frente a host y dig"
+          "text": "Opciones con '+' y Persistencia de Preferencias"
         },
         {
-          "type": "paragraph",
-          "text": "Cuándo usar cada utilidad para evitar confusiones de diagnóstico"
+          "type": "table",
+          "headers": ["Modificador de dig", "Efecto en la Salida", "Ejemplo"],
+          "rows": [
+            ["+short", "Muestra únicamente el resultado neto (ideal para scripts)", "dig +short lpi.org (devuelve solo la IP)"],
+            ["+trace", "Realiza traza jerárquica recursiva desde los root servers (.)", "dig +trace lpi.org"],
+            ["+noall +answer", "Oculta todas las secciones salvo la sección ANSWER", "dig +noall +answer lpi.org"],
+            ["+question", "Vuelve a mostrar la sección QUESTION (usado con +noall)", "dig +noall +answer +question lpi.org"],
+            ["-x <IP>", "Búsqueda inversa directa para registros PTR", "dig -x 208.80.154.224 +short"],
+            ["@servidor", "Envía la consulta a un servidor DNS alternativo específico", "dig @8.8.8.8 lpi.org MX"],
+            ["+nocookie", "Desactiva el envío de la cookie EDNS en la consulta", "dig +nocookie lpi.org"]
+          ],
+          "caption": "Opciones avanzadas y filtros de dig"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Archivo de Configuración Personal ~/.digrc",
+          "content": "Para no tener que escribir flags repetitivos como '+noall +answer' en cada comando, puedes crear el archivo '~/.digrc' en tu directorio personal escribiendo dichas opciones; dig las cargará automáticamente por defecto."
         }
       ]
     },
     {
       "id": "109.4-slide-13",
       "slideNumber": 13,
-      "title": "Resumen de la Cadena de Resolución en el Cliente",
-      "layout": "content",
+      "title": "Matriz Comparativa: getent frente a host y dig",
+      "layout": "comparison",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Resumen de la Cadena de Resolución en el Cliente"
+          "text": "¿Cuándo usar cada utilidad en la resolución DNS?"
         },
         {
-          "type": "paragraph",
-          "text": "Interacción global entre archivos, servicios y librerías"
+          "type": "table",
+          "headers": ["Característica", "getent hosts", "host", "dig"],
+          "rows": [
+            ["Librería subyacente", "glibc resolver del sistema", "Cliente de red BIND propio", "Cliente de red BIND propio"],
+            ["¿Respeta /etc/hosts?", "SÍ (según nsswitch.conf)", "NO (ignora /etc/hosts)", "NO (ignora /etc/hosts)"],
+            ["¿Respeta nsswitch.conf?", "SÍ (sigue el orden de fuentes)", "NO (solo consulta DNS)", "NO (solo consulta DNS)"],
+            ["Búsqueda inversa PTR", "getent hosts <IP>", "host <IP>", "dig -x <IP>"],
+            ["Uso en administración", "Ver cómo resuelve el sistema", "Consultas rápidas de registros", "Depuración exhaustiva y DNSSEC"],
+            ["Aislamiento de fuente", "getent -s files/dns hosts", "host dominio [servidor]", "dig @servidor dominio [tipo]"]
+          ],
+          "caption": "Matriz técnica de diferencias entre herramientas de resolución"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "🎯 Trampa Clásica: getent vs host/dig",
+          "content": "Si añades '192.168.1.99 prueba.local' a '/etc/hosts', 'getent hosts prueba.local' devolverá la IP correctamente, pero 'host prueba.local' o 'dig prueba.local' devolverán error (NXDOMAIN) porque consultan directamente al servidor DNS configurado."
         }
       ]
     },
@@ -255,11 +472,33 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Trampas Críticas de Examen: 109.4 DNS Cliente"
+          "text": "Escenarios Engañosos en la Certificación LPIC-1"
         },
         {
-          "type": "paragraph",
-          "text": "4 puntos engañosos frecuentes en las preguntas de certificación"
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Trampa 1: [SUCCESS=continue] en nsswitch.conf",
+          "content": "La sintaxis estándar es 'hosts: files dns'. Si aparece 'hosts: files [SUCCESS=continue] dns', el resolver busca en /etc/hosts y, aunque lo encuentre con éxito, continuará hacia el DNS. Si el DNS responde, su respuesta reemplaza a la local."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Trampa 2: host y dig no leen /etc/hosts",
+          "content": "Nunca asumas que un cambio en /etc/hosts se probará con 'dig' o 'host'. Esas utilidades se comunican únicamente por UDP/TCP con el servidor de nombres. Para validar /etc/hosts usa 'getent hosts' o 'ping'."
+        }
+      ],
+      "secondaryBlocks": [
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Trampa 3: Inversión en /etc/hosts",
+          "content": "La primera columna siempre es la IP. 'localhost 127.0.0.1' es un error común en opciones múltiples; la forma válida es '127.0.0.1 localhost' y '::1 localhost'."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Trampa 4: search frente a domain",
+          "content": "'search' permite hasta 6 dominios de búsqueda delimitados por espacios (ej. 'search lpi.org sub.lpi.org'). 'domain' solo permite uno. Si se configuran ambos en /etc/resolv.conf, prevalece el último declarado."
         }
       ]
     },
@@ -272,28 +511,64 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales (Manual LPI)"
+          "text": "Casos Prácticos Oficiales (1 a 3)"
         },
         {
-          "type": "paragraph",
-          "text": "Casos prácticos interactivos con solución oficial comprobada"
+          "type": "list",
+          "items": [
+            "**1. Comando 'getent group openldap'**: Lee `/etc/nsswitch.conf`, busca la entrada para el grupo `openldap` en las fuentes configuradas (`group:`) y despliega su información (nombre, password y GID).",
+            "**2. Diferencia de getent frente a host/dig**: `getent` utiliza las librerías del sistema glibc respetando `/etc/nsswitch.conf` y `/etc/hosts`. Por el contrario, `host` y `dig` son clientes directos que solo consultan servidores DNS.",
+            "**3. Opción para tipo de registro en host y dig**: Ambos programas utilizan la opción `-t` seguida del tipo de registro buscado (ej. `-t MX`, `-t NS`, `-t SOA`)."
+          ]
+        }
+      ],
+      "secondaryBlocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Casos Prácticos Oficiales (4 y 5)"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**4. Entrada correcta en /etc/hosts**: La opción correcta es `::1 localhost`. La columna de la izquierda siempre debe ser una dirección IPv4 o IPv6; la variante `localhost 127.0.0.1` es errónea.",
+            "**5. Especificar fuente de datos en getent**: Se utiliza la opción `-s <fuente>` (ej. `getent -s files hosts localhost` para consultar solo `/etc/hosts` o `getent -s dns hosts lpi.org`)."
+          ]
         }
       ]
     },
     {
       "id": "109.4-slide-16",
       "slideNumber": 16,
-      "title": "Flashcards de Memorización Rápida: 109.4 DNS Cliente",
-      "layout": "content",
+      "title": "Ejercicios de Exploración Oficiales (Manual LPI)",
+      "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Flashcards de Memorización Rápida: 109.4 DNS Cliente"
+          "text": "Exploración Avanzada (1 a 3)"
         },
         {
-          "type": "paragraph",
-          "text": "Fija los conceptos finales del Tema 109 antes del Repaso Gráfico"
+          "type": "list",
+          "items": [
+            "**1. Edición de resolv.conf con NetworkManager**: Si el archivo contiene `# Generated by NetworkManager`, cualquier cambio manual será sobrescrito en cuanto el gestor de red se reinicie o renueve la concesión DHCP.",
+            "**2. Significado de 'hosts: files [SUCCESS=continue] dns'**: Las búsquedas de nombres comprobarán `/etc/hosts` y luego DNS. Si una entrada se encuentra en files pero también existe en DNS, se utilizará la respuesta del DNS porque la búsqueda continúa.",
+            "**3. Fichero resolv.conf con servidores comentados**: Si las líneas `nameserver` tienen un `#` al inicio (`#nameserver ...`) y no hay un servidor DNS local, el sistema no podrá resolver ningún nombre por DNS."
+          ]
+        }
+      ],
+      "secondaryBlocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Exploración Avanzada (4 y 5)"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**4. Comando 'dig +noall +answer +question lpi.org'**: Suprime todas las secciones informativas (`+noall`) y muestra únicamente la consulta enviada (`+question`) y la respuesta limpia con el registro A (`+answer`).",
+            "**5. Modificar valores predeterminados de dig sin la línea de comandos**: Se crea un archivo de configuración `.digrc` en el directorio personal del usuario (`~/.digrc`) con las opciones deseadas (ej. `+noall +answer`)."
+          ]
         }
       ]
     }

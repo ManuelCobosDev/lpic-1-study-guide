@@ -11,16 +11,37 @@
     "Dominio técnico de las herramientas y configuración del subtema 107.2"
   ],
   "keyTerms": [
+    "/etc/anacrontab",
+    "/etc/at.allow",
+    "/etc/at.deny",
+    "/etc/cron.allow",
+    "/etc/cron.deny",
     "/etc/crontab",
+    "/etc/cron.d/",
     "/var/spool/cron/",
     "anacron",
     "at",
+    "at -c",
     "atq / atrm",
     "batch",
-    "cron.allow / cron.deny",
+    "MAILTO",
+    "run-parts",
+    "systemd-run",
+    "timers.target"
+  ],
+  "commands": [
+    "anacron",
+    "at",
+    "atq",
+    "atrm",
+    "batch",
+    "crontab",
+    "mail",
+    "run-parts",
+    "systemctl",
+    "systemd-analyze",
     "systemd-run"
   ],
-  "commands": [],
   "placeholder": false,
   "slides": [
     {
@@ -345,6 +366,16 @@
               "Lee los comandos desde un archivo de script en lugar de la entrada interactiva de consola."
             ],
             [
+              "-c ID_TRABAJO",
+              "",
+              "Imprime a la salida estándar (stdout) los comandos y el entorno completo del script programado."
+            ],
+            [
+              "-v",
+              "",
+              "Muestra la fecha y hora calculada para la ejecución antes de leer las instrucciones de la tarea."
+            ],
+            [
               "-m",
               "",
               "Envía un correo al usuario cuando la tarea finalice, incluso si no produjo ninguna salida."
@@ -509,9 +540,14 @@
               "Asigna un nombre de unidad específico al servicio/temporizador transitorio generado."
             ],
             [
-              "systemctl list-timers",
+              "--user",
               "",
-              "Muestra todos los temporizadores activos, su próxima ejecución (NEXT), cuándo se ejecutaron (LAST) y el servicio que activan."
+              "Crea y programa temporizadores en el espacio de usuario (sin requerir permisos de root)."
+            ],
+            [
+              "systemctl list-timers [--all]",
+              "",
+              "Muestra los temporizadores activos; con '--all' lista también los inactivos/cargados, su próxima ejecución (NEXT) y última (LAST)."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -520,10 +556,10 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 'systemd-run --on-calendar=...' programa tareas basadas en el calendario (estilo cron). 'systemd-run --on-active=...' programa retardos relativos (estilo at)."
+          "content": "🎯 Clave de Examen: 'systemd-run --on-calendar=...' programa tareas de calendario (cron); '--on-active=...' retardos relativos (at). En unidades fijas foobar.timer, la sección [Install] debe incluir 'WantedBy=timers.target' para activarse en el arranque."
         }
       ],
-      "notes": "systemctl list-timers muestra la próxima ejecución de todos los temporizadores del sistema."
+      "notes": "systemctl list-timers --all enumera todos los temporizadores del sistema. La activación persistente depende de timers.target."
     },
     {
       "id": "107.2-slide-13",
@@ -637,8 +673,8 @@
         },
         {
           "type": "code",
-          "language": "bash",
-          "code": "\n<strong>1. <code>30 13 * * 1-5</code></strong>: A las 13:30 de lunes a viernes (días 1 al 5 de la semana).<br><br>\n<strong>2. <code>00 09-18 * * *</code></strong>: Cada hora en punto, desde las 09:00 hasta las 18:00 inclusive, todos los días.<br><br>\n<strong>3. <code>30 08 1 1 *</code></strong>: A las 08:30 de la mañana del día 1 de enero (año nuevo).<br><br>\n<strong>4. <code>0,20,40 11 * * Sun</code></strong>: A las 11:00, 11:20 y 11:40 todos los domingos.<br><br>\n<strong>5. <code>*/20 * * * *</code></strong>: Cada 20 minutos (en los minutos 0, 20 y 40 de cada hora de todos los días).\n",
+          "language": "text",
+          "code": "# Ejemplos de tiempos en cron (m h dom mon dow):\n30 13 * * 1-5       # Lunes a viernes a las 13:30\n00 09-18 * * *      # Cada hora en punto de 09:00 a 18:00\n30 08 1 1 *         # El 1 de enero a las 08:30\n0,20,40 11 * * Sun  # Domingos a las 11:00, 11:20 y 11:40\n*/20 * * * *        # Cada 20 minutos (minutos 0, 20 y 40)",
           "title": "Solución del ejercicio"
         },
         {
@@ -666,8 +702,8 @@
         },
         {
           "type": "code",
-          "language": "bash",
-          "code": "\n• <code>at 08:30 AM next week</code> : ❌ <strong>INVÁLIDA</strong>. No se permite 'next week'; la sintaxis correcta es <code>at 08:30 AM next Monday</code> o <code>at 08:30 AM +1 week</code>.<br>\n• <code>at midday</code> : ❌ <strong>INVÁLIDA</strong>. La palabra oficial en inglés para el mediodía en at es <code>noon</code> (no existe 'midday').<br>\n• <code>at 01-01-2020 07:30 PM</code> : ❌ <strong>INVÁLIDA</strong>. La hora debe preceder a la fecha o usar los formatos admitidos (MMDDYY, MM/DD/YY o mes día).<br>\n• <code>at 21:50 01.01.20</code> : ✅ <strong>VÁLIDA</strong>. Formato hora seguido de día.mes.año.<br>\n• <code>at now +4 days</code> : ✅ <strong>VÁLIDA</strong>. Desplazamiento relativo respecto al momento presente.<br>\n• <code>at tomorrow 08:30 AM</code> : ❌ <strong>INVÁLIDA</strong>. La palabra 'tomorrow' debe ir DESPUÉS de la hora: <code>at 08:30 AM tomorrow</code>.\n",
+          "language": "text",
+          "code": "# Expresiones de at evaluadas por LPI:\nat 08:30 AM next week    # INVÁLIDA: usar '+1 week' o 'next Mon'\nat midday                # INVÁLIDA: palabra reservada es 'noon'\nat 01-01-2020 07:30 PM   # INVÁLIDA: la hora debe preceder a la fecha\nat 21:50 01.01.20        # VÁLIDA: hora y fecha separadas por punto\nat now +4 days           # VÁLIDA: desplazamiento relativo\nat tomorrow 08:30 AM     # INVÁLIDA: 'tomorrow' debe ir tras la hora",
           "title": "Solución del ejercicio"
         },
         {
@@ -702,7 +738,7 @@
         {
           "type": "code",
           "language": "bash",
-          "code": "\n<pre style=\"background:#0F172A; color:#E2E8F0; padding:10px; border-radius:6px; font-size:12px;\">\n# 1. Restringir acceso al servicio cron:\necho \"operador\" > /etc/cron.allow\necho \"root\" >> /etc/cron.allow\nrm -f /etc/cron.deny\n\n# 2. Instalar la tarea en el crontab de operador (6 campos):\n# Ejecutar como root: crontab -u operador -e\n# O inyectar directamente:\n(crontab -u operador -l 2>/dev/null; echo \"30 02 * * 0 /opt/scripts/backup.sh >> /var/log/backup.log 2>&1\") | crontab -u operador -\n\n# 3. Programar tarea puntual a las 16:00 (teatime):\necho \"df -h / > /tmp/espacio_disco.txt\" | at teatime\n</pre>\n",
+          "code": "# 1. Restringir acceso al servicio cron:\necho \"operador\" | sudo tee /etc/cron.allow\necho \"root\" | sudo tee -a /etc/cron.allow\nsudo rm -f /etc/cron.deny\n\n# 2. Instalar tarea dominical en el crontab de operador (6 campos):\necho \"30 02 * * 0 /opt/scripts/backup.sh >> /var/log/backup.log 2>&1\" | sudo crontab -u operador -\n\n# 3. Programar tarea puntual a las 16:00 (teatime):\necho \"df -h / > /tmp/espacio_disco.txt\" | at teatime",
           "title": "Solución del desafío"
         }
       ]
@@ -726,7 +762,7 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Regla de Oro: Si te piden borrar UNA tarea de at, usa 'atrm ID'. Si te piden borrar el crontab entero, es 'crontab -r'."
+          "content": "🎯 Regla de Oro: Si te piden borrar UNA tarea de at, usa 'atrm ID' (o inspecciónala con 'at -c ID'). Si te piden borrar el crontab entero, es 'crontab -r'. La salida por defecto de cron y at se envía al buzón de correo local mediante MAILTO (consultable con el comando 'mail' o 'mailx')."
         }
       ]
     },

@@ -7,23 +7,50 @@
   "language": "es",
   "estimatedMinutes": 30,
   "objectives": [
-    "Arquitectura y administración de CUPS: demonio cupsd, puerto TCP 631, ficheros de configuración (/etc/cups/), gestión de colas e impresoras con lpadmin y lpoptions, envío de trabajos con lp y lpr, control de estados (cupsenable/disable, cupsaccept/reject), consulta con lpstat y lpq, cancelación con cancel y lprm, y reubicación con lpmove.",
-    "Dominio técnico de las herramientas y configuración del subtema 108.4"
+    "Arquitectura y administración de CUPS: demonio cupsd, puerto TCP 631, ficheros de configuración (/etc/cups/) y la regla de oro de parada del servicio para editar printers.conf.",
+    "Gestión de impresoras y colas con lpadmin (-p, -E, -v, -m, -x, -d, -c, -r, -u, -o) y políticas de error (abort-job, retry-job, retry-current-job, stop-printer).",
+    "Establecer impresora por defecto y consultar opciones PPD con lpoptions (-d, -p, -l, -o, -x) distinguiendo el ámbito local frente al global.",
+    "Diagnóstico y monitorización del subsistema de impresión mediante lpstat con todas sus banderas (-t, -p, -d, -a, -r, -s, -o, -v, -u).",
+    "Control fino del flujo de cola: distinción de examen entre aceptar/rechazar trabajos en spool (cupsaccept/cupsreject) y habilitar/detener impresión física (cupsenable/cupsdisable).",
+    "Envío de trabajos comparado System V vs BSD (lp -d, -n frente a lpr -P, -#) y opciones de acabado avanzadas con -o (landscape, sides, media, number-up, page-ranges, collate).",
+    "Inspección de colas con lpq, reubicación de trabajos con lpmove y cancelación con cancel (System V) y lprm (BSD)."
   ],
   "keyTerms": [
     "CUPS (Common Unix Printing System)",
     "cupsd",
     "IPP (Internet Printing Protocol)",
-    "/etc/cups/printers.conf",
     "PPD (PostScript Printer Description)",
+    "/etc/cups/printers.conf",
+    "/etc/cups/cupsd.conf",
+    "/etc/printcap",
     "lpadmin",
     "lpoptions",
     "lpstat",
     "cupsenable / cupsdisable",
-    "cupsaccept / cupsreject"
+    "cupsaccept / cupsreject",
+    "lp (System V)",
+    "lpr (BSD)",
+    "lpmove",
+    "cancel / lprm"
   ],
-  "commands": [],
-  "placeholder": true,
+  "commands": [
+    "cupsd",
+    "lpadmin",
+    "lpoptions",
+    "lpstat",
+    "cupsenable",
+    "cupsdisable",
+    "cupsaccept",
+    "cupsreject",
+    "lp",
+    "lpr",
+    "lpq",
+    "lpmove",
+    "cancel",
+    "lprm",
+    "systemctl"
+  ],
+  "placeholder": false,
   "slides": [
     {
       "id": "108.4-slide-1",
@@ -38,43 +65,100 @@
         },
         {
           "type": "paragraph",
-          "text": "Servicios esenciales del sistema · Peso 2"
+          "text": "Servicios esenciales del sistema · Peso 2 · Examen LPIC-1 102-500"
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Objetivo oficial de certificación",
+          "content": "Dominar la arquitectura CUPS (cupsd, IPP en puerto TCP 631, archivos PPD), los ficheros de configuración en /etc/cups/, la administración de impresoras con lpadmin y lpoptions, el control de colas (cupsenable/disable vs cupsaccept/reject), el envío con lp y lpr, la inspección con lpstat y lpq, la cancelación con cancel y lprm, y la reubicación con lpmove."
         }
-      ]
+      ],
+      "notes": "Bienvenido al subtema 108.4. CUPS es el estándar de facto en Linux para gestionar impresoras locales y de red, manteniendo compatibilidad con System V y BSD."
     },
     {
       "id": "108.4-slide-2",
       "slideNumber": 2,
       "title": "Arquitectura y Pipeline de Impresión en CUPS",
-      "layout": "content",
+      "layout": "diagram",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Arquitectura y Pipeline de Impresión en CUPS"
+          "text": "El flujo de datos de impresión en 4 fases"
         },
         {
           "type": "paragraph",
-          "text": "4 fases desde que el usuario imprime hasta la salida en papel"
+          "text": "CUPS (Common Unix Printing System) sustituyó al antiguo demonio LPD. Su arquitectura modular procesa los documentos en 4 etapas ordenadas:"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "1. Creación del trabajo (Aplicación)",
+              "description": "La aplicación o el usuario genera el documento en formato estándar (PDF o PostScript) y lo envía a CUPS mediante `lp` o `lpr`."
+            },
+            {
+              "number": 2,
+              "title": "2. Almacenamiento en Spooler",
+              "description": "El demonio planificador `cupsd` recibe el trabajo y lo almacena temporalmente en `/var/spool/cups/` (ficheros de datos `d*` y ficheros de control `c*`)."
+            },
+            {
+              "number": 3,
+              "title": "3. Cadena de filtros y PPD",
+              "description": "CUPS encadena filtros (ej. pdftoraster -> rastertoipp) utilizando el fichero PPD (/etc/cups/ppd/) para convertir el archivo al lenguaje nativo de la impresora."
+            },
+            {
+              "number": 4,
+              "title": "4. Backend de comunicación",
+              "description": "El backend específico (`socket://`, `ipp://`, `usb://`, `cups-pdf:/`) transmite los datos binarios al dispositivo de impresión físico o virtual."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen",
+          "content": "El demonio principal del planificador es **`cupsd`** (`/usr/sbin/cupsd`). En sistemas systemd se administra mediante la unidad de servicio **`cups.service`** (`systemctl status cups.service`)."
         }
-      ]
+      ],
+      "notes": "CUPS utiliza RIP (Raster Image Processor) internamente para transformar PDFs o PostScript en mapas de bits listos para el cabezal o tóner."
     },
     {
       "id": "108.4-slide-3",
       "slideNumber": 3,
       "title": "Protocolo IPP e Interfaz Web de CUPS (Puerto TCP 631)",
-      "layout": "content",
+      "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Protocolo IPP e Interfaz Web de CUPS (Puerto TCP 631)"
+          "text": "Protocolo IPP y Administración Web"
         },
         {
           "type": "paragraph",
-          "text": "Gestión visual y el estándar moderno 'driverless' IPP Everywhere"
+          "text": "CUPS se basa íntegramente en IPP (Internet Printing Protocol) para el transporte y gestión de trabajos:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Puerto TCP 631**: Puerto oficial IANA utilizado tanto por el protocolo IPP como por el servidor web integrado de CUPS.",
+            "**Acceso a la interfaz web**: Disponible por defecto en `http://localhost:631` (si `WebInterface Yes` está activado en `/etc/cups/cupsd.conf`).",
+            "**Pestañas principales**: *Home* (versión e información), *Administration* (añadir/eliminar impresoras y clases), *Classes*, *Printers*, *Jobs* (trabajos en cola) y *Help* (`http://localhost:631/help`).",
+            "**Autenticación**: Las tareas de administración requieren credenciales de `root` o usuarios pertenecientes al grupo administrativo del sistema (`Require user @SYSTEM`).",
+            "**IPP Everywhere**: Estándar moderno de impresión *driverless* (sin controladores propietarios). Se configura con `-m everywhere` en lpadmin."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Pregunta de Examen Clásica",
+          "content": "¿Cuál es el puerto de red por defecto y protocolo utilizado por la interfaz web de CUPS?\nRespuesta oficial: **631/TCP** (Protocolo **IPP** / HTTP)."
         }
-      ]
+      ],
+      "notes": "Para desactivar la interfaz web se para cups, se cambia WebInterface Yes por WebInterface No en /etc/cups/cupsd.conf y se reinicia."
     },
     {
       "id": "108.4-slide-4",
@@ -85,13 +169,61 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Ficheros de Configuración de CUPS (/etc/cups/)"
+          "text": "Ficheros esenciales y regla de parada para edición"
         },
         {
           "type": "paragraph",
-          "text": "Ubicaciones clave y la regla dorada de edición para el examen"
+          "text": "Toda la configuración del subsistema CUPS se centraliza en el directorio `/etc/cups/`:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Fichero / Ruta",
+            "Contenido y Propósito técnico",
+            "Notas de administración"
+          ],
+          "rows": [
+            [
+              "/etc/cups/cupsd.conf",
+              "Configuración del demonio cupsd (puerto 631, directivas <Location> y <Limit> similares a Apache, permisos de acceso).",
+              "Se puede editar directamente; requiere 'systemctl restart cups' para aplicar cambios."
+            ],
+            [
+              "/etc/cups/printers.conf",
+              "Definición y atributos de cada impresora (<Printer nombre>...</Printer>, estado, URI, opciones).",
+              "¡ATENCIÓN! NUNCA editarlo con cupsd en ejecución (ver aviso abajo)."
+            ],
+            [
+              "/etc/cups/classes.conf",
+              "Definición de clases / grupos de impresoras (<Class nombre>...).",
+              "Permite agrupar varias impresoras bajo un único nombre para balanceo de carga."
+            ],
+            [
+              "/etc/cups/ppd/*.ppd",
+              "Ficheros PostScript Printer Description para cada impresora configurada.",
+              "Ficheros de texto plano que describen resoluciones, bandejas y tamaños soportados."
+            ],
+            [
+              "/etc/printcap",
+              "Fichero de compatibilidad heredada LPD.",
+              "Enlace simbólico a /run/cups/printcap generado automáticamente por CUPS."
+            ],
+            [
+              "/var/log/cups/",
+              "Registros del servidor: error_log, access_log y page_log.",
+              "error_log es el primer lugar a consultar ante trabajos fallidos."
+            ]
+          ],
+          "caption": "Ficheros y directorios de configuración de CUPS"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "¡REGLA DE ORO DE EXAMEN!: Edición de /etc/cups/printers.conf",
+          "content": "NUNCA se debe editar manualmente `/etc/cups/printers.conf` mientras el servicio `cupsd` esté activo. Al detenerse o recibir trabajos, `cupsd` sobrescribe el fichero en disco con el estado que mantiene en memoria RAM, perdiéndose cualquier edición manual. Es OBLIGATORIO ejecutar primero: `systemctl stop cups`."
         }
-      ]
+      ],
+      "notes": "Esta regla de parada de cupsd es evaluada reiteradamente en reactivos de opción múltiple de LPIC-1."
     },
     {
       "id": "108.4-slide-5",
@@ -102,47 +234,181 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Añadir y Modificar Impresoras: comando lpadmin"
+          "text": "Sintaxis fundamental y opciones de lpadmin"
         },
         {
           "type": "paragraph",
-          "text": "Herramienta administrativa de System V para el ciclo de vida de dispositivos"
+          "text": "El comando administrativo `lpadmin` (System V) permite configurar el ciclo de vida completo de las colas de impresión desde la consola:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "title": "Ejemplo oficial de configuración de impresora de red (Manual LPI)",
+          "code": "$ sudo lpadmin -p ENVY-4510 -L \"office\" -v socket://192.168.150.25 -m everywhere -E"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción",
+            "Argumento",
+            "Efecto operativo"
+          ],
+          "rows": [
+            [
+              "-p",
+              "<nombre>",
+              "Nombre amigable de la impresora o cola (ej. ENVY-4510, FRONT-DESK)."
+            ],
+            [
+              "-E",
+              "(sin arg)",
+              "Habilita la impresora y activa la aceptación de trabajos simultáneamente (enable + accept)."
+            ],
+            [
+              "-v",
+              "<URI>",
+              "DeviceURI del dispositivo: socket://IP:puerto (JetDirect 9100), ipp://..., usb://..., cups-pdf:/."
+            ],
+            [
+              "-m",
+              "<modelo>",
+              "Fichero PPD o modelo ('everywhere' para estándar IPP sin drivers, 'raw' para paso directo)."
+            ],
+            [
+              "-L",
+              "\"ubicación\"",
+              "Ubicación física descriptiva de la impresora (Location, ej. 'Planta 2')."
+            ],
+            [
+              "-D",
+              "\"descripción\"",
+              "Texto descriptivo amigable para los usuarios."
+            ],
+            [
+              "-d",
+              "<nombre>",
+              "Establece la impresora predeterminada a NIVEL DE TODO EL SISTEMA (en /etc/cups/printers.conf)."
+            ],
+            [
+              "-x",
+              "<nombre>",
+              "Elimina por completo la impresora y su cola asociada de CUPS."
+            ]
+          ],
+          "caption": "Banderas fundamentales de lpadmin"
         }
-      ]
+      ],
+      "notes": "Recuerda que lpadmin requiere privilegios de superusuario (sudo) para alterar la configuración del sistema."
     },
     {
       "id": "108.4-slide-6",
       "slideNumber": 6,
       "title": "Control de Acceso y Políticas de Error en lpadmin",
-      "layout": "content",
+      "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Control de Acceso y Políticas de Error en lpadmin"
+          "text": "Restricción de usuarios (-u) y políticas de error (-o)"
         },
         {
           "type": "paragraph",
-          "text": "Restricción de colas por usuario o grupo (-u) y tratamiento de anomalías (-o)"
+          "text": "`lpadmin` permite controlar quién imprime y qué sucede cuando un trabajo falla:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Parámetro",
+            "Ejemplo de sintaxis",
+            "Comportamiento"
+          ],
+          "rows": [
+            [
+              "-u allow:<lista>",
+              "lpadmin -p FRONT-DESK -u allow:carol,frank,grace",
+              "Lista blanca: solo los usuarios especificados pueden imprimir en la cola."
+            ],
+            [
+              "-u deny:<lista>",
+              "lpadmin -p FRONT-DESK -u deny:dave,@sales",
+              "Lista negra: deniega el acceso al usuario dave y al grupo @sales."
+            ],
+            [
+              "-o printer-is-shared",
+              "lpadmin -p FRONT-DESK -o printer-is-shared=true",
+              "Publica y comparte la impresora en la red local vía IPP."
+            ],
+            [
+              "-c <clase> / -r <clase>",
+              "lpadmin -p FRONT-DESK -c Recepcion",
+              "Añade (-c) o retira (-r) la impresora de la clase o grupo especificado."
+            ]
+          ],
+          "caption": "Control de acceso y compartición de impresoras"
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Políticas de Error: printer-error-policy",
+          "content": "Mediante `lpadmin -p <nombre> -o printer-error-policy=<valor>`:\n• **`abort-job`**: Cancela inmediatamente el trabajo que provocó el error y pasa al siguiente.\n• **`retry-job`**: Reintenta el trabajo fallido tras un intervalo de tiempo.\n• **`retry-current-job`**: Reintenta de inmediato el trabajo actual.\n• **`stop-printer`**: Detiene la cola de impresión completa ante cualquier fallo."
         }
-      ]
+      ],
+      "notes": "Las políticas de error son fundamentales en entornos de producción desatendidos para evitar colas bloqueadas indefinidamente."
     },
     {
       "id": "108.4-slide-7",
       "slideNumber": 7,
-      "title": "Impresora por Defecto: comando lpoptions",
+      "title": "Impresora por Defecto y Opciones PPD: comando lpoptions",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Impresora por Defecto: comando lpoptions"
+          "text": "Gestión de opciones por usuario y consulta PPD"
         },
         {
           "type": "paragraph",
-          "text": "Establece el destino predeterminado cuando los comandos no especifican cola"
+          "text": "El comando `lpoptions` permite a cualquier usuario sin privilegios configurar su impresora preferida y parámetros de renderizado PPD:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Invocación de lpoptions",
+            "Ámbito / Destino",
+            "Efecto operativo"
+          ],
+          "rows": [
+            [
+              "lpoptions -d office-mgr",
+              "Usuario local (~/.cups/lpoptions)",
+              "Fija 'office-mgr' como la impresora predeterminada para el usuario actual (Ejercicio Guiado 1)."
+            ],
+            [
+              "lpoptions -p ENVY-4510 -l",
+              "Consulta de opciones",
+              "Lista todas las opciones del PPD y sus valores posibles. El valor activo actual se señala con un asterisco '*' (ej: PageSize: *A4 Letter Legal)."
+            ],
+            [
+              "lpoptions -p ENVY-4510 -o PageSize=A4",
+              "Usuario local",
+              "Configura A4 como tamaño de página por defecto para ese usuario en esa impresora."
+            ],
+            [
+              "lpoptions -x ENVY-4510",
+              "Usuario local",
+              "Elimina las opciones personalizadas del usuario, restableciendo los valores predeterminados del sistema."
+            ]
+          ],
+          "caption": "Comandos y funciones de lpoptions"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Diferencia Crítica de Examen: lpoptions -d vs lpadmin -d",
+          "content": "• **`lpadmin -d <impresora>`**: Requiere `sudo` (root), afecta a **TODO EL SISTEMA** y se almacena en `/etc/cups/printers.conf`.\n• **`lpoptions -d <impresora>`**: No requiere privilegios elevados, afecta **SOLO AL USUARIO ACTUAL** y se guarda en su fichero personal `~/.cups/lpoptions`."
         }
-      ]
+      ],
+      "notes": "Si un usuario tiene definida una impresora en ~/.cups/lpoptions, esta prevalece sobre la predeterminada del sistema para ese usuario."
     },
     {
       "id": "108.4-slide-8",
@@ -153,47 +419,201 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Diagnóstico y Estado de Impresión: comando lpstat"
+          "text": "Banderas esenciales de lpstat para Troubleshooting"
         },
         {
           "type": "paragraph",
-          "text": "La herramienta universal para inspeccionar planificador, colas y destinos"
+          "text": "`lpstat` es la herramienta de referencia en el examen LPIC-1 para diagnosticar el estado de colas, planificador y dispositivos:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Flag",
+            "Información desplegada",
+            "Ejemplo de salida o utilidad"
+          ],
+          "rows": [
+            [
+              "-t",
+              "Informe total y completo de todo el subsistema de impresión",
+              "Muestra estado del scheduler, default, dispositivos, aceptación y colas."
+            ],
+            [
+              "-p [imp]",
+              "Estado de las impresoras (idle, processing, disabled)",
+              "printer FRONT-DESK is idle. enabled since Mon 03 Aug..."
+            ],
+            [
+              "-d",
+              "Muestra cuál es la impresora predeterminada del sistema",
+              "system default destination: ENVY-4510"
+            ],
+            [
+              "-a [imp]",
+              "Estado de aceptación de trabajos en cola (accepting requests)",
+              "FRONT-DESK accepting requests since Mon 03 Aug..."
+            ],
+            [
+              "-r",
+              "Estado del planificador de CUPS (cupsd scheduler)",
+              "scheduler is running (o scheduler is not running)"
+            ],
+            [
+              "-s",
+              "Resumen general (predeterminada, dispositivos y colas activas)",
+              "Resumen rápido de infraestructura de impresión."
+            ],
+            [
+              "-o [imp]",
+              "Lista los trabajos de impresión pendientes en cola",
+              "ACCOUNTING-LASERJET-4 carol 19456 Wed 05 Aug..."
+            ],
+            [
+              "-v [imp]",
+              "Muestra el DeviceURI asociado a cada impresora",
+              "device for FRONT-DESK: socket://192.168.150.24"
+            ],
+            [
+              "-u [user]",
+              "Filtra los trabajos encolados por nombre de usuario",
+              "Útil para que un usuario vea solo sus impresiones pendientes."
+            ]
+          ],
+          "caption": "Matriz de banderas del comando lpstat"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Ejercicio Guiado 2 Oficial LPI",
+          "content": "¿Qué comando y opción se utilizaría para determinar qué impresoras están disponibles para imprimir desde una estación de trabajo?\nRespuesta oficial: **`lpstat -p`** (opcionalmente combinable con `-d`: `lpstat -p -d`)."
         }
-      ]
+      ],
+      "notes": "Combinar banderas como lpstat -p -d o lpstat -t es una práctica estándar de troubleshooting en Linux."
     },
     {
       "id": "108.4-slide-9",
       "slideNumber": 9,
       "title": "Control Fino de Colas: Imprimir vs Aceptar Trabajos",
-      "layout": "content",
+      "layout": "comparison",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Control Fino de Colas: Imprimir vs Aceptar Trabajos"
+          "text": "cupsaccept/reject frente a cupsenable/disable"
         },
         {
           "type": "paragraph",
-          "text": "La distinción clave de examen entre el proceso de impresión y la recepción de trabajos"
+          "text": "La distinción más evaluada en el examen LPIC-1 es la diferencia entre aceptar trabajos en el spool de disco y enviarlos al dispositivo físico:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Comando",
+            "Acción sobre la cola",
+            "Efecto sobre los trabajos",
+            "Escenario típico de administración"
+          ],
+          "rows": [
+            [
+              "cupsaccept <imp>",
+              "Acepta trabajos entrantes en el spool",
+              "Permite que nuevos trabajos entren en cola (/var/spool/cups/).",
+              "Servicio de impresión operativo y abierto a los usuarios."
+            ],
+            [
+              "cupsreject [-r motivo] <imp>",
+              "Rechaza trabajos entrantes en el spool",
+              "Los comandos 'lp' y 'lpr' fallan inmediatamente indicando el motivo.",
+              "Mantenimiento definitivo o desinstalación programada de la impresora."
+            ],
+            [
+              "cupsenable <imp>",
+              "Habilita el envío hacia el hardware físico",
+              "cupsd procesa los trabajos del spool y los envía a imprimir.",
+              "Tras recargar papel, sustituir tóner o solucionar un atasco."
+            ],
+            [
+              "cupsdisable [-r motivo] <imp>",
+              "Detiene la transmisión hacia el dispositivo físico",
+              "Los trabajos SE GUARDAN en el spool pero NO se imprimen (quedan pausados).",
+              "Atasco de papel temporal, fin de consumibles o mantenimiento breve."
+            ]
+          ],
+          "caption": "Comparativa técnica de control de colas en CUPS"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Escenario Típico de Examen",
+          "content": "Una impresora se queda sin papel. Los usuarios deben poder seguir enviando trabajos para que se impriman cuando se cargue el papel. ¿Qué comando debe ejecutarse?\nRespuesta: **`cupsdisable <impresora>`** (detiene la impresión física pero el spool sigue aceptando con cupsaccept). Al recargar papel: **`cupsenable <impresora>`**."
         }
-      ]
+      ],
+      "notes": "cupsdisable acepta opciones como --hold (retiene trabajos) y -c (cancela el trabajo en curso). cupsenable acepta --release."
     },
     {
       "id": "108.4-slide-10",
       "slideNumber": 10,
       "title": "Envío de Trabajos: System V (lp) vs BSD Legacy (lpr)",
-      "layout": "content",
+      "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Envío de Trabajos: System V (lp) vs BSD Legacy (lpr)"
+          "text": "Sintaxis comparada de impresión en consola"
         },
         {
           "type": "paragraph",
-          "text": "Diferencias críticas de argumentos entre las dos familias de utilidades"
+          "text": "Linux soporta tanto la interfaz tradicional de System V (`lp`) como la de BSD (`lpr`):"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Acción requerida",
+            "Sintaxis System V (lp)",
+            "Sintaxis BSD (lpr)"
+          ],
+          "rows": [
+            [
+              "Impresora predeterminada",
+              "lp archivo.txt",
+              "lpr archivo.txt"
+            ],
+            [
+              "Especificar impresora destino",
+              "lp -d IMPRESORA archivo.txt",
+              "lpr -P IMPRESORA archivo.txt (¡P mayúscula obligatoria!)"
+            ],
+            [
+              "Número de copias",
+              "lp -n 3 archivo.txt",
+              "lpr -#3 archivo.txt"
+            ],
+            [
+              "Opciones de acabado",
+              "lp -o landscape archivo.txt",
+              "lpr -o landscape archivo.txt"
+            ],
+            [
+              "Borrar archivo tras imprimir",
+              "No nativo (requiere script)",
+              "lpr -r archivo.txt"
+            ],
+            [
+              "Aviso por correo al finalizar",
+              "No nativo",
+              "lpr -m archivo.txt"
+            ]
+          ],
+          "caption": "Sintaxis comparada entre lp y lpr"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Trampas Críticas de Sintaxis",
+          "content": "• En `lpr`, especificar la impresora se hace con **`-P` MAYÚSCULA**. La opción `-p` minúscula invoca el formateador de texto `pr`.\n• En `lp`, las copias se indican con **`-n <num>`**, mientras que en `lpr` se indican con **`-#<num>`**."
         }
-      ]
+      ],
+      "notes": "Ambos comandos leen de stdin si no se especifica nombre de archivo (ej: cat archivo.txt | lp -d PDF)."
     },
     {
       "id": "108.4-slide-11",
@@ -204,30 +624,111 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Opciones de Formato y Acabado: modificador -o"
+          "text": "Personalización del trabajo de impresión con -o"
         },
         {
           "type": "paragraph",
-          "text": "Parámetros de orientación, doble cara, soporte, intercalado y rangos"
+          "text": "Tanto `lp` como `lpr` aceptan la opción `-o` repetidas veces para ajustar el formato y comportamiento del trabajo:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Parámetro -o",
+            "Valores admitidos",
+            "Efecto en la impresión"
+          ],
+          "rows": [
+            [
+              "landscape",
+              "(sin valor)",
+              "Orientación apaisada / horizontal (frente al valor portrait por defecto)."
+            ],
+            [
+              "sides",
+              "two-sided-long-edge, two-sided-short-edge, one-sided",
+              "Impresión a doble cara: borde largo (típico vertical) o borde corto (típico bloc/apaisado)."
+            ],
+            [
+              "media",
+              "A4, Letter, Legal, Transparency",
+              "Selecciona el tamaño y soporte del papel."
+            ],
+            [
+              "number-up",
+              "2, 4, 6",
+              "Imprime N páginas lógicas reducidas en una sola cara de papel (ej. -o number-up=2)."
+            ],
+            [
+              "page-ranges",
+              "5-7,9,15",
+              "Imprime únicamente el intervalo o lista de páginas seleccionadas."
+            ],
+            [
+              "collate",
+              "true, false",
+              "Intercala las páginas en copias múltiples (ej. 1,2,3 - 1,2,3)."
+            ],
+            [
+              "outputorder",
+              "normal, reverse",
+              "Orden de salida: normal (comienza en página 1) o invertido (última página primero)."
+            ],
+            [
+              "fit-to-page",
+              "(sin valor)",
+              "Escala el documento para ajustarlo automáticamente al tamaño del papel."
+            ]
+          ],
+          "caption": "Opciones de renderizado y acabado en CUPS"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "title": "Ejemplo de impresión avanzada en consola",
+          "code": "$ lp -d ACCOUNTING-LASERJET -n 3 -o landscape -o media=A4 -o two-sided-long-edge informe.pdf"
         }
-      ]
+      ],
+      "notes": "Estas opciones modifican las directivas PPD al vuelo para ese trabajo concreto sin alterar la configuración permanente."
     },
     {
       "id": "108.4-slide-12",
       "slideNumber": 12,
       "title": "Inspección de Colas (lpq) y Reubicación de Trabajos (lpmove)",
-      "layout": "content",
+      "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Inspección de Colas (lpq) y Reubicación de Trabajos (lpmove)"
+          "text": "Consulta de colas con lpq y migración con lpmove"
         },
         {
           "type": "paragraph",
-          "text": "Visualizar trabajos pendientes y moverlos entre impresoras sin reimprimir"
+          "text": "Cuando una impresora presenta incidencias, `lpq` permite obtener el identificador de trabajo y `lpmove` transferirlo a otra impresora:"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "lpq -a",
+              "output": "Rank Owner Job File(s) Total Size\n1st carol 2 FRONT-DESK-2 finance-report.pdf 5072 bytes"
+            }
+          ]
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "title": "Sintaxis de reubicación con lpmove",
+          "code": "# Mover un trabajo específico a otra impresora:\n$ sudo lpmove FRONT-DESK-2 ACCOUNTING-LASERJET\n\n# O mover TODOS los trabajos de una cola a otra:\n$ sudo lpmove FRONT-DESK ACCOUNTING-LASERJET"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Ejercicio Guiado 4 Oficial LPI",
+          "content": "Tienes un trabajo de impresión destinado a una impresora sin papel suficiente. ¿Qué comando utilizarías para mover el trabajo con ID 2 en la impresora FRONT-DESK hacia ACCOUNTING-LASERJET?\nRespuesta oficial: **`sudo lpmove FRONT-DESK-2 ACCOUNTING-LASERJET`**."
         }
-      ]
+      ],
+      "notes": "lpmove evita tener que pedir a los usuarios que vuelvan a enviar sus documentos cuando una impresora queda fuera de servicio."
     },
     {
       "id": "108.4-slide-13",
@@ -238,30 +739,124 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Cancelación de Trabajos: cancel (System V) vs lprm (BSD)"
+          "text": "Eliminación de trabajos individuales y purga de colas"
         },
         {
           "type": "paragraph",
-          "text": "Eliminar trabajos individuales, trabajos actuales o vaciar la cola completa"
+          "text": "Para abortar o eliminar trabajos atascados se utiliza `cancel` (System V) o `lprm` (BSD):"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Acción de cancelación",
+            "Comando System V (cancel)",
+            "Comando BSD (lprm)"
+          ],
+          "rows": [
+            [
+              "Cancelar un trabajo específico por ID",
+              "cancel office-mgr-15 (o cancel 15)",
+              "lprm -P office-mgr 15 (o lprm 15)"
+            ],
+            [
+              "Cancelar el trabajo actual en impresión",
+              "cancel (sin argumentos)",
+              "lprm (sin argumentos)"
+            ],
+            [
+              "Cancelar TODOS los trabajos del propio usuario",
+              "cancel -u <usuario>",
+              "lprm - (¡un guion '-' solitario!)"
+            ],
+            [
+              "Cancelar todos los trabajos de una impresora (purga)",
+              "cancel -a office-mgr",
+              "lprm -P office-mgr -"
+            ],
+            [
+              "Cancelar trabajos de otro usuario (admin)",
+              "sudo cancel -u dave",
+              "sudo lprm -U dave"
+            ]
+          ],
+          "caption": "Sintaxis comparada de cancelación entre cancel y lprm"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Ejercicio Guiado 3 Oficial LPI",
+          "content": "Utilizando el comando `cancel`, ¿cómo eliminarías un trabajo con ID 15 que está atascado en la cola de la impresora llamada `office-mgr`?\nRespuesta oficial: **`cancel office-mgr-15`**."
         }
-      ]
+      ],
+      "notes": "Los usuarios ordinarios solo pueden cancelar sus propios trabajos; el superusuario root puede cancelar los trabajos de cualquier usuario."
     },
     {
       "id": "108.4-slide-14",
       "slideNumber": 14,
       "title": "Matriz de Equivalencias de Comandos de Impresión",
-      "layout": "content",
+      "layout": "comparison",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Matriz de Equivalencias de Comandos de Impresión"
+          "text": "Tabla Maestra de Equivalencias System V vs BSD"
         },
         {
-          "type": "paragraph",
-          "text": "Resumen comparativo esencial para responder cualquier pregunta de CUPS"
+          "type": "table",
+          "headers": [
+            "Operación de impresión",
+            "Familia System V",
+            "Familia BSD Legacy",
+            "Herramienta nativa CUPS"
+          ],
+          "rows": [
+            [
+              "Enviar trabajo a imprimir",
+              "lp -d <imp> -n <copias>",
+              "lpr -P <imp> -#<copias>",
+              "lp / lpr"
+            ],
+            [
+              "Consultar cola de trabajos",
+              "lpstat -o [imp]",
+              "lpq -P <imp>",
+              "lpstat / lpq"
+            ],
+            [
+              "Estado de impresoras",
+              "lpstat -p / lpstat -t",
+              "lpc status",
+              "lpstat"
+            ],
+            [
+              "Cancelar un trabajo por ID",
+              "cancel <imp>-<id>",
+              "lprm -P <imp> <id>",
+              "cancel"
+            ],
+            [
+              "Cancelar todos los trabajos propios",
+              "cancel -u $USER",
+              "lprm -",
+              "cancel / lprm"
+            ],
+            [
+              "Reubicar trabajo a otra cola",
+              "(lpmove nativo)",
+              "(sin equivalente BSD directo)",
+              "lpmove"
+            ],
+            [
+              "Administrar impresoras y colas",
+              "lpadmin",
+              "lpc",
+              "lpadmin / interfaz web"
+            ]
+          ],
+          "caption": "Equivalencia completa entre comandos de impresión en Linux"
         }
-      ]
+      ],
+      "notes": "Dominar esta tabla garantiza responder con seguridad cualquier pregunta de equivalencia en el examen 102-500."
     },
     {
       "id": "108.4-slide-15",
@@ -272,13 +867,34 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Trampas Críticas de Examen: 108.4 CUPS"
+          "text": "4 puntos de error frecuentes en el Examen 102"
         },
         {
-          "type": "paragraph",
-          "text": "4 puntos donde suelen equivocarse los aspirantes al examen 102-500"
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Trampa 1: Modificar printers.conf con cupsd corriendo",
+          "content": "Cualquier cambio manual en `/etc/cups/printers.conf` se perderá si no detienes previamente el servicio (`systemctl stop cups`), porque `cupsd` reescribe el archivo desde la memoria RAM al reiniciarse."
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Trampa 2: cupsreject frente a cupsdisable",
+          "content": "• `cupsdisable`: La impresora física no imprime, pero los usuarios PUEDEN seguir enviando trabajos al spool.\n• `cupsreject`: La cola RECHAZA nuevos envíos dando error al usuario."
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Trampa 3: Banderas de destino (lp -d vs lpr -P)",
+          "content": "En `lp` se especifica destino con `-d` (destination). En `lpr` se especifica con `-P` (Printer) en **MAYÚSCULA** estricta. Si usas `-p` minúscula en lpr, activas el paginador `pr`."
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Trampa 4: lpoptions -d frente a lpadmin -d",
+          "content": "`lpadmin -d` fija la impresora predeterminada para TODO EL SISTEMA (en /etc/cups/printers.conf). `lpoptions -d` fija la predeterminada SOLO PARA EL USUARIO ACTUAL (en ~/.cups/lpoptions)."
         }
-      ]
+      ],
+      "notes": "Ten muy en cuenta estas 4 trampas antes de realizar los simulacros de examen."
     },
     {
       "id": "108.4-slide-16",
@@ -289,13 +905,22 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales (Manual LPI)"
+          "text": "Soluciones Oficiales a los 9 Ejercicios del Manual"
         },
         {
-          "type": "paragraph",
-          "text": "Casos prácticos interactivos con solución oficial comprobada"
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Ejercicios Guiados 1 a 4 (Pág. 386)",
+          "content": "• **1. Fijar predeterminada local**: `lpoptions -d office-mgr`.\n• **2. Determinar impresoras disponibles**: `lpstat -p`.\n• **3. Cancelar trabajo atascado**: `cancel office-mgr-15`.\n• **4. Mover trabajo por falta de papel**: `sudo lpmove FRONT-DESK-2 ACCOUNTING-LASERJET`."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Ejercicios de Exploración 1 a 5 (Pág. 387)",
+          "content": "• **1. Verificar estado de PDF**: `lpstat -p -d`.\n• **2. Imprimir archivo de prueba**: `lp -d PDF /etc/services`.\n• **3. Desactivar cola física**: `sudo cupsdisable PDF` (verificar con `lpstat -t`).\n• **4. Trabajo retenido**: `lp -d PDF /etc/fstab` (queda retenido en `lpstat -o`).\n• **5. Purgar y eliminar**: `cancel PDF-4` y `sudo lpadmin -x PDF`."
         }
-      ]
+      ],
+      "notes": "Estos 9 ejercicios corresponden a las páginas 386, 387, 390, 391 y 392 del manual oficial LPIC-1."
     }
   ],
   "totalSlides": 16

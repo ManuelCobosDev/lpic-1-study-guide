@@ -11,13 +11,41 @@
     "Dominio técnico de las herramientas y configuración del subtema 103.1"
   ],
   "keyTerms": [
-    "Trabajar en la línea de comandos",
-    "Tema 103"
+    "prompt ($ frente a #)",
+    "Bourne Again Shell (Bash)",
+    "virgulilla (~)",
+    "sistema man (secciones 1, 5, 8)",
+    "apropos y whatis",
+    "type, which, whereis y hash",
+    "HISTSIZE frente a HISTFILESIZE",
+    "~/.bash_history",
+    "variables de entorno y export",
+    "variable PATH y seguridad",
+    "reglas de quoting (comillas simples, dobles, escape)",
+    "sustitución de comandos ($())",
+    "subshells padre e hijo",
+    "source frente a ejecución hija"
   ],
   "commands": [
     "uname",
     "type",
-    "history"
+    "history",
+    "bash",
+    "echo",
+    "env",
+    "export",
+    "pwd",
+    "cd",
+    "set",
+    "unset",
+    "which",
+    "man",
+    "whereis",
+    "hash",
+    "apropos",
+    "whatis",
+    "lsblk",
+    "tail"
   ],
   "placeholder": false,
   "slides": [
@@ -114,7 +142,17 @@
             [
               "uname -a",
               "Toda la información",
-              "🎯 Imprime nombre de SO, hostname, versión kernel, arquitectura y plataforma."
+              "🎯 Imprime toda la información combinada del sistema (-s, -n, -r, -v, -m, -p, -i, -o)."
+            ],
+            [
+              "uname -s",
+              "Nombre del Kernel/SO",
+              "🎯 Imprime el nombre del kernel del sistema operativo (por ejemplo 'Linux')."
+            ],
+            [
+              "uname -n",
+              "Nombre de host (Network Node)",
+              "🎯 Nombre del nodo de red / hostname asignado a la máquina (ej: 'servidor01')."
             ],
             [
               "uname -r",
@@ -122,9 +160,24 @@
               "🎯 Versión exacta de release del kernel (ej: 6.1.0-21-amd64). ¡Dato clave para compilar drivers!"
             ],
             [
+              "uname -v",
+              "Versión de compilación",
+              "🎯 Fecha, hora y número de compilación detallada de la imagen del kernel activo."
+            ],
+            [
               "uname -m",
               "Arquitectura CPU",
               "🎯 Arquitectura de hardware (x86_64 para 64 bits PC, aarch64 para ARM, i686 para 32 bits)."
+            ],
+            [
+              "uname -p / -i",
+              "Procesador / Plataforma",
+              "🎯 Tipo de procesador (-p) o plataforma de hardware (-i) (frecuentemente 'unknown' en GNU/Linux)."
+            ],
+            [
+              "uname -o",
+              "Sistema Operativo",
+              "🎯 Nombre formal del sistema operativo (habitualmente 'GNU/Linux')."
             ],
             [
               "pwd",
@@ -181,6 +234,12 @@
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 LA DUPLA DE ORO DE EXAMEN: 'man passwd' abre la sección 1 (el comando ejecutable). Para consultar la estructura interna del archivo /etc/passwd debes forzar la sección 5: 'man 5 passwd'."
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Caso Práctico LPI: Búsqueda con apropos y lsblk",
+          "content": "Ejercicio oficial del manual: Si necesitas identificar el comando para mostrar el tamaño de un dispositivo de bloque en bytes exactos, ejecuta 'apropos block' (identifica 'lsblk'), consulta 'man lsblk' para ubicar la opción '-b', y ejecuta: 'lsblk -b'."
         }
       ],
       "notes": "Insiste a los alumnos: una sección del manual es como un tomo temático en una biblioteca de 8 volúmenes. man passwd abre el tomo 1 por defecto; para ver el formato de /etc/passwd hay que pedir man 5 passwd."
@@ -298,8 +357,13 @@
           "rows": [
             [
               "history [N]",
-              "Ver historial",
-              "🎯 Muestra la lista numerada de comandos ejecutados (opcionalmente solo los últimos N)."
+              "Ver historial en RAM",
+              "🎯 Muestra la lista numerada de comandos en la memoria activa (ej: 'history 20' para los últimos 20)."
+            ],
+            [
+              "tail -n 20 ~/.bash_history",
+              "Historial en Disco",
+              "🎯 Examina los últimos comandos guardados físicamente en disco, permitiendo contrastar RAM frente a disco."
             ],
             [
               "!!",
@@ -801,6 +865,25 @@
           "type": "heading",
           "level": 2,
           "text": "Resumen y Claves de Examen: Subtema 103.1"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Prompt y privilegios:** `$` identifica usuario ordinario; `#` identifica al superusuario `root`. La virgulilla `~` abrevia el directorio personal `$HOME`.",
+            "**Auditoría con uname:** `uname -r` revela la versión exacta del kernel, `uname -m` la arquitectura (x86_64/aarch64), y `uname -a` consolida todas las banderas (`-s`, `-n`, `-r`, `-v`, `-m`, `-p`, `-i`, `-o`).",
+            "**Sistema man:** Sección 1 (comandos de usuario), Sección 5 (formatos de archivos de configuración como `/etc/passwd`), Sección 8 (administración de root). Búsqueda por palabras clave con `apropos` / `man -k` y resumen breve con `whatis` / `man -f`.",
+            "**Naturaleza de órdenes:** `type` distingue builtins, alias y binarios; `which` solo busca ejecutables en `$PATH`; `whereis` localiza binario, fuentes y manual; `hash` gestiona la caché de rutas en RAM.",
+            "**Historial:** `HISTSIZE` gobierna comandos en memoria RAM (`history 20`), `HISTFILESIZE` gobierna líneas en disco (`~/.bash_history` consultable con `tail -n 20 ~/.bash_history`). Expansión con `!!` (último comando) y `!n` (por índice).",
+            "**Variables y PATH:** `VAR=valor` (local), `export VAR` (heredable a hijos), `env`/`printenv` (solo exportadas), `set` (todas + funciones), `unset VAR` (borrado sin `$`). Seguridad: nunca incluir `.` al inicio de `PATH`.",
+            "**Quoting y Subshells:** Comillas simples `' '` (blindaje total), comillas dobles `\" \"` (permiten `$`, `\\` y `$()`). Las subshells hijas no pueden alterar la memoria del padre; `source` ejecuta en la shell actual."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Checklist Final de Repaso 103.1",
+          "content": "Para el examen LPIC-1 recuerda: nunca usar espacios al asignar variables (A=1); borrar sin '$' (unset A); 'man 5 passwd' para la estructura del fichero; 'uname -r' para release del kernel; y 'sudo !!' para repetir el último comando con privilegios."
         }
       ],
       "notes": "Concluimos el subtema 103.1. Los alumnos dominan ahora los fundamentos esenciales de la línea de comandos."

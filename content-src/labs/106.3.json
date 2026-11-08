@@ -10,27 +10,42 @@
     {
       "id": "step-106-3-1",
       "stepNumber": 1,
-      "title": "Misión 1 — Auditoría y Configuración de Tecnologías de Teclado con gsettings",
-      "instruction": "En entornos basados en GNOME y compatibles, las tecnologías de accesibilidad se pueden auditar y cambiar tanto desde los menús gráficos como desde la línea de comandos mediante `gsettings`.",
-      "command": "# 1. Consultar el estado actual de las tecnologías de teclado asistenciales\r\ngsettings list-recursively org.gnome.desktop.a11y.keyboard 2>/dev/null || echo \"Esquema gsettings disponible en entornos GNOME\"\r\n\r\n# 2. Habilitar la tecnología de Teclas Adhesivas (Sticky Keys) desde CLI\r\ngsettings set org.gnome.desktop.a11y.keyboard stickykeys-enable true 2>/dev/null || true\r\n\r\n# 3. Comprobar si está activado el atajo para activar Sticky Keys pulsando Shift 5 veces\r\ngsettings get org.gnome.desktop.a11y.keyboard stickykeys-modifier-beep 2>/dev/null || echo \"Aviso sonoro configurado\"\r\n\r\n# 4. Inspeccionar las opciones de Slow Keys (teclas lentas) y Bounce Keys (rechazo de rebotes)\r\ngsettings list-keys org.gnome.desktop.a11y.keyboard 2>/dev/null | grep -E \"slowkeys|bouncekeys|mousekeys\"",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "title": "Misión 1 — Auditoría y Configuración de Accesibilidad de Teclado con gsettings",
+      "instruction": "En entornos basados en GNOME y escritorios modernos, las tecnologías de accesibilidad de teclado se auditan y activan tanto desde los paneles gráficos de configuración como desde la línea de comandos mediante la herramienta `gsettings`.",
+      "command": "# 1. Consultar el estado actual de las tecnologías de teclado asistenciales\ngsettings list-recursively org.gnome.desktop.a11y.keyboard 2>/dev/null || echo \"Esquema gsettings org.gnome.desktop.a11y.keyboard disponible\"\n\n# 2. Habilitar la tecnología de Teclas Adhesivas (Sticky Keys) desde CLI\ngsettings set org.gnome.desktop.a11y.keyboard stickykeys-enable true 2>/dev/null || true\n\n# 3. Comprobar si está activado el atajo para activar Sticky Keys pulsando Shift 5 veces seguidas\ngsettings get org.gnome.desktop.a11y.keyboard stickykeys-modifier-beep 2>/dev/null || echo \"Aviso sonoro configurado para teclas modificadoras\"\n\n# 4. Inspeccionar las claves para Slow Keys (teclas lentas) y Bounce Keys (rechazo de rebotes involuntarios)\ngsettings list-keys org.gnome.desktop.a11y.keyboard 2>/dev/null | grep -E \"slowkeys|bouncekeys|mousekeys\"",
+      "expectedOutput": "Verifica que gsettings lista las propiedades del esquema org.gnome.desktop.a11y.keyboard y permite modificar stickykeys-enable sin errores."
     },
     {
       "id": "step-106-3-2",
       "stepNumber": 2,
-      "title": "Misión 2 — Asistencia de Ratón (KMouseTool) y Teclado en Pantalla (Onboard)",
-      "instruction": "Para personas con movilidad reducida o dificultades motoras en las manos, existen dos utilidades clave evaluadas en el examen: `onboard` (teclado virtual en pantalla) y `KMouseTool` (clic automático por reposo).",
-      "command": "# 1. Comprobar la disponibilidad del paquete y binario de Onboard\r\nwhich onboard 2>/dev/null || dpkg -l onboard | grep -E \"^ii\" || echo \"Onboard: teclado virtual en pantalla para pantallas táctiles o punteros adaptados\"\r\n\r\n# 2. Consultar la documentación y propósito oficial de KMouseTool\r\n# KMouseTool monitoriza el movimiento del ratón y, cuando el puntero se detiene durante\r\n# una fracción de segundo ajustable, emite un clic automático en nombre del usuario.\r\nman -k kmousetool 2>/dev/null || echo \"KMouseTool: software de pulsación automática para aliviar el dolor por movimientos repetitivos (RSI)\"\r\n\r\n# 3. Simular la verificación de las herramientas de ratón asistencial en el sistema\r\ndpkg -l | grep -E \"kmousetool|mousetweaks|onboard\" || true",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "title": "Misión 2 — Control de la Extensión AccessX desde Consola con xkbset",
+      "instruction": "El servidor X11 incorpora la extensión AccessX para asistir a usuarios con dificultades motoras. En entornos sin panel de control gráfico completo, la herramienta oficial de línea de comandos para manipular AccessX es `xkbset`.",
+      "command": "# 1. Verificar si la utilidad xkbset se encuentra instalada en el sistema\nwhich xkbset 2>/dev/null || dpkg -l xkbset 2>/dev/null | grep -E \"^ii\" || echo \"xkbset: utilidad CLI para gestionar la extensión AccessX de X11\"\n\n# 2. Consultar el estado actual de todas las funciones de accesibilidad XKB\nxkbset q 2>/dev/null || echo \"xkbset q: muestra el estado de StickyKeys, SlowKeys, BounceKeys y MouseKeys\"\n\n# 3. Simular la activación de Teclas Adhesivas (Sticky Keys) y desactivación con 2 teclas simultáneas (twokey)\necho \"xkbset sticky -twokey latchlock\"\n\n# 4. Simular la configuración de Slow Keys con un umbral de retardo de 500 milisegundos\necho \"xkbset slowkeys 500 slowkeysdelay 500\"",
+      "expectedOutput": "Comprueba el funcionamiento o sintaxis del comando xkbset para gestionar extensiones AccessX directamente desde el terminal."
     },
     {
       "id": "step-106-3-3",
       "stepNumber": 3,
-      "title": "Misión 3 — Accesibilidad Visual: Alto Contraste, Lupas y Lector Orca",
-      "instruction": "Para usuarios con baja visión o ceguera, Linux dispone de herramientas de síntesis de voz, líneas braille y ajuste de contraste visual.",
-      "command": "# 1. Inspeccionar el lector de pantalla Orca\r\nwhich orca 2>/dev/null || dpkg -l gnome-orca | grep -E \"^ii\" || echo \"Orca: lector de pantalla con síntesis de voz TTS y salida a pantalla braille efímera\"\r\n\r\n# 2. Consultar las opciones de arranque de Orca en la consola\r\norca --help 2>/dev/null | head -n 15 || echo \"Orca soporta --replace, --setup y perfiles personalizados\"\r\n\r\n# 3. Comprobar la clave de activación de temas de alto contraste mediante gsettings\r\ngsettings get org.gnome.desktop.a11y high-contrast-enable 2>/dev/null || echo \"High Contrast mode disponible\"\r\n\r\n# 4. Auditar la presencia del entorno de audio emacspeak\r\nman -k emacspeak 2>/dev/null || echo \"Emacspeak: interfaz auditiva completa que transforma Emacs en un sistema multimedia sonoro\"",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
-      "examAlert": "Ver pista desplegable si te atascas</summary>"
+      "title": "Misión 3 — Asistencia Motriz: Mouse Keys, Clic Automático (KMouseTool) y Onboard",
+      "instruction": "Para personas con movilidad reducida en manos o dolor por movimientos repetitivos (RSI), Linux ofrece control del cursor mediante el teclado numérico (Mouse Keys), clics por detención (KMouseTool / Dwell Click) y teclados en pantalla (Onboard).",
+      "command": "# 1. Auditar la presencia del teclado virtual en pantalla Onboard\nwhich onboard 2>/dev/null || dpkg -l onboard 2>/dev/null | grep -E \"^ii\" || echo \"Onboard: teclado virtual en pantalla para pantallas táctiles o dispositivos apuntadores alternativos\"\n\n# 2. Consultar la documentación y propósito oficial de KMouseTool\nman -k kmousetool 2>/dev/null || echo \"KMouseTool: software de pulsación automática al detener el puntero para mitigar el dolor por RSI\"\n\n# 3. Verificar el soporte de Mouse Keys (controlar puntero con teclado numérico numpad)\ngsettings get org.gnome.desktop.a11y.keyboard mousekeys-enable 2>/dev/null || echo \"Mouse Keys: Numpad 5 actúa como clic, flechas desplazan cursor\"\n\n# 4. Inspeccionar paquetes asistenciales de ratón disponibles en la distribución\ndpkg -l | grep -E \"kmousetool|mousetweaks|onboard\" || true",
+      "expectedOutput": "Se identifican los componentes para emulación de ratón, clic por permanencia y teclado en pantalla evaluados en LPIC-1."
+    },
+    {
+      "id": "step-106-3-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Accesibilidad Visual: Lector Orca, Emacspeak y Líneas Braille",
+      "instruction": "Para usuarios invidentes o con baja visión severa, Linux integra herramientas de síntesis de voz (TTS), líneas braille efímeras (Refreshable Braille Displays vía BRLTTY) y lectores de pantalla completos.",
+      "command": "# 1. Inspeccionar el lector de pantalla Orca y su ruta binaria\nwhich orca 2>/dev/null || dpkg -l gnome-orca 2>/dev/null | grep -E \"^ii\" || echo \"Orca: lector de pantalla con síntesis de voz TTS y soporte para terminales braille\"\n\n# 2. Consultar las opciones de arranque y configuración de Orca en la consola\norca --help 2>/dev/null | head -n 15 || echo \"Orca soporta opciones clave de examen: --setup (-s) y --replace\"\n\n# 3. Comprobar la disponibilidad del demonio para pantallas Braille efímeras BRLTTY\nwhich brltty 2>/dev/null || dpkg -l brltty 2>/dev/null | grep -E \"^ii\" || echo \"BRLTTY: demonio que proporciona acceso a la consola Linux mediante dispositivos Braille actualizables\"\n\n# 4. Auditar la presencia del entorno sonoro Emacspeak\nman -k emacspeak 2>/dev/null || echo \"Emacspeak: interfaz auditiva completa que transforma Emacs en un sistema sonoro interactivo sin pantalla\"",
+      "expectedOutput": "Se comprueba la configuración de Orca, el rol de BRLTTY para pantallas braille y el propósito de Emacspeak."
+    },
+    {
+      "id": "step-106-3-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Campana Visual (Visual Bell) y Herramientas de Ampliación (Lupas)",
+      "instruction": "Las personas con discapacidad auditiva requieren sustituir pitidos por señales visuales (Campana Visual), mientras que los usuarios con baja visión utilizan temas de alto contraste y magnificadores como KMagnifier.",
+      "command": "# 1. Comprobar la clave de activación de la Campana Visual (Visual Bell) en GNOME\ngsettings list-recursively org.gnome.desktop.wm.preferences 2>/dev/null | grep -E \"visual-bell|audible-bell\" || echo \"org.gnome.desktop.wm.preferences visual-bell true (sustituye pitido por parpadeo de ventana/pantalla)\"\n\n# 2. Consultar el estado del modo de Alto Contraste (High Contrast)\ngsettings get org.gnome.desktop.a11y high-contrast-enable 2>/dev/null || echo \"High Contrast mode disponible en org.gnome.desktop.a11y\"\n\n# 3. Auditar la lupa oficial del escritorio KDE (KMagnifier / kmag)\nwhich kmag 2>/dev/null || man -k kmag 2>/dev/null || echo \"KMagnifier (kmag): herramienta de magnificación de pantalla para KDE Plasma\"\n\n# 4. Verificar la activación del ampliador de pantalla integrado en GNOME\ngsettings get org.gnome.desktop.a11y.magnifier active 2>/dev/null || echo \"GNOME Magnifier disponible vía org.gnome.desktop.a11y.magnifier\"",
+      "expectedOutput": "Se verifica la parametrización de la campana visual frente a la sonora y las utilidades de aumento como KMagnifier y GNOME Magnifier."
     }
   ]
 }

@@ -11,14 +11,23 @@
     "Dominio técnico de las herramientas y configuración del subtema 102.3"
   ],
   "keyTerms": [
+    "librería compartida",
+    "librería estática",
     "soname",
-    "ld.so / ld-linux.so",
-    "ldconfig",
-    "ldd",
-    "LD_LIBRARY_PATH"
+    "/etc/ld.so.conf",
+    "/etc/ld.so.cache",
+    "LD_LIBRARY_PATH",
+    "enlazador dinámico (ld.so)",
+    "NEEDED",
+    "ELF",
+    "readelf"
   ],
   "commands": [
-    "ldconfig"
+    "ldd",
+    "ldconfig",
+    "objdump",
+    "readelf",
+    "file"
   ],
   "placeholder": false,
   "slides": [
@@ -203,7 +212,7 @@
         },
         {
           "type": "html",
-          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin:8px 0;\">\n  <!-- Finalidad real y casos de uso -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:10px; padding:10px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:6px; margin-bottom:4px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px;\">CASO 1</span>\n        <strong style=\"color:#1E40AF; font-size:13.5px;\">Desarrollo y Testing de Software</strong>\n      </div>\n      <div style=\"font-size:12.5px; color:#1E3A8A; line-height:1.4;\">\n        Has compilado una versión beta de una librería en <code>/home/dev/libs</code> y quieres probar si tu programa funciona sin sobreescribir las librerías oficiales del sistema operativo.\n      </div>\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:10px; padding:10px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:6px; margin-bottom:4px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px;\">CASO 2</span>\n        <strong style=\"color:#14532D; font-size:13.5px;\">Servidores Compartidos sin Permisos root</strong>\n      </div>\n      <div style=\"font-size:12.5px; color:#14532D; line-height:1.4;\">\n        Estás en un servidor corporativo o cluster HPC donde no tienes <code>sudo</code> para editar <code>/etc/ld.so.conf</code>. Descomprimes la librería en tu home y la vinculas temporalmente.\n      </div>\n    </div>\n  </div>\n\n  <!-- Terminal realista paso a paso -->\n  <div style=\"background:#0F172A; border-radius:10px; padding:12px 16px; color:#E2E8F0; font-family:monospace; font-size:12.5px; line-height:1.5; box-shadow:0 4px 12px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:6px; margin-bottom:8px; font-size:12px; color:#94A3B8;\">\n      <span>terminal bash — flujo de trabajo temporal con LD_LIBRARY_PATH</span>\n      <span style=\"background:#1E293B; padding:2px 8px; border-radius:4px;\">sesión de usuario</span>\n    </div>\n    <div style=\"color:#64748B;\"># 1. Anteponer la carpeta de prueba conservando las rutas previas ($LD_LIBRARY_PATH)</div>\n    <div><span style=\"color:#38BDF8;\">$</span> <span style=\"color:#FDE047;\">export LD_LIBRARY_PATH=/opt/app_beta/lib:$LD_LIBRARY_PATH</span></div>\n    \n    <div style=\"margin-top:6px; color:#64748B;\"># 2. Comprobar con ldd que el programa ahora resuelve la librería desde /opt/app_beta/lib</div>\n    <div><span style=\"color:#38BDF8;\">$</span> ldd ./mi_programa | grep libcustom</div>\n    <div style=\"color:#4ADE80;\">&nbsp;&nbsp;&nbsp;&nbsp;libcustom.so.2 =&gt; /opt/app_beta/lib/libcustom.so.2 (0x00007f9c2d1b0000)</div>\n\n    <div style=\"margin-top:6px; color:#64748B;\"># 3. Al terminar, limpiar la variable para devolver la terminal a su estado original</div>\n    <div><span style=\"color:#38BDF8;\">$</span> <span style=\"color:#F87171;\">unset LD_LIBRARY_PATH</span></div>\n  </div>\n\n  <!-- Ejecución en 1 sola línea & Aviso SUID -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12.5px;\">\n    <div style=\"background:#FFFFFF; border:1px solid var(--border-strong); border-radius:8px; padding:8px 12px;\">\n      <strong style=\"color:var(--text);\">💡 Forma recomendada (One-shot, sin ensuciar la sesión):</strong><br>\n      <code style=\"color:#2563EB; font-weight:700;\">LD_LIBRARY_PATH=/opt/app_beta/lib ./mi_programa</code><br>\n      <span style=\"color:#64748B; font-size:11.5px;\">La variable solo existe durante la ejecución de ese comando concreto.</span>\n    </div>\n\n    <div style=\"background:#FEF2F2; border:1.5px solid #F87171; border-radius:8px; padding:8px 12px; color:#991B1B;\">\n      <strong style=\"color:#DC2626;\">⚠️ SEGURIDAD CRÍTICA DE EXAMEN (SUID / SGID):</strong><br>\n      El enlazador dinámico <strong>IGNORA</strong> <code>LD_LIBRARY_PATH</code> si el ejecutable tiene el bit SUID activo (ej: <code>passwd</code> o <code>sudo</code>), evitando escaladas de privilegios con librerías troyanas.\n    </div>\n  </div>\n</div>\n"
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin:8px 0;\">\n  <!-- Finalidad real y casos de uso -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:10px; padding:10px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:6px; margin-bottom:4px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px;\">CASO 1</span>\n        <strong style=\"color:#1E40AF; font-size:13.5px;\">Desarrollo y Testing de Software</strong>\n      </div>\n      <div style=\"font-size:12.5px; color:#1E3A8A; line-height:1.4;\">\n        Has compilado una versión beta de una librería en <code>/home/dev/libs</code> y quieres probar si tu programa funciona sin sobreescribir las librerías oficiales del sistema operativo.\n      </div>\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:10px; padding:10px 14px;\">\n      <div style=\"display:flex; align-items:center; gap:6px; margin-bottom:4px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px;\">CASO 2</span>\n        <strong style=\"color:#14532D; font-size:13.5px;\">Servidores Compartidos sin Permisos root</strong>\n      </div>\n      <div style=\"font-size:12.5px; color:#14532D; line-height:1.4;\">\n        Estás en un servidor corporativo o cluster HPC donde no tienes <code>sudo</code> para editar <code>/etc/ld.so.conf</code>. Descomprimes la librería en tu home y la vinculas temporalmente.\n      </div>\n    </div>\n  </div>\n\n  <!-- Terminal realista paso a paso -->\n  <div style=\"background:#0F172A; border-radius:10px; padding:12px 16px; color:#E2E8F0; font-family:monospace; font-size:12.5px; line-height:1.5; box-shadow:0 4px 12px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:6px; margin-bottom:8px; font-size:12px; color:#94A3B8;\">\n      <span>terminal bash — flujo de trabajo temporal con LD_LIBRARY_PATH</span>\n      <span style=\"background:#1E293B; padding:2px 8px; border-radius:4px;\">sesión de usuario</span>\n    </div>\n    <div style=\"color:#64748B;\"># 1. Anteponer la carpeta de prueba conservando las rutas previas ($LD_LIBRARY_PATH)</div>\n    <div><span style=\"color:#38BDF8;\">$</span> <span style=\"color:#FDE047;\">export LD_LIBRARY_PATH=/opt/app_beta/lib:$LD_LIBRARY_PATH</span></div>\n    \n    <div style=\"margin-top:6px; color:#64748B;\"># 2. Comprobar con ldd que el programa ahora resuelve la librería desde /opt/app_beta/lib</div>\n    <div><span style=\"color:#38BDF8;\">$</span> ldd ./mi_programa | grep libcustom</div>\n    <div style=\"color:#4ADE80;\">&nbsp;&nbsp;&nbsp;&nbsp;libcustom.so.2 =&gt; /opt/app_beta/lib/libcustom.so.2 (0x00007f9c2d1b0000)</div>\n\n    <div style=\"margin-top:6px; color:#64748B;\"># 3. Al terminar, limpiar la variable para devolver la terminal a su estado original</div>\n    <div><span style=\"color:#38BDF8;\">$</span> <span style=\"color:#F87171;\">unset LD_LIBRARY_PATH</span></div>\n  </div>\n\n  <!-- PERSISTENCIA EN ARCHIVOS RC Y ADVERTENCIA -->\n  <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:8px; padding:7px 12px; font-size:11.5px; margin-bottom:8px;\">\n    <strong style=\"color:#0F172A;\">📁 Persistencia entre sesiones de shell:</strong><br>\n    Para que <code>LD_LIBRARY_PATH</code> esté disponible al abrir nuevas terminales, se puede exportar en <code>~/.bashrc</code> (nivel usuario) o en <code>/etc/bash.bashrc</code> (nivel global del sistema).<br>\n    <em>Aviso de seguridad LPIC-1:</em> En producción es preferible usar <code>/etc/ld.so.conf.d/*.conf</code> para librerías permanentes, reservando la variable para pruebas temporales.\n  </div>\n\n  <!-- Ejecución en 1 sola línea & Aviso SUID -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12.5px;\">\n    <div style=\"background:#FFFFFF; border:1px solid var(--border-strong); border-radius:8px; padding:8px 12px;\">\n      <strong style=\"color:var(--text);\">💡 Forma recomendada (One-shot, sin ensuciar la sesión):</strong><br>\n      <code style=\"color:#2563EB; font-weight:700;\">LD_LIBRARY_PATH=/opt/app_beta/lib ./mi_programa</code><br>\n      <span style=\"color:#64748B; font-size:11.5px;\">La variable solo existe durante la ejecución de ese comando concreto.</span>\n    </div>\n\n    <div style=\"background:#FEF2F2; border:1.5px solid #F87171; border-radius:8px; padding:8px 12px; color:#991B1B;\">\n      <strong style=\"color:#DC2626;\">⚠️ SEGURIDAD CRÍTICA DE EXAMEN (SUID / SGID):</strong><br>\n      El enlazador dinámico <strong>IGNORA</strong> <code>LD_LIBRARY_PATH</code> si el ejecutable tiene el bit SUID activo (ej: <code>passwd</code> o <code>sudo</code>), evitando escaladas de privilegios con librerías troyanas.\n    </div>\n  </div>\n</div>\n"
         },
         {
           "type": "callout",
@@ -259,7 +268,7 @@
         },
         {
           "type": "html",
-          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin:6px 0;\">\n  <!-- ANALOGÍA DE LOS RAYOS X -->\n  <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-left:6px solid #2563EB; border-radius:10px; padding:10px 16px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:3px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-size:11px; font-weight:800; padding:2px 8px; border-radius:4px;\">¿QUÉ ES REALMENTE?</span>\n      <strong style=\"color:#1E40AF; font-size:14px;\">La 'Máquina de Rayos X' para abrir la caja negra de un ejecutable:</strong>\n    </div>\n    <div style=\"font-size:13px; color:#1E3A8A; line-height:1.4;\">\n      Un archivo binario (como <code>/bin/cat</code>) es una <strong>caja negra cerrada</strong>. Si lo abres con un editor de texto, solo ves caracteres basura ilegibles.<br>\n      El comando <strong><code>objdump</code></strong> (<em>object dumper</em>) es un escáner que <strong>desmonta la caja y lee su ficha técnica de fábrica</strong> sin arrancar el programa jamás.\n    </div>\n  </div>\n\n  <!-- DUELO VISUAL: LDD VS OBJDUMP -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px;\">\n    <!-- Tarjeta ldd -->\n    <div style=\"background:#FFFBEB; border:1.5px solid #FCD34D; border-radius:10px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#D97706; color:#FFF; font-size:11px; font-weight:800; padding:2px 6px; border-radius:4px;\">ldd &lt;binario&gt;</span>\n        <span style=\"color:#92400E; font-size:11.5px; font-weight:700;\">🚗 Motor en marcha (Dinámico)</span>\n      </div>\n      <div style=\"font-size:12.5px; color:#78350F; line-height:1.4;\">\n        • <strong>Qué hace:</strong> Simula arrancar el ejecutable invocando al enlazador dinámico.<br>\n        • <strong>Qué te dice:</strong> En qué carpeta de tu disco duro están las librerías <em>hoy</em> (<code>=&gt; /lib/...</code>) o si alguna falta (<code>not found</code>).<br>\n        • <span style=\"color:#DC2626; font-weight:700;\">⚠️ Inconveniente:</span> Si el binario es sospechoso o malware, <em>puede ejecutar código</em>.\n      </div>\n    </div>\n\n    <!-- Tarjeta objdump -->\n    <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:10px; padding:10px 14px; box-shadow:0 2px 6px rgba(22,163,74,0.1);\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-size:11px; font-weight:800; padding:2px 6px; border-radius:4px;\">objdump -p &lt;binario&gt;</span>\n        <span style=\"color:#14532D; font-size:11.5px; font-weight:700;\">🔬 Motor apagado (Estático)</span>\n      </div>\n      <div style=\"font-size:12.5px; color:#14532D; line-height:1.4;\">\n        • <strong>Qué hace:</strong> Lee los planos del archivo impresos en disco (cabeceras ELF).<br>\n        • <strong>Qué te dice:</strong> Qué ingredientes grabó el compilador en fábrica (<strong><code>NEEDED</code></strong>) y el DNI de la librería (<strong><code>SONAME</code></strong>).<br>\n        • <span style=\"color:#15803D; font-weight:700;\">🛡️ Ventaja:</span> 100% seguro. No ejecuta nada. Funciona con archivos de cualquier arquitectura.\n      </div>\n    </div>\n  </div>\n\n  <!-- CÓMO SE USA EN LA PRÁCTICA: CASOS REALES EN TERMINAL -->\n  <div style=\"background:#0F172A; border-radius:10px; padding:12px 16px; color:#E2E8F0; font-family:monospace; font-size:12px; line-height:1.5; box-shadow:0 4px 12px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; font-size:11.5px; color:#94A3B8;\">\n      <span>terminal bash — los dos únicos usos que necesitas dominar</span>\n      <span style=\"background:#1E293B; padding:2px 8px; border-radius:4px;\">opción -p (private headers)</span>\n    </div>\n\n    <!-- Caso 1: NEEDED -->\n    <div style=\"color:#64748B;\"># Caso 1: ¿Qué ingredientes/librerías pide este programa al sistema operativo?</div>\n    <div><span style=\"color:#38BDF8;\">$</span> objdump -p /bin/cat | grep NEEDED</div>\n    <div>&nbsp;&nbsp;<span style=\"color:#FDE047; font-weight:700;\">NEEDED</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#4ADE80; font-weight:700;\">libc.so.6</span> &nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#94A3B8;\"># El ejecutable 'cat' exige libc.so.6 para poder arrancar</span></div>\n\n    <!-- Caso 2: SONAME -->\n    <div style=\"margin-top:6px; color:#64748B;\"># Caso 2: ¿Qué DNI o nombre oficial declara tener esta librería compartida?</div>\n    <div><span style=\"color:#38BDF8;\">$</span> objdump -p /lib/x86_64-linux-gnu/libssl.so.3 | grep SONAME</div>\n    <div>&nbsp;&nbsp;<span style=\"color:#FDE047; font-weight:700;\">SONAME</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#38BDF8; font-weight:700;\">libssl.so.3</span> &nbsp;&nbsp;<span style=\"color:#94A3B8;\"># La librería certifica que su versión mayor es la 3</span></div>\n  </div>\n\n  <!-- COMANDO HERMANO OFICIAL EN LPIC-1 -->\n  <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:8px; padding:8px 14px; display:flex; justify-content:space-between; align-items:center; font-size:12px;\">\n    <div>\n      <strong style=\"color:#6B21A8;\">💡 Comando Hermano en el Examen: <code>readelf -d &lt;binario&gt;</code></strong><br>\n      <span style=\"color:#581C87;\">Hace exactamente lo mismo: lee la sección <strong>D</strong>inámica ELF y te muestra la lista <code>NEEDED</code> y <code>SONAME</code> sin desensamblar código.</span>\n    </div>\n    <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:11px; padding:3px 10px; border-radius:6px; white-space:nowrap;\">readelf -d</span>\n  </div>\n</div>\n"
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:10px; margin:6px 0;\">\n  <!-- ANALOGÍA DE LOS RAYOS X -->\n  <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-left:6px solid #2563EB; border-radius:10px; padding:10px 16px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:3px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-size:11px; font-weight:800; padding:2px 8px; border-radius:4px;\">¿QUÉ ES REALMENTE?</span>\n      <strong style=\"color:#1E40AF; font-size:14px;\">La 'Máquina de Rayos X' para abrir la caja negra de un ejecutable:</strong>\n    </div>\n    <div style=\"font-size:13px; color:#1E3A8A; line-height:1.4;\">\n      Un archivo binario (como <code>/bin/cat</code>) es una <strong>caja negra cerrada</strong>. Si lo abres con un editor de texto, solo ves caracteres basura ilegibles.<br>\n      El comando <strong><code>objdump</code></strong> (<em>object dumper</em>) es un escáner que <strong>desmonta la caja y lee su ficha técnica de fábrica</strong> sin arrancar el programa jamás.\n    </div>\n  </div>\n\n  <!-- DUELO VISUAL: LDD VS OBJDUMP -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px;\">\n    <!-- Tarjeta ldd -->\n    <div style=\"background:#FFFBEB; border:1.5px solid #FCD34D; border-radius:10px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#D97706; color:#FFF; font-size:11px; font-weight:800; padding:2px 6px; border-radius:4px;\">ldd &lt;binario&gt;</span>\n        <span style=\"color:#92400E; font-size:11.5px; font-weight:700;\">🚗 Motor en marcha (Dinámico)</span>\n      </div>\n      <div style=\"font-size:12.5px; color:#78350F; line-height:1.4;\">\n        • <strong>Qué hace:</strong> Simula arrancar el ejecutable invocando al enlazador dinámico.<br>\n        • <strong>Qué te dice:</strong> En qué carpeta de tu disco duro están las librerías <em>hoy</em> (<code>=&gt; /lib/...</code>) o si alguna falta (<code>not found</code>).<br>\n        • <span style=\"color:#DC2626; font-weight:700;\">⚠️ Inconveniente:</span> Si el binario es sospechoso o malware, <em>puede ejecutar código</em>.\n      </div>\n    </div>\n\n    <!-- Tarjeta objdump -->\n    <div style=\"background:#F0FDF4; border:2px solid #86EFAC; border-radius:10px; padding:10px 14px; box-shadow:0 2px 6px rgba(22,163,74,0.1);\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-size:11px; font-weight:800; padding:2px 6px; border-radius:4px;\">objdump -p / --private-headers &lt;binario&gt;</span>\n        <span style=\"color:#14532D; font-size:11.5px; font-weight:700;\">🔬 Motor apagado (Estático)</span>\n      </div>\n      <div style=\"font-size:12.5px; color:#14532D; line-height:1.4;\">\n        • <strong>Qué hace:</strong> Lee los planos del archivo impresos en disco (cabeceras ELF).<br>\n        • <strong>Qué te dice:</strong> Qué ingredientes grabó el compilador en fábrica (<strong><code>NEEDED</code></strong>) y el DNI de la librería (<strong><code>SONAME</code></strong>).<br>\n        • <span style=\"color:#15803D; font-weight:700;\">🛡️ Ventaja:</span> 100% seguro. No ejecuta nada. Funciona con archivos de cualquier arquitectura.\n      </div>\n    </div>\n  </div>\n\n  <!-- CÓMO SE USA EN LA PRÁCTICA: CASOS REALES EN TERMINAL -->\n  <div style=\"background:#0F172A; border-radius:10px; padding:12px 16px; color:#E2E8F0; font-family:monospace; font-size:12px; line-height:1.5; box-shadow:0 4px 12px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; font-size:11.5px; color:#94A3B8;\">\n      <span>terminal bash — los dos únicos usos que necesitas dominar</span>\n      <span style=\"background:#1E293B; padding:2px 8px; border-radius:4px;\">opción -p / --private-headers</span>\n    </div>\n\n    <!-- Caso 1: NEEDED -->\n    <div style=\"color:#64748B;\"># Caso 1: ¿Qué ingredientes/librerías pide este programa al sistema operativo?</div>\n    <div><span style=\"color:#38BDF8;\">$</span> objdump -p /bin/cat | grep NEEDED</div>\n    <div>&nbsp;&nbsp;<span style=\"color:#FDE047; font-weight:700;\">NEEDED</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#4ADE80; font-weight:700;\">libc.so.6</span> &nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#94A3B8;\"># El ejecutable 'cat' exige libc.so.6 para poder arrancar</span></div>\n\n    <!-- Caso 2: SONAME -->\n    <div style=\"margin-top:6px; color:#64748B;\"># Caso 2: ¿Qué DNI o nombre oficial declara tener esta librería compartida?</div>\n    <div><span style=\"color:#38BDF8;\">$</span> objdump -p /lib/x86_64-linux-gnu/libssl.so.3 | grep SONAME</div>\n    <div>&nbsp;&nbsp;<span style=\"color:#FDE047; font-weight:700;\">SONAME</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style=\"color:#38BDF8; font-weight:700;\">libssl.so.3</span> &nbsp;&nbsp;<span style=\"color:#94A3B8;\"># La librería certifica que su versión mayor es la 3</span></div>\n  </div>\n\n  <!-- COMANDO HERMANO OFICIAL EN LPIC-1 -->\n  <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:8px; padding:8px 14px; display:flex; justify-content:space-between; align-items:center; font-size:12px;\">\n    <div>\n      <strong style=\"color:#6B21A8;\">💡 Comando Hermano en el Examen: <code>readelf -d &lt;binario&gt;</code></strong><br>\n      <span style=\"color:#581C87;\">Hace exactamente lo mismo: lee la sección <strong>D</strong>inámica ELF y te muestra la lista <code>NEEDED</code> y <code>SONAME</code> sin desensamblar código.</span>\n    </div>\n    <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:11px; padding:3px 10px; border-radius:6px; white-space:nowrap;\">readelf -d</span>\n  </div>\n</div>\n"
         },
         {
           "type": "callout",
@@ -378,6 +387,54 @@
           "calloutType": "tip",
           "title": "Solución y Explicación del Ejercicio",
           "content": "Sin ejecutar ldconfig, el enlazador dinámico jamás consultará la nueva ruta en /opt."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Biblioteca (Archivo / Enlace)",
+            "Nombre Base",
+            "Sufijo",
+            "Versión (Mayor / soname)"
+          ],
+          "rows": [
+            [
+              "linux-vdso.so.1",
+              "linux-vdso",
+              ".so",
+              "1 (Virtual DSO del kernel)"
+            ],
+            [
+              "libprocps.so.6",
+              "libprocps",
+              ".so",
+              "6"
+            ],
+            [
+              "libdl.so.2",
+              "libdl",
+              ".so",
+              "2 (Dynamic Linking Library)"
+            ],
+            [
+              "libc.so.6",
+              "libc",
+              ".so",
+              "6 (GNU C Library central)"
+            ],
+            [
+              "libsystemd.so.0",
+              "libsystemd",
+              ".so",
+              "0"
+            ],
+            [
+              "ld-linux-x86-64.so.2",
+              "ld-linux-x86-64",
+              ".so",
+              "2 (Enlazador dinámico)"
+            ]
+          ],
+          "caption": "Ejercicio Guiado 1 LPI: Descomposición oficial de componentes de nombres de bibliotecas compartidas"
         }
       ],
       "notes": "Enfatiza el paso 2: en el 80% de los errores reales de administración, la gente se olvida de ejecutar ldconfig."
@@ -573,6 +630,22 @@
             [
               "¿Por qué LD_LIBRARY_PATH es ignorada en ejecutables SUID?",
               "Por seguridad, para impedir que un usuario inyecte código malicioso y obtenga privilegios de root."
+            ],
+            [
+              "¿Qué opción de ldd detecta librerías enlazadas pero no usadas?",
+              "ldd -u (o ldd --unused)."
+            ],
+            [
+              "¿Cuál es la forma larga de la opción -p en objdump?",
+              "objdump --private-headers (vuelca cabeceras privadas ELF como NEEDED y SONAME)."
+            ],
+            [
+              "¿En qué archivos se puede persistir la variable LD_LIBRARY_PATH?",
+              "~/.bashrc (usuario) o /etc/bash.bashrc (global de sistema)."
+            ],
+            [
+              "¿Cuál es la versión del soname en libc.so.6?",
+              "Versión mayor 6 (indica compatibilidad binaria ABI con ejecutables compilados)."
             ]
           ],
           "caption": "Tarjetas de memorización"
@@ -590,6 +663,54 @@
           "type": "heading",
           "level": 2,
           "text": "Resumen y Claves de Examen: Subtema 102.3"
+        },
+        {
+          "type": "paragraph",
+          "text": "Puntos clave de gestión de librerías compartidas en Linux para LPIC-1:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Herramienta / Archivo",
+            "Propósito y Comportamiento Oficial LPI"
+          ],
+          "rows": [
+            [
+              "ldd <binario>",
+              "Simula ejecución con ld.so y lista dependencias resueltas en disco. Opción -u / --unused lista dependencias no usadas."
+            ],
+            [
+              "objdump -p / --private-headers",
+              "Inspección estática 100% segura sin ejecutar código. Filtra NEEDED (librerías que requiere) y SONAME (DNI de librería)."
+            ],
+            [
+              "readelf -d <binario>",
+              "Comando hermano en LPIC-1 para leer la sección dinámica ELF (filtra NEEDED y SONAME)."
+            ],
+            [
+              "/etc/ld.so.conf y .d/*.conf",
+              "Configuración permanente de rutas no estándar de librerías (ej: /opt/app/lib)."
+            ],
+            [
+              "ldconfig",
+              "Lee ld.so.conf, crea enlaces simbólicos de soname y regenera la caché binaria ultrarrápida /etc/ld.so.cache. Opción -p muestra la caché actual."
+            ],
+            [
+              "LD_LIBRARY_PATH",
+              "Variable de entorno prioritaria para pruebas. Ignorada por seguridad en binarios con bit SUID/SGID. Persistible en ~/.bashrc o /etc/bash.bashrc."
+            ],
+            [
+              "Convención de soname",
+              "lib<nombre>.so.<version_mayor> (garantiza compatibilidad de binarios frente a cambios menores de librería)."
+            ]
+          ],
+          "caption": "Matriz maestra de librerías compartidas LPIC-1"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Checklist Definitivo LPIC-1 102.3",
+          "content": "1. Añadir ruta en /etc/ld.so.conf.d/ y ejecutar 'sudo ldconfig' obligatoriamente. 2. 'ldd -u' para dependencias no usadas. 3. 'objdump -p' (o --private-headers) para NEEDED/SONAME seguro sin correr código. 4. LD_LIBRARY_PATH no funciona con programas SUID."
         }
       ],
       "notes": "Finalizamos el subtema 102.3. Un subtema corto pero con preguntas muy directas que no se deben fallar."

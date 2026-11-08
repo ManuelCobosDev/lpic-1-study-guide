@@ -10,35 +10,42 @@
     {
       "id": "step-103-1-1",
       "stepNumber": 1,
-      "title": "Misión 1 — Variables de Entorno y Exportación con export y env",
-      "instruction": "Las variables de shell son locales al proceso salvo que se exporten como variables de entorno con export.",
-      "command": "# Crear una variable local de shell y verificar que existe\r\nVAR_LOCAL=\"LinuxAula\"\r\necho \"Variable local: $VAR_LOCAL\"\r\n\r\n# Probar si un subproceso hijo la hereda (no la verá)\r\nbash -c 'echo \"En subshell: $VAR_LOCAL\"'\r\n\r\n# Exportar la variable al entorno global\r\nexport VAR_GLOBAL=\"LPIC1-Cert\"\r\nbash -c 'echo \"Heredada en subshell: $VAR_GLOBAL\"'\r\n\r\n# Consultar el contenido de la variable PATH\r\necho \"Ruta de búsqueda de binarios: $PATH\"",
+      "title": "Misión 1 — Variables de Entorno y Ciclo de Vida con export y unset",
+      "instruction": "Crea variables locales, comprueba que los subprocesos hijos no las heredan salvo que se promocionen con export, y elimínalas con unset.",
+      "command": "# 1. Crear variable local de shell y comprobar existencia\r\nVAR_LOCAL=\"LinuxAula\"\r\necho \"Variable local en padre: $VAR_LOCAL\"\r\n\r\n# 2. Verificar que un proceso hijo nace ciego a variables locales\r\nbash -c 'echo \"En subshell hija: $VAR_LOCAL\"'\r\n\r\n# 3. Exportar al entorno global y comprobar visibilidad en hijo\r\nexport VAR_GLOBAL=\"LPIC1-Cert\"\r\nbash -c 'echo \"Heredada en subshell: $VAR_GLOBAL\"'\r\n\r\n# 4. Eliminar la variable con unset (sin anteponer el signo $)\r\nunset VAR_GLOBAL\r\necho \"Tras unset: [${VAR_GLOBAL}]\"",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
       "id": "step-103-1-2",
       "stepNumber": 2,
-      "title": "Misión 2 — Historial de Comandos y Variables Especiales (history)",
-      "instruction": "Bash guarda los comandos tecleados en memoria y los persiste en ~/.bash_history al cerrar la sesión.",
-      "command": "# Ver los últimos 10 comandos ejecutados\r\nhistory 10\r\n\r\n# Consultar las variables de control del historial\r\necho \"Límite en memoria (HISTSIZE): $HISTSIZE\"\r\necho \"Límite en archivo (HISTFILESIZE): $HISTFILESIZE\"\r\necho \"Archivo de almacenamiento: $HISTFILE\"\r\n\r\n# Probar la invocación por evento con !-1 (repite el comando anterior)\r\necho \"Prueba historial\"\r\n!-1",
+      "title": "Misión 2 — Historial en RAM (history) frente a Fichero en Disco (.bash_history)",
+      "instruction": "Bash guarda los comandos de la sesión actual en memoria RAM y los persiste en ~/.bash_history al salir de la terminal.",
+      "command": "# 1. Consultar los últimos 10 comandos en la memoria activa\r\nhistory 10\r\n\r\n# 2. Comparar los comandos en RAM frente al archivo histórico en disco\r\ntail -n 10 ~/.bash_history\r\n\r\n# 3. Consultar las variables de control del historial\r\necho \"Límite en memoria RAM (HISTSIZE): $HISTSIZE\"\r\necho \"Límite en archivo disco (HISTFILESIZE): $HISTFILESIZE\"\r\n\r\n# 4. Probar atajo de repetición inmediata del comando previo con !-1\r\necho \"Comprobando atajo\"\r\n!-1",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
       "id": "step-103-1-3",
       "stepNumber": 3,
-      "title": "Misión 3 — Creación de Alias y Clasificación con type y which",
-      "instruction": "Debes distinguir entre binarios externos en disco, órdenes internas integradas (builtins) y palabras reservadas.",
-      "command": "# Crear un alias para listar con formato largo y legible\r\nalias lh='ls -lh --color=auto'\r\nlh /tmp\r\n\r\n# Investigar la naturaleza exacta de diferentes comandos\r\ntype cd\r\ntype ls\r\ntype lh\r\ntype if\r\ntype grep\r\n\r\n# Localizar el archivo ejecutable en disco con which\r\nwhich ls bash",
+      "title": "Misión 3 — Clasificación de Comandos con type, which, whereis y hash",
+      "instruction": "Distingue entre órdenes internas integradas (builtins), alias, binarios externos en disco y rutas cacheadas en la tabla hash de Bash.",
+      "command": "# 1. Clasificar con type (detecta si es builtin, alias o archivo)\r\ntype cd\r\ntype ls\r\ntype echo\r\ntype -a echo\r\n\r\n# 2. Localizar binarios en $PATH con which (falla con builtins como cd)\r\nwhich ls bash\r\nwhich cd || echo \"which no encuentra cd porque es un builtin\"\r\n\r\n# 3. Localizar binario, fuentes y manual con whereis\r\nwhereis grep\r\n\r\n# 4. Inspeccionar la caché de rutas ejecutadas con hash\r\nhash",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
       "id": "step-103-1-4",
       "stepNumber": 4,
-      "title": "Misión 4 — Información de Arquitectura y Kernel con uname",
-      "instruction": "Aprenderás a extraer datos de la versión del núcleo y de la arquitectura con el comando uname.",
-      "command": "# Mostrar toda la información del sistema\r\nuname -a\r\n\r\n# Ver exclusivamente la versión del kernel y la arquitectura\r\nuname -r\r\nuname -m",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
-      "examAlert": "Ver pista desplegable si te atascas</summary>"
+      "title": "Misión 4 — Información de Sistema y Kernel con uname y Navegación",
+      "instruction": "Extrae los metadatos de versión del núcleo, arquitectura de CPU y nombre de sistema mediante las banderas de uname.",
+      "command": "# 1. Mostrar toda la información combinada del sistema\r\nuname -a\r\n\r\n# 2. Consultar la versión exacta de release del kernel (clave para módulos y DKMS)\r\nuname -r\r\n\r\n# 3. Consultar la arquitectura de hardware del procesador\r\nuname -m\r\n\r\n# 4. Consultar nombre del SO, nodo de red y compilación\r\nuname -s\r\nuname -n\r\nuname -v\r\nuname -o\r\n\r\n# 5. Navegación con pwd y alternancia con cd -\r\npwd && cd /etc && pwd && cd - && pwd",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-103-1-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Búsqueda en el Sistema man con apropos, whatis y lsblk",
+      "instruction": "Aplica el método oficial del manual LPI para descubrir herramientas de bloques en el sistema mediante palabras clave.",
+      "command": "# 1. Buscar páginas de manual relacionadas con dispositivos de bloque\r\napropos block\r\n\r\n# 2. Obtener resumen de una sola línea de una orden con whatis\r\nwhatis lsblk uname\r\n\r\n# 3. Consultar opciones de lsblk para tamaño en bytes y ejecutarlo\r\nlsblk -b\r\n\r\n# 4. Consultar la sección 5 de un archivo de configuración\r\nman -f passwd\r\nwhatis passwd",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     }
   ]
 }

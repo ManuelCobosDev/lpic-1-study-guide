@@ -5,15 +5,47 @@
   "estimatedMinutes": 35,
   "difficulty": "intermediate",
   "type": "subtopic",
-  "placeholder": true,
+  "placeholder": false,
   "steps": [
     {
       "id": "step-110-1-1",
       "stepNumber": 1,
-      "title": "Misión 1: Configuración y verificación de 110.1",
-      "instruction": "Ejecuta los comandos fundamentales del objetivo 110.1 en tu entorno de pruebas Debian.",
-      "command": "man 110_1",
-      "expectedOutput": "El sistema despliega la documentación y sintaxis oficial de las herramientas."
+      "title": "Misión 1 — Auditoría de binarios con permisos especiales SUID/SGID",
+      "instruction": "Audita el directorio de ejecutables del sistema (/usr/bin) para localizar todos los archivos regulares que tengan activo el bit especial SUID (-perm -4000), descartando mensajes de error.",
+      "command": "find /usr/bin -type f -perm -4000 -exec ls -ld {} + 2>/dev/null",
+      "expectedOutput": "-rwsr-xr-x 1 root root 68208 May 12  2024 /usr/bin/passwd\n-rwsr-xr-x 1 root root 55528 Mar 23  2024 /usr/bin/mount\n-rwsr-xr-x 1 root root 71912 Jan 10  2024 /usr/bin/su"
+    },
+    {
+      "id": "step-110-1-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Configuración de política de caducidad con chage",
+      "instruction": "Aplica una política de envejecimiento de contraseñas sobre la usuaria 'carol' fijando una vigencia máxima de 90 días, aviso previo de 7 días, periodo de inactividad de 14 días y forzando la renovación inmediata de la clave en su próximo inicio de sesión. A continuación, lista los parámetros aplicados.",
+      "command": "chage -M 90 -W 7 -I 14 -d 0 carol && chage -l carol",
+      "expectedOutput": "Último cambio de contraseña                              : se debe cambiar la contraseña\nLa contraseña caduca                                     : se debe cambiar la contraseña\nContraseña inactiva                                      : se debe cambiar la contraseña\nLa cuenta caduca                                         : nunca\nNúmero mínimo de días entre cambios de contraseña        : 0\nNúmero máximo de días entre cambios de contraseña        : 90\nNúmero de días de aviso antes de que caduque la contraseña: 7"
+    },
+    {
+      "id": "step-110-1-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Bloqueo y verificación de estado con passwd",
+      "instruction": "Inhabilita el acceso de la usuaria 'carol' anteponiendo el prefijo '!' a su hash en /etc/shadow y verifica inmediatamente el estado de la cuenta.",
+      "command": "passwd -l carol && passwd -S carol",
+      "expectedOutput": "carol L 02/10/2024 0 90 7 14"
+    },
+    {
+      "id": "step-110-1-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Detección de puertos y sockets en escucha",
+      "instruction": "Supervisa los sockets TCP y UDP en escucha en el sistema mostrando puertos numéricos y el PID del programa responsable, y luego audita qué proceso mantiene abierto el puerto 22 SSH con lsof.",
+      "command": "netstat -tlpn && lsof -i :22",
+      "expectedOutput": "Active Internet connections (only servers)\nProto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name\ntcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      812/sshd\nCOMMAND PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME\nsshd    812 root    3u  IPv4  19245      0t0  TCP *:ssh (LISTEN)"
+    },
+    {
+      "id": "step-110-1-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Gestión de límites de sesión y verificación de privilegios",
+      "instruction": "Establece el límite blando (soft limit) de descriptores de archivos a 1024 para la sesión actual con ulimit y comprueba la lista de privilegios administrativos delegados disponibles para el usuario con sudo.",
+      "command": "ulimit -Sn 1024 && sudo -l",
+      "expectedOutput": "User user may run the following commands on lpic-node:\n    (ALL : ALL) ALL\n    (root) NOPASSWD: /bin/systemctl"
     }
   ]
 }

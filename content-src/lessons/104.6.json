@@ -12,12 +12,28 @@
   ],
   "keyTerms": [
     "Crear y cambiar enlaces duros y simbólicos",
-    "Tema 104"
+    "Tema 104",
+    "enlace duro",
+    "enlace simbólico",
+    "hard link",
+    "symbolic link",
+    "inodo",
+    "contador de enlaces",
+    "link count",
+    "cross-device link",
+    "enlace roto",
+    "dangling link",
+    "readlink",
+    "unlink"
   ],
   "commands": [
     "ln",
+    "ls",
     "readlink",
-    "find"
+    "unlink",
+    "find",
+    "cp",
+    "rm"
   ],
   "placeholder": false,
   "slides": [
@@ -207,19 +223,24 @@
               "Ruta Relativa",
               "ln -s rel/path",
               "Enlace simbólico relativo: depende de la ubicación del propio enlace (si se mueve de carpeta, se rompe)."
+            ],
+            [
+              "ls -lhi / ls -lahi",
+              "Inspección LPI",
+              "🎯 Combinación oficial del manual LPI: formato largo (-l), tamaño legible (-h), número de inodo (-i) y opcionalmente ocultos (-a)."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
         },
         {
           "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px; display:flex; align-items:center; gap:14px;\">\n  <span style=\"font-size:26px;\">📐</span>\n  <div style=\"font-size:12.5px; color:#334155; line-height:1.45;\">\n    <strong>Orden Estricto de Argumentos en el Examen:</strong> En ambos comandos la sintaxis es <code>ln [-s] &lt;ORIGEN_EXISTENTE&gt; &lt;NOMBRE_NUEVO_ENLACE&gt;</code>. Si inviertes los argumentos, crearás un enlace apuntando a un destino vacío o provocarás un error.\n  </div>\n</div>\n"
+          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px; display:flex; align-items:center; gap:14px;\">\n  <span style=\"font-size:26px;\">📐</span>\n  <div style=\"font-size:12.5px; color:#334155; line-height:1.45;\">\n    <strong>Orden Estricto de Argumentos en el Examen:</strong> En ambos comandos la sintaxis es <code>ln [-s] &lt;ORIGEN_EXISTENTE&gt; &lt;NOMBRE_NUEVO_ENLACE&gt;</code>. Si inviertes los argumentos, crearás un enlace apuntando a un destino vacío o provocarás un error. Para verificar inodos y enlaces, el manual oficial utiliza habitualmente <code style=\"color:#2563EB; font-weight:700;\">ls -lhi</code>.\n  </div>\n</div>\n"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Sintaxis de Examen: 'ln -s <archivo_existente_origen> <nombre_nuevo_enlace>'. ¡Siempre origen primero, destino después!"
+          "content": "🎯 Sintaxis de Examen: 'ln -s <archivo_existente_origen> <nombre_nuevo_enlace>'. ¡Siempre origen primero, destino después! Para validar inodos y enlaces, emplea 'ls -lhi'."
         }
       ],
       "notes": "Muestra que en 'ls -li', doc.txt y duro.txt tienen exactamente el mismo número de inodo (184520)."
@@ -593,14 +614,15 @@
           "items": [
             "**1. Invertir el orden de argumentos en 'ln -s'** — 🎯 El error más común: escribir 'ln -s enlace destino'. La sintaxis universal SIEMPRE es: 'ln -s archivo_existente_que_ya_tienes nombre_del_nuevo_enlace'.",
             "**2. Creer que borrar el archivo original destruye el enlace duro** — En un enlace duro no hay 'original' ni 'copia': ambos son nombres gemelos del mismo inodo. Si borras uno, el otro conserva los datos al 100%.",
-            "**3. Olvidar que un symlink relativo se evalúa desde su propia carpeta** — Si estás en /home y haces 'ln -s archivo /tmp/enlace', el enlace en /tmp buscará '/tmp/archivo' y estará roto. Debes usar rutas absolutas ('ln -s /home/archivo /tmp/enlace')."
+            "**3. Olvidar que un symlink relativo se evalúa desde su propia carpeta** — Si estás en /home y haces 'ln -s archivo /tmp/enlace', el enlace en /tmp buscará '/tmp/archivo' y estará roto. Debes usar rutas absolutas ('ln -s /home/archivo /tmp/enlace').",
+            "**4. El sutil peligro de reubicar un symlink relativo (Caso Oficial Pág 543)** — 🎯 Si dentro de 'somedir' creas 'partners.txt -> clients.txt' y luego mueves 'partners.txt' al directorio padre '~/Documents', si en ese padre existe otro 'clients.txt', el symlink NO queda roto: ¡pasa a apuntar al archivo de la nueva carpeta de forma silenciosa!"
           ]
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Mnemotecnia Rápida: Origen primero, enlace después. Hard link sobrevive a rm. Symlinks entre carpetas distintas siempre con ruta absoluta."
+          "content": "🎯 Mnemotecnia Rápida: Origen primero, enlace después. Hard link sobrevive a rm. Los symlinks relativos se resuelven respecto a la carpeta donde residen (si los mueves a otra carpeta con un archivo homónimo, cambian de destino silenciosamente)."
         }
       ],
       "notes": "Repite estos tres axiomas antes de pasar al bloque de ejercicios."
@@ -629,10 +651,16 @@
           "type": "callout",
           "calloutType": "tip",
           "title": "Solución y Explicación del Ejercicio",
-          "content": "ln para hard link, ls -i para validar inodos idénticos, y ln -s para enlaces simbólicos."
+          "content": "ln para hard link, ls -li (o ls -lhi) para validar inodos idénticos, y ln -s para enlaces simbólicos."
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Inspección Completa en el Manual LPI",
+          "content": "El manual oficial emplea con frecuencia 'ls -lhi' para contrastar simultáneamente el inodo (-i), los permisos con flecha de destino (-l), el contador de enlaces y el tamaño legible (-h). (Nota: la pregunta 1 de la pág. 541 del PDF oficial contenía por errata una cuestión sobre 'chmod +t'; el examen 104.6 evalúa estrictamente enlaces)."
         }
       ],
-      "notes": "Enseña a comprobar con 'ls -l' la flechita '->' en el enlace simbólico."
+      "notes": "Enseña a comprobar con 'ls -lhi' la flechita '->' en el enlace simbólico. Aclara a los alumnos la errata tipográfica de la pág. 541 del manual LPI."
     },
     {
       "id": "104.6-slide-14",
@@ -825,12 +853,28 @@
             [
               "¿Qué opción de 'cp' copia el enlace simbólico sin duplicar datos?",
               "cp -d (o cp -a)."
+            ],
+            [
+              "¿Qué combinación de opciones emplea el manual LPI para auditar inodos?",
+              "ls -lhi (o ls -lahi), mostrando inodo (-i), formato largo (-l) y tamaño legible (-h)."
+            ],
+            [
+              "¿Qué ocurre si mueves un symlink relativo a un directorio con un archivo homónimo?",
+              "Pasa a apuntar silenciosamente a ese nuevo archivo sin romperse (comportamiento relativo LPI pág. 543)."
+            ],
+            [
+              "¿Qué función cumple la llamada/comando 'unlink'?",
+              "Elimina una única entrada de directorio (enlace duro o archivo) desvinculando el nombre del inodo."
+            ],
+            [
+              "¿Cómo encuentras todos los enlaces duros hermanos de un archivo con find?",
+              "find <directorio> -samefile <archivo> (o find <directorio> -inum <inodo>)."
             ]
           ],
           "caption": "Tarjetas de memorización"
         }
       ],
-      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 104.6."
+      "notes": "Repasa estas 12 tarjetas para asegurar el pleno de aciertos en el objetivo 104.6."
     },
     {
       "id": "104.6-slide-19",
@@ -842,6 +886,27 @@
           "type": "heading",
           "level": 2,
           "text": "Resumen y Claves de Examen: Subtema 104.6"
+        },
+        {
+          "type": "paragraph",
+          "text": "Checklist de conceptos críticos evaluados en el examen LPIC-1 101-500 (Tema 104.6):"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Arquitectura de Inodos**: El inodo almacena metadatos (tamaño, permisos, marcas de tiempo, punteros a bloques) pero NUNCA el nombre del archivo. El nombre reside en la entrada de directorio (dentry).",
+            "**Enlaces Duros (ln)**: Comparten el mismo número de inodo. Solo se pueden crear dentro de la misma partición (no cruzan sistemas de archivos) y no se permiten sobre directorios. Al borrar uno con rm/unlink, el archivo sigue existiendo mientras Link Count > 0.",
+            "**Enlaces Simbólicos (ln -s)**: Tienen su propio inodo y almacenan una ruta de texto. Pueden cruzar particiones y apuntar a directorios. Sus permisos ('lrwxrwxrwx') son cosméticos; mandan los del destino. Si se borra el destino, quedan rotos (dangling links).",
+            "**Fórmula de Directorios**: Todo directorio vacío tiene Link Count = 2 (su nombre en el padre y '.' en sí mismo). Cada subdirectorio suma +1 a través de '..'. Fórmula: Link Count = 2 + número_de_subdirectorios.",
+            "**Herramientas Auxiliares**: 'readlink' (muestra el destino), 'cp -d' / 'cp -a' (preserva symlinks sin duplicar datos), 'find -xtype l' (encuentra symlinks rotos) y 'ls -lhi' (inspección de inodos y tamaños)."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Regla de Oro para el Examen",
+          "content": "🎯 Recuerda para el examen: 'ln origen destino' = enlace duro; 'ln -s origen destino' = enlace simbólico. Enlace duro = mismo inodo; enlace simbólico = inodo nuevo con puntero de texto."
         }
       ],
       "notes": "Concluimos el subtema 104.6. Los alumnos dominan ahora los enlaces en Linux."

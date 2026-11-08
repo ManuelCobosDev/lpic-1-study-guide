@@ -13,18 +13,27 @@
   "keyTerms": [
     "BIOS",
     "UEFI",
-    "MBR",
-    "ESP",
     "GRUB",
     "initramfs",
     "systemd",
+    "SysVinit",
+    "Upstart",
     "dmesg",
-    "journalctl"
+    "journalctl",
+    "/etc/fstab",
+    "Ring Buffer",
+    "/etc/systemd/journald.conf"
   ],
   "commands": [
-    "linux",
     "dmesg",
-    "journalctl"
+    "journalctl",
+    "systemctl",
+    "uname",
+    "shutdown",
+    "reboot",
+    "update-grub",
+    "grub-mkconfig",
+    "dracut"
   ],
   "placeholder": false,
   "slides": [
@@ -70,6 +79,12 @@
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 CLAVE TOP DE EXAMEN: El primer proceso que ejecuta el Kernel siempre tiene el PID 1 (/sbin/init o systemd). Si el kernel no lo encuentra en el disco, el arranque se bloquea con un Kernel Panic («Attempted to kill init!»)."
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Montaje de Sistemas de Archivos: /etc/fstab",
+          "content": "Durante la transición final del kernel al espacio de usuario (init / systemd), el sistema consulta /etc/fstab para verificar la integridad del sistema de archivos raíz (/) y montarlo en modo lectura/escritura (rw), seguido del montaje del resto de particiones."
         }
       ],
       "notes": "Guión didáctico sencillo para el profesor en clase:\n1. DEFINICIÓN DE SYSTEMD: Explica a los alumnos que systemd es el 'director de orquesta' del sistema. Sustituyó al antiguo SysVinit porque arranca todo en paralelo mucho más rápido. Es el proceso padre (PID 1) de todo lo que corre en Linux.\n2. LAS 5 FASES EN LENGUAJE HUMANO:\n   - 1. BIOS/UEFI: Chequea corriente, procesador y busca el disco.\n   - 2. GRUB: Elige con qué Linux arrancar y lo mete en la RAM.\n   - 3. Kernel: Despierta el cerebro y toma el control.\n   - 4. initramfs: Un mini-disco auxiliar en RAM con los drivers para poder leer el disco duro real.\n   - 5. systemd (PID 1): Enciende la red, los programas y te pide usuario y contraseña.\n3. PREGUNTAS CLÁSICAS DE EXAMEN:\n   - ¿Quién pone el kernel en RAM? ➔ GRUB.\n   - ¿Por qué existe initramfs? ➔ Para cargar drivers antes de montar la raíz '/'.\n   - ¿Cuál es el proceso padre de todos? ➔ PID 1 (init o systemd)."
@@ -485,24 +500,34 @@
           ],
           "rows": [
             [
-              "¿Para qué sirve dmesg en la vida real?",
+              "¿Para qué sirve dmesg?",
               "",
-              "Es la primera herramienta del SysAdmin cuando algo de hardware falla: un disco que da errores de lectura, una tarjeta Wi-Fi que no conecta o un puerto USB que no reconoce un dispositivo."
+              "Es la primera herramienta del SysAdmin cuando algo de hardware falla: un disco que da errores de lectura, una controladora o un puerto USB que no reconoce un periférico."
             ],
             [
-              "dmesg -T (Human-readable time)",
-              "",
-              "🎯 Clave de Examen: Convierte los segundos incomprensibles [  12.451234] en fechas y horas humanas reales (ej: 'Sun Oct 25 10:14:02 2026')."
+              "dmesg -T",
+              "Human-readable time",
+              "🎯 Clave de Examen: Convierte los segundos relativos [ 12.451234] en fechas y horas humanas reales (ej: Sun Oct 25 10:14:02 2026)."
+            ],
+            [
+              "dmesg -H / --human",
+              "Paginación y formato legible",
+              "🎯 Clave Oficial LPI: Activa paginación integrada interactiva automática (estilo less integrado) y marcas de tiempo humanas sin requerir entubar con less."
+            ],
+            [
+              "dmesg --clear",
+              "Vaciar buffer circular",
+              "🎯 Mantenimiento: Limpia y borra el contenido actual del búfer circular en RAM. Ideal antes de conectar un dispositivo sospechoso para aislar nuevos logs."
             ],
             [
               "dmesg -l err,warn",
-              "",
-              "Filtra la salida para no leer miles de líneas y ver únicamente los errores y advertencias de hardware."
+              "Filtro de severidad",
+              "Filtra la salida para omitir mensajes informativos y ver únicamente los errores y advertencias de hardware."
             ],
             [
-              "dmesg -w (Follow / En vivo)",
-              "",
-              "Se queda a la escucha en directo (como tail -f): conectas un pendrive USB y ves salir los mensajes del kernel al instante."
+              "dmesg -w",
+              "Seguimiento en directo",
+              "Permanece a la escucha en vivo (como tail -f): conectas un periférico y ves salir los mensajes del kernel al instante."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -560,29 +585,34 @@
           ],
           "rows": [
             [
-              "journalctl -b",
-              "",
+              "journalctl -b / --boot",
+              "Arranque actual",
               "Muestra todos los logs generados desde que encendiste el ordenador en la sesión actual."
             ],
             [
-              "journalctl -b -1",
-              "",
-              "🎯 Clave de Examen: Muestra los logs del arranque ANTERIOR (vital cuando un servidor se reinició inesperadamente y quieres saber por qué cayó)."
+              "journalctl -b -1 / --boot=-1",
+              "Arranque anterior",
+              "🎯 Clave de Examen: Muestra los logs del arranque previo (vital para diagnosticar caídas inesperadas del servidor). Acepta sinónimos --boot=0, --boot=-1."
+            ],
+            [
+              "journalctl -D / --directory=DIR",
+              "Directorio alternativo",
+              "🎯 Clave de Examen: Consulta archivos de journald en un directorio externo o montaje forense (ej: --directory=/mnt/disco/var/log/journal)."
             ],
             [
               "journalctl -u nginx -f",
-              "",
-              "Filtra por un servicio concreto (ej: servidor web nginx) y se queda en directo (-f / follow) viendo accesos o errores."
+              "Seguimiento de servicio",
+              "Filtra por una unidad concreta y permanece en directo (-f / follow) monitorizando eventos."
             ],
             [
               "journalctl -k -p err",
-              "",
-              "Muestra solo mensajes del Kernel (-k) con prioridad de error grave (-p err)."
+              "Errores del Kernel",
+              "Muestra exclusivamente mensajes del Kernel (-k) con prioridad de error grave (-p err)."
             ],
             [
               "journalctl --list-boots",
-              "",
-              "Lista todos los arranques que el sistema tiene guardados en su historial con sus fechas y horas exactas."
+              "Historial de arranques",
+              "Lista todos los arranques registrados por el sistema con sus identificadores UUID, fechas y horas."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -705,7 +735,7 @@
           "type": "callout",
           "calloutType": "warning",
           "title": "Escenario del Desafío",
-          "content": "Resuelve estos 4 retos de examen planteados en el manual oficial LPIC-1 (Páginas 35-36):\n1. ¿Qué ocurre exactamente si en un disco GPT ejecutas 'dd if=/dev/zero of=/dev/sda bs=446 count=1'?\n2. ¿Cómo forzarías al kernel a ignorar los primeros 8 GB de RAM si sospechas que un módulo DIMM falla?\n3. ¿Por qué el comando 'dmesg' pierde los mensajes iniciales del arranque en servidores que llevan 300 días encendidos?\n4. ¿Cómo analizar los logs de un disco de servidor montado en /mnt/recuperacion?"
+          "content": "Resuelve estos 4 retos de examen planteados en el manual oficial LPIC-1 (Páginas 41-44):\n1. ¿Qué ocurre exactamente si en un disco GPT ejecutas 'dd if=/dev/zero of=/dev/sda bs=446 count=1'?\n2. ¿Cómo forzarías al kernel a ignorar los primeros 8 GB de RAM si sospechas que un módulo DIMM falla?\n3. ¿Cómo examinar el búfer de dmesg con paginación integrada de forma nativa sin usar tuberías con less?\n4. ¿Cómo analizar los logs de un disco de servidor montado en /mnt/recuperacion con journalctl?"
         },
         {
           "type": "callout",
@@ -717,7 +747,7 @@
           "type": "callout",
           "calloutType": "tip",
           "title": "Solución y Explicación del Desafío",
-          "content": "1. En GPT el Protective MBR solo ocupa el LBA 0 para protección; el arranque UEFI ignora el código del MBR y seguirá arrancando normalmente desde la partición ESP.\n2. Para limitar la memoria a 8 GB se añade el parámetro 'mem=8G' en la línea del kernel en GRUB.\n3. Porque dmesg lee un búfer circular en memoria RAM de tamaño finito: conforme ocurren eventos de red o discos a lo largo de meses, los mensajes viejos se van pisando.\n4. Se utiliza el comando: journalctl -D /mnt/recuperacion/var/log/journal/."
+          "content": "1. En GPT el Protective MBR solo ocupa el LBA 0 para protección; el arranque UEFI ignora el código del MBR y seguirá arrancando normalmente desde la partición ESP.\n2. Para limitar la memoria se añade el parámetro 'mem=8G' en la línea de arranque del kernel en GRUB.\n3. El manual oficial LPI destaca la opción 'dmesg -H' (o '--human'): activa un paginador interactivo interno nativo y traduce los timestamps a formato legible.\n4. Se utiliza la opción de directorio alternativo: 'journalctl --directory=/mnt/recuperacion/var/log/journal/' (o el sinónimo corto '-D')."
         }
       ],
       "notes": "Estos retos cubren preguntas de situaciones límite en el examen de certificación."

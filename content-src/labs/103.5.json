@@ -3,42 +3,54 @@
   "subtopicId": "103.5",
   "title": "Práctica 103.5 — Crear, Monitorizar y Matar Procesos",
   "estimatedMinutes": 30,
-  "difficulty": "basic",
+  "difficulty": "intermediate",
   "type": "subtopic",
   "placeholder": false,
   "steps": [
     {
       "id": "step-103-5-1",
       "stepNumber": 1,
-      "title": "Misión 1 — Monitorización de Procesos con ps, pstree y top",
-      "instruction": "Debes identificar los procesos activos en el servidor, su consumo de CPU/memoria y la jerarquía de procesos padre e hijos.",
-      "command": "# Listar todos los procesos con sintaxis BSD (aux)\r\nps aux | head -n 12\r\n\r\n# Listar con sintaxis estándar UNIX (-ef)\r\nps -ef | head -n 12\r\n\r\n# Ver el árbol jerárquico de procesos con sus PIDs\r\npstree -p | head -n 15\r\n\r\n# Consultar carga media del sistema y tiempo de actividad\r\nuptime",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "title": "Misión 1 — Monitorización de Procesos con ps, pstree y Formato Personalizado",
+      "instruction": "Identifica los procesos activos en el servidor, su consumo de CPU/memoria, la genealogía de procesos padre e hijos, y genera vistas con columnas a medida con la opción -o.",
+      "command": "# Listar todos los procesos con sintaxis BSD (aux)\nps aux | head -n 10\n\n# Listar con sintaxis estándar UNIX (-ef)\nps -ef | head -n 10\n\n# Formato personalizado mostrando PID, comando y porcentajes de CPU/memoria\nps -o pid,comm,%cpu,%mem | head -n 10\n\n# Ver el árbol jerárquico de procesos con sus PIDs\npstree -p | head -n 10\n\n# Consultar carga media del sistema (1, 5, 15 min) y tiempo de actividad\nuptime",
+      "expectedOutput": "Comprobación de la salida estructurada de ps, el árbol de procesos pstree y el load average de uptime.",
+      "hint": "Recuerda que 'ps aux' se escribe sin guión (BSD) mientras que 'ps -ef' y 'ps -o' usan el estándar Unix con guión."
     },
     {
       "id": "step-103-5-2",
       "stepNumber": 2,
-      "title": "Misión 2 — Control de Trabajos en Segundo Plano (jobs, bg, fg)",
-      "instruction": "Aprenderás a enviar comandos a segundo plano (&), pausarlos con Ctrl+Z y reanudarlos.",
-      "command": "# Lanzar un proceso sleep en segundo plano con el ampersand (&)\r\nsleep 400 &\r\n\r\n# Lanzar otro en primer plano y pausarlo con la combinación de teclas Ctrl+Z\r\n# (Simulamos lanzando otro en segundo plano para el script)\r\nsleep 500 &\r\n\r\n# Listar los trabajos gestionados por la shell actual\r\njobs -l\r\n\r\n# Traer el trabajo número 1 al primer plano\r\n# (En terminal interactiva pulsarías fg %1; aquí mostramos la sintaxis)",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "title": "Misión 2 — Control de Trabajos en Segundo Plano (jobs, bg, fg y nohup)",
+      "instruction": "Envía comandos a segundo plano con '&', inspecciona la lista de trabajos con 'jobs -l', y lanza procesos inmunes a SIGHUP con 'nohup'.",
+      "command": "# Lanzar un proceso sleep en segundo plano con el ampersand (&)\nsleep 400 &\n\n# Lanzar un segundo proceso en background\nsleep 500 &\n\n# Listar los trabajos gestionados por la shell actual junto con sus PIDs\njobs -l\n\n# Lanzar un proceso protegido contra desconexiones de terminal (SIGHUP)\nnohup sleep 600 > /tmp/sleep-nohup.log 2>&1 &\n\n# Comprobar que nohup está en ejecución activa\njobs -l",
+      "expectedOutput": "Lista de trabajos activos en segundo plano con sus números de job ([1], [2], [3]) y PIDs.",
+      "hint": "Para traer un trabajo a primer plano usarías 'fg %1', y para pausar un comando interactivo se usa Ctrl+Z seguido de 'bg'."
     },
     {
       "id": "step-103-5-3",
       "stepNumber": 3,
-      "title": "Misión 3 — Envío de Señales con kill, killall y pkill",
-      "instruction": "El examen LPIC-1 exige conocer las señales fundamentales por nombre y número: 1 (SIGHUP), 2 (SIGINT), 9 (SIGKILL) y 15 (SIGTERM).",
-      "command": "# Terminar el primer proceso sleep enviando la señal por defecto 15 (SIGTERM)\r\nkill -15 $(pgrep -f \"sleep 400\" | head -n 1)\r\n\r\n# Enviar la señal de terminación forzada e inapelable 9 (SIGKILL) a todos los sleep\r\nkillall -9 sleep\r\n\r\n# Confirmar que ningún proceso sleep sigue con vida\r\npgrep -l sleep || echo \"Todos los procesos sleep han sido eliminados con éxito.\"",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "title": "Misión 3 — Búsqueda y Envío de Señales con kill, killall, pgrep y pkill",
+      "instruction": "Localiza procesos por patrón o nombre de binario y envía señales específicas: 15 (SIGTERM), 1 (SIGHUP) y 9 (SIGKILL).",
+      "command": "# Buscar PIDs de procesos sleep con pgrep\npgrep -l sleep\n\n# Terminar el primer proceso enviando la señal por defecto 15 (SIGTERM) por Job ID\nkill -15 %1\n\n# Enviar señal SIGTERM mediante pkill a procesos que coincidan con 'sleep 500'\npkill -15 -f \"sleep 500\"\n\n# Forzar la terminación inmediata e ineludible (señal 9 / SIGKILL) con killall\nkillall -9 sleep\n\n# Confirmar que no quedan instancias de sleep activas\npgrep -l sleep || echo \"Todos los procesos sleep han sido eliminados correctamente.\"",
+      "expectedOutput": "Confirmación de localización y terminación limpia y forzada de los procesos.",
+      "hint": "Recuerda que 'kill %N' actúa sobre el Job N, mientras que 'kill N' actúa sobre el PID global N del sistema."
     },
     {
       "id": "step-103-5-4",
       "stepNumber": 4,
-      "title": "Misión 4 — Supervisión Interactiva con top y free",
-      "instruction": "Conocerás los atajos de teclado esenciales de top evaluados en el examen.",
-      "command": "# Consultar memoria en formato legible\r\nfree -h\r\n\r\n# Repaso de atajos de top para examen:\r\n# 'k' -> Solicita un PID para matarlo (kill)\r\n# 'r' -> Modifica la prioridad nice (renice)\r\n# 'M' -> Ordena por consumo de memoria\r\n# 'P' -> Ordena por consumo de CPU\r\n# 'q' -> Salir de top",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
-      "examAlert": "Ver pista desplegable si te atascas</summary>"
+      "title": "Misión 4 — Supervisión Interactiva con top y Medición de Memoria con free",
+      "instruction": "Evalúa el uso de memoria RAM con 'free -h' y revisa las operaciones interactivas clave del monitor 'top', incluyendo el guardado de configuración.",
+      "command": "# Consultar memoria física y swap en formato legible (GiB/MiB)\nfree -h\n\n# Ejecutar top en modo batch (no interactivo) para una captura de 1 iteración\ntop -b -n 1 | head -n 15\n\n# Repaso de teclas interactivas de top para el examen LPIC-1:\n# 'M' -> Ordenar por consumo de memoria RAM\n# 'P' -> Ordenar por uso de CPU (orden predeterminado)\n# 'k' -> Solicitar PID y señal para matar un proceso\n# 'r' -> Modificar el valor nice de un proceso (renice)\n# '1' -> Desglosar el uso de CPU núcleo a núcleo\n# 'W' -> Guardar la configuración interactiva en ~/.toprc\n# 'q' -> Salir de top",
+      "expectedOutput": "Resumen de memoria disponible/cacheada y cabecera de estadísticas en vivo de top.",
+      "hint": "La columna 'available' en 'free -h' indica la memoria real que pueden reclamar nuevas aplicaciones sin swap."
+    },
+    {
+      "id": "step-103-5-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Persistencia de Sesiones con Multiplexores (Screen y tmux)",
+      "instruction": "Crea y desacopla sesiones virtuales en GNU Screen y tmux, comprende los modos de recuperación remota y ubica sus ficheros de configuración.",
+      "command": "# Comprobar la existencia o crear archivos de configuración de usuario\nls -l /etc/screenrc ~/.screenrc 2>/dev/null || echo \"Rutas de Screen: /etc/screenrc y ~/.screenrc\"\nls -l /etc/tmux.conf ~/.tmux.conf 2>/dev/null || echo \"Rutas de tmux: /etc/tmux.conf y ~/.tmux.conf\"\n\n# Iniciar una sesión nombrada en GNU Screen y desacoplar de inmediato\nscreen -dmS sesion-mantenimiento sleep 100\n\n# Listar las sesiones de screen activas\nscreen -ls\n\n# Sintaxis de recuperación remota forzada si la sesión quedó abierta en otra terminal:\n# screen -d -r sesion-mantenimiento\n\n# Atajos clave de examen:\n# Screen: Prefijo Ctrl+A | Desacoplar: Ctrl+A d | Modo Scrollback/Copia: Ctrl+A [\n# tmux:   Prefijo Ctrl+B | Desacoplar: Ctrl+B d | Modo Scrollback/Copia: Ctrl+B [",
+      "expectedOutput": "Listado de sesiones de Screen activas (Attached o Detached) y confirmación de rutas de configuración.",
+      "hint": "A diferencia de nohup, los multiplexores permiten reanudar la interfaz interactiva completa con screen -r o tmux attach."
     }
   ]
 }

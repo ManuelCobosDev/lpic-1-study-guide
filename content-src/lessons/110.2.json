@@ -5,20 +5,49 @@
   "title": "Configuración de la seguridad del sistema",
   "version": "1.0.0",
   "language": "es",
-  "estimatedMinutes": 30,
+  "estimatedMinutes": 35,
   "objectives": [
-    "Protección de contraseñas shadow, bloqueo global y por usuario con /etc/nologin y shells restrictivas, superdemonios inetd y xinetd, unidades systemd.socket, desactivación de servicios innecesarios (SysV update-rc.d/chkconfig y systemctl disable --now) y control de acceso con TCP Wrappers (/etc/hosts.allow y /etc/hosts.deny).",
-    "Dominio técnico de las herramientas y configuración del subtema 110.2"
+    "Comprender la arquitectura shadow passwords y la separación entre /etc/passwd y /etc/shadow.",
+    "Implementar los tres métodos de bloqueo de acceso de usuarios (/etc/nologin, shells restrictivas y bloqueo de hash).",
+    "Configurar y administrar superdemonios de red (inetd, xinetd y systemd.socket).",
+    "Desactivar servicios innecesarios en sistemas SysVinit (update-rc.d, chkconfig) y systemd (systemctl disable --now, mask).",
+    "Auditar sockets en escucha con netstat y ss, y comprobar conectividad con nc y lsof.",
+    "Comprobar compatibilidad con ldd e implementar reglas de control de acceso perimetral mediante TCP Wrappers (/etc/hosts.allow y /etc/hosts.deny)."
   ],
   "keyTerms": [
     "Shadow Passwords",
+    "/etc/passwd",
+    "/etc/shadow",
     "/etc/nologin",
+    "/sbin/nologin",
+    "/bin/false",
     "xinetd",
+    "/etc/xinetd.d/",
+    "/etc/services",
     "systemd.socket",
-    "TCP Wrappers"
+    "ListenStream",
+    "update-rc.d",
+    "chkconfig",
+    "TCP Wrappers",
+    "libwrap.so",
+    "/etc/hosts.allow",
+    "/etc/hosts.deny",
+    "Comodines TCP Wrappers (ALL, LOCAL, PARANOID)"
   ],
-  "commands": [],
-  "placeholder": true,
+  "commands": [
+    "passwd",
+    "usermod",
+    "chage",
+    "systemctl",
+    "update-rc.d",
+    "chkconfig",
+    "netstat",
+    "ss",
+    "lsof",
+    "nc",
+    "ldd"
+  ],
+  "placeholder": false,
   "slides": [
     {
       "id": "110.2-slide-1",
@@ -29,7 +58,17 @@
         {
           "type": "heading",
           "level": 1,
-          "text": "Configuración de la seguridad del sistema"
+          "text": "Tema 110.2: Configuración de la seguridad del sistema"
+        },
+        {
+          "type": "paragraph",
+          "text": "En el examen LPIC-1 (102-500), el subtema 110.2 aborda el endurecimiento (hardening) del sistema operativo Linux frente a accesos no autorizados: separación de archivos de credenciales, técnicas de restricción de inicio de sesión, gestión de servicios en escucha mediante superdemonios y control de tráfico con TCP Wrappers."
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Relevancia en LPIC-1",
+          "content": "Con un peso de 3 en el examen 102, las preguntas ponen especial énfasis en la regla estricta de evaluación de TCP Wrappers (/etc/hosts.allow frente a /etc/hosts.deny), la desactivación limpia de servicios heredados y systemd, y la configuración de /etc/nologin."
         }
       ]
     },
@@ -42,7 +81,25 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Shadow Passwords: Separación de passwd y shadow"
+          "text": "Arquitectura y protección de contraseñas de usuario"
+        },
+        {
+          "type": "paragraph",
+          "text": "En los primeros sistemas UNIX, las contraseñas cifradas se almacenaban en `/etc/passwd`. Al requerir permisos de lectura pública para resolver UIDs a nombres, cualquier usuario podía extraer los hashes para ataques offline de diccionario o fuerza bruta. El conjunto de utilidades shadow resolvió este riesgo crítico separando las funciones en dos archivos:"
+        },
+        {
+          "type": "table",
+          "headers": ["Archivo", "Campos", "Permisos estándar", "Propietario : Grupo", "Contenido y Seguridad"],
+          "rows": [
+            ["/etc/passwd", "7 campos", "0644 (-rw-r--r--)", "root : root", "Metadatos de usuario (login, UID, GID, GECOS, HOME, Shell). El campo 2 contiene una 'x' fija que indica que el hash reside en shadow."],
+            ["/etc/shadow", "9 campos", "0640 (-rw-r-----) o 0600", "root : shadow (o root)", "Almacena los hashes cifrados de contraseñas y parámetros de caducidad. Inaccesible para usuarios sin privilegios."]
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Identificadores de hash en /etc/shadow",
+          "content": "El formato del hash inicia con '$ID$'. Identificadores comunes en el examen: '$1$' (MD5 obsoleto), '$5$' (SHA-256) y '$6$' (SHA-512, estándar actual en Linux moderno). Si el campo de contraseña empieza con '!' o '*', la cuenta está bloqueada."
         }
       ]
     },
@@ -55,7 +112,26 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Bloqueo de Inicios de Sesión: Tres Métodos"
+          "text": "Estrategias de restricción y bloqueo de acceso"
+        },
+        {
+          "type": "paragraph",
+          "text": "Un administrador LPIC-1 debe dominar los tres métodos complementarios para bloquear el acceso de usuarios al sistema:"
+        },
+        {
+          "type": "table",
+          "headers": ["Método", "Alcance", "Mecanismo técnico", "Comando / Archivo involucrado"],
+          "rows": [
+            ["Archivo /etc/nologin", "Global (todos los usuarios no-root)", "Si el archivo existe, ningún usuario común puede iniciar sesión. Su contenido se imprime en pantalla como mensaje explicativo. ¡El usuario root siempre puede acceder!", "touch /etc/nologin\necho 'Mantenimiento en curso' > /etc/nologin"],
+            ["Shell restrictiva", "Individual por usuario", "Se sustituye la shell válida por una shell nula en /etc/passwd: '/sbin/nologin' (imprime mensaje informativo y sale) o '/bin/false' (retorna código 1 y sale silenciosamente).", "usermod -s /sbin/nologin usuario\nusermod -s /bin/false usuario"],
+            ["Bloqueo de hash", "Individual por credencial", "Antepone un signo '!' al hash cifrado en /etc/shadow, invalidando cualquier coincidencia de contraseña.", "passwd -l usuario\nusermod -L usuario\nchage -E 0 usuario"]
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Diferencia crítica de /etc/nologin y claves SSH",
+          "content": "El bloqueo mediante /etc/nologin detiene autenticaciones interactivas (login local y SSH). Sin embargo, bloquear la contraseña con 'passwd -l' NO impide que el usuario acceda por SSH si tiene claves públicas configuradas en ~/.ssh/authorized_keys."
         }
       ]
     },
@@ -68,7 +144,37 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Superdemonios de Red: inetd, xinetd y systemd.socket"
+          "text": "Evolución de los administradores de sockets bajo demanda"
+        },
+        {
+          "type": "paragraph",
+          "text": "Tener decenas de servicios de red en memoria permanente consume recursos y amplía la superficie de vulnerabilidades. Un superdemonio escucha en múltiples puertos centralizados e invoca el binario correspondiente solo cuando llega una petición entrante:"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "inetd (Internet Daemon clásico)",
+              "description": "El superdemonio UNIX tradicional configurado en un archivo monolítico (/etc/inetd.conf). Carece de control de acceso avanzado nativo."
+            },
+            {
+              "number": 2,
+              "title": "xinetd (eXtended Internet Daemon)",
+              "description": "Evolución moderna con arquitectura modular (/etc/xinetd.conf y /etc/xinetd.d/*), soporte nativo de TCP Wrappers, límites de tasa y control de acceso por IP."
+            },
+            {
+              "number": 3,
+              "title": "systemd.socket (Activación por socket nativa)",
+              "description": "Estándar actual en distribuciones systemd. Los sockets del kernel se administran como unidades '.socket' vinculadas a unidades '.service'."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "El archivo /etc/services",
+          "content": "Tanto inetd como xinetd consultan el archivo '/etc/services' para mapear nombres de servicios (ej. 'daytime', 'telnet', 'tftp') a sus respectivos puertos y protocolos TCP o UDP."
         }
       ]
     },
@@ -81,7 +187,33 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Configuración de xinetd: /etc/xinetd.conf y /etc/xinetd.d/"
+          "text": "Estructura y directivas de configuración en xinetd"
+        },
+        {
+          "type": "paragraph",
+          "text": "La configuración global reside en `/etc/xinetd.conf`, mientras que cada servicio individual cuenta con su archivo de directivas dentro del directorio `/etc/xinetd.d/`:"
+        },
+        {
+          "type": "table",
+          "headers": ["Directiva de xinetd", "Propósito", "Valores representativos"],
+          "rows": [
+            ["service <nombre>", "Define el bloque del servicio.", "service daytime, service tftp"],
+            ["disable", "Activa (no) o desactiva (yes) el servicio.", "disable = no"],
+            ["socket_type", "Tipo de socket de transporte.", "stream (TCP) o dgram (UDP)"],
+            ["protocol", "Protocolo de red.", "tcp o udp"],
+            ["wait", "Control de concurrencia: 'yes' (monohilo, el demonio procesa y sale) o 'no' (multihilo, xinetd sigue escuchando).", "wait = no"],
+            ["user", "Usuario del sistema con cuyos privilegios se ejecutará el binario.", "user = nobody, user = root"],
+            ["server", "Ruta absoluta al binario ejecutable que atiende la conexión.", "server = /usr/sbin/in.tftpd"],
+            ["server_args", "Parámetros y banderas pasados al binario al iniciarse.", "server_args = -s /srv/tftp"],
+            ["only_from", "Lista de direcciones IP o redes autorizadas a conectar.", "only_from = 192.168.1.0/24 127.0.0.1"],
+            ["no_access", "Lista de direcciones IP o redes explícitamente bloqueadas.", "no_access = 10.0.0.0/8"]
+          ]
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "title": "Ejemplo real de /etc/xinetd.d/daytime",
+          "code": "service daytime\n{\n    disable         = no\n    type            = INTERNAL\n    id              = daytime-stream\n    socket_type     = stream\n    protocol        = tcp\n    user            = root\n    wait            = no\n    only_from       = 192.168.1.0/24\n}"
         }
       ]
     },
@@ -94,7 +226,31 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Activación por Socket en systemd (systemd.socket)"
+          "text": "Mecanismo moderno de socket activation en systemd"
+        },
+        {
+          "type": "paragraph",
+          "text": "systemd reemplaza las funciones de xinetd mediante unidades de tipo `.socket`. El demonio init crea y escucha en el socket desde el arranque inicial, retrasando la ejecución del servicio hasta que llega el primer paquete:"
+        },
+        {
+          "type": "table",
+          "headers": ["Directiva .socket", "Significado técnico", "Ejemplo práctico"],
+          "rows": [
+            ["ListenStream=", "Escucha conexiones basadas en flujos orientados a conexión (TCP) o sockets UNIX stream.", "ListenStream=2222\nListenStream=/run/cups/cups.sock"],
+            ["ListenDatagram=", "Escucha paquetes de datagramas UDP.", "ListenDatagram=0.0.0.0:123"],
+            ["Accept=yes", "Crea una nueva instancia del servicio por cada conexión entrante (ej. 'cups@<id>.service'). Equivale a 'wait = no' en xinetd.", "Accept=yes"],
+            ["Accept=no", "Inicia una única instancia compartida del servicio que gestiona todas las conexiones recibidas.", "Accept=no"]
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "#",
+              "command": "systemctl list-sockets",
+              "output": "LISTEN               UNIT                     ACTIVATES\n/run/systemd/journal/stdout systemd-journald.socket systemd-journald.service\n0.0.0.0:22           sshd.socket              sshd.service\n[::]:631             cups.socket              cups.service"
+            }
+          ]
         }
       ]
     },
@@ -107,7 +263,27 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Desactivación de Servicios Innecesarios"
+          "text": "Minimizar la superficie de ataque en SysVinit y systemd"
+        },
+        {
+          "type": "paragraph",
+          "text": "Cualquier servicio en ejecución que no cumpla una función imprescindible debe ser detenido y deshabilitado permanentemente para evitar vulnerabilidades:"
+        },
+        {
+          "type": "table",
+          "headers": ["Sistema de Init", "Comando para detener", "Comando para deshabilitar del arranque", "Comando para bloquear"],
+          "rows": [
+            ["SysVinit (/etc/inittab)", "Comentar entrada o cambiar 'respawn' a 'off' en /etc/inittab", "init q (o telinit q) para releer /etc/inittab", "Comentar línea del demonio en /etc/inittab"],
+            ["SysVinit (Debian)", "/etc/init.d/servicio stop", "update-rc.d servicio disable (o remove)", "Eliminar enlaces S* en /etc/rc*.d/"],
+            ["SysVinit (Red Hat)", "service servicio stop", "chkconfig servicio off", "chkconfig --del servicio"],
+            ["systemd (Moderno)", "systemctl stop servicio", "systemctl disable servicio\n(o systemctl disable --now servicio)", "systemctl mask servicio (enlaza a /dev/null impidiendo cualquier inicio)"]
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "El flag --now de systemctl",
+          "content": "'systemctl disable --now servicio' realiza dos acciones simultáneas en un solo paso: desactiva el servicio del inicio de los runlevels/targets y detiene inmediatamente el proceso en ejecución."
         }
       ]
     },
@@ -120,7 +296,31 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Auditoría de Servicios en Escucha: netstat vs ss"
+          "text": "Diagnóstico de puertos con ss, netstat, lsof y netcat"
+        },
+        {
+          "type": "paragraph",
+          "text": "Tras desactivar servicios innecesarios, se debe verificar que ningún socket siga escuchando indebidamente en interfaces de red externas:"
+        },
+        {
+          "type": "table",
+          "headers": ["Herramienta", "Comando de auditoría", "Detalle técnico"],
+          "rows": [
+            ["ss (Socket Statistics)", "ss -tulpn", "Reemplazo moderno de netstat. Consulta directamente la API Netlink del kernel, siendo órdenes de magnitud más rápido en hosts cargados."],
+            ["netstat (Net-tools)", "netstat -tulpn", "Utilidad tradicional que parsea los ficheros /proc/net/. Mismas opciones: -t (TCP), -u (UDP), -l (listen), -p (PID), -n (numérico)."],
+            ["lsof", "lsof -iTCP -sTCP:LISTEN", "Audita descriptores de archivos de red filtrando solo sockets TCP en estado LISTEN."],
+            ["nc (netcat)", "nc -zv 192.168.1.50 20-25", "Comprueba conectividad remota hacia puertos específicos ('-z' modo escaneo sin enviar datos, '-v' verbose)."]
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "#",
+              "command": "ss -tlpn",
+              "output": "State    Recv-Q   Send-Q     Local Address:Port     Peer Address:Port   Process\nLISTEN   0        128              0.0.0.0:22            0.0.0.0:*       users:((\"sshd\",pid=812,fd=3))\nLISTEN   0        100            127.0.0.1:25            0.0.0.0:*       users:((\"master\",pid=1120,fd=13))"
+            }
+          ]
         }
       ]
     },
@@ -133,7 +333,42 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "TCP Wrappers: Arquitectura y Detección con ldd"
+          "text": "Control de acceso a nivel de aplicación con libwrap.so"
+        },
+        {
+          "type": "paragraph",
+          "text": "TCP Wrappers (`tcpd`) proporciona una capa de filtrado perimetral por software a nivel de host. Cuando un cliente intenta conectarse, la biblioteca intercepta la petición, verifica si el cliente está autorizado y permite o corta la comunicación antes de transferirla a la aplicación:"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "Verificación con ldd",
+              "description": "Para que un binario soporte TCP Wrappers de forma autónoma, debe haber sido compilado y enlazado con la biblioteca compartida 'libwrap.so'."
+            },
+            {
+              "number": 2,
+              "title": "Servicios bajo superdemonio",
+              "description": "Si un servicio no enlaza con libwrap pero es lanzado por xinetd o tcpd, el superdemonio aplica automáticamente el filtrado de TCP Wrappers en su nombre."
+            }
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "ldd /usr/sbin/sshd | grep libwrap",
+              "output": "libwrap.so.0 => /lib/x86_64-linux-gnu/libwrap.so.0 (0x00007fc465134000)"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Pregunta de examen sobre compatibilidad",
+          "content": "Para averiguar si un demonio o ejecutable soporta el control de acceso de /etc/hosts.allow y /etc/hosts.deny, ejecuta 'ldd <ruta_binario> | grep libwrap'."
         }
       ]
     },
@@ -146,7 +381,37 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Reglas de Acceso en /etc/hosts.allow y /etc/hosts.deny"
+          "text": "Sintaxis de reglas y orden estricto de evaluación"
+        },
+        {
+          "type": "paragraph",
+          "text": "El control de acceso de TCP Wrappers se gobierna mediante dos ficheros en `/etc/`. La regla de evaluación es absoluta y se ejecuta siempre en el siguiente orden secuencial:"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "Paso 1: Examinar /etc/hosts.allow",
+              "description": "Si el cliente y demonio coinciden con una regla en /etc/hosts.allow, el acceso es CONCEDIDO de inmediato y la evaluación se DETIENE."
+            },
+            {
+              "number": 2,
+              "title": "Paso 2: Examinar /etc/hosts.deny",
+              "description": "Si no hubo coincidencia en hosts.allow, se revisa /etc/hosts.deny. Si coincide aquí, el acceso es DENEGADO y se corta la conexión."
+            },
+            {
+              "number": 3,
+              "title": "Paso 3: Decisión por defecto",
+              "description": "Si no hay coincidencia en NINGUNO de los dos archivos (o si ambos están vacíos), el acceso es PERMITIDO por defecto."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Trampa clásica de examen",
+          "content": "Si una regla en /etc/hosts.allow permite a un cliente y otra regla en /etc/hosts.deny deniega al mismo cliente, ¿qué ocurre? Respuesta: El cliente TIENE ACCESO, porque /etc/hosts.allow se evalúa siempre primero."
         }
       ]
     },
@@ -159,7 +424,29 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Patrones de Configuración Segura con TCP Wrappers"
+          "text": "Sintaxis, comodines oficiales y el operador EXCEPT"
+        },
+        {
+          "type": "paragraph",
+          "text": "La sintaxis estándar de cada línea es: `lista_demonios : lista_clientes [: opciones]`"
+        },
+        {
+          "type": "table",
+          "headers": ["Comodín / Operador", "Comportamiento", "Ejemplo práctico"],
+          "rows": [
+            ["ALL", "Coincide con todos los demonios o todos los clientes.", "ALL : ALL"],
+            ["LOCAL", "Coincide con cualquier host cuyo nombre no contenga un punto (mismo dominio local).", "sshd : LOCAL"],
+            ["UNKNOWN", "Coincide si la dirección IP no resuelve por DNS inverso o si el usuario es desconocido.", "in.telnetd : UNKNOWN"],
+            ["KNOWN", "Coincide si tanto el nombre como la dirección resuelven correctamente.", "ALL : KNOWN"],
+            ["PARANOID", "Coincide si la resolución DNS directa de un nombre no coincide con la resolución inversa de su IP (alerta de suplantación/spoofing).", "ALL : PARANOID : DENY"],
+            ["EXCEPT", "Operador de excepción para excluir elementos de una lista.", "sshd : 192.168.1. EXCEPT 192.168.1.50"]
+          ]
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "title": "Estrategia estándar recomendada: Denegar todo por defecto",
+          "code": "# En /etc/hosts.deny (bloqueo universal preventivo):\nALL : ALL\n\n# En /etc/hosts.allow (apertura explícita):\nsshd : 192.168.1.0/255.255.255.0, 10.0.0.15\nvsftpd : .empresa.com EXCEPT ventas.empresa.com"
         }
       ]
     },
@@ -172,7 +459,22 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Comparativa de Métodos de Bloqueo de Acceso"
+          "text": "Capas de defensa en profundidad en GNU/Linux"
+        },
+        {
+          "type": "paragraph",
+          "text": "Cada mecanismo opera en una capa distinta del sistema. Un administrador debe combinarlos para una defensa robusta:"
+        },
+        {
+          "type": "table",
+          "headers": ["Mecanismo", "Capa del modelo", "Punto fuerte", "Limitación"],
+          "rows": [
+            ["Netfilter / iptables / nftables", "Red / Kernel (Capa 3 y 4)", "Máximo rendimiento, descarta paquetes antes de llegar al userspace.", "No inspecciona nombres de usuario ni banners de aplicación."],
+            ["TCP Wrappers (libwrap)", "Aplicación / Host", "Fácil de configurar en dos archivos de texto, soporte de comodines DNS y syslog.", "Solo protege aplicaciones enlazadas con libwrap.so."],
+            ["xinetd (only_from / no_access)", "Superdemonio (userspace)", "Control de acceso por IP integrado para servicios bajo demanda.", "Solo aplica a servicios gestionados por xinetd."],
+            ["/etc/nologin", "Autenticación PAM / Login", "Bloqueo universal instantáneo sin alterar contraseñas de cuentas.", "No bloquea al superusuario root ni ataques de red directos."],
+            ["Shell /sbin/nologin", "Gestión de cuentas (passwd)", "Bloquea inicio interactivo individual imprimiendo mensaje.", "El usuario aún puede ejecutar tareas de cron o comandos sin shell si se configuran."]
+          ]
         }
       ]
     },
@@ -185,7 +487,20 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Flashcards de Memorización — Seguridad 110.2"
+          "text": "Conceptos clave de examen 110.2 en formato flashcard"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**¿Qué archivo se evalúa primero en TCP Wrappers?** -> `/etc/hosts.allow`. Si coincide, se concede acceso de inmediato.",
+            "**¿Qué ocurre si un host no coincide ni en hosts.allow ni en hosts.deny?** -> El acceso se **PERMITE** por defecto.",
+            "**¿Qué significa el comodín PARANOID?** -> Coincide cuando la resolución directa de nombre y la inversa de IP no concuerdan (posible spoofing).",
+            "**¿Cómo saber si un ejecutable soporta TCP Wrappers?** -> Ejecutando `ldd /ruta/binario | grep libwrap`.",
+            "**¿Quién puede iniciar sesión si existe /etc/nologin?** -> Únicamente el usuario **root**.",
+            "**¿Diferencia entre /sbin/nologin y /bin/false?** -> `/sbin/nologin` muestra un mensaje explicativo al usuario antes de salir; `/bin/false` sale silenciosamente.",
+            "**¿Desactivación y superdemonios?** -> `systemctl disable --now <servicio>`, `update-rc.d`/`chkconfig` en SysV, y `disable = no` en xinetd."
+          ]
         }
       ]
     },
@@ -198,7 +513,38 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicio Práctico Guiado: Bastionado con TCP Wrappers y Desactivación"
+          "text": "Secuencia de endurecimiento del servidor"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "Auditar sockets en escucha",
+              "description": "Comprueba con ss qué puertos están abiertos antes de la intervención."
+            },
+            {
+              "number": 2,
+              "title": "Desactivar servicio innecesario",
+              "description": "Deshabilita y detiene el servicio de impresión CUPS con systemctl."
+            },
+            {
+              "number": 3,
+              "title": "Verificar soporte libwrap",
+              "description": "Inspecciona el binario sshd con ldd para confirmar soporte de TCP Wrappers."
+            },
+            {
+              "number": 4,
+              "title": "Configurar política hosts.deny/allow",
+              "description": "Aplica denegación general en hosts.deny y autoriza solo la subred local para sshd."
+            }
+          ]
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "title": "Comandos ejecutados",
+          "code": "# 1. Auditoría de sockets\nss -tlpn\n\n# 2. Desactivación de CUPS\nsystemctl disable --now cups.service cups.socket\n\n# 3. Inspección libwrap\nldd /usr/sbin/sshd | grep libwrap\n\n# 4. Reglas TCP Wrappers\necho 'ALL : ALL' >> /etc/hosts.deny\necho 'sshd : 192.168.1.0/24' >> /etc/hosts.allow"
         }
       ]
     },
@@ -211,7 +557,29 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Reto de Examen: Orden de Evaluación en TCP Wrappers"
+          "text": "Escenario de conflicto de reglas"
+        },
+        {
+          "type": "paragraph",
+          "text": "Considera la siguiente configuración en un servidor Linux:"
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "title": "Contenido de /etc/hosts.allow",
+          "code": "sshd : 192.168.1.15"
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "title": "Contenido de /etc/hosts.deny",
+          "code": "sshd : ALL\nvsftpd : ALL"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Resolución razonada",
+          "content": "• **Cliente 192.168.1.15 hacia sshd**: PERMITIDO. Coincide en hosts.allow, por lo que hosts.deny ni siquiera se comprueba.\n• **Cliente 192.168.1.20 hacia sshd**: DENEGADO. No coincide en hosts.allow, pasa a hosts.deny donde coincide con 'sshd : ALL'.\n• **Cliente hacia httpd (Apache)**: PERMITIDO. No está en hosts.allow ni en hosts.deny. Al no coincidir en ninguno, la política por defecto concede el acceso."
         }
       ]
     },
@@ -224,7 +592,26 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Resumen y Trampas de Examen — Tema 110.2"
+          "text": "Puntos de control indispensables para el examen"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**/etc/passwd vs /etc/shadow**: passwd tiene 7 campos y permisos 0644; shadow tiene 9 campos y permisos 0640/0600. El campo de contraseña en passwd contiene 'x'.",
+            "**Control de login**: bloqueo global con `/etc/nologin` (permite solo a root) y por usuario con shells nulas `/sbin/nologin` o `/bin/false`.",
+            "**xinetd**: configuración modular en `/etc/xinetd.conf` y `/etc/xinetd.d/*` con `disable = no`. Mapeo de nombres en `/etc/services`.",
+            "**systemd.socket**: activación bajo demanda con directivas `ListenStream=` y `Accept=yes|no` vinculada a unidad `.service` homónima.",
+            "**Desactivación limpia**: `systemctl disable --now <srv>` en systemd; `update-rc.d` (Debian) y `chkconfig` (Red Hat) en SysV.",
+            "**ss y netstat**: auditoría con `-tulpn`, inspección de sockets con `lsof -i` y escaneo con `nc -zv`.",
+            "**TCP Wrappers**: `ldd` comprueba `libwrap.so`. Orden: 1º `hosts.allow` -> 2º `hosts.deny` -> 3º Permitir por defecto. Comodines `ALL`, `LOCAL`, `PARANOID` y `EXCEPT`."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Trampa del examen 102",
+          "content": "No confundir el bloqueo de inicio de sesión con el bloqueo de contraseña: si el administrador sólo ejecuta 'passwd -l', el usuario aún podría entrar por SSH usando autenticación con clave pública. Para un bloqueo total, combina bloqueo de clave o cambia la shell a /sbin/nologin."
         }
       ]
     }

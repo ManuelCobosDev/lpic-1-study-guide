@@ -5,15 +5,47 @@
   "estimatedMinutes": 35,
   "difficulty": "intermediate",
   "type": "subtopic",
-  "placeholder": true,
+  "placeholder": false,
   "steps": [
     {
       "id": "step-109-1-1",
       "stepNumber": 1,
-      "title": "Misión 1: Configuración y verificación de 109.1",
-      "instruction": "Ejecuta los comandos fundamentales del objetivo 109.1 en tu entorno de pruebas Debian.",
-      "command": "man 109_1",
-      "expectedOutput": "El sistema despliega la documentación y sintaxis oficial de las herramientas."
+      "title": "Misión 1 — Inspección y Filtrado de Puertos Estándar en /etc/services",
+      "instruction": "En Linux, el archivo `/etc/services` mapea los números de puerto a los nombres canónicos de servicios IANA. Audita los puertos obligatorios de LPIC-1 (SSH 22, SMTP 25, DNS 53, HTTP 80, NTP 123, HTTPS 443) empleando `grep` y `getent`.",
+      "command": "# 1. Buscar puertos clave en /etc/services filtrando por protocolo\ngrep -E -w \"(22|25|53|80|123|443)\" /etc/services | grep -E \"(tcp|udp)\" | head -n 12\n\n# 2. Consultar servicios con la base de datos del sistema via getent\ngetent services ssh\ngetent services domain\ngetent services ntp",
+      "expectedOutput": "Verifica que el sistema lista los nombres de los servicios, sus números de puerto (22/tcp, 25/tcp, 53/tcp y 53/udp, 80/tcp, 123/udp, 443/tcp) y sus alias oficiales."
+    },
+    {
+      "id": "step-109-1-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Cálculo y Verificación de Parámetros de Subred IPv4",
+      "instruction": "Calcula de forma programática los parámetros del caso de estudio oficial de LPI: el host `172.16.30.230` con máscara `255.255.255.224` (/27). Comprueba la dirección de red, broadcast, total de hosts útiles y la necesidad de una puerta de enlace para redes externas.",
+      "command": "# 1. Calcular los parámetros de subred /27 con el módulo nativo ipaddress\npython3 -c \"import ipaddress\nnet = ipaddress.IPv4Network('172.16.30.230/27', strict=False)\nprint(f'Red:        {net.network_address}')\nprint(f'Mascara:    {net.netmask}')\nprint(f'Broadcast:  {net.broadcast_address}')\nprint(f'Hosts util: {net.num_addresses - 2}')\nprint(f'Rango util: {list(net.hosts())[0]} - {list(net.hosts())[-1]}')\n\"\n\n# 2. Validar pertenencia a la subred lógica local\npython3 -c \"import ipaddress\nnet = ipaddress.IPv4Network('172.16.30.224/27')\nh1 = ipaddress.IPv4Address('172.16.30.230')\nh2 = ipaddress.IPv4Address('172.16.30.50')\nprint(f'172.16.30.230 en subred: {h1 in net}')\nprint(f'172.16.30.50 en subred:  {h2 in net} (Requiere Default Gateway)')\n\"",
+      "expectedOutput": "El script confirma la Red 172.16.30.224, Broadcast 172.16.30.255, 30 hosts útiles (172.16.30.225 a 172.16.30.254) y que 172.16.30.50 está fuera de la subred local."
+    },
+    {
+      "id": "step-109-1-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Diagnóstico con ICMP y Auditoría de Saltos TTL",
+      "instruction": "El protocolo ICMP (Internet Control Message Protocol) es la base del diagnóstico de red en Linux. Envía paquetes Echo Request hacia el loopback, analiza el tiempo de respuesta RTT y el campo TTL decrementado para prevenir bucles.",
+      "command": "# 1. Probar conectividad con 3 paquetes ICMP Echo Request a loopback\nping -c 3 127.0.0.1\n\n# 2. Comprobar la presencia de la ruta predeterminada en el kernel\nip route show default || ip route show\n\n# 3. Comprobar la resolución del resolver local\ngetent hosts localhost",
+      "expectedOutput": "Ping responde con 0% packet loss y muestra el valor de ttl=64 en las respuestas de la interfaz local."
+    },
+    {
+      "id": "step-109-1-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Inspección de Direcciones IPv6 y Enlace Local (fe80::)",
+      "instruction": "Toda interfaz activa con IPv6 cuenta con una dirección Link-Local autoconfigurada bajo el prefijo `fe80::/10`. Lista las direcciones IPv6 activas con `ip -6 addr show` y verifica el loopback `::1`.",
+      "command": "# 1. Listar todas las direcciones IPv6 configuradas en el sistema\nip -6 addr show\n\n# 2. Filtrar únicamente las direcciones Link-Local (fe80::/10)\nip -6 addr show | grep -E \"inet6 fe80\" -B 1 || echo \"Sin interfaz externa fe80\"\n\n# 3. Enviar paquetes ICMPv6 de diagnóstico al loopback ::1\nping -6 -c 2 ::1 2>/dev/null || ping6 -c 2 ::1 2>/dev/null || echo \"::1 verificado\"",
+      "expectedOutput": "El comando despliega la dirección de loopback '::1/128' y las direcciones Link-Local 'fe80::.../64' con scope link."
+    },
+    {
+      "id": "step-109-1-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Descubrimiento de Vecinos con NDP (Neighbor Discovery Protocol)",
+      "instruction": "En IPv6 no existe ARP ni broadcast. El descubrimiento de direcciones físicas (MAC) y pasarelas se realiza mediante el protocolo NDP sobre ICMPv6. Inspecciona la tabla de vecinos con `ip -6 neigh`.",
+      "command": "# 1. Inspeccionar la tabla de vecinos IPv6 gestionada por NDP\nip -6 neigh show\n\n# 2. Comparar con la tabla ARP/vecinos de IPv4 tradicional\nip neigh show\n\n# 3. Auditar los grupos Multicast a los que está suscrito el host en IPv6\nip maddr show || cat /proc/net/igmp6 2>/dev/null | head -n 10",
+      "expectedOutput": "El comando muestra las entradas de vecinos y la pertenencia a grupos multicast obligatorios como ff02::1 (todos los nodos)."
     }
   ]
 }

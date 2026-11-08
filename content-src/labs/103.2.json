@@ -10,35 +10,42 @@
     {
       "id": "step-103-2-1",
       "stepNumber": 1,
-      "title": "Misión 1 — Extracción y Paginación con head, tail, cut y wc",
-      "instruction": "Debes procesar /etc/passwd para contar usuarios y extraer exclusivamente sus nombres de usuario y shells de inicio.",
-      "command": "# Contar líneas, palabras y bytes del archivo /etc/passwd\r\nwc -l -w -c /etc/passwd\r\n\r\n# Extraer las primeras 5 líneas\r\nhead -n 5 /etc/passwd\r\n\r\n# Extraer las últimas 5 líneas\r\ntail -n 5 /etc/passwd\r\n\r\n# Extraer los campos 1 (usuario) y 7 (shell) usando dos puntos como delimitador\r\ncut -d: -f1,7 /etc/passwd | head -n 8",
+      "title": "Misión 1 — Visualización de Archivos Planos y Comprimidos (head, tail, zcat, wc)",
+      "instruction": "Inspecciona flujos normales y comprimidos, monitoriza colas de archivos y calcula estadísticas de líneas.",
+      "command": "# 1. Contar líneas, palabras y bytes del archivo /etc/passwd\r\nwc -l -w -c /etc/passwd\r\n\r\n# 2. Extraer las 5 primeras y 5 últimas líneas\r\nhead -n 5 /etc/passwd\r\ntail -n 5 /etc/passwd\r\n\r\n# 3. Crear un archivo comprimido de prueba y leerlo a stdout con zcat sin descomprimir\r\ngzip -c /etc/passwd > /tmp/passwd.gz\r\nzcat /tmp/passwd.gz | head -n 3",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
       "id": "step-103-2-2",
       "stepNumber": 2,
-      "title": "Misión 2 — Ordenación y Filtrado de Duplicados con sort y uniq",
-      "instruction": "Aprenderás a ordenar datos numéricamente o alfabéticamente y a condensar líneas idénticas consecutivas con uniq.",
-      "command": "# Extraer todas las shells del sistema, ordenarlas alfabéticamente y contar frecuencias\r\ncut -d: -f7 /etc/passwd | sort | uniq -c\r\n\r\n# Ordenar el archivo /etc/passwd numéricamente por el UID (campo 3)\r\nsort -t: -k3 -n /etc/passwd | head -n 8",
+      "title": "Misión 2 — Extracción Vertical (cut) y Fusión de Columnas en CSV (paste)",
+      "instruction": "Corta columnas por delimitador y únelas horizontalmente con paste para generar una estructura CSV.",
+      "command": "# 1. Extraer nombre de usuario (columna 1) y shell (columna 7)\r\ncut -d: -f1 /etc/passwd > /tmp/usuarios.txt\r\ncut -d: -f7 /etc/passwd > /tmp/shells.txt\r\n\r\n# 2. Unir ambos archivos en formato CSV usando coma como delimitador con paste\r\npaste -d, /tmp/usuarios.txt /tmp/shells.txt | head -n 8",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
       "id": "step-103-2-3",
       "stepNumber": 3,
-      "title": "Misión 3 — Transformación de Caracteres con tr y sed",
-      "instruction": "Modificaremos mayúsculas y realizaremos sustituciones de cadenas en flujos de texto sin editar archivos en disco.",
-      "command": "# Convertir texto a mayúsculas con tr\r\necho \"certificacion oficial lpic-1 linux\" | tr '[:lower:]' '[:upper:]'\r\n\r\n# Eliminar caracteres específicos (ej: borrar vocales con -d)\r\necho \"administrador de sistemas\" | tr -d 'aeiou'\r\n\r\n# Sustituir cadenas de texto en un flujo mediante sed\r\ncat /etc/issue | sed 's/Debian/SUPER-DEBIAN/g'",
+      "title": "Misión 3 — Ordenación Numérica (-n), Aleatoria (-R) y Deduplicación (uniq)",
+      "instruction": "Aplica ordenaciones numéricas por campo y combina sort con uniq para calcular frecuencias de valores repetidos.",
+      "command": "# 1. Ordenar /etc/passwd por el UID (campo 3) de menor a mayor numérico\r\nsort -t: -k3 -n /etc/passwd | head -n 6\r\n\r\n# 2. Extraer shells, ordenarlas y contar repeticiones consecutivas con uniq -c\r\ncut -d: -f7 /etc/passwd | sort | uniq -c\r\n\r\n# 3. Realizar una ordenación aleatoria (random) para selección al azar\r\ncut -d: -f1 /etc/passwd | sort -R | head -n 1",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
       "id": "step-103-2-4",
       "stepNumber": 4,
-      "title": "Misión 4 — Inversión, Numeración y Volcado con tac, nl y od",
-      "instruction": "Conocerás filtros complementarios evaluados en los exámenes de certificación.",
-      "command": "# Mostrar un archivo en orden inverso (de abajo hacia arriba)\r\ntac /etc/issue\r\n\r\n# Numerar las líneas de un archivo con nl\r\nnl -ba /etc/issue\r\n\r\n# Volcar contenido en octal y caracteres con od\r\necho \"Hola LPIC\" | od -c",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
-      "examAlert": "Ver pista desplegable si te atascas</summary>"
+      "title": "Misión 4 — Transformación de Caracteres con tr y Sustitución con sed",
+      "instruction": "Manipula flujos de texto en memoria traduciendo caracteres mediante stdin y realizando sustituciones globales.",
+      "command": "# 1. Convertir texto a mayúsculas leyendo por stdin con tr\r\necho \"certificacion lpic-1 linux\" | tr 'a-z' 'A-Z'\r\n\r\n# 2. Suprimir retornos de carro \\r de Windows o vocales con tr -d\r\necho \"administrador de sistemas\" | tr -d 'aeiou'\r\n\r\n# 3. Comprimir múltiples espacios en uno solo con tr -s\r\necho \"columna1    columna2     columna3\" | tr -s ' '\r\n\r\n# 4. Sustituir texto de forma global con sed 's/.../.../g'\r\ncat /etc/issue | sed 's/Debian/SISTEMA-LINUX/g'",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-103-2-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Inspección Octal (od -An) y Verificación de Message Digest (sha256sum)",
+      "instruction": "Inspecciona bytes ocultos suprimiendo el desplazamiento y verifica la integridad criptográfica de un fichero.",
+      "command": "# 1. Volcar texto revelando caracteres ocultos y suprimiendo el offset con od -An -c\r\nprintf \"L1\\r\\nL2\\tTAB\\n\" | od -An -c\r\n\r\n# 2. Generar el Message Digest SHA-256 de un archivo en disco\r\nsha256sum /etc/issue > /tmp/issue.sha256\r\ncat /tmp/issue.sha256\r\n\r\n# 3. Validar de forma desatendida la integridad del archivo con sha256sum -c\r\nsha256sum -c /tmp/issue.sha256",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     }
   ]
 }

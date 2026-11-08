@@ -20,7 +20,7 @@
       "stepNumber": 2,
       "title": "Misión 2 — Parámetros Posicionales y la Trampa de ${10}",
       "instruction": "Los argumentos que recibe un script se almacenan en `$1` a `$9`. A partir del décimo argumento es OBLIGATORIO usar llaves `${10}` para evitar que Bash interprete `$1` seguido del número 0.",
-      "command": "# 1. Crear un script que procese múltiples parámetros\ncat << 'EOF' > ~/procesa_args.sh\n#!/bin/bash\necho \"Total de argumentos (\\$#): $#\"\necho \"Primer argumento (\\$1):    $1\"\necho \"Noveno argumento (\\$9):    $9\"\necho \"Trampa \\$10 sin llaves:     $10\"\necho \"Décimo correcto (\\${10}):   ${10}\"\necho \"Undécimo correcto (\\${11}): ${11}\"\nEOF\n\nchmod +x ~/procesa_args.sh\n\n# 2. Ejecutar pasando 11 argumentos numéricos\n~/procesa_args.sh A B C D E F G H I J K",
+      "command": "# 1. Crear un script que procese múltiples parámetros, arrays e IFS\ncat << 'EOF' > ~/procesa_args.sh\n#!/bin/bash\necho \"Total de argumentos (\\$#): $#\"\necho \"Primer argumento (\\$1):    $1\"\necho \"Noveno argumento (\\$9):    $9\"\necho \"Trampa \\$10 sin llaves:     $10\"\necho \"Décimo correcto (\\${10}):   ${10}\"\necho \"Undécimo correcto (\\${11}): ${11}\"\n\n# Guardar argumentos en un array de Bash:\nPARAMS=( \"$@\" )\necho \"Array PARAMS total: ${#PARAMS[@]} elementos\"\n\n# Iterar líneas con delimitador IFS personalizado:\nOLDIFS=\"$IFS\"\nIFS=$'\\n'\nfor ITEM in \"${PARAMS[@]}\"; do\n    printf \"  -> Elemento procesado: %s\\n\" \"$ITEM\"\ndone\nIFS=\"$OLDIFS\"\nEOF\n\nchmod +x ~/procesa_args.sh\n\n# 2. Ejecutar pasando 11 argumentos numéricos\n~/procesa_args.sh A B C D E F G H I J K",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
@@ -42,11 +42,10 @@
     {
       "id": "step-105-2-5",
       "stepNumber": 5,
-      "title": "Misión 5 — Bucles e Iteraciones con read y Aritmética $(( ))",
-      "instruction": "Automatizaremos el procesamiento de una lista con `for` y crearemos un bucle `while` con contador aritmético y lectura oculta de contraseñas con `read -s`.",
-      "command": "# 1. Iterar sobre una lista de usuarios con bucle for\nfor SERVICIO in ssh cron rsyslog; do\n    echo \"Comprobando servicio: $SERVICIO -> $(systemctl is-active $SERVICIO)\"\ndone\n\n# 2. Bucle while con contador aritmético (sin bucle infinito)\nCONTADOR=1\nwhile [ $CONTADOR -le 3 ]; do\n    echo \"Iteración número: $CONTADOR\"\n    CONTADOR=$(( CONTADOR + 1 ))\ndone\n\n# 3. Lectura silenciosa interactiva con read -s\necho \"Prueba de contraseña segura:\"\nread -s -p \"Introduce clave de prueba: \" PASS_SECRETA\necho \"\"\necho \"Longitud de la clave introducida: ${#PASS_SECRETA} caracteres\"",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
-      "examAlert": "Ver pista desplegable si te atascas</summary>"
+      "title": "Misión 5 — Bucles, read -s, printf y Reemplazo de Proceso con exec",
+      "instruction": "Automatizaremos el procesamiento con bucles `for` y `while`, solicitaremos claves con `read -s`, formatearemos salida con `printf` y verificaremos el reemplazo de proceso con `exec`.",
+      "command": "# 1. Iterar sobre servicios y formatear salida con printf\nfor SERVICIO in ssh cron rsyslog; do\n    ESTADO=$(systemctl is-active $SERVICIO 2>/dev/null || echo \"inactivo\")\n    printf \"%-12s : [%s]\\n\" \"$SERVICIO\" \"$ESTADO\"\ndone\n\n# 2. Bucle while con contador aritmético (sin bucle infinito)\nCONTADOR=1\nwhile [ $CONTADOR -le 3 ]; do\n    printf \"Iteración número: %02d\\n\" $CONTADOR\n    CONTADOR=$(( CONTADOR + 1 ))\ndone\n\n# 3. Lectura silenciosa interactiva con read -s\nread -s -p \"Introduce clave de prueba: \" PASS_SECRETA\necho \"\"\nprintf \"Longitud de la clave introducida: %d caracteres\\n\" ${#PASS_SECRETA}\n\n# 4. Probar reemplazo de proceso con exec en un subshell\nbash -c 'echo \"PID subshell antes: $$\"; exec date; echo \"Esto nunca se ejecutará\"'",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     }
   ]
 }

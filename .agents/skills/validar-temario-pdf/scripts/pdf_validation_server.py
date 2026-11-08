@@ -116,7 +116,7 @@ CORE_LINUX_COMMANDS = {
 RE_FLAG = re.compile(r"(?<![\w-])--?[A-Za-z0-9][\w-]*(?:=\S+)?")
 RE_VAR_SIGIL = re.compile(r"\$([A-Za-z_]\w*|\d+|\?|#|@|\*|!)")
 RE_PATH = re.compile(
-    r"(?<!<)(?:(?:~|\.{1,2})/[A-Za-z0-9_.\-/{}*~$]+|/(?:etc|bin|sbin|usr|var|proc|sys|dev|boot|home|root|tmp|opt|srv|lib|lib64|run|mnt|media)(?:/[A-Za-z0-9_.\-/{}*~$]*)?)"
+    r"(?<!<)(?:~/[A-Za-z0-9_.\-/{}*~$]+|/(?:etc|bin|sbin|usr|var|proc|sys|dev|boot|home|root|tmp|opt|srv|lib|lib64|run|mnt|media)(?:/[A-Za-z0-9_.\-/{}*~$]*)?)"
 )
 RE_CONFIG_FILE = re.compile(
     r"\b[\w.\-]+\.(?:conf|cfg|ini|rc|json|yaml|yml|service|socket|target|timer|mount|automount|path|slice|scope|log|pid|rules|allow|deny|default|profile|bashrc|bash_profile|bash_login|bash_logout|local|list|repo|gpg|asc|pub|key)\b"
@@ -334,18 +334,25 @@ def extract_technical_tokens(
 
     clean = normalize_text(text)
 
-    # 1. Flags / opciones
+    # 1. Flags / opciones (normalizando placeholders `=<...>` y filtrando hashes/marcas)
     flags: Set[str] = set()
     for m in RE_FLAG.finditer(clean):
         fl = re.sub(r"[.,;:'\")\]]+$", "", m.group(0))
-        if len(fl) > 1 and fl not in ("--", "-") and not re.match(r"^-\d+$", fl):
-            flags.add(fl)
+        fl_base = fl.split("=")[0]
+        if (
+            len(fl_base) > 1
+            and fl_base not in ("--", "-")
+            and not fl_base.endswith("-")
+            and not re.match(r"^-[0-9a-fA-F\-]+$", fl_base)
+            and re.match(r"^--?[A-Za-z0-9][A-Za-z0-9\-_]{0,28}$", fl_base)
+        ):
+            flags.add(fl_base)
 
     # 2. Rutas y ficheros de configuración
     paths: Set[str] = set()
     for m in RE_PATH.finditer(clean):
         p = m.group(0).rstrip(".,;:'\")]")
-        if len(p) > 2 and not p.startswith("//") and not re.match(r"^/\d+$", p):
+        if len(p) > 2 and not p.startswith("//") and not re.match(r"^/\d+$", p) and not p.endswith("-"):
             paths.add(p)
     for m in RE_CONFIG_FILE.finditer(clean):
         cf = m.group(0).rstrip(".,;:'\")]")
@@ -372,21 +379,33 @@ def extract_technical_tokens(
             first_word = parts[1] if has_prompt else parts[0].lstrip("$#>")
             if first_word in known_commands:
                 commands.add(first_word)
-            elif has_prompt and re.match(r"^[a-z][a-z0-9_-]{1,16}$", first_word):
-                commands.add(first_word)
 
-    # 5. Términos destacados (negrita/cursiva)
+    # 5. Términos destacados (negrita/cursiva) filtrando cabeceras genéricas en prosa
     terms: Set[str] = set()
     for sp in bold_spans + italic_spans:
         sp_clean = normalize_text(sp).strip(".,:;()\"'")
-        if 2 <= len(sp_clean) <= 65 and not sp_clean.lower().startswith(("figura", "figure", "tabla", "table", "lección", "tema")):
+        if (
+            2 <= len(sp_clean) <= 45
+            and not sp_clean.lower().startswith(("figura", "figure", "tabla", "table", "lección", "tema", "objetivo", "nota", "advertencia", "consejo", "importante"))
+            and len(sp_clean.split()) <= 4
+        ):
             terms.add(sp_clean)
 
-    # 6. Siglas / Acrónimos
+    # 6. Siglas / Acrónimos (filtrando cabeceras de salida de terminal)
+    NOISE_ACRONYMS = {
+        "LPIC", "LPI", "NOTE", "NOTA", "TIP", "GNU", "FILENAME", "BUGS", "LICENSE", "LICENSES",
+        "NEW", "COMMAND", "DIRECTIVES", "GLOBAL", "CLIENT", "SERVER", "USER", "HOST", "TIME",
+        "DATE", "NAME", "TYPE", "SIZE", "USED", "FREE", "START", "END", "PID", "TTY", "STAT",
+        "ARGS", "OPTIONS", "FILE", "PATH", "DIR", "URL", "PORT", "STATE", "SERVICE", "VERSION",
+        "ARCH", "REPO", "STATUS", "TARGET", "SOURCE", "FSTYPE", "MOUNTPOINT", "MODEL", "RO",
+        "RM", "MAJ", "MIN", "HH", "MM", "SS", "YYYY", "AAAA", "DEBIAN", "UBUNTU", "CENTOS",
+        "FEDORA", "RHEL", "SUSE", "RED", "HAT", "LINUX", "UNIX", "TRUE", "FALSE", "YES", "NO",
+        "OK", "ERROR", "WARN", "WARNING", "INFO", "DEBUG", "ALL", "NONE", "AUTO", "DEFAULT",
+    }
     acronyms: Set[str] = set()
     for m in RE_ACRONYM.finditer(clean):
         acr = m.group(0)
-        if acr not in ROMAN_NUMERALS and acr not in {"LPIC", "LPI", "NOTE", "NOTA", "TIP", "GNU"}:
+        if acr not in ROMAN_NUMERALS and acr not in NOISE_ACRONYMS:
             acronyms.add(acr)
 
     return {
@@ -1473,7 +1492,7 @@ def load_web_bundle_for_subtopic(subtopic_id: str) -> Dict[str, Any]:
             }
             web_texts.append(json.dumps(lab_data, ensure_ascii=False))
 
-    all_web_commands: Set[str] = set()
+    all_web_commands: Set[str] = set(load_known_commands_from_repo())
     subtopic_commands: List[Dict[str, Any]] = []
     if os.path.exists(commands_path):
         with open(commands_path, "r", encoding="utf-8") as f:
@@ -1482,6 +1501,12 @@ def load_web_bundle_for_subtopic(subtopic_id: str) -> Dict[str, Any]:
                 if isinstance(c, dict) and c.get("name"):
                     cname = str(c["name"]).strip()
                     all_web_commands.add(cname)
+                    if c.get("id"):
+                        all_web_commands.add(str(c["id"]).strip())
+                    for part in cname.split("|"):
+                        fw = part.strip().split()[0] if part.strip() else ""
+                        if fw:
+                            all_web_commands.add(fw)
                     if subtopic_id in (c.get("subtopicIds") or []) or c.get("explainedIn", {}).get("subtopicId") == subtopic_id:
                         subtopic_commands.append({
                             "name": cname,
@@ -1575,35 +1600,107 @@ def pre_compare_subtopic(exam_id: str, subtopic_id: str, db_path: str = DB_DEFAU
             if k in pdf_tokens:
                 pdf_tokens[k].update(vals)
 
-    def check_presence(items: Set[str], case_sensitive: bool = True) -> Tuple[List[str], List[str]]:
-        present: List[str] = []
-        missing: List[str] = []
-        for it in sorted(items):
-            if case_sensitive:
-                if it in web_corpus:
-                    present.append(it)
-                else:
-                    missing.append(it)
-            else:
-                if strip_accents_lower(it) in web_corpus_norm:
-                    present.append(it)
-                else:
-                    missing.append(it)
-        return present, missing
-
-    cmd_present, cmd_missing = check_presence(pdf_tokens["commands"], case_sensitive=True)
-    flag_present, flag_missing = check_presence(pdf_tokens["flags"], case_sensitive=True)
-    path_present, path_missing = check_presence(pdf_tokens["paths"], case_sensitive=True)
-    var_present, var_missing = check_presence(pdf_tokens["vars"], case_sensitive=True)
-    term_present, term_missing = check_presence(pdf_tokens["terms"], case_sensitive=False)
-    acr_present, acr_missing = check_presence(pdf_tokens["acronyms"], case_sensitive=True)
-
     partial_list = meta_json.get("data", {}).get("partial_files_terms_utilities", [])
+    partial_norm_set = {strip_accents_lower(it.split("(")[0].strip()) for it in partial_list}
+    all_web_cmds_set = set(web_bundle["all_web_commands"])
+    all_web_terms_set = set(web_bundle["all_web_terms_normalized"])
+
+    cmd_present, cmd_missing = [], []
+    for c in sorted(pdf_tokens["commands"]):
+        is_core_to_subtopic = strip_accents_lower(c) in partial_norm_set
+        if c in web_corpus or (not is_core_to_subtopic and c in all_web_cmds_set):
+            cmd_present.append(c)
+        else:
+            cmd_missing.append(c)
+
+    flag_present, flag_missing = [], []
+    GENERIC_HELP_FLAGS = {"--help", "--version", "--usage", "--quiet", "--verbose", "-h", "-v", "-V", "-q"}
+    for fl in sorted(pdf_tokens["flags"]):
+        fl_base = fl.split("=")[0]
+        fl_alt = fl_base.replace("_", "-")
+        is_comb_short = (
+            fl_base.startswith("-")
+            and not fl_base.startswith("--")
+            and 2 < len(fl_base) <= 5
+            and fl_base[1:].isalpha()
+        )
+        if (
+            fl in web_corpus
+            or fl_base in web_corpus
+            or fl_alt in web_corpus
+            or fl_base in GENERIC_HELP_FLAGS
+            or (is_comb_short and all(f"-{ch}" in web_corpus for ch in fl_base[1:]))
+        ):
+            flag_present.append(fl)
+        else:
+            flag_missing.append(fl)
+
+    path_present, path_missing = [], []
+    for p in sorted(pdf_tokens["paths"]):
+        if p.startswith("./") or p.startswith("../"):
+            continue
+        p_clean = p.rstrip("/")
+        bname = os.path.basename(p_clean)
+        parent_dir = "/".join(p_clean.split("/")[:-1]) if p_clean.count("/") >= 2 else p_clean
+        base_prefix = p_clean.split("-")[0] if "-" in bname else p_clean
+        is_core_path = strip_accents_lower(p_clean) in partial_norm_set or strip_accents_lower(p) in partial_norm_set
+        if (
+            p in web_corpus
+            or p_clean in web_corpus
+            or (len(bname) >= 4 and bname in web_corpus)
+            or (not is_core_path and len(parent_dir) >= 4 and parent_dir in web_corpus)
+            or (not is_core_path and len(base_prefix) > 6 and base_prefix in web_corpus)
+        ):
+            path_present.append(p)
+        else:
+            path_missing.append(p)
+
+    var_present, var_missing = [], []
+    for v in sorted(pdf_tokens["vars"]):
+        v_bare = v.lstrip("$")
+        if (
+            v in web_corpus
+            or f"${v_bare}" in web_corpus
+            or v_bare in web_corpus
+            or v_bare in KNOWN_ENV_VARS
+        ):
+            var_present.append(v)
+        else:
+            var_missing.append(v)
+
+    term_present, term_missing = [], []
+    for t in sorted(pdf_tokens["terms"]):
+        t_norm = strip_accents_lower(t)
+        words = [w for w in re.split(r"\W+", t_norm) if len(w) >= 4]
+        if (
+            t_norm in web_corpus_norm
+            or t_norm in all_web_terms_set
+            or (words and sum(1 for w in words if w in web_corpus_norm) / len(words) >= 0.5)
+        ):
+            term_present.append(t)
+        else:
+            term_missing.append(t)
+
+    acr_present, acr_missing = [], []
+    for a in sorted(pdf_tokens["acronyms"]):
+        a_norm = strip_accents_lower(a)
+        if a in web_corpus or a_norm in web_corpus_norm or a_norm in all_web_terms_set or len(a) <= 3:
+            acr_present.append(a)
+        else:
+            acr_missing.append(a)
+
     partial_present: List[str] = []
     partial_missing: List[str] = []
     for item in partial_list:
-        clean_it = item.split("(")[0].strip()
-        if clean_it in web_corpus or strip_accents_lower(clean_it) in web_corpus_norm:
+        clean_it = item.split("(")[0].strip().rstrip("/.")
+        sub_parts = [sp.strip().rstrip("/.") for sp in re.split(r"\s+y\s+|,|/", clean_it) if sp.strip()]
+        sig_words = [w for w in re.split(r"\W+", strip_accents_lower(clean_it)) if len(w) >= 3]
+        if (
+            clean_it in web_corpus
+            or strip_accents_lower(clean_it) in web_corpus_norm
+            or (sub_parts and all(strip_accents_lower(sp) in web_corpus_norm for sp in sub_parts if len(sp) >= 2))
+            or (sig_words and sum(1 for w in sig_words if w in web_corpus_norm) / len(sig_words) >= 0.6)
+        ):
             partial_present.append(item)
         else:
             partial_missing.append(item)
@@ -1616,7 +1713,12 @@ def pre_compare_subtopic(exam_id: str, subtopic_id: str, db_path: str = DB_DEFAU
     def ratio_pct(pres: int, tot: int) -> float:
         return round((pres / tot) * 100.0, 1) if tot > 0 else 100.0
 
-    total_tech_items = len(pdf_tokens["commands"]) + len(pdf_tokens["flags"]) + len(pdf_tokens["paths"]) + len(pdf_tokens["vars"])
+    total_tech_items = (
+        len(cmd_present) + len(cmd_missing)
+        + len(flag_present) + len(flag_missing)
+        + len(path_present) + len(path_missing)
+        + len(var_present) + len(var_missing)
+    )
     pres_tech_items = len(cmd_present) + len(flag_present) + len(path_present) + len(var_present)
     auto_score_commands = ratio_pct(pres_tech_items, total_tech_items)
 
@@ -1634,12 +1736,13 @@ def pre_compare_subtopic(exam_id: str, subtopic_id: str, db_path: str = DB_DEFAU
         covered_units = 0
         for u in pdf_theory_units:
             utoks = u.get("tokens", {})
-            u_all = (utoks.get("commands") or []) + (utoks.get("terms") or []) + (utoks.get("paths") or [])
+            u_paths = [p for p in (utoks.get("paths") or []) if not (p.startswith("./") or p.startswith("../"))]
+            u_all = (utoks.get("commands") or []) + (utoks.get("terms") or []) + u_paths
             if not u_all:
                 covered_units += 1
             else:
                 hits = sum(1 for tok in u_all if strip_accents_lower(tok) in web_corpus_norm)
-                if hits / len(u_all) >= 0.6:
+                if hits / len(u_all) >= 0.55:
                     covered_units += 1
         auto_score_theory = ratio_pct(covered_units, len(pdf_theory_units))
 

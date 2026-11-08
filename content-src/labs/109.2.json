@@ -2,18 +2,50 @@
   "id": "lab-109-2",
   "subtopicId": "109.2",
   "title": "Práctica 109.2 — Configuración de Red Persistente: nmcli, iproute2, hostnamectl y systemd-networkd",
-  "estimatedMinutes": 40,
+  "estimatedMinutes": 35,
   "difficulty": "intermediate",
   "type": "subtopic",
-  "placeholder": true,
+  "placeholder": false,
   "steps": [
     {
       "id": "step-109-2-1",
       "stepNumber": 1,
-      "title": "Misión 1: Configuración y verificación de 109.2",
-      "instruction": "Ejecuta los comandos fundamentales del objetivo 109.2 en tu entorno de pruebas Debian.",
-      "command": "man 109_2",
-      "expectedOutput": "El sistema despliega la documentación y sintaxis oficial de las herramientas."
+      "title": "Misión 1 — Auditoría y Configuración de Nombres de Host con hostnamectl",
+      "instruction": "En distribuciones Linux con systemd, `hostnamectl` gobierna el nombre de host estático (/etc/hostname), el transitorio (asignado en RAM por DHCP) y el descriptivo 'pretty' (/etc/machine-info). Inspecciona el estado y configura cada variante.",
+      "command": "# 1. Consultar el estado y tipos actuales de hostname\nhostnamectl status\n\n# 2. Modificar únicamente el hostname estático con la opción --static\nsudo hostnamectl --static set-hostname servidor-lpic\n\n# 3. Asignar un Pretty Hostname descriptivo en formato libre UTF-8\nsudo hostnamectl --pretty set-hostname \"Servidor de Prácticas LPIC-1\"\n\n# 4. Establecer el tipo de chasis a 'server'\nsudo hostnamectl set-chassis server\n\n# 5. Verificar que /etc/hostname refleja el nuevo nombre estático\ncat /etc/hostname",
+      "expectedOutput": "hostnamectl muestra el Static hostname como servidor-lpic, el Pretty hostname asignado y el Chassis como server."
+    },
+    {
+      "id": "step-109-2-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Resolución Estática (/etc/hosts) y Orden NSS (/etc/nsswitch.conf)",
+      "instruction": "El Name Service Switch (NSS) define el orden de consulta de nombres en glibc mediante `/etc/nsswitch.conf`. Comprueba que `files` precede a `dns` y añade una entrada con múltiples nombres asociados a una misma IP en `/etc/hosts`.",
+      "command": "# 1. Inspeccionar la directiva de resolución de nombres de host\ngrep -E \"^hosts:\" /etc/nsswitch.conf\n\n# 2. Añadir un mapeo múltiple en /etc/hosts (caso oficial LPI)\nsudo sh -c 'echo \"10.8.0.1 firewall router\" >> /etc/hosts'\n\n# 3. Comprobar la resolución estática con getent hosts\ngetent hosts firewall\ngetent hosts router\n\n# 4. Auditar las directivas de resolver configuradas en /etc/resolv.conf\ngrep -E \"^(nameserver|search|domain)\" /etc/resolv.conf",
+      "expectedOutput": "La directiva hosts muestra 'files dns' y los nombres firewall y router resuelven de forma inmediata a la IP 10.8.0.1."
+    },
+    {
+      "id": "step-109-2-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Diagnóstico de Conectividad y Gestión de Radio con nmcli",
+      "instruction": "NetworkManager evalúa la conectividad de la máquina clasificándola en estados: none, portal (bloqueado por portal cautivo web), limited o full. Audita la salud general y gestiona el interruptor de software de la radio inalámbrica.",
+      "command": "# 1. Comprobar estado global de NetworkManager y estado de CONNECTIVITY\nnmcli general status\n\n# 2. Consultar el estado y tipos de los dispositivos físicos y virtuales\nnmcli device status\n\n# 3. Consultar y verificar el control de radio Wi-Fi por software\nnmcli radio wifi\nnmcli radio wifi on 2>/dev/null || true",
+      "expectedOutput": "El comando despliega las columnas STATE, CONNECTIVITY (full, limited o portal) y el estado enabled de la radio inalámbrica."
+    },
+    {
+      "id": "step-109-2-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Gestión de Perfiles y Escaneo Wi-Fi con nmcli",
+      "instruction": "NetworkManager escanea redes inalámbricas periódicamente. Aprende a forzar un reescaneo inmediato con `nmcli device wifi rescan`, crea un perfil de prueba y elimínalo definitivamente con `nmcli connection delete`.",
+      "command": "# 1. Listar puntos de acceso detectados en el último ciclo de escaneo\nnmcli device wifi list 2>/dev/null || echo \"Sin hardware wifi activo\"\n\n# 2. Forzar a NetworkManager a reescanear inmediatamente todos los APs\nnmcli device wifi rescan 2>/dev/null || true\n\n# 3. Crear un perfil de prueba cableado llamado 'Hotel Internet'\nnmcli connection add type ethernet con-name \"Hotel Internet\" ifname eth99 2>/dev/null || true\n\n# 4. Eliminar el perfil en desuso mediante su nombre\nnmcli connection delete \"Hotel Internet\" 2>/dev/null || true",
+      "expectedOutput": "El perfil 'Hotel Internet' se crea y se elimina con éxito confirmando 'Connection Hotel Internet successfully deleted'."
+    },
+    {
+      "id": "step-109-2-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Configuración Declarativa en systemd-networkd y wpa_passphrase",
+      "instruction": "En systemd-networkd, los archivos en `/etc/systemd/network/` tienen prioridad sobre `/run` y `/lib`. Crea un perfil declarativo con coincidencia comodín `Name=en*` en la sección `[Match]` y genera un bloque PSK cifrado con `wpa_passphrase`.",
+      "command": "# 1. Inspeccionar la jerarquía de directorios de systemd-networkd\nls -ld /etc/systemd/network /run/systemd/network /lib/systemd/network 2>/dev/null || true\n\n# 2. Crear un perfil declarativo que coincida con todas las interfaces ethernet\nsudo sh -c 'cat << \"EOF\" > /etc/systemd/network/99-test-dhcp.network\n[Match]\nName=en*\n\n[Network]\nDHCP=yes\nEOF'\n\n# 3. Verificar la estructura INI del fichero creado en /etc/systemd/network/\ncat /etc/systemd/network/99-test-dhcp.network\n\n# 4. Generar clave PSK cifrada en 256 bits a partir de SSID y passphrase\nwpa_passphrase MyWifi MyPassword\n\n# 5. Limpieza del perfil de prueba temporal\nsudo rm -f /etc/systemd/network/99-test-dhcp.network",
+      "expectedOutput": "wpa_passphrase genera el bloque network={ ssid=\"MyWifi\" psk=<hash de 64 caracteres hex> } sin exponer la contraseña en texto plano."
     }
   ]
 }

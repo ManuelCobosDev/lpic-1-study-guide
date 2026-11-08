@@ -24,16 +24,24 @@
     "~/.bash_profile",
     "~/.bashrc",
     "~/.bash_logout",
-    "function"
+    "function",
+    "readonly",
+    "export -p / -n",
+    "noclobber",
+    "$DISPLAY",
+    "$SSH_CONNECTION",
+    "$OSTYPE"
   ],
   "commands": [
     "source",
     "alias",
     "unalias",
     "env",
+    "printenv",
     "export",
     "set",
     "unset",
+    "readonly",
     "shopt"
   ],
   "placeholder": false,
@@ -320,27 +328,28 @@
     {
       "id": "105.1-slide-11",
       "slideNumber": 11,
-      "title": "Valores y Entrecomillado en Bash",
+      "title": "Valores, Comillas y Control de Redirección (noclobber)",
       "layout": "content",
       "src": "105.1#u514-u564",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Comillas Simples, Dobles y Sustitución"
+          "text": "Comillas, Sustitución y Protección con noclobber"
         },
         {
           "type": "list",
           "items": [
             "Comillas Simples ('...'): Preservan el valor estrictamente literal de cada carácter. Inhiben la expansión de variables ($) y comodines (*).",
             "Comillas Dobles (\"...\"): Preservan espacios en blanco pero PERMITEN la expansión de variables ($VAR), sustitución de comandos y escape con barra invertida (\\).",
-            "Sustitución de Comandos $(...) o `...`: Ejecuta el comando y devuelve su salida para asignarla a la variable."
+            "Sustitución de Comandos $(...) o `...`: Ejecuta el comando y devuelve su salida para asignarla a la variable.",
+            "Protección con noclobber ('set -o noclobber' o 'set -C'): Evita sobreescribir accidentalmente archivos existentes al redirigir con '>'. Para forzar la sobreescritura con la opción activa, se usa el operador '>|'."
           ]
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "animal=gnu\necho 'El animal es $animal'  # Salida: El animal es $animal\necho \"El animal es $animal\"  # Salida: El animal es gnu\nkernel=$(uname -r)           # Sustitución moderna recomendada"
+          "code": "animal=gnu\necho 'El animal es $animal'  # Salida literal: El animal es $animal\necho \"El animal es $animal\"  # Salida expandida: El animal es gnu\nkernel=$(uname -r)           # Sustitución de comando recomendada\n\n# Control defensivo de ficheros con noclobber:\nset -o noclobber             # Impide sobreescribir archivos existentes con '>'\necho \"datos\" > existente.txt # Error: cannot overwrite existing file\necho \"datos\" >| existente.txt# Bypass puntual con '>|' para forzar sobreescritura\nset +o noclobber             # Desactiva la protección noclobber"
         }
       ],
       "notes": "Las comillas simples son estrictamente literales; las dobles permiten interpretar variables y sustitución.\n\n--- Detalle ampliado del manual oficial ---\nValores de las variables\nEn lo que respecta a la referencia o el valor de las variables, también es importante considerar\nuna serie de reglas.\nLas variables pueden contener cualquier carácter alfanumérico (a-z,A-Z,0-9) así como la\nmayoría de los caracteres (?,!,*,.,/, etc.):\n$ distro=zorin12.4?\n$ echo $distro\nzorin12.4?\nLos valores de las variables deben ser encerrados entre comillas si contienen espacios simples:\n$ distro=zorin 12.4\n-bash: 12.4: command not found\n$ distro=\"zorin 12.4\"\n$ echo $distro\nzorin 12.4\n$ distro='zorin 12.4'\n$ echo $distro\nzorin 12.4\nLos valores de las variables también deben ser encerrados entre comillas si contienen caracteres\ncomo los utilizados para la redirección (<,>) o el símbolo de \"pipe\" (|). Lo único que hace el\nsiguiente comando es crear un archivo vacío llamado zorin:\n$ distro=>zorin\n$ echo $distro\n$ ls zorin\nzorin\nEsto funciona, siempre y cuando usemos las comillas:\n$ distro=\">zorin\"\n$ echo $distro\n>zorin\nSin embargo, las comillas simples y dobles no siempre son intercambiables. Según lo que hagamos\ncon una variable (asignación o referencia), el uso de una u otra tiene implicaciones y dará\nresultados diferentes. En el contexto de la asignación de variables, las comillas simples toman\ntodos los caracteres del valor de la variable literalmente, mientras que las comillas dobles\npermiten la sustitución de la variable:\n$ lizard=uromastyx\n$ animal='My $lizard'\n$ echo $animal\nMy $lizard\n$ animal=\"My $lizard\"\n$ echo $animal\nMy uromastyx\nPor otra parte, cuando se hace referencia a una variable cuyo valor incluye algunos espacios\niniciales (o adicionales) — a veces combinados con asteriscos — es obligatorio utilizar comillas\ndobles después del comando echo para evitar la división de campos y la expansión de nombres:\n$ lizard=\" genus | uromastyx\"\n$ echo $lizard\ngenus | uromastyx\n$ echo \"$lizard\"\ngenus | uromastyx\nSi la referencia de la variable contiene un signo de exclamación de cierre, éste debe ser el último\ncarácter de la cadena (ya que de lo contrario Bash pensará que nos referimos a un evento\nhistórico):\n$ distro=zorin.?/!os\n-bash: !os: event not found\n$ distro=zorin.?/!\n$ echo $distro\nzorin.?/!\nCualquier \"backslash\" debe escapar por otro. Además, si una barra invertida es el último caracter\nde la cadena (string) y no escapa, Bash interpretará que queremos un salto de línea y nos dará\nuna nueva línea:\n$ distro=zorinos\\\n>\n$ distro=zorinos\\\\\n$ echo $distro\nzorinos\\\nEn las próximas dos secciones resumiremos las principales diferencias entre las variables locales\ny de entorno."
@@ -348,19 +357,31 @@
     {
       "id": "105.1-slide-12",
       "slideNumber": 12,
-      "title": "Variables Locales vs Globales (export y unset)",
+      "title": "Ámbito de Variables: export, readonly y unset",
       "layout": "content",
       "src": "105.1#u565-u686",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ámbito de Variables y Herencia a Subprocesos"
+          "text": "Herencia a Subprocesos y Modificadores de Variables"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "# Variable local: Solo visible en la shell actual\nmammal=gnu\nbash -c 'echo [$mammal]'    # Salida: [] (vacía)\n\n# Variable global con export: Heredable por procesos hijos\nexport mammal\nbash -c 'echo [$mammal]'    # Salida: [gnu]\n\n# Listado y eliminación:\nset | grep mammal           # set lista locales, exportadas y funciones\nenv | grep mammal           # env lista ÚNICAMENTE variables exportadas\nunset mammal                # Elimina la variable de la memoria"
+          "code": "# 1. Promoción a entorno global y desmarque:\nmammal=gnu; export mammal   # Global: heredable por subshells hijos\nexport -n mammal            # Convierte de nuevo la variable en local (-n: desmarcar)\nexport -p                   # Imprime variables exportadas en formato 'declare -x VAR=\"val\"'\n\n# 2. Variables inmutables con readonly:\nreadonly reptile=tortoise   # Asignación y bloqueo directo en solo lectura\nreadonly -p                 # Lista todas las variables de solo lectura en la sesión\n\n# 3. Listado y eliminación de variables:\nset | grep mammal           # set lista locales, globales y funciones\nenv | grep mammal           # env / printenv listan ÚNICAMENTE variables de entorno\nunset mammal                # Elimina variable de memoria (readonly no puede borrarse)"
+        },
+        {
+          "type": "table",
+          "headers": ["Comando / Flag", "Tipo", "Efecto Práctico"],
+          "rows": [
+            ["export VAR", "Global", "Marca la variable para ser exportada al entorno de procesos hijos."],
+            ["export -n VAR", "Local", "Retira el atributo export manteniendo la variable en la sesión actual."],
+            ["export -p", "Auditoría", "Imprime todas las variables exportadas reutilizables en scripts de Bash."],
+            ["readonly VAR", "Inmutable", "Bloquea el valor de la variable; impide reasignarla o borrarla con unset."],
+            ["unset VAR", "Limpieza", "Elimina la variable de la sesión (las de solo lectura no se pueden borrar)."]
+          ],
+          "caption": "Gestión del ciclo de vida y modificadores de variables en Bash"
         },
         {
           "type": "callout",
@@ -398,25 +419,35 @@
     {
       "id": "105.1-slide-14",
       "slideNumber": 14,
-      "title": "Variables Canónicas: HISTCONTROL, PS1 y PS2",
+      "title": "Variables Canónicas: DISPLAY, SSH, HISTCONTROL y Prompt",
       "layout": "content",
       "src": "105.1#u766-u841",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Afinar el Historial y el Prompt del Shell"
+          "text": "Variables de Entorno y Sesión en el Examen LPI"
         },
         {
-          "type": "list",
-          "items": [
-            "USER y LOGNAME: Nombre del usuario autenticado en la sesión.",
-            "HOME: Directorio de inicio del usuario actual (ej. /home/user2 o ~).",
-            "HISTSIZE y HISTFILE: Número de comandos en memoria y ruta del archivo de guardado (~/.bash_history).",
-            "HISTCONTROL: Control de comandos duplicados (ignoredups), con espacio previo (ignorespace) o ambos (ignoreboth).",
-            "PS1: Prompt principal interactivo (ej. '\\u@\\h:\\w\\$ ').",
-            "PS2: Prompt secundario para comandos continuados en múltiples líneas (por defecto '> ')."
-          ]
+          "type": "table",
+          "headers": ["Variable", "Propósito en el Sistema", "Ejemplo de Valor"],
+          "rows": [
+            ["$DISPLAY", "Identificador de pantalla del servidor gráfico X11.", "reptilium:0:2 o :0.0"],
+            ["$SSH_CONNECTION", "IPs y puertos cliente/servidor en sesiones sshd.", "192.168.1.10 49330 192.168.1.7 22"],
+            ["$OSTYPE", "Nombre del sistema operativo subyacente para scripts.", "linux-gnu"],
+            ["$HISTCONTROL", "Filtrado de comandos duplicados o con espacio inicial.", "ignoredups, ignorespace, ignoreboth, erasedups"],
+            ["$HISTFILE / $HISTSIZE", "Ruta de guardado y límite en memoria del historial.", "~/.bash_history / 1000"],
+            ["$MAILCHECK / $MAIL", "Frecuencia en seg para chequear correo y ruta buzón.", "60 / /var/mail/$USER"],
+            ["$PS1 / $PS2", "Prompts principal y secundario para multilínea.", "'\\u@\\h:\\w\\$ ' y '> '"],
+            ["$PATH", "Rutas de búsqueda de binarios delimitadas por ':'.", "/usr/local/bin:/usr/bin:/bin"]
+          ],
+          "caption": "Variables del entorno de shell canónicas evaluadas en 105.1"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "🎯 Trampa Clásica de Examen",
+          "content": "'HISTCONTROL=ignoreboth' reúne ignoredups (ignora consecutivos idénticos) e ignorespace (ignora comandos con espacio al inicio). $DISPLAY identifica la sesión X11 y $SSH_CONNECTION almacena la conexión SSH activa."
         }
       ],
       "notes": "HISTCONTROL=ignoreboth es un valor muy preguntado en LPIC-1.\n\n--- Detalle ampliado del manual oficial ---\n$ if [ ~ == \"$HOME\" ]; then echo \"true\"; else echo \"false\"; fi\ntrue\nNOTE\nRecuerde: El signo de igualdad = se utiliza para la asignación de variables. Y el\nsigno == se usa para probar la igualdad.\nHOSTNAME\nVariable que almacena nombre del computador en la red:\n$ echo $HOSTNAME\ndebian\nHOSTTYPE\nEsto almacena la arquitectura de la unidad central de procesamiento (CPU) del computador:\n$ echo $HOSTTYPE\nx86_64\nLANG\nEsta variable guarda la información de localización que utiliza el sistema:\n$ echo $LANG\nen_UK.UTF-8\nLD_LIBRARY_PATH\nEsta variable consiste en un conjunto de directorios separados por dos puntos donde las\nbibliotecas compartidas (shared libraries) son compartidas por los programas:\n$ echo $LD_LIBRARY_PATH\n/usr/local/lib\nMAIL\nEsta variable almacena el archivo en el que Bash revisa el correo electrónico:\n$ echo $MAIL\n/var/mail/carol\nOtro valor común para esta variable es /var/spool/mail/$USER.\nMAILCHECK\nEsta variable almacena un valor numérico que indica en segundos la frecuencia con la que\nBash comprueba si hay correo nuevo:\n$ echo $MAILCHECK\n60\nPATH\nEsta variable de entorno almacena la lista de directorios donde Bash busca los archivos\nejecutables cuando se le indica que ejecute cualquier programa. En nuestra máquina de\nejemplo, esta variable se establece a través del archivo /etc/profile de todo el sistema:\nif [ \"`id -u`\" -eq 0 ]; then\nPATH=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"\nelse\nPATH=\"/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games\"\nfi\nexport PATH\nA través de la declaración if se comprueba la identidad del usuario y — dependiendo del\nresultado de la prueba (root o de otra manera) — obtendremos un PATH u otro. Finalmente, el\nPATH elegido se propaga invocando el comando export.\nObserve dos cosas con respecto al valor de PATH:\n• Los nombres de los directorios se escriben usando rutas absolutas.\n• Los dos puntos se usan como delimitador.\nSi quisiéramos incluir la carpeta /usr/local/sbin en el PATH para usuarios habituales,\nmodificaremos la línea para que se vea así:\n(...)\nelse\nPATH=\"/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/usr/local/sbin\"\nfi\nexport PATH\nAhora podemos ver cómo cambia el valor de la variable cuando entramos como usuario\nregular:\n# su - carol\n$ echo $PATH\n/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/usr/local/sbin\nNOTE\nTambién podríamos haber añadido /usr/local/sbin al PATH del usuario en\nla \nlínea \nde \ncomandos \no \nbien \nPATH=/usr/local/sbin:$PATH \no\nPATH=$PATH:/usr/local/sbin — el primero hace que /usr/local/sbin\nsea el primer directorio en el que se busquen archivos ejecutables; el segundo\nhace que sea el último.\nPS1\nEsta variable almacena el valor del indicador Bash. En la siguiente parte de código (también de\n/etc/profile), la sentencia if comprueba la identidad del usuario y en consecuencia brinda\nun indicador muy discreto ( # para root o $ para usuarios regulares):\nif [ \"`id -u`\" -eq 0 ]; then\nPS1='# '\nelse\nPS1='$ '\nfi\nNOTE\nEl id de root es 0. Conviértete en root y compruébalo tú mismo con id -u.\nOtras variables de aviso incluyen:\nPS2\nNormalmente se establece en > y se usa como un mensaje de continuidad para comandos\nlargos de varias líneas.\nPS3\nUsado como el indicador para el comando select.\nPS4\nNormalmente se establece en + y se usa para la depuración.\nSHELL\nEsta variable almacena la ruta absoluta del shell actual:\n$ echo $SHELL\n/bin/bash\nUSER\nEsto almacena el nombre del usuario actual:\n$ echo $USER\ncarol"

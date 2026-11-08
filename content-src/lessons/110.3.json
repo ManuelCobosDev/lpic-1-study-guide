@@ -5,22 +5,45 @@
   "title": "Protección de datos mediante cifrado",
   "version": "1.0.0",
   "language": "es",
-  "estimatedMinutes": 30,
+  "estimatedMinutes": 40,
   "objectives": [
-    "Criptografía asimétrica y protocolo OpenSSH 2.0, algoritmos de clave (RSA, DSA, ECDSA, ED25519), gestión de claves de cliente y servidor (~/.ssh/authorized_keys y known_hosts), ssh-agent y ssh-add, túneles de puertos (local -L, remoto -R y X11 -X/-Y), arquitectura de GnuPG (~/.gnupg/ y pubring.kbx), generación y revocación de claves GPG, exportación/importación con armadura ASCII, cifrado/descifrado y firma digital (--sign, --clearsign, --verify).",
-    "Dominio técnico de las herramientas y configuración del subtema 110.3"
+    "Dominar los principios de criptografía asimétrica y el protocolo OpenSSH 2.0.",
+    "Generar, administrar y desplegar pares de claves SSH (RSA, ECDSA, ED25519) con ssh-keygen y ssh-copy-id.",
+    "Asegurar los permisos y conocer los archivos críticos de autenticación en ~/.ssh/ y /etc/ssh/.",
+    "Optimizar el acceso interactivo con el agente de autenticación ssh-agent y el comando ssh-add.",
+    "Configurar túneles de red cifrados mediante reenvío de puertos local (-L), remoto (-R) y reenvío gráfico X11 (-X/-Y).",
+    "Administrar el llavero de GnuPG (~/.gnupg/): generación de claves, certificados de revocación, armaduras ASCII, cifrado/descifrado y los tres tipos de firmas digitales."
   ],
   "keyTerms": [
     "Criptografía Asimétrica",
     "OpenSSH",
     "Host Key",
+    "known_hosts",
+    "authorized_keys",
     "ssh-agent",
-    "Port Forwarding (Túnel SSH)",
-    "GnuPG (GPG)",
-    "ASCII Armor"
+    "ssh-add",
+    "Túnel Local (-L)",
+    "Túnel Remoto (-R)",
+    "Reenvío X11 (-X / -Y)",
+    "GnuPG",
+    "~/.gnupg/",
+    "pubring.kbx",
+    "Certificado de Revocación",
+    "Web of Trust",
+    "ASCII Armor",
+    "clearsign",
+    "detach-sign"
   ],
-  "commands": [],
-  "placeholder": true,
+  "commands": [
+    "ssh",
+    "ssh-keygen",
+    "ssh-copy-id",
+    "ssh-agent",
+    "ssh-add",
+    "gpg",
+    "gpg-agent"
+  ],
+  "placeholder": false,
   "slides": [
     {
       "id": "110.3-slide-1",
@@ -31,7 +54,17 @@
         {
           "type": "heading",
           "level": 1,
-          "text": "Protección de datos mediante cifrado"
+          "text": "Tema 110.3: Protección de datos mediante cifrado"
+        },
+        {
+          "type": "paragraph",
+          "text": "El subtema 110.3 es el de mayor peso oficial en el Topic 110 (peso 4) dentro del examen LPIC-1 102-500. Abarca el uso práctico e intensivo de dos pilares de seguridad fundamentales en GNU/Linux: la suite OpenSSH para comunicaciones remotas seguras y túneles de red, y GnuPG (GPG) para cifrado, firma digital y gestión de confianza."
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Importancia en el examen 102",
+          "content": "Con 4 preguntas garantizadas en el examen, es imprescindible dominar las banderas de ssh, ssh-keygen, ssh-add y gpg, la estructura y permisos exactos de ~/.ssh/ y ~/.gnupg/, y la sintaxis de reenvío de puertos local (-L) y remoto (-R)."
         }
       ]
     },
@@ -44,7 +77,26 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Criptografía Asimétrica y el Protocolo SSH 2.0"
+          "text": "Fundamentos de claves públicas y privadas"
+        },
+        {
+          "type": "paragraph",
+          "text": "La criptografía asimétrica utiliza un par de claves matemáticamente vinculadas que resuelven los problemas de transmisión insegura de contraseñas inherentes a protocolos legados como telnet o rlogin:"
+        },
+        {
+          "type": "table",
+          "headers": ["Elemento criptográfico", "Acceso y Visibilidad", "Funcionalidad primordial"],
+          "rows": [
+            ["Clave Pública (Public Key)", "Pública (se comparte con el mundo)", "Se utiliza para CIFRAR datos destinados al propietario y para VERIFICAR firmas digitales generadas por este."],
+            ["Clave Privada (Private Key)", "Secreta (custodiada bajo contraseña)", "Se utiliza para DESCIFRAR los datos recibidos y para FIRMAR digitalmente mensajes y autenticaciones."]
+          ],
+          "caption": "Mecanismo asimétrico en OpenSSH y GnuPG"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Propiedades de seguridad evaluadas en LPIC-1",
+          "content": "• **Confidencialidad**: Solo quien posee la clave privada puede leer el mensaje cifrado con la clave pública.\n• **Autenticidad e Integridad**: Si un mensaje se verifica con la clave pública del emisor, se garantiza que solo el poseedor de la clave privada lo creó y que no ha sido alterado.\n• **No repudio**: El emisor no puede negar haber firmado el mensaje."
         }
       ]
     },
@@ -57,7 +109,27 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Algoritmos de Claves SSH: RSA, DSA, ECDSA y ED25519"
+          "text": "Algoritmos criptográficos soportados por OpenSSH"
+        },
+        {
+          "type": "paragraph",
+          "text": "OpenSSH implementa diferentes algoritmos asimétricos con marcadas diferencias en longitud de clave, rendimiento y fortaleza de seguridad:"
+        },
+        {
+          "type": "table",
+          "headers": ["Algoritmo", "Parámetro -t", "Tamaño típico de clave", "Estado y Recomendación LPIC-1"],
+          "rows": [
+            ["RSA", "-t rsa", "2048 o 4096 bits", "Ampliamente soportado y compatible. Se desaconsejan tamaños inferiores a 2048 bits."],
+            ["DSA", "-t dsa", "Exactamente 1024 bits", "OBSOLETO y considerado inseguro. Deshabilitado por defecto en versiones modernas de OpenSSH."],
+            ["ECDSA", "-t ecdsa", "256, 384 o 521 bits", "Basado en curvas elípticas estándar NIST. Claves cortas con alta seguridad."],
+            ["ED25519", "-t ed25519", "Fijo de 256 bits", "Estándar moderno más recomendado. Alta velocidad de firma, curva no manipulada y máxima resistencia criptográfica."]
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Recomendación actual",
+          "content": "Para servidores y clientes modernos, la recomendación oficial es generar claves Ed25519 mediante 'ssh-keygen -t ed25519' o RSA de 4096 bits con 'ssh-keygen -t rsa -b 4096'."
         }
       ]
     },
@@ -70,7 +142,34 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Generación de Claves de Usuario con ssh-keygen"
+          "text": "Comando ssh-keygen y sus opciones fundamentales"
+        },
+        {
+          "type": "paragraph",
+          "text": "La herramienta `ssh-keygen` crea, gestiona y convierte pares de claves de autenticación:"
+        },
+        {
+          "type": "table",
+          "headers": ["Bandera", "Propósito", "Ejemplo práctico"],
+          "rows": [
+            ["-t <algoritmo>", "Especifica el tipo de clave criptográfica (rsa, dsa, ecdsa, ed25519).", "ssh-keygen -t ed25519"],
+            ["-b <bits>", "Especifica el número de bits del módulo (para RSA o ECDSA).", "ssh-keygen -t rsa -b 4096"],
+            ["-f <archivo>", "Ruta y nombre del archivo de clave privada generado.", "ssh-keygen -t ed25519 -f ~/.ssh/id_servidor"],
+            ["-N <passphrase>", "Establece la frase de paso (passphrase) desde la línea de comandos (-N '' para clave sin contraseña).", "ssh-keygen -N '' -f ~/.ssh/id_backup"],
+            ["-p", "Cambia la frase de paso de un archivo de clave privada existente.", "ssh-keygen -p -f ~/.ssh/id_rsa"],
+            ["-l", "Muestra la huella digital (fingerprint) de un archivo de clave especificado con -f.", "ssh-keygen -l -f ~/.ssh/id_ed25519.pub"],
+            ["-y", "Lee un archivo de clave privada OpenSSH y muestra su clave pública correspondiente.", "ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub"]
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "ssh-keygen -t ed25519 -C \"ana@lpic1.local\"",
+              "output": "Generating public/private ed25519 key pair.\nEnter file in which to save the key (/home/ana/.ssh/id_ed25519): \nEnter passphrase (empty for no passphrase): \nEnter same passphrase again: \nYour identification has been saved in /home/ana/.ssh/id_ed25519\nYour public key has been saved in /home/ana/.ssh/id_ed25519.pub\nThe key fingerprint is:\nSHA256:7uK...Z4 ana@lpic1.local"
+            }
+          ]
         }
       ]
     },
@@ -83,7 +182,40 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "El Directorio ~/.ssh/ y Archivos de Autenticación"
+          "text": "Estructura y permisos estrictos del directorio ~/.ssh/"
+        },
+        {
+          "type": "paragraph",
+          "text": "OpenSSH implementa una política inflexible de permisos: si los archivos de clave privada o el directorio `.ssh` son legibles por otros usuarios, el cliente aborta la conexión inmediatamente:"
+        },
+        {
+          "type": "table",
+          "headers": ["Archivo / Directorio", "Permiso numérico", "Permiso simbólico", "Función técnica"],
+          "rows": [
+            ["~/.ssh/", "0700", "drwx------", "Directorio personal de configuración y claves SSH."],
+            ["~/.ssh/id_rsa, id_dsa, id_ecdsa, id_ed25519", "0600", "-rw-------", "Claves PRIVADAS del usuario. NUNCA deben ser compartidas ni legibles por otros."],
+            ["id_rsa.pub, id_dsa.pub, id_ecdsa.pub, id_ed25519.pub", "0644", "-rw-r--r--", "Claves PÚBLICAS del usuario. Se copian a servidores remotos (con ssh-copy-id o scp)."],
+            ["authorized_keys", "0600 (o 0644)", "-rw-------", "Almacena las claves públicas autorizadas para iniciar sesión en esta cuenta."],
+            ["~/.ssh/known_hosts y /etc/ssh/ssh_known_hosts", "0644", "-rw-r--r--", "Registra las claves públicas de los servidores (Host Keys) conocidas por el usuario o globalmente (/etc/ssh/ssh_known_hosts)."],
+            ["/etc/ssh/ssh_host_rsa_key, ssh_host_dsa_key, ssh_host_ecdsa_key, ssh_host_ed25519_key", "0600 (priv) / 0644 (.pub)", "-rw-------", "Pares de claves de host del servidor SSH (junto a sus respectivos .pub: ssh_host_rsa_key.pub, ssh_host_dsa_key.pub, ssh_host_ecdsa_key.pub, ssh_host_ed25519_key.pub)."],
+            ["config", "0600", "-rw-------", "Archivo de configuración del cliente SSH (alias de hosts, puertos, usuarios)."]
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "ssh-copy-id -i ~/.ssh/id_ed25519.pub ana@servidor.remoto",
+              "output": "/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: \"/home/ana/.ssh/id_ed25519.pub\"\nana@servidor.remoto's password: \nNumber of key(s) added: 1\nNow try logging into the machine, with:   \"ssh 'ana@servidor.remoto'\""
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "ssh-copy-id en LPIC-1",
+          "content": "'ssh-copy-id' automatiza el aprovisionamiento de claves públicas: crea el directorio ~/.ssh remoto si no existe, asigna permisos restrictivos correctos y añade la clave pública al final de ~/.ssh/authorized_keys."
         }
       ]
     },
@@ -96,7 +228,27 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Claves del Servidor (Host Keys) y Alerta Man-in-the-Middle"
+          "text": "Verificación de identidad de host y archivo known_hosts"
+        },
+        {
+          "type": "paragraph",
+          "text": "Durante la instalación de OpenSSH Server, se generan pares de claves de servidor en `/etc/ssh/ssh_host_*_key` y `.pub`. En la primera conexión, el cliente solicita confirmar la huella digital y la almacena en `~/.ssh/known_hosts` (modelo TOFU: Trust On First Use):"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "ssh servidor.empresa.com",
+              "output": "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\nIT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\nSomeone could be eavesdropping on you right now (man-in-the-middle attack)!\nHost key verification failed."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Resolución de alerta MITM",
+          "content": "Si el servidor fue reinstalado legítimamente y su Host Key cambió, la clave antigua almacenada en ~/.ssh/known_hosts debe ser eliminada mediante:\n$ ssh-keygen -R servidor.empresa.com"
         }
       ]
     },
@@ -109,7 +261,37 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Gestión de Claves en Memoria: ssh-agent y ssh-add"
+          "text": "Agente de autenticación en memoria para sesiones fluidas"
+        },
+        {
+          "type": "paragraph",
+          "text": "`ssh-agent` es un demonio auxiliar que retiene en memoria RAM las claves privadas descifradas, evitando que el usuario reingrese la frase de paso en cada conexión SSH subsiguiente:"
+        },
+        {
+          "type": "table",
+          "headers": ["Comando / Variable", "Función técnica en la sesión"],
+          "rows": [
+            ["eval $(ssh-agent)", "Inicia ssh-agent en segundo plano y exporta las variables de entorno a la shell activa."],
+            ["SSH_AUTH_SOCK", "Variable de entorno que apunta al socket UNIX de comunicación con el agente."],
+            ["SSH_AGENT_PID", "Variable de entorno que almacena el identificador de proceso (PID) del agente."],
+            ["ssh-agent -k", "Finaliza el proceso del agente y desvincula las variables de entorno."],
+            ["ssh-add", "Añade por defecto las claves privadas estándar (~/.ssh/id_rsa, id_ed25519) solicitando la passphrase una sola vez."],
+            ["ssh-add -l", "Lista las huellas digitales (fingerprints) de las claves cargadas en memoria."],
+            ["ssh-add -L", "Lista las claves públicas completas cargadas en el agente."],
+            ["ssh-add -d <clave>", "Descarga y elimina una clave específica de la memoria del agente."],
+            ["ssh-add -D", "Purga y elimina TODAS las claves cargadas en memoria."],
+            ["ssh-add -t <tiempo>", "Establece el tiempo máximo de permanencia de la clave en memoria (ej. ssh-add -t 2h)." ]
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "eval $(ssh-agent) && ssh-add -t 1h ~/.ssh/id_ed25519",
+              "output": "Agent pid 3140\nEnter passphrase for /home/ana/.ssh/id_ed25519: \nIdentity added: /home/ana/.ssh/id_ed25519 (ana@lpic1.local)\nLifetime set to 3600 seconds"
+            }
+          ]
         }
       ]
     },
@@ -122,7 +304,35 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Túneles de Puertos SSH: Reenvío Local (-L)"
+          "text": "Port Forwarding Local: Acceso seguro a servicios remotos"
+        },
+        {
+          "type": "paragraph",
+          "text": "El reenvío local abre un puerto en el equipo local del cliente. Cualquier paquete entrante a ese puerto es cifrado y reenviado por el túnel SSH hacia el servidor remoto, el cual lo entrega al destino final:"
+        },
+        {
+          "type": "table",
+          "headers": ["Parámetro sintáctico", "Ejemplo de sintaxis", "Descripción"],
+          "rows": [
+            ["Formato general", "ssh -L [ip_escucha:]puerto_local:host_destino:puerto_remoto usuario@servidor_ssh", "Mapea peticiones del puerto local hacia host_destino a través del servidor SSH."],
+            ["Banderas auxiliares", "-N (sin comandos remotos, solo túnel) y -f (bifurca a segundo plano tras autenticar)", "Ideal para dejar túneles activos de forma desatendida."]
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "ssh -f -N -L 8080:localhost:80 ana@servidor.remoto",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Análisis del ejemplo",
+          "content": "El comando anterior abre el puerto 8080 en la máquina local. Cuando el usuario navega a 'http://localhost:8080', el tráfico viaja cifrado por SSH hasta 'servidor.remoto', quien conecta internamente al puerto 80 (servidor web no expuesto a internet)."
         }
       ]
     },
@@ -135,7 +345,31 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Túnel Remoto (-R) y Reenvío Gráfico X11 (-X / -Y)"
+          "text": "Reenvío remoto y aplicaciones gráficas sobre SSH"
+        },
+        {
+          "type": "paragraph",
+          "text": "Además del reenvío local, OpenSSH permite túneles inversos y la transmisión segura de ventanas gráficas X11:"
+        },
+        {
+          "type": "table",
+          "headers": ["Mecanismo", "Sintaxis / Opción", "Comportamiento"],
+          "rows": [
+            ["Reenvío Remoto (Reverso)", "ssh -R [ip_escucha:]puerto_remoto:host_destino:puerto_local usuario@servidor", "Abre un puerto en el servidor remoto. Las conexiones recibidas allí viajan en sentido inverso hacia la máquina local interna del cliente (sorteando NAT/firewalls)."],
+            ["Reenvío X11 Untrusted", "ssh -X usuario@servidor", "Habilita el reenvío gráfico X11 aplicando controles estrictos de seguridad de la extensión Security (evita capturas de teclado indebidas por clientes no confiables)."],
+            ["Reenvío X11 Trusted", "ssh -Y usuario@servidor", "Habilita reenvío X11 de total confianza (trusted). Evita restricciones de seguridad si la aplicación falla bajo -X."],
+            ["Directiva en servidor", "X11Forwarding yes", "Debe estar activa en '/etc/ssh/sshd_config' para permitir la exportación de la variable DISPLAY."]
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "ssh -X ana@servidor.remoto xclock",
+              "output": ""
+            }
+          ]
         }
       ]
     },
@@ -148,7 +382,22 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "GnuPG: Arquitectura y el Directorio ~/.gnupg/"
+          "text": "Arquitectura OpenPGP y componentes del llavero ~/.gnupg/"
+        },
+        {
+          "type": "paragraph",
+          "text": "GnuPG (GNU Privacy Guard) es la implementación libre del estándar OpenPGP (RFC 4880). Todos los llaveros, firmas y configuraciones se custodian en el directorio del usuario `~/.gnupg/`:"
+        },
+        {
+          "type": "table",
+          "headers": ["Archivo / Componente", "Permisos", "Función en GnuPG"],
+          "rows": [
+            ["~/.gnupg/", "0700 (drwx------)", "Directorio raíz de GnuPG. Permisos estrictos obligatorios."],
+            ["pubring.kbx", "0600 (-rw-------)", "Llavero moderno (keybox) que almacena claves públicas y metadatos desde GnuPG 2.1+ (sustituye a los antiguos pubring.gpg y secring.gpg)."],
+            ["trustdb.gpg", "0600 (-rw-------)", "Base de datos de confianza (Web of Trust) con las valoraciones asignadas a las firmas de terceros."],
+            ["openpgp-revocs.d/", "0700 (drwx------)", "Directorio donde GnuPG 2.1+ genera automáticamente un certificado de revocación preventiva al crear cualquier clave."],
+            ["gpg-agent", "Demonio en memoria", "Agente que gestiona y retiene en memoria la contraseña de las claves privadas GPG (mediante pinentry)."]
+          ]
         }
       ]
     },
@@ -161,7 +410,36 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Generación y Revocación de Claves con gpg"
+          "text": "Creación de pares de claves y certificados de revocación"
+        },
+        {
+          "type": "paragraph",
+          "text": "La generación de pares de claves en GPG se realiza a través de asistentes interactivos:"
+        },
+        {
+          "type": "table",
+          "headers": ["Comando", "Tipo de asistente", "Opciones configurables"],
+          "rows": [
+            ["gpg --gen-key", "Asistente rápido simplificado", "Solicita nombre real, dirección de correo y contraseña. Selecciona automáticamente RSA de 3072 bits o ECC con vigencia por defecto."],
+            ["gpg --full-generate-key", "Asistente experto completo", "Permite elegir algoritmo (RSA, DSA/Elgamal, ECC), longitud de clave (1024 a 4096 bits), fecha de expiración y subclaves dedicadas."],
+            ["gpg --gen-revoke <uid>", "Generador de certificado de revocación", "Crea un archivo ASCII que permite invalidar la clave pública en los servidores de claves si la clave privada se pierde o se ve comprometida."]
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "gpg --output mi_revocacion.asc --gen-revoke ana@empresa.com",
+              "output": "sec  rsa3072/1234ABCD 2024-03-01 Ana García <ana@empresa.com>\n¿Crear un certificado de revocación para esta clave? (s/N) s\nPor favor elija el motivo de revocación:\n  1 = La clave ha sido comprometida\n  2 = La clave ha sido reemplazada\nRevocation certificate created."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Certificado de revocación en el examen",
+          "content": "Un certificado de revocación debe generarse SIEMPRE inmediatamente después de crear la clave, guardándose en un medio seguro fuera de línea (offline). Si la clave privada se extravía, no se podrá generar el certificado posteriormente."
         }
       ]
     },
@@ -174,7 +452,26 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Gestión de Llaveros, Exportación e Importación GPG"
+          "text": "Manejo de llaveros, armadura ASCII y servidores de claves"
+        },
+        {
+          "type": "paragraph",
+          "text": "Para intercambiar material criptográfico por correo o páginas web, GPG convierte los datos binarios a texto plano mediante Armadura ASCII (`--armor` o `-a`):"
+        },
+        {
+          "type": "table",
+          "headers": ["Operación", "Comando GPG", "Efecto"],
+          "rows": [
+            ["Listar claves públicas", "gpg -k (o gpg --list-keys)", "Muestra claves públicas, UIDs y fechas de expiración en ~/.gnupg/pubring.kbx."],
+            ["Listar claves privadas", "gpg -K (o gpg --list-secret-keys)", "Muestra claves privadas existentes en el llavero."],
+            ["Ver huella digital", "gpg --fingerprint <uid>", "Muestra los 40 dígitos hexadecimales de la huella."],
+            ["Editar clave / confianza", "gpg --edit-key <uid>", "Abre el menú interactivo para firmar claves (sign), cambiar caducidad (expire) o nivel de confianza (trust en trustdb.gpg)."],
+            ["Exportar clave pública ASCII", "gpg --armor --export <uid> > clave_pub.asc", "Exporta la clave pública con cabeceras PGP legibles."],
+            ["Exportar clave privada / subclaves", "gpg --armor --export-secret-keys <uid>\n(o --export-secret-subkeys)", "Exporta la clave privada completa o únicamente las subclaves secretas protegidas por contraseña ( con gpg-agent --daemon / --sh / --csh / --supervised / --server )."],
+            ["Importar clave", "gpg --import <archivo.asc>", "Añade una clave pública, privada o certificado de ~/.gnupg/openpgp-revocs.d al llavero local."],
+            ["Publicar en servidor de claves", "gpg --keyserver hkp://keyserver.ubuntu.com --send-keys <keyid>", "Envía la clave pública a un keyserver mundial."],
+            ["Descargar de servidor de claves", "gpg --keyserver hkp://keyserver.ubuntu.com --recv-keys <keyid>", "Descarga la clave pública indicada mediante su Key-ID."]
+          ]
         }
       ]
     },
@@ -187,7 +484,36 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Cifrado y Descifrado de Archivos con GPG"
+          "text": "Flujo de trabajo de cifrado asimétrico y simétrico"
+        },
+        {
+          "type": "paragraph",
+          "text": "GnuPG permite proteger archivos utilizando la clave pública del destinatario (asimétrico) o mediante una contraseña compartida (simétrico):"
+        },
+        {
+          "type": "table",
+          "headers": ["Acción", "Sintaxis de comando", "Detalle técnico"],
+          "rows": [
+            ["Cifrado Asimétrico", "gpg -e -r destinatario archivo\n(o --encrypt --recipient / --default-recipient)", "Cifra con la clave pública del destinatario (o del destinatario por defecto --default-recipient). Solo su clave privada correspondiente podrá abrirlo."],
+            ["Cifrado con Armadura ASCII", "gpg -ea -r destinatario archivo", "Genera un archivo '.asc' de texto plano con bloques ASCII Base64."],
+            ["Cifrado Simétrico", "gpg -c archivo\n(o --symmetric)", "Cifra utilizando un algoritmo simétrico robusto (AES-256) mediante una frase de paso compartida."],
+            ["Descifrado", "gpg -d archivo.gpg\n(o --decrypt)", "Descifra el archivo volcando el contenido a pantalla (o a un archivo de salida mediante '-o archivo_dest')."]
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "gpg -e -r carol@empresa.com balances.pdf",
+              "output": ""
+            },
+            {
+              "prompt": "$",
+              "command": "ls -l balances.pdf*",
+              "output": "-rw-r--r-- 1 ana ana 412030 Mar 10 10:15 balances.pdf\n-rw-r--r-- 1 ana ana 412210 Mar 10 10:16 balances.pdf.gpg"
+            }
+          ]
         }
       ]
     },
@@ -200,7 +526,26 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Firma Digital y Verificación con GPG"
+          "text": "Los tres tipos de firma digital en OpenPGP"
+        },
+        {
+          "type": "paragraph",
+          "text": "La firma digital avala la autoría y certifica que el archivo no ha sufrido alteraciones. GnuPG contempla tres métodos distintos de firma:"
+        },
+        {
+          "type": "table",
+          "headers": ["Tipo de firma", "Opción GPG", "Estructura del archivo resultante"],
+          "rows": [
+            ["Firma Binaria Comprimida", "--sign (o -s)", "Empaqueta los datos del archivo y la firma en un único fichero binario '.gpg' no legible directamente."],
+            ["Firma en Texto Claro (Clearsign)", "--clearsign", "Mantiene el texto original perfectamente legible para el ser humano, añadiendo cabeceras PGP y el bloque de firma al final (archivo '.asc')."],
+            ["Firma Separada (Detached)", "--detach-sign (o -b)", "Crea un archivo de firma independiente (ej. 'paquete.tar.gz.sig') sin alterar en absoluto el archivo original. Ideal para descargas de software."]
+          ]
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "title": "Comandos de firma y verificación",
+          "code": "# 1. Crear firma en texto claro\ngpg --clearsign aviso.txt\n\n# 2. Crear firma separada (detached)\ngpg --detach-sign release.tar.gz\n\n# 3. Verificar firma en texto claro o empaquetada\ngpg --verify aviso.txt.asc\n\n# 4. Verificar firma separada contra el original\ngpg --verify release.tar.gz.sig release.tar.gz"
         }
       ]
     },
@@ -213,7 +558,22 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Comparativa Integral: OpenSSH frente a GnuPG"
+          "text": "Diferencias funcionales entre OpenSSH y GnuPG"
+        },
+        {
+          "type": "paragraph",
+          "text": "Aunque ambas herramientas se fundamentan en criptografía asimétrica, resuelven necesidades distintas en la administración de sistemas:"
+        },
+        {
+          "type": "table",
+          "headers": ["Aspecto", "OpenSSH", "GnuPG (OpenPGP)"],
+          "rows": [
+            ["Objetivo primordial", "Canal de comunicación interactivo seguro y túneles de red.", "Cifrado persistente de archivos en reposo y firmas digitales de mensajes."],
+            ["Directorio de configuración", "~/.ssh/ (permisos 0700)", "~/.gnupg/ (permisos 0700)"],
+            ["Gestión de claves en memoria", "ssh-agent y ssh-add", "gpg-agent (con pinentry)"],
+            ["Modelo de confianza", "Trust On First Use (TOFU) mediante ~/.ssh/known_hosts.", "Web of Trust (Red de Confianza descentralizada mediante firmas cruzadas)."],
+            ["Formato de claves públicas", "Formato de una sola línea OpenSSH (ej. 'ssh-ed25519 AAAA... comment').", "Bloque ASCII con armadura (-----BEGIN PGP PUBLIC KEY BLOCK-----) o binario."]
+          ]
         }
       ]
     },
@@ -226,7 +586,20 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Flashcards de Memorización — Seguridad 110.3"
+          "text": "Tarjetas rápidas de repaso — Examen LPIC-1 102"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**¿Qué permisos debe tener la clave privada SSH?** -> `0600` (`-rw-------`). Si tiene permisos abiertos, SSH aborta.",
+            "**¿Qué algoritmo de curva elíptica moderna es el más recomendado en SSH?** -> `ed25519` (`ssh-keygen -t ed25519`).",
+            "**¿Cómo eliminar una host key de known_hosts tras una reinstalación?** -> `ssh-keygen -R <hostname_o_ip>`.",
+            "**¿Cómo opera el agente SSH en memoria?** -> `eval $(ssh-agent)` exporta `SSH_AUTH_SOCK`, `ssh-add` carga claves y `ssh-add -D` purga todas.",
+            "**¿Qué opción de ssh establece un túnel de reenvío local?** -> `-L` (ej. `ssh -L 8080:localhost:80 user@host`).",
+            "**¿Cuáles son los tres tipos de firma digital en GPG?** -> Binaria `--sign`, texto claro `--clearsign`, y separada `--detach-sign` (`-b`).",
+            "**¿Qué archivo almacena el llavero en GnuPG 2.1+?** -> `~/.gnupg/pubring.kbx` con permisos `0600`."
+          ]
         }
       ]
     },
@@ -239,7 +612,38 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicio Práctico Guiado: Cifrado y Verificación GPG"
+          "text": "Misión paso a paso: Firma y Cifrado GPG"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "Generar par de claves",
+              "description": "Crea una clave rápida con gpg indicando tu nombre y correo."
+            },
+            {
+              "number": 2,
+              "title": "Generar certificado de revocación",
+              "description": "Crea el certificado preventivo para almacenarlo fuera de línea."
+            },
+            {
+              "number": 3,
+              "title": "Firmar documento con clearsign",
+              "description": "Genera una firma en texto claro legible para el documento 'comunicado.txt'."
+            },
+            {
+              "number": 4,
+              "title": "Verificar integridad de la firma",
+              "description": "Comprueba con gpg --verify la validez del mensaje firmado."
+            }
+          ]
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "title": "Comandos de ejecución en terminal",
+          "code": "# 1. Generar par de claves\ngpg --gen-key\n\n# 2. Generar revocación preventiva\ngpg --output revoco.asc --gen-revoke ana@lpic.local\n\n# 3. Firmar en texto claro\necho 'Servidor actualizado a v2.4' > comunicado.txt\ngpg --clearsign comunicado.txt\n\n# 4. Verificar firma\ngpg --verify comunicado.txt.asc"
         }
       ]
     },
@@ -252,7 +656,27 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Reto de Examen: Diagnóstico de Permisos en Clave Privada SSH"
+          "text": "Escenario de error en conexión SSH"
+        },
+        {
+          "type": "paragraph",
+          "text": "Al intentar conectarse al servidor remoto, un administrador recibe el siguiente mensaje de error:"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "ssh -i ~/.ssh/id_rsa ana@servidor.empresa.com",
+              "output": "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\nPermissions 0644 for '/home/ana/.ssh/id_rsa' are too open.\nIt is required that your private key files are NOT accessible by others.\nThis private key will be ignored.\nLoad key \"/home/ana/.ssh/id_rsa\": bad permissions\nana@servidor.empresa.com: Permission denied (publickey)."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Causa raíz y solución requerida",
+          "content": "• **Causa**: La clave privada tiene permisos 0644 (-rw-r--r--), permitiendo a otros usuarios del sistema local leer el archivo.\n• **Solución obligatoria**: Restringir los permisos del archivo de clave privada exclusivamente al propietario:\n$ chmod 600 ~/.ssh/id_rsa\n\nY comprobar que el directorio ~/.ssh/ tenga permisos 0700:\n$ chmod 700 ~/.ssh"
         }
       ]
     },
@@ -265,7 +689,26 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Resumen y Trampas de Examen — Tema 110.3"
+          "text": "Puntos de control indispensables — LPIC-1 102"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**ssh-keygen**: `-t` (algoritmo: ed25519, rsa), `-b` (bits), `-f` (archivo salida), `-p` (cambiar passphrase), `-l` (fingerprint), `-y` (clave pública).",
+            "**Permisos en ~/.ssh/**: directorio 0700, clave privada 0600, clave pública 0644, `authorized_keys` 0600, `known_hosts` 0644.",
+            "**Claves de host y MITM**: `/etc/ssh/ssh_host_*` y `known_hosts`; resolución de advertencias con `ssh-keygen -R`.",
+            "**ssh-agent y ssh-add**: variables `SSH_AUTH_SOCK` y `SSH_AGENT_PID`, flags `-l` (huellas), `-D` (purgar) y `-k` (terminar).",
+            "**Túneles SSH**: `-L` (reenvío local), `-R` (reenvío remoto), `-X`/`-Y` (gráficos X11) y flags auxiliares `-N` y `-f`.",
+            "**GnuPG y llaveros**: `~/.gnupg/` (0700), `pubring.kbx`, certificados de revocación (`--gen-revoke`) y armadura ASCII (`--armor` / `-a`).",
+            "**Firmas y cifrado GPG**: `--sign` (binaria), `--clearsign` (texto claro), `--detach-sign` (separada); cifrado `-e -r` y descifrado `-d`."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Trampa clásica de examen sobre túneles",
+          "content": "Preguntan por la sintaxis de un túnel para acceder al puerto web 80 de una máquina interna '10.0.0.5' usando como salto el servidor 'gateway.org'.\nSintaxis correcta: 'ssh -L 8080:10.0.0.5:80 usuario@gateway.org'. El puerto local (8080) va siempre antes de la máquina y puerto remotos."
         }
       ]
     }

@@ -11,15 +11,29 @@
     "Dominio técnico de las herramientas y configuración del subtema 101.3"
   ],
   "keyTerms": [
-    "daemon",
     "runlevel",
     "target",
-    "init"
+    "default.target",
+    "inittab",
+    "systemd",
+    "SysVinit",
+    "acpid",
+    "/etc/systemd/logind.conf",
+    "/etc/shutdown.allow",
+    "SIGINT",
+    "/usr/lib/systemd/"
   ],
   "commands": [
-    "runlevel",
     "systemctl",
-    "shutdown"
+    "init",
+    "telinit",
+    "shutdown",
+    "reboot",
+    "halt",
+    "poweroff",
+    "runlevel",
+    "wall",
+    "sulogin"
   ],
   "placeholder": false,
   "slides": [
@@ -124,8 +138,8 @@
         {
           "type": "code",
           "language": "bash",
-          "code": "",
-          "title": "/etc/inittab"
+          "code": "# Nivel de ejecución por defecto\nid:3:initdefault:\n\n# Script de inicialización global del sistema\nsi::sysinit:/etc/rc.d/rc.sysinit\n\n# Modo monousuario de rescate con solicitud de password de root\n~:S:wait:/sbin/sulogin\n\n# Combinación Ctrl+Alt+Supr protegida con shutdown -a\nca::ctrlaltdel:/sbin/shutdown -a -r now\n\n# Terminales tty en modo texto\n1:2345:respawn:/sbin/mingetty tty1",
+          "title": "Ejemplo maestro de /etc/inittab (SysVinit)"
         },
         {
           "type": "html",
@@ -135,7 +149,7 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 CLAVE TOP DE EXAMEN: En la línea 'initdefault', el cuarto campo (process) se deja SIEMPRE VACÍO (ej: id:3:initdefault:). Poner un comando o ruta ahí provoca un error de sintaxis."
+          "content": "🎯 Claves Top de Examen:\n1. initdefault NUNCA debe ser 0 ni 6 (provoca bucle infinito de reinicio o apagado inmediato).\n2. En modo monousuario (runlevel 1 o S), SysVinit ejecuta /sbin/sulogin para exigir la contraseña de root antes de permitir el acceso shell de mantenimiento.\n3. La acción ca::ctrlaltdel invoca shutdown con la opción -a para comprobar /etc/shutdown.allow."
         }
       ],
       "notes": "Explica la estructura de 4 campos separados por dos puntos: id : runlevels : action : process. Es evaluada frecuentemente."
@@ -232,8 +246,8 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Si editas un archivo de unidad en /etc/systemd/system/, debes ejecutar inmediatamente 'systemctl daemon-reload' para que systemd lo cargue en memoria."
+          "title": "Jerarquía de Rutas de Unidades según Especificación LPI",
+          "content": "🎯 Especificación Oficial LPI (Precedencia de Rutas de systemd):\n1. /etc/systemd/system/ — Prioridad Máxima. Archivos creados o modificados por el administrador.\n2. /run/systemd/system/ — Prioridad Media. Unidades volátiles creadas dinámicamente en tiempo de ejecución.\n3. /usr/lib/systemd/ (y /lib/systemd/system/) — Prioridad Base. Unidades provistas de fábrica por los paquetes de la distribución.\n💡 Si editas una unidad en /etc/systemd/system/, ejecuta siempre \"systemctl daemon-reload\"."
         }
       ],
       "notes": "Muestra los 7 tipos de unidades. El sufijo define el comportamiento del recurso."
@@ -509,7 +523,7 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 CLAVE TOP DE EXAMEN: Para que 'systemctl hibernate' funcione, el tamaño de la partición Swap DEBE ser al menos igual o mayor que la memoria RAM física (Swap >= RAM). Si no hay espacio suficiente para volcar la RAM, la hibernación fallará."
+          "content": "🎯 Claves Oficiales LPI de Energía:\n1. Memoria Swap: Para que \"systemctl hibernate\" funcione, el tamaño de la partición Swap DEBE ser igual o mayor que la RAM física (Swap >= RAM).\n2. Control sin acpid: En sistemas modernos con systemd sin el demonio clásico acpid, la respuesta a eventos de energía (botón de encendido, botón de suspensión o cierre de la tapa del portátil) se define en /etc/systemd/logind.conf y en el directorio /etc/systemd/logind.conf.d/ mediante parámetros como HandlePowerKey y HandleLidSwitch."
         }
       ],
       "notes": "Guión didáctico para clase:\n1. RESUMEN VISUAL DE LOS 3 MODOS:\n   - Suspend (S3): La RAM sigue alimentada. CPU y discos apagados. Despierta en 1 segundo. Si se acaba la batería, se pierde la sesión.\n   - Hibernate (S4): Vuelca toda la RAM al Swap y apaga el ordenador al 100%. Consumo 0 vatios. Puedes quitar la batería y no pasa nada. Despierta más lento porque tiene que leer el disco.\n   - Hybrid-Sleep: Guarda en Swap y a la vez deja la RAM encendida. Despierta rápido, pero si se corta la corriente tiene el salvavidas en el disco.\n2. PREGUNTA CLÁSICA DE EXAMEN LPIC-1:\n   - ¿Qué requisito de disco es indispensable para hibernar?\n   - Respuesta: Partición Swap con tamaño mayor o igual que la memoria RAM física.\n3. DEMONIO ACPID:\n   - Es el que escucha eventos del chasis (pulsar botón de power, cerrar la tapa del portátil, desenchufar el cargador)."
@@ -573,33 +587,38 @@
           "rows": [
             [
               "-h / -P / --poweroff",
-              "",
-              "🎯 Clave de Examen: Detiene los procesos y corta la energía eléctrica de la máquina."
+              "Apagado total",
+              "🎯 Clave de Examen: Detiene los procesos ordenadamente y corta la energía eléctrica de la máquina."
             ],
             [
               "-r / --reboot",
-              "",
-              "🎯 Clave de Examen: Reinicia el sistema operativo tras el apagado ordenado."
+              "Reinicio",
+              "🎯 Clave de Examen: Detiene los procesos y reinicia el sistema operativo de forma limpia."
+            ],
+            [
+              "-a",
+              "Control de acceso",
+              "🎯 Clave de Examen: Instruye a shutdown a consultar el archivo /etc/shutdown.allow. Solo los usuarios listados en dicho archivo (o root) tienen permiso para reiniciar el sistema mediante Ctrl+Alt+Supr."
             ],
             [
               "-H / --halt",
-              "",
-              "Detiene todos los procesos y el kernel, pero deja la placa base con corriente encendida."
+              "Detención de CPU",
+              "Detiene todos los procesos y para el kernel, pero deja la placa base con corriente encendida."
             ],
             [
               "-c",
-              "",
-              "🎯 Clave de Examen: Cancela un apagado programado que estaba en cuenta atrás."
+              "Cancelar apagado",
+              "🎯 Clave de Examen: Cancela un apagado o reinicio programado que estaba en cuenta atrás."
             ],
             [
               "+m / hh:mm / now",
-              "",
+              "Tiempo de espera",
               "Especificación de tiempo: +15 (en 15 minutos), 23:30 (a las 23:30 horas), now (inmediatamente, equivale a +0)."
             ],
             [
               "wall <mensaje>",
-              "",
-              "Difunde un mensaje de texto por terminal a TODOS los usuarios con sesión abierta simultáneamente."
+              "Aviso global",
+              "Difunde un mensaje de texto por terminal a TODOS los usuarios conectados simultáneamente."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -611,8 +630,8 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Cuando quedan 5 minutos para el apagado programado por shutdown, el sistema crea el archivo /etc/nologin para impedir que nuevos usuarios inicien sesión."
+          "title": "Secuencia de Señales en el Proceso de Apagado (shutdown)",
+          "content": "🎯 Secuencia cronológica del apagado:\n1. shutdown difunde la advertencia a los usuarios con wall y bloquea nuevos inicios de sesión (/run/nologin o /etc/nologin).\n2. El sistema envía primero la señal SIGTERM a todos los procesos (permitiendo a tareas interactivas capturar SIGINT) para que salven datos y cierren conexiones.\n3. Tras un periodo de gracia (unos segundos), envía la señal inapelable SIGKILL para liquidar cualquier proceso remanente.\n4. Finalmente desmonta todos los sistemas de archivos y sincroniza discos antes de llamar a poweroff o halt."
         }
       ],
       "notes": "Enseña la sintaxis de shutdown: 'shutdown -r +10 Advertencia'. Y el comando salvador 'shutdown -c' para cancelar."

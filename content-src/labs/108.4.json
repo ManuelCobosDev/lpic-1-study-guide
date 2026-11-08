@@ -5,15 +5,47 @@
   "estimatedMinutes": 30,
   "difficulty": "advanced",
   "type": "subtopic",
-  "placeholder": true,
+  "placeholder": false,
   "steps": [
     {
       "id": "step-108-4-1",
       "stepNumber": 1,
-      "title": "Misión 1: Configuración y verificación de 108.4",
-      "instruction": "Ejecuta los comandos fundamentales del objetivo 108.4 en tu entorno de pruebas Debian.",
-      "command": "man 108_4",
-      "expectedOutput": "El sistema despliega la documentación y sintaxis oficial de las herramientas."
+      "title": "Misión 1 — Diagnóstico integral del servicio CUPS e impresoras",
+      "instruction": "Inspecciona el estado global del subsistema de impresión de CUPS utilizando el comando lpstat con la opción que muestra el informe total del planificador, dispositivos y destinos.",
+      "command": "lpstat -t",
+      "expectedOutput": "scheduler is running\nsystem default destination: ...\ndevice for ...: ...\n... accepting requests since ...\nprinter ... is idle. enabled since ..."
+    },
+    {
+      "id": "step-108-4-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Configuración de impresora predeterminada y consulta PPD",
+      "instruction": "Establece para el usuario actual la impresora predeterminada mediante lpoptions y lista las opciones disponibles en el fichero PPD marcando la opción activa con asterisco (*).",
+      "command": "lpoptions -d office-mgr && lpoptions -p office-mgr -l",
+      "expectedOutput": "Se actualiza ~/.cups/lpoptions y se despliegan las opciones PPD (ej. PageSize/Media Size: *A4 Letter Legal)."
+    },
+    {
+      "id": "step-108-4-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Control de colas: detención de salida física con cupsdisable",
+      "instruction": "Simula una parada técnica por falta de consumibles deteniendo el envío físico hacia la impresora con cupsdisable (incluyendo un motivo con -r) y verifica que el estado cambia a disabled.",
+      "command": "sudo cupsdisable -r \"Falta de papel\" office-mgr && lpstat -p office-mgr",
+      "expectedOutput": "printer office-mgr disabled since ... - Falta de papel"
+    },
+    {
+      "id": "step-108-4-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Envío y comprobación de retención en spool con lp",
+      "instruction": "Envía un trabajo de impresión formateado en orientación horizontal (landscape) a la cola detenida y verifica con lpstat -o que el trabajo permanece encolado y aceptado en el spool.",
+      "command": "lp -d office-mgr -o landscape /etc/services && lpstat -o",
+      "expectedOutput": "request id is office-mgr-1 (1 file(s))\noffice-mgr-1 usuario ... (el trabajo permanece retenido en la cola)"
+    },
+    {
+      "id": "step-108-4-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Reanudación con cupsenable, cancelación y borrado de cola",
+      "instruction": "Reactiva la transmisión física con cupsenable, purga todos los trabajos de la cola con cancel -a y elimina la impresora del sistema con lpadmin -x.",
+      "command": "sudo cupsenable office-mgr && cancel -a office-mgr && sudo lpadmin -x office-mgr",
+      "expectedOutput": "La impresora es reactivada, los trabajos pendientes son cancelados y la cola queda desinstalada del subsistema CUPS."
     }
   ]
 }

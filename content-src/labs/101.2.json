@@ -19,16 +19,16 @@
       "id": "step-101-2-2",
       "stepNumber": 2,
       "title": "Misión 2 — Auditoría del Ring Buffer del Kernel con dmesg",
-      "instruction": "Cuando el kernel arranca, registra la detección de memoria, CPU y discos en un búfer circular de memoria viva llamado ring buffer.",
-      "command": "# Ver los primeros mensajes emitidos por el kernel\r\ndmesg | head -n 15\r\n\r\n# Filtrar errores o advertencias ocurridas durante la inicialización\r\ndmesg --level=err,warn\r\n\r\n# Buscar la detección de memoria RAM y discos en el buffer\r\ndmesg | grep -i -E \"Memory:|sata|sda|scsi\" | head -n 8",
+      "instruction": "Cuando el kernel arranca, registra la detección de hardware en el ring buffer. Aprenderás a consultarlo de forma humana y a gestionarlo.",
+      "command": "# Ver los primeros mensajes emitidos por el kernel\ndmesg | head -n 10\n\n# Consulta humana con paginación y marcas de tiempo amigables\ndmesg -H | head -n 15\n\n# Filtrar errores o advertencias ocurridas durante la inicialización\ndmesg --level=err,warn\n\n# Verificar la opción de limpieza del búfer circular (--clear disponible)\ndmesg --help | grep -E \"clear|human\"",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
       "id": "step-101-2-3",
       "stepNumber": 3,
       "title": "Misión 3 — Auditoría de Arranques Anteriores con journalctl",
-      "instruction": "Systemd persiste los registros de arranque en journald. Aprenderás a consultar arranques pasados y filtrar eventos del kernel.",
-      "command": "# Listar los arranques registrados por systemd en la máquina\r\njournalctl --list-boots\r\n\r\n# Ver los registros del arranque actual (boot 0)\r\njournalctl -b 0 | head -n 15\r\n\r\n# Ver exclusivamente los mensajes del kernel del arranque anterior (-b -1)\r\njournalctl -b -1 -k 2>/dev/null || journalctl -b 0 -k | head -n 15\r\n\r\n# Filtrar los registros del servicio udev durante el inicio\r\njournalctl -u systemd-udevd.service --no-pager | tail -n 15",
+      "instruction": "Systemd persiste los registros en journald. Practicaremos con los sinónimos oficiales largos --boot y --directory evaluados en LPIC-1.",
+      "command": "# Listar los arranques registrados en el sistema\njournalctl --list-boots\n\n# Ver registros del arranque actual usando el sinónimo oficial --boot=0\njournalctl --boot=0 | head -n 15\n\n# Consultar directorio de logs usando el sinónimo oficial --directory\njournalctl --directory=/var/log/journal 2>/dev/null || journalctl -b 0 | head -n 10",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
@@ -38,7 +38,7 @@
       "instruction": "En sistemas basados en SysVinit o con rsyslog activo, el arranque genera archivos de texto plano bajo el directorio /var/log/.",
       "command": "# Inspeccionar el log tradicional de arranque si está presente\r\nls -l /var/log/boot.log* /var/log/dmesg* 2>/dev/null || ls -l /var/log/syslog\r\n\r\n# Ver las últimas líneas del registro del sistema\r\nsudo tail -n 15 /var/log/syslog 2>/dev/null || journalctl -n 15",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
-      "examAlert": "Ver pista desplegable si te atascas</summary>"
+      "hint": "En sistemas basados en SysVinit o con rsyslog activo, los mensajes del kernel y del arranque se copian a archivos como /var/log/boot.log y /var/log/dmesg."
     }
   ]
 }

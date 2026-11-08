@@ -14,13 +14,21 @@
     "nice / NI",
     "renice",
     "top",
-    "ps"
+    "ps",
+    "PRI (Prioridad del Kernel)",
+    "/proc/<PID>/sched",
+    "Escala de Prioridad Estática (100-139)",
+    "Multitarea preventiva",
+    "CFS (Completely Fair Scheduler)",
+    "ps --sort=pcpu",
+    "schedtool"
   ],
   "commands": [
     "ps",
     "top",
     "nice",
-    "renice"
+    "renice",
+    "schedtool"
   ],
   "placeholder": false,
   "slides": [
@@ -137,7 +145,8 @@
           "items": [
             "**1. Niceness (NI) — La Escala de Usuario (-20 a +19)** — 🎯 Es el valor de 40 niveles que el administrador manipula con 'nice' y 'renice'. Cuanto más negativo, mayor prioridad exige el proceso.",
             "**2. Prioridad del Kernel (PR en top: 0 a 39)** — 🎯 Es la escala interna que usa el planificador del kernel para ordenar la cola de CPU. Menor número PR = el proceso se atiende antes.",
-            "**3. Procesos de Tiempo Real (RT)** — 🎯 Prioridades críticas de hardware (0 a 99 en kernel). En 'top' aparecen con la etiqueta 'rt' o valores negativos, con preferencia absoluta sobre todo lo demás."
+            "**3. Procesos de Tiempo Real (RT)** — 🎯 Prioridades críticas de hardware (0 a 99 en kernel). En 'top' aparecen con la etiqueta 'rt' o valores negativos, con preferencia absoluta sobre todo lo demás.",
+            "**4. Escala Estática del Kernel y /proc/<PID>/sched** — 🎯 En el kernel la prioridad estática va de 100 a 139 (base 120 para NI=0, 100 para NI=-20). Se consulta con 'grep ^prio /proc/1/sched'. En 'ps -el', la columna PRI tiene un desfase histórico de 40: PRI 80 + 40 = 120 (y tiempo real muestra PRI -40, pues -40 + 40 = 0)."
           ]
         },
         {
@@ -171,15 +180,15 @@
         {
           "type": "code",
           "language": "bash",
-          "code": "ps -l | ps -el | ps -o pid,user,ni,pri,stat,cmd",
-          "title": "Comprobar las columnas NI (Niceness) y PRI (Prioridad del kernel) y los indicadores de STAT"
+          "code": "ps -l | ps -el --sort=pcpu | ps -o pid,user,ni,pri,stat,cmd",
+          "title": "Comprobar las columnas NI y PRI, ordenar por uso de CPU y auditar los modificadores STAT"
         },
         {
           "type": "terminal",
           "lines": [
             {
               "prompt": "$ ",
-              "command": "ps -o pid,user,ni,pri,stat,cmd -C render,backup,bash",
+              "command": "ps -el --sort=pcpu | head -n 4; ps -o pid,user,ni,pri,stat,cmd | head -n 4",
               "output": ""
             }
           ]
@@ -196,6 +205,11 @@
               "ps -l (o ps -el)",
               "Formato largo estándar",
               "🎯 Clave de Examen: Añade obligatoriamente las columnas 'PRI' (prioridad) y 'NI' (niceness)."
+            ],
+            [
+              "ps --sort=pcpu / -pcpu",
+              "Ordenar por uso de CPU",
+              "🎯 Clave de Examen: 'pcpu' ordena de forma ascendente (menor a mayor uso); '-pcpu' en orden descendente."
             ],
             [
               "ps -o <columnas>",
@@ -684,19 +698,19 @@
           "type": "callout",
           "calloutType": "warning",
           "title": "Escenario del Desafío",
-          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. Si un administrador arranca una copia pesada ejecutando exactamente 'nice tar -czf backup.tar.gz /var', ¿con qué valor de niceness exacto nacerá el proceso tar?\n2. Estás monitorizando el sistema con 'top' y detectas un script que consume el 99% de CPU con PID 8420. ¿Qué teclas exactas debes pulsar dentro de top para cambiar su prioridad a nice 19 sin cerrar el monitor?\n3. ¿Puede un usuario ordinario que ha lanzado un script con 'nice -n 10 script.sh' usar luego el comando renice para devolverlo a nice 0?"
+          "content": "Resuelve estos 4 retos de examen planteados en el manual oficial LPIC-1:\n1. Si un administrador arranca una copia pesada con 'nice tar -czf backup.tar.gz /var', ¿con qué niceness exacto nacerá?\n2. En 'top', un proceso con PID 8420 gasta 99% de CPU. ¿Qué teclas pulsas para ponerle nice 19 sin cerrar top?\n3. ¿Puede un usuario normal que lanzó 'nice -n 10 script.sh' usar renice para devolverlo a nice 0?\n4. ¿Qué parámetro de 'ps --sort' ordena por uso de CPU ascendente, y qué comando avanzado inspecciona políticas de planificación y asigna tiempo real (-R)?\n   - Comando ps: ps -el --sort=pcpu\n   - Herramienta avanzada: schedtool (ej: 'schedtool 1750' o 'schedtool -R -p 89 1750')."
         },
         {
           "type": "callout",
           "calloutType": "tip",
           "title": "Pista",
-          "content": "Recuerda: valor por defecto de nice a secas; tecla 'r' en top; y regla de irreversibilidad para usuarios normales."
+          "content": "Recuerda: valor por defecto de nice a secas (+10); tecla 'r' en top; regla de irreversibilidad; ps --sort=pcpu y la utilidad schedtool."
         },
         {
           "type": "callout",
           "calloutType": "tip",
           "title": "Solución y Explicación del Desafío",
-          "content": "1. Nacerá con nice = 10 (el comando nice sin argumentos añade 10 al valor base 0).\n2. Se pulsa la tecla 'r', se teclea el PID '8420' y Enter, y luego se introduce '19' y Enter.\n3. ¡NO! Un usuario ordinario no puede aumentar la prioridad de un proceso (pasar de 10 a 0 es un aumento de prioridad). Dará error 'Permission denied' a menos que lo ejecute root."
+          "content": "1. Nacerá con nice = 10 (el comando nice sin argumentos añade 10 al valor base 0).\n2. Se pulsa la tecla 'r', se teclea el PID '8420' y Enter, y luego se introduce '19' y Enter.\n3. ¡NO! Un usuario ordinario no puede aumentar la prioridad de un proceso (pasar de 10 a 0 es un aumento de prioridad). Dará error 'Permission denied' a menos que lo ejecute root.\n4. Para ps se utiliza '--sort=pcpu' (ascendente) o '--sort=-pcpu' (descendente). Para consultar y cambiar parámetros avanzados de CPU en tiempo real se emplea 'schedtool'."
         }
       ],
       "notes": "El reto 3 ilustra una de las trampas más sutiles de la administración de sistemas."

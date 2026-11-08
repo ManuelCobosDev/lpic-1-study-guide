@@ -5,25 +5,46 @@
   "title": "Resolución de problemas básicos de red",
   "version": "1.0.0",
   "language": "es",
-  "estimatedMinutes": 30,
+  "estimatedMinutes": 35,
   "objectives": [
-    "Herramientas de diagnóstico, configuración manual y resolución de problemas en Linux: manipulación de interfaces y rutas con iproute2 (ip addr, ip link, ip route), auditoría de sockets con ss y netstat, pruebas de conectividad con ping/ping6, descubrimiento de saltos y MTU con traceroute/tracepath, inspección de puertos con netcat (nc) y resolución ARP con ip neighbour.",
+    "Herramientas de diagnóstico, configuración manual y resolución de problemas en Linux: manipulación de interfaces y rutas con iproute2 (ip addr, ip link, ip route, ip neighbour), auditoría de sockets con ss y netstat, inspección de procesos con lsof, pruebas de conectividad con ping/ping6, descubrimiento de saltos y MTU con traceroute/tracepath, inspección de puertos con netcat (nc) y resolución ARP.",
     "Dominio técnico de las herramientas y configuración del subtema 109.3"
   ],
   "keyTerms": [
     "iproute2",
+    "net-tools",
     "ip address / ip a",
     "ip link",
     "ip route / ip r",
+    "ip neighbour / ip neigh",
     "ss (Socket Statistics)",
+    "lsof (List Open Files)",
     "ping / ping6",
     "traceroute / traceroute6",
     "tracepath / tracepath6",
     "netcat (nc)",
-    "ip neighbour / ip neigh"
+    "Path MTU Discovery (PMTU)",
+    "Recv-Q / Send-Q",
+    "Flags de enrutamiento (U, UG)",
+    "Caché ARP"
   ],
-  "commands": [],
-  "placeholder": true,
+  "commands": [
+    "ip",
+    "hostname",
+    "ss",
+    "ping",
+    "ping6",
+    "traceroute",
+    "traceroute6",
+    "tracepath",
+    "tracepath6",
+    "netcat",
+    "ifconfig",
+    "netstat",
+    "route",
+    "lsof"
+  ],
+  "placeholder": false,
   "slides": [
     {
       "id": "109.3-slide-1",
@@ -38,24 +59,92 @@
         },
         {
           "type": "paragraph",
-          "text": "Fundamentos de redes · Peso 4"
+          "text": "Tema 109: Fundamentos de redes · Examen LPIC-1 (102-500) · Peso oficial: 4"
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Objetivo de Certificación LPI",
+          "content": "Aprende a diagnosticar incidencias de conectividad de abajo hacia arriba en la pila TCP/IP: manipulación de interfaces y tablas de rutas con iproute2, auditoría de puertos con ss y netstat, identificación de procesos con lsof, pruebas de latencia y Path MTU con ping, traceroute y tracepath, e inspección con netcat."
         }
       ]
     },
     {
       "id": "109.3-slide-2",
       "slideNumber": 2,
-      "title": "Estrategia de Diagnóstico por Capas TCP/IP",
+      "title": "Estrategia por Capas TCP/IP y Utilidad hostname",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Estrategia de Diagnóstico por Capas TCP/IP"
+          "text": "Metodología de Diagnóstico Ascendente y sysfs"
         },
         {
           "type": "paragraph",
-          "text": "Metodología sistemática de abajo hacia arriba para aislar fallos de red"
+          "text": "El diagnóstico eficaz aísla problemas comenzando en la capa de enlace físico hasta la capa de aplicación. Antes de manipular rutas o sockets, verifica la identidad y las interfaces detectadas en el sistema."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Capa TCP/IP",
+            "Herramienta iproute2",
+            "Herramienta Heredada",
+            "Verificación Principal"
+          ],
+          "rows": [
+            [
+              "Enlace (Capa 2)",
+              "ip link, ip neigh",
+              "ifconfig, arp",
+              "Estado UP/LOWER_UP, MTU, carrier y MAC"
+            ],
+            [
+              "Red / Internet (Capa 3)",
+              "ip addr, ip route, ping, tracepath",
+              "ifconfig, route, netstat -r",
+              "IP asignada, máscara, default gateway, saltos"
+            ],
+            [
+              "Transporte (Capa 4)",
+              "ss, traceroute -T, nc",
+              "netstat",
+              "Puertos TCP/UDP en escucha, Recv-Q/Send-Q"
+            ],
+            [
+              "Aplicación (Capa 7)",
+              "nc, curl, lsof",
+              "telnet",
+              "Banners de servicios, peticiones HTTP manuales, PIDs"
+            ]
+          ],
+          "caption": "Mapeo de utilidades de diagnóstico según la capa de red"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "hostname",
+              "output": "srv-linux01"
+            },
+            {
+              "prompt": "$",
+              "command": "sudo hostname srv-temp",
+              "output": ""
+            },
+            {
+              "prompt": "$",
+              "command": "ls /sys/class/net",
+              "output": "eth0  eth1  lo"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Inspección Directa en /sys/class/net",
+          "content": "El directorio '/sys/class/net' en sysfs enumera de forma instantánea todos los adaptadores de red reconocidos por el kernel de Linux, independientemente de si están activos o tienen direcciones IP asignadas."
         }
       ]
     },
@@ -63,16 +152,59 @@
       "id": "109.3-slide-3",
       "slideNumber": 3,
       "title": "La Gran Transición: iproute2 frente a net-tools",
-      "layout": "content",
+      "layout": "comparison",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "La Gran Transición: iproute2 frente a net-tools"
+          "text": "Sustitución de Herramientas Heredadas (net-tools)"
         },
         {
-          "type": "paragraph",
-          "text": "Comandos heredados (obsoletos) frente a los estándares modernos de examen"
+          "type": "table",
+          "headers": [
+            "Operación Administrativa",
+            "iproute2 (Estándar Examen)",
+            "net-tools (Heredado / Obsoleto)"
+          ],
+          "rows": [
+            [
+              "Estado y flags de enlace",
+              "ip link show / ip link set <dev> up/down",
+              "ifconfig <dev> up / down"
+            ],
+            [
+              "Gestión de direcciones IP",
+              "ip addr show / ip addr add <ip/mask> dev <dev>",
+              "ifconfig <dev> <ip> netmask <mask>"
+            ],
+            [
+              "Visualizar y modificar rutas",
+              "ip route show / ip route add ...",
+              "route -n / route add ... / netstat -r"
+            ],
+            [
+              "Caché de vecinos / tabla ARP",
+              "ip neighbour show (o ip neigh)",
+              "arp -n / arp -a"
+            ],
+            [
+              "Auditoría de sockets",
+              "ss -tulnp",
+              "netstat -tulnp"
+            ],
+            [
+              "Rastreo de saltos y MTU",
+              "tracepath <host> / traceroute --mtu",
+              "traceroute <host>"
+            ]
+          ],
+          "caption": "Correspondencia entre utilidades net-tools e iproute2"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "🎯 Trampa de Examen: Netlink vs /proc/net/",
+          "content": "'netstat' recopila su información parseando línea a línea los archivos de '/proc/net/' (como /proc/net/tcp), lo que resulta extremadamente lento en servidores con miles de conexiones abiertas. Por el contrario, 'ss' consulta directamente los sockets mediante la interfaz Netlink del kernel, ofreciendo una velocidad instantánea."
         }
       ]
     },
@@ -80,33 +212,61 @@
       "id": "109.3-slide-4",
       "slideNumber": 4,
       "title": "Gestión de Direcciones: comando ip address (ip a)",
-      "layout": "content",
+      "layout": "code-explain",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Gestión de Direcciones: comando ip address (ip a)"
+          "text": "Asignación Manual, Máscaras Válidas y Alias"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# Mostrar todas las direcciones IP asignadas a las interfaces:\nip address show      # o en forma abreviada: ip a\n\n# Asignar una dirección IPv4 primaria con longitud de prefijo CIDR:\nsudo ip addr add 192.168.1.50/24 dev eth0\n\n# Añadir una segunda dirección IP con etiqueta (label) para compatibilidad:\nsudo ip addr add 172.16.15.16/16 dev eth0 label eth0:sub1\n\n# Eliminar una dirección IP específica de la interfaz:\nsudo ip addr del 172.16.15.16/16 dev eth0",
+          "title": "Manipulación de direcciones con ip addr"
         },
         {
           "type": "paragraph",
-          "text": "Asignación dinámica o estática manual sin persistencia de arranque"
+          "text": "Las modificaciones realizadas con el comando 'ip' se aplican de forma inmediata en el kernel pero son volátiles (se pierden al reiniciar el sistema)."
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Regla de Máscaras de Subred en IPv4",
+          "content": "Una máscara de subred IPv4 solo es válida si posee bits 1 contiguos a la izquierda y bits 0 contiguos a la derecha. Por ejemplo: '255.252.0.0' (/14) y '/24' son máscaras válidas. Máscaras discontinuas como '255.0.255.0' o '0.0.0.255' son matemáticamente inválidas."
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Compatibilidad de Alias con ifconfig",
+          "content": "Si asignas una segunda dirección IP sin 'label <dev>:<alias>', la dirección funcionará perfectamente y se mostrará en 'ip addr', pero no será visible al ejecutar la herramienta heredada 'ifconfig'."
         }
       ]
     },
     {
       "id": "109.3-slide-5",
       "slideNumber": 5,
-      "title": "Control de Enlace Físico y MTU: comando ip link",
+      "title": "Control de Enlace Físico, MTU y Virtualización: ip link",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Control de Enlace Físico y MTU: comando ip link"
+          "text": "Manipulación de Enlaces, MTU, VLAN y Bridges"
         },
         {
-          "type": "paragraph",
-          "text": "Manipular flags UP/DOWN, tamaños de trama MTU y direcciones MAC"
+          "type": "code",
+          "language": "bash",
+          "code": "# Activar o desactivar administrativamente una interfaz:\nsudo ip link set dev eth0 up\nsudo ip link set dev eth0 down\n\n# Modificar el tamaño de MTU (Maximum Transmission Unit):\nsudo ip link set dev eth0 mtu 9000   # Jumbo frames\n\n# Crear una subinterfaz virtual con etiquetado 802.1Q (VLAN ID 20):\nsudo ip link add link enp0s9 name enp0s9.20 type vlan id 20\n\n# Crear un puente de red (bridge) con prioridad de árbol de expansión (STP):\nsudo ip link add link enp0s9 name enp0s9.50 type bridge priority 50",
+          "title": "Subcomandos avanzados de ip link"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Flags de estado**: Al ejecutar 'ip link show', la presencia de '<UP,LOWER_UP>' confirma que la interfaz está administrativamente activa ('UP') y el cable/portadora física está conectada ('LOWER_UP').",
+            "**type vlan id <id>**: Añade una subinterfaz que emite y recibe tramas con etiquetas IEEE 802.1Q asociadas a la VLAN indicada.",
+            "**type bridge priority <val>**: Permite configurar opciones de árbol de expansión (Spanning Tree Protocol, STP) fijando la prioridad del puente."
+          ]
         }
       ]
     },
@@ -119,11 +279,19 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Tablas de Enrutamiento: comando ip route (ip r)"
+          "text": "Rutas por Defecto, Subredes y Respaldo Binario"
         },
         {
-          "type": "paragraph",
-          "text": "Configurar saltos hacia subredes y la puerta de enlace predeterminada"
+          "type": "code",
+          "language": "bash",
+          "code": "# Mostrar la tabla de enrutamiento actual del kernel:\nip route show            # o simplemente: ip r\n\n# Configurar la puerta de enlace predeterminada (default gateway):\nsudo ip route add default via 192.168.1.1 dev eth0\n\n# Añadir una ruta hacia una red o subred específica:\nsudo ip route add 10.0.0.0/8 via 192.168.1.254 dev eth0\n\n# Respaldar la tabla de enrutamiento completa en un archivo binario:\nsudo ip route save > /root/routes/route_backup\n\n# Restaurar la tabla de rutas previamente respaldada:\nsudo ip route restore < /root/routes/route_backup",
+          "title": "Gestión de tablas de rutas con iproute2"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Respaldo y Restauración de Rutas",
+          "content": "Los subcomandos 'ip route save' e 'ip route restore' vuelcan y cargan una representación binaria exacta de la tabla de rutas del kernel, lo que resulta ideal para congelar el estado de red antes de aplicar cambios complejos."
         }
       ]
     },
@@ -136,11 +304,64 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Comandos Heredados: ifconfig y route -n"
+          "text": "Lectura de Tablas Clásicas y Banderas de Enrutamiento"
         },
         {
-          "type": "paragraph",
-          "text": "Lectura de tablas clásicas y banderas U / G en el examen LPIC-1"
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "route -n",
+              "output": "Kernel IP routing table\nDestination     Gateway         Genmask         Flags Metric Ref    Use Iface\n0.0.0.0         192.168.1.1     0.0.0.0         UG    600    0        0 eth0\n192.168.1.0     0.0.0.0         255.255.255.0   U     600    0        0 eth0"
+            },
+            {
+              "prompt": "$",
+              "command": "sudo route add default gw 192.168.1.1",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Bandera (Flag)",
+            "Nombre",
+            "Significado Técnico en el Examen"
+          ],
+          "rows": [
+            [
+              "U",
+              "Up",
+              "La ruta está activa y disponible para cursar tráfico."
+            ],
+            [
+              "G",
+              "Gateway",
+              "La ruta requiere atravesar una pasarela o router externo."
+            ],
+            [
+              "UG",
+              "Default Gateway",
+              "Combinación que identifica la ruta predeterminada hacia Internet."
+            ],
+            [
+              "H",
+              "Host",
+              "El destino es una única dirección de máquina específica (/32), no una red."
+            ],
+            [
+              "D / M",
+              "Dynamic / Modified",
+              "Ruta generada por un demonio de enrutamiento o modificada por ICMP Redirect."
+            ]
+          ],
+          "caption": "Banderas de la tabla de enrutamiento en route y netstat -r"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "🎯 Pregunta Clásica: 'route add default gw'",
+          "content": "Recuerda la sintaxis exacta de la herramienta clásica: 'route add default gw <IP>'. En iproute2 su equivalente moderno es 'ip route add default via <IP>'."
         }
       ]
     },
@@ -153,28 +374,82 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Auditoría de Puertos y Sockets: comando ss"
+          "text": "Inspección de Sockets con Socket Statistics (ss)"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción",
+            "Acción Técnica",
+            "Propósito en Diagnóstico"
+          ],
+          "rows": [
+            [
+              "-t / -u",
+              "TCP / UDP",
+              "Filtra exclusivamente sockets TCP o datagramas UDP."
+            ],
+            [
+              "-l",
+              "Listening",
+              "Muestra únicamente sockets a la escucha esperando conexiones entrantes."
+            ],
+            [
+              "-a",
+              "All",
+              "Muestra todos los sockets (tanto en escucha como establecidos)."
+            ],
+            [
+              "-n",
+              "Numeric",
+              "Presenta direcciones IP y puertos en formato numérico sin resolver DNS."
+            ],
+            [
+              "-p",
+              "Processes",
+              "Despliega el nombre del programa y el PID propietario (requiere root)."
+            ]
+          ],
+          "caption": "Modificadores esenciales de ss evaluados en LPIC-1"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "sudo ss -tulnp",
+              "output": "Netid  State   Recv-Q  Send-Q   Local Address:Port   Peer Address:Port  Process\ntcp    LISTEN  0       128            0.0.0.0:22          0.0.0.0:*      users:((\"sshd\",pid=642,fd=3))\ntcp    LISTEN  0       511            0.0.0.0:80          0.0.0.0:*      users:((\"nginx\",pid=890,fd=6))"
+            }
+          ]
         },
         {
           "type": "paragraph",
-          "text": "La herramienta moderna indispensable para auditar servicios a la escucha"
+          "text": "**Métricas Recv-Q y Send-Q**: En sockets en estado `LISTEN`, `Send-Q` indica el tamaño máximo de la cola backlog de conexiones pendientes y `Recv-Q` el número actual de conexiones esperando a ser aceptadas. En sockets conectados, `Recv-Q` son los bytes recibidos pendientes de lectura por la aplicación y `Send-Q` los bytes enviados pendientes de confirmación ACK."
         }
       ]
     },
     {
       "id": "109.3-slide-9",
       "slideNumber": 9,
-      "title": "Inspección Heredada: comando netstat",
-      "layout": "content",
+      "title": "Inspección Heredada y de Procesos: netstat y lsof",
+      "layout": "comparison",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Inspección Heredada: comando netstat"
+          "text": "netstat (-tulnp) e Identificación de Procesos con lsof"
         },
         {
-          "type": "paragraph",
-          "text": "Opciones idénticas a ss pero con arquitectura basada en /proc"
+          "type": "code",
+          "language": "bash",
+          "code": "# Auditoría clásica de puertos en escucha con netstat:\nnetstat -ln | grep \":80\"\nsudo netstat -lnp | grep \":22\"\n\n# Inspección de la tabla de rutas del kernel con netstat:\nnetstat -r   # Equivalente a ejecutar el comando 'route'\n\n# Identificar el proceso y PID exacto con lsof (List Open Files):\nsudo lsof -Pi:80    # Muestra el proceso escuchando en el puerto TCP 80\nsudo lsof -Pi:22    # Inspecciona sockets SSH en el puerto 22",
+          "title": "Consultas con netstat y lsof"
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Parámetros de lsof en Diagnóstico de Red",
+          "content": "La opción '-i:<puerto>' filtra archivos abiertos correspondientes a sockets de red en ese puerto. La opción '-P' desactiva la conversión de puertos a nombres de servicio (evitando consultar /etc/services), proporcionando una salida inmediata."
         }
       ]
     },
@@ -187,11 +462,36 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Verificación de Conectividad: ping y ping6"
+          "text": "Sondeo ICMP Echo Request y Causas de Fallo"
         },
         {
-          "type": "paragraph",
-          "text": "Envío de paquetes ICMP Echo Request y evaluación de pérdidas y latencia"
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "ping -c 3 8.8.8.8",
+              "output": "PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.\n64 bytes from 8.8.8.8: icmp_seq=1 ttl=118 time=14.2 ms\n64 bytes from 8.8.8.8: icmp_seq=2 ttl=118 time=14.0 ms\n64 bytes from 8.8.8.8: icmp_seq=3 ttl=118 time=14.1 ms\n--- 8.8.8.8 ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 2003ms"
+            },
+            {
+              "prompt": "$",
+              "command": "ping6 -c 2 2001:4860:4860::8888",
+              "output": "64 bytes from 2001:4860:4860::8888: icmp_seq=1 ttl=117 time=15.1 ms"
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "items": [
+            "**ping -c <n>**: En Linux ping emite paquetes indefinidamente; '-c' fija el número exacto de paquetes a transmitir.",
+            "**ping -s <bytes>**: Modifica el tamaño de la carga útil del paquete ICMP para probar problemas de MTU y fragmentación.",
+            "**ping -i <seg>**: Establece el intervalo en segundos entre paquetes consecutivos."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "¿Por qué puede fallar el ping a un host remoto?",
+          "content": "Razones oficiales del manual LPI: 1. El host remoto está apagado o caído. 2. Un ACL en un router intermedio bloquea el tráfico ICMP. 3. El firewall local o remoto descarta las solicitudes Echo. 4. Error en la resolución DNS del nombre de host. 5. Configuración de subred/enrutamiento errónea o desconexión física de la interfaz. Para ver paquetes reales en el cable, recurre a 'tcpdump' o 'wireshark'."
         }
       ]
     },
@@ -204,11 +504,57 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Descubrimiento de Saltos: traceroute y traceroute6"
+          "text": "Rastreo de Rutas por Incremento de TTL y Opciones Clave"
         },
         {
           "type": "paragraph",
-          "text": "Identificación de los routers intermedios mediante el incremento progresivo de TTL"
+          "text": "'traceroute' emite paquetes incrementando secuencialmente el campo TTL (Time-To-Live) desde 1. Cada router intermedio decrementa el TTL; al llegar a 0, descarta el paquete y responde con un mensaje 'ICMP Time Exceeded', revelando su dirección IP y tiempo de respuesta."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción de traceroute",
+            "Comportamiento Técnico",
+            "Uso en Examen LPIC-1"
+          ],
+          "rows": [
+            [
+              "-n",
+              "Salida numérica",
+              "No resuelve los nombres DNS de los routers intermedios, agilizando el rastreo."
+            ],
+            [
+              "-i <interfaz>",
+              "Fijar interfaz de salida",
+              "Fuerza la emisión de sondas por un adaptador específico (ej. -i eth1)."
+            ],
+            [
+              "-I",
+              "Sondas ICMP Echo",
+              "Utiliza paquetes ICMP Echo en lugar de datagramas UDP (comportamiento estándar en Linux)."
+            ],
+            [
+              "-T",
+              "Sondas TCP SYN",
+              "Envía paquetes TCP SYN (ej. al puerto 80) para eludir cortafuegos que bloquean UDP/ICMP."
+            ],
+            [
+              "--mtu",
+              "Informe de MTU por salto",
+              "Descubre y reporta la MTU soportada en cada salto del recorrido hacia el destino."
+            ]
+          ],
+          "caption": "Modificadores fundamentales del comando traceroute"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "traceroute -n -i eth0 8.8.8.8",
+              "output": "1  192.168.1.1  1.210 ms  1.104 ms  0.985 ms\n2  10.0.0.1  8.432 ms  7.912 ms  8.120 ms\n3  8.8.8.8  14.320 ms  14.110 ms  14.250 ms"
+            }
+          ]
         }
       ]
     },
@@ -221,11 +567,32 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Detección de MTU en Ruta: comando tracepath"
+          "text": "Path MTU Discovery (PMTU) sin Privilegios de Root"
         },
         {
-          "type": "paragraph",
-          "text": "Rastreo sin privilegios de root y detección automática de cuellos de botella MTU"
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "tracepath -p 33434 8.8.8.8",
+              "output": " 1?: [LOCALHOST]     pmtu 1500\n 1:  192.168.1.1                                         1.423ms \n 2:  10.20.0.1                                           5.120ms \n 3:  8.8.8.8                                             14.210ms reached\n     Resume: pmtu 1500 hops 3 back 58"
+            }
+          ]
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Sin privilegios de superusuario**: 'tracepath' está diseñado para ser ejecutado por usuarios no privilegiados, a diferencia de muchas variantes de 'traceroute'.",
+            "**Detección de PMTU (Path MTU)**: Analiza a lo largo del recorrido cuál es el tamaño de paquete más grande que puede atravesar todos los enlaces intermedios sin requerir fragmentación.",
+            "**Opción -p <puerto>**: Permite configurar el puerto UDP base sobre el que se inician las consultas.",
+            "**tracepath6**: Herramienta homóloga para el diagnóstico y análisis de rutas sobre IPv6."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Diferencia Clave: traceroute vs tracepath",
+          "content": "Para determinar la MTU máxima de una ruta sin privilegios de root, la herramienta idónea y requerida en el temario es 'tracepath'. Si se utiliza traceroute, debe pasarse explícitamente el flag '--mtu'."
         }
       ]
     },
@@ -238,11 +605,44 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "La Navaja Suiza de Red: netcat (nc)"
+          "text": "Comprobación de Puertos, Modo Escucha y Banners"
         },
         {
-          "type": "paragraph",
-          "text": "Comprobación de puertos abiertos, transferencias y diagnóstico interactivo"
+          "type": "table",
+          "headers": [
+            "Modo de Operación",
+            "Sintaxis de netcat (nc)",
+            "Propósito en Administración"
+          ],
+          "rows": [
+            [
+              "Servidor en escucha",
+              "nc -l -p 8080",
+              "Abre un socket TCP local en el puerto 8080 a la espera de datos."
+            ],
+            [
+              "Escaneo zero-I/O",
+              "nc -zv 192.168.1.1 20-80",
+              "Escanea un rango de puertos sin enviar datos para comprobar si están abiertos."
+            ],
+            [
+              "Protocolo UDP",
+              "nc -u 192.168.1.1 53",
+              "Envía datagramas mediante UDP en lugar del protocolo TCP por defecto."
+            ],
+            [
+              "Petición interactiva",
+              "nc www.example.com 80",
+              "Abre un socket cliente para interactuar directamente con un servicio de red."
+            ]
+          ],
+          "caption": "Modos fundamentales de netcat"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# Petición HTTP manual completa con netcat:\n$ nc www.example.com 80\nGET /index.html HTTP/1.1\nHost: www.example.com\n<Pulsar Enter dos veces>\n\n# Respuesta recibida directamente del servidor web:\nHTTP/1.1 200 OK\nContent-Type: text/html; charset=UTF-8\nContent-Length: 1256",
+          "title": "Inyección manual de protocolo HTTP con netcat"
         }
       ]
     },
@@ -255,11 +655,64 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Resolución de Capa 2: ip neighbour y arp"
+          "text": "Inspección de la Caché ARP y Estados de Vecinos"
         },
         {
-          "type": "paragraph",
-          "text": "Inspección de la tabla ARP local (asociación de IP a dirección física MAC)"
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "ip neighbour",
+              "output": "10.0.2.2 dev enp0s3 lladdr 52:54:00:12:35:02 REACHABLE\n192.168.1.20 dev eth0 lladdr 52:54:00:44:88:11 STALE"
+            },
+            {
+              "prompt": "$",
+              "command": "arp -n",
+              "output": "Address        HWtype  HWaddress           Flags Mask  Iface\n192.168.1.1    ether   52:54:00:12:35:02   C           eth0"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Estado de Vecino",
+            "Significado",
+            "Comportamiento del Kernel"
+          ],
+          "rows": [
+            [
+              "REACHABLE",
+              "Alcanzable",
+              "La entrada ARP es válida y ha sido confirmada recientemente."
+            ],
+            [
+              "STALE",
+              "Caducado",
+              "Entrada válida pero inactiva; el kernel verificará si se vuelve a transmitir."
+            ],
+            [
+              "DELAY / PROBE",
+              "En verificación",
+              "El kernel está emitiendo sondas ARP para validar la dirección MAC."
+            ],
+            [
+              "FAILED",
+              "Fallido",
+              "No se obtuvo respuesta ARP; no hay comunicación en capa de enlace."
+            ],
+            [
+              "PERMANENT",
+              "Permanente",
+              "Entrada estática fijada manualmente por el administrador del sistema."
+            ]
+          ],
+          "caption": "Estados de entradas en la tabla de vecinos de ip neighbour"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Limpiar entradas ARP",
+          "content": "Para forzar la renegociación de una entrada física corrupta o tras cambiar una tarjeta de red, elimina el vecino con: 'sudo ip neighbour del <IP> dev <dev>' (o con la herramienta heredada 'sudo arp -d <IP>')."
         }
       ]
     },
@@ -272,11 +725,37 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Árbol de Decisión: Detección Rápida de Averías de Red"
+          "text": "Protocolo Metódico de 5 Fases para Aislamiento de Fallos"
         },
         {
-          "type": "paragraph",
-          "text": "5 comprobaciones que todo administrador debe realizar por orden"
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "Verificar Enlace Físico e Interfaz",
+              "description": "Comprueba 'ip link' o '/sys/class/net'. La interfaz debe presentar flags 'UP' y 'LOWER_UP' (cable conectado y portadora activa)."
+            },
+            {
+              "number": 2,
+              "title": "Verificar IP y Máscara de Red",
+              "description": "Ejecuta 'ip addr show'. Asegúrate de que la IP y el prefijo de subred CIDR correspondan al segmento local correcto."
+            },
+            {
+              "number": 3,
+              "title": "Validar Puerta de Enlace (Default Gateway)",
+              "description": "Ejecuta 'ip route' o 'route -n'. Confirma la existencia de 'default via <IP>' y haz 'ping -c 2 <IP_GW>' hacia el router local."
+            },
+            {
+              "number": 4,
+              "title": "Diagnosticar Conectividad Externa y Saltos",
+              "description": "Haz 'ping -c 3 8.8.8.8'. Si falla, ejecuta 'traceroute -n -I' o 'tracepath' para ubicar en qué salto o router intermedio se corta la comunicación o desciende la MTU."
+            },
+            {
+              "number": 5,
+              "title": "Auditar Puertos Locales y Servicios Remotos",
+              "description": "Comprueba con 'sudo ss -tulnp' o 'sudo lsof -Pi:<puerto>' que el servicio escucha localmente. Para servidores remotos, valida con 'nc -zv <host> <puerto>'."
+            }
+          ]
         }
       ]
     },
@@ -289,11 +768,33 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Trampas Críticas de Examen: 109.3 Diagnóstico"
+          "text": "Escenarios Engañosos en la Certificación LPIC-1"
         },
         {
-          "type": "paragraph",
-          "text": "4 escenarios engañosos en la línea de comandos de red"
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Trampa 1: netstat vs ss",
+          "content": "'netstat' lee de '/proc/net/' y es lento con miles de sockets; 'ss' utiliza la interfaz Netlink directa del kernel. En preguntas sobre utilidades modernas de alto rendimiento, la respuesta es siempre 'ss'."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Trampa 2: Protocolo por defecto de traceroute",
+          "content": "En sistemas Linux, 'traceroute' emite por defecto datagramas UDP a puertos altos (>30000). Para que utilice paquetes ICMP Echo como en Windows, debes suministrar la opción '-I' (o '-T' para TCP SYN)."
+        }
+      ],
+      "secondaryBlocks": [
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Trampa 3: Banderas U frente a UG",
+          "content": "En 'route -n' y 'netstat -r', una bandera 'U' representa una red local directamente conectada. La combinación 'UG' (Up + Gateway) denota obligatoriamente una ruta que atraviesa una pasarela (como el default gateway)."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Trampa 4: tracepath no requiere root",
+          "content": "'tracepath' está diseñado específicamente para descubrir la Path MTU sin requerir permisos de superusuario ni privilegios especiales sobre sockets, a diferencia de los modos avanzados de traceroute."
         }
       ]
     },
@@ -306,28 +807,74 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales (Manual LPI)"
+          "text": "Casos Prácticos Oficiales (1 a 5)"
         },
         {
-          "type": "paragraph",
-          "text": "Casos prácticos interactivos con solución oficial comprobada"
+          "type": "list",
+          "items": [
+            "**1. Listar interfaces de red**: Se pueden utilizar `ip link`, `ifconfig -a` o consultar directamente el directorio `ls /sys/class/net`.",
+            "**2. Desactivar y reactivar interfaz**: Mediante `ip link set dev wlan1 down` y `ip link set dev wlan1 up` (o con herramientas heredadas: `ifconfig wlan1 down/up`).",
+            "**3. Máscaras IPv4 razonables**: `255.252.0.0` y `/24` son válidas porque tienen bits 1 contiguos a la izquierda. `0.0.0.255` y `255.0.255.0` son inválidas.",
+            "**4. Verificar la ruta por defecto**: Mediante `ip route`, `route` o `netstat -r` (observando el registro con la bandera `UG` hacia la pasarela).",
+            "**5. Añadir segunda IP a interfaz**: Con `ip addr add 172.16.15.16/16 dev enp0s9 label enp0s9:sub1` (o con sintaxis heredada: `ifconfig enp0s9:sub1 172.16.15.16/16`)."
+          ]
+        }
+      ],
+      "secondaryBlocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Casos Prácticos Oficiales (6 a 10)"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**6. Probar conectividad básica**: Con `ping <host>` para IPv4 o `ping6 <host>` para IPv6.",
+            "**7. Determinar ruta hacia 8.8.8.8**: Utilizando `tracepath 8.8.8.8` o `traceroute 8.8.8.8`.",
+            "**8. Proceso escuchando en TCP 80**: Con `ss -ln | grep ':80'`, `netstat -ln | grep ':80'` o `sudo lsof -Pi:80`.",
+            "**9. Saber qué proceso escucha en un puerto**: Ejecutando `sudo ss -lnp | grep ':22'`, `sudo netstat -lnp | grep ':22'` o `sudo lsof -Pi:22`.",
+            "**10. Determinar la MTU máxima de una ruta**: Mediante el comando `tracepath somehost.example.com`."
+          ]
         }
       ]
     },
     {
       "id": "109.3-slide-18",
       "slideNumber": 18,
-      "title": "Flashcards de Memorización Rápida: 109.3 Diagnóstico",
-      "layout": "content",
+      "title": "Ejercicios de Exploración Oficiales (Manual LPI)",
+      "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Flashcards de Memorización Rápida: 109.3 Diagnóstico"
+          "text": "Exploración Avanzada (1 a 5)"
         },
         {
-          "type": "paragraph",
-          "text": "Fija los comandos esenciales antes de pasar a resolución DNS de cliente"
+          "type": "list",
+          "items": [
+            "**1. Etiquetado VLAN con ip**: Se utiliza `ip link add link enp0s9 name enp0s9.20 type vlan id 20`.",
+            "**2. Configurar ruta por defecto**: Con `ip route add default via 192.168.1.1` (o clásicamente: `route add default gw 192.168.1.1`).",
+            "**3. ip neighbour por sí solo**: Muestra la caché ARP con IPs, direcciones MAC y estados como `REACHABLE` o `STALE`. Su manual se consulta con `man ip-neighbour`.",
+            "**4. Copia de seguridad y restauración de rutas**: `ip route save > /root/routes/route_backup` para respaldar y `ip route restore < /root/routes/route_backup` para restaurar.",
+            "**5. Árbol de expansión (STP) con ip**: Mediante `ip link add link enp0s9 name enp0s9.50 type bridge priority 50`."
+          ]
+        }
+      ],
+      "secondaryBlocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Exploración Avanzada (6 a 10)"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**6. Petición HTTP manual con netcat**: Conectar con `nc host 80`, escribir `GET /index.html HTTP/1.1`, añadir cabecera `Host:` y presionar Enter dos veces.",
+            "**7. Razones de fallo de ping**: Host apagado, ACL en router, firewall bloqueando ICMP, resolución DNS incorrecta, configuración IP errónea o cable desconectado.",
+            "**8. Herramientas de captura de paquetes**: `tcpdump` (modo texto en consola) y `wireshark` (interfaz gráfica detallada).",
+            "**9. Forzar interfaz en traceroute**: Mediante la opción `-i` (ej. `traceroute -i eth1 8.8.8.8`).",
+            "**10. Reporte de MTU con traceroute**: Sí es posible, pasando la opción `--mtu` (despliega el valor `F=1500`, etc. en cada salto)."
+          ]
         }
       ]
     }

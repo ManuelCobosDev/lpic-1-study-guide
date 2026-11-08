@@ -11,14 +11,32 @@
     "Dominio técnico de las herramientas y configuración del subtema 102.2"
   ],
   "keyTerms": [
-    "bootloader",
+    "GRUB Legacy",
     "GRUB 2",
+    "MBR",
+    "UEFI",
+    "ESP",
     "chainloading",
-    "MBR"
+    "CHS",
+    "LBA",
+    "grub rescue",
+    "menuentry",
+    "UUID"
   ],
   "commands": [
     "grub-install",
-    "grub"
+    "grub-mkconfig",
+    "update-grub",
+    "grub",
+    "find",
+    "root",
+    "setup",
+    "makeactive",
+    "chainloader",
+    "insmod",
+    "boot",
+    "search",
+    "fdisk"
   ],
   "placeholder": false,
   "slides": [
@@ -449,7 +467,7 @@
           "type": "callout",
           "calloutType": "tip",
           "title": "Solución y Explicación del Desafío",
-          "content": "1. Porque en GRUB 2 las particiones empiezan en 1. Para la primera partición de sdb debe escribir '(hd1,1)' o '(hd1,msdos1)'. (hd1,0) solo era válido en GRUB Legacy.\n2. Con el comando: blkid (o lsblk -f).\n3. grub-mkconfig ignorará el script; por tanto, el menú de GRUB dejará de mostrar otros sistemas operativos (como Windows).\n4. Se ejecuta: sudo grub-install /dev/sdb (en el disco entero, no en la partición sdb1)."
+          "content": "1. Falla porque en GRUB 2 las particiones se numeran desde 1 (1ª partición = 1). (hd1,0) es sintaxis inválida en GRUB 2 (pertenece a GRUB Legacy). La primera partición del segundo disco es (hd1,1) o (hd1,msdos1).\n2. Oficialmente en LPIC-1 con: ls -la /dev/disk/by-uuid/ (o mediante el comando blkid / lsblk -f). Para ver la partición de arranque se comprueba la columna Boot con: fdisk -l /dev/sda (marcada con un asterisco '*').\n3. Si 30_os-prober no tiene permisos de ejecución (+x), grub-mkconfig lo ignora y no agregará Windows ni otros Linux detectados al menú.\n4. Con: sudo grub-install /dev/sdb. O si se aloja en directorio alternativo: sudo grub-install --boot-directory=/mnt/tmp /dev/sdb."
         }
       ],
       "notes": "Estos retos cubren fallos típicos de examen: numeración 0 vs 1 y permisos en /etc/grub.d/."
@@ -585,6 +603,22 @@
             [
               "¿Qué hace el comando 'blkid'?",
               "Muestra los UUIDs, etiquetas y sistemas de archivos de todas las particiones detectadas."
+            ],
+            [
+              "¿Qué opción de grub-install permite especificar un directorio de arranque alternativo?",
+              "--boot-directory=/ruta (ej: --boot-directory=/mnt/tmp /dev/sda)."
+            ],
+            [
+              "¿Qué comando en la shell de GRUB Legacy localiza la partición de arranque?",
+              "grub> find /boot/grub/stage1"
+            ],
+            [
+              "¿Qué directiva de GRUB 2 busca la raíz por UUID para evitar cambios de disco?",
+              "search --no-floppy --set=root --fs-uuid <UUID>"
+            ],
+            [
+              "¿Qué comando marca la partición activa en el chainloading de GRUB Legacy?",
+              "makeactive"
             ]
           ],
           "caption": "Tarjetas de memorización"
@@ -602,6 +636,58 @@
           "type": "heading",
           "level": 2,
           "text": "Resumen y Claves de Examen: Subtema 102.2"
+        },
+        {
+          "type": "paragraph",
+          "text": "Puntos clave de instalación y configuración del gestor de arranque GRUB para LPIC-1:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Elemento / Parámetro",
+            "Comportamiento / Clave de Examen"
+          ],
+          "rows": [
+            [
+              "Numeración de Particiones",
+              "GRUB Legacy cuenta particiones desde 0 (hd0,0). GRUB 2 cuenta desde 1 (hd0,1)."
+            ],
+            [
+              "Instalación de GRUB 2",
+              "grub-install /dev/sda (en disco, NUNCA en partición). Ubicación alternativa: --boot-directory=/mnt/tmp."
+            ],
+            [
+              "Compilación de grub.cfg",
+              "NUNCA editar /boot/grub/grub.cfg a mano. Editar /etc/default/grub y ejecutar grub-mkconfig -o /boot/grub/grub.cfg."
+            ],
+            [
+              "Búsqueda robusta en GRUB 2",
+              "search --no-floppy --set=root --fs-uuid <UUID> evita fallos si cambia el orden BIOS de los discos."
+            ],
+            [
+              "Consola GRUB Legacy",
+              "find /boot/grub/stage1 -> root (hd0,0) -> setup (hd0) -> quit."
+            ],
+            [
+              "Chainloading a Windows",
+              "title Windows / rootnoverify (hd0,0) / makeactive / chainloader +1."
+            ],
+            [
+              "Rescate grub rescue>",
+              "set prefix=(hd0,1)/boot/grub -> set root=(hd0,1) -> insmod normal -> normal."
+            ],
+            [
+              "Inspección UUID / Boot",
+              "ls -la /dev/disk/by-uuid/ y fdisk -l /dev/sda (asterisco '*' en columna Boot)."
+            ]
+          ],
+          "caption": "Matriz maestra de GRUB Legacy y GRUB 2"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Checklist Definitivo LPIC-1 102.2",
+          "content": "1. grub-install se lanza contra /dev/sda (MBR) o con --boot-directory=/mnt/tmp para ubicaciones alternativas. 2. GRUB 2 numera particiones desde 1. 3. En grub rescue>: insmod normal activa la consola completa. 4. grub-mkconfig compila /etc/default/grub + /etc/grub.d/*."
         }
       ],
       "notes": "Concluimos el subtema 102.2. Los alumnos ya dominan los dos gestores de arranque de la certificación."

@@ -11,14 +11,28 @@
     "Dominio técnico de las herramientas y configuración del subtema 102.6"
   ],
   "keyTerms": [
-    "Linux como sistema virtualizado",
-    "Tema 102"
+    "hipervisor",
+    "KVM",
+    "QEMU",
+    "Xen",
+    "VirtualBox",
+    "Guest Extensions / Guest Additions",
+    "Invitado Híbrido (VirtIO)",
+    "Migración en vivo (Live Migration)",
+    "Contenedor de aplicaciones vs Contenedor de sistema",
+    "cloud-init",
+    "/etc/machine-id"
   ],
   "commands": [
-    "grep",
-    "virt-install",
+    "dbus-uuidgen",
     "systemd-machine-id-setup",
-    "ssh-keygen"
+    "systemd-detect-virt",
+    "virsh",
+    "qemu-img",
+    "virt-install",
+    "lsblk",
+    "ssh-keygen",
+    "grep"
   ],
   "placeholder": false,
   "slides": [
@@ -59,9 +73,9 @@
           "type": "list",
           "ordered": false,
           "items": [
-            "**Hipervisor Tipo 1 (Bare-Metal / Nativo)** — 🎯 Se ejecuta directamente sobre el hardware físico del servidor sin ningún sistema operativo por debajo. Ofrece máximo rendimiento y menor latencia. Ejemplos de examen: KVM (Kernel-based Virtual Machine integrado en Linux), Xen y VMware ESXi.",
-            "**Hipervisor Tipo 2 (Hosted / Alojado)** — Se ejecuta como una aplicación ordinaria encima de un sistema operativo anfitrión convencional. Mayor sobrecarga de CPU y memoria. Ejemplos de examen: VirtualBox, VMware Workstation y QEMU en modo emulación software pura.",
-            "**KVM: El estándar de Tipo 1 en Linux** — KVM convierte al propio kernel de Linux en un hipervisor Tipo 1 cargando los módulos 'kvm' y el driver específico del procesador ('kvm_intel' o 'kvm_amd')."
+            "**Hipervisor Tipo 1 (Bare-Metal / Nativo)** — Se ejecuta directamente sobre el hardware físico del servidor sin capa intermedia de SO. Ofrece máximo rendimiento y mínima latencia. Ejemplos de examen: Xen, VMware ESXi y KVM. *Matiz oficial LPI:* KVM actúa con propiedades de Tipo 1 y 2: se carga como módulo del kernel Linux (`kvm.ko`) pero otorga a las máquinas acceso nativo a las extensiones de hardware de la CPU.",
+            "**Hipervisor Tipo 2 (Hosted / Alojado)** — Se ejecuta como una aplicación ordinaria sobre un sistema operativo anfitrión (Host OS). Ejemplos de examen: VirtualBox, VMware Workstation y QEMU en modo emulación completa pura.",
+            "**Migración en Vivo (Live Migration)** — 🎯 Clave de Examen: Capacidad del hipervisor para transferir una máquina virtual en plena ejecución de un servidor físico a otro a través de la red local sin interrumpir los servicios ni cortar las conexiones de red activas."
           ]
         },
         {
@@ -96,9 +110,10 @@
           "type": "list",
           "ordered": false,
           "items": [
-            "**Virtualización Completa (Full Virtualization)** — El hipervisor emula un ordenador físico completo. El sistema operativo invitado no sabe que está virtualizado y funciona sin ninguna modificación.",
-            "**Paravirtualización y Controladores VirtIO** — 🎯 Clave de Examen: El sistema operativo invitado es consciente de que está virtualizado y utiliza controladores optimizados especiales (VirtIO para disco, red y memoria) que se comunican directamente con el hipervisor a hiper-velocidad.",
-            "**Contenedores Linux (LXC, Docker, Podman)** — No virtualizan hardware. Comparten el mismo kernel de Linux del host y aíslan los procesos de usuario mediante Control Groups (cgroups) y Namespaces."
+            "**Virtualización Completa (Full Virtualization)** — El hipervisor emula un ordenador físico completo (BIOS/UEFI, tarjetas gráficas genéricas, controladoras IDE). El sistema operativo invitado no requiere modificaciones, pero sufre sobrecarga por emulación.",
+            "**Controladores de Máquina Huésped (Guest Extensions / Additions)** — 🎯 Concepto Oficial LPI: Controladores especializados proporcionados por la plataforma de virtualización (como las *Guest Additions* de VirtualBox o *open-vm-tools* de VMware), distribuidos típicamente mediante una imagen ISO de CD-ROM virtual que se monta e instala en el SO huésped para optimizar gráficos, sincronización de ratón y carpetas compartidas.",
+            "**Invitado Híbrido (Hybrid Guest) y VirtIO** — 🎯 Clave de Examen: Combina la virtualización completa por hardware con controladores paravirtualizados (VirtIO para disco `virtio-blk` y red `virtio-net`). El kernel invitado se comunica de forma ultra-directa con el hipervisor logrando un rendimiento de E/S cercano al nativo sin modificar la arquitectura general del sistema.",
+            "**Contenedores de Sistema y Aplicación** — Aislamiento a nivel de espacio de usuario (namespaces y cgroups) compartiendo el kernel anfitrión. Inicio instantáneo en milisegundos."
           ]
         },
         {
@@ -337,22 +352,27 @@
             [
               "/etc/machine-id",
               "UUID único de 32 hex",
-              "🎯 Archivo de texto plano con 32 caracteres hexadecimales generado durante la instalación del sistema."
+              "🎯 Archivo de texto plano con 32 caracteres hexadecimales que identifica unívocamente a cada instalación o instancia."
             ],
             [
-              "truncate -s 0",
+              "dbus-uuidgen --get",
+              "Consultar ID de D-Bus",
+              "🎯 Pregunta Oficial LPI: Muestra en pantalla el identificador actual de máquina D-Bus sin alterar ningún archivo."
+            ],
+            [
+              "dbus-uuidgen --ensure[=/ruta]",
+              "Garantizar ID de D-Bus",
+              "🎯 Verifica que exista un UUID válido en /etc/machine-id (o /var/lib/dbus/machine-id); si no existe o está vacío, lo genera."
+            ],
+            [
+              "truncate -s 0 /etc/machine-id",
               "Vaciar en la plantilla",
-              "🎯 Clave de Examen: Deja el archivo con 0 bytes antes de apagar la plantilla dorada para clonar."
+              "🎯 Deja el archivo a 0 bytes antes de apagar la plantilla dorada para clonación en masa."
             ],
             [
               "systemd-machine-id-setup",
-              "Regenerar UUID",
-              "🎯 Genera un identificador nuevo y único leyendo el UUID del hipervisor o creando uno criptográfico."
-            ],
-            [
-              "dbus-uuidgen --ensure",
-              "Sincronizar D-Bus",
-              "Comando alternativo histórico para garantizar la identidad en /var/lib/dbus/machine-id."
+              "Regenerar con systemd",
+              "Lee el UUID del hipervisor o genera una cadena aleatoria criptográfica y la graba en /etc/machine-id al arrancar."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -485,7 +505,7 @@
         },
         {
           "type": "html",
-          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- COMPARATIVA GRÁFICA EN 2 PILARES ARQUITECTÓNICOS -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px;\">\n    <!-- Pilar 1: Máquinas Virtuales -->\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:12px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 8px; border-radius:4px;\">VIRTUALIZACIÓN HARDWARE</span>\n        <span style=\"color:#1E40AF; font-weight:800; font-size:12px;\">KVM / QEMU / Xen</span>\n      </div>\n      <h3 style=\"margin:2px 0 6px 0; font-size:16px; font-weight:800; color:#1E40AF;\">Máquinas Virtuales (VMs)</h3>\n      <div style=\"display:flex; flex-direction:column; gap:6px; font-size:11.5px; color:#1E3A8A;\">\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          🎯 <strong>Kernel:</strong> Cada VM ejecuta su <strong>propio kernel independiente</strong> (puedes ejecutar Windows o BSD sobre Linux).\n        </div>\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          🛡️ <strong>Aislamiento:</strong> Completo por hardware a nivel de silicio mediante hipervisor Tipo 1 (KVM).\n        </div>\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          ⚡ <strong>Mecanismo CPU:</strong> Extensiones de procesador Intel VT-x (<code>vmx</code>) o AMD-V (<code>svm</code>).\n        </div>\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          ⏱️ <strong>Arranque y Peso:</strong> Minutos o decenas de segundos; gigabytes en disco; emulación de BIOS/UEFI.\n        </div>\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          🏷️ <strong>Identidad:</strong> UUID propio en <code>/etc/machine-id</code> y dirección MAC virtual dedicada.\n        </div>\n      </div>\n    </div>\n\n    <!-- Pilar 2: Contenedores -->\n    <div style=\"background:#F0FDF4; border:2px solid #16A34A; border-radius:12px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 8px; border-radius:4px;\">NIVEL SISTEMA OPERATIVO</span>\n        <span style=\"color:#15803D; font-weight:800; font-size:12px;\">LXC / Docker / Podman</span>\n      </div>\n      <h3 style=\"margin:2px 0 6px 0; font-size:16px; font-weight:800; color:#14532D;\">Contenedores Linux</h3>\n      <div style=\"display:flex; flex-direction:column; gap:6px; font-size:11.5px; color:#14532D;\">\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          🎯 <strong>Kernel:</strong> <strong>Comparten el mismo kernel de Linux del host</strong> (todos deben ser Linux).\n        </div>\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          🛡️ <strong>Aislamiento:</strong> Lógico a nivel de espacio de usuario; no hay hipervisor emulando hardware.\n        </div>\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          ⚡ <strong>Mecanismo Kernel:</strong> <code>cgroups</code> (límites de CPU/RAM) y <code>namespaces</code> (aislamiento PID, red, IPC).\n        </div>\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          ⏱️ <strong>Arranque y Peso:</strong> Milisegundos (solo arranca el proceso); megabytes de espacio en disco.\n        </div>\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          🏷️ <strong>Identidad:</strong> ID de contenedor gestionado por el runtime (Docker/Podman).\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <!-- TABLA MNEMOTÉCNICA ULTRA-RESUMIDA DE EXAMEN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:6px 12px;\">\n    <div style=\"display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap:6px; font-size:11px; text-align:center;\">\n      <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; padding:4px; border-radius:4px; font-weight:800; color:#334155;\">Criterio de Examen</div>\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:4px; border-radius:4px; font-weight:800; color:#1E40AF;\">Máquinas Virtuales (KVM)</div>\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:4px; border-radius:4px; font-weight:800; color:#15803D;\">Contenedores (Docker/LXC)</div>\n      \n      <div style=\"padding:3px; text-align:left; font-weight:700;\">Kernel del sistema</div>\n      <div style=\"padding:3px; color:#1E40AF;\">🎯 Kernel propio independiente</div>\n      <div style=\"padding:3px; color:#15803D;\">🎯 Kernel del host compartido</div>\n      \n      <div style=\"padding:3px; text-align:left; font-weight:700;\">Tecnología clave</div>\n      <div style=\"padding:3px; color:#1E40AF;\">Intel VT-x (vmx) / AMD-V (svm)</div>\n      <div style=\"padding:3px; color:#15803D;\">cgroups + namespaces</div>\n    </div>\n  </div>\n</div>\n"
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- COMPARATIVA GRÁFICA EN 2 PILARES ARQUITECTÓNICOS -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px;\">\n    <!-- Pilar 1: Máquinas Virtuales -->\n    <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:12px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 8px; border-radius:4px;\">VIRTUALIZACIÓN HARDWARE</span>\n        <span style=\"color:#1E40AF; font-weight:800; font-size:12px;\">KVM / QEMU / Xen</span>\n      </div>\n      <h3 style=\"margin:2px 0 6px 0; font-size:16px; font-weight:800; color:#1E40AF;\">Máquinas Virtuales (VMs)</h3>\n      <div style=\"display:flex; flex-direction:column; gap:6px; font-size:11.5px; color:#1E3A8A;\">\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          🎯 <strong>Kernel:</strong> Cada VM ejecuta su <strong>propio kernel independiente</strong> (puedes ejecutar Windows o BSD sobre Linux).\n        </div>\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          🛡️ <strong>Aislamiento:</strong> Completo por hardware a nivel de silicio mediante hipervisor Tipo 1 (KVM).\n        </div>\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          ⚡ <strong>Mecanismo CPU:</strong> Extensiones de procesador Intel VT-x (<code>vmx</code>) o AMD-V (<code>svm</code>).\n        </div>\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          ⏱️ <strong>Arranque y Peso:</strong> Minutos o decenas de segundos; gigabytes en disco; emulación de BIOS/UEFI.\n        </div>\n        <div style=\"background:#DBEAFE; padding:4px 8px; border-radius:5px;\">\n          🏷️ <strong>Identidad:</strong> UUID propio en <code>/etc/machine-id</code> y dirección MAC virtual dedicada.\n        </div>\n      </div>\n    </div>\n\n    <!-- SUB-DIVISIÓN OFICIAL LPI: APLICACIÓN VS SISTEMA -->\n  <div style=\"background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px; padding:6px 12px; margin-bottom:8px; font-size:11.5px; color:#92400E;\">\n    <strong>🎯 Distinción Oficial LPIC-1 en Contenedores:</strong><br>\n    • <strong>Contenedor de aplicaciones (Application Container):</strong> Diseñado para aislar un único proceso/servicio (Docker, Podman) con ciclo de vida efímero e inmutable.<br>\n    • <strong>Contenedor de sistema Linux (Linux System Container):</strong> Ejecuta un sistema operativo completo con múltiples servicios y su propio gestor de inicio (LXC, LXD), compartiendo el kernel del anfitrión.\n  </div>\n\n  <!-- Pilar 2: Contenedores -->\n    <div style=\"background:#F0FDF4; border:2px solid #16A34A; border-radius:12px; padding:10px 14px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 8px; border-radius:4px;\">NIVEL SISTEMA OPERATIVO</span>\n        <span style=\"color:#15803D; font-weight:800; font-size:12px;\">LXC / Docker / Podman</span>\n      </div>\n      <h3 style=\"margin:2px 0 6px 0; font-size:16px; font-weight:800; color:#14532D;\">Contenedores Linux</h3>\n      <div style=\"display:flex; flex-direction:column; gap:6px; font-size:11.5px; color:#14532D;\">\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          🎯 <strong>Kernel:</strong> <strong>Comparten el mismo kernel de Linux del host</strong> (todos deben ser Linux).\n        </div>\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          🛡️ <strong>Aislamiento:</strong> Lógico a nivel de espacio de usuario; no hay hipervisor emulando hardware.\n        </div>\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          ⚡ <strong>Mecanismo Kernel:</strong> <code>cgroups</code> (límites de CPU/RAM) y <code>namespaces</code> (aislamiento PID, red, IPC).\n        </div>\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          ⏱️ <strong>Arranque y Peso:</strong> Milisegundos (solo arranca el proceso); megabytes de espacio en disco.\n        </div>\n        <div style=\"background:#DCFCE7; padding:4px 8px; border-radius:5px;\">\n          🏷️ <strong>Identidad:</strong> ID de contenedor gestionado por el runtime (Docker/Podman).\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <!-- TABLA MNEMOTÉCNICA ULTRA-RESUMIDA DE EXAMEN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:6px 12px;\">\n    <div style=\"display:grid; grid-template-columns: 1.2fr 1fr 1fr; gap:6px; font-size:11px; text-align:center;\">\n      <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; padding:4px; border-radius:4px; font-weight:800; color:#334155;\">Criterio de Examen</div>\n      <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:4px; border-radius:4px; font-weight:800; color:#1E40AF;\">Máquinas Virtuales (KVM)</div>\n      <div style=\"background:#F0FDF4; border:1px solid #86EFAC; padding:4px; border-radius:4px; font-weight:800; color:#15803D;\">Contenedores (Docker/LXC)</div>\n      \n      <div style=\"padding:3px; text-align:left; font-weight:700;\">Kernel del sistema</div>\n      <div style=\"padding:3px; color:#1E40AF;\">🎯 Kernel propio independiente</div>\n      <div style=\"padding:3px; color:#15803D;\">🎯 Kernel del host compartido</div>\n      \n      <div style=\"padding:3px; text-align:left; font-weight:700;\">Tecnología clave</div>\n      <div style=\"padding:3px; color:#1E40AF;\">Intel VT-x (vmx) / AMD-V (svm)</div>\n      <div style=\"padding:3px; color:#15803D;\">cgroups + namespaces</div>\n    </div>\n  </div>\n</div>\n"
         },
         {
           "type": "callout",
@@ -568,8 +588,8 @@
           "ordered": true,
           "items": [
             "Caso 1 (Oficial Pág 182): ¿Qué comando permite comprobar si un servidor con procesador AMD dispone de extensiones de virtualización por hardware habilitadas? — Comando: `grep -E --color 'svm' /proc/cpuinfo (o lscpu | grep Virtualization)` (En procesadores AMD, la tecnología de virtualización por hardware se denomina AMD-V y el kernel la identifica con el flag 'svm' en el archivo /proc/cpuinfo.)",
-            "Caso 2 (Oficial Pág 182): Un administrador nota lentitud en las operaciones de red y disco de una VM Linux sobre KVM. ¿Qué tipo de controladores debe instalar o configurar para obtener rendimiento nativo? — Comando: `Controladores paravirtualizados VirtIO (virtio-net, virtio-blk)` (VirtIO elimina la sobrecarga de emulación completa de hardware comunicando el kernel invitado directamente con el hipervisor KVM.)",
-            "Caso 3 (Oficial Pág 182): ¿Qué comando se utiliza en una distribución con systemd para regenerar el identificador único del sistema tras vaciar /etc/machine-id? — Comando: `sudo systemd-machine-id-setup` (systemd-machine-id-setup lee el UUID de KVM o genera una nueva cadena criptográfica aleatoria de 32 caracteres y la escribe en /etc/machine-id.)"
+            "Caso 2 (Oficial Pág 182): Un administrador nota lentitud en las operaciones de red y disco de una VM Linux sobre KVM. ¿Qué tipo de controladores debe instalar o configurar para obtener rendimiento nativo? — Comando: `Controladores paravirtualizados VirtIO (virtio-net, virtio-blk)` (VirtIO configura un huésped híbrido que elimina la sobrecarga de emulación completa de hardware comunicando el kernel invitado directamente con el hipervisor KVM.)",
+            "Caso 3 (Oficial Pág 178/181): Dos máquinas virtuales clonadas con D-Bus sufren comportamientos erráticos al comunicarse por el bus del sistema. ¿Qué comando se utiliza para determinar si cada una tiene diferente ID de máquina D-Bus y cuál lo regenera? — Comando: `dbus-uuidgen --get (para consultar); y sudo dbus-uuidgen --ensure (o systemd-machine-id-setup)` (El comando 'dbus-uuidgen --get' imprime el UUID actual de D-Bus sin alterarlo. Si dos clones comparten el mismo ID, colisionan en el bus de mensajes del sistema; '--ensure=/etc/machine-id' o 'systemd-machine-id-setup' asignan una nueva identidad unívoca.)"
           ]
         },
         {
@@ -731,6 +751,26 @@
             [
               "¿Qué permisos obligatorios debe tener ~/.ssh/authorized_keys?",
               "Permisos 0600 (y el directorio ~/.ssh permisos 0700)."
+            ],
+            [
+              "¿Qué comando muestra el ID de máquina actual de D-Bus sin modificarlo?",
+              "dbus-uuidgen --get."
+            ],
+            [
+              "¿Qué opción de dbus-uuidgen regenera el ID si no existe?",
+              "sudo dbus-uuidgen --ensure (o --ensure=/etc/machine-id)."
+            ],
+            [
+              "¿Qué es un 'Invitado Híbrido' (Hybrid Guest)?",
+              "Una máquina virtual completa que utiliza controladores paravirtualizados (VirtIO) para alcanzar rendimiento de E/S casi nativo."
+            ],
+            [
+              "¿Cómo se distribuyen habitualmente las Guest Additions de VirtualBox?",
+              "A través de una imagen ISO de CD-ROM virtual que se monta e instala en el sistema operativo huésped."
+            ],
+            [
+              "¿Qué diferencia a un contenedor de aplicaciones de uno de sistema?",
+              "El de aplicaciones (Docker/Podman) empaqueta un solo proceso; el de sistema (LXC/LXD) ejecuta un sistema operativo completo."
             ]
           ],
           "caption": "Tarjetas de memorización"
@@ -748,6 +788,58 @@
           "type": "heading",
           "level": 2,
           "text": "Resumen y Claves de Examen: Subtema 102.6"
+        },
+        {
+          "type": "paragraph",
+          "text": "Puntos clave de Linux como sistema virtualizado y en la nube para LPIC-1:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto / Herramienta",
+            "Propósito y Clave de Examen LPI"
+          ],
+          "rows": [
+            [
+              "Hipervisores Tipo 1 vs Tipo 2",
+              "Tipo 1 (Bare-Metal: Xen, ESXi, KVM en kernel). Tipo 2 (Hosted: VirtualBox, VMware Workstation). Live Migration mueve VMs en caliente."
+            ],
+            [
+              "Flags CPU (/proc/cpuinfo)",
+              "Intel: vmx. AMD: svm. Vitales para soporte de hardware nativo de virtualización."
+            ],
+            [
+              "Invitado Híbrido y VirtIO",
+              "VirtIO proporciona drivers paravirtualizados (virtio-blk, virtio-net) para lograr rendimiento de E/S cercano al nativo."
+            ],
+            [
+              "Guest Extensions / Additions",
+              "Controladores del hipervisor distribuidos típicamente mediante ISO de CD-ROM montada en el huésped."
+            ],
+            [
+              "Formatos de Disco en VM",
+              "RAW (fijo, máximo rendimiento de E/S) vs QCOW2 (crecimiento dinámico, snapshots CoW y compresión)."
+            ],
+            [
+              "Clonación y /etc/machine-id",
+              "Vaciar con 'truncate -s 0'. Consultar con 'dbus-uuidgen --get'. Regenerar con 'systemd-machine-id-setup' o 'dbus-uuidgen --ensure'."
+            ],
+            [
+              "cloud-init (#cloud-config)",
+              "Estándar YAML para aprovisionamiento inicial automático de instancias en la nube (hostnames, usuarios, SSH keys)."
+            ],
+            [
+              "Contenedores App vs Sistema",
+              "Aplicaciones (Docker/Podman: un proceso). Sistema (LXC/LXD: SO multi-proceso completo compartiendo kernel)."
+            ]
+          ],
+          "caption": "Matriz maestra de Linux como sistema virtualizado LPIC-1"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Checklist Definitivo LPIC-1 102.6",
+          "content": "1. Intel=vmx, AMD=svm en /proc/cpuinfo. 2. dbus-uuidgen --get para ver machine-id sin tocarlo. 3. VirtIO convierte al huésped en invitado híbrido de alto rendimiento. 4. cloud-init requiere cabecera exacta '#cloud-config'."
         }
       ],
       "notes": "Concluimos el subtema 102.6 y con él finalizamos completamente la refactorización del Tema 102."

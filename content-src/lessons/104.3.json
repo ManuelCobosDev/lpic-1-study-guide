@@ -3,7 +3,7 @@
   "topicId": "104",
   "examId": "101",
   "title": "Controlar el montaje y desmontaje de los sistemas de archivos",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "language": "es",
   "estimatedMinutes": 30,
   "objectives": [
@@ -11,11 +11,31 @@
     "Dominio técnico de las herramientas y configuración del subtema 104.3"
   ],
   "keyTerms": [
-    "Controlar el montaje y desmontaje de los sistemas de archivos",
-    "Tema 104"
+    "Punto de montaje",
+    "Efecto de ocultación VFS",
+    "fstab (6 campos)",
+    "fsck pass (1 para /, 2 para otros, 0 para swap/red)",
+    "Opciones fstab (defaults, ro, rw, noexec, nosuid, noatime, user, users, auto, noauto, group, owner, sync, async)",
+    "remount",
+    "target is busy",
+    "umount -f (forzar red NFS)",
+    "umount -r (fallback ro)",
+    "mount -t <tipo1,tipo2>",
+    "systemd .mount",
+    "systemd .automount",
+    "/etc/systemd/system/",
+    "systemctl daemon-reload"
   ],
   "commands": [
-    "sudo"
+    "mount",
+    "umount",
+    "fuser",
+    "lsof",
+    "blkid",
+    "lsblk",
+    "findfs",
+    "systemctl",
+    "losetup"
   ],
   "placeholder": false,
   "slides": [
@@ -35,7 +55,7 @@
           "text": "mount, umount, opciones de montaje, /etc/fstab (los 6 campos), blkid, findfs, systemd .mount (Modo Examen)"
         }
       ],
-      "notes": "Iniciamos el subtema 104.3 (peso 3). El montaje de sistemas de archivos es una de las tareas más evaluadas en el examen LPIC-1. Dominaremos el comando mount y sus opciones de seguridad, la resolución del molesto error 'target is busy' al desmontar, el diseño y sintaxis de los 6 campos del archivo /etc/fstab, y la identificación persistente con UUIDs."
+      "notes": "Iniciamos el subtema 104.3 (peso 3). El montaje de sistemas de archivos es una de las tareas más evaluadas en el examen LPIC-1. Dominaremos el comando mount y sus opciones de seguridad, la resolución del error 'target is busy', el diseño y sintaxis de los 6 campos de /etc/fstab, y la gestión de unidades systemd .mount en /etc/systemd/system/."
     },
     {
       "id": "104.3-slide-2",
@@ -56,14 +76,14 @@
           "type": "list",
           "ordered": false,
           "items": [
-            "**Un árbol único invertido con raíz en '/'** — A diferencia de las letras de unidad de Windows (C:, D:), Linux une todos los discos en una estructura unificada. Cada sistema de archivos secundario se 'acopla' en un directorio existente llamado 'punto de montaje'.",
-            "**Efecto de ocultación de contenidos previos** — 🎯 Si montas una partición en un directorio que ya contenía archivos (ej: /mnt/fotos), los archivos que estaban antes en esa carpeta quedan OCULTOS e inaccesibles temporalmente hasta que se desmonte el dispositivo. ¡No se borran, solo se tapan!",
-            "**Puntos de montaje estándar FHS** — 🎯 '/mnt' para montajes manuales temporales del administrador; '/media' para dispositivos extraíbles montados automáticamente por el entorno gráfico (USB, CD-ROMs)."
+            "**Un árbol único invertido con raíz en '/'** — Todos los discos y particiones se acoplan en directorios existentes llamados 'puntos de montaje'.",
+            "**Efecto de ocultación de contenidos previos** — 🎯 Si montas una partición en un directorio que ya contenía archivos (ej: /mnt/fotos), los archivos preexistentes quedan temporalmente OCULTOS e inaccesibles hasta desmontar. ¡No se borran, solo se tapan!",
+            "**Puntos de montaje estándar FHS** — '/mnt' para montajes manuales del administrador; '/media' para dispositivos extraíbles montados automáticamente (USB, CD-ROMs)."
           ]
         },
         {
           "type": "html",
-          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Diagrama de Árbol de Montaje -->\n  <div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:12px; padding:14px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;\">\n      <span style=\"font-weight:800; color:#0F172A; font-size:14px;\">Árbol Unificado de Ficheros (Virtual File System - VFS)</span>\n      <span style=\"background:#DBEAFE; color:#1E40AF; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:4px;\">Puntos de Montaje</span>\n    </div>\n    \n    <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; font-family:monospace; text-align:center;\">\n      <!-- Raíz -->\n      <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:8px; padding:10px 4px;\">\n        <div style=\"font-size:18px; font-weight:800; color:#1E40AF;\">/ (Raíz)</div>\n        <div style=\"font-size:11px; color:#2563EB; margin:4px 0;\">Disco Principal</div>\n        <div style=\"font-size:10px; background:#DBEAFE; color:#1E3A8A; padding:2px 4px; border-radius:4px;\">UUID=a1b2... (/dev/sda2)</div>\n      </div>\n\n      <!-- /home -->\n      <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:8px; padding:10px 4px;\">\n        <div style=\"font-size:18px; font-weight:800; color:#166534;\">/home</div>\n        <div style=\"font-size:11px; color:#15803D; margin:4px 0;\">Partición Usuarios</div>\n        <div style=\"font-size:10px; background:#DCFCE7; color:#14532D; padding:2px 4px; border-radius:4px;\">UUID=4f3b... (/dev/sdb1)</div>\n      </div>\n\n      <!-- /boot/efi -->\n      <div style=\"background:#FEF3C7; border:2px solid #F59E0B; border-radius:8px; padding:10px 4px;\">\n        <div style=\"font-size:18px; font-weight:800; color:#92400E;\">/boot/efi</div>\n        <div style=\"font-size:11px; color:#B45309; margin:4px 0;\">Partición ESP FAT32</div>\n        <div style=\"font-size:10px; background:#FEF3C7; color:#78350F; padding:2px 4px; border-radius:4px;\">UUID=c12a... (/dev/sda1)</div>\n      </div>\n\n      <!-- /mnt/backup -->\n      <div style=\"background:#F5F3FF; border:2px solid #8B5CF6; border-radius:8px; padding:10px 4px;\">\n        <div style=\"font-size:18px; font-weight:800; color:#5B21B6;\">/mnt/backup</div>\n        <div style=\"font-size:11px; color:#6D28D9; margin:4px 0;\">Disco Externo USB</div>\n        <div style=\"font-size:10px; background:#EDE9FE; color:#4C1D95; padding:2px 4px; border-radius:4px;\">UUID=8e9f... (/dev/sdc1)</div>\n      </div>\n    </div>\n  </div>\n\n  <!-- Alerta de examen: Efecto de Ocultación -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:14px;\">\n    <span style=\"font-size:26px;\">💡</span>\n    <div style=\"font-size:13px; color:#92400E; line-height:1.45;\">\n      <strong>Efecto de Ocultación de Archivos Preexistentes:</strong> Si montas un dispositivo en un directorio que ya contenía archivos (ej: montas en <code style=\"background:#FEF3C7; padding:2px 4px; border-radius:4px;\">/mnt/fotos</code>), los archivos previos <strong>NO se borran</strong>; quedan temporalmente <strong>ocultos e inaccesibles</strong> bajo el nuevo sistema montado. Al ejecutar <code style=\"font-weight:700;\">umount /mnt/fotos</code>, los archivos originales reaparecen intactos.\n    </div>\n  </div>\n</div>\n"
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:12px; padding:14px;\">\n    <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; font-family:monospace; text-align:center;\">\n      <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:8px; padding:10px 4px;\">\n        <div style=\"font-size:18px; font-weight:800; color:#1E40AF;\">/ (Raíz)</div>\n        <div style=\"font-size:11px; color:#2563EB; margin:4px 0;\">Disco Principal</div>\n        <div style=\"font-size:10px; background:#DBEAFE; color:#1E3A8A; padding:2px 4px; border-radius:4px;\">UUID=a1b2... (/dev/sda2)</div>\n      </div>\n      <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:8px; padding:10px 4px;\">\n        <div style=\"font-size:18px; font-weight:800; color:#166534;\">/home</div>\n        <div style=\"font-size:11px; color:#15803D; margin:4px 0;\">Partición Usuarios</div>\n        <div style=\"font-size:10px; background:#DCFCE7; color:#14532D; padding:2px 4px; border-radius:4px;\">UUID=4f3b... (/dev/sdb1)</div>\n      </div>\n      <div style=\"background:#FEF3C7; border:2px solid #F59E0B; border-radius:8px; padding:10px 4px;\">\n        <div style=\"font-size:18px; font-weight:800; color:#92400E;\">/boot/efi</div>\n        <div style=\"font-size:11px; color:#B45309; margin:4px 0;\">Partición ESP FAT32</div>\n        <div style=\"font-size:10px; background:#FEF3C7; color:#78350F; padding:2px 4px; border-radius:4px;\">UUID=c12a... (/dev/sda1)</div>\n      </div>\n      <div style=\"background:#F5F3FF; border:2px solid #8B5CF6; border-radius:8px; padding:10px 4px;\">\n        <div style=\"font-size:18px; font-weight:800; color:#5B21B6;\">/mnt/backup</div>\n        <div style=\"font-size:11px; color:#6D28D9; margin:4px 0;\">Disco Externo USB</div>\n        <div style=\"font-size:10px; background:#EDE9FE; color:#4C1D95; padding:2px 4px; border-radius:4px;\">UUID=8e9f... (/dev/sdc1)</div>\n      </div>\n    </div>\n  </div>\n</div>\n"
         },
         {
           "type": "callout",
@@ -77,84 +97,75 @@
     {
       "id": "104.3-slide-3",
       "slideNumber": 3,
-      "title": "El Comando mount: Acoplamiento Manual de Dispositivos",
+      "title": "El Comando mount: Acoplamiento Manual y Filtros de Tipo",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "El Comando mount: Acoplamiento Manual de Dispositivos"
+          "text": "El Comando mount: Acoplamiento Manual y Filtros de Tipo"
         },
         {
           "type": "paragraph",
-          "text": "Sintaxis básica y modificadores operativos de montaje en tiempo real:"
+          "text": "Sintaxis básica, modificadores operativos de montaje en tiempo real y filtrado por tipos:"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "sudo mount [-t <tipo>] [-o <opciones>] <dispositivo> <punto_montaje>",
-          "title": "Acoplar un sistema de archivos al árbol de directorios del sistema operativo"
-        },
-        {
-          "type": "terminal",
-          "lines": [
-            {
-              "prompt": "$ ",
-              "command": "sudo mount -t ext4 -o ro,noatime /dev/sdb1 /mnt/backup; mount | grep sdb1",
-              "output": "/dev/sdb1 on /mnt/backup type ext4 (ro,noatime,relatime)"
-            }
-          ]
+          "code": "# 1. Montar ext4 en /mnt/external como solo lectura con noatime y async (Ejercicio Guiado 1):\nsudo mount -t ext4 -o noatime,async,ro /dev/sdc1 /mnt/external\n\n# 2. Listar simultáneamente sistemas ext3 y ntfs montados (Ejercicio Guiado 6):\nmount -t ext3,ntfs\n\n# 3. Montar directamente en solo lectura con la bandera corta -r (o -w para lectura/escritura):\nsudo mount -r /dev/sdb1 /mnt/backup",
+          "title": "Sintaxis oficial completa del comando mount"
         },
         {
           "type": "table",
           "headers": [
             "Opción / Bandera",
             "Nombre",
-            "Descripción"
+            "Descripción en Examen LPIC-1"
           ],
           "rows": [
             [
               "mount (sin args)",
-              "Listar montados",
-              "🎯 Clave de Examen: Muestra la lista de TODOS los sistemas de archivos montados actualmente en el sistema con sus opciones activas."
+              "Listar todo",
+              "Muestra la lista de TODOS los sistemas de archivos montados y sus opciones activas."
             ],
             [
-              "mount <disp> <dir>",
-              "Montaje manual",
-              "Sintaxis estándar manual (ej: 'sudo mount /dev/sdb1 /mnt')."
-            ],
-            [
-              "-t <tipo>",
-              "-t (Tipo FS)",
-              "Especifica explícitamente el tipo de sistema de archivos (ext4, xfs, vfat, iso9660, nfs). Si se omite, mount lo detecta automáticamente."
+              "-t <tipo1,tipo2>",
+              "Filtro / Tipo FS",
+              "🎯 Especifica el tipo para montar, O filtra listas separadas por comas (ej: 'mount -t ext3,ntfs')."
             ],
             [
               "-o <opciones>",
-              "-o (Opciones)",
-              "🎯 Clave de Examen: Pasa modificadores de montaje específicos (ej: '-o ro,noexec,nosuid')."
+              "Opciones",
+              "Pasa modificadores separados por comas sin espacios (ej: '-o ro,noatime,async')."
+            ],
+            [
+              "-r / -ro",
+              "Read-only",
+              "🎯 Atajo directo para montar en modo solo lectura sin escribir '-o ro'."
+            ],
+            [
+              "-w / -rw",
+              "Read-write",
+              "Atajo directo para montar en lectura y escritura sin escribir '-o rw'."
             ],
             [
               "mount -a",
-              "mount -a (fstab)",
-              "🎯 Clave Absoluta de Examen: Monta TODOS los sistemas de archivos listados en /etc/fstab que no tengan la opción 'noauto'."
+              "Montar fstab",
+              "🎯 Monta todos los sistemas de archivos de /etc/fstab que no tengan 'noauto'."
             ],
             [
               "-o remount",
-              "Remontar en vivo",
-              "🎯 Modifica opciones de una partición ya montada sin desmontarla (ej: 'mount -o remount,ro /')."
+              "Remontar",
+              "🎯 Modifica opciones de un montaje activo en caliente (ej: 'mount -o remount,ro /mnt/data')."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"display:flex; gap:12px; margin-top:10px;\">\n  <div style=\"flex:1; background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:10px 14px;\">\n    <div style=\"font-size:12px; font-weight:800; color:#1E40AF; margin-bottom:4px; text-transform:uppercase;\">\n      Remontaje en Caliente (remount)\n    </div>\n    <div style=\"font-family:monospace; font-size:12px; color:#1D4ED8; background:#DBEAFE; padding:4px 8px; border-radius:4px; font-weight:700;\">\n      sudo mount -o remount,ro /mnt/backup\n    </div>\n    <div style=\"font-size:11.5px; color:#1E3A8A; margin-top:4px;\">\n      Pasa de lectura/escritura a solo lectura sin interrumpir el servicio ni cerrar el punto de montaje.\n    </div>\n  </div>\n  <div style=\"flex:1; background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:10px 14px;\">\n    <div style=\"font-size:12px; font-weight:800; color:#166534; margin-bottom:4px; text-transform:uppercase;\">\n      Verificación con mount -a\n    </div>\n    <div style=\"font-family:monospace; font-size:12px; color:#15803D; background:#DCFCE7; padding:4px 8px; border-radius:4px; font-weight:700;\">\n      sudo mount -a\n    </div>\n    <div style=\"font-size:11.5px; color:#14532D; margin-top:4px;\">\n      Lee /etc/fstab y monta todo lo pendiente. <strong>Obligatorio</strong> tras editar fstab para evitar pánicos al reiniciar.\n    </div>\n  </div>\n</div>\n"
+          "caption": "Opciones clave de mount evaluadas en LPIC-1"
         },
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 'mount -a' lee /etc/fstab y monta todo lo pendiente. Es el comando obligatorio tras editar fstab para verificar que no hay errores antes de reiniciar."
+          "title": "Clave Oficial de Examen LPIC-1 (Ejercicios Guiados 1, 5 y 6)",
+          "content": "🎯 Recuerda: 1) Para listar múltiples tipos de sistemas usa comas: 'mount -t ext3,ntfs'. 2) Para remontar exFAT en /mnt/data como ro: 'mount -o remount,ro /mnt/data'. 3) Las banderas directas '-r' y '-w' equivalen a '-o ro' y '-o rw'."
         }
       ],
       "notes": "Advierte: si editas /etc/fstab con un error tipográfico y reinicias sin probar 'mount -a', el servidor entrará en modo emergencia."
@@ -179,61 +190,67 @@
           "headers": [
             "Opción de Montaje",
             "Efecto Operativo",
-            "Propósito de Seguridad o Rendimiento en Examen"
+            "Propósito en Examen LPIC-1"
           ],
           "rows": [
             [
               "defaults",
               "🎯 Equivale a: rw, suid, dev, exec, auto, nouser, async.",
-              "Conjunto estándar equilibrado para la mayoría de particiones."
+              "Conjunto estándar para la mayoría de particiones de disco."
             ],
             [
-              "ro frente a rw",
-              "🎯 'ro' = solo lectura (read-only); 'rw' = lectura y escritura (read-write).",
-              "'ro' protege particiones de backups o imágenes forenses."
+              "ro / rw",
+              "'ro' = solo lectura; 'rw' = lectura y escritura.",
+              "Protección contra alteraciones en backups o particiones forenses."
             ],
             [
               "noexec",
-              "🎯 Impide la ejecución directa de cualquier binario o script en esa partición.",
-              "Seguridad crítica en particiones de usuario como /tmp o /var/tmp."
+              "🎯 Impide ejecutar binarios o scripts directamente desde esa partición.",
+              "Seguridad crítica en /tmp, /var/tmp y medios extraíbles."
             ],
             [
               "nosuid",
-              "🎯 Desactiva los bits especiales SUID y SGID en los archivos de la partición.",
-              "Evita escaladas de privilegios en medios extraíbles y particiones /home."
-            ],
-            [
-              "nodev",
-              "Impide la interpretación de archivos de dispositivo de caracteres o bloques.",
-              "Seguridad en particiones secundarias para evitar nodos trampa."
+              "🎯 Desactiva los bits especiales SUID y SGID en los archivos montados.",
+              "Evita escaladas de privilegios en particiones de usuario y USBs."
             ],
             [
               "noatime",
-              "🎯 No actualiza la fecha de último acceso (atime) al leer archivos.",
-              "Aumenta drásticamente el rendimiento de E/S en discos SSD y servidores web."
+              "🎯 No actualiza la fecha de último acceso al leer archivos.",
+              "Incrementa drásticamente el rendimiento de E/S en SSDs y bases de datos."
             ],
             [
-              "user frente a users",
-              "🎯 Clave de Examen: 'user' permite montar a un usuario normal, pero SOLO ÉL puede desmontarlo; 'users' permite que CUALQUIER usuario lo desmonte.",
-              "Acceso a unidades ópticas (CD-ROM) o pendrives sin sudo."
+              "user / nouser",
+              "🎯 'user' permite montar a un usuario normal (pero solo él o root pueden desmontarlo); 'nouser' lo prohíbe.",
+              "Acceso sin sudo a pendrives o CD-ROMs para un usuario específico."
             ],
             [
-              "auto frente a noauto",
-              "🎯 'auto' = se monta con 'mount -a' al arrancar; 'noauto' = se omite en 'mount -a', solo se monta cuando se pide manualmente.",
-              "Para pendrives, discos de backup externos o CDs."
+              "users",
+              "🎯 'users' permite montar a un usuario normal y que CUALQUIER otro usuario pueda desmontarlo.",
+              "Permite que otro compañero de equipo desmonte la unidad compartida."
+            ],
+            [
+              "group / owner",
+              "🎯 'group' permite montar si el usuario pertenece al grupo del dispositivo; 'owner' si es su propietario.",
+              "Control granular por grupo o dueño sin dar permisos globales de 'user'."
+            ],
+            [
+              "auto / noauto",
+              "🎯 'auto' se monta con 'mount -a'; 'noauto' se omite en 'mount -a'.",
+              "Obligatorio 'noauto' para discos de backup externos no permanentes."
+            ],
+            [
+              "sync / async",
+              "'sync' escribe de forma síncrona en disco; 'async' usa búferes de memoria.",
+              "'async' es el valor por defecto para máximo rendimiento."
             ]
           ],
-          "caption": "Opciones de Montaje de Examen: mount -o y /etc/fstab"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #CBD5E1; border-radius:8px; padding:8px 14px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;\">\n  <div style=\"font-size:12px; color:#334155;\">\n    <strong style=\"color:#2563EB;\">defaults</strong> = rw, suid, dev, exec, auto, nouser, async\n  </div>\n  <div style=\"font-size:12px; color:#B45309; background:#FEF3C7; padding:2px 8px; border-radius:4px; font-weight:700;\">\n    🎯 user (solo quien monta desmonta) &bull; users (cualquiera desmonta)\n  </div>\n  <div style=\"font-size:12px; color:#15803D; background:#DCFCE7; padding:2px 8px; border-radius:4px; font-weight:700;\">\n    🔒 noexec (seguridad /tmp) &bull; noatime (rendimiento SSD)\n  </div>\n</div>\n"
+          "caption": "Catálogo completo de opciones de montaje en /etc/fstab y mount -o"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 La Diferencia Clásica de Examen: 'user' = monta un usuario normal y solo él puede desmontarlo; 'users' = monta un usuario normal y cualquiera puede desmontarlo."
+          "content": "🎯 Diferencias Críticas: 'user' = monta usuario normal y solo él desmonta; 'users' = cualquier usuario desmonta; 'group'/'owner' = valida grupo o dueño del dispositivo; 'noauto' = 'mount -a' lo ignora por completo."
         }
       ],
       "notes": "Pregunta frecuente: '¿Qué opción en /tmp evita ejecutar malware?'. Respuesta: noexec."
@@ -241,84 +258,89 @@
     {
       "id": "104.3-slide-5",
       "slideNumber": 5,
-      "title": "El Comando umount y Resolución de 'target is busy'",
+      "title": "El Comando umount, Forzado en Red (-f/-r) y 'target is busy'",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "El Comando umount y Resolución de 'target is busy'"
+          "text": "El Comando umount, Forzado en Red (-f/-r) y 'target is busy'"
         },
         {
           "type": "paragraph",
-          "text": "¿Qué hacer cuando Linux se niega a desmontar un dispositivo porque dice que está ocupado?"
-        },
-        {
-          "type": "code",
-          "language": "bash",
-          "code": "sudo umount <dispositivo|punto_montaje> | fuser -m <dir> | lsof +D <dir>",
-          "title": "Desacoplar sistemas de archivos de forma limpia y localizar procesos que bloquean el desmontaje"
+          "text": "¿Cómo forzar desmontajes en caídas de red o diagnosticar qué proceso bloquea una partición?"
         },
         {
           "type": "terminal",
           "lines": [
             {
               "prompt": "$ ",
-              "command": "sudo umount /mnt/backup; fuser -vm /mnt/backup",
-              "output": "umount: /mnt/backup: target is busy.\n                     USER        PID ACCESS COMMAND\n/mnt/backup:         alumno    29410 ..c..  bash"
+              "command": "sudo umount /mnt/backup",
+              "output": "umount: /mnt/backup: target is busy."
+            },
+            {
+              "prompt": "$ ",
+              "command": "lsof /mnt/backup",
+              "output": "COMMAND   PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME\nbash    29410 alumno  cwd    DIR   8,17     4096    2 /mnt/backup"
+            },
+            {
+              "prompt": "$ ",
+              "command": "sudo umount -fr /mnt/server",
+              "output": "# Forzado (-f) con fallback a solo lectura (-r) ante fallo de red NFS."
             }
           ]
         },
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
+            "Comando / Opción",
+            "Propósito",
+            "Uso en Examen LPIC-1"
           ],
           "rows": [
             [
-              "umount <disp o dir>",
-              "Sintaxis flexible",
-              "🎯 Clave de Examen: Se puede desmontar indicando la ruta del dispositivo ('/dev/sdb1') O la ruta del directorio ('/mnt/backup')."
+              "umount <disp|dir>",
+              "Desmontaje estándar",
+              "Admite tanto la ruta del dispositivo ('/dev/sdb1') como el punto de montaje ('/mnt/data')."
             ],
             [
-              "target is busy",
-              "¿Por qué falla?",
-              "🎯 Ocurre si un usuario tiene su terminal abierta dentro de la carpeta (ACCESS 'c' = current dir) o un proceso retiene archivos."
+              "-f (--force)",
+              "🎯 Forzar desmontaje",
+              "Obligatorio ante fallos de red en sistemas remotos inalcanzables (NFS/CIFS)."
+            ],
+            [
+              "-r (--read-only)",
+              "🎯 Remontar como ro",
+              "Si el desmontaje falla, intenta degradar el sistema a solo lectura para no perder datos."
+            ],
+            [
+              "-l (--lazy)",
+              "Desmontaje perezoso",
+              "Desvincula la ruta inmediatamente y limpia buffers cuando los procesos cierren archivos."
+            ],
+            [
+              "lsof <dir>",
+              "Localizar ficheros abiertos",
+              "🎯 Reporta qué procesos, usuarios y PIDs mantienen archivos abiertos en esa partición."
             ],
             [
               "fuser -vm <dir>",
-              "fuser (Ver PIDs)",
-              "🎯 Muestra qué usuarios y PIDs están accediendo al punto de montaje."
+              "Ver accesos interactivos",
+              "Muestra usuarios y terminales ('c'=current dir) bloqueando el desmontaje."
             ],
             [
               "fuser -km <dir>",
-              "fuser -k (Matar)",
-              "🎯 Mata automáticamente con señal SIGKILL todos los procesos que estén reteniendo el punto de montaje."
-            ],
-            [
-              "lsof +D <dir>",
-              "lsof +D (Ficheros)",
-              "Lista todos los archivos abiertos dentro de ese directorio y los comandos responsables."
-            ],
-            [
-              "umount -l",
-              "-l (Lazy unmount)",
-              "🎯 Desmontaje perezoso (Lazy): desvincula el sistema de archivos del árbol de inmediato y limpia referencias cuando los procesos acaben."
+              "Matar bloqueos",
+              "Envía señal SIGKILL a todos los procesos reteniendo el punto de montaje."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px;\">\n  <div style=\"font-size:12px; font-weight:800; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;\">\n    Flujo de Diagnóstico y Resolución: Target is Busy\n  </div>\n  <div style=\"display:flex; align-items:center; justify-content:space-between; gap:6px; font-family:monospace; font-size:11.5px; text-align:center;\">\n    <div style=\"flex:1; background:#FEE2E2; border:1px solid #EF4444; color:#991B1B; padding:6px 2px; border-radius:6px; font-weight:700;\">\n      1. umount falla\n      <div style=\"font-size:9.5px; font-weight:normal;\">Target is busy</div>\n    </div>\n    <span style=\"color:#64748B; font-weight:bold;\">&rarr;</span>\n    <div style=\"flex:1; background:#FEF3C7; border:1px solid #FDE68A; color:#92400E; padding:6px 2px; border-radius:6px; font-weight:700;\">\n      2. fuser -vm /mnt\n      <div style=\"font-size:9.5px; font-weight:normal;\">Ver PID y usuario</div>\n    </div>\n    <span style=\"color:#64748B; font-weight:bold;\">&rarr;</span>\n    <div style=\"flex:1; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; padding:6px 2px; border-radius:6px; font-weight:700;\">\n      3. cd / Ó fuser -km\n      <div style=\"font-size:9.5px; font-weight:normal;\">Liberar recursos</div>\n    </div>\n    <span style=\"color:#64748B; font-weight:bold;\">&rarr;</span>\n    <div style=\"flex:1; background:#DCFCE7; border:1px solid #BBF7D0; color:#166534; padding:6px 2px; border-radius:6px; font-weight:700;\">\n      4. umount limpio\n      <div style=\"font-size:9.5px; font-weight:normal;\">(O umount -l lazy)</div>\n    </div>\n  </div>\n</div>\n"
+          "caption": "Herramientas y opciones de desmontaje en LPIC-1"
         },
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Si 'umount' falla con 'target is busy', la causa es que hay procesos con archivos abiertos o una shell situada dentro de esa ruta. Se diagnostica con 'fuser' o 'lsof'."
+          "title": "Clave Oficial de Examen LPIC-1 (Ejercicio Guiado 2 y Exploratorio 2)",
+          "content": "🎯 Si un sistema remoto en /mnt/server queda inalcanzable por fallo de red y quieres obligarlo a desmontar o dejarlo en solo lectura si no puede: usa 'umount -f -r /mnt/server' (o 'umount -fr /mnt/server'). Para ver qué bloquea: 'lsof <disp>' o 'fuser -vm <dir>'."
         }
       ],
       "notes": "Muestra a los alumnos que si su propia terminal está en /mnt/backup, basta con hacer 'cd /' y luego 'umount /mnt/backup'."
@@ -340,7 +362,13 @@
         },
         {
           "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px;\">\n  <div style=\"font-size:12px; font-weight:800; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;\">\n    Anatomía Visual de los 6 Campos en /etc/fstab\n  </div>\n  <div style=\"display:flex; gap:6px; font-family:monospace; font-size:11.5px; text-align:center;\">\n    <div style=\"flex:3; background:#DBEAFE; color:#1E40AF; padding:8px 2px; border-radius:6px; font-weight:700;\">\n      1. Dispositivo\n      <div style=\"font-size:10px; font-weight:normal; color:#2563EB;\">UUID=... / LABEL=...</div>\n    </div>\n    <div style=\"flex:2; background:#DCFCE7; color:#166534; padding:8px 2px; border-radius:6px; font-weight:700;\">\n      2. Montaje\n      <div style=\"font-size:10px; font-weight:normal; color:#15803D;\">/ , /home , none</div>\n    </div>\n    <div style=\"flex:1.5; background:#FEF3C7; color:#92400E; padding:8px 2px; border-radius:6px; font-weight:700;\">\n      3. Tipo\n      <div style=\"font-size:10px; font-weight:normal; color:#B45309;\">ext4, xfs, swap</div>\n    </div>\n    <div style=\"flex:2.5; background:#FCE7F3; color:#9D174D; padding:8px 2px; border-radius:6px; font-weight:700;\">\n      4. Opciones\n      <div style=\"font-size:10px; font-weight:normal; color:#BE185D;\">defaults,noatime,ro</div>\n    </div>\n    <div style=\"flex:1; background:#F5F3FF; color:#5B21B6; padding:8px 2px; border-radius:6px; font-weight:700;\">\n      5. Dump\n      <div style=\"font-size:10px; font-weight:normal; color:#6D28D9;\">0 (no) / 1 (sí)</div>\n    </div>\n    <div style=\"flex:1; background:#FEE2E2; border:1px solid #EF4444; color:#991B1B; padding:8px 2px; border-radius:6px; font-weight:800;\">\n      6. Pass\n      <div style=\"font-size:10px; font-weight:normal; color:#DC2626;\">1 (raíz) / 2 / 0</div>\n    </div>\n  </div>\n</div>\n"
+          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px;\">\n  <div style=\"font-size:12px; font-weight:800; color:#334155; margin-bottom:6px; text-transform:uppercase;\">\n    Anatomía Visual de los 6 Campos en /etc/fstab\n  </div>\n  <div style=\"display:flex; gap:6px; font-family:monospace; font-size:11.5px; text-align:center;\">\n    <div style=\"flex:3; background:#DBEAFE; color:#1E40AF; padding:8px 2px; border-radius:6px; font-weight:700;\">\n      1. Dispositivo\n      <div style=\"font-size:10px; font-weight:normal; color:#2563EB;\">UUID=... / LABEL=...</div>\n    </div>\n    <div style=\"flex:2; background:#DCFCE7; color:#166534; padding:8px 2px; border-radius:6px; font-weight:700;\">\n      2. Montaje\n      <div style=\"font-size:10px; font-weight:normal; color:#15803D;\">/ , /home , none</div>\n    </div>\n    <div style=\"flex:1.5; background:#FEF3C7; color:#92400E; padding:8px 2px; border-radius:6px; font-weight:700;\">\n      3. Tipo\n      <div style=\"font-size:10px; font-weight:normal; color:#B45309;\">ext4, xfs, swap</div>\n    </div>\n    <div style=\"flex:2.5; background:#FCE7F3; color:#9D174D; padding:8px 2px; border-radius:6px; font-weight:700;\">\n      4. Opciones\n      <div style=\"font-size:10px; font-weight:normal; color:#BE185D;\">defaults,noatime,ro</div>\n    </div>\n    <div style=\"flex:1; background:#F5F3FF; color:#5B21B6; padding:8px 2px; border-radius:6px; font-weight:700;\">\n      5. Dump\n      <div style=\"font-size:10px; font-weight:normal; color:#6D28D9;\">0 (no) / 1 (sí)</div>\n    </div>\n    <div style=\"flex:1; background:#FEE2E2; border:1px solid #EF4444; color:#991B1B; padding:8px 2px; border-radius:6px; font-weight:800;\">\n      6. Pass\n      <div style=\"font-size:10px; font-weight:normal; color:#DC2626;\">1 (raíz) / 2 / 0</div>\n    </div>\n  </div>\n</div>\n"
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "code": "# Volumen btrfs con etiqueta Backup, defaults y prohibiendo ejecutar binarios (Exploratorio 3):\nLABEL=Backup   /mnt/backup   btrfs   defaults,noexec   0   0\n\n# Partición ext4 con noauto (Guiado 3, no se monta con 'mount -a'):\n/dev/sdb1      /data         ext4    noatime,noauto,async   0   2",
+          "title": "Ejemplos oficiales de sintaxis en /etc/fstab"
         },
         {
           "type": "callout",
@@ -393,10 +421,6 @@
           "caption": "Análisis Detallado del 6º Campo de /etc/fstab (fsck pass)"
         },
         {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:8px; padding:8px 14px; margin-bottom:10px; display:flex; justify-content:space-around; text-align:center; font-family:monospace;\">\n  <div><span style=\"background:#EF4444; color:#FFF; font-weight:800; padding:2px 8px; border-radius:4px;\">1</span> <span style=\"font-size:12px; color:#991B1B; font-weight:800;\">Exclusivo para la Raíz (/)</span></div>\n  <div><span style=\"background:#3B82F6; color:#FFF; font-weight:800; padding:2px 8px; border-radius:4px;\">2</span> <span style=\"font-size:12px; color:#1E40AF; font-weight:700;\">Otras particiones locales (/home, /var)</span></div>\n  <div><span style=\"background:#64748B; color:#FFF; font-weight:800; padding:2px 8px; border-radius:4px;\">0</span> <span style=\"font-size:12px; color:#334155; font-weight:700;\">No comprobar (Swap, red NFS, CDs)</span></div>\n</div>\n"
-        },
-        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
@@ -421,65 +445,50 @@
           "text": "¿Por qué nunca debes usar nombres como /dev/sda1 en /etc/fstab y cómo obtener el UUID?"
         },
         {
-          "type": "code",
-          "language": "bash",
-          "code": "sudo blkid [disp] | lsblk -f | findfs UUID=<uuid> | findfs LABEL=<label>",
-          "title": "Averiguar UUIDs, etiquetas y tipos de sistemas de archivos para configuraciones persistentes"
-        },
-        {
           "type": "terminal",
           "lines": [
             {
               "prompt": "$ ",
-              "command": "sudo blkid /dev/sdb1; findfs LABEL=DATOS",
-              "output": "/dev/sdb1: LABEL=\"DATOS\" UUID=\"a1b2c3d4-e5f6-7890-abcd-ef1234567890\" BLOCK_SIZE=\"4096\" TYPE=\"ext4\" PARTUUID=\"5a2d1f8b-01\"\n/dev/sdb1"
+              "command": "lsblk -f /dev/sdb1",
+              "output": "NAME FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUSE% MOUNTPOINTS\nsdb1 ext4   1.0   DATOS a1b2c3d4-e5f6-7890-abcd-ef1234567890   18.2G     5% /mnt/datos"
+            },
+            {
+              "prompt": "$ ",
+              "command": "findfs UUID=a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+              "output": "/dev/sdb1"
             }
           ]
         },
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
+            "Comando",
+            "Entrada / Argumento",
+            "Salida y Propósito en Examen"
           ],
           "rows": [
             [
-              "El peligro /dev/sda",
-              "Riesgo de cable",
-              "⚠️ Cambiar el orden de cables o buses altera /dev/sda a /dev/sdb provocando fallo de arranque."
-            ],
-            [
-              "UUID (128 bits)",
-              "Inmutable",
-              "🎯 Identificador de 128 bits inmutable que reside en el superbloque. Es idéntico en cualquier bus."
+              "lsblk -f [disp]",
+              "Dispositivo o vacío",
+              "🎯 Clave de Examen (Guiado 4): Muestra nombres, FSTYPE, LABEL, UUID y MOUNTPOINTS en árbol limpio."
             ],
             [
               "blkid [disp]",
-              "blkid (Ver UUID)",
-              "🎯 Clave de Examen: Bloque ID: imprime el UUID, LABEL y TYPE de todas las particiones o del dispositivo indicado."
-            ],
-            [
-              "lsblk -f",
-              "lsblk -f (Árbol)",
-              "🎯 Muestra un árbol visual limpio con nombres de partición, sistemas de archivos, etiquetas, UUIDs y puntos de montaje."
+              "Dispositivo o vacío",
+              "🎯 Imprime atributos de bloque: UUID, LABEL, TYPE y PARTUUID."
             ],
             [
               "findfs UUID=<uuid>",
-              "findfs UUID",
-              "🎯 Clave de Examen: Busca y devuelve la ruta del dispositivo físico que posee ese UUID (ej: '/dev/sdb1')."
+              "UUID de 128 bits",
+              "🎯 Localiza y devuelve la ruta del dispositivo físico que tiene ese UUID (ej: '/dev/sdb1')."
             ],
             [
               "findfs LABEL=<label>",
-              "findfs LABEL",
-              "Devuelve la ruta del dispositivo físico que posee esa etiqueta de volumen."
+              "Etiqueta de volumen",
+              "Localiza y devuelve la ruta del dispositivo físico que tiene esa etiqueta."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px; display:flex; align-items:center; justify-content:space-between; gap:12px;\">\n  <div style=\"flex:1; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:8px 10px; text-align:center;\">\n    <div style=\"font-size:11px; color:#1E40AF; font-weight:bold;\">Tengo dispositivo &rarr; Quiero UUID</div>\n    <div style=\"font-family:monospace; font-size:13px; font-weight:800; color:#1D4ED8; margin:3px 0;\">blkid /dev/sdb1</div>\n    <div style=\"font-size:10px; color:#3B82F6;\">Devuelve UUID=\"a1b2c3d4...\"</div>\n  </div>\n  <div style=\"font-size:20px; color:#64748B;\">&harr;</div>\n  <div style=\"flex:1; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:8px 10px; text-align:center;\">\n    <div style=\"font-size:11px; color:#166534; font-weight:bold;\">Tengo UUID &rarr; Quiero dispositivo</div>\n    <div style=\"font-family:monospace; font-size:13px; font-weight:800; color:#15803D; margin:3px 0;\">findfs UUID=a1b2c3d4...</div>\n    <div style=\"font-size:10px; color:#22C55E;\">Devuelve /dev/sdb1</div>\n  </div>\n</div>\n"
+          "caption": "Comandos oficiales para identificación persistente de almacenamiento"
         },
         {
           "type": "callout",
@@ -493,36 +502,60 @@
     {
       "id": "104.3-slide-9",
       "slideNumber": 9,
-      "title": "Unidades de Montaje en systemd: .mount y .automount",
+      "title": "Unidades systemd .mount y .automount en /etc/systemd/system/",
       "layout": "diagram",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Unidades de Montaje en systemd: .mount y .automount"
+          "text": "Unidades systemd .mount y .automount en /etc/systemd/system/"
         },
         {
           "type": "paragraph",
-          "text": "En sistemas systemd modernos, cada línea de /etc/fstab se convierte al arrancar en una unidad de servicio .mount:"
+          "text": "systemd permite definir montajes persistentes mediante archivos de unidad en '/etc/systemd/system/':"
         },
         {
-          "type": "list",
-          "ordered": false,
-          "items": [
-            "**El generador systemd-fstab-generator** — 🎯 Al arrancar, systemd lee /etc/fstab y convierte automáticamente cada línea en una unidad interna de tipo '.mount' en el directorio /run/systemd/generator/.",
-            "**Regla Estricta de Nomenclatura de Unidades .mount** — 🎯 Clave de Examen: El nombre del archivo .mount debe coincidir EXACTAMENTE con la ruta del punto de montaje sustituyendo las barras '/' por guiones '-'. Ejemplo: para montar '/mnt/datos', el archivo debe llamarse obligatoriamente 'mnt-datos.mount'. Para montar '/var/log', debe llamarse 'var-log.mount'.",
-            "**Unidades .automount (Montaje bajo demanda)** — Permiten que una partición o recurso de red se monte automáticamente solo cuando un usuario o programa intenta acceder por primera vez a esa carpeta."
-          ]
+          "type": "code",
+          "language": "ini",
+          "code": "# Archivo: /etc/systemd/system/mnt-external.mount (para punto /mnt/external)\n[Unit]\nDescription=External data disk\n\n[Mount]\nWhat=/dev/disk/by-uuid/56C11DCC5D2E1334\nWhere=/mnt/external\nType=ntfs\nOptions=defaults\n\n[Install]\nWantedBy=multi-user.target",
+          "title": "Estructura oficial de unidad systemd .mount (Ejercicio Exploratorio 4 y 5)"
         },
         {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Pipeline fstab-generator -->\n  <div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px;\">\n    <div style=\"background:#E2E8F0; padding:6px 12px; border-radius:6px; font-family:monospace; font-weight:700; color:#0F172A; font-size:13px;\">\n      /etc/fstab\n    </div>\n    <span style=\"color:#64748B; font-weight:bold;\">&rarr;</span>\n    <div style=\"background:#DBEAFE; color:#1E40AF; padding:6px 12px; border-radius:6px; font-family:monospace; font-weight:700; font-size:13px;\">\n      systemd-fstab-generator\n    </div>\n    <span style=\"color:#64748B; font-weight:bold;\">&rarr;</span>\n    <div style=\"background:#DCFCE7; color:#166534; padding:6px 12px; border-radius:6px; font-family:monospace; font-weight:700; font-size:13px;\">\n      /run/systemd/generator/*.mount\n    </div>\n  </div>\n\n  <!-- Regla Estricta de Nombres .mount -->\n  <div style=\"background:#FFFFFF; border:2px solid #3B82F6; border-radius:10px; padding:12px 16px;\">\n    <div style=\"font-size:13px; font-weight:800; color:#1E40AF; margin-bottom:8px;\">\n      🎯 REGLA DE ORO DE EXAMEN: Conversión de Rutas a Nombres de Unidad\n    </div>\n    <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; font-family:monospace; text-align:center;\">\n      <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:8px 4px;\">\n        <div style=\"font-size:11px; color:#64748B;\">Punto de montaje</div>\n        <div style=\"font-size:15px; font-weight:800; color:#1E40AF; margin:2px 0;\">/</div>\n        <div style=\"font-size:11px; font-weight:700; color:#2563EB;\">-.mount</div>\n      </div>\n      <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:8px 4px;\">\n        <div style=\"font-size:11px; color:#64748B;\">Punto de montaje</div>\n        <div style=\"font-size:15px; font-weight:800; color:#1E40AF; margin:2px 0;\">/home</div>\n        <div style=\"font-size:11px; font-weight:700; color:#2563EB;\">home.mount</div>\n      </div>\n      <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:8px 4px;\">\n        <div style=\"font-size:11px; color:#64748B;\">Punto de montaje</div>\n        <div style=\"font-size:15px; font-weight:800; color:#1E40AF; margin:2px 0;\">/var/log</div>\n        <div style=\"font-size:11px; font-weight:700; color:#2563EB;\">var-log.mount</div>\n      </div>\n      <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:8px 4px;\">\n        <div style=\"font-size:11px; color:#64748B;\">Punto de montaje</div>\n        <div style=\"font-size:15px; font-weight:800; color:#1E40AF; margin:2px 0;\">/mnt/backup</div>\n        <div style=\"font-size:11px; font-weight:700; color:#2563EB;\">mnt-backup.mount</div>\n      </div>\n    </div>\n  </div>\n\n  <!-- Automount -->\n  <div style=\"background:#F5F3FF; border:2px solid #8B5CF6; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:14px;\">\n    <span style=\"font-size:24px;\">⚡</span>\n    <div style=\"font-size:12.5px; color:#4C1D95; line-height:1.45;\">\n      <strong>Montaje a Demanda (.automount):</strong> Las unidades <code>.automount</code> no montan el disco al arrancar el sistema; vigilan el directorio y acoplan el sistema de archivos automáticamente en el milisegundo en que un usuario o script entra en esa carpeta.\n    </div>\n  </div>\n</div>\n"
+          "type": "table",
+          "headers": [
+            "Elemento systemd",
+            "Regla Oficial",
+            "Detalle Técnico LPI"
+          ],
+          "rows": [
+            [
+              "Ubicación canónica",
+              "🎯 /etc/systemd/system/",
+              "Directorio donde el administrador deposita las unidades personalizadas."
+            ],
+            [
+              "Nomenclatura",
+              "🎯 mnt-external.mount",
+              "El nombre del archivo DEBE coincidir con la ruta sustituyendo '/' por '-' (omitiendo la primera barra)."
+            ],
+            [
+              "Sección [Mount]",
+              "What=, Where=, Type=, Options=",
+              "Directivas obligatorias que mapean los campos del clásico /etc/fstab."
+            ],
+            [
+              "Comandos de control",
+              "systemctl",
+              "🎯 'sudo systemctl daemon-reload' tras crear/editar;\n'sudo systemctl start mnt-external.mount';\n'sudo systemctl enable mnt-external.mount'."
+            ]
+          ],
+          "caption": "Directivas y ciclo de vida de unidades systemd .mount"
         },
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Pregunta Típica de Examen: ¿Cómo debe llamarse la unidad systemd para el punto de montaje '/mnt/backup'? Respuesta: 'mnt-backup.mount'."
+          "title": "Clave Oficial de Examen LPIC-1 (Ejercicio Exploratorio 4 y 5)",
+          "content": "🎯 1) La unidad para montar '/mnt/external' se debe llamar obligatoriamente 'mnt-external.mount' y colocarse en '/etc/systemd/system/'. 2) Tras guardarla, es obligatorio ejecutar 'systemctl daemon-reload' antes de arrancarla con 'systemctl start mnt-external.mount'."
         }
       ],
       "notes": "Muestra que si el punto de montaje es la raíz (/), la unidad de systemd se llama '-.mount'."
@@ -672,22 +705,23 @@
         },
         {
           "type": "paragraph",
-          "text": "Los 3 errores conceptuales más frecuentes en las preguntas de montaje y fstab:"
+          "text": "Los 4 errores conceptuales más frecuentes en las preguntas de montaje y fstab:"
         },
         {
           "type": "list",
           "ordered": false,
           "items": [
-            "**1. Poner espacios en las opciones del 4º campo de fstab** — 🎯 ¡Error gravísimo! En /etc/fstab los campos están separados por espacios o tabuladores. Si escribes 'defaults, noatime' (con un espacio después de la coma), fstab creerá que 'noatime' es el 5º campo y el archivo quedará corrupto impidiendo el arranque del servidor.",
-            "**2. Confundir el orden de los campos 5 y 6** — El campo 5 es DUMP (frecuencia de backup) y el campo 6 es PASS (orden de fsck). En el 99% de las particiones actuales es '0 2' (dump=0, pass=2) o '0 0' (para swap). Nunca pongas '2 0'.",
-            "**3. Olvidar la palabra clave 'none' en la swap** — Como la memoria swap no tiene ningún directorio en el árbol, en el 2º campo de /etc/fstab es obligatorio poner la palabra 'none' (o 'swap')."
+            "**1. Poner espacios en las opciones del 4º campo de fstab** — 🎯 ¡Error gravísimo! En /etc/fstab los campos están separados por espacios. Si escribes 'defaults, noatime' (con un espacio tras la coma), fstab interpretará 'noatime' como el 5º campo y el archivo quedará corrupto impidiendo arrancar.",
+            "**2. Confundir el orden de los campos 5 y 6** — El campo 5 es DUMP (frecuencia de backup) y el campo 6 es PASS (orden de fsck). En casi todas las particiones actuales es '0 2' o '0 0' (para swap). Nunca pongas '2 0'.",
+            "**3. Suponer que 'mount -a' monta todo** — La opción 'noauto' excluye explícitamente esa línea de la orden 'mount -a'.",
+            "**4. Olvidar la palabra clave 'none' en la swap** — Como la memoria swap no tiene ningún directorio en el árbol, en el 2º campo de /etc/fstab es obligatorio poner la palabra 'none' (o 'swap')."
           ]
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Mnemotecnia Rápida: Sin espacios en opciones de fstab; 5º campo = dump (0); 6º campo = pass (1 para /, 2 para otros, 0 para swap)."
+          "content": "🎯 Mnemotecnia Rápida: Sin espacios en opciones de fstab; 5º campo = dump (0); 6º campo = pass (1 para /, 2 para otros, 0 para swap); 'noauto' evita que 'mount -a' monte la partición."
         }
       ],
       "notes": "Pide a los alumnos que revisen siempre las opciones de fstab para asegurarse de que no hay espacios tras las comas."
@@ -695,91 +729,86 @@
     {
       "id": "104.3-slide-13",
       "slideNumber": 13,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: mount y Opciones)",
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1)",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: mount y Opciones)"
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1)"
         },
         {
           "type": "list",
           "ordered": true,
           "items": [
-            "Caso 1 (Oficial Pág 486): ¿Cuál es el comando exacto para montar una partición ext4 '/dev/sdb1' en el directorio '/mnt/datos' en modo de solo lectura y desactivando la ejecución de programas binarios? — Comando: `sudo mount -t ext4 -o ro,noexec /dev/sdb1 /mnt/datos` (La opción -o combina múltiples parámetros separados por comas sin espacios ('ro' para solo lectura y 'noexec' para prohibir ejecución).)",
-            "Caso 2 (Oficial Pág 486): Un administrador intenta desmontar un pendrive con 'sudo umount /media/usb' y el sistema devuelve el error 'target is busy'. ¿Qué comando permite averiguar qué proceso o usuario está bloqueando el punto de montaje? — Comando: `fuser -vm /media/usb (o lsof +D /media/usb)` (fuser y lsof escanean la tabla de descriptores de archivos abiertos y procesos activos en ese punto de montaje.)",
-            "Caso 3 (Oficial Pág 486): ¿Qué comando remonta en caliente la partición raíz montada en '/' pasando su estado a lectura y escritura (rw) sin reiniciar? — Comando: `sudo mount -o remount,rw /` (El modificador 'remount' actualiza los flags del sistema de archivos activo sin desmontarlo.)"
+            "**Ejercicio Guiado 1 (Oficial Pág 500):** Usando mount, ¿cómo se puede montar un sistema ext4 en /dev/sdc1 en /mnt/external como solo lectura, usando las opciones noatime y async? — **Respuesta:** `mount -t ext4 -o noatime,async,ro /dev/sdc1 /mnt/external`.",
+            "**Ejercicio Guiado 2 (Oficial Pág 500):** Al desmontar un sistema en /dev/sdd2 aparece 'target is busy'. ¿Cómo saber qué archivos están abiertos y qué procesos los abrieron? — **Respuesta:** `lsof /dev/sdd2` (o `fuser -vm /dev/sdd2`).",
+            "**Ejercicio Guiado 3 (Oficial Pág 500):** Entrada en /etc/fstab: `/dev/sdb1 /data ext4 noatime,noauto,async 0 2`. ¿Se montará si se emite 'mount -a'? ¿Por qué? — **Respuesta:** **No se montará**, porque la opción 'noauto' indica expresamente a 'mount -a' que ignore esta entrada."
           ]
         },
         {
           "type": "callout",
           "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "mount -o ro,noexec para seguridad; fuser para target is busy; y mount -o remount,rw para emergencias."
+          "title": "Solución y Análisis Técnico",
+          "content": "mount -o ro,noatime,async combina parámetros sin espacios; lsof y fuser diagnostican 'target is busy'; y 'noauto' protege particiones de montajes masivos con mount -a."
         }
       ],
-      "notes": "Muestra cómo en el Caso 2 un simple 'cd /' suele solucionar el problema si la shell actual estaba dentro de /media/usb."
+      "notes": "Casos oficiales 1, 2 y 3 extraídos de las páginas 500 y 503-504 del manual LPI 101-500."
     },
     {
       "id": "104.3-slide-14",
       "slideNumber": 14,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: fstab y blkid)",
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2)",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: fstab y blkid)"
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2)"
         },
         {
           "type": "list",
           "ordered": true,
           "items": [
-            "Caso 4 (Oficial Pág 486): ¿Cuál es el comando exacto para obtener el UUID y el tipo de sistema de archivos de la partición '/dev/sda2'? — Comando: `sudo blkid /dev/sda2 (o lsblk -f /dev/sda2)` (blkid consulta las cabeceras de bloque y devuelve la cadena UUID oficial junto con el atributo TYPE.)",
-            "Caso 5 (Oficial Pág 486): Escribe la línea completa que debe añadirse a '/etc/fstab' para montar una partición con UUID '1234-ABCD' en '/mnt/disco' con formato ext4, opciones estándar de defaults, sin soporte de dump y con comprobación secundaria de fsck. — Comando: `UUID=1234-ABCD /mnt/disco ext4 defaults 0 2` (Estructura estándar de 6 campos: dispositivo por UUID, punto de montaje, tipo ext4, defaults, dump=0 y pass=2.)"
+            "**Ejercicio Guiado 4 (Oficial Pág 500):** ¿Cómo se puede averiguar el UUID de un sistema de archivos en /dev/sdb1? — **Respuesta:** `lsblk -f /dev/sdb1` (o alternativamente `blkid /dev/sdb1`).",
+            "**Ejercicio Guiado 5 (Oficial Pág 500):** ¿Cómo se puede usar mount para volver a montar como de solo lectura un sistema exFAT con UUID '6e2c12e3...', montado en /mnt/data? — **Respuesta:** `mount -o remount,ro /mnt/data` (al estar ya montado, no es necesario especificar UUID ni tipo).",
+            "**Ejercicio Guiado 6 (Oficial Pág 500):** ¿Cómo se puede obtener una lista de todos los sistemas de archivos ext3 y ntfs montados actualmente en un sistema? — **Respuesta:** `mount -t ext3,ntfs` (pasando una lista de tipos separados por comas sin espacios)."
           ]
         },
         {
           "type": "callout",
           "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "blkid obtiene el UUID persistente; fstab organiza los 6 campos garantizando que el arranque verifique el disco con orden pass 2."
+          "title": "Solución y Análisis Técnico",
+          "content": "lsblk -f muestra el UUID de forma estructurada; remount,ro cambia los permisos en caliente; y mount -t tipo1,tipo2 filtra con precisión quirúrgica."
         }
       ],
-      "notes": "Recuerda que tras añadir esa línea, siempre se debe ejecutar 'sudo mount -a' para verificar que funciona."
+      "notes": "Casos oficiales 4, 5 y 6 extraídos de las páginas 500 y 503-504 del manual LPI."
     },
     {
       "id": "104.3-slide-15",
       "slideNumber": 15,
-      "title": "Retos de Exploración Oficiales (systemd .mount e ISO Loop)",
+      "title": "Retos de Exploración Oficiales del Manual LPIC-1",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Retos de Exploración Oficiales (systemd .mount e ISO Loop)"
+          "text": "Retos de Exploración Oficiales del Manual LPIC-1"
         },
         {
           "type": "callout",
           "calloutType": "warning",
-          "title": "Escenario del Desafío",
-          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. Un administrador ha configurado un punto de montaje en '/var/data/backup'. Si desea gestionarlo como una unidad nativa de systemd, ¿cómo debe llamarse obligatoriamente el archivo de unidad .mount?\n2. ¿Qué comando permite montar un archivo de imagen 'ubuntu.iso' en el directorio '/mnt/iso' para examinar sus archivos sin grabarlo en un medio físico?\n3. En /etc/fstab una partición tiene la opción 'noauto'. Si el administrador ejecuta 'sudo mount -a', ¿se montará dicha partición?"
+          "title": "5 Desafíos de Escenario Real del Manual Oficial (Págs 501 y 505-506)",
+          "content": "1. **nouser en fstab (Pág 501):** Entrada con `/dev/sdc1 /backup ext4 noatime,nouser,async`. ¿Puede un usuario montarla con 'mount /backup'? -> **No**: el parámetro `nouser` prohíbe explícitamente a usuarios sin privilegios realizar el montaje.\n2. **Red NFS Inalcanzable (Pág 501):** Sistema remoto en `/mnt/server` congelado por corte de red. ¿Cómo forzar desmontaje o degradar a solo lectura si falla? -> `umount -f -r /mnt/server` (o forma compacta `umount -fr /mnt/server`).\n3. **Volumen btrfs en fstab (Pág 501):** Entrada para montar btrfs con etiqueta Backup en /mnt/backup, defaults y sin ejecutar binarios -> `LABEL=Backup /mnt/backup btrfs defaults,noexec 0 0`.\n4. **Unidad systemd .mount a fstab (Pág 501):** Unidad con What=/dev/disk/by-uuid/56C11DCC..., Where=/mnt/external, Type=ntfs, Options=defaults. Entrada fstab equivalente -> `UUID=56C11DCC5D2E1334 /mnt/external ntfs defaults 0 0`.\n5. **Nombre y Ruta de Unidad systemd (Pág 501):** ¿Cómo debe llamarse y dónde alojarse la unidad para /mnt/external? -> Se llama obligatoriamente `mnt-external.mount` y se coloca en `/etc/systemd/system/`."
         },
         {
           "type": "callout",
           "calloutType": "tip",
-          "title": "Pista",
-          "content": "Recuerda: nombres de unidades systemd sustituyendo '/' por '-'; mount con la opción loop; y el comportamiento de 'noauto'."
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Desafío",
-          "content": "1. Debe llamarse obligatoriamente: 'var-data-backup.mount'.\n2. Se ejecuta: sudo mount -o loop ubuntu.iso /mnt/iso\n3. ¡NO! La opción 'noauto' indica expresamente al comando 'mount -a' que omita esa partición durante los montajes automáticos. Solo se montará si se invoca explícitamente con 'mount /mnt/punto'."
+          "title": "Lección de Ingeniería LPIC-1",
+          "content": "Dominar la dualidad /etc/fstab frente a /etc/systemd/system/*.mount y los modificadores -f y -r de umount es la marca distintiva de un administrador certificado."
         }
       ],
-      "notes": "El reto 1 evalúa la convención estricta de nombres de systemd, una pregunta de alta dificultad en el examen actual."
+      "notes": "Los 5 ejercicios exploratorios oficiales resueltos con total rigor pedagógico."
     },
     {
       "id": "104.3-slide-16",
@@ -877,47 +906,63 @@
         {
           "type": "table",
           "headers": [
-            "Concepto",
-            "Significado / Uso"
+            "Concepto Clave",
+            "Significado / Respuesta en Examen LPIC-1"
           ],
           "rows": [
             [
-              "¿Qué comando monta todos los sistemas de archivos listados en /etc/fstab?",
-              "mount -a (omitiendo los que tengan 'noauto')."
+              "Listar múltiples tipos con mount",
+              "mount -t ext3,ntfs (lista separada por comas sin espacios)."
             ],
             [
-              "¿Qué significa cada uno de los 6 campos de /etc/fstab?",
-              "1. Dispositivo, 2. Punto montaje, 3. Tipo FS, 4. Opciones, 5. Dump, 6. Pass (fsck)."
+              "Remontar en caliente a solo lectura",
+              "mount -o remount,ro <punto_montaje>."
             ],
             [
-              "¿Qué valor debe tener el 6º campo de fstab para la partición raíz (/)?",
-              "El valor 1 (todas las demás particiones llevan 2 o 0)."
+              "Forzar desmontaje ante caída de red",
+              "umount -f -r <punto_montaje> (o umount -fr)."
             ],
             [
-              "¿Qué comando diagnostica el error 'target is busy' al desmontar?",
-              "fuser -vm <directorio> (o lsof +D <directorio>)."
+              "Diagnosticar 'target is busy'",
+              "lsof <disp|dir> o fuser -vm <dir>."
             ],
             [
-              "¿Qué comando y opción remonta en caliente a lectura y escritura?",
-              "mount -o remount,rw <punto_montaje>."
+              "Liberar procesos bloqueantes en un montaje",
+              "fuser -km <dir> (envía señal SIGKILL)."
             ],
             [
-              "¿Qué diferencia hay entre la opción 'user' y 'users' en fstab?",
-              "'user' = solo el usuario que montó puede desmontar; 'users' = cualquier usuario puede desmontar."
+              "Opción fstab para no montar con 'mount -a'",
+              "noauto (solo se monta si se invoca explícitamente)."
             ],
             [
-              "¿Cómo debe llamarse la unidad systemd para el punto '/mnt/datos'?",
-              "mnt-datos.mount (sustituyendo barras por guiones)."
+              "Diferencia entre 'user' y 'users'",
+              "'user': solo quien montó desmonta; 'users': cualquiera desmonta."
             ],
             [
-              "¿Qué comando obtiene el UUID y TYPE de una partición?",
-              "blkid <dispositivo> (o lsblk -f)."
+              "Opciones 'group' y 'owner'",
+              "Permiten montar si pertenece al grupo o es dueño del dispositivo."
+            ],
+            [
+              "Valor de Pass (6º campo) para la raíz /",
+              "Valor 1 exclusivo (otras particiones locales llevan 2; swap/red llevan 0)."
+            ],
+            [
+              "Ruta canónica de unidades .mount",
+              "/etc/systemd/system/."
+            ],
+            [
+              "Nombre de unidad para /mnt/external",
+              "mnt-external.mount (barras sustituidas por guiones)."
+            ],
+            [
+              "Recargar demonio tras editar unidad systemd",
+              "systemctl daemon-reload."
             ]
           ],
-          "caption": "Tarjetas de memorización"
+          "caption": "12 Tarjetas maestras de memorización para el subtema 104.3"
         }
       ],
-      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 104.3."
+      "notes": "Repasa estas 12 tarjetas para asegurar el pleno de aciertos en el objetivo 104.3."
     },
     {
       "id": "104.3-slide-19",
@@ -929,9 +974,25 @@
           "type": "heading",
           "level": 2,
           "text": "Resumen y Claves de Examen: Subtema 104.3"
+        },
+        {
+          "type": "paragraph",
+          "text": "En esta lección hemos cubierto el 100% de los objetivos y ejercicios del manual oficial LPIC-1 para el subtema 104.3:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Árbol VFS y Puntos de Montaje:** Unicidad de raíz `/`, efecto de ocultación de contenidos previos sin borrado, y estándares `/mnt` y `/media`.",
+            "**El comando mount:** Filtros de tipo con `mount -t ext3,ntfs`, modificadores directos `-r` y `-w`, remontaje en caliente `mount -o remount,ro`, y montajes especiales (`--bind`, `-o loop`).",
+            "**El comando umount:** Resolución de 'target is busy' con `lsof` y `fuser`, desmontaje perezoso (`-l`), forzado en caídas de red NFS (`umount -f`) y degradación segura (`umount -r`).",
+            "**Anatomía de /etc/fstab:** Los 6 campos (Dispositivo, Punto, Tipo, Opciones, Dump, Pass), reglas sin espacios en opciones, y fsck pass (1 raíz, 2 secundarias, 0 swap/red).",
+            "**Identificación Persistente:** Mapeo de UUIDs y etiquetas con `blkid`, `lsblk -f` y localización inversa con `findfs`.",
+            "**Integración con systemd:** Archivos de unidad `.mount` y `.automount` en `/etc/systemd/system/`, regla de nombres (`mnt-external.mount`), y ciclo con `systemctl daemon-reload / start / enable`."
+          ]
         }
       ],
-      "notes": "Concluimos el subtema 104.3 y la primera mitad del Tema 104."
+      "notes": "Concluimos el subtema 104.3 y la primera mitad del Tema 104 con cobertura y fidelidad total al manual oficial."
     }
   ]
 }

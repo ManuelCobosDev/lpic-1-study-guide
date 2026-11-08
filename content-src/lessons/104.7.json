@@ -11,12 +11,47 @@
     "Dominio técnico de las herramientas y configuración del subtema 104.7"
   ],
   "keyTerms": [
-    "Encontrar archivos de sistema y ubicar archivos en el lugar correspondiente",
-    "Tema 104"
+    "Encontrar archivos de sistema y ubicar archivos en el FHS",
+    "Tema 104",
+    "FHS",
+    "Filesystem Hierarchy Standard",
+    "locate",
+    "locate -A",
+    "updatedb",
+    "/etc/updatedb.conf",
+    "PRUNEPATHS",
+    "PRUNEFS",
+    "PRUNENAMES",
+    "PRUNE_BIND_MOUNTS",
+    "find",
+    "-mtime",
+    "-atime",
+    "-ctime",
+    "-cmin",
+    "-amin",
+    "-mmin",
+    "-perm",
+    "-size",
+    "-maxdepth",
+    "-mindepth",
+    "-mount",
+    "which",
+    "whereis",
+    "type",
+    "builtin",
+    "/var/tmp",
+    "/tmp",
+    "/run",
+    "/srv",
+    "/opt",
+    "/usr/local"
   ],
   "commands": [
+    "find",
     "locate",
+    "updatedb",
     "which",
+    "whereis",
     "type"
   ],
   "placeholder": false,
@@ -259,8 +294,8 @@
           "lines": [
             {
               "prompt": "$ ",
-              "command": "locate -b '\\sshd_config'; locate -c '*.conf'",
-              "output": "/etc/ssh/sshd_config\n482"
+              "command": "locate -A 'report' 'updat'; locate -b '\\sshd_config'; locate -c '*.conf'",
+              "output": "/var/log/reporting_updates.log\n/etc/ssh/sshd_config\n482"
             }
           ]
         },
@@ -276,6 +311,11 @@
               "locate <patrón>",
               "locate",
               "Busca el patrón en cualquier parte de la ruta completa dentro de la base de datos indexada."
+            ],
+            [
+              "-A, --all",
+              "-A (Todos los patrones)",
+              "🎯 Clave de Examen LPI: Requiere que coincidan simultáneamente TODOS los patrones especificados (operación lógica AND en lugar de OR)."
             ],
             [
               "-i, --ignore-case",
@@ -303,7 +343,7 @@
               "🎯 No ve archivos creados después de la última ejecución de updatedb."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Opciones y parámetros del comando locate"
         },
         {
           "type": "html",
@@ -331,17 +371,50 @@
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo se construye el índice de locate y cómo se configuran las exclusiones de carpetas?"
+          "text": "¿Cómo se construye el índice de locate y cómo se configuran las exclusiones de carpetas y sistemas de archivos?"
         },
         {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px; display:flex; justify-content:space-between; gap:12px; font-size:12px;\">\n  <div style=\"flex:1; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:8px 10px;\">\n    <strong style=\"color:#1E40AF;\">PRUNEPATHS (Exclusión de Rutas):</strong><br>\n    <code>/tmp /var/spool /media /mnt</code> &rarr; No indexa temporales ni pendrives extraíbles.\n  </div>\n  <div style=\"flex:1; background:#FEF3C7; border:1px solid #FDE68A; border-radius:6px; padding:8px 10px;\">\n    <strong style=\"color:#92400E;\">PRUNEFS (Exclusión de Sistemas):</strong><br>\n    <code>NFS cifs proc sysfs</code> &rarr; No satura la red indexando recursos compartidos.\n  </div>\n</div>\n"
+          "type": "code",
+          "language": "bash",
+          "code": "sudo updatedb [--prunepaths='...'] [--prunefs='...']\ncat /etc/updatedb.conf",
+          "title": "Configuración del generador de la base de datos mlocate.db"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Directiva en /etc/updatedb.conf",
+            "Propósito Oficial LPI",
+            "Ejemplo Habitual de Configuración"
+          ],
+          "rows": [
+            [
+              "PRUNEPATHS",
+              "🎯 Lista de rutas absolutas de directorios que updatedb jamás debe examinar ni indexar.",
+              "\"/tmp /var/spool /media /mnt /var/tmp\""
+            ],
+            [
+              "PRUNEFS",
+              "🎯 Lista de tipos de sistemas de archivos ignorados para no saturar la red ni indexar pseudofilesystems.",
+              "\"NFS cifs ntfs iso9660 proc sysfs usbfs\""
+            ],
+            [
+              "PRUNENAMES",
+              "🎯 Nombres de carpetas concretas que nunca se indexan independientemente de dónde residan.",
+              "\".git .hg .svn CVS\""
+            ],
+            [
+              "PRUNE_BIND_MOUNTS",
+              "🎯 Si se establece en \"yes\", updatedb ignora los montajes duplicados creados con 'mount --bind'.",
+              "\"yes\""
+            ]
+          ],
+          "caption": "Las 4 Directivas Oficiales de Exclusión en /etc/updatedb.conf"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 'PRUNEPATHS' excluye rutas en /etc/updatedb.conf; 'PRUNEFS' excluye tipos de sistemas de archivos (como NFS) para evitar colapsar la red."
+          "content": "🎯 Directivas de /etc/updatedb.conf evaluadas en el examen: 'PRUNEPATHS' (rutas excluidas), 'PRUNEFS' (tipos de sistemas de archivos como NFS o ntfs), 'PRUNENAMES' (nombres como .git) y 'PRUNE_BIND_MOUNTS' (ignorar bind mounts con \"yes\")."
         }
       ],
       "notes": "Explica que si updatedb indexara NFS, saturaría la red de la empresa todas las noches."
@@ -509,6 +582,122 @@
     {
       "id": "104.7-slide-10",
       "slideNumber": 10,
+      "title": "Búsqueda en Tiempo Real con find: Criterios, Tiempos y Permisos",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Búsqueda en Tiempo Real con find: Criterios, Tiempos y Permisos"
+        },
+        {
+          "type": "paragraph",
+          "text": "A diferencia de locate, find rastrea en vivo la jerarquía física en disco examinando inodos y metadatos con máxima precisión:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "find [ruta_inicio] [filtros_criterios] [acciones]",
+          "title": "Sintaxis universal de búsqueda en vivo en el sistema de archivos"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "find /var/log -maxdepth 2 -type f -size +10M -mtime -7",
+              "output": "/var/log/syslog.1\n/var/log/journal/system.journal"
+            },
+            {
+              "prompt": "$ ",
+              "command": "find . -writable -perm -410 -cmin -120",
+              "output": "./scripts/deploy.sh"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Parámetro de find",
+            "Categoría",
+            "Comportamiento y Reglas de Examen"
+          ],
+          "rows": [
+            [
+              "-name / -iname <patrón>",
+              "Nombre",
+              "🎯 Coincidencia por nombre (globbing). -name distingue mayúsculas; -iname ignora mayúsculas/minúsculas."
+            ],
+            [
+              "-type [f|d|l|b|c|s|p]",
+              "Tipo de Inodo",
+              "🎯 'f' = archivo regular, 'd' = directorio, 'l' = symlink, 'b' = bloque (/dev/sda), 'c' = carácter."
+            ],
+            [
+              "-maxdepth N / -mindepth N",
+              "Profundidad",
+              "🎯 Limita niveles de descenso. N=1 busca solo en el directorio indicado sin entrar en subcarpetas."
+            ],
+            [
+              "-mount (o -xdev)",
+              "Sistemas Archivos",
+              "🎯 NO desciende a directorios que pertenezcan a otros sistemas de archivos o particiones montadas."
+            ],
+            [
+              "-fstype <tipo>",
+              "Tipo Filesystem",
+              "🎯 Restringe la búsqueda a un tipo concreto de sistema de archivos (ej: ext4, xfs, btrfs)."
+            ],
+            [
+              "-user / -group",
+              "Titularidad",
+              "🎯 Filtra por usuario propietario (UID/nombre) o por grupo de pertenencia (GID/nombre)."
+            ],
+            [
+              "-readable / -writable / -executable",
+              "Acceso Efectivo",
+              "🎯 Evalúa si el usuario ACTUAL que ejecuta find tiene permiso de lectura, escritura o ejecución."
+            ],
+            [
+              "-perm NNN / -perm -NNN",
+              "Permisos Octales",
+              "🎯 '-perm 0644' = permisos exactos; '-perm -4000' = al menos bit SUID; '-perm -410' = al menos esos bits."
+            ],
+            [
+              "-mtime / -atime / -ctime [+/-]N",
+              "Tiempos en DÍAS",
+              "🎯 '-mtime' (modificación datos), '-atime' (lectura), '-ctime' (cambio inodo). -N (menos de N días), +N (más de N)."
+            ],
+            [
+              "-mmin / -amin / -cmin [+/-]N",
+              "Tiempos en MINUTOS",
+              "🎯 Idéntico a los anteriores pero en minutos. Ej: '-cmin -120' = metadatos alterados en las últimas 2 horas."
+            ],
+            [
+              "-size [+/-]N[c|k|M|G]",
+              "Tamaño",
+              "🎯 '+100M' (mayor a 100 MiB), '-10k' (menor a 10 KiB), 'c' = bytes exactos. '-empty' = tamaño cero."
+            ],
+            [
+              "-exec cmd {} \\; / -delete",
+              "Acciones",
+              "🎯 Ejecuta 'cmd' sustituyendo '{}' por cada ruta encontrada. '-delete' borra los archivos hallados."
+            ]
+          ],
+          "caption": "Criterios y Modificadores Fundamentales de find Evaluados en LPIC-1"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Diferencias Temporales de find: 'mtime' evalúa cuándo cambió el CONTENIDO; 'ctime' cuándo cambiaron los METADATOS (permisos, propietario); 'atime' cuándo se LEYÓ. '-mount' evita saltar de partición. '-perm -NNN' exige que al menos estén encendidos los bits indicados."
+        }
+      ],
+      "notes": "Enseña a los alumnos que -maxdepth debe especificarse al principio de los criterios de find para optimizar el rendimiento."
+    },
+    {
+      "id": "104.7-slide-11",
+      "slideNumber": 11,
       "title": "Gran Matriz Comparativa de Búsqueda de Archivos",
       "layout": "content",
       "blocks": [
@@ -573,8 +762,8 @@
       "notes": "Esta diapositiva resume todos los motores de búsqueda de Linux en una sola tabla."
     },
     {
-      "id": "104.7-slide-11",
-      "slideNumber": 11,
+      "id": "104.7-slide-12",
+      "slideNumber": 12,
       "title": "Trampas Clásicas de Examen en el FHS y Búsquedas",
       "layout": "content",
       "blocks": [
@@ -606,15 +795,15 @@
       "notes": "Repasa estos tres conceptos antes de los ejercicios oficiales."
     },
     {
-      "id": "104.7-slide-12",
-      "slideNumber": 12,
+      "id": "104.7-slide-13",
+      "slideNumber": 13,
       "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: FHS y locate)",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: FHS y locate)"
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: FHS, /run y locate -A)"
         },
         {
           "type": "paragraph",
@@ -624,87 +813,90 @@
           "type": "list",
           "ordered": true,
           "items": [
-            "Caso 1 (Oficial Pág 550): Según el estándar FHS, ¿en qué directorio exacto deben almacenarse los archivos de configuración estáticos de los servicios instalados en el equipo local? — Comando: `/etc (o /etc/<nombre_servicio>/)` (El estándar FHS reserva /etc exclusivamente para archivos de configuración específicos del host y prohíbe alojar ejecutables en él.)",
-            "Caso 2 (Oficial Pág 550): Acabas de instalar un paquete y necesitas buscar inmediatamente un archivo llamado 'apache2.conf' con locate pero no aparece en los resultados. ¿Qué comando previo debes ejecutar como root? — Comando: `sudo updatedb` (updatedb lee el árbol de directorios y reconstruye la base de datos indexada (/var/lib/mlocate/mlocate.db) para que locate pueda encontrar los nuevos ficheros.)",
-            "Caso 3 (Oficial Pág 550): ¿En qué directorio del estándar FHS deben residir los datos que un servidor web ofrece hacia los clientes de red externa? — Comando: `/srv (ej: /srv/www o /srv/http)` (/srv (Service Data) está destinado a contener los datos específicos del sitio que los servicios del sistema sirven a los usuarios.)"
+            "Caso 1 (Oficial Pág 564): Según el estándar FHS, ¿en qué directorio exacto deben almacenarse los archivos de configuración estáticos de los servicios del equipo local? — Comando: `/etc (o /etc/<nombre_servicio>/)` (El estándar FHS reserva /etc exclusivamente para configuraciones del host local y prohíbe ejecutables en él.)",
+            "Caso 2 (Oficial Pág 564): ¿Cuál es el directorio temporal del sistema que DEBE borrarse obligatoriamente durante el proceso de arranque (boot)? — Comando: `/run (o /var/run)` (/run almacena datos de tiempo de ejecución volátiles del sistema como archivos PID de servicios activos y sockets de control; se reinicia en cada boot montado como tmpfs.)",
+            "Caso 3 (Oficial Pág 564): Usando locate, ¿qué comando busca cualquier archivo que contenga simultáneamente los patrones 'report' y 'updat' (o updated, update, updating) en su nombre? — Comando: `locate -A \"report\" \"updat\"` (La opción -A (--all) exige que coincidan todos los patrones indicados mediante un AND lógico.)",
+            "Caso 4 (Oficial Pág 564): ¿En qué directorio del estándar FHS deben residir los datos que un servidor ofrece hacia los clientes de red (web, FTP)? — Comando: `/srv (ej: /srv/www o /srv/ftp)` (/srv (Service Data) aloja los datos específicos servidos a la red.)"
           ]
         },
         {
           "type": "callout",
           "calloutType": "tip",
           "title": "Solución y Explicación del Ejercicio",
-          "content": "/etc para configs; updatedb para regenerar la caché de locate; y /srv para datos servidos en red."
+          "content": "/etc para configuraciones locales; /run para datos de ejecución volátiles que se limpian en boot; locate -A exige coincidencia múltiple; y /srv para datos servidos en red."
         }
       ],
       "notes": "Muestra que muchas distros usan /var/www por tradición histórica, pero el estándar estricto FHS es /srv."
     },
     {
-      "id": "104.7-slide-13",
-      "slideNumber": 13,
+      "id": "104.7-slide-14",
+      "slideNumber": 14,
       "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: whereis y which)",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: whereis y which)"
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: whereis, which y find)"
         },
         {
           "type": "paragraph",
-          "text": "Identifica comandos internos de Bash y localiza documentación oficial del sistema."
+          "text": "Casos prácticos oficiales de filtrado con find y localización de programas y manuales."
         },
         {
           "type": "list",
           "ordered": true,
           "items": [
-            "Caso 4 (Oficial Pág 550): ¿Cuál es el comando exacto con 'whereis' para localizar ÚNICAMENTE las páginas del manual oficial de la orden 'tar' ignorando sus binarios? — Comando: `whereis -m tar` (La opción -m (manuals) restringe la salida exclusivamente a las rutas de las páginas de documentación man.)",
-            "Caso 5 (Oficial Pág 550): ¿Qué comando determina si la orden 'export' es una función interna de la shell o un archivo binario ubicado en el disco duro? — Comando: `type export (o type -t export)` (El comando 'type' inspecciona la memoria de la shell y devolverá 'export is a shell builtin'.)"
+            "Caso 5 (Oficial Pág 564 - Ejercicio Guiado 3): Usando find, busque solo en el directorio actual archivos regulares en los que el usuario tenga permiso de escritura, modificados en los últimos 10 días y con tamaño superior a 4 GiB — Comando: `find . -maxdepth 1 -type f -writable -mtime -10 -size +4G` (-writable comprueba permisos de escritura del usuario actual, -mtime -10 filtra los últimos 10 días y -size +4G tamaños mayores a 4 Gigabytes.)",
+            "Caso 6 (Oficial Pág 564 - Ejercicio Guiado 5): ¿Cómo puede encontrar de forma directa dónde se almacena la página del manual oficial de 'ifconfig' ignorando sus binarios? — Comando: `whereis -m ifconfig` (La opción -m (manuals) restringe la búsqueda exclusivamente a la documentación man.)",
+            "Caso 7 (Oficial Pág 564 - Ejercicio Guiado 6): ¿Qué variable debe añadirse a /etc/updatedb.conf para que updatedb ignore los sistemas de archivos ntfs? — Comando: `PRUNEFS=\"... ntfs\"` (La directiva PRUNEFS enumera los tipos de filesystem excluidos de la indexación.)",
+            "Caso 8 (Oficial Pág 564 - Ejercicio Guiado 7): Un administrador desea montar un disco interno de forma provisional (/dev/sdc1). Según el FHS, ¿dónde se recomienda montarlo? — Comando: `/mnt (o /mnt/<subdirectorio>)` (El FHS reserva /mnt como punto de montaje temporal para administradores.)"
           ]
         },
         {
           "type": "callout",
           "calloutType": "tip",
           "title": "Solución y Explicación del Ejercicio",
-          "content": "whereis -m filtra documentación man; type identifica comandos internos integrados en la propia shell."
+          "content": "find combina -writable, -mtime y -size; whereis -m para páginas man; PRUNEFS para ignorar filesystems en updatedb; y /mnt para montajes temporales según FHS."
         }
       ],
       "notes": "Recuerda que 'which export' fallaría porque export no existe en el disco."
     },
     {
-      "id": "104.7-slide-14",
-      "slideNumber": 14,
+      "id": "104.7-slide-15",
+      "slideNumber": 15,
       "title": "Retos de Exploración Oficiales (updatedb.conf y Binarios SUID)",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Retos de Exploración Oficiales (updatedb.conf y Binarios SUID)"
+          "text": "Retos de Exploración Oficiales (find Avanzado y updatedb)"
         },
         {
           "type": "callout",
           "calloutType": "warning",
-          "title": "Escenario del Desafío",
-          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. En '/etc/updatedb.conf', ¿qué parámetro debes editar para evitar que la base de datos de 'locate' indexe el directorio '/opt/datos_gigantes'?\n2. ¿Cuál es la diferencia fundamental entre el ciclo de vida de los archivos almacenados en '/tmp' frente a los almacenados en '/var/tmp'?\n3. ¿Por qué ejecutar 'which cd' devuelve código de error o no produce ninguna salida en una terminal Bash estándar?"
+          "title": "Escenario del Desafío Oficial LPI",
+          "content": "Resuelve estos 4 retos de examen planteados en el manual oficial LPIC-1 (pág. 565):\n1. ¿Cómo hacer que locate muestre solo los archivos que existen realmente en disco ignorando entradas borradas de su índice?\n2. Busca en el directorio actual y subcarpetas hasta 2 niveles hacia abajo, excluyendo otros sistemas de archivos montados, archivos cuyo nombre contenga 'Status' o 'statute'.\n3. Limitando la búsqueda a sistemas ext4, busca en /mnt archivos que tengan al menos permisos de ejecución para el grupo, sean legibles por el usuario y hayan cambiado atributos en las últimas 2 horas.\n4. ¿Por qué 'which cd' no devuelve nada y 'type cd' sí?"
         },
         {
           "type": "callout",
           "calloutType": "tip",
-          "title": "Pista",
-          "content": "Recuerda: directiva PRUNEPATHS; persistencia tras reinicios; y la naturaleza de los builtins."
+          "title": "Pistas Técnicas",
+          "content": "locate con -e; find con -maxdepth 3 y -mount; find con -fstype ext4, -perm -410 y -cmin -120; y naturaleza de builtins."
         },
         {
           "type": "callout",
           "calloutType": "tip",
-          "title": "Solución y Explicación del Desafío",
-          "content": "1. Se añade la ruta a la directiva: PRUNEPATHS=\"... /opt/datos_gigantes\"\n2. Los archivos en '/tmp' son de corta duración y habitualmente se vacían automáticamente durante el reinicio del sistema (o residen en memoria tmpfs); los archivos en '/var/tmp' deben conservarse y persistir entre reinicios del sistema.\n3. Porque 'cd' es un comando interno de la shell (shell builtin) integrado en el ejecutable de Bash. 'which' solo busca archivos ejecutables independientes en el disco dentro de las rutas de $PATH."
+          "title": "Solución Oficial Detallada",
+          "content": "1. Se usa la opción -e: `locate -e <patron>` (comprueba existencia real en disco antes de imprimir).\n2. Comando: `find . -maxdepth 3 -mount -iname \"*statu*\"` (-maxdepth 3 cuenta el directorio actual + 2 niveles abajo; -mount evita cruzar particiones).\n3. Comando: `find /mnt -fstype ext4 -perm -410 -cmin -120` (permiso al menos r para usuario (4), x para grupo (1) y cualquiera para otros (0) -> -410; -cmin -120 = 2 horas en minutos).\n4. 'cd' es una orden interna de Bash (shell builtin) que reside en la memoria de la shell; which solo busca archivos ejecutables en las rutas de $PATH."
         }
       ],
       "notes": "El reto 2 evalúa una distinción fundamental del estándar FHS muy repetida en los exámenes oficiales."
     },
     {
-      "id": "104.7-slide-15",
-      "slideNumber": 15,
+      "id": "104.7-slide-16",
+      "slideNumber": 16,
       "title": "Pregunta de Examen LPIC-1: Propósito de /etc en el FHS",
       "layout": "checkpoint",
       "blocks": [
@@ -715,7 +907,7 @@
         },
         {
           "type": "quiz-inline",
-          "id": "quiz-104-7-15",
+          "id": "quiz-104-7-16",
           "question": "De acuerdo con el estándar de jerarquía de sistemas de archivos FHS (Filesystem Hierarchy Standard), ¿cuál es el propósito exclusivo del directorio '/etc'?",
           "options": [
             {
@@ -744,8 +936,8 @@
       "notes": "Pregunta clásica y fundamental de examen."
     },
     {
-      "id": "104.7-slide-16",
-      "slideNumber": 16,
+      "id": "104.7-slide-17",
+      "slideNumber": 17,
       "title": "Pregunta de Examen LPIC-1: Base de Datos de locate",
       "layout": "checkpoint",
       "blocks": [
@@ -756,7 +948,7 @@
         },
         {
           "type": "quiz-inline",
-          "id": "quiz-104-7-16",
+          "id": "quiz-104-7-17",
           "question": "Un administrador ejecuta 'locate' para buscar un archivo de configuración que acaba de crear hace dos minutos, pero el comando no devuelve ningún resultado. ¿Cuál es la causa más probable?",
           "options": [
             {
@@ -785,8 +977,8 @@
       "notes": "Pregunta fija de examen para comprobar el conocimiento de locate vs updatedb."
     },
     {
-      "id": "104.7-slide-17",
-      "slideNumber": 17,
+      "id": "104.7-slide-18",
+      "slideNumber": 18,
       "title": "Pregunta de Examen LPIC-1: Búsqueda de Manuales con whereis",
       "layout": "checkpoint",
       "blocks": [
@@ -797,7 +989,7 @@
         },
         {
           "type": "quiz-inline",
-          "id": "quiz-104-7-17",
+          "id": "quiz-104-7-18",
           "question": "¿Qué opción del comando 'whereis' restringe la búsqueda exclusivamente a las páginas del manual man del comando consultado?",
           "options": [
             {
@@ -826,8 +1018,8 @@
       "notes": "Pregunta directa sobre los modificadores de whereis."
     },
     {
-      "id": "104.7-slide-18",
-      "slideNumber": 18,
+      "id": "104.7-slide-19",
+      "slideNumber": 19,
       "title": "Tarjetas Nemotécnicas: FHS y Búsquedas 104.7",
       "layout": "content",
       "blocks": [
@@ -845,27 +1037,39 @@
           "rows": [
             [
               "¿Qué tipo de archivos residen exclusivamente en /etc según el FHS?",
-              "Archivos de configuración estáticos específicos del host."
+              "Archivos de configuración estáticos específicos del host local."
             ],
             [
               "¿En qué directorio del FHS se almacenan los datos de servicios de red?",
               "En /srv (Service Data, ej: /srv/www, /srv/ftp)."
             ],
             [
-              "¿Dónde debe instalarse el software compilado a mano por el admin?",
-              "En /usr/local/ (aislado del gestor de paquetes)."
+              "¿Dónde debe instalarse el software compilado a mano por el administrador?",
+              "En /usr/local/ (aislado del gestor de paquetes de la distribución)."
             ],
             [
-              "¿Qué diferencia hay entre /tmp y /var/tmp?",
-              "/tmp se puede limpiar al reiniciar; /var/tmp debe persistir entre reinicios."
+              "¿Qué diferencia hay entre /tmp, /var/tmp y /run en el FHS?",
+              "/tmp se limpia en reinicios; /var/tmp debe persistir; /run almacena PIDs/sockets volátiles."
             ],
             [
-              "¿Qué comando actualiza la base de datos de 'locate'?",
-              "sudo updatedb."
+              "¿Qué función cumple 'locate -A' frente a locate normal?",
+              "Exige que coincidan simultáneamente todos los patrones (intersección lógica AND)."
             ],
             [
-              "¿En qué archivo se configuran las exclusiones de updatedb?",
-              "/etc/updatedb.conf (parámetros PRUNEPATHS y PRUNEFS)."
+              "¿Qué 4 directivas configuran exclusiones en /etc/updatedb.conf?",
+              "PRUNEPATHS (rutas), PRUNEFS (sistemas FS), PRUNENAMES (nombres carpetas) y PRUNE_BIND_MOUNTS."
+            ],
+            [
+              "¿Cómo se busca en find por permisos mínimos (que tenga al menos esos bits)?",
+              "Con el prefijo guion en octal: find /ruta -perm -NNNN (ej. -perm -4000 para SUID o -perm -410)."
+            ],
+            [
+              "¿Qué diferencia hay en find entre -mtime y -ctime?",
+              "-mtime evalúa modificación de contenido de datos; -ctime evalúa cambio de metadatos o inodo."
+            ],
+            [
+              "¿Cómo evita find descender a otras particiones o montajes?",
+              "Con la opción '-mount' (o '-xdev')."
             ],
             [
               "¿Qué opción de 'whereis' busca únicamente páginas de manual?",
@@ -882,8 +1086,8 @@
       "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 104.7."
     },
     {
-      "id": "104.7-slide-19",
-      "slideNumber": 19,
+      "id": "104.7-slide-20",
+      "slideNumber": 20,
       "title": "Resumen y Claves de Examen: Subtema 104.7",
       "layout": "summary",
       "blocks": [
@@ -891,9 +1095,31 @@
           "type": "heading",
           "level": 2,
           "text": "Resumen y Claves de Examen: Subtema 104.7"
+        },
+        {
+          "type": "paragraph",
+          "text": "Checklist de conceptos críticos evaluados en el examen LPIC-1 101-500 (Tema 104.7):"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Estándar FHS**: Clasificación 2x2 (Shareable vs Non-shareable, Static vs Variable). /etc (config host estática), /srv (datos de servicios de red), /opt (paquetes adicionales de terceros), /usr/local (software compilado localmente), /run y /tmp (temporales volátiles), /var/tmp (temporales persistentes).",
+            "**find**: Búsqueda en tiempo real en disco físico. Filtros por nombre (-name, -iname), tipo (-type f, d, l, b, c), tamaño (-size +/-N[c|k|M|G]), profundidad (-maxdepth, -mindepth), sistemas de archivos (-mount, -fstype), permisos (-perm exacto vs -perm -NNN), y tiempo (-mtime/-atime/-ctime en días, -mmin/-amin/-cmin en minutos).",
+            "**locate y updatedb**: Búsqueda indexada instantánea en /var/lib/mlocate/mlocate.db. 'locate -A' exige todos los patrones; 'locate -b' busca solo en basename; 'locate -e' verifica que el archivo aún exista. /etc/updatedb.conf define PRUNEPATHS, PRUNEFS, PRUNENAMES y PRUNE_BIND_MOUNTS.",
+            "**which vs whereis**: 'which' busca solo el primer ejecutable en las carpetas de $PATH. 'whereis' busca en rutas estándar binarios (-b), páginas de manual man (-m) y código fuente (-s).",
+            "**type**: Clasifica la naturaleza del comando en la sesión de shell. 'type -t' devuelve builtin (cd, history), alias, file (/usr/bin/find) o function."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Regla de Oro para el Examen",
+          "content": "🎯 Para buscar por atributos o fechas en vivo: find. Para buscar por nombre al instante: locate (requiere updatedb). Para ubicar páginas man: whereis -m. Para ejecutables en PATH: which. Para comandos internos de Bash: type."
         }
       ],
       "notes": "Concluimos el subtema 104.7 y con él finalizamos completamente la refactorización integral del Tema 104 y de los temas 101 a 104 al 100%."
     }
-  ]
+  ],
+  "totalSlides": 20
 }

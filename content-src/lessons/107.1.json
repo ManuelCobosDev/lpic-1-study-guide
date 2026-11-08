@@ -11,17 +11,35 @@
     "Dominio técnico de las herramientas y configuración del subtema 107.1"
   ],
   "keyTerms": [
-    "/etc/passwd",
-    "/etc/shadow",
+    "/bin/tcsh",
+    "/etc/default/useradd",
     "/etc/group",
     "/etc/gshadow",
-    "/etc/skel/",
     "/etc/login.defs",
-    "/etc/default/useradd",
+    "/etc/passwd",
+    "/etc/shadow",
+    "/etc/skel/",
+    "/var/mail",
+    "/var/spool/mail",
+    "chage",
     "getent",
-    "chage"
+    "GID",
+    "UID"
   ],
-  "commands": [],
+  "commands": [
+    "chage",
+    "getent",
+    "gpasswd",
+    "groupadd",
+    "groupdel",
+    "groupmod",
+    "id",
+    "newgrp",
+    "passwd",
+    "useradd",
+    "userdel",
+    "usermod"
+  ],
   "placeholder": false,
   "slides": [
     {
@@ -252,6 +270,16 @@
               "Fecha en que se desactivará la cuenta en formato YYYY-MM-DD."
             ],
             [
+              "-f, --inactive DIAS",
+              "",
+              "Días de inactividad tras vencer la contraseña antes de inhabilitar la cuenta (campo 7 shadow; -1 desactiva)."
+            ],
+            [
+              "-k, --skel SKEL_DIR",
+              "",
+              "Directorio esqueleto alternativo a /etc/skel/ (usado conjuntamente con -m al crear el home)."
+            ],
+            [
               "-D",
               "",
               "Muestra la configuración predeterminada de /etc/default/useradd o la modifica si se combina con opciones."
@@ -329,7 +357,12 @@
             [
               "-s, --shell SHELL",
               "",
-              "Cambia el shell de inicio asignado al usuario."
+              "Cambia el shell de inicio asignado al usuario (ej. /bin/bash, /bin/tcsh, /usr/sbin/nologin)."
+            ],
+            [
+              "-f, --inactive DIAS",
+              "",
+              "Modifica el número de días de inactividad de gracia tras expirar la clave (campo 7 shadow)."
             ],
             [
               "-L, --lock",
@@ -389,7 +422,7 @@
             [
               "-r, --remove",
               "",
-              "Elimina el directorio personal (home) del usuario y su cola de correo (/var/mail/usuario)."
+              "Elimina el directorio personal (home) del usuario y su buzón de correo (/var/mail/usuario o /var/spool/mail/usuario)."
             ],
             [
               "-f, --force",
@@ -403,7 +436,7 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Por defecto 'userdel usuario' elimina la cuenta de /etc/passwd y /etc/shadow pero DEJA intacto el directorio home. Para borrar el home y el correo se DEBE usar '-r'."
+          "content": "🎯 Clave de Examen: Por defecto 'userdel usuario' elimina la cuenta de /etc/passwd y /etc/shadow pero DEJA intacto el directorio home. Para borrar el home y el buzón de correo (/var/mail o /var/spool/mail según la distribución) se DEBE usar '-r'."
         }
       ],
       "notes": "Los archivos que queden huérfanos tras un userdel sin -r mantendrán el UID numérico como propietario."
@@ -821,8 +854,8 @@
         },
         {
           "type": "code",
-          "language": "bash",
-          "code": "\n<strong>1. Propósito de comandos fundamentales:</strong><br>\n• <code>usermod -L</code>: Bloquea la contraseña de una cuenta de usuario (Lock).<br>\n• <code>passwd -u</code>: Desbloquea la contraseña de una cuenta de usuario (Unlock).<br>\n• <code>chage -E &lt;fecha&gt;</code>: Establece la fecha de expiración/caducidad de una cuenta.<br>\n• <code>groupdel &lt;grupo&gt;</code>: Elimina un grupo del sistema.<br>\n• <code>useradd -s &lt;shell&gt;</code>: Define la shell de inicio de sesión de la cuenta.<br>\n• <code>groupadd -g &lt;GID&gt;</code>: Crea un nuevo grupo con un identificador GID específico.<br>\n• <code>userdel -r &lt;usuario&gt;</code>: Elimina la cuenta, su carpeta home y su buzón de correo.<br>\n• <code>usermod -l &lt;login&gt;</code>: Cambia el nombre de usuario de una cuenta (login name).<br>\n• <code>groupmod -n &lt;nombre&gt;</code>: Cambia el nombre de un grupo existente.<br>\n• <code>useradd -m</code>: Crea la cuenta y genera físicamente su directorio home clonando /etc/skel/.<br><br>\n<strong>2. Equivalencias passwd vs chage:</strong><br>\n• <code>passwd -n</code> = <code>chage -m</code> (Días mínimos)<br>\n• <code>passwd -x</code> = <code>chage -M</code> (Días máximos)<br>\n• <code>passwd -w</code> = <code>chage -W</code> (Días de advertencia)<br>\n• <code>passwd -i</code> = <code>chage -I</code> (Días de inactividad)<br>\n• <code>passwd -S</code> = <code>chage -l</code> (Mostrar estado)\n",
+          "language": "text",
+          "code": "# Comandos fundamentales evaluados por LPI:\nusermod -L <user>     # Bloquea la contraseña de la cuenta\npasswd -u <user>      # Desbloquea la contraseña de la cuenta\nchage -E YYYY-MM-DD   # Fija fecha de expiración de cuenta\ngroupdel <grupo>      # Elimina grupo existente\nuseradd -s <shell>    # Fija shell (ej. /bin/bash, /bin/tcsh)\nuserdel -r <user>     # Borra cuenta, home y buzón /var/mail\nuseradd -m -k <skel>  # Crea home con skel alternativo\nusermod -l <login>    # Cambia el nombre de usuario\ngroupmod -n <nom>     # Renombra grupo existente\n# Equivalencias passwd vs chage:\npasswd -n/-x/-w/-i == chage -m/-M/-W/-I",
           "title": "Solución del ejercicio"
         },
         {
@@ -857,7 +890,7 @@
         {
           "type": "code",
           "language": "bash",
-          "code": "\n<pre style=\"background:#0F172A; color:#E2E8F0; padding:10px; border-radius:6px; font-size:12px;\">\n# 1. Crear el grupo primario si no existe:\ngroupadd -g 2000 seguridad\n\n# 2. Crear la cuenta con todos los atributos requeridos:\nuseradd -m -u 1600 -g 2000 -G adm,systemd-journal -e 2026-12-31 -c \"Auditor Externo 2026\" auditor24\n\n# 3. Asignar contraseña inicial temporal:\npasswd auditor24\n\n# 4. Forzar el cambio de contraseña en el próximo inicio de sesión:\npasswd -e auditor24\n# (o alternativamente: chage -d 0 auditor24)\n\n# 5. Verificación de bases de datos:\ngetent passwd auditor24\nchage -l auditor24\n</pre>\n",
+          "code": "# 1. Crear grupo primario y cuenta de auditoría completa:\nsudo groupadd -g 2000 seguridad\nsudo useradd -m -u 1600 -g 2000 -G adm,systemd-journal -e 2026-12-31 -c \"Auditor 2026\" auditor24\n# 2. Asignar contraseña temporal y forzar cambio inmediato:\nsudo passwd auditor24\nsudo passwd -e auditor24\n# 3. Verificación de bases de datos del sistema:\ngetent passwd auditor24\nchage -l auditor24",
           "title": "Solución del desafío"
         }
       ]

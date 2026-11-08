@@ -11,18 +11,47 @@
     "Dominio técnico de las herramientas y configuración del subtema 103.2"
   ],
   "keyTerms": [
-    "Procesar flujos de texto usando filtros",
-    "Tema 103"
+    "filtro y tubería (pipe)",
+    "salida estándar (stdout) y entrada (stdin)",
+    "message digest (resumen de mensajes)",
+    "suma de control criptográfica (checksum)",
+    "visores comprimidos (zcat, bzcat, xzcat)",
+    "paginador interactivo (less)",
+    "corte vertical (cut) frente a unión horizontal (paste)",
+    "generación de CSV con paste -d,",
+    "orden numérico (-n) frente a aleatorio (-R)",
+    "deduplicación adyacente (uniq)",
+    "tr exclusivamente por stdin",
+    "sustitución global con sed (s///g)",
+    "edición in-place (sed -i)",
+    "octal dump y supresión de offset (od -An)",
+    "fragmentación y recomposición (split y cat)"
   ],
   "commands": [
     "cat",
+    "zcat",
+    "bzcat",
+    "xzcat",
+    "less",
+    "head",
+    "tail",
+    "tac",
     "wc",
+    "nl",
     "cut",
+    "paste",
     "sort",
+    "uniq",
     "tr",
     "sed",
     "sha256sum",
-    "od"
+    "md5sum",
+    "sha512sum",
+    "od",
+    "split",
+    "pr",
+    "expand",
+    "unexpand"
   ],
   "placeholder": false,
   "slides": [
@@ -75,26 +104,26 @@
     {
       "id": "103.2-slide-3",
       "slideNumber": 3,
-      "title": "Visualización y Paginación: cat, tac, head y tail",
+      "title": "Visualización, Paginación y Archivos Comprimidos: cat, less, zcat, bzcat y xzcat",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Visualización y Paginación: cat, tac, head y tail"
+          "text": "Visualización, Paginación y Archivos Comprimidos: cat, less, zcat, bzcat y xzcat"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "cat [-n] | tac | head [-n] | tail [-n|-f]",
-          "title": "Inspeccionar archivos completos, invertidos o solo sus cabeceras y colas"
+          "code": "cat [-n] | less | zcat | bzcat | xzcat | tac | head [-n] | tail [-n|-f]",
+          "title": "Inspeccionar archivos completos, paginados interactivamente o comprimidos sin extraerlos a disco"
         },
         {
           "type": "terminal",
           "lines": [
             {
               "prompt": "$ ",
-              "command": "cat -n srv.txt; tac srv.txt | head -n 1; head -n 1 srv.txt; tail -n 1 srv.txt",
+              "command": "cat -n srv.txt; zcat backup.sql.gz | head -n 3; bzcat log.bz2 | grep ERROR; tail -f /var/log/syslog",
               "output": ""
             }
           ]
@@ -113,9 +142,24 @@
               "🎯 Numera todas las líneas de salida de la primera a la última."
             ],
             [
-              "cat -s",
-              "Comprimir vacías",
-              "Reduce múltiples líneas consecutivas en blanco a una sola."
+              "less <fichero>",
+              "Paginador interactivo",
+              "🎯 Navega por ficheros largos con flechas, espacio, búsqueda con '/patrón' y salida con 'q'. No desborda la pantalla."
+            ],
+            [
+              "zcat <arch.gz>",
+              "Ver gzip a stdout",
+              "🎯 Descomprime flujos gzip directamente a stdout en memoria sin extraer el archivo en disco."
+            ],
+            [
+              "bzcat <arch.bz2>",
+              "Ver bzip2 a stdout",
+              "🎯 Emite a stdout el contenido de archivos comprimidos con bzip2 para procesarlos en tuberías."
+            ],
+            [
+              "xzcat <arch.xz>",
+              "Ver xz a stdout",
+              "🎯 Emite a stdout el contenido de archivos comprimidos con el algoritmo xz / LZMA."
             ],
             [
               "tac <fichero>",
@@ -128,30 +172,25 @@
               "🎯 Muestra las primeras N líneas (por defecto 10 si no indicas número)."
             ],
             [
-              "tail -n <N>",
-              "Últimas N líneas",
-              "🎯 Muestra las últimas N líneas del fichero (por defecto 10)."
-            ],
-            [
-              "tail -f",
-              "Seguimiento en vivo",
-              "🎯 Modo follow: no se cierra, monitoriza nuevas líneas añadidas al log en tiempo real."
+              "tail -n <N> / -f",
+              "Últimas N líneas / En vivo",
+              "🎯 '-n' muestra las últimas N líneas; '-f' monitoriza nuevas líneas añadidas en tiempo real."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
         },
         {
           "type": "html",
-          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-top:8px; font-size:13px;\">\n  <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n    <div style=\"font-weight:800; color:#1E40AF; font-size:14px; margin-bottom:2px;\">cat (Completo)</div>\n    <div style=\"color:#1E3A8A; line-height:1.35;\">\n      Muestra todo de la 1 a la final. Usa <code>cat -n</code> para ver números de línea al revisar código.\n    </div>\n  </div>\n\n  <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:14px; margin-bottom:2px;\">tac (Espejo Inverso)</div>\n    <div style=\"color:#7F1D1D; line-height:1.35;\">\n      <em>cat</em> al revés: imprime de última a primera (ideal para logs cronológicos inversos).\n    </div>\n  </div>\n\n  <div style=\"background:#FEFCE8; border:1.5px solid #EAB308; border-radius:8px; padding:10px;\">\n    <div style=\"font-weight:800; color:#854D0E; font-size:14px; margin-bottom:2px;\">head (La Cabeza)</div>\n    <div style=\"color:#713F12; line-height:1.35;\">\n      Extrae el inicio. <code>head -n 5</code> extrae las 5 primeras líneas (por defecto 10).\n    </div>\n  </div>\n\n  <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n    <div style=\"font-weight:800; color:#14532D; font-size:14px; margin-bottom:2px;\">tail -f (En Vivo)</div>\n    <div style=\"color:#14532D; line-height:1.35;\">\n      La cola. Con <code>-f</code> queda a la espera de nuevas líneas (monitor de logs en directo).\n    </div>\n  </div>\n</div>\n"
+          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-top:8px; font-size:13px;\">\n  <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n    <div style=\"font-weight:800; color:#1E40AF; font-size:14px; margin-bottom:2px;\">less (Paginador Pro)</div>\n    <div style=\"color:#1E3A8A; line-height:1.35;\">\n      Lectura interactiva hacia delante y atrás. Busca con <code>/texto</code> y pulsa <code>q</code> para salir.\n    </div>\n  </div>\n\n  <div style=\"background:#FEFCE8; border:1.5px solid #EAB308; border-radius:8px; padding:10px;\">\n    <div style=\"font-weight:800; color:#854D0E; font-size:14px; margin-bottom:2px;\">zcat / bzcat / xzcat</div>\n    <div style=\"color:#713F12; line-height:1.35;\">\n      Leen archivos <code>.gz</code>, <code>.bz2</code> y <code>.xz</code> a stdout sin descomprimir en disco.\n    </div>\n  </div>\n\n  <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:14px; margin-bottom:2px;\">tac (Inversor)</div>\n    <div style=\"color:#7F1D1D; line-height:1.35;\">\n      <em>cat</em> invertido: imprime de abajo hacia arriba (ideal para consultar registros cronológicos).\n    </div>\n  </div>\n\n  <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n    <div style=\"font-weight:800; color:#14532D; font-size:14px; margin-bottom:2px;\">tail -f (En Vivo)</div>\n    <div style=\"color:#14532D; line-height:1.35;\">\n      La cola. Con <code>-f</code> queda a la espera de nuevas líneas (monitor de logs en directo).\n    </div>\n  </div>\n</div>\n"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 'tail -f /var/log/syslog' monitoriza logs en tiempo real; 'tac' es 'cat' al revés (invierte líneas de abajo a arriba)."
+          "content": "🎯 Clave de Examen: 'zcat', 'bzcat' y 'xzcat' permiten ver y filtrar archivos comprimidos directamente por tuberías sin gastar espacio en disco. 'less' permite búsqueda interactiva con '/' y salir con 'q'."
         }
       ],
-      "notes": "Enseña a los alumnos que head y tail leen por defecto 10 líneas si se omite -n. tail -f es el comando de cabecera de cualquier sysadmin durante incidencias."
+      "notes": "Enseña a los alumnos que zcat arch.gz equivale a gzip -dc arch.gz. less es el paginador predeterminado que sustituyó al clásico more."
     },
     {
       "id": "103.2-slide-4",
@@ -287,7 +326,12 @@
             [
               "paste arch1 arch2",
               "Unión horizontal",
-              "🎯 Junta archivos lado a lado, línea 1 con línea 1, línea 2 con línea 2."
+              "🎯 Junta archivos lado a lado, línea 1 con línea 1, línea 2 con línea 2 (delimitador por defecto: tabulador)."
+            ],
+            [
+              "paste -d<delim>",
+              "Delimitador de unión (CSV)",
+              "🎯 Une columnas usando el carácter indicado (ej: 'paste -d, nombres.txt cargos.txt > empleados.csv')."
             ],
             [
               "paste -s",
@@ -324,8 +368,8 @@
         {
           "type": "code",
           "language": "bash",
-          "code": "sort [-n|-r|-k|-t|-u]",
-          "title": "Reorganizar registros alfabética o numéricamente por columnas"
+          "code": "sort [-n|-r|-k|-t|-u|-R]",
+          "title": "Reorganizar registros alfabética, numéricamente o de forma aleatoria por columnas"
         },
         {
           "type": "terminal",
@@ -374,6 +418,11 @@
               "sort -u",
               "Ordenar y deduplicar",
               "Elimina líneas duplicadas durante la propia ordenación."
+            ],
+            [
+              "sort -R",
+              "Orden aleatorio (Random)",
+              "🎯 Mezcla al azar las líneas del flujo de texto (ej: rifas o selección aleatoria: 'sort -R | head -n 1')."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -612,19 +661,23 @@
     {
       "id": "103.2-slide-10",
       "slideNumber": 10,
-      "title": "Integridad y Sumas Criptográficas: md5sum y sha256sum",
+      "title": "Integridad y Message Digest: md5sum y sha256sum",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Integridad y Sumas Criptográficas: md5sum y sha256sum"
+          "text": "Integridad y Message Digest: md5sum y sha256sum"
+        },
+        {
+          "type": "paragraph",
+          "text": "Un **Message Digest (resumen de mensajes)** es una huella criptográfica matemática unidireccional y de longitud fija que garantiza que un fichero no ha sufrido corrupción ni alteraciones maliciosas:"
         },
         {
           "type": "code",
           "language": "bash",
           "code": "sha256sum | md5sum | sha512sum [-c fichero]",
-          "title": "Garantizar que un archivo no ha sido corrompido ni alterado maliciosamente"
+          "title": "Calcular y verificar el Message Digest de archivos mediante sumas hash"
         },
         {
           "type": "terminal",
@@ -646,23 +699,23 @@
           "rows": [
             [
               "sha256sum <file>",
-              "Huella SHA-256",
-              "🎯 Calcula un hash de 256 bits (64 caracteres hex). El estándar moderno oficial."
+              "Message Digest SHA-256",
+              "🎯 Genera un resumen de 256 bits (64 caracteres hex). El estándar moderno oficial en LPIC-1."
             ],
             [
               "md5sum <file>",
-              "Huella MD5",
-              "Calcula un hash de 128 bits (32 caracteres hex). Rápido pero inseguro criptográficamente."
+              "Message Digest MD5",
+              "Genera un resumen de 128 bits (32 caracteres hex). Histórico, rápido pero obsoleto para seguridad criptográfica."
             ],
             [
               "-c, --check",
               "Verificación desatendida",
-              "🎯 Clave de Examen: Lee el archivo de hashes y comprueba los ficheros devolviendo 'OK' o 'FAILED'."
+              "🎯 Clave de Examen: Lee el archivo de hashes y comprueba los ficheros locales devolviendo 'OK' o 'FAILED'."
             ],
             [
               "--status",
               "Silencioso para scripts",
-              "No imprime nada; solo devuelve código de salida 0 si todos los hashes son válidos."
+              "No imprime nada; solo devuelve código de salida 0 si todos los hashes coinciden."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -719,6 +772,11 @@
               "od -c",
               "Caracteres ASCII/Escape",
               "🎯 Octal Dump: revela caracteres no imprimibles (saltos de línea \\n, retornos \\r, tabuladores \\t)."
+            ],
+            [
+              "od -An",
+              "Suprimir offset/direcciones",
+              "🎯 Elimina la columna de direcciones de desplazamiento (offset) en la salida, dejando únicamente los bytes volcados."
             ],
             [
               "split -b <tamaño>",
@@ -1003,6 +1061,25 @@
           "type": "heading",
           "level": 2,
           "text": "Resumen y Claves de Examen: Subtema 103.2"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Visualización y Paginación:** `cat -n` numera líneas; `less` permite navegación interactiva (búsqueda `/`, salida `q`); `tail -f` monitoriza logs en tiempo real; `tac` invierte líneas de abajo hacia arriba.",
+            "**Flujos comprimidos:** `zcat` (.gz), `bzcat` (.bz2) y `xzcat` (.xz) emiten el texto directamente a stdout sin extraer en disco.",
+            "**Conteo y Columnas:** `wc -l` cuenta líneas; `cut -d: -f1,7` realiza cortes verticales; `paste -d,` une archivos horizontalmente en formato CSV.",
+            "**Ordenación y Unicidad:** `sort -n` ordena numéricamente; `sort -R` ordena aleatoriamente; `uniq -c` exige tubería previa `sort | uniq -c` porque solo compara líneas adyacentes.",
+            "**Transformación:** `tr` SOLO opera sobre `stdin` (`tr -d '\\r'` elimina retornos Windows; `tr -s ' '` comprime espacios); `sed 's/foo/bar/g'` sustituye de forma global; `sed -i` escribe a disco.",
+            "**Integridad (Message Digest):** `sha256sum` y `md5sum` generan resúmenes hash; `sha256sum -c` valida automáticamente firmas contra corrupción.",
+            "**Bajo nivel y Formato:** `od -c -An` inspecciona caracteres ocultos suprimiendo la dirección offset; `split -b` divide ficheros grandes; `pr` pagina para impresión; `expand` convierte tabs en espacios."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Checklist Final de Filtros LPIC-1",
+          "content": "Los 4 puntos de oro del examen: 1) 'uniq' siempre va detrás de 'sort'; 2) 'tr' jamás acepta archivo como parámetro; 3) 'sed' necesita 'g' final para sustituir todas las apariciones; 4) 'sha256sum -c' para comprobar listas de integridad."
         }
       ],
       "notes": "Concluimos el subtema 103.2. Los alumnos dominan ahora los filtros de texto GNU para el examen."

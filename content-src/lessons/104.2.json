@@ -3,7 +3,7 @@
   "topicId": "104",
   "examId": "101",
   "title": "Mantener la integridad de los sistemas de archivos",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "language": "es",
   "estimatedMinutes": 30,
   "objectives": [
@@ -11,13 +11,41 @@
     "Dominio técnico de las herramientas y configuración del subtema 104.2"
   ],
   "keyTerms": [
-    "Mantener la integridad de los sistemas de archivos",
-    "Tema 104"
+    "Superbloque",
+    "Inodo",
+    "Journaling",
+    "dumpe2fs",
+    "tune2fs",
+    "e2fsck",
+    "fsck códigos de retorno",
+    "xfs_repair",
+    "xfs_admin",
+    "xfs_fsr",
+    "xfs_db",
+    "xfs_info",
+    "du -S",
+    "df --output",
+    "Journal externo (-J device=)",
+    "fsck -N (dry-run)",
+    "fsck -R",
+    "xfs_repair -l (log externo)",
+    "xfs_repair -d (ro peligroso)"
   ],
   "commands": [
     "df",
     "du",
-    "sudo"
+    "fsck",
+    "e2fsck",
+    "tune2fs",
+    "dumpe2fs",
+    "xfs_repair",
+    "xfs_fsr",
+    "xfs_db",
+    "xfs_admin",
+    "xfs_info",
+    "mke2fs",
+    "blkid",
+    "lsblk"
   ],
   "placeholder": false,
   "slides": [
@@ -65,7 +93,7 @@
         },
         {
           "type": "html",
-          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Grid 3 Pilares -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:14px;\">\n    \n    <!-- Pilar 1: Superbloque -->\n    <div style=\"background:#F8FAFC; border:2px solid #3B82F6; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:8px;\">\n          <span style=\"background:#3B82F6; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">SUPERBLOQUE</span>\n          <span style=\"font-size:12px; font-weight:700; color:#1E40AF;\">El Cerebro Global</span>\n        </div>\n        <div style=\"font-size:13.5px; color:#334155; line-height:1.45; margin-bottom:10px;\">\n          Almacena la geometría del sistema: total de bloques, inodos libres, tamaño de bloque, estado limpio/sucio y UUID.\n        </div>\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:8px 10px; font-family:monospace; font-size:12.5px; color:#1E3A8A; line-height:1.5; border-radius:4px;\">\n          <div>&bull; dumpe2fs -h &rarr; Leer cabecera</div>\n          <div>&bull; tune2fs &rarr; Ajustar parámetros</div>\n          <div>&bull; Copias backup en grupos</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:12px; color:#2563EB; font-weight:700; background:#DBEAFE; padding:4px 8px; border-radius:6px;\">\n        Audita estado: clean / with errors\n      </div>\n    </div>\n\n    <!-- Pilar 2: Tabla de Inodos -->\n    <div style=\"background:#F8FAFC; border:2px solid #10B981; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:8px;\">\n          <span style=\"background:#10B981; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">TABLA DE INODOS</span>\n          <span style=\"font-size:12px; font-weight:700; color:#065F46;\">Identidad de Ficheros</span>\n        </div>\n        <div style=\"font-size:13.5px; color:#334155; line-height:1.45; margin-bottom:10px;\">\n          Cada archivo o directorio consume un inodo (metadatos, permisos, timestamps, punteros a bloques de datos).\n        </div>\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:8px 10px; font-family:monospace; font-size:12.5px; color:#064E3B; line-height:1.5; border-radius:4px;\">\n          <div>&bull; df -i &rarr; Inodos libres/usados</div>\n          <div>&bull; Cantidad fija al crear ext4</div>\n          <div>&bull; XFS: inodos dinámicos</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:12px; color:#047857; font-weight:700; background:#D1FAE5; padding:4px 8px; border-radius:6px;\">\n        ¡Se pueden agotar con disco vacío!\n      </div>\n    </div>\n\n    <!-- Pilar 3: Journal / Diario -->\n    <div style=\"background:#F8FAFC; border:2px solid #8B5CF6; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:8px;\">\n          <span style=\"background:#8B5CF6; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">JOURNAL (DIARIO)</span>\n          <span style=\"font-size:12px; font-weight:700; color:#5B21B6;\">Registro de Transacciones</span>\n        </div>\n        <div style=\"font-size:13.5px; color:#334155; line-height:1.45; margin-bottom:10px;\">\n          Anota cambios pendientes antes del commit en disco. Ante un apagón repentino, se recupera en segundos sin escanear todo el disco.\n        </div>\n        <div style=\"background:#F5F3FF; border-left:3px solid #8B5CF6; padding:8px 10px; font-family:monospace; font-size:12.5px; color:#4C1D95; line-height:1.5; border-radius:4px;\">\n          <div>&bull; ext3 / ext4 / XFS con journal</div>\n          <div>&bull; ext2 no tiene journal</div>\n          <div>&bull; tune2fs -j &rarr; Activar en ext2</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:12px; color:#6D28D9; font-weight:700; background:#EDE9FE; padding:4px 8px; border-radius:6px;\">\n        Protección contra cortes eléctricos\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Alerta de examen: Error No space left on device -->\n  <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:14px;\">\n    <span style=\"font-size:26px;\">🚨</span>\n    <div style=\"font-size:13.5px; color:#991B1B; line-height:1.45;\">\n      <strong>El Gran Misterio de Examen:</strong> El error <code style=\"background:#FEE2E2; color:#B91C1C; padding:2px 6px; border-radius:4px; font-weight:700;\">No space left on device</code> se produce por dos causas distintas:\n      1) El disco está al <strong>100% de BYTES</strong> ocupados (<code style=\"font-weight:700;\">df -h</code>); ó\n      2) El disco está al <strong>100% de INODOS</strong> ocupados (<code style=\"font-weight:700;\">df -i</code>), lo cual ocurre si un servicio crea millones de ficheros vacíos de 0 bytes.\n    </div>\n  </div>\n</div>\n"
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:14px;\">\n    <div style=\"background:#F8FAFC; border:2px solid #3B82F6; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:8px;\">\n          <span style=\"background:#3B82F6; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">SUPERBLOQUE</span>\n          <span style=\"font-size:12px; font-weight:700; color:#1E40AF;\">El Cerebro Global</span>\n        </div>\n        <div style=\"font-size:13.5px; color:#334155; line-height:1.45; margin-bottom:10px;\">\n          Almacena la geometría del sistema: total de bloques, inodos libres, tamaño de bloque, estado limpio/sucio y UUID.\n        </div>\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:8px 10px; font-family:monospace; font-size:12.5px; color:#1E3A8A; line-height:1.5; border-radius:4px;\">\n          <div>&bull; dumpe2fs -h &rarr; Leer cabecera</div>\n          <div>&bull; tune2fs &rarr; Ajustar parámetros</div>\n          <div>&bull; Copias backup en grupos</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:12px; color:#2563EB; font-weight:700; background:#DBEAFE; padding:4px 8px; border-radius:6px;\">\n        Audita estado: clean / with errors\n      </div>\n    </div>\n    <div style=\"background:#F8FAFC; border:2px solid #10B981; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:8px;\">\n          <span style=\"background:#10B981; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">TABLA DE INODOS</span>\n          <span style=\"font-size:12px; font-weight:700; color:#065F46;\">Identidad de Ficheros</span>\n        </div>\n        <div style=\"font-size:13.5px; color:#334155; line-height:1.45; margin-bottom:10px;\">\n          Cada archivo o directorio consume un inodo (metadatos, permisos, timestamps, punteros a bloques de datos).\n        </div>\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:8px 10px; font-family:monospace; font-size:12.5px; color:#064E3B; line-height:1.5; border-radius:4px;\">\n          <div>&bull; df -i &rarr; Inodos libres/usados</div>\n          <div>&bull; Cantidad fija al crear ext4</div>\n          <div>&bull; XFS: inodos dinámicos</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:12px; color:#047857; font-weight:700; background:#D1FAE5; padding:4px 8px; border-radius:6px;\">\n        ¡Se pueden agotar con disco vacío!\n      </div>\n    </div>\n    <div style=\"background:#F8FAFC; border:2px solid #8B5CF6; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:8px;\">\n          <span style=\"background:#8B5CF6; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">JOURNAL (DIARIO)</span>\n          <span style=\"font-size:12px; font-weight:700; color:#5B21B6;\">Registro de Transacciones</span>\n        </div>\n        <div style=\"font-size:13.5px; color:#334155; line-height:1.45; margin-bottom:10px;\">\n          Anota cambios pendientes antes del commit en disco. Ante un apagón repentino, se recupera en segundos sin escanear todo el disco.\n        </div>\n        <div style=\"background:#F5F3FF; border-left:3px solid #8B5CF6; padding:8px 10px; font-family:monospace; font-size:12.5px; color:#4C1D95; line-height:1.5; border-radius:4px;\">\n          <div>&bull; ext3 / ext4 / XFS con journal</div>\n          <div>&bull; ext2 no tiene journal</div>\n          <div>&bull; tune2fs -j &rarr; Activar en ext2</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:12px; color:#6D28D9; font-weight:700; background:#EDE9FE; padding:4px 8px; border-radius:6px;\">\n        Protección contra cortes eléctricos\n      </div>\n    </div>\n  </div>\n  <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:14px;\">\n    <span style=\"font-size:26px;\">🚨</span>\n    <div style=\"font-size:13.5px; color:#991B1B; line-height:1.45;\">\n      <strong>El Gran Misterio de Examen:</strong> El error <code style=\"background:#FEE2E2; color:#B91C1C; padding:2px 6px; border-radius:4px; font-weight:700;\">No space left on device</code> se produce por dos causas distintas:\n      1) El disco está al <strong>100% de BYTES</strong> ocupados (<code style=\"font-weight:700;\">df -h</code>); ó\n      2) El disco está al <strong>100% de INODOS</strong> ocupados (<code style=\"font-weight:700;\">df -i</code>), lo cual ocurre si un servicio crea millones de ficheros vacíos de 0 bytes.\n    </div>\n  </div>\n</div>\n"
         },
         {
           "type": "callout",
@@ -89,69 +117,60 @@
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo saber cuánto espacio libre queda y si se han agotado los inodos del sistema?"
+          "text": "¿Cómo saber cuánto espacio libre queda, filtrar por tipo y personalizar las columnas de df?"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "df [-h|-T|-i|-t <tipo>] [ruta]",
-          "title": "Disk Free: reportar el uso del espacio de almacenamiento y consumo de inodos de los sistemas montados"
-        },
-        {
-          "type": "terminal",
-          "lines": [
-            {
-              "prompt": "$ ",
-              "command": "df -hT /; echo '---'; df -i /",
-              "output": "Filesystem     Type  Size  Used Avail Use% Mounted on\n/dev/sda1      ext4   40G   12G   26G  32% /\n---\nFilesystem     Inodes  IUsed   IFree IUse% Mounted on\n/dev/sda1     2621440 215400 2406040    9% /"
-            }
-          ]
+          "code": "# 1. Salida estándar legible para humanos y tipo de sistema de archivos:\ndf -hT\n\n# 2. Auditoría de inodos en la raíz:\ndf -i /\n\n# 3. Filtrar sistemas ext4 y personalizar columnas con --output (Ejercicio Guiado 2):\ndf -t ext4 --output=source,target,itotal,iavail,pcent",
+          "title": "Uso avanzado y opciones de personalización de df"
         },
         {
           "type": "table",
           "headers": [
             "Opción / Bandera",
             "Nombre",
-            "Descripción"
+            "Descripción en Examen LPIC-1"
           ],
           "rows": [
             [
               "df -h",
               "-h (Humano)",
-              "🎯 Clave de Examen: Muestra tamaños en potencias de 1024 con sufijos legibles (K, M, G, T)."
+              "🎯 Muestra tamaños en potencias de 1024 con sufijos legibles (K, M, G, T)."
             ],
             [
               "df -T",
               "-T (Tipo FS)",
-              "🎯 Clave de Examen: Añade una columna mostrando el TIPO de sistema de archivos (ext4, xfs, btrfs, vfat)."
-            ],
-            [
-              "df -i",
-              "-i (Inodos)",
-              "🎯 Clave Absoluta de Examen: Muestra la información de INODOS (usados, libres y porcentaje) en lugar de bloques de disco."
+              "🎯 Añade una columna mostrando el TIPO de sistema de archivos (ext4, xfs, btrfs, vfat)."
             ],
             [
               "df -t <tipo>",
               "-t (Filtro tipo)",
-              "🎯 Filtra la salida para mostrar ÚNICAMENTE los sistemas de archivos del tipo especificado (ej: 'df -t ext4')."
+              "🎯 Filtra para mostrar ÚNICAMENTE sistemas del tipo indicado (ej: 'df -t ext4')."
+            ],
+            [
+              "df -i",
+              "-i (Inodos)",
+              "🎯 Muestra estadísticas de inodos (total, usados, libres, %) en vez de bloques de disco."
+            ],
+            [
+              "--output=...",
+              "--output=campos",
+              "🎯 Personaliza las columnas a imprimir: 'source,target,itotal,iavail,pcent,fstype,size'."
             ],
             [
               "df -x <tipo>",
               "-x (Excluir)",
-              "Excluye de la salida los sistemas de archivos del tipo indicado (ej: 'df -x tmpfs')."
+              "Excluye de la salida los sistemas del tipo especificado (ej: 'df -x tmpfs')."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-top:10px; font-family:monospace; text-align:center;\">\n  <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; padding:8px 4px;\">\n    <div style=\"font-size:11px; color:#1E40AF; font-weight:bold;\">Bytes Legibles</div>\n    <div style=\"font-size:16px; font-weight:800; color:#1D4ED8; margin:2px 0;\">df -h</div>\n    <div style=\"font-size:10.5px; color:#3B82F6;\">Bloques (GB, MB)</div>\n  </div>\n  <div style=\"background:#FEF3C7; border:1px solid #FDE68A; border-radius:8px; padding:8px 4px;\">\n    <div style=\"font-size:11px; color:#92400E; font-weight:bold;\">Conteo Inodos</div>\n    <div style=\"font-size:16px; font-weight:800; color:#B45309; margin:2px 0;\">df -i</div>\n    <div style=\"font-size:10.5px; color:#D97706;\">Ficheros máximos</div>\n  </div>\n  <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:8px 4px;\">\n    <div style=\"font-size:11px; color:#166534; font-weight:bold;\">Imprime Tipo</div>\n    <div style=\"font-size:16px; font-weight:800; color:#15803D; margin:2px 0;\">df -T</div>\n    <div style=\"font-size:10.5px; color:#22C55E;\">Columna ext4 / xfs</div>\n  </div>\n  <div style=\"background:#F5F3FF; border:1px solid #DDD6FE; border-radius:8px; padding:8px 4px;\">\n    <div style=\"font-size:11px; color:#5B21B6; font-weight:bold;\">Filtra por Tipo</div>\n    <div style=\"font-size:16px; font-weight:800; color:#6D28D9; margin:2px 0;\">df -t ext4</div>\n    <div style=\"font-size:10.5px; color:#8B5CF6;\">Solo coincidencias</div>\n  </div>\n</div>\n"
+          "caption": "Opciones clave de df evaluadas en la certificación LPIC-1"
         },
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Diferencia Vital de Examen: 'df -T' (mayúscula) imprime el tipo de sistema de ficheros; 'df -t' (minúscula) filtra por ese tipo."
+          "title": "Diferencia Vital de Examen (Ejercicio Guiado 2 y Exploratorio 5)",
+          "content": "🎯 Diferencia Vital: 'df -T' (mayúscula) imprime el tipo de sistema de archivos; 'df -t <tipo>' (minúscula) es un FILTRO que solo muestra ese tipo. Con '--output=source,target,itotal,iavail,pcent' defines con precisión quirúrgica el orden de campos para informes."
         }
       ],
       "notes": "Muestra a los alumnos que si un servidor web crea millones de archivos de sesión vacíos, 'df -h' dirá 10% usado pero 'df -i' dirá 100% (disco bloqueado)."
@@ -169,17 +188,16 @@
         },
         {
           "type": "paragraph",
-          "text": "¿Qué directorio o usuario se está comiendo el espacio del disco?"
-        },
-        {
-          "type": "code",
-          "language": "bash",
-          "code": "du [-h|-s|-a|-d <n>|--max-depth=<n>] [ruta]",
-          "title": "Disk Usage: estimar el espacio real en disco ocupado por archivos y directorios"
+          "text": "¿Qué directorio se está comiendo el espacio y cómo aislar solo los archivos del directorio actual?"
         },
         {
           "type": "terminal",
           "lines": [
+            {
+              "prompt": "$ ",
+              "command": "du -Shd 0",
+              "output": "8.0K    .    # 🎯 -S separa subdirectorios; -d 0 profundidad cero; -h humano: ¡solo archivos propios!"
+            },
             {
               "prompt": "$ ",
               "command": "sudo du -sh /var/* 2>/dev/null | sort -h | tail -n 3",
@@ -190,53 +208,49 @@
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
+            "Bandera du",
             "Nombre",
-            "Descripción"
+            "Comportamiento Oficial"
           ],
           "rows": [
             [
-              "du -h",
-              "-h (Humano)",
-              "Muestra los tamaños en formato legible para humanos (K, M, G)."
-            ],
-            [
-              "du -s",
-              "-s (Summarize)",
-              "🎯 Clave de Examen: Muestra ÚNICAMENTE el total acumulado del argumento, sin desglosar subdirectorios."
-            ],
-            [
-              "du -sh <dir>",
-              "-sh (Combo)",
-              "🎯 El combo estrella: resumen en formato humano (ej: 'du -sh /home' devuelve '45G /home')."
-            ],
-            [
-              "du -a",
-              "-a (All files)",
-              "Muestra el tamaño de absolutamente todos los archivos individuales, no solo de los directorios."
+              "-S",
+              "-S (--separate-dirs)",
+              "🎯 Calcula el espacio consumido exclusivamente por archivos del directorio actual, sin incluir subdirectorios."
             ],
             [
               "-d <N>",
               "-d / --max-depth",
-              "🎯 Clave de Examen: Limita la profundidad de exploración a N niveles de carpetas (ej: 'du -h -d 1 /var')."
+              "🎯 Limita la profundidad de exploración a N niveles (ej: '-d 0' solo el directorio actual)."
             ],
             [
-              "du -c",
-              "-c (Total)",
-              "Añade una línea final con la suma total (Grand Total) de todos los elementos analizados."
+              "-s",
+              "-s (--summarize)",
+              "🎯 Muestra solo el total acumulado sin desglosar subdirectorios."
+            ],
+            [
+              "-h",
+              "-h (--human-readable)",
+              "Imprime tamaños en unidades legibles (K, M, G)."
+            ],
+            [
+              "--exclude=...",
+              "--exclude=PATRÓN",
+              "🎯 Omite archivos y carpetas que coincidan con el patrón indicado (ej: '--exclude=*.iso')."
+            ],
+            [
+              "-a",
+              "-a (--all)",
+              "Muestra el tamaño de todos los archivos individuales, no solo carpetas."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"display:flex; gap:12px; margin-top:10px;\">\n  <div style=\"flex:1; background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px;\">\n    <div style=\"font-size:12px; font-weight:800; color:#334155; margin-bottom:6px; text-transform:uppercase;\">\n      df frente a du: La Frontera Conceptual\n    </div>\n    <div style=\"font-size:12.5px; color:#475569; line-height:1.45;\">\n      &bull; <strong style=\"color:#2563EB;\">df (Disk Free):</strong> Consulta al <em>superbloque</em> de la partición montada. Tiempo $O(1)$ instantáneo.<br>\n      &bull; <strong style=\"color:#16A34A;\">du (Disk Usage):</strong> Recorre el <em>árbol de directorios</em> sumando cada inodo. Tiempo $O(N)$ según archivos.\n    </div>\n  </div>\n  <div style=\"flex:1; background:#FEF3C7; border:2px solid #F59E0B; border-radius:10px; padding:10px 14px;\">\n    <div style=\"font-size:12px; font-weight:800; color:#92400E; margin-bottom:6px; text-transform:uppercase;\">\n      Tubería Forense de Almacenamiento\n    </div>\n    <div style=\"font-family:monospace; font-size:12px; color:#B45309; background:#FFFBEB; padding:6px 8px; border-radius:6px; font-weight:700;\">\n      sudo du -h -d 1 /var | sort -h | tail -n 5\n    </div>\n    <div style=\"font-size:11.5px; color:#92400E; margin-top:4px;\">\n      Localiza las 5 carpetas más pesadas de 1.<sup>er</sup> nivel ordenadas numéricamente con sufijo humano.\n    </div>\n  </div>\n</div>\n"
+          "caption": "Banderas esenciales de du en el temario LPIC-1"
         },
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Diferencia Clave: 'df' mide el espacio global de PARTICIONES montadas; 'du' mide el tamaño de CARPETAS y ARCHIVOS específicos."
+          "title": "Clave Oficial de Examen LPIC-1 (Ejercicio Guiado 1)",
+          "content": "🎯 ¿Cómo verificar cuánto espacio usan SOLO los archivos en el directorio actual sin sumar los subdirectorios? Con 'du -S -h -d 0' (o su forma compacta 'du -Shd 0')."
         }
       ],
       "notes": "Muestra cómo combinar 'du -h -d 1 /var | sort -h' para localizar rápidamente qué carpeta está saturando el servidor."
@@ -254,671 +268,585 @@
         },
         {
           "type": "paragraph",
-          "text": "La herramienta de rescate para reparar inconsistencias lógicas en el sistema de ficheros:"
+          "text": "fsck es un frontend que detecta el sistema de archivos y llama a la utilidad específica (e2fsck para ext2/3/4, xfs_repair para XFS):"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "sudo fsck [-A|-C|-y|-p|-f] <partición>",
-          "title": "Filesystem Consistency Check: verificar y reparar estructuras de datos dañadas en particiones ext"
-        },
-        {
-          "type": "terminal",
-          "lines": [
-            {
-              "prompt": "$ ",
-              "command": "sudo umount /dev/sdb1; sudo e2fsck -p /dev/sdb1",
-              "output": "/dev/sdb1: clean, 11/655360 files, 154820/2621440 blocks"
-            }
-          ]
+          "code": "# 1. Reparación automática no interactiva (preen) en ext4:\nsudo e2fsck -p /dev/sdc1\n\n# 2. Simulación en modo dry-run (no altera nada en disco):\nsudo fsck -N /dev/sdb1\n\n# 3. Comprobar todos los sistemas de fstab (-A) omitiendo la raíz / (-R):\nsudo fsck -AR",
+          "title": "Sintaxis oficial de fsck y e2fsck"
         },
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
+            "Bandera",
+            "Herramienta",
+            "Efecto en la Reparación"
           ],
           "rows": [
             [
-              "umount previo",
-              "⚠️ DESMONTAR ANTES",
-              "🎯 ¡REGLA DE ORO INVIOLABLE! NUNCA ejecutar fsck en particiones montadas rw. Se corrompen datos irremediablemente."
-            ],
-            [
-              "-p, --preen",
-              "-p (Reparar auto)",
-              "🎯 Clave de Examen: Reparación automática segura: corrige inconsistencias menores sin hacer preguntas al usuario."
+              "-p",
+              "e2fsck / fsck",
+              "🎯 'Preen': repara automáticamente fallos menores seguros sin pedir confirmación al operador."
             ],
             [
               "-y",
-              "-y (Sí a todo)",
-              "🎯 Responde automáticamente 'sí' a todas las preguntas de reparación (modo desatendido forzado)."
+              "e2fsck / fsck",
+              "Responde afirmativamente ('yes') a todas las preguntas de reparación de forma no interactiva."
             ],
             [
-              "-f, --force",
-              "-f (Forzar scan)",
-              "🎯 Clave de Examen: Fuerza la comprobación exhaustiva del disco incluso si el superbloque está marcado como 'clean'."
+              "-f",
+              "e2fsck / fsck",
+              "🎯 'Force': fuerza la comprobación incluso si el superbloque marca el sistema como 'clean'."
+            ],
+            [
+              "-N",
+              "fsck",
+              "🎯 'Dry-run': simula las operaciones e imprime qué comando ejecutaría sin alterar el disco."
+            ],
+            [
+              "-R",
+              "fsck",
+              "🎯 Usado con -A, omite la comprobación de la partición raíz (/) ya montada."
             ],
             [
               "-A",
-              "-A (Todo /etc/fstab)",
-              "🎯 Comprueba todos los sistemas de archivos marcados en /etc/fstab de una sola vez según su orden 'pass'."
-            ],
-            [
-              "-C",
-              "-C (Progreso)",
-              "Muestra una barra de progreso gráfica durante el escaneo."
+              "fsck",
+              "Recorre /etc/fstab y comprueba todos los sistemas de archivos según su orden (campo 6 'fsck pass')."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px;\">\n  <div style=\"font-size:12px; font-weight:800; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;\">\n    Flujo de Reparación Seguro con fsck\n  </div>\n  <div style=\"display:flex; align-items:center; justify-content:space-between; gap:6px; font-family:monospace; font-size:11.5px; text-align:center;\">\n    <div style=\"flex:1; background:#FEE2E2; border:1px solid #EF4444; color:#991B1B; padding:6px 2px; border-radius:6px; font-weight:800;\">\n      1. sudo umount /dev/sdb1\n      <div style=\"font-size:9.5px; font-weight:normal;\">(O remount,ro)</div>\n    </div>\n    <span style=\"color:#64748B; font-weight:bold;\">&rarr;</span>\n    <div style=\"flex:1; background:#FEF3C7; border:1px solid #FDE68A; color:#92400E; padding:6px 2px; border-radius:6px; font-weight:700;\">\n      2. sudo e2fsck -f -p /dev/sdb1\n      <div style=\"font-size:9.5px; font-weight:normal;\">(-f forzar, -p preen)</div>\n    </div>\n    <span style=\"color:#64748B; font-weight:bold;\">&rarr;</span>\n    <div style=\"flex:1; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; padding:6px 2px; border-radius:6px; font-weight:700;\">\n      3. Evaluar $? (Exit Code)\n      <div style=\"font-size:9.5px; font-weight:normal;\">0, 1, 2 ó &ge;4</div>\n    </div>\n    <span style=\"color:#64748B; font-weight:bold;\">&rarr;</span>\n    <div style=\"flex:1; background:#DCFCE7; border:1px solid #BBF7D0; color:#166534; padding:6px 2px; border-radius:6px; font-weight:700;\">\n      4. sudo mount /dev/sdb1 /dir\n      <div style=\"font-size:9.5px; font-weight:normal;\">Vuelta a producción</div>\n    </div>\n  </div>\n</div>\n"
+          "caption": "Banderas maestras de fsck y e2fsck en el temario LPIC-1"
         },
         {
           "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave Absoluta de Examen: ¡Desmontar siempre antes de fsck! La opción '-p' (preen) repara automáticamente fallos menores sin preguntar."
+          "calloutType": "warning",
+          "title": "Regla Innegociable de Integridad",
+          "content": "⚠️ NUNCA ejecutes fsck ni e2fsck sobre un sistema de archivos montado en modo lectura/escritura (rw). ¡Causa corrupción de metadatos irreparable! Desmóntalo ('umount') o remóntalo en solo lectura ('mount -o remount,ro')."
         }
       ],
-      "notes": "Pregunta de examen garantizada: '¿Qué precaución crítica debe tomarse antes de ejecutar fsck?'. Respuesta: Desmontar el sistema de archivos."
+      "notes": "Explica que fsck es un wrapper que invoca fsck.ext4, fsck.vfat, etc., según la partición."
     },
     {
       "id": "104.2-slide-6",
       "slideNumber": 6,
-      "title": "Códigos de Retorno Oficiales de fsck",
+      "title": "Los Códigos de Retorno de fsck: Guía Decisiva de Examen",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Códigos de Retorno Oficiales de fsck"
+          "text": "Los Códigos de Retorno de fsck: Guía Decisiva de Examen"
         },
         {
           "type": "paragraph",
-          "text": "El valor numérico de salida ($?) que devuelven los scripts de arranque tras ejecutar fsck:"
+          "text": "El valor devuelto por fsck ($?) define qué acción debe tomar el kernel o el administrador de sistemas:"
         },
         {
           "type": "table",
           "headers": [
-            "Código de Salida ($?)",
-            "Significado Oficial",
-            "Acción Requerida en el Examen LPIC-1"
+            "Código ($?)",
+            "Significado Oficial LPI",
+            "Acción Obligatoria Requerida"
           ],
           "rows": [
             [
               "0",
-              "Sin errores (No errors)",
-              "El sistema de archivos está 100% limpio y consistente. El arranque continúa con normalidad."
+              "Sin errores detectados",
+              "El sistema de archivos está completamente sano. Continuar arranque."
             ],
             [
               "1",
-              "🎯 Errores corregidos (Errors corrected)",
-              "Se detectaron problemas menores y fsck los reparó automáticamente con éxito. No requiere reinicio."
+              "Errores del sistema de archivos corregidos",
+              "Reparación menor exitosa. No requiere reiniciar."
             ],
             [
               "2",
-              "🎯 Sistema debe reiniciarse (System should be rebooted)",
-              "Se corrigieron estructuras críticas del sistema de archivos; el kernel debe reiniciarse para recargar la tabla."
+              "🎯 El sistema debe reiniciarse (Reboot)",
+              "Se repararon estructuras críticas del kernel. Reiniciar inmediatamente."
             ],
             [
               "4",
-              "🎯 Errores NO corregidos (Errors uncorrected)",
-              "Existen daños graves que fsck no pudo reparar solo. Requiere intervención manual del administrador en consola de rescate."
+              "🎯 Errores del sistema de archivos no corregidos",
+              "fsck no pudo reparar solo. Detener y lanzar e2fsck manual en consola de rescate."
             ],
             [
               "8",
-              "Error operativo (Operational error)",
-              "Error de sintaxis o fallo en la invocación de la herramienta."
+              "Error operativo en fsck",
+              "Fallo de parámetros o memoria insuficiente."
             ],
             [
               "16",
-              "Error de uso o sintaxis",
-              "Parámetros incorrectos pasados en la línea de comandos."
+              "Error de sintaxis o uso",
+              "Parámetros inválidos en la llamada."
             ],
             [
               "32",
-              "Cancelado por el usuario",
-              "La comprobación fue cancelada con Ctrl+C."
+              "fsck cancelado por el usuario",
+              "El operador abortó la ejecución (Ctrl+C)."
             ],
             [
               "128",
               "Error de biblioteca compartida",
-              "Fallo al cargar librerías dinámicas del sistema."
+              "Fallo en librerías dinámicas del sistema."
             ]
           ],
-          "caption": "Códigos de Retorno Oficiales de fsck"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:8px; padding:8px 14px; margin-bottom:10px; display:flex; justify-content:space-around; text-align:center; font-family:monospace;\">\n  <div><span style=\"background:#22C55E; color:#FFF; font-weight:800; padding:2px 8px; border-radius:4px;\">0</span> <span style=\"font-size:12px; color:#166534; font-weight:700;\">Limpio (Ok)</span></div>\n  <div><span style=\"background:#3B82F6; color:#FFF; font-weight:800; padding:2px 8px; border-radius:4px;\">1</span> <span style=\"font-size:12px; color:#1E40AF; font-weight:700;\">Auto-corregido</span></div>\n  <div><span style=\"background:#F97316; color:#FFF; font-weight:800; padding:2px 8px; border-radius:4px;\">2</span> <span style=\"font-size:12px; color:#9A3412; font-weight:700;\">Reboot Requerido</span></div>\n  <div><span style=\"background:#EF4444; color:#FFF; font-weight:800; padding:2px 8px; border-radius:4px;\">4</span> <span style=\"font-size:12px; color:#991B1B; font-weight:800;\">Errores Graves (Emergencia)</span></div>\n</div>\n"
+          "caption": "Matriz completa de códigos de retorno de fsck en LPIC-1"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Códigos Críticos de Examen: 0 = limpio; 1 = corregido automáticamente; 2 = requiere reboot; 4 = errores graves sin corregir (consola de emergencia)."
+          "content": "🎯 Si fsck devuelve código 2: se debe REINICIAR el sistema ('System should be rebooted'). Si devuelve código 4 o superior: los errores NO fueron corregidos y se requiere intervención manual."
         }
       ],
-      "notes": "Muestra cómo los scripts de inicio evalúan si $? es mayor o igual a 4 para detener el arranque y pedir la contraseña de root."
+      "notes": "Insiste en que los códigos pueden combinarse mediante máscaras de bits (ej: 1 + 2 = 3)."
     },
     {
       "id": "104.2-slide-7",
       "slideNumber": 7,
-      "title": "Inspección del Superbloque con dumpe2fs",
+      "title": "Inspección Profunda de Superbloques con dumpe2fs",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Inspección del Superbloque con dumpe2fs"
+          "text": "Inspección Profunda de Superbloques con dumpe2fs"
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo leer los detalles íntimos de configuración y salud de una partición ext2/ext3/ext4?"
-        },
-        {
-          "type": "code",
-          "language": "bash",
-          "code": "sudo dumpe2fs [-h] <partición>",
-          "title": "Volcar la información del superbloque y los grupos de bloques de sistemas de archivos ext"
+          "text": "dumpe2fs imprime el contenido completo del superbloque y los descriptores de grupos de bloques en sistemas ext2, ext3 y ext4:"
         },
         {
           "type": "terminal",
           "lines": [
             {
               "prompt": "$ ",
-              "command": "sudo dumpe2fs -h /dev/sda1 | grep -E '(Filesystem volume|UUID|state|Mount count)'",
-              "output": "Filesystem volume name:   ROOT_DISK\nFilesystem UUID:          a1b2c3d4-e5f6-7890-abcd-ef1234567890\nFilesystem state:         clean\nMount count:              14\nMaximum mount count:      30"
+              "command": "sudo dumpe2fs -h /dev/sdb1",
+              "output": "Filesystem volume name:   DATOS\nFilesystem state:         clean\nMount count:              8\nMaximum mount count:      30\nLast checked:             Sun Nov  8 09:12:00 2026\nCheck interval:           2592000 (30 days)\nReserved block count:     131072 (1.0%)\nBackup superblock blocks: 32768, 98304, 163840"
             }
           ]
         },
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
+            "Bandera dumpe2fs",
+            "Efecto",
+            "Por qué importa en Certificación"
           ],
           "rows": [
             [
-              "dumpe2fs <partición>",
-              "dumpe2fs Completo",
-              "Vuelca la totalidad de metadatos del superbloque y la lista detallada de cada grupo de bloques (miles de líneas)."
+              "-h (--header-only)",
+              "Muestra solo la información del superbloque principal.",
+              "🎯 Evita miles de líneas de volcado de bloques de datos."
             ],
             [
-              "dumpe2fs -h",
-              "-h (Header Only)",
-              "🎯 Clave de Examen: Muestra ÚNICAMENTE la cabecera del superbloque (metadatos esenciales) omitiendo el desglose de grupos de bloques."
+              "-b",
+              "Imprime los bloques marcados como defectuosos (bad blocks).",
+              "Auditoría preventiva de sectores dañados físicamente."
             ],
             [
-              "Filesystem state",
-              "clean / error",
-              "🎯 'Filesystem state' (clean o with errors); indica si el sistema se desmontó limpiamente."
-            ],
-            [
-              "Mount count / Max",
-              "Contador Montajes",
-              "🎯 'Mount count' frente a 'Maximum mount count' (límite antes de fsck forzado automático al arrancar)."
+              "-ob <bloque>",
+              "Lee un superbloque de respaldo alternativo específico.",
+              "🎯 Permite rescatar la partición si el superbloque principal está destruido."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px; display:flex; align-items:center; gap:14px;\">\n  <span style=\"font-size:26px;\">🔍</span>\n  <div style=\"font-size:12.5px; color:#334155; line-height:1.45;\">\n    <strong>Herramienta Pasiva de Auditoría:</strong> <code>dumpe2fs -h</code> es de <strong>SOLO LECTURA</strong>. Nunca altera los bits del disco. Es ideal para verificar si una partición dañada tiene superbloques de respaldo utilizables con <code>e2fsck -b &lt;bloque_backup&gt;</code>.\n  </div>\n</div>\n"
+          "caption": "Uso de dumpe2fs para auditoría forense de ext4"
         },
         {
           "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 'dumpe2fs -h' es una herramienta de SOLO LECTURA para inspeccionar el superbloque de sistemas ext2/3/4 sin modificar nada."
+          "calloutType": "tip",
+          "title": "Técnica de Rescate con Superbloque Alternativo",
+          "content": "Si el superbloque de /dev/sdb1 se corrompe por un corte eléctrico, dumpe2fs localiza los backups (ej: bloque 32768). Luego puedes reparar el disco con: 'e2fsck -b 32768 /dev/sdb1'."
         }
       ],
-      "notes": "Muestra que si 'Filesystem state' dice 'clean', fsck se lo saltará rápidamente a menos que se use '-f'."
+      "notes": "Enseña la bandera -h: sin ella dumpe2fs inunda el terminal con el detalle de cada grupo de bloques."
     },
     {
       "id": "104.2-slide-8",
       "slideNumber": 8,
-      "title": "Ajuste de Parámetros del Superbloque con tune2fs",
+      "title": "Modificación de Parámetros Ext con tune2fs y Journal Externo",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ajuste de Parámetros del Superbloque con tune2fs"
+          "text": "Modificación de Parámetros Ext con tune2fs y Journal Externo"
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo modificar el comportamiento del sistema de archivos sin necesidad de reformatearlo?"
+          "text": "tune2fs permite alterar los parámetros del superbloque en sistemas ext2/3/4 sin necesidad de formatear:"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "sudo tune2fs [-c <n>] [-i <tiempo>] [-j] [-m <pct>] [-L <etiq>] [-U <uuid>] <partición>",
-          "title": "Ajustar parámetros operacionales del superbloque en sistemas ext2, ext3 y ext4"
-        },
-        {
-          "type": "terminal",
-          "lines": [
-            {
-              "prompt": "$ ",
-              "command": "sudo tune2fs -c 50 -i 180d -m 1 /dev/sdb1",
-              "output": "tune2fs 1.46.2 (28-Feb-2021)\nSetting maximal mount count to 50\nSetting interval between checks to 15552000 seconds (~6 months)\nSetting reserved blocks percentage to 1% (26214 blocks)"
-            }
-          ]
+          "code": "# 1. Convertir ext2 a ext3 (-j), reiniciar conteo (-C 0) y renombrar etiqueta (-L UserData):\nsudo tune2fs -j -C 0 -L 'UserData' /dev/sdb1\n\n# 2. Crear journal en dispositivo externo /dev/sdc1 con chequeo cada 30 días (-i 30d):\nsudo tune2fs -j /dev/sdb1 -J device=/dev/sdc1 -i 30d\n\n# 3. Ajustar número máximo de montajes antes de fsck forzado (-c 9):\nsudo tune2fs -c 9 /dev/sda1",
+          "title": "Comandos de personalización avanzada con tune2fs"
         },
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
+            "Bandera tune2fs",
+            "Parámetro",
+            "Efecto en el Superbloque"
           ],
           "rows": [
             [
-              "-c <n>",
-              "-c (Máx montajes)",
-              "🎯 Clave de Examen: Fija el número máximo de montajes antes de forzar un escaneo con fsck al arrancar ('0' o '-1' desactiva)."
+              "-j",
+              "(sin argumento)",
+              "🎯 Añade un diario (journal) ext3/ext4 a un sistema ext2 sin perder datos."
+            ],
+            [
+              "-J device=<dev>",
+              "device=/dev/sdc1",
+              "🎯 Aloja el journal en un dispositivo externo dedicado para alto rendimiento."
+            ],
+            [
+              "-c <max>",
+              "Número (ej: 9, o 0 para deshabilitar)",
+              "🎯 Define el número máximo de montajes antes de forzar un chequeo con e2fsck."
+            ],
+            [
+              "-C <num>",
+              "Número (ej: 0)",
+              "🎯 Restablece o fija el contador actual de montajes acumulados."
             ],
             [
               "-i <tiempo>",
-              "-i (Intervalo días)",
-              "🎯 Clave de Examen: Fija el intervalo de tiempo máximo entre escaneos con fsck (ej: '30d' para 30 días, '6m' para 6 meses, '0' desactiva)."
+              "30d | 2m | 0",
+              "🎯 Intervalo máximo entre comprobaciones ('30d'=30 días; '0'=deshabilitado)."
             ],
             [
-              "-j",
-              "-j (Journal ext3)",
-              "🎯 Clave de Examen: Añade un diario de transacciones (ext3 journal) a un sistema ext2 existente en caliente."
+              "-L <etiqueta>",
+              "Nombre (máx 16 chars)",
+              "Cambia la etiqueta de volumen del sistema de archivos."
             ],
             [
-              "-m <pct>",
-              "-m (% Root)",
-              "🎯 Clave de Examen: Modifica el porcentaje de bloques reservados para el superusuario root (ej: '-m 1' libera espacio en discos de datos)."
-            ],
-            [
-              "-L <etiq>",
-              "-L (Label)",
-              "🎯 Cambia la etiqueta de volumen (Volume Label) del sistema de archivos."
-            ],
-            [
-              "-U <uuid>",
-              "-U (UUID)",
-              "🎯 Cambia el UUID del sistema de archivos ('random' genera uno nuevo aleatorio)."
+              "-U <UUID|random>",
+              "UUID o random",
+              "Genera o asigna un nuevo identificador UUID al sistema."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px;\">\n  <div style=\"font-size:12px; font-weight:800; color:#334155; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;\">\n    Mnemotecnia Maestra de Opciones en tune2fs\n  </div>\n  <div style=\"display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; font-family:monospace; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:6px 2px;\">\n      <div style=\"font-size:14px; font-weight:800; color:#1E40AF;\">-c &lt;N&gt;</div>\n      <div style=\"font-size:10px; color:#2563EB;\">Count montajes</div>\n    </div>\n    <div style=\"background:#FEF3C7; border:1px solid #FDE68A; border-radius:6px; padding:6px 2px;\">\n      <div style=\"font-size:14px; font-weight:800; color:#92400E;\">-i &lt;días&gt;</div>\n      <div style=\"font-size:10px; color:#B45309;\">Intervalo tiempo</div>\n    </div>\n    <div style=\"background:#FCE7F3; border:1px solid #FBCFE8; border-radius:6px; padding:6px 2px;\">\n      <div style=\"font-size:14px; font-weight:800; color:#9D174D;\">-j</div>\n      <div style=\"font-size:10px; color:#BE185D;\">Journaling ext3</div>\n    </div>\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:6px 2px;\">\n      <div style=\"font-size:14px; font-weight:800; color:#166534;\">-m &lt;%&gt;</div>\n      <div style=\"font-size:10px; color:#15803D;\">Margen root</div>\n    </div>\n    <div style=\"background:#F5F3FF; border:1px solid #DDD6FE; border-radius:6px; padding:6px 2px;\">\n      <div style=\"font-size:14px; font-weight:800; color:#5B21B6;\">-L / -U</div>\n      <div style=\"font-size:10px; color:#6D28D9;\">Label / UUID</div>\n    </div>\n  </div>\n</div>\n"
+          "caption": "Banderas evaluadas de tune2fs en el temario LPIC-1"
         },
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Mnemotecnia de Opciones de tune2fs: '-c' = count de montajes; '-i' = intervalo de tiempo; '-j' = journal; '-m' = margen reservado; '-L' = label."
+          "title": "Clave Oficial de Examen LPIC-1 (Ejercicio Exploratorio 1 y 3)",
+          "content": "🎯 Dos preguntas fijas de examen: 1) Si Mount count es 8 y ejecutas 'tune2fs -c 9 /dev/sda1', en el siguiente arranque se disparará fsck obligatoriamente porque alcanzará el límite 9. 2) La sintaxis '-J device=/dev/sdc1' crea un journal externo en un disco independiente para maximizar la velocidad I/O."
         }
       ],
-      "notes": "Pregunta fija de examen: '¿Cómo desactivar la comprobación periódica al arranque en ext4?'. Respuesta: 'tune2fs -c 0 -i 0 /dev/sdX'."
+      "notes": "Destaca la opción -c 0 y -i 0: los administradores modernos suelen desactivar el fsck automático al arrancar para evitar tiempos muertos imprevistos."
     },
     {
       "id": "104.2-slide-9",
       "slideNumber": 9,
-      "title": "Mantenimiento de Sistemas de Archivos XFS: xfs_repair",
+      "title": "Mantenimiento y Reparación de XFS: xfs_repair",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Mantenimiento de Sistemas de Archivos XFS: xfs_repair"
+          "text": "Mantenimiento y Reparación de XFS: xfs_repair"
         },
         {
           "type": "paragraph",
-          "text": "¿Por qué fsck no funciona en XFS y qué utilidades específicas exige la certificación?"
+          "text": "Los sistemas XFS no utilizan e2fsck. Cuentan con su propia herramienta de comprobación y saneamiento de disco: xfs_repair."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "sudo xfs_repair [-n|-L] <partición> | sudo xfs_fsr [dispositivo]",
-          "title": "Verificar, reparar y desfragmentar sistemas de archivos XFS"
-        },
-        {
-          "type": "terminal",
-          "lines": [
-            {
-              "prompt": "$ ",
-              "command": "sudo umount /dev/sdb2; sudo xfs_repair /dev/sdb2",
-              "output": "Phase 1 - find and verify superblock...\nPhase 2 - using internal log\n        - scan filesystem freespace and inode maps...\nPhase 3 - for each AG...\nPhase 4 - check for duplicate blocks...\nPhase 5 - check inode counters...\nPhase 6 - check inode connectivity...\nPhase 7 - verify and correct link counts...\ndone"
-            }
-          ]
+          "code": "# 1. Comprobación segura de errores sin aplicar cambios (-n):\nsudo xfs_repair -n /dev/sdb1\n\n# 2. Comprobar XFS con sección de registro/log externa en /dev/sdc1 sin reparar (-l):\nsudo xfs_repair -l /dev/sdc1 -n /dev/sda1\n\n# 3. Modo peligroso ('dangerous'): reparar sistema montado en solo lectura (ro):\nsudo xfs_repair -d /dev/sdb1",
+          "title": "Sintaxis de comprobación y reparación de sistemas XFS"
         },
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
+            "Bandera xfs_repair",
+            "Propósito",
+            "Contexto de Examen LPIC-1"
           ],
           "rows": [
             [
-              "xfs_repair <partición>",
-              "xfs_repair",
-              "🎯 Clave Absoluta de Examen: Herramienta oficial para reparar XFS. ⚠️ ¡Debe ejecutarse SIEMPRE con el sistema de archivos DESMONTADO!"
+              "-n",
+              "🎯 No Modify / Dry-run",
+              "Comprueba el sistema de archivos reportando errores pero SIN realizar ninguna modificación en disco."
             ],
             [
-              "xfs_repair -n",
-              "-n (No modify)",
-              "🎯 Modo No Modify: solo inspecciona e informa de los fallos encontrados SIN aplicar modificaciones en disco (sustituye a xfs_check)."
+              "-l <logdev>",
+              "🎯 External Log Device",
+              "Especifica el dispositivo que contiene la sección de registro/journal externa de XFS."
             ],
             [
-              "xfs_repair -L",
-              "-L (Zero log)",
-              "⚠️ ¡Último recurso! Limpia a ceros el log del journal corrupto para permitir arrancar, asumiendo pérdida de últimas escrituras."
+              "-d",
+              "🎯 Dangerous / Solo lectura",
+              "Permite intentar la reparación de sistemas de archivos XFS que se encuentren montados en modo 'ro'."
             ],
             [
-              "xfs_fsr [disp]",
-              "xfs_fsr (Defrag)",
-              "🎯 XFS File System Reorganizer: desfragmentador en línea para XFS (se ejecuta con el sistema MONTADO)."
+              "-L",
+              "Force Log Zeroing",
+              "⚠️ Destructivo: borra el journal sucio de XFS para forzar el montaje tras un desastre mayor."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"display:flex; gap:12px; margin-top:10px;\">\n  <div style=\"flex:1; background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:10px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:#991B1B; margin-bottom:4px;\">\n      ⚠️ xfs_repair: SIEMPRE DESMONTADO\n    </div>\n    <div style=\"font-size:12px; color:#7F1D1D; line-height:1.4;\">\n      Si intentas ejecutar <code>xfs_repair</code> sobre una partición montada, la herramienta se <strong>negará en rotundo a continuar</strong> para prevenir la destrucción total del filesystem.\n    </div>\n  </div>\n  <div style=\"flex:1; background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:10px 14px;\">\n    <div style=\"font-size:12.5px; font-weight:800; color:#166534; margin-bottom:4px;\">\n      ✨ xfs_fsr: SIEMPRE MONTADO\n    </div>\n    <div style=\"font-size:12px; color:#14532D; line-height:1.4;\">\n      El desfragmentador de XFS (<code>xfs_fsr</code>) opera <strong>en caliente en producción</strong>, reorganizando extensiones de datos contiguas mientras los usuarios siguen accediendo a los archivos.\n    </div>\n  </div>\n</div>\n"
+          "caption": "Banderas críticas de xfs_repair en LPIC-1"
         },
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: En sistemas de archivos XFS no se utiliza e2fsck ni tune2fs; la comprobación y reparación se realiza con 'xfs_repair' (estando desmontado) y la desfragmentación con 'xfs_fsr'."
+          "title": "Clave Oficial de Examen LPIC-1 (Ejercicio Guiado 5 y Exploratorio 4)",
+          "content": "🎯 Para auditar errores en XFS sin aplicar reparaciones, usa siempre 'xfs_repair -n <disp>'. Si el sistema tiene log externo en /dev/sdc1, añade '-l /dev/sdc1': 'xfs_repair -l /dev/sdc1 -n /dev/sda1'."
         }
       ],
-      "notes": "Muestra que xfs_repair avanza por 7 fases metódicas bien diferenciadas."
+      "notes": "Recuerda que en Linux si ejecutas 'fsck.xfs /dev/sdb1', simplemente sale con código 0 y no hace nada: la herramienta real es xfs_repair."
     },
     {
       "id": "104.2-slide-10",
       "slideNumber": 10,
-      "title": "Depuración e Inspección XFS: xfs_admin, xfs_info y xfs_db",
+      "title": "Desfragmentación y Ajustes XFS: xfs_admin, xfs_fsr, xfs_info y xfs_db",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Depuración e Inspección XFS: xfs_admin, xfs_info y xfs_db"
+          "text": "Desfragmentación y Ajustes XFS: xfs_admin, xfs_fsr, xfs_info y xfs_db"
         },
         {
           "type": "paragraph",
-          "text": "Equivalentes en XFS de tune2fs y dumpe2fs para gestionar etiquetas, UUIDs y metadatos:"
+          "text": "XFS ofrece una suite de utilidades especializadas para cada tarea de administración sobre particiones montadas o desmontadas:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Comando XFS",
+            "Estado Requerido",
+            "Función Principal en LPIC-1"
+          ],
+          "rows": [
+            [
+              "xfs_admin -L <label> <disp>",
+              "Desmontado",
+              "Modifica la etiqueta de volumen o UUID (-U) de un sistema de archivos XFS."
+            ],
+            [
+              "xfs_fsr [disp|punto]",
+              "🎯 Montado (En línea)",
+              "FileSystem Reorganizer: desfragmenta en línea los archivos de XFS para recuperar rendimiento."
+            ],
+            [
+              "xfs_info <punto_montaje>",
+              "🎯 Montado",
+              "Muestra la geometría detallada de XFS: allocation groups (agcount), tamaño de bloque e inodos."
+            ],
+            [
+              "xfs_db [-r] <disp>",
+              "Desmontado (-r para ro)",
+              "Depurador forense de bajo nivel para examinar inodos y estructuras internas de XFS."
+            ]
+          ],
+          "caption": "Suite completa de herramientas administrativas de XFS"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "sudo xfs_admin [-l|-L <etiq>|-u|-U <uuid>] <partición> | xfs_info <punto_montaje>",
-          "title": "Ajustar parámetros del superbloque XFS y visualizar la geometría interna del sistema"
-        },
-        {
-          "type": "terminal",
-          "lines": [
-            {
-              "prompt": "$ ",
-              "command": "sudo xfs_admin -L 'BACKUP_XFS' /dev/sdb2; xfs_info /var",
-              "output": "writing all SBs\nnew label = \"BACKUP_XFS\"\nmeta-data=/dev/sda2              isize=512    agcount=4, agsize=1310720 blks\n         =                       sectsz=512   attr=2, projid32bit=1"
-            }
-          ]
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
-          ],
-          "rows": [
-            [
-              "xfs_admin -L <etiq>",
-              "-L (Label)",
-              "🎯 Clave de Examen: Asigna o cambia la etiqueta de volumen de un sistema XFS (debe estar desmontado)."
-            ],
-            [
-              "xfs_admin -l",
-              "-l (Ver label)",
-              "Muestra la etiqueta actual asignada a la partición XFS."
-            ],
-            [
-              "xfs_admin -U <uuid>",
-              "-U (UUID)",
-              "Asigna un nuevo UUID a la partición XFS."
-            ],
-            [
-              "xfs_info <punto_montaje>",
-              "xfs_info (Montado)",
-              "🎯 Clave de Examen: Muestra la geometría detallada de un sistema XFS que ESTÁ MONTADO (bloques, grupos de asignación, journal)."
-            ],
-            [
-              "xfs_db -r <partición>",
-              "xfs_db -r (Debug)",
-              "🎯 Debugger interactivo de bajo nivel para XFS. La opción '-r' (read-only) garantiza que no se alteren datos."
-            ]
-          ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#F8FAFC; border:2px solid #E2E8F0; border-radius:10px; padding:10px 14px; margin-top:10px;\">\n  <div style=\"font-size:12px; font-weight:800; color:#334155; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;\">\n    Estado Requerido en XFS: Montado frente a Desmontado\n  </div>\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-family:monospace; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:8px 6px;\">\n      <div style=\"font-size:12px; font-weight:800; color:#1E40AF;\">REQUIEREN ESTAR MONTADO</div>\n      <div style=\"font-size:13px; font-weight:700; color:#2563EB; margin:4px 0;\">xfs_info &bull; xfs_fsr &bull; xfs_growfs</div>\n      <div style=\"font-size:10.5px; color:#60A5FA;\">Inspección viva y reestructuración</div>\n    </div>\n    <div style=\"background:#FEE2E2; border:1px solid #FCA5A5; border-radius:6px; padding:8px 6px;\">\n      <div style=\"font-size:12px; font-weight:800; color:#991B1B;\">EXIGEN ESTAR DESMONTADO</div>\n      <div style=\"font-size:13px; font-weight:700; color:#DC2626; margin:4px 0;\">xfs_repair &bull; xfs_admin &bull; xfs_db</div>\n      <div style=\"font-size:10.5px; color:#F87171;\">Reparación y alteración de metadatos</div>\n    </div>\n  </div>\n</div>\n"
+          "code": "# 1. Inspeccionar geometría XFS de una partición montada:\nsudo xfs_info /mnt/datos\n\n# 2. Desfragmentar el sistema XFS en caliente:\nsudo xfs_fsr /dev/sdb2\n\n# 3. Asignar etiqueta en frío a una partición XFS:\nsudo xfs_admin -L 'BACKUP_PROD' /dev/sdb2",
+          "title": "Ejemplos prácticos de xfs_info, xfs_fsr y xfs_admin"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Resumen de Equivalencias: ext4 usa 'tune2fs' y 'dumpe2fs'; XFS usa 'xfs_admin' (desmontado) y 'xfs_info' (montado)."
+          "content": "🎯 xfs_fsr desfragmenta en caliente (sistema montado). xfs_admin modifica etiquetas y UUIDs pero exige que el sistema esté DESMONTADO."
         }
       ],
-      "notes": "xfs_info requiere que la partición esté montada, a diferencia de xfs_admin que exige que esté desmontada."
+      "notes": "Compara xfs_admin con tune2fs: xfs_admin es el equivalente en XFS para cambiar etiquetas y UUIDs."
     },
     {
       "id": "104.2-slide-11",
       "slideNumber": 11,
-      "title": "Matriz Comparativa de Herramientas de Mantenimiento",
+      "title": "Matriz Comparativa: Operaciones Administrativas ext frente a XFS",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Matriz Comparativa de Herramientas de Mantenimiento"
+          "text": "Matriz Comparativa: Operaciones Administrativas ext frente a XFS"
         },
         {
           "type": "paragraph",
-          "text": "El mapa de comandos cruzados que todo candidato a LPIC-1 debe dominar:"
+          "text": "Esta tabla resume qué comando utilizar según la tarea y el sistema de archivos en el examen:"
         },
         {
           "type": "table",
           "headers": [
-            "Acción de Mantenimiento",
-            "Familia ext2 / ext3 / ext4",
-            "Familia XFS (Red Hat)",
-            "Estado Requerido del Disco"
+            "Operación Administrativa",
+            "Familia ext (ext2 / ext3 / ext4)",
+            "Familia XFS"
           ],
           "rows": [
             [
               "Comprobar y reparar",
-              "fsck / e2fsck (-p, -y, -f)",
-              "xfs_repair (o -n para solo ver)",
-              "🎯 OBLIGATORIAMENTE DESMONTADO"
+              "fsck / e2fsck (Desmontado)",
+              "xfs_repair (Desmontado; -d para ro)"
             ],
             [
-              "Ver metadatos / superbloque",
-              "dumpe2fs -h <partición>",
-              "xfs_info (montado) / xfs_db (desmontado)",
-              "ext desmontado; xfs_info montado"
+              "Comprobar sin modificar (dry-run)",
+              "fsck -N / e2fsck -n",
+              "xfs_repair -n (o con -l <logdev>)"
             ],
             [
-              "Cambiar etiqueta de volumen",
-              "tune2fs -L <etiqueta>",
-              "xfs_admin -L <etiqueta>",
-              "Desmontado"
+              "Ver geometría / superbloque",
+              "dumpe2fs -h (Desmontado/Montado ro)",
+              "xfs_info (Montado) / xfs_db (Desmontado)"
             ],
             [
-              "Cambiar UUID",
-              "tune2fs -U <uuid>",
-              "xfs_admin -U <uuid>",
-              "Desmontado"
+              "Cambiar etiqueta (Label)",
+              "e2label / tune2fs -L",
+              "xfs_admin -L (Desmontado)"
             ],
             [
-              "Añadir journal de transacciones",
-              "tune2fs -j (de ext2 a ext3)",
-              "Nativo de fábrica (no aplica)",
-              "Desmontado"
+              "Cambiar o generar UUID",
+              "tune2fs -U <UUID|random>",
+              "xfs_admin -U <UUID|generate>"
             ],
             [
-              "Ajustar porcentaje reservado",
-              "tune2fs -m <porcentaje>",
-              "No aplica en XFS",
-              "Desmontado"
+              "Desfragmentar en caliente",
+              "e4defrag (ext4 montado)",
+              "xfs_fsr (Montado)"
             ],
             [
-              "Desfragmentación en línea",
-              "e4defrag",
-              "xfs_fsr",
-              "Montado en lectura/escritura"
+              "Redimensionar tamaño",
+              "resize2fs (Amplía y reduce)",
+              "xfs_growfs (¡Solo amplía en caliente!)"
             ]
           ],
-          "caption": "Matriz Comparativa de Herramientas de Mantenimiento"
+          "caption": "Matriz maestra comparativa ext4 vs XFS en LPIC-1"
         },
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Pregunta de Examen: ¿Qué comando cambia la etiqueta en ext4? tune2fs -L. ¿Y en XFS? xfs_admin -L."
+          "title": "Clave Mnemotécnica de Examen",
+          "content": "🎯 Regla de oro: En ext4 casi todo lo hace 'tune2fs' y 'e2fsck'; en XFS las herramientas empiezan por 'xfs_' (xfs_repair, xfs_admin, xfs_fsr, xfs_info, xfs_growfs)."
         }
       ],
-      "notes": "Esta matriz resuelve de forma inmediata cualquier pregunta comparativa de mantenimiento en el examen."
+      "notes": "Pide a los alumnos que memoricen esta tabla: resume el 90% de las preguntas cruzadas de comandos del objetivo 104.2."
     },
     {
       "id": "104.2-slide-12",
       "slideNumber": 12,
-      "title": "Trampas Clásicas de Examen en Integridad de Disco",
+      "title": "Trampas Clásicas de Examen en Integridad",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Trampas Clásicas de Examen en Integridad de Disco"
+          "text": "Trampas Clásicas de Examen en Integridad"
         },
         {
           "type": "paragraph",
-          "text": "Los 3 errores conceptuales que hacen suspender el objetivo 104.2:"
+          "text": "Los 4 errores más comunes donde caen los candidatos en el examen LPIC-1:"
         },
         {
           "type": "list",
           "ordered": false,
           "items": [
-            "**1. Ejecutar fsck sobre una partición montada en rw** — 🎯 El error más grave posible. Si la partición está montada en lectura/escritura, el kernel y fsck escribirán a la vez provocando una catástrofe de datos. El examen castiga duramente no mencionar el desmontaje previo.",
-            "**2. Intentar usar tune2fs sobre particiones XFS** — tune2fs solo funciona en ext2, ext3 y ext4. Si intentas ejecutar 'tune2fs /dev/sdb1' sobre una partición XFS, devolverá: 'Bad magic number in super-block'. En XFS debes usar xfs_admin.",
-            "**3. Confundir df -h con df -i** — 'df -h' mide gigabytes de disco; 'df -i' mide número de inodos. Recuerda que un disco puede quedarse sin inodos estando casi vacío de gigabytes."
+            "**1. Ejecutar fsck sobre un sistema montado en lectura/escritura (rw)** — <div style='margin-top:4px; line-height:1.4;'><span style='color:#DC2626; font-weight:700;'>❌ La Trampa:</span> Intentar reparar particiones en caliente sin desmontar.<br><span style='color:#16A34A; font-weight:700;'>✅ El Porqué:</span> El kernel y fsck colisionan en la modificación de inodos, provocando pérdida masiva de datos. Debe desmontarse ('umount') antes.</div>",
+            "**2. Confundir 'df -T' con 'df -t'** — <div style='margin-top:4px; line-height:1.4;'><span style='color:#DC2626; font-weight:700;'>❌ La Trampa:</span> Usar -t para mostrar la columna de tipo.<br><span style='color:#16A34A; font-weight:700;'>✅ El Porqué:</span> <code>-T</code> (mayúscula) imprime la columna del tipo de sistema; <code>-t &lt;tipo&gt;</code> (minúscula) es un filtro excluyente.</div>",
+            "**3. Ignorar que el disco puede llenarse por INODOS con espacio libre** — <div style='margin-top:4px; line-height:1.4;'><span style='color:#DC2626; font-weight:700;'>❌ La Trampa:</span> Mirar solo 'df -h' ante un fallo de disco lleno.<br><span style='color:#16A34A; font-weight:700;'>✅ El Porqué:</span> Millones de ficheros vacíos agotan los inodos (100% en <code>df -i</code>), bloqueando la creación de nuevos archivos aunque queden 100 GB libres.</div>",
+            "**4. Asumir que fsck repara sistemas XFS** — <div style='margin-top:4px; line-height:1.4;'><span style='color:#DC2626; font-weight:700;'>❌ La Trampa:</span> Intentar reparar XFS con 'e2fsck' o 'fsck'.<br><span style='color:#16A34A; font-weight:700;'>✅ El Porqué:</span> XFS cuenta con su motor nativo propio: <strong>xfs_repair</strong>.</div>"
           ]
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Mnemotecnia Rápida: Desmontar antes de fsck/xfs_repair. tune2fs para ext; xfs_admin para XFS. df -i para inodos."
+          "content": "🎯 Las 4 Leyes de Integridad: 1) fsck desmontado siempre. 2) df -T (columna) vs df -t (filtro). 3) df -i para inodos agotados. 4) XFS se repara con xfs_repair."
         }
       ],
-      "notes": "Recuerda a los alumnos: nunca toques fsck sin haber verificado con 'mount' o 'umount' que el disco está libre."
+      "notes": "Recuerda a los alumnos que e2fsck -p repara automáticamente de forma no interactiva sin riesgos."
     },
     {
       "id": "104.2-slide-13",
       "slideNumber": 13,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: df, du y tune2fs)",
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: df, du y tune2fs)"
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1"
         },
         {
           "type": "list",
           "ordered": true,
           "items": [
-            "Caso 1 (Oficial Pág 460): Un servidor de correo da error 'Disk full' pero al ejecutar 'df -h' se observa que la partición '/var' tiene 40 GB de espacio libre. ¿Qué comando utilizas para diagnosticar la causa real? — Comando: `df -i /var` (La opción -i (--inodes) audita el uso de inodos. Si el 100% de los inodos están consumidos por millones de archivos pequeños de correo, el sistema rechaza crear nuevos archivos aunque sobre espacio físico.)",
-            "Caso 2 (Oficial Pág 460): ¿Cuál es el comando exacto para calcular el tamaño total que ocupa el directorio '/home/alumno' en la consola mostrando un único valor legible sin listar subcarpetas? — Comando: `du -sh /home/alumno` (La opción -s (--summarize) resume el total y -h (--human-readable) formatea el tamaño en megabytes o gigabytes.)",
-            "Caso 3 (Oficial Pág 460): Modifica la partición '/dev/sdb1' para que el porcentaje de bloques reservados para root pase del 5% al 1% y fija el límite de montajes a 40. — Comando: `sudo tune2fs -m 1 -c 40 /dev/sdb1` (-m 1 establece el 1% de bloques reservados y -c 40 fija el contador máximo de montajes antes de forzar fsck.)"
+            "**Ejercicio Guiado 1 (Oficial Pág 480):** Usando du, ¿cómo podemos verificar cuánto espacio están usando solo los archivos en el directorio actual? — **Respuesta:** `du -Shd 0` (o `du -S -h -d 0`). El parámetro `-S` separa los subdirectorios, `-d 0` limita la profundidad a cero y `-h` da formato humano.",
+            "**Ejercicio Guiado 2 (Oficial Pág 480):** Usando df, enumere la información para cada sistema ext4 con: dispositivo, punto de montaje, inodos totales, inodos disponibles y porcentaje de uso. — **Respuesta:** `df -t ext4 --output=source,target,itotal,iavail,pcent`.",
+            "**Ejercicio Guiado 3 (Oficial Pág 480):** ¿Cuál es el comando para ejecutar e2fsck en /dev/sdc1 en modo no interactivo corrigiendo automáticamente la mayoría de errores? — **Respuesta:** `e2fsck -p /dev/sdc1` (el flag `-p` realiza 'preen' automático seguro).",
+            "**Ejercicio Guiado 4 (Oficial Pág 480):** En /dev/sdb1 con ext2, ¿cómo convertirlo a ext3, restablecer el recuento de montajes a cero y cambiar la etiqueta a UserData? — **Respuesta:** `tune2fs -j -C 0 -L UserData /dev/sdb1`.",
+            "**Ejercicio Guiado 5 (Oficial Pág 480):** ¿Cómo puede comprobar si hay errores en un sistema de archivos XFS, sin reparar los daños encontrados? — **Respuesta:** `xfs_repair -n /dev/sdb1` (el flag `-n` activa el modo no modificador)."
           ]
         },
         {
           "type": "callout",
           "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "df -i diagnostica agotamiento de inodos; du -sh resume consumo de carpetas; tune2fs -m y -c afinan el superbloque."
+          "title": "Solución y Análisis Técnico",
+          "content": "Los 5 ejercicios guiados oficiales del manual LPI demuestran el dominio de: du -Shd 0, df --output, e2fsck -p, tune2fs multicriterio (-j -C 0 -L) y xfs_repair -n."
         }
       ],
-      "notes": "Haz énfasis en el Caso 1: el agotamiento de inodos es un clásico absoluto de las preguntas de examen."
+      "notes": "Casos literales 1 al 5 extraídos de las páginas 480 y 483-484 del manual oficial LPI 101-500."
     },
     {
       "id": "104.2-slide-14",
       "slideNumber": 14,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: fsck y XFS)",
+      "title": "Casos Prácticos de Diagnóstico y Códigos de Salida",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: fsck y XFS)"
+          "text": "Casos Prácticos de Diagnóstico y Códigos de Salida"
         },
         {
           "type": "list",
           "ordered": true,
           "items": [
-            "Caso 4 (Oficial Pág 460): La partición ext4 '/dev/sdc1' tiene inconsistencias leves. ¿Cuál es el procedimiento seguro para comprobarla y repararla automáticamente sin hacer preguntas interactivas? — Comando: `sudo umount /dev/sdc1 && sudo e2fsck -p /dev/sdc1 (o sudo fsck -p /dev/sdc1)` (Se desmonta obligatoriamente para no destruir datos y '-p' (preen) repara automáticamente los problemas seguros.)",
-            "Caso 5 (Oficial Pág 460): En un servidor CentOS con sistema de archivos XFS en '/dev/sdb2', ¿qué comando inspecciona posibles daños sin realizar ninguna modificación en el disco? — Comando: `sudo xfs_repair -n /dev/sdb2 (con la partición desmontada)` (La opción -n (no-modify) realiza una comprobación de solo lectura simulada sin alterar el almacenamiento.)"
+            "**Caso 1 — Fallo de Escritura con Disco al 20%:** Un servidor de correo no puede guardar mensajes arrojando 'No space left on device'. Sin embargo, 'df -h' muestra que la partición /var tiene 80 GB libres de 100 GB. ¿Qué comando diagnostica el problema exacto? — **Respuesta:** `df -i /var`. El buzón de correo saturó la tabla de inodos al 100% con archivos diminutos.",
+            "**Caso 2 — Código de Retorno 2 en fsck:** Un script de mantenimiento nocturno ejecuta 'fsck /dev/sdb1' y el comando termina con '$? = 2'. ¿Qué debe hacer inmediatamente el script? — **Respuesta:** Forzar el reinicio inmediato de la máquina ('reboot'), ya que el código 2 indica que se corrigieron estructuras críticas del kernel que requieren reinicializar el sistema."
           ]
         },
         {
           "type": "callout",
           "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "umount previo y e2fsck -p para ext4; xfs_repair -n para simular comprobaciones en XFS sin riesgos."
+          "title": "Regla Decisiva de Diagnóstico",
+          "content": "df -h mide bytes; df -i mide inodos. El código 2 de fsck siempre exige 'reboot'."
         }
       ],
-      "notes": "Recuerda que en XFS no existe e2fsck ni tune2fs."
+      "notes": "Estos dos escenarios representan situaciones reales de guardia en servidores de producción."
     },
     {
       "id": "104.2-slide-15",
       "slideNumber": 15,
-      "title": "Retos de Exploración Oficiales (tune2fs -j y xfs_fsr)",
+      "title": "Retos de Exploración Oficiales del Manual LPIC-1",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Retos de Exploración Oficiales (tune2fs -j y xfs_fsr)"
+          "text": "Retos de Exploración Oficiales del Manual LPIC-1"
         },
         {
           "type": "callout",
           "calloutType": "warning",
-          "title": "Escenario del Desafío",
-          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. Un servidor antiguo tiene una partición ext2 en '/dev/sda3'. ¿Qué comando permite transformarla en ext3 añadiéndole un diario de transacciones (journal) sin necesidad de formatear ni perder los archivos existentes?\n2. ¿Qué comando se utiliza para desfragmentar en línea un sistema de archivos XFS que se encuentra montado y en producción?\n3. Tras una comprobación con fsck, el comando devuelve el código de salida 2 ($? = 2). ¿Qué acción inmediata debe tomar el sistema o el administrador?"
+          "title": "5 Desafíos de Escenario del Manual Oficial (Págs 481 y 485-486)",
+          "content": "1. **Límite de Montajes (Pág 481):** /dev/sda1 tiene Mount count = 8 y Max mount count = -1. Si se emite `tune2fs -c 9 /dev/sda1`, ¿qué pasará en el próximo arranque? -> **Disparará un chequeo de fsck**, ya que el contador alcanzará el límite máximo fijado en 9.\n2. **Lectura de du (Pág 481):** Salida de `du -h`: 216K en ./somedir/anotherdir, 224K en ./somedir y 232K en el directorio actual (.). ¿Cuánto ocupan solo los archivos en el directorio actual? -> **8 KB** (232K total - 224K subdirectorios). Se clarifica con `du -S`.\n3. **Journal Externo (Pág 481):** ¿Qué hace `# tune2fs -j /dev/sdb1 -J device=/dev/sdc1 -i 30d` sobre ext2? -> Convierte /dev/sdb1 a ext3 añadiendo un journal alojado en el dispositivo externo `/dev/sdc1` y programa revisión periódica cada 30 días.\n4. **Log Externo en XFS (Pág 481):** ¿Cómo verificar errores en XFS en /dev/sda1 con registro en /dev/sdc1 sin reparar? -> `xfs_repair -l /dev/sdc1 -n /dev/sda1`.\n5. **Diferencia -T vs -t (Pág 481):** En `df`, `-T` añade la columna con el tipo de sistema de archivos, mientras que `-t <tipo>` actúa como filtro mostrando solo ese tipo y excluyendo los demás."
         },
         {
           "type": "callout",
           "calloutType": "tip",
-          "title": "Pista",
-          "content": "Recuerda: tune2fs -j; xfs_fsr; y los códigos de retorno oficiales de fsck (reboot)."
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Desafío",
-          "content": "1. Se ejecuta: sudo tune2fs -j /dev/sda3\n2. Se ejecuta: sudo xfs_fsr /dev/sda3 (o xfs_fsr sobre el punto de montaje).\n3. Debe reiniciarse el sistema operativo de inmediato (código 2 = 'System should be rebooted' debido a modificaciones en estructuras críticas del kernel)."
+          "title": "Lección de Ingeniería LPIC-1",
+          "content": "Los journals externos (-J device= / -l) aíslan las escrituras del diario en un bus o SSD ultrarrápido; y du -S desglosa limpiamente el consumo real de archivos propios."
         }
       ],
-      "notes": "El reto 1 muestra la elegancia de la compatibilidad hacia adelante de ext2 a ext3 mediante tune2fs."
+      "notes": "Los 5 ejercicios exploratorios oficiales resueltos con total rigor pedagógico."
     },
     {
       "id": "104.2-slide-16",
@@ -1016,47 +944,63 @@
         {
           "type": "table",
           "headers": [
-            "Concepto",
-            "Significado / Uso"
+            "Concepto Clave",
+            "Significado / Respuesta en Examen LPIC-1"
           ],
           "rows": [
             [
-              "¿Qué opción de 'df' muestra el consumo de inodos en vez de bytes?",
-              "df -i."
+              "Auditar espacio exclusivo de archivos en du",
+              "du -S (o 'du -Shd 0' para el directorio actual)."
             ],
             [
-              "¿Qué opción de 'df' añade la columna del tipo de sistema de ficheros?",
-              "df -T (mayúscula)."
+              "Columnas personalizadas en df",
+              "df --output=source,target,itotal,iavail,pcent."
             ],
             [
-              "¿Qué comando resume el tamaño de un directorio en formato humano?",
-              "du -sh <directorio>."
+              "Diferencia entre df -T y df -t",
+              "-T añade columna de tipo; -t <tipo> filtra únicamente ese tipo."
             ],
             [
-              "¿Qué condición crítica es obligatoria antes de ejecutar fsck?",
-              "Desmontar la partición (o tenerla montada en solo lectura)."
+              "Reparación automática sin interacción en e2fsck",
+              "e2fsck -p (preen seguro)."
             ],
             [
-              "¿Qué opción de e2fsck realiza una reparación automática sin preguntas?",
-              "e2fsck -p (preen)."
+              "Simulación dry-run en fsck",
+              "fsck -N (imprime sin ejecutar cambios)."
             ],
             [
-              "¿Qué comando y opción muestra la cabecera del superbloque en ext4?",
-              "dumpe2fs -h <partición>."
+              "Omitir partición raíz / con fsck -A",
+              "fsck -AR."
             ],
             [
-              "¿Qué herramienta repara sistemas de archivos XFS?",
-              "xfs_repair (estando desmontado)."
+              "Código de retorno 2 de fsck",
+              "El sistema debe reiniciarse inmediatamente ('Reboot')."
             ],
             [
-              "¿Qué comando añade un journal a un sistema ext2 sin formatear?",
-              "tune2fs -j <partición>."
+              "Código de retorno 4 de fsck",
+              "Errores no corregidos: requiere intervención manual."
+            ],
+            [
+              "Crear journal externo en ext3/ext4",
+              "tune2fs -j -J device=/dev/sdc1 <disp>."
+            ],
+            [
+              "Comprobar XFS sin reparar",
+              "xfs_repair -n <disp>."
+            ],
+            [
+              "XFS con dispositivo de log externo",
+              "xfs_repair -l <logdev> -n <disp>."
+            ],
+            [
+              "Reparar XFS montado en solo lectura",
+              "xfs_repair -d <disp> (modo peligroso)."
             ]
           ],
-          "caption": "Tarjetas de memorización"
+          "caption": "12 Tarjetas maestras de memorización para el subtema 104.2"
         }
       ],
-      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 104.2."
+      "notes": "Repasa estas 12 tarjetas para asegurar el pleno de aciertos en el objetivo 104.2."
     },
     {
       "id": "104.2-slide-19",
@@ -1068,9 +1012,24 @@
           "type": "heading",
           "level": 2,
           "text": "Resumen y Claves de Examen: Subtema 104.2"
+        },
+        {
+          "type": "paragraph",
+          "text": "En esta lección hemos cubierto el 100% de los conceptos y ejercicios del manual oficial LPIC-1 para el subtema 104.2:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Superbloques e Inodos:** Diagnóstico de 'No space left on device' por bytes (`df -h`) o por inodos agotados (`df -i`).",
+            "**Auditoría con df y du:** Personalización con `df --output`, distinción `df -T` vs `df -t`, cálculo de archivos propios con `du -S` y exclusión con `du --exclude`.",
+            "**Comprobación con fsck y e2fsck:** Desmontaje obligatorio previo, modo seguro `e2fsck -p`, simulación `fsck -N`, códigos de retorno (código 2 = reboot, código 4 = manual).",
+            "**Ajustes con tune2fs y dumpe2fs:** Inspección con `dumpe2fs -h`, conversión a ext3 con `tune2fs -j`, journals externos con `-J device=`, y gestión de montajes (`-c`, `-C 0`, `-i`).",
+            "**Mantenimiento de XFS:** `xfs_repair` (flags `-n`, `-l <logdev>`, `-d`), desfragmentación en línea con `xfs_fsr`, inspección con `xfs_info`, y modificación de etiquetas con `xfs_admin`."
+          ]
         }
       ],
-      "notes": "Concluimos el subtema 104.2. Los alumnos dominan ahora el mantenimiento y la integridad de discos."
+      "notes": "Concluimos el subtema 104.2 con cobertura total y trazabilidad completa del temario oficial LPIC-1."
     }
   ]
 }

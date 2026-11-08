@@ -3,42 +3,49 @@
   "subtopicId": "104.2",
   "title": "Práctica 104.2 — Mantenimiento e Integridad de Sistemas de Archivos",
   "estimatedMinutes": 30,
-  "difficulty": "basic",
+  "difficulty": "intermediate",
   "type": "subtopic",
   "placeholder": false,
   "steps": [
     {
       "id": "step-104-2-1",
       "stepNumber": 1,
-      "title": "Misión 1 — Monitorización de Espacio e Inodos con df y du",
-      "instruction": "Un disco en Linux puede fallar por falta de espacio en bytes O por agotamiento de inodos (número máximo de archivos).",
-      "command": "# Consultar espacio en disco en formato humano legible (-h)\r\ndf -h /\r\n\r\n# Consultar el porcentaje de inodos libres (-i)\r\ndf -i /\r\n\r\n# Analizar qué directorios consumen más espacio en /var (resumen a 1 nivel de profundidad)\r\nsudo du -h -d 1 /var 2>/dev/null | sort -h | tail -n 8",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "title": "Misión 1 — Auditoría de Espacio e Inodos con df --output y du -Shd 0",
+      "instruction": "Aprende a personalizar las columnas de df para auditar inodos y utiliza du -S para aislar el consumo de los archivos locales de un directorio sin sus subdirectorios.",
+      "command": "# 1. Listar sistemas de archivos ext4 con columnas personalizadas (dispositivo, punto de montaje, inodos y uso)\ndf -t ext4 --output=source,target,itotal,iavail,pcent 2>/dev/null || df -h /\n\n# 2. Calcular el espacio ocupado exclusivamente por los archivos del directorio actual sin subdirectorios\ndu -Shd 0 .\n\n# 3. Identificar los 5 directorios más pesados de /var con límite de profundidad 1\nsudo du -h -d 1 /var 2>/dev/null | sort -h | tail -n 5",
+      "expectedOutput": "Verifica que la salida muestra las columnas de inodos seleccionadas y el tamaño neto del directorio actual."
     },
     {
       "id": "step-104-2-2",
       "stepNumber": 2,
       "title": "Misión 2 — Inspección de Superbloques con dumpe2fs y tune2fs",
-      "instruction": "El superbloque almacena el estado de salud, UUID, tamaño de bloque y fecha de última comprobación de un sistema de archivos ext4.",
-      "command": "# Crear un disco de prueba temporal de 100 MB formateado en ext4\r\ntruncate -s 100M /tmp/fsck_test.raw\r\nsudo mkfs.ext4 -L \"INTEGRIDAD\" /tmp/fsck_test.raw\r\n\r\n# Inspeccionar la información del superbloque con tune2fs\r\nsudo tune2fs -l /tmp/fsck_test.raw | grep -E \"Filesystem volume name|Last mounted|Mount count|Check interval\"\r\n\r\n# Inspeccionar superbloques de respaldo con dumpe2fs (primeras líneas)\r\nsudo dumpe2fs /tmp/fsck_test.raw | head -n 15",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "instruction": "Crea una imagen virtual de prueba en ext4 e inspecciona la información técnica de su superbloque con dumpe2fs y tune2fs.",
+      "command": "# 1. Crear un disco de prueba de 150 MB formateado en ext4\ntruncate -s 150M /tmp/disco_integ.raw\nsudo mkfs.ext4 -L \"DATOS_TEST\" /tmp/disco_integ.raw\n\n# 2. Inspeccionar solo la cabecera del superbloque (-h) para ver copias de respaldo y parámetros\nsudo dumpe2fs -h /tmp/disco_integ.raw | head -n 20\n\n# 3. Comprobar el estado y límites de montaje con tune2fs\nsudo tune2fs -l /tmp/disco_integ.raw | grep -E \"Filesystem state|Mount count|Maximum mount count|Check interval\"",
+      "expectedOutput": "Filesystem state: clean"
     },
     {
       "id": "step-104-2-3",
       "stepNumber": 3,
-      "title": "Misión 3 — Modificación de Parámetros de Chequeo y Verificación con fsck",
-      "instruction": "Configuraremos el intervalo máximo de montajes antes de forzar un chequeo y pasaremos fsck sobre el disco desmontado.",
-      "command": "# Configurar para que chequee cada 20 montajes (-c 20) o cada 30 días (-i 30d)\r\nsudo tune2fs -c 20 -i 30d /tmp/fsck_test.raw\r\n\r\n# Comprobar la integridad del sistema de archivos con fsck en modo no destructivo\r\nsudo fsck -y /tmp/fsck_test.raw\r\n\r\n# Limpiar el archivo de pruebas\r\nrm /tmp/fsck_test.raw",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "title": "Misión 3 — Ajuste de Intervalos de Chequeo y Conversión a ext3 con tune2fs",
+      "instruction": "Configura el límite de montajes, intervalo periódico de chequeo y restablece el contador de montajes a cero con tune2fs.",
+      "command": "# 1. Fijar comprobación obligatoria cada 15 montajes (-c 15) o cada 30 días (-i 30d)\nsudo tune2fs -c 15 -i 30d /tmp/disco_integ.raw\n\n# 2. Restablecer el contador actual de montajes acumulados a cero (-C 0)\nsudo tune2fs -C 0 /tmp/disco_integ.raw\n\n# 3. Verificar los nuevos parámetros en el superbloque\nsudo tune2fs -l /tmp/disco_integ.raw | grep -E \"Mount count|Maximum mount count|Check interval\"",
+      "expectedOutput": "Mount count: 0\nMaximum mount count: 15\nCheck interval: ... (30 days)"
     },
     {
       "id": "step-104-2-4",
       "stepNumber": 4,
-      "title": "Misión 4 — Herramientas de Mantenimiento para Sistemas XFS",
-      "instruction": "XFS no utiliza fsck ni tune2fs; dispone de su propia suite de herramientas especializadas.",
-      "command": "# Comprobar la presencia de herramientas nativas de XFS\r\nwhich xfs_repair xfs_fsr xfs_db || true",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
-      "examAlert": "Ver pista desplegable si te atascas</summary>"
+      "title": "Misión 4 — Comprobación Automática con e2fsck -p y Simulación con fsck -N",
+      "instruction": "Practica la reparación no interactiva de errores con e2fsck -p y la simulación sin cambios con fsck -N sobre la imagen desmontada.",
+      "command": "# 1. Simulación dry-run de fsck para ver qué comando invocaría sin tocar el disco (-N)\nsudo fsck -N /tmp/disco_integ.raw\n\n# 2. Comprobación y reparación automática segura con e2fsck (modo preen -p forzado -f)\nsudo e2fsck -f -p /tmp/disco_integ.raw\n\n# 3. Comprobar el código de salida de fsck ($? debe ser 0)\necho \"Código de salida: $?\"",
+      "expectedOutput": "Código de salida: 0"
+    },
+    {
+      "id": "step-104-2-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Creación y Mantenimiento de XFS con xfs_repair -n",
+      "instruction": "Crea una imagen XFS y practica la comprobación de errores en modo solo lectura con xfs_repair -n antes de limpiar el entorno.",
+      "command": "# 1. Crear y formatear un disco virtual en XFS\ntruncate -s 100M /tmp/disco_xfs.raw\nsudo mkfs.xfs -f /tmp/disco_xfs.raw\n\n# 2. Comprobar la integridad de XFS sin aplicar modificaciones (-n)\nsudo xfs_repair -n /tmp/disco_xfs.raw\n\n# 3. Limpieza de archivos temporales\nrm -f /tmp/disco_integ.raw /tmp/disco_xfs.raw\necho \"Práctica 104.2 completada con éxito.\"",
+      "expectedOutput": "Práctica 104.2 completada con éxito."
     }
   ]
 }

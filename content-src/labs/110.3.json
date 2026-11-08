@@ -5,15 +5,47 @@
   "estimatedMinutes": 40,
   "difficulty": "advanced",
   "type": "subtopic",
-  "placeholder": true,
+  "placeholder": false,
   "steps": [
     {
       "id": "step-110-3-1",
       "stepNumber": 1,
-      "title": "Misión 1: Configuración y verificación de 110.3",
-      "instruction": "Ejecuta los comandos fundamentales del objetivo 110.3 en tu entorno de pruebas Debian.",
-      "command": "man 110_3",
-      "expectedOutput": "El sistema despliega la documentación y sintaxis oficial de las herramientas."
+      "title": "Misión 1 — Generación de par de claves SSH y verificación de permisos",
+      "instruction": "Genera un par de claves asimétricas de tipo Ed25519 sin contraseña (-N '') guardado en ~/.ssh/id_test, asegura que la clave privada tenga permisos restrictivos 0600 y lista los archivos generados.",
+      "command": "ssh-keygen -t ed25519 -N \"\" -f ~/.ssh/id_test && chmod 600 ~/.ssh/id_test && ls -l ~/.ssh/id_test*",
+      "expectedOutput": "-rw------- 1 user user 419 May 12 11:20 /home/user/.ssh/id_test\n-rw-r--r-- 1 user user  96 May 12 11:20 /home/user/.ssh/id_test.pub"
+    },
+    {
+      "id": "step-110-3-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Administración de claves en memoria con ssh-agent y ssh-add",
+      "instruction": "Inicia el agente de autenticación ssh-agent exportando sus variables a la shell activa, carga en memoria la clave privada creada y lista las huellas digitales registradas.",
+      "command": "eval $(ssh-agent) && ssh-add ~/.ssh/id_test && ssh-add -l",
+      "expectedOutput": "Agent pid 4210\nIdentity added: /home/user/.ssh/id_test (ED25519)\n256 SHA256:8hX...vL /home/user/.ssh/id_test (ED25519)"
+    },
+    {
+      "id": "step-110-3-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Creación de túnel de reenvío de puertos local (-L)",
+      "instruction": "Establece un túnel SSH de reenvío local en segundo plano sin ejecutar comandos remotos (-f -N -L) que redirija el puerto local 8080 hacia el puerto 80 del servidor y comprueba con ss que el puerto esté a la escucha.",
+      "command": "ssh -f -N -L 8080:localhost:80 user@localhost && ss -tlpn | grep 8080",
+      "expectedOutput": "LISTEN 0 128 127.0.0.1:8080 0.0.0.0:* users:((\"ssh\",pid=4350,fd=4))"
+    },
+    {
+      "id": "step-110-3-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Generación de claves y consulta del llavero en GnuPG",
+      "instruction": "Genera una clave OpenPGP en modo desatendido para el usuario 'Lab User <lab@lpic.local>' con validez de un año y consulta el llavero público con gpg --list-keys.",
+      "command": "gpg --batch --passphrase '' --quick-generate-key \"Lab User <lab@lpic.local>\" default default 1y && gpg --list-keys lab@lpic.local",
+      "expectedOutput": "pub   ed25519 2026-11-08 [SC] [caduca: 2027-11-08]\n      8F3A21BC4D5E...8901234567\nuid           [absoluta] Lab User <lab@lpic.local>\nsub   cv25519 2026-11-08 [E]"
+    },
+    {
+      "id": "step-110-3-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Firma en texto claro (clearsign) y verificación con GnuPG",
+      "instruction": "Crea el archivo 'aviso.txt', genera una firma digital en texto claro legible para humanos con gpg --clearsign y verifica su autenticidad e integridad con gpg --verify.",
+      "command": "echo 'Confidencial LPIC-1' > aviso.txt && gpg --batch --yes --clearsign aviso.txt && gpg --verify aviso.txt.asc",
+      "expectedOutput": "gpg: Firma correcta de \"Lab User <lab@lpic.local>\" [absoluta]"
     }
   ]
 }

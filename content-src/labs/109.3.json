@@ -1,19 +1,56 @@
 {
   "id": "lab-109-3",
   "subtopicId": "109.3",
-  "title": "Práctica 109.3 — Resolución de Problemas de Red: iproute2, ss, tracepath y Auditoría con Netcat",
+  "title": "Práctica 109.3 — Diagnóstico de Red, iproute2, ss, tracepath y Auditoría con Netcat",
   "estimatedMinutes": 35,
   "difficulty": "intermediate",
   "type": "subtopic",
-  "placeholder": true,
+  "placeholder": false,
   "steps": [
     {
       "id": "step-109-3-1",
       "stepNumber": 1,
-      "title": "Misión 1: Configuración y verificación de 109.3",
-      "instruction": "Ejecuta los comandos fundamentales del objetivo 109.3 en tu entorno de pruebas Debian.",
-      "command": "man 109_3",
-      "expectedOutput": "El sistema despliega la documentación y sintaxis oficial de las herramientas."
+      "title": "Misión 1 — Diagnóstico y Manipulación de Interfaces con ip link",
+      "instruction": "Inspecciona los adaptadores de red registrados en sysfs, verifica el estado y flags del enlace eth0, y cambia su MTU a 9000 bytes (jumbo frames).",
+      "command": "ls /sys/class/net && ip link show eth0 && sudo ip link set dev eth0 mtu 9000",
+      "expectedOutput": "eth0  eth1  lo\n2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9000 qdisc fq_codel state UP mode DEFAULT group default qlen 1000",
+      "hint": "Recuerda que /sys/class/net lista todos los dispositivos detectados por el kernel sin importar si están activos."
+    },
+    {
+      "id": "step-109-3-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Asignación de Direcciones IP y Alias de Compatibilidad",
+      "instruction": "Asigna una dirección IP secundaria 172.16.15.16/16 a eth0 utilizando una etiqueta (label) para que la herramienta clásica ifconfig pueda detectarla.",
+      "command": "sudo ip addr add 172.16.15.16/16 dev eth0 label eth0:sub1 && ip addr show eth0",
+      "expectedOutput": "inet 192.168.1.50/24 scope global eth0\ninet 172.16.15.16/16 scope global secondary eth0:sub1",
+      "hint": "El parámetro 'label eth0:sub1' crea el alias necesario para herramientas heredadas de net-tools."
+    },
+    {
+      "id": "step-109-3-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Verificación, Respaldo y Restauración de Rutas",
+      "instruction": "Inspecciona la tabla de enrutamiento con route -n comprobando la bandera UG, realiza una copia de seguridad binaria con ip route save y compruébalo con ip route.",
+      "command": "route -n && sudo ip route save > /tmp/routes_backup.bin && ip route show",
+      "expectedOutput": "Kernel IP routing table\nDestination     Gateway         Genmask         Flags Metric Ref    Use Iface\n0.0.0.0         192.168.1.1     0.0.0.0         UG    100    0        0 eth0\ndefault via 192.168.1.1 dev eth0 proto dhcp src 192.168.1.50 metric 100",
+      "hint": "La bandera UG indica que la ruta está activa (U) y pasa por una pasarela o router (G)."
+    },
+    {
+      "id": "step-109-3-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Auditoría de Sockets y Procesos con ss y lsof",
+      "instruction": "Audita los puertos TCP en escucha (-tuln) mostrando el proceso y PID asociado (-p), y verifica con lsof qué proceso está escuchando en el puerto 22.",
+      "command": "sudo ss -tulnp | grep ':22' && sudo lsof -Pi:22",
+      "expectedOutput": "tcp   LISTEN 0      128          0.0.0.0:22        0.0.0.0:*    users:((\"sshd\",pid=642,fd=3))\nsshd    642 root    3u  IPv4  19284      0t0  TCP *:22 (LISTEN)",
+      "hint": "La opción -P en lsof evita resolver números de puerto a nombres de servicio."
+    },
+    {
+      "id": "step-109-3-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Descubrimiento de Path MTU y Comprobación con Netcat",
+      "instruction": "Ejecuta un descubrimiento de la MTU de ruta hacia 8.8.8.8 con tracepath y comprueba la conectividad hacia el puerto 80 mediante escaneo zero-I/O (-z) con netcat.",
+      "command": "tracepath -p 33434 8.8.8.8 && nc -zv 8.8.8.8 80",
+      "expectedOutput": "1?: [LOCALHOST]     pmtu 1500\n 1:  192.168.1.1                                         1.345ms \nResume: pmtu 1500 hops 3\nConnection to 8.8.8.8 80 port [tcp/http] succeeded!",
+      "hint": "'nc -zv' permite comprobar puertos TCP abiertos sin enviar datos a la aplicación remota."
     }
   ]
 }

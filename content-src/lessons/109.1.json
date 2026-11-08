@@ -3,12 +3,16 @@
   "topicId": "109",
   "examId": "102",
   "title": "Fundamentos de los protocolos de Internet",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "language": "es",
-  "estimatedMinutes": 30,
+  "estimatedMinutes": 35,
   "objectives": [
-    "Conceptos fundamentales de red en Linux: direccionamiento IPv4, clases y rangos privados RFC 1918, cálculo de subredes y notación CIDR, puertos y servicios estándar en /etc/services, características de TCP, UDP e ICMP, y arquitectura IPv6 (estructura de 128 bits, compresión, tipos de dirección, SLAAC y ausencia de difusión broadcast).",
-    "Dominio técnico de las herramientas y configuración del subtema 109.1"
+    "Demostrar conocimientos sobre máscaras de red y notación CIDR.",
+    "Conocer la diferencia entre direcciones IP privadas y públicas con notación decimal punteada.",
+    "Conocer puertos y servicios TCP y UDP comunes (20, 21, 22, 23, 25, 53, 80, 110, 123, 139, 143, 161, 162, 389, 443, 465, 514, 636, 993, 995).",
+    "Conocer las diferencias y características principales de los protocolos UDP, TCP e ICMP.",
+    "Conocer las principales diferencias entre IPv4 e IPv6.",
+    "Conocer las características básicas de IPv6."
   ],
   "keyTerms": [
     "IPv4",
@@ -20,10 +24,24 @@
     "ICMP (Internet Control Message Protocol)",
     "IPv6",
     "SLAAC (Stateless Address Autoconfiguration)",
-    "Link-Local (fe80::/10)"
+    "Link-Local (fe80::/10)",
+    "Neighbor Discovery Protocol (NDP)",
+    "EUI-64",
+    "Anycast",
+    "Multicast",
+    "Unicast",
+    "Time to Live (TTL)",
+    "Hop Limit",
+    "NAT (Network Address Translation)"
   ],
-  "commands": [],
-  "placeholder": true,
+  "commands": [
+    "getent",
+    "grep",
+    "ping",
+    "traceroute",
+    "ip"
+  ],
+  "placeholder": false,
   "slides": [
     {
       "id": "109.1-slide-1",
@@ -38,7 +56,13 @@
         },
         {
           "type": "paragraph",
-          "text": "Fundamentos de redes · Peso 4"
+          "text": "Tema 109: Fundamentos de redes · Examen 102-500 · Peso 4"
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Alcance del Objetivo Oficial",
+          "content": "Este subtema evalúa la base teórica indispensable de redes: la estructura binaria y decimal de IPv4, cálculo de subredes con CIDR, rangos RFC 1918, el archivo /etc/services con los 20 puertos obligatorios, la comparativa TCP/UDP/ICMP, y el direccionamiento IPv6 (reglas de compresión, prefijos estándar, NDP y SLAAC/EUI-64)."
         }
       ]
     },
@@ -49,13 +73,48 @@
       "layout": "content",
       "blocks": [
         {
-          "type": "heading",
-          "level": 2,
-          "text": "Estructura del Direccionamiento IPv4 (32 bits)"
+          "type": "paragraph",
+          "text": "Una dirección **IPv4** consta exactamente de **32 bits binarios** agrupados en **4 octetos** (bloques de 8 bits), separados tradicionalmente por puntos. En formato decimal punteado (*dotted-decimal notation*), cada octeto representa un valor entero entre **0 y 255** (2^8 = 256 valores posibles)."
         },
         {
-          "type": "paragraph",
-          "text": "4 octetos decimales punteados con valores posibles de 0 a 255"
+          "type": "table",
+          "headers": [
+            "Nivel",
+            "Octeto 1",
+            "Octeto 2",
+            "Octeto 3",
+            "Octeto 4"
+          ],
+          "rows": [
+            [
+              "Decimal Punteado",
+              "192",
+              "168",
+              "1",
+              "10"
+            ],
+            [
+              "Binario (8 bits/octeto)",
+              "11000000",
+              "10101000",
+              "00000001",
+              "00001010"
+            ],
+            [
+              "División Lógica",
+              "Porción de Red (Network ID)",
+              "Porción de Red (Network ID)",
+              "Porción de Red (Network ID)",
+              "Porción de Host (Host ID)"
+            ]
+          ],
+          "caption": "Desglose decimal y binario de una dirección IPv4 típica"
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Espacio Global de Direcciones",
+          "content": "Con 32 bits, el espacio teórico máximo de IPv4 es de 2^32 = 4.294.967.296 direcciones. Debido a su inminente agotamiento, se desarrollaron soluciones de transición como las subredes CIDR, el protocolo NAT y finalmente la migración definitiva a IPv6 (128 bits)."
         }
       ]
     },
@@ -66,13 +125,62 @@
       "layout": "content",
       "blocks": [
         {
-          "type": "heading",
-          "level": 2,
-          "text": "Clases Históricas de Direcciones IPv4"
+          "type": "paragraph",
+          "text": "Antes de la introducción del enrutamiento sin clases (CIDR), las direcciones IPv4 se organizaban en **clases fijas** según el patrón de los primeros bits del primer octeto."
         },
         {
-          "type": "paragraph",
-          "text": "División clásica basada en el valor del primer octeto"
+          "type": "table",
+          "headers": [
+            "Clase",
+            "Bits Iniciales",
+            "Rango 1º Octeto",
+            "Máscara por Defecto",
+            "Propósito Histórico / Uso"
+          ],
+          "rows": [
+            [
+              "Clase A",
+              "0...",
+              "1 a 126",
+              "255.0.0.0 (/8)",
+              "Redes masivas (16 millones de hosts por red)"
+            ],
+            [
+              "Clase B",
+              "10...",
+              "128 a 191",
+              "255.255.0.0 (/16)",
+              "Redes medianas (65.534 hosts por red)"
+            ],
+            [
+              "Clase C",
+              "110...",
+              "192 a 223",
+              "255.255.255.0 (/24)",
+              "Redes pequeñas (254 hosts por red)"
+            ],
+            [
+              "Clase D",
+              "1110...",
+              "224 a 239",
+              "No aplicable",
+              "Tráfico de multidifusión (Multicast)"
+            ],
+            [
+              "Clase E",
+              "1111...",
+              "240 a 255",
+              "No aplicable",
+              "Reservada para investigación y experimentación"
+            ]
+          ],
+          "caption": "Distribución clásica de clases IPv4 (RFC 791)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Regla Clave de Examen: Rangos 127 y > 224",
+          "content": "El rango 127.0.0.0/8 no pertenece a ninguna clase comercial porque está reservado para la interfaz de loopback local. Asimismo, las clases D y E jamás se asignan a interfaces de host convencionales."
         }
       ]
     },
@@ -83,13 +191,53 @@
       "layout": "content",
       "blocks": [
         {
-          "type": "heading",
-          "level": 2,
-          "text": "Direcciones IPv4 Privadas (RFC 1918) y Especiales"
+          "type": "paragraph",
+          "text": "El estándar **RFC 1918** reservó tres bloques de direcciones para redes internas que **no son enrutables en Internet pública**. Los paquetes con estas IPs son descartados por los routers de los proveedores (ISP)."
         },
         {
-          "type": "paragraph",
-          "text": "Bloques no enrutables en Internet y reservados para redes de área local (LAN)"
+          "type": "table",
+          "headers": [
+            "Clase",
+            "Bloque CIDR",
+            "Rango de Direcciones IP",
+            "Capacidad Total"
+          ],
+          "rows": [
+            [
+              "Clase A Privada",
+              "10.0.0.0/8",
+              "10.0.0.0 – 10.255.255.255",
+              "1 red de 16.777.216 direcciones"
+            ],
+            [
+              "Clase B Privada",
+              "172.16.0.0/12",
+              "172.16.0.0 – 172.31.255.255",
+              "16 redes contiguas /16 (1.048.576 direcciones)"
+            ],
+            [
+              "Clase C Privada",
+              "192.168.0.0/16",
+              "192.168.0.0 – 192.168.255.255",
+              "256 redes contiguas /24 (65.536 direcciones)"
+            ]
+          ],
+          "caption": "Bloques privados RFC 1918 indispensables en LPIC-1"
+        },
+        {
+          "type": "list",
+          "items": [
+            "`127.0.0.0/8` (Loopback): Comunicación interna entre procesos del host local (`127.0.0.1` es localhost).",
+            "`169.254.0.0/16` (Link-Local / APIPA): Autoconfiguración automática de enlace si falla DHCP; no enrutable.",
+            "`0.0.0.0/0`: Representa la red predeterminada (default route) o cualquier dirección no vinculada.",
+            "`255.255.255.255`: Dirección de difusión limitada (broadcast local a nivel de capa 2)."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Función de NAT (Network Address Translation)",
+          "content": "Para que los hosts con IPs privadas naveguen en Internet, la puerta de enlace (router/firewall) ejecuta NAT: sustituye la IP de origen privada por la IP pública de su interfaz externa y mantiene una tabla de seguimiento de conexiones."
         }
       ]
     },
@@ -100,13 +248,76 @@
       "layout": "content",
       "blocks": [
         {
-          "type": "heading",
-          "level": 2,
-          "text": "Máscaras de Red y Notación CIDR"
+          "type": "paragraph",
+          "text": "La **máscara de red** (*netmask*) es un filtro binario de 32 bits compuesto por una secuencia contigua de unos (`1`) seguidos de ceros (`0`). Los unos delimitan los bits de **Red** (*Network ID*) y los ceros los bits de **Host** (*Host ID*)."
         },
         {
-          "type": "paragraph",
-          "text": "La frontera binaria entre los bits de red y los bits de host"
+          "type": "table",
+          "headers": [
+            "Prefijo CIDR",
+            "Máscara Decimal",
+            "Bits de Host",
+            "Total IPs",
+            "Hosts Útiles (2^h - 2)"
+          ],
+          "rows": [
+            [
+              "/24",
+              "255.255.255.0",
+              "8 bits",
+              "256",
+              "254"
+            ],
+            [
+              "/25",
+              "255.255.255.128",
+              "7 bits",
+              "128",
+              "126"
+            ],
+            [
+              "/26",
+              "255.255.255.192",
+              "6 bits",
+              "64",
+              "62"
+            ],
+            [
+              "/27",
+              "255.255.255.224",
+              "5 bits",
+              "32",
+              "30"
+            ],
+            [
+              "/28",
+              "255.255.255.240",
+              "4 bits",
+              "16",
+              "14"
+            ],
+            [
+              "/29",
+              "255.255.255.248",
+              "3 bits",
+              "8",
+              "6"
+            ],
+            [
+              "/30",
+              "255.255.255.252",
+              "2 bits",
+              "4",
+              "2 (enlaces punto a punto)"
+            ]
+          ],
+          "caption": "Correspondencia de máscaras en el cuarto octeto"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Fórmula Fundamental de Hosts Útiles",
+          "content": "Para cualquier subred con 'h' bits de host: Hosts Útiles = 2^h - 2. Siempre se reservan 2 direcciones: la primera con todos los bits de host a 0 (Dirección de Red) y la última con todos los bits de host a 1 (Dirección de Broadcast)."
         }
       ]
     },
@@ -114,16 +325,75 @@
       "id": "109.1-slide-6",
       "slideNumber": 6,
       "title": "Cálculo Práctico de Subred (Ejemplo Oficial LPI)",
-      "layout": "content",
+      "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
-          "level": 2,
-          "text": "Cálculo Práctico de Subred (Ejemplo Oficial LPI)"
+          "level": 3,
+          "text": "1. Análisis Binario y Operación AND"
         },
         {
           "type": "paragraph",
-          "text": "Dado el host 172.16.30.230 y la máscara 255.255.255.224 (/27)"
+          "text": "En el examen LPI se plantea el cálculo formal para el host **172.16.30.230** con máscara **255.255.255.224**:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Prefijo CIDR**: 24 unos + 3 unos (128+64+32) = **/27**.",
+            "**Bits de host**: 32 - 27 = **5 bits** (2^5 = 32 direcciones).",
+            "**Operación AND** en 4º octeto: `230 & 224`:",
+            "`230` decimal = `11100110` binario",
+            "`224` decimal = `11100000` binario",
+            "`AND` lógico  = `11100000` binario = **224** decimal"
+          ]
+        }
+      ],
+      "secondaryBlocks": [
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "2. Parámetros de la Subred"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Parámetro",
+            "Valor Resultante",
+            "Detalle Técnico"
+          ],
+          "rows": [
+            [
+              "Dirección de Red",
+              "172.16.30.224",
+              "Bits de host en 0 (11100000)"
+            ],
+            [
+              "Dirección Broadcast",
+              "172.16.30.255",
+              "Bits de host en 1 (11111111)"
+            ],
+            [
+              "Primer Host Útil",
+              "172.16.30.225",
+              "Red + 1"
+            ],
+            [
+              "Último Host Útil",
+              "172.16.30.254",
+              "Broadcast - 1"
+            ],
+            [
+              "Hosts Asignables",
+              "30",
+              "2^5 - 2 = 30 equipos"
+            ]
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Comunicación entre Subredes",
+          "content": "Para que 172.16.30.230 se comunique con un host en otra red lógica (como 172.16.30.50 en la subred .0/27), el host requiere obligatoriamente una **Ruta por defecto (Default Gateway)** configurada hacia un router."
         }
       ]
     },
@@ -134,13 +404,55 @@
       "layout": "content",
       "blocks": [
         {
-          "type": "heading",
-          "level": 2,
-          "text": "Puertos y Servicios de Red: Archivo /etc/services"
+          "type": "paragraph",
+          "text": "En la capa de transporte (TCP/UDP), un **puerto** es un identificador numérico de **16 bits** (rango **0 a 65535**, total 65.536 puertos) que asocia un paquete a un proceso o aplicación concreta."
         },
         {
-          "type": "paragraph",
-          "text": "Estandarización IANA para asociar nombres de servicios a puertos de transporte"
+          "type": "table",
+          "headers": [
+            "Rango de Puertos",
+            "Clasificación IANA",
+            "Permisos Requeridos / Descripción"
+          ],
+          "rows": [
+            [
+              "0 a 1023",
+              "Puertos Bien Conocidos (Well-known)",
+              "Privilegios de root para enlazar (bind); servicios esenciales del sistema"
+            ],
+            [
+              "1024 a 49151",
+              "Puertos Registrados",
+              "Aplicaciones de usuario y servicios comerciales registrados ante IANA"
+            ],
+            [
+              "49152 a 65535",
+              "Puertos Dinámicos / Efímeros",
+              "Asignados temporalmente por el kernel como puertos de origen para conexiones salientes"
+            ]
+          ],
+          "caption": "Estructura de rangos de puertos según la IANA"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "grep -w 22 /etc/services",
+              "output": "ssh             22/tcp                          # SSH Remote Login Protocol\nssh             22/udp"
+            },
+            {
+              "prompt": "$",
+              "command": "getent services domain",
+              "output": "domain                53/tcp"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Formato de /etc/services",
+          "content": "Cada línea contiene: <nombre_servicio>  <puerto>/<protocolo>  [alias...]  [# comentarios]. Las herramientas del sistema consultan este archivo para mostrar nombres legibles en lugar de números en utilidades como ss, netstat o nmap."
         }
       ]
     },
@@ -151,13 +463,146 @@
       "layout": "content",
       "blocks": [
         {
-          "type": "heading",
-          "level": 2,
-          "text": "Los 20 Puertos y Servicios Obligatorios en LPIC-1"
+          "type": "paragraph",
+          "text": "El objetivo oficial 109.1 exige memorizar de forma estricta los siguientes **20 puertos canónicos** y sus protocolos de transporte:"
         },
         {
-          "type": "paragraph",
-          "text": "La lista exacta especificada en los objetivos oficiales del examen 102-500"
+          "type": "table",
+          "headers": [
+            "Puerto",
+            "Servicio",
+            "Transporte",
+            "Función Principal en Linux"
+          ],
+          "rows": [
+            [
+              "20",
+              "FTP-DATA",
+              "TCP",
+              "Transferencia efectiva de datos en modo activo de FTP"
+            ],
+            [
+              "21",
+              "FTP",
+              "TCP",
+              "Canal de comandos y autenticación de sesión FTP"
+            ],
+            [
+              "22",
+              "SSH",
+              "TCP",
+              "Acceso remoto seguro, terminal cifrada, SFTP y scp"
+            ],
+            [
+              "23",
+              "Telnet",
+              "TCP",
+              "Acceso remoto en texto plano sin cifrar (obsoleto e inseguro)"
+            ],
+            [
+              "25",
+              "SMTP",
+              "TCP",
+              "Simple Mail Transfer Protocol: envío y retransmisión de correo"
+            ],
+            [
+              "53",
+              "DNS",
+              "TCP / UDP",
+              "Resolución de nombres (UDP para consultas rápidas; TCP para transferencias de zona)"
+            ],
+            [
+              "80",
+              "HTTP",
+              "TCP",
+              "Navegación web estándar no cifrada"
+            ],
+            [
+              "110",
+              "POP3",
+              "TCP",
+              "Post Office Protocol v3: descarga de correos al cliente local"
+            ],
+            [
+              "123",
+              "NTP",
+              "UDP",
+              "Network Time Protocol: sincronización horaria de relojes de sistema"
+            ],
+            [
+              "139",
+              "NetBIOS-SSN",
+              "TCP",
+              "Servicio de sesiones NetBIOS para compartición de archivos Samba/Windows"
+            ],
+            [
+              "143",
+              "IMAP",
+              "TCP",
+              "Gestión y sincronización remota de carpetas de correo en el servidor"
+            ],
+            [
+              "161",
+              "SNMP",
+              "UDP",
+              "Consultas del gestor de red al agente del dispositivo monitorizado"
+            ],
+            [
+              "162",
+              "SNMPTRAP",
+              "UDP",
+              "Notificaciones y alertas asíncronas enviadas por el agente al gestor"
+            ],
+            [
+              "389",
+              "LDAP",
+              "TCP / UDP",
+              "Lightweight Directory Access Protocol: consulta de cuentas y directorios"
+            ],
+            [
+              "443",
+              "HTTPS",
+              "TCP",
+              "HTTP Seguro con cifrado sobre TLS/SSL"
+            ],
+            [
+              "465",
+              "SMTPS / URD",
+              "TCP",
+              "Envío de correo seguro mediante SMTP sobre TLS implícito"
+            ],
+            [
+              "514",
+              "Syslog",
+              "UDP",
+              "Recepción centralizada de registros y logs del sistema a través de la red"
+            ],
+            [
+              "636",
+              "LDAPS",
+              "TCP",
+              "LDAP Seguro mediante túnel cifrado TLS/SSL"
+            ],
+            [
+              "993",
+              "IMAPS",
+              "TCP",
+              "Acceso a buzones IMAP cifrado directamente sobre TLS/SSL"
+            ],
+            [
+              "995",
+              "POP3S",
+              "TCP",
+              "Descarga de correo POP3 cifrada directamente sobre TLS/SSL"
+            ]
+          ],
+          "caption": "Los 20 puertos evaluados explícitamente en el examen 102-500"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Trampa Típica de Examen",
+          "content": "¿Qué protocolo utiliza Syslog por defecto en red? **UDP en el puerto 514**. ¿Y NTP? **UDP en el puerto 123**. ¿Qué diferencia hay entre FTP 20 y 21? El **21** es canal de control y el **20** es canal de datos."
         }
       ]
     },
@@ -165,16 +610,47 @@
       "id": "109.1-slide-9",
       "slideNumber": 9,
       "title": "Protocolos de Transporte: TCP frente a UDP",
-      "layout": "content",
+      "layout": "comparison",
       "blocks": [
         {
           "type": "heading",
-          "level": 2,
-          "text": "Protocolos de Transporte: TCP frente a UDP"
+          "level": 3,
+          "text": "TCP (Transmission Control Protocol)"
         },
         {
           "type": "paragraph",
-          "text": "Conexión confiable y con control de flujo frente a transmisión ligera de datagramas"
+          "text": "Protocolo **orientado a conexión** diseñado para garantizar la entrega íntegra y ordenada de los datos."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Three-Way Handshake**: Establecimiento previo con `SYN` ➔ `SYN-ACK` ➔ `ACK`.",
+            "**Fiabilidad total**: Emplea acuses de recibo (`ACK`) y retransmite segmentos perdidos.",
+            "**Control de flujo y congestión**: Ventana deslizante para no saturar al receptor.",
+            "**Sobrecarga**: Cabecera mínima de **20 bytes**.",
+            "**Servicios típicos**: SSH (22), HTTP (80), HTTPS (443), SMTP (25), IMAP (143)."
+          ]
+        }
+      ],
+      "secondaryBlocks": [
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "UDP (User Datagram Protocol)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Protocolo **no orientado a conexión** de entrega sin garantías (*best-effort*)."
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Sin negociación previa**: Envía datagramas inmediatamente sin verificar estado del receptor.",
+            "**Sin confirmación**: No retransmite paquetes perdidos ni garantiza el orden de llegada.",
+            "**Mínima latencia**: Sobrecarga mínima con cabecera de apenas **8 bytes**.",
+            "**Eficiencia**: Ideal para streaming en tiempo real, difusión y consultas atómicas.",
+            "**Servicios típicos**: DNS consultas (53), NTP (123), SNMP (161/162), Syslog (514), DHCP."
+          ]
         }
       ]
     },
@@ -185,13 +661,45 @@
       "layout": "content",
       "blocks": [
         {
-          "type": "heading",
-          "level": 2,
-          "text": "Protocolo ICMP: Mensajes de Control y Diagnóstico"
+          "type": "paragraph",
+          "text": "El protocolo **ICMP** (*Internet Control Message Protocol*) opera sobre IP (capa de red) para transmitir mensajes de control, estado de enlaces y reportes de error entre hosts y enrutadores."
         },
         {
-          "type": "paragraph",
-          "text": "Gestión operativa de la capa de red: eco, accesibilidad y expiración de TTL"
+          "type": "table",
+          "headers": [
+            "Tipo ICMP",
+            "Nombre del Mensaje",
+            "Utilidad / Escenario de Disparo"
+          ],
+          "rows": [
+            [
+              "Tipo 8 / Tipo 0",
+              "Echo Request / Echo Reply",
+              "Petición y respuesta empleadas por el comando `ping` para evaluar conectividad y RTT"
+            ],
+            [
+              "Tipo 3",
+              "Destination Unreachable",
+              "Notifica que la red, host, protocolo o puerto destino es inalcanzable"
+            ],
+            [
+              "Tipo 11",
+              "Time Exceeded",
+              "Disparado cuando el contador **TTL** de un paquete llega a cero antes de alcanzar el destino"
+            ],
+            [
+              "Tipo 5",
+              "Redirect",
+              "Un enrutador informa al host de una ruta local más corta hacia otra pasarela"
+            ]
+          ],
+          "caption": "Mensajes ICMP evaluados en LPIC-1"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Mecanismo del TTL (Time To Live)",
+          "content": "El TTL es un campo de 8 bits en la cabecera IPv4 concebido para **evitar bucles infinitos de enrutamiento**. Cada router que reenvía el paquete decrementa su TTL en 1 unidad ('salto'). Si el TTL llega a 0, el paquete se destruye y el router devuelve un ICMP **Time Exceeded** al emisor. La herramienta `traceroute` explota este comportamiento enviando paquetes con TTL progresivos (1, 2, 3...) para identificar cada router intermedio."
         }
       ]
     },
@@ -202,13 +710,34 @@
       "layout": "content",
       "blocks": [
         {
-          "type": "heading",
-          "level": 2,
-          "text": "Introducción a IPv6: Arquitectura de 128 Bits"
+          "type": "paragraph",
+          "text": "**IPv6** amplía el direccionamiento de 32 a **128 bits** (16 bytes), ofreciendo un espacio astronómico de **3,4 × 10^38 direcciones** (unos 6,67 × 10^23 direcciones por metro cuadrado de superficie terrestre)."
         },
         {
-          "type": "paragraph",
-          "text": "Espacio masivo de 3,4 × 10^38 direcciones para sustituir al agotado IPv4"
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "Estructura en 8 Hextetos Hexadecimales",
+              "description": "Se representa en 8 bloques de 4 dígitos hexadecimales separados por dos puntos (ejemplo: 2001:0db8:85a3:0000:0000:8a2e:0370:7334). Cada dígito hexadecimal representa 4 bits (un hexteto = 16 bits)."
+            },
+            {
+              "number": 2,
+              "title": "Tipos de Comunicación Admitidos",
+              "description": "Unicast (uno a uno), Anycast (uno al más próximo según métrica de enrutamiento) y Multicast (uno a todos los miembros suscritos a un grupo)."
+            },
+            {
+              "number": 3,
+              "title": "¡Ausencia Total de Difusión (Broadcast)!",
+              "description": "IPv6 elimina por completo el concepto de tráfico broadcast. Todas las tareas de descubrimiento, anuncio y resolución de vecinos se canalizan exclusivamente mediante grupos de Multicast específicos."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Pregunta de Examen Garantizada",
+          "content": "Si una pregunta del examen consulta por la dirección de broadcast en una subred IPv6: ¡no te dejes engañar! **En IPv6 NO existe broadcast**. Dicha función la absorbe el direccionamiento Multicast (como `ff02::1` para todos los nodos del enlace local)."
         }
       ]
     },
@@ -219,13 +748,60 @@
       "layout": "content",
       "blocks": [
         {
-          "type": "heading",
-          "level": 2,
-          "text": "Reglas Oficiales de Compresión de Direcciones IPv6"
+          "type": "paragraph",
+          "text": "Para evitar escribir cadenas de 39 caracteres, el estándar RFC 5952 define **dos reglas estrictas de compresión**:"
         },
         {
-          "type": "paragraph",
-          "text": "Las dos reglas matemáticas para acortar la escritura hexadecimal"
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "Regla 1: Supresión de ceros a la izquierda dentro de un hexteto",
+              "description": "En cualquier bloque de 4 dígitos, los ceros iniciales pueden omitirse: 0042 pasa a ser 42; 0db8 pasa a ser db8; 0000 pasa a ser 0. (OJO: los ceros a la derecha nunca se suprimen, 4200 permanece 4200)."
+            },
+            {
+              "number": 2,
+              "title": "Regla 2: Sustitución única de bloques continuos de ceros por '::'",
+              "description": "Una secuencia de uno o más bloques contiguos compuestos únicamente por ceros puede comprimirse usando dos caracteres de dos puntos contiguos (::)."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Dirección Expandida (Sin comprimir)",
+            "Aplicando Regla 1 (Ceros a la izquierda)",
+            "Comprimida Definitiva (Regla 2 con ::)"
+          ],
+          "rows": [
+            [
+              "2001:0db8:0000:0000:0000:0000:1428:57ab",
+              "2001:db8:0:0:0:0:1428:57ab",
+              "2001:db8::1428:57ab"
+            ],
+            [
+              "fe80:0000:0000:0000:0202:b3ff:fe1e:8329",
+              "fe80:0:0:0:202:b3ff:fe1e:8329",
+              "fe80::202:b3ff:fe1e:8329"
+            ],
+            [
+              "0000:0000:0000:0000:0000:0000:0000:0001",
+              "0:0:0:0:0:0:0:1",
+              "::1 (Loopback)"
+            ],
+            [
+              "0000:0000:0000:0000:0000:0000:0000:0000",
+              "0:0:0:0:0:0:0:0",
+              ":: (Dirección no especificada)"
+            ]
+          ],
+          "caption": "Ejemplos oficiales de compresión exacta de IPv6"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Regla de Oro: Solo un '::' por Dirección",
+          "content": "El símbolo '::' solo puede utilizarse **UNA VEZ** en toda la dirección. Si se permitiera dos veces (ejemplo inválido: `2001::db8::1`), sería matemáticamente imposible determinar cuántos bloques de ceros corresponden a cada sección."
         }
       ]
     },
@@ -236,30 +812,109 @@
       "layout": "content",
       "blocks": [
         {
-          "type": "heading",
-          "level": 2,
-          "text": "Tipos y Prefijos Fundamentales de Direcciones IPv6"
+          "type": "paragraph",
+          "text": "Al igual que en IPv4, en IPv6 los primeros bits de la dirección definen su alcance y tipo de uso. Debes memorizar los siguientes prefijos para el examen:"
         },
         {
-          "type": "paragraph",
-          "text": "Mapeo de ámbitos para identificar el alcance de cualquier dirección en examen"
+          "type": "table",
+          "headers": [
+            "Prefijo CIDR",
+            "Rango / Notación",
+            "Ámbito / Denominación",
+            "Equivalente IPv4",
+            "Alcance y Comportamiento"
+          ],
+          "rows": [
+            [
+              "::1/128",
+              "::1",
+              "Loopback",
+              "127.0.0.1",
+              "Interfaz local de bucle interno en el host"
+            ],
+            [
+              "::/128",
+              "::",
+              "Dirección No Especificada",
+              "0.0.0.0",
+              "Usada como origen antes de obtener una IP válida"
+            ],
+            [
+              "fe80::/10",
+              "fe80:: a febf::",
+              "Link-Local (Enlace Local)",
+              "169.254.0.0/16",
+              "Autoconfigurada en cada interfaz activa; no enrutable entre routers"
+            ],
+            [
+              "fc00::/7",
+              "fc00:: y fd00::",
+              "Unique Local (ULA)",
+              "RFC 1918 (Privadas)",
+              "Enrutables dentro de la red corporativa/privada; no en Internet"
+            ],
+            [
+              "2000::/3",
+              "2000:: a 3fff::",
+              "Global Unicast (GUA)",
+              "IPs Públicas",
+              "Enrutables globalmente en la Internet pública IPv6"
+            ],
+            [
+              "ff00::/8",
+              "ff00:: a ffff::",
+              "Multicast",
+              "Clase D (224.0.0.0/4)",
+              "Envío a grupos (ff02::1 = todos los nodos; ff02::2 = todos los routers)"
+            ]
+          ],
+          "caption": "Prefijos IPv6 indispensables para el examen LPIC-1"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Dirección de Enlace Local Obligatoria",
+          "content": "Toda interfaz de red habilitada con IPv6 en Linux genera automáticamente una dirección Link-Local con prefijo `fe80::/10`. Esta dirección permite la comunicación inmediata con vecinos del mismo switch sin requerir configuración manual ni DHCP."
         }
       ]
     },
     {
       "id": "109.1-slide-14",
       "slideNumber": 14,
-      "title": "Mecanismos Clave: SLAAC, EUI-64 y Hop Limit",
+      "title": "Mecanismos Clave: SLAAC, EUI-64, Hop Limit y NDP",
       "layout": "content",
       "blocks": [
         {
-          "type": "heading",
-          "level": 2,
-          "text": "Mecanismos Clave: SLAAC, EUI-64 y Hop Limit"
+          "type": "paragraph",
+          "text": "IPv6 introduce mecanismos nativos que sustituyen protocolos obsoletos de IPv4 y agilizan la autoconfiguración de equipos:"
         },
         {
-          "type": "paragraph",
-          "text": "Autoconfiguración sin servidor de estado y cambios respecto a IPv4"
+          "type": "list",
+          "items": [
+            "**Hop Limit**: Campo de cabecera IPv6 de 8 bits que **sustituye directamente al TTL de IPv4**. Cada enrutador decrementa el Hop Limit en 1 y descarta el paquete al llegar a cero.",
+            "**NDP (Neighbor Discovery Protocol)**: Protocolo que **reemplaza a ARP**. Se ejecuta sobre ICMPv6 y permite resolver direcciones MAC, descubrir enrutadores en el enlace (Router Solicitation / Advertisement), detectar direcciones IP duplicadas (DAD) y obtener prefijos de red.",
+            "**SLAAC (Stateless Address Autoconfiguration)**: Permite a un host obtener su prefijo de red (/64) desde el router mediante NDP y generar automáticamente su propia dirección IPv6 global sin necesidad de un servidor DHCP centralizado."
+          ]
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "Proceso EUI-64: División de la MAC",
+              "description": "Toma la dirección MAC física de 48 bits (ej. 00:1A:2B:3C:4D:5E) y divídela en dos mitades de 24 bits: 00:1A:2B y 3C:4D:5E."
+            },
+            {
+              "number": 2,
+              "title": "Inserción del Bloque FFFE",
+              "description": "Inserta los 16 bits fijos FFFE en medio de ambas mitades: 00:1A:2B:FF:FE:3C:4D:5E (ahora tiene 64 bits)."
+            },
+            {
+              "number": 3,
+              "title": "Inversión del 7º bit (Universal/Local U/L)",
+              "description": "Invierte el 7º bit del primer octeto (00 en binario es 00000000; con el 7º bit invertido es 00000010 = 02). El identificador EUI-64 queda: 021a:2bff:fe3c:4d5e, formando la IP fe80::21a:2bff:fe3c:4d5e/64."
+            }
+          ]
         }
       ]
     },
@@ -267,16 +922,43 @@
       "id": "109.1-slide-15",
       "slideNumber": 15,
       "title": "Matriz Comparativa Integral: IPv4 frente a IPv6",
-      "layout": "content",
+      "layout": "comparison",
       "blocks": [
         {
           "type": "heading",
-          "level": 2,
-          "text": "Matriz Comparativa Integral: IPv4 frente a IPv6"
+          "level": 3,
+          "text": "Protocolo IPv4 (Clásico)"
         },
         {
-          "type": "paragraph",
-          "text": "Resumen técnico de alto impacto para fijar todos los conceptos"
+          "type": "list",
+          "items": [
+            "**Longitud y formato**: 32 bits (4 bytes) en decimal punteado (`192.168.1.1`).",
+            "**Difusión**: Usa Broadcast nativo (`255.255.255.255`).",
+            "**Resolución de hardware**: ARP (Address Resolution Protocol por broadcast).",
+            "**Prevención de bucles**: Campo **TTL** (Time To Live).",
+            "**Autoconfiguración**: DHCP con estado o manual.",
+            "**Cabecera**: Variable (20-60 bytes), incluye checksum.",
+            "**Fragmentación**: La realizan emisores y enrutadores intermedios."
+          ]
+        }
+      ],
+      "secondaryBlocks": [
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Protocolo IPv6 (Nueva Generación)"
+        },
+        {
+          "type": "list",
+          "items": [
+            "**Longitud y formato**: 128 bits (16 bytes) en hexadecimal (`2001:db8::1`).",
+            "**Difusión**: ¡NO EXISTE broadcast! Usa Multicast.",
+            "**Resolución de hardware**: NDP (Neighbor Discovery Protocol sobre ICMPv6).",
+            "**Prevención de bucles**: Campo **Hop Limit**.",
+            "**Autoconfiguración**: SLAAC sin estado, DHCPv6 o manual.",
+            "**Cabecera**: Fija (40 bytes simplificados), sin checksum.",
+            "**Fragmentación**: Realizada ÚNICAMENTE por el host emisor."
+          ]
         }
       ]
     },
@@ -288,12 +970,39 @@
       "blocks": [
         {
           "type": "heading",
-          "level": 2,
-          "text": "Trampas Críticas de Examen: 109.1 Protocolos"
+          "level": 3,
+          "text": "Trampas 1 y 2: Formato y Difusión"
         },
         {
-          "type": "paragraph",
-          "text": "4 escenarios engañosos recurrentes en las preguntas de red"
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "1. Múltiple uso de '::' en IPv6",
+          "content": "Una pregunta clásica muestra varias direcciones IPv6 y pregunta cuál es sintácticamente INVÁLIDA. Identifica de inmediato la que use dos veces '::' (ejemplo: `2001::1::4`). Solo se permite una única vez."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "2. Broadcast en IPv6",
+          "content": "Si te preguntan cuál es la dirección de broadcast en una subred IPv6: ¡no existe broadcast! La respuesta correcta siempre hace referencia a direcciones Multicast (como `ff02::1`)."
+        }
+      ],
+      "secondaryBlocks": [
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Trampas 3 y 4: Puertos y Subnetting"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "3. Confusión de Puertos FTP y SNMP",
+          "content": "FTP usa el puerto **21** para el control de la sesión y el puerto **20** para la transferencia de datos. En SNMP, el agente recibe consultas por **UDP 161**, mientras que las alertas (*traps*) se emiten hacia **UDP 162**."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "4. Hosts Utilizables en Subredes",
+          "content": "En un cálculo CIDR /27, el total de direcciones es 32 (2^5), pero los hosts útiles son **30**. Recuerda siempre restar 2: la dirección de red y la de broadcast NO son asignables a interfaces de equipos."
         }
       ]
     },
@@ -305,29 +1014,101 @@
       "blocks": [
         {
           "type": "heading",
-          "level": 2,
-          "text": "Ejercicios Guiados Oficiales (Manual LPI)"
+          "level": 3,
+          "text": "Lección 1: Subnetting y Conectividad"
         },
         {
-          "type": "paragraph",
-          "text": "Casos prácticos interactivos con solución oficial comprobada"
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Ejercicio 1: Cálculo con 172.16.30.230 y 255.255.255.224",
+          "content": "• **Notación CIDR**: /27 (24 bits de 255.255.255.0 + 3 bits de 224).\n• **Dirección de Red**: 172.16.30.224 (operación AND entre 230 y 224).\n• **Dirección de Broadcast**: 172.16.30.255.\n• **Hosts útiles**: 30 equipos utilizables (rango de 172.16.30.225 a 172.16.30.254)."
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Ejercicio 2: Comunicación entre Redes Lógicas",
+          "content": "• **Pregunta**: ¿Qué configuración se requiere en un host para permitir comunicación IP con un host en otra red lógica?\n• **Solución oficial**: Se requiere configurar una **Ruta por defecto (Default Gateway)** que apunte a un router capaz de enrutar los paquetes."
+        }
+      ],
+      "secondaryBlocks": [
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Lección 2: Puertos, Transporte e IPv6"
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Ejercicio 3: Puerto por Defecto de SMTP",
+          "content": "• **Pregunta**: ¿Qué puerto es el predeterminado para el protocolo SMTP?\n• **Solución oficial**: El puerto **25** (TCP)."
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Ejercicio 4: Total de Puertos Disponibles",
+          "content": "• **Pregunta**: ¿Cuántos puertos diferentes hay disponibles en un sistema?\n• **Solución oficial**: **65.536 puertos** (del 0 al 65535, definidos por un campo de 16 bits)."
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Ejercicio 5: Fiabilidad de Transporte y Grupos IPv6",
+          "content": "• **Protocolo fiable**: **TCP** garantiza entrega, orden e integridad con acuses de recibo.\n• **Dirección IPv6 a grupo**: **Multicast** (`ff00::/8`) se usa para enviar paquetes a todas las interfaces pertenecientes a un grupo."
         }
       ]
     },
     {
       "id": "109.1-slide-18",
       "slideNumber": 18,
-      "title": "Flashcards de Memorización Rápida: 109.1 Protocolos",
-      "layout": "content",
+      "title": "Ejercicios de Exploración Oficiales (Manual LPI)",
+      "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
-          "level": 2,
-          "text": "Flashcards de Memorización Rápida: 109.1 Protocolos"
+          "level": 3,
+          "text": "Lección 1: Rangos Especiales, TTL y NAT"
         },
         {
-          "type": "paragraph",
-          "text": "Fija los conceptos esenciales antes de avanzar a configuración persistente"
+          "type": "callout",
+          "calloutType": "info",
+          "title": "1. Exclusión de 127 y > 224 de Clases A, B, C",
+          "content": "El bloque 127.0.0.0/8 está reservado para **loopback** (pruebas internas entre procesos). Las direcciones a partir de 224 no son de host: 224-239 (Clase D) es para **multicast** y 240-255 (Clase E) es para **investigación**."
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "2. Función del Campo TTL (Time To Live)",
+          "content": "Define el tiempo de vida de un paquete IP. Funciona como un contador que se decrementa en 1 en cada salto de enrutador. Al llegar a 0, el paquete se descarta de inmediato para **prevenir bucles infinitos** en la red."
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "3. Función y Escenario de Uso de NAT",
+          "content": "La **traducción de direcciones de red (NAT)** permite a los hosts de una LAN con IPs privadas (RFC 1918) acceder a Internet compartiendo la IP pública asignada a la puerta de enlace."
+        }
+      ],
+      "secondaryBlocks": [
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Lección 2: Servicios TCP, Hop Limit y NDP"
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "4. Ejemplos de Servicios que usan TCP",
+          "content": "FTP (20/21), SSH (22), Telnet (23), SMTP (25), HTTP (80), POP3 (110), IMAP (143) y HTTPS (443)."
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "5. Campo IPv6 Equivalente a TTL",
+          "content": "El campo se denomina **Hop Limit** (Límite de Saltos). Cumple la misma función de prevención de bucles decrementando su valor en cada router."
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "6. Información que Descubre el Protocolo NDP",
+          "content": "El Neighbor Discovery Protocol permite descubrir en el enlace local: **direcciones MAC de vecinos** (sustituyendo a ARP), **routers y pasarelas**, **detección de IPs duplicadas (DAD)**, prefijos de red y servidores DNS mediante SLAAC."
         }
       ]
     }

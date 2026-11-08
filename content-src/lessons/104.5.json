@@ -12,11 +12,32 @@
   ],
   "keyTerms": [
     "Administración de los permisos y los propietarios de los archivos",
-    "Tema 104"
+    "Tema 104",
+    "modelo DAC",
+    "modo octal",
+    "modo simbólico",
+    "SUID",
+    "SGID",
+    "Sticky Bit",
+    "bit adhesivo",
+    "bandera de eliminación restringida",
+    "umask",
+    "umask -S",
+    "dispositivo de bloque",
+    "dispositivo de caracteres",
+    "socket",
+    "tubería nombrada"
   ],
   "commands": [
     "chmod",
-    "sudo"
+    "chown",
+    "chgrp",
+    "umask",
+    "ls",
+    "getent",
+    "sudo",
+    "touch",
+    "mkdir"
   ],
   "placeholder": false,
   "slides": [
@@ -67,10 +88,56 @@
           "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Grid Comparativa Archivo vs Directorio -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px;\">\n    \n    <!-- Archivo -->\n    <div style=\"background:#F8FAFC; border:2px solid #3B82F6; border-radius:12px; padding:14px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:10px;\">\n        <span style=\"background:#3B82F6; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">ARCHIVO ORDINARIO</span>\n        <span style=\"font-size:12px; font-weight:700; color:#1E40AF;\">Contenido de Datos</span>\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:13px; color:#334155;\">\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#1D4ED8;\">r (Read):</strong> Abrir y leer el contenido (cat, less).\n        </div>\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#1D4ED8;\">w (Write):</strong> Modificar, sobreescribir o truncar el contenido.\n        </div>\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#1D4ED8;\">x (Execute):</strong> Ejecutar como programa binario o script bash.\n        </div>\n      </div>\n    </div>\n\n    <!-- Directorio -->\n    <div style=\"background:#F8FAFC; border:2px solid #10B981; border-radius:12px; padding:14px;\">\n      <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:10px;\">\n        <span style=\"background:#10B981; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">DIRECTORIO (CARPETA)</span>\n        <span style=\"font-size:12px; font-weight:700; color:#065F46;\">Tabla de Inodos</span>\n      </div>\n      <div style=\"display:flex; flex-direction:column; gap:8px; font-size:13px; color:#334155;\">\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#047857;\">r (Read):</strong> Listar los nombres de archivos en la carpeta (ls).\n        </div>\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#047857;\">w (Write):</strong> CREAR, BORRAR o RENOMBRAR archivos dentro.\n        </div>\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:6px 10px; border-radius:4px;\">\n          <strong style=\"color:#047857;\">x (Execute):</strong> ATRAVESAR / ENTRAR con cd y acceder a inodos.\n        </div>\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Alerta de examen: Trampa de Borrado -->\n  <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:14px;\">\n    <span style=\"font-size:26px;\">⚠️</span>\n    <div style=\"font-size:13px; color:#991B1B; line-height:1.45;\">\n      <strong>La Gran Trampa de Borrado de LPIC-1:</strong> La capacidad de borrar un archivo <strong>NO DEPENDE</strong> de los permisos del archivo, sino de tener permiso <strong>'w' (escritura) en el DIRECTORIO PADRE</strong>. Aunque un archivo tenga permisos <code style=\"background:#FEE2E2; color:#B91C1C; padding:2px 4px; border-radius:4px; font-weight:700;\">0000 (---------)</code>, si el usuario tiene permiso 'w' en la carpeta, ¡puede borrar el archivo sin problemas!\n    </div>\n  </div>\n</div>\n"
         },
         {
+          "type": "table",
+          "headers": [
+            "Carácter inicial en ls -l",
+            "Tipo de Archivo",
+            "Descripción y Ejemplos Oficiales"
+          ],
+          "rows": [
+            [
+              "-",
+              "Archivo regular",
+              "Fichero de texto plano, script, ejecutable ELF compilado o binario."
+            ],
+            [
+              "d",
+              "Directorio",
+              "Carpeta contenedora de nombres de archivos asociados a inodos."
+            ],
+            [
+              "b",
+              "Dispositivo de bloque (Block device)",
+              "Dispositivo de almacenamiento por bloques búfer (ej. discos duros /dev/sda, particiones /dev/sdb1)."
+            ],
+            [
+              "c",
+              "Dispositivo de caracteres (Character device)",
+              "Dispositivo de flujo directo de bytes sin búfer (ej. terminales /dev/tty1, puertos serie, /dev/null)."
+            ],
+            [
+              "l",
+              "Enlace simbólico (Symlink)",
+              "Puntero que contiene la ruta textual de acceso hacia otro archivo o directorio."
+            ],
+            [
+              "s",
+              "Socket de dominio local (Socket)",
+              "Punto final de comunicación bidireccional entre procesos locales (IPC)."
+            ],
+            [
+              "p",
+              "Tubería nombrada (Named pipe / FIFO)",
+              "Canal FIFO (First In, First Out) de comunicación unidireccional entre procesos."
+            ]
+          ],
+          "caption": "Identificación del Tipo de Archivo en la Columna 1 de ls -l"
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Para poder entrar en una carpeta con 'cd' se necesita obligatoriamente permiso de ejecución 'x'; para borrar un archivo se necesita permiso de escritura 'w' en la carpeta."
+          "content": "🎯 Clave de Examen: El primer carácter de 'ls -l' define el tipo de archivo ('-' regular, 'd' directorio, 'b' bloque, 'c' carácter, 'l' enlace, 's' socket, 'p' tubería FIFO). Para entrar en una carpeta con 'cd' se necesita 'x'; para borrar un archivo se necesita 'w' en el directorio padre."
         }
       ],
       "notes": "Muestra que si un archivo tiene permisos 0000 (sin permisos) pero la carpeta tiene 777, el usuario puede borrar el archivo sin problemas."
@@ -264,12 +331,12 @@
           "items": [
             "**1. SUID (Set User ID - Octal 4000)** — 🎯 Se aplica sobre BINARIOS EJECUTABLES. Cuando un usuario ordinario ejecuta el programa, el proceso se ejecuta temporalmente con los privilegios del PROPIETARIO DEL ARCHIVO (habitualmente root). Ejemplo oficial: /usr/bin/passwd (para modificar /etc/shadow).",
             "**2. SGID (Set Group ID - Octal 2000)** — 🎯 En binarios: ejecuta con privilegios del grupo del archivo. En DIRECTORIOS: 🎯 ¡Clave de Examen! Todo archivo o subcarpeta creado dentro HEREDA AUTOMÁTICAMENTE EL GRUPO del directorio padre (esencial para carpetas de trabajo colaborativo).",
-            "**3. Sticky Bit (Bit de Permanencia - Octal 1000)** — 🎯 Se aplica sobre DIRECTORIOS COMPARTIDOS (como /tmp y /var/tmp). Permite a cualquiera crear archivos, pero IMPIDE que un usuario borre o renombre archivos de otros. Solo el dueño del archivo o root pueden borrarlo."
+            "**3. Sticky Bit (Bit Adhesivo / Bandera de Eliminación Restringida - Octal 1000)** — 🎯 Denominado formalmente en el manual LPI como *bit adhesivo* o *bandera de eliminación restringida*. Se aplica sobre DIRECTORIOS COMPARTIDOS (como /tmp y /var/tmp). Permite a cualquiera crear archivos, pero IMPIDE que un usuario borre o renombre archivos de otros. Solo el dueño del archivo o root pueden borrarlo."
           ]
         },
         {
           "type": "html",
-          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Grid 3 Permisos Especiales -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:14px;\">\n    \n    <!-- SUID (4000) -->\n    <div style=\"background:#F8FAFC; border:2px solid #EF4444; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#EF4444; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">SUID</span>\n          <span style=\"font-family:monospace; font-weight:800; color:#991B1B; font-size:14px;\">Octal 4000</span>\n        </div>\n        <div style=\"font-size:13px; color:#334155; line-height:1.45; margin-bottom:8px;\">\n          <strong>En Binarios Ejecutables:</strong> El programa se ejecuta con la identidad y privilegios del <strong>propietario del archivo</strong> (habitualmente root), no del usuario que lo invoca.\n        </div>\n        <div style=\"background:#FEE2E2; border-left:3px solid #EF4444; padding:6px 8px; font-family:monospace; font-size:11.5px; color:#991B1B; border-radius:4px;\">\n          <div>/usr/bin/passwd</div>\n          <div style=\"font-weight:700;\">-rwsr-xr-x (root:root)</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:11.5px; color:#991B1B; font-weight:700; background:#FEE2E2; padding:4px 8px; border-radius:6px;\">\n        chmod 4755 &bull; chmod u+s\n      </div>\n    </div>\n\n    <!-- SGID (2000) -->\n    <div style=\"background:#F8FAFC; border:2px solid #3B82F6; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#3B82F6; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">SGID</span>\n          <span style=\"font-family:monospace; font-weight:800; color:#1E40AF; font-size:14px;\">Octal 2000</span>\n        </div>\n        <div style=\"font-size:13px; color:#334155; line-height:1.45; margin-bottom:8px;\">\n          <strong>En Directorios (¡Examen!):</strong> Todo archivo o subcarpeta creado dentro <strong>hereda automáticamente el grupo</strong> del directorio padre, facilitando el trabajo en equipo.\n        </div>\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:6px 8px; font-family:monospace; font-size:11.5px; color:#1E40AF; border-radius:4px;\">\n          <div>/shared/devs/</div>\n          <div style=\"font-weight:700;\">drwxrwsr-x (root:devs)</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:11.5px; color:#1E40AF; font-weight:700; background:#DBEAFE; padding:4px 8px; border-radius:6px;\">\n        chmod 2775 &bull; chmod g+s\n      </div>\n    </div>\n\n    <!-- Sticky Bit (1000) -->\n    <div style=\"background:#F8FAFC; border:2px solid #10B981; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#10B981; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">STICKY BIT</span>\n          <span style=\"font-family:monospace; font-weight:800; color:#065F46; font-size:14px;\">Octal 1000</span>\n        </div>\n        <div style=\"font-size:13px; color:#334155; line-height:1.45; margin-bottom:8px;\">\n          <strong>En Directorios Compartidos:</strong> Todos los usuarios pueden crear archivos, pero <strong>SOLO el creador del archivo</strong> (o root) puede borrarlo o renombrarlo.\n        </div>\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:6px 8px; font-family:monospace; font-size:11.5px; color:#065F46; border-radius:4px;\">\n          <div>/tmp y /var/tmp</div>\n          <div style=\"font-weight:700;\">drwxrwxrwt (root:root)</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:11.5px; color:#065F46; font-weight:700; background:#D1FAE5; padding:4px 8px; border-radius:6px;\">\n        chmod 1777 &bull; chmod +t\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Resumen de 4 dígitos -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:8px 16px; display:flex; align-items:center; justify-content:space-between;\">\n    <span style=\"font-size:13px; color:#92400E; font-weight:700;\">\n      Formato Octal de 4 Dígitos: <code style=\"font-size:15px; background:#FEF3C7; padding:2px 8px; border-radius:4px;\">[Especiales] [Dueño] [Grupo] [Otros]</code>\n    </span>\n    <span style=\"font-size:12.5px; color:#B45309;\">\n      Ejemplo: <strong>chmod 2775</strong> = SGID (2) + Dueño (7) + Grupo (7) + Otros (5)\n    </span>\n  </div>\n</div>\n"
+          "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:14px; margin:14px 0;\">\n  <!-- Grid 3 Permisos Especiales -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:14px;\">\n    \n    <!-- SUID (4000) -->\n    <div style=\"background:#F8FAFC; border:2px solid #EF4444; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#EF4444; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">SUID</span>\n          <span style=\"font-family:monospace; font-weight:800; color:#991B1B; font-size:14px;\">Octal 4000</span>\n        </div>\n        <div style=\"font-size:13px; color:#334155; line-height:1.45; margin-bottom:8px;\">\n          <strong>En Binarios Ejecutables:</strong> El programa se ejecuta con la identidad y privilegios del <strong>propietario del archivo</strong> (habitualmente root), no del usuario que lo invoca.\n        </div>\n        <div style=\"background:#FEE2E2; border-left:3px solid #EF4444; padding:6px 8px; font-family:monospace; font-size:11.5px; color:#991B1B; border-radius:4px;\">\n          <div>/usr/bin/passwd</div>\n          <div style=\"font-weight:700;\">-rwsr-xr-x (root:root)</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:11.5px; color:#991B1B; font-weight:700; background:#FEE2E2; padding:4px 8px; border-radius:6px;\">\n        chmod 4755 &bull; chmod u+s\n      </div>\n    </div>\n\n    <!-- SGID (2000) -->\n    <div style=\"background:#F8FAFC; border:2px solid #3B82F6; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#3B82F6; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">SGID</span>\n          <span style=\"font-family:monospace; font-weight:800; color:#1E40AF; font-size:14px;\">Octal 2000</span>\n        </div>\n        <div style=\"font-size:13px; color:#334155; line-height:1.45; margin-bottom:8px;\">\n          <strong>En Directorios (¡Examen!):</strong> Todo archivo o subcarpeta creado dentro <strong>hereda automáticamente el grupo</strong> del directorio padre, facilitando el trabajo en equipo.\n        </div>\n        <div style=\"background:#EFF6FF; border-left:3px solid #3B82F6; padding:6px 8px; font-family:monospace; font-size:11.5px; color:#1E40AF; border-radius:4px;\">\n          <div>/shared/devs/</div>\n          <div style=\"font-weight:700;\">drwxrwsr-x (root:devs)</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:11.5px; color:#1E40AF; font-weight:700; background:#DBEAFE; padding:4px 8px; border-radius:6px;\">\n        chmod 2775 &bull; chmod g+s\n      </div>\n    </div>\n\n    <!-- Sticky Bit (1000) -->\n    <div style=\"background:#F8FAFC; border:2px solid #10B981; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;\">\n          <span style=\"background:#10B981; color:#FFF; font-size:12px; font-weight:800; padding:3px 8px; border-radius:6px;\">STICKY / BIT ADHESIVO</span>\n          <span style=\"font-family:monospace; font-weight:800; color:#065F46; font-size:14px;\">Octal 1000</span>\n        </div>\n        <div style=\"font-size:13px; color:#334155; line-height:1.45; margin-bottom:8px;\">\n          <strong>En Directorios Compartidos:</strong> Todos los usuarios pueden crear archivos, pero <strong>SOLO el creador del archivo</strong> (o root) puede borrarlo o renombrarlo (bandera de eliminación restringida).\n        </div>\n        <div style=\"background:#ECFDF5; border-left:3px solid #10B981; padding:6px 8px; font-family:monospace; font-size:11.5px; color:#065F46; border-radius:4px;\">\n          <div>/tmp y /var/tmp</div>\n          <div style=\"font-weight:700;\">drwxrwxrwt (root:root)</div>\n        </div>\n      </div>\n      <div style=\"margin-top:10px; font-size:11.5px; color:#065F46; font-weight:700; background:#D1FAE5; padding:4px 8px; border-radius:6px;\">\n        chmod 1777 &bull; chmod +t\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Resumen de 4 dígitos -->\n  <div style=\"background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:8px 16px; display:flex; align-items:center; justify-content:space-between;\">\n    <span style=\"font-size:13px; color:#92400E; font-weight:700;\">\n      Formato Octal de 4 Dígitos: <code style=\"font-size:15px; background:#FEF3C7; padding:2px 8px; border-radius:4px;\">[Especiales] [Dueño] [Grupo] [Otros]</code>\n    </span>\n    <span style=\"font-size:12.5px; color:#B45309;\">\n      Ejemplo: <strong>chmod 2775</strong> = SGID (2) + Dueño (7) + Grupo (7) + Otros (5)\n    </span>\n  </div>\n</div>\n"
         },
         {
           "type": "callout",
@@ -440,8 +507,8 @@
           "lines": [
             {
               "prompt": "$ ",
-              "command": "sudo chown www-data:www-data /var/www/html; sudo chown -R alumno:devs /opt/proyecto; ls -ld /var/www/html",
-              "output": "drwxr-xr-x 2 www-data www-data 4096 Oct 20 11:40 /var/www/html"
+              "command": "getent group devs; sudo chown -R alumno:devs /opt/proyecto; ls -ld /opt/proyecto",
+              "output": "devs:x:1002:carol,alumno\ndrwxr-xr-x 3 alumno devs 4096 Oct 20 11:40 /opt/proyecto"
             }
           ]
         },
@@ -453,6 +520,11 @@
             "Descripción"
           ],
           "rows": [
+            [
+              "getent group [grupo]",
+              "getent group",
+              "🎯 Consulta la base de datos de grupos (/etc/group) para verificar qué grupos y miembros existen en el sistema antes de asignar titularidades."
+            ],
             [
               "chown user file",
               "chown (Dueño)",
@@ -516,7 +588,17 @@
           "items": [
             "**Los Permisos Base Máximos Iniciales** — 🎯 En Linux, los programas solicitan permisos máximos de partida: para ARCHIVOS ORDINARIOS la base es 666 (rw-rw-rw-, ningún archivo nace ejecutable por seguridad). Para DIRECTORIOS la base es 777 (rwxrwxrwx, para permitir entrar y listar).",
             "**umask: La máscara que RECORTA permisos** — 🎯 umask define los bits que se DESACTIVAN (se sustraen) de los permisos base en el momento de crear el archivo. Los permisos resultantes se calculan mediante la operación lógica a nivel de bits: 'Permiso = Base AND NOT(umask)'.",
-            "**El comando umask en la consola** — 'umask' sin argumentos muestra el valor actual (ej: 0022). 'umask 027' cambia la máscara para la sesión actual."
+            "**El comando umask y la bandera simbólica -S (¡Examen LPIC-1!)** — 🎯 'umask' sin argumentos muestra el valor octal activo (ej: 0022). 🎯 'umask -S' muestra la máscara en NOTACIÓN SIMBÓLICA (ej: u=rwx,g=rx,o=rx). Muy preguntado en el examen: el modo simbólico muestra los permisos que SÍ se conceden, al contrario del octal que muestra lo que se prohíbe. 'umask 027' fija una nueva máscara para la sesión."
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "umask; umask -S",
+              "output": "0022\nu=rwx,g=rx,o=rx"
+            }
           ]
         },
         {
@@ -551,37 +633,42 @@
           "type": "table",
           "headers": [
             "Valor umask",
-            "Permisos en ARCHIVOS (Base 666 - umask)",
-            "Permisos en DIRECTORIOS (Base 777 - umask)",
+            "Modo Simbólico (umask -S)",
+            "Permisos ARCHIVOS (666 - umask)",
+            "Permisos DIRECTORIOS (777 - umask)",
             "Propósito en Examen LPIC-1"
           ],
           "rows": [
             [
               "022 (o 0022)",
+              "u=rwx,g=rx,o=rx",
               "🎯 644 (rw-r--r--)",
               "🎯 755 (rwxr-xr-x)",
               "🎯 Máscara ESTÁNDAR de Linux: otros pueden leer pero no escribir."
             ],
             [
               "002 (o 0002)",
+              "u=rwx,g=rwx,o=rx",
               "664 (rw-rw-r--)",
               "775 (rwxrwxr-x)",
               "Entornos de desarrollo colaborativo con User Private Groups (UPG)."
             ],
             [
               "027 (o 0027)",
+              "u=rwx,g=rx,o=",
               "🎯 640 (rw-r-----)",
               "🎯 750 (rwxr-x---)",
               "🎯 Entornos restringidos: el grupo lee pero 'otros' no tienen ningún acceso."
             ],
             [
               "077 (o 0077)",
+              "u=rwx,g=,o=",
               "🎯 600 (rw-------)",
               "🎯 700 (rwx------)",
               "🎯 Máxima privacidad: solo el propietario tiene acceso; grupo y otros tienen 0."
             ]
           ],
-          "caption": "Matriz de Valores umask Evaluados en el Examen"
+          "caption": "Matriz de Valores umask Evaluados en el Examen (Octal y Simbólico)"
         },
         {
           "type": "html",
@@ -702,14 +789,15 @@
           "ordered": true,
           "items": [
             "Caso 4 (Oficial Pág 514): Un administrador crea un directorio de proyectos compartidos '/srv/proyecto'. ¿Qué comando en modo octal asigna control total al dueño, lectura/escritura/herencia de grupo al grupo y ningún acceso a otros? — Comando: `sudo chmod 2770 /srv/proyecto` (El primer dígito '2' activa el permiso especial SGID para que todos los ficheros nuevos hereden el grupo; '770' da rwx al dueño, rwx al grupo y nada a otros.)",
-            "Caso 5 (Oficial Pág 514): Al listar un archivo se observa '-rwsr-xr-x 1 root root /usr/bin/passwd'. ¿Qué permiso especial tiene asignado y qué función cumple? — Comando: `Tiene asignado el permiso SUID (Set User ID)` (La 's' en el lugar de la 'x' del propietario indica que cualquier usuario que lo ejecute asumirá temporalmente los privilegios del dueño (root) durante la ejecución.)"
+            "Caso 5 (Oficial Pág 514): Al listar un archivo se observa '-rwsr-xr-x 1 root root /usr/bin/passwd'. ¿Qué permiso especial tiene asignado y qué función cumple? — Comando: `Tiene asignado el permiso SUID (Set User ID)` (La 's' en el lugar de la 'x' del propietario indica que cualquier usuario que lo ejecute asumirá temporalmente los privilegios del dueño (root) durante la ejecución.)",
+            "Caso 6 (Oficial Pág 525 - Ejercicio Guiado 5): Al ejecutar 'ls -l /dev/sdb1' se observa 'brw-rw---- 1 root disk 8, 17 Dec 21 18:51 /dev/sdb1'. ¿Qué tipo de archivo es y quién puede escribir en él? — Comando: `Tipo: Dispositivo de bloque ('b'). Escritura: root y grupo disk` (La 'b' inicial identifica un dispositivo de almacenamiento por bloques. El modo 'rw-rw----' otorga permisos de lectura y escritura al usuario propietario 'root' y a los usuarios que pertenezcan al grupo 'disk'.)"
           ]
         },
         {
           "type": "callout",
           "calloutType": "tip",
           "title": "Solución y Explicación del Ejercicio",
-          "content": "2770 configura colaboración perfecta con SGID; SUID en passwd permite elevar privilegios de forma controlada."
+          "content": "2770 configura colaboración con SGID; SUID en passwd eleva privilegios; 'b' en /dev/sdb1 identifica dispositivo de bloque con escritura para root y grupo disk."
         }
       ],
       "notes": "Muestra cómo en /srv/proyecto con 2770, si un usuario crea un archivo, el grupo asignado no es el suyo personal, sino el del directorio."
@@ -877,12 +965,28 @@
             [
               "¿Qué comando cambia el propietario y el grupo a la vez?",
               "chown usuario:grupo <archivo>."
+            ],
+            [
+              "¿Qué muestra la opción 'umask -S' en la terminal?",
+              "Muestra la máscara en notación simbólica (los permisos que SÍ se otorgan, ej: u=rwx,g=rx,o=rx)."
+            ],
+            [
+              "¿Qué denominaciones oficiales en español tiene el Sticky Bit (1000)?",
+              "Bit adhesivo y bandera de eliminación restringida (restringe el borrado al dueño del archivo o a root)."
+            ],
+            [
+              "¿Qué representan 'b' y 'c' en la primera columna de ls -l?",
+              "'b' = dispositivo de bloque (/dev/sda, discos); 'c' = dispositivo de caracteres (/dev/tty, /dev/null)."
+            ],
+            [
+              "¿Qué utilidad tiene 'getent group' en la administración de permisos?",
+              "Consulta la base de datos /etc/group para conocer grupos y miembros antes de reasignar con chown o chgrp."
             ]
           ],
           "caption": "Tarjetas de memorización"
         }
       ],
-      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 104.5."
+      "notes": "Repasa estas 12 tarjetas para asegurar el pleno de aciertos en el objetivo 104.5."
     },
     {
       "id": "104.5-slide-19",
@@ -894,6 +998,28 @@
           "type": "heading",
           "level": 2,
           "text": "Resumen y Claves de Examen: Subtema 104.5"
+        },
+        {
+          "type": "paragraph",
+          "text": "Checklist de conceptos críticos evaluados en el examen LPIC-1 101-500 (Tema 104.5):"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Modelo DAC (r=4, w=2, x=1)**: Aplicado a usuario, grupo y otros. Para borrar un archivo se requiere permiso 'w' en el directorio contenedor; para entrar con 'cd' se necesita permiso 'x'.",
+            "**Tipos de Archivo Especial**: 'b' (bloque, /dev/sda), 'c' (carácter, /dev/tty), 'l' (enlace), 's' (socket IPC), 'p' (tubería FIFO), 'd' (directorio), '-' (regular).",
+            "**Permisos Especiales (4000, 2000, 1000)**: SUID (4000) ejecuta como el propietario; SGID (2000) en directorios fuerza herencia de grupo en archivos nuevos; Sticky Bit (1000, bit adhesivo / bandera de eliminación restringida) protege el borrado en /tmp.",
+            "**Representación s/S y t/T**: La letra minúscula (s, t) indica que el permiso de ejecución 'x' está activo; la mayúscula (S, T) indica que 'x' no está configurado (error de configuración).",
+            "**umask y umask -S**: Base archivos = 666 (nunca nacen ejecutables); base directorios = 777. 'umask 022' -> 644/755; 'umask 027' -> 640/750. 'umask -S' imprime la notación simbólica con los permisos concedidos.",
+            "**Propiedad y Grupos**: 'chown user:group archivo' y 'chgrp group archivo'. 'chown -h' cambia el enlace simbólico sin alterar el destino. Usar 'getent group' para auditar pertenencias."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Regla de Oro para el Examen",
+          "content": "🎯 Recuerda para el examen: Ningún archivo nace ejecutable mediante umask. Los directorios compartidos con colaboración usan SGID (chmod 2775). Los directorios públicos de intercambio usan Sticky Bit (chmod 1777). 'umask -S' muestra lo que se concede."
         }
       ],
       "notes": "Concluimos el subtema 104.5. Los alumnos dominan ahora los permisos y la titularidad en Linux."

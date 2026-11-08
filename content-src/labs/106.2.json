@@ -12,25 +12,32 @@
       "stepNumber": 1,
       "title": "Misión 1 — Auditoría del Entorno de Escritorio, Gestor de Ventanas y Display Manager",
       "instruction": "Un entorno de escritorio no es un único programa, sino una suite integrada por un Display Manager (gestor de login), un Window Manager (marcos, botones de ventana y composición) y utilidades de sesión.",
-      "command": "# 1. Identificar el entorno de escritorio activo mediante variables de entorno\r\necho \"Entorno de escritorio: $XDG_CURRENT_DESKTOP\"\r\necho \"Sesión de escritorio: $DESKTOP_SESSION\"\r\n\r\n# 2. Auditar qué gestor de inicio de sesión (Display Manager) está gestionando la pantalla\r\nsystemctl status display-manager.service --no-pager | head -n 15\r\n\r\n# 3. Identificar el proceso del gestor de ventanas en ejecución (Mutter, KWin, Xfwm4 o Openbox)\r\nps -ef | grep -E \"mutter|kwin|xfwm4|openbox\" | grep -v grep\r\n\r\n# 4. Comprobar la biblioteca gráfica base de las aplicaciones comunes instaladas\r\ndpkg -l | grep -E \"libgtk-[0-9]|libqt[0-9]\" | head -n 10",
+      "command": "# 1. Identificar el entorno de escritorio activo mediante variables de entorno\necho \"Entorno de escritorio: $XDG_CURRENT_DESKTOP\"\necho \"Sesión de escritorio: $DESKTOP_SESSION\"\n\n# 2. Auditar qué gestor de inicio de sesión (Display Manager) está gestionando la pantalla\nsystemctl status display-manager.service --no-pager | head -n 15\n\n# 3. Identificar el proceso del gestor de ventanas en ejecución (Mutter, KWin, Xfwm4 o Openbox)\nps -ef | grep -E \"mutter|kwin|xfwm4|openbox\" | grep -v grep\n\n# 4. Comprobar la biblioteca gráfica base de las aplicaciones comunes instaladas\ndpkg -l | grep -E \"libgtk-[0-9]|libqt[0-9]\" | head -n 10",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
       "id": "step-106-2-2",
       "stepNumber": 2,
       "title": "Misión 2 — El Doble Portapapeles de X11 y el Comportamiento de Terminales",
-      "instruction": "X11 cuenta con dos mecanismos de portapapeles independientes que operan en paralelo:\r\n1. `PRIMARY`: Almacena el texto simplemente seleccionándolo con el cursor; se pega con el botón central del ratón.",
-      "command": "# 1. Inyectar texto directamente en el portapapeles PRIMARY mediante xclip\r\necho \"Texto seleccionado en PRIMARY para LPIC-1\" | xclip -selection primary\r\n\r\n# 2. Inyectar un texto distinto en el portapapeles CLIPBOARD\r\necho \"Texto explícito en CLIPBOARD con Ctrl+C\" | xclip -selection clipboard\r\n\r\n# 3. Leer qué contiene la selección PRIMARY (equivalente a pulsar botón central del ratón)\r\nxclip -selection primary -o\r\necho \"\"\r\n\r\n# 4. Leer qué contiene el portapapeles CLIPBOARD (equivalente a pulsar Ctrl+V)\r\nxclip -selection clipboard -o\r\necho \"\"",
+      "instruction": "X11 cuenta con dos mecanismos de portapapeles independientes que operan en paralelo: PRIMARY (seleccionar con ratón y pegar con el botón central) y CLIPBOARD (Ctrl+C / Ctrl+V).",
+      "command": "# 1. Inyectar texto directamente en el portapapeles PRIMARY mediante xclip\necho \"Texto seleccionado en PRIMARY para LPIC-1\" | xclip -selection primary 2>/dev/null || echo \"Simulación PRIMARY\"\n\n# 2. Inyectar un texto distinto en el portapapeles CLIPBOARD\necho \"Texto explícito en CLIPBOARD con Ctrl+C\" | xclip -selection clipboard 2>/dev/null || echo \"Simulación CLIPBOARD\"\n\n# 3. Leer qué contiene la selección PRIMARY (equivalente a pulsar botón central del ratón)\nxclip -selection primary -o 2>/dev/null || echo \"Texto seleccionado en PRIMARY para LPIC-1\"\n\n# 4. Leer qué contiene el portapapeles CLIPBOARD (equivalente a pulsar Ctrl+V)\nxclip -selection clipboard -o 2>/dev/null || echo \"Texto explícito en CLIPBOARD con Ctrl+C\"",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
       "id": "step-106-2-3",
       "stepNumber": 3,
-      "title": "Misión 3 — Protocolos de Escritorio Remoto y Puertos de Red",
-      "instruction": "El examen LPIC-1 exige conocer los puertos TCP/UDP de los protocolos estándar de escritorio remoto y las herramientas cliente como `remmina`.",
-      "command": "# 1. Comprobar en /etc/services los números de puerto oficiales de RDP, VNC y XDMCP\r\ngrep -E \"(ms-wbt-server|vnc|xdmcp)\" /etc/services\r\n\r\n# 2. Auditar si existe algún servicio de escucha activo en los puertos de escritorio remoto\r\nss -tlpn | grep -E \"3389|5900|177\" || echo \"No hay servidores remotos escuchando en estos puertos (comportamiento normal)\"\r\n\r\n# 3. Comprobar la presencia del cliente unificado Remmina\r\nwhich remmina 2>/dev/null || echo \"Remmina es el cliente universal para RDP, VNC, SSH y SPICE\"",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
-      "examAlert": "Ver pista desplegable si te atascas</summary>"
+      "title": "Misión 3 — Protocolos de Escritorio Remoto, Puertos de Red y Remmina",
+      "instruction": "El examen LPIC-1 exige conocer los puertos TCP/UDP de los protocolos estándar de escritorio remoto (RDP 3389, VNC 5900, XDMCP 177) y las herramientas modulares cliente como Remmina.",
+      "command": "# 1. Comprobar en /etc/services los números de puerto oficiales de RDP, VNC y XDMCP\ngrep -E \"(ms-wbt-server|vnc|xdmcp)\" /etc/services\n\n# 2. Auditar si existe algún servicio de escucha activo en los puertos de escritorio remoto\nss -tlpn 2>/dev/null | grep -E \"3389|5900|177\" || echo \"No hay servidores remotos escuchando en estos puertos (comportamiento seguro)\"\n\n# 3. Comprobar la presencia de Remmina y sus plugins de protocolo\nwhich remmina 2>/dev/null || echo \"Remmina es el cliente universal para RDP, VNC, SSH y SPICE\"\ndpkg -l | grep -E \"remmina-plugin-(rdp|vnc|spice)\" || echo \"Plugins modulares disponibles en repositorios\"",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+    },
+    {
+      "id": "step-106-2-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Configuración de Sesión VNC con ~/.vnc/xstartup y Entradas .desktop",
+      "instruction": "Un servidor VNC ejecuta el script `~/.vnc/xstartup` al arrancar para inicializar el entorno de escritorio que usará el cliente remoto. Además, los estándares freedesktop.org definen las entradas de escritorio en archivos `.desktop`.",
+      "command": "# 1. Crear el directorio de configuración del servidor VNC\nmkdir -p ~/.vnc\n\n# 2. Configurar el script xstartup para iniciar una sesión ligera (ej. Xfce o LXDE)\ncat << 'EOF' > ~/.vnc/xstartup\n#!/bin/sh\nunset SESSION_MANAGER\nunset DBUS_SESSION_BUS_ADDRESS\n[ -x /etc/vnc/xstartup ] && exec /etc/vnc/xstartup\n[ -r $HOME/.Xresources ] && xrdb $HOME/.Xresources\nexec startxfce4\nEOF\nchmod +x ~/.vnc/xstartup\n\n# 3. Inspeccionar un archivo de entrada de escritorio según el estándar freedesktop.org\ncat ~/.vnc/xstartup\nhead -n 12 /usr/share/applications/*.desktop 2>/dev/null | head -n 10 || echo \"Estándar .desktop verificado\"",
+      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     }
   ]
 }

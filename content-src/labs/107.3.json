@@ -2,7 +2,7 @@
   "id": "lab-107-3",
   "subtopicId": "107.3",
   "title": "Práctica 107.3 — Localización, Zonas Horarias, Locales y Conversión con iconv",
-  "estimatedMinutes": 25,
+  "estimatedMinutes": 35,
   "difficulty": "basic",
   "type": "subtopic",
   "placeholder": false,
@@ -12,25 +12,40 @@
       "stepNumber": 1,
       "title": "Misión 1 — Diagnóstico y Configuración de Zonas Horarias con timedatectl",
       "instruction": "Comprobaremos el estado horario del sistema, analizaremos el enlace `/etc/localtime` y cambiaremos la zona horaria de forma persistente con `timedatectl`, verificando además la sobreescritura temporal mediante la variable `TZ`.",
-      "command": "# 1. Consultar el estado detallado de tiempo y zona horaria\r\ntimedatectl status\r\n\r\n# 2. Comprobar a qué archivo apunta físicamente /etc/localtime\r\nls -l /etc/localtime\r\n\r\n# 3. Cambiar la zona horaria del sistema a 'Europe/Paris' con timedatectl\r\nsudo timedatectl set-timezone Europe/Paris\r\ntimedatectl status | grep \"Time zone\"\r\n\r\n# 4. Comprobar que el enlace simbólico /etc/localtime se actualizó automáticamente\r\nls -l /etc/localtime\r\n\r\n# 5. Probar una zona horaria diferente solo para un comando mediante la variable TZ\r\nTZ=America/New_York date\r\nTZ=Asia/Tokyo date\r\ndate",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "command": "# 1. Consultar el estado detallado de tiempo y zona horaria\ntimedatectl status\n\n# 2. Comprobar a qué archivo apunta físicamente /etc/localtime\nls -l /etc/localtime\n\n# 3. Cambiar la zona horaria del sistema a 'Europe/Paris' con timedatectl\nsudo timedatectl set-timezone Europe/Paris\ntimedatectl status | grep \"Time zone\"\n\n# 4. Comprobar que el enlace simbólico /etc/localtime se actualizó automáticamente\nls -l /etc/localtime\n\n# 5. Probar una zona horaria diferente solo para un comando mediante la variable TZ\nTZ=America/New_York date\nTZ=Asia/Tokyo date\ndate",
+      "expectedOutput": "timedatectl actualiza el enlace /etc/localtime y la variable TZ sobreescribe la hora del proceso."
     },
     {
       "id": "step-107-3-2",
       "stepNumber": 2,
-      "title": "Misión 2 — Precedencia de Variables de Locale: LC_ALL vs LANG",
-      "instruction": "Comprobaremos de forma práctica la jerarquía de variables regionales del sistema demostrando cómo `LC_ALL` se impone sobre cualquier otra directiva configurada.",
-      "command": "# 1. Inspeccionar las variables de localización activas con locale\r\nlocale\r\n\r\n# 2. Configurar LANG en español y LC_MESSAGES en español\r\nexport LANG=es_ES.UTF-8\r\nexport LC_MESSAGES=es_ES.UTF-8\r\n\r\n# 3. Lanzar un comando que produzca un mensaje de error y ver el idioma\r\nls /archivo_que_no_existe\r\n\r\n# 4. Forzar LC_ALL=C (inglés neutro de desarrollo) y repetir la orden\r\nexport LC_ALL=C\r\nls /archivo_que_no_existe\r\n\r\n# 5. Desactivar LC_ALL y comprobar que vuelve a responder en español\r\nunset LC_ALL\r\nls /archivo_que_no_existe",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "title": "Misión 2 — Administración Tradicional de Zonas Horarias y Convención Etc/GMT",
+      "instruction": "Gestionaremos la zona horaria tradicionalmente mediante enlace simbólico directo en `/etc/localtime` y verificaremos la inversión de signos en el formato POSIX `Etc/GMT`.",
+      "command": "# 1. Explorar la base de datos Olson en /usr/share/zoneinfo/\nls /usr/share/zoneinfo/Europe | head -n 10\n\n# 2. Establecer manualmente la zona a Europe/Madrid mediante enlace simbólico relativo\nsudo ln -sf /usr/share/zoneinfo/Europe/Madrid /etc/localtime\nls -l /etc/localtime\n\n# 3. Probar la zona Etc/GMT+3 (que equivale a UTC-3 según POSIX) con la variable TZ\nTZ=Etc/GMT+3 date\n\n# 4. Probar la zona Etc/GMT-3 (que equivale a UTC+3 según POSIX)\nTZ=Etc/GMT-3 date\n\n# 5. Comparar con date -u (hora UTC pura)\ndate -u",
+      "expectedOutput": "El enlace simbólico queda establecido y se comprueba la regla de signos invertidos de Etc/GMT."
     },
     {
       "id": "step-107-3-3",
       "stepNumber": 3,
-      "title": "Misión 3 — Codificación de Caracteres y Conversión con iconv",
-      "instruction": "Crearemos un archivo con caracteres especiales en codificación tradicional ISO-8859-15 (incluyendo tildes y el símbolo del Euro `€`) y lo convertiremos a UTF-8 estándar mediante `iconv`.",
-      "command": "# 1. Generar un archivo de texto codificado en ISO-8859-15\r\nprintf \"Certificación LPIC-1: Administración de Servidores en Europa.\r\nPrecio del examen: 160 €.\r\n\" | iconv -f UTF-8 -t ISO-8859-15 > ~/factura_iso.txt\r\n\r\n# 2. Comprobar el tipo de codificación detectado por la herramienta file\r\nfile ~/factura_iso.txt\r\n\r\n# 3. Convertir el archivo de ISO-8859-15 a UTF-8 mediante iconv\r\niconv -f ISO-8859-15 -t UTF-8 ~/factura_iso.txt -o ~/factura_utf8.txt\r\n\r\n# 4. Verificar que el archivo resultante es UTF-8 y leer su contenido\r\nfile ~/factura_utf8.txt\r\ncat ~/factura_utf8.txt",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
-      "examAlert": "Ver pista desplegable si te atascas</summary>"
+      "title": "Misión 3 — Precedencia de Variables de Locale e Impacto de LC_NUMERIC en uptime",
+      "instruction": "Comprobaremos la jerarquía de variables regionales del sistema demostrando cómo `LC_ALL` anula a `LC_*` y `LANG`, y comprobaremos cómo `LC_NUMERIC` altera el formato decimal de `uptime`.",
+      "command": "# 1. Inspeccionar variables de localización activas con /usr/bin/locale\n/usr/bin/locale\n\n# 2. Comprobar la salida de uptime en locale C (formato inglés con punto decimal)\nLC_ALL=C uptime\n\n# 3. Comprobar la salida de uptime forzando locale español con coma decimal\nLC_ALL=es_ES.UTF-8 uptime 2>/dev/null || LC_NUMERIC=es_ES.UTF-8 uptime\n\n# 4. Probar que LC_ALL=C prevalece sobre LC_MESSAGES=es_ES.UTF-8 al provocar un error\nLC_ALL=C LC_MESSAGES=es_ES.UTF-8 ls /archivo_inexistente_prueba\n\n# 5. Sin LC_ALL, LC_MESSAGES toma el control\nLC_ALL= LC_MESSAGES=es_ES.UTF-8 ls /archivo_inexistente_prueba",
+      "expectedOutput": "uptime muestra punto o coma decimal según LC_NUMERIC y LC_ALL se impone con máxima prioridad."
+    },
+    {
+      "id": "step-107-3-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Auditoría y Compilación de Locales con locale -a y locale -m",
+      "instruction": "Listaremos todos los locales compilados y mapas de caracteres disponibles, y verificaremos la configuración persistente del sistema con `localectl`.",
+      "command": "# 1. Listar los mapas de caracteres admitidos por el sistema (charmaps)\nlocale -m | grep -E \"UTF-8|ISO-8859-15|ANSI_X3.4-1968\"\n\n# 2. Listar todos los locales actualmente generados en el sistema\nlocale -a | head -n 15\n\n# 3. Consultar el estado permanente de systemd para localización y teclado\nlocalectl status\n\n# 4. Listar las zonas horarias que contengan 'Madrid' o 'Canary'\ntimedatectl list-timezones | grep -E \"Madrid|Canary\"",
+      "expectedOutput": "locale -m y locale -a muestran los charmaps y locales compilados en el sistema."
+    },
+    {
+      "id": "step-107-3-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Conversión de Archivos con iconv, //TRANSLIT e //IGNORE",
+      "instruction": "Crearemos un archivo con caracteres especiales en ISO-8859-15 (con tildes y euro `€`), lo convertiremos a UTF-8 y probaremos los sufijos `//TRANSLIT` e `//IGNORE` hacia ASCII.",
+      "command": "# 1. Generar un archivo de texto en ISO-8859-15 con euro y tildes\nprintf \"Servidor Linux: Precio 150 € con garantía.\n\" | iconv -f UTF-8 -t ISO-8859-15 > ~/factura_iso.txt\nfile ~/factura_iso.txt\n\n# 2. Convertir de ISO-8859-15 a UTF-8 estándar con iconv -o\niconv -f ISO-8859-15 -t UTF-8 ~/factura_iso.txt -o ~/factura_utf8.txt\nfile ~/factura_utf8.txt\n\n# 3. Convertir a ASCII puro con transliteración aproximada (//TRANSLIT)\niconv -f UTF-8 -t ASCII//TRANSLIT ~/factura_utf8.txt -o ~/factura_translit.txt\ncat ~/factura_translit.txt\n\n# 4. Convertir a ASCII puro descartando caracteres no representables (//IGNORE)\niconv -f UTF-8 -t ASCII//IGNORE ~/factura_utf8.txt -o ~/factura_ignore.txt\ncat ~/factura_ignore.txt",
+      "expectedOutput": "iconv realiza conversiones limpias: //TRANSLIT aproxima caracteres y //IGNORE omite los no soportados."
     }
   ]
 }
