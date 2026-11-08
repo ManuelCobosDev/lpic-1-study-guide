@@ -67,6 +67,11 @@ describe('SettingsPageComponent', () => {
 
     component.onDensityChange('compact');
     expect(preferencesService.density()).toBe('compact');
+    expect(document.documentElement.getAttribute('data-density')).toBe('compact');
+
+    component.onTextSizeChange('lg');
+    expect(preferencesService.textSize()).toBe('lg');
+    expect(document.documentElement.getAttribute('data-text-size')).toBe('lg');
   });
 
   it('debe llamar a downloadBackupFile al pulsar exportar JSON', async () => {
