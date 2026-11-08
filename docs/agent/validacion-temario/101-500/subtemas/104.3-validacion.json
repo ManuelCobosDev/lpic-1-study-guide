@@ -1,0 +1,119 @@
+{
+  "exam_id": "101-500",
+  "topic_id": "104",
+  "subtopic_id": "104.3",
+  "subtopic_title": "Controlar el montaje y desmontaje de los sistemas de archivos",
+  "pages_range": {
+    "start": 487,
+    "end": 506
+  },
+  "validated_at": "2026-11-08T09:41:51.171084+00:00",
+  "verdict": "APTO_CON_HUECOS",
+  "scores": {
+    "total": 80.8,
+    "commands_flags_paths": 78.0,
+    "definitions_glossary": 82.0,
+    "theory_statements": 84.0,
+    "exercises_practical": 80.0
+  },
+  "executive_summary": "El subtema 104.3 ('Controlar el montaje y desmontaje de los sistemas de archivos') cuenta con un desarrollo pedagógico notable en la plataforma web (19 diapositivas interactivas y un laboratorio práctico de 4 misiones). Sobresale en la explicación del árbol unificado VFS, el efecto de ocultación de directorios, la anatomía exhaustiva de los 6 campos de /etc/fstab (con especial rigor en el 6º campo 'fsck pass': 1 para raíz, 2 para particiones locales, 0 para swap/remotas), la identificación fiable mediante UUIDs y etiquetas, y la regla de nomenclatura de systemd (.mount sustituyendo barras por guiones). Sin embargo, se identifican huecos técnicos relevantes frente al manual oficial de LPI (páginas 487-506): ausencia de comandos systemctl (daemon-reload, start, enable, status) y de la ruta canónica /etc/systemd/system/ para gestionar unidades .mount y .automount; omisión de banderas clave de umount como -f (forzar) y -r (fallback a solo lectura ante caídas de red) evaluadas en los ejercicios; y falta de cobertura de la sintaxis 'mount -t tipo1,tipo2' para listar sistemas de archivos específicos.",
+  "missing_from_web": [
+    {
+      "kind": "command",
+      "item": "systemctl (daemon-reload, start, enable, status)",
+      "page": 498,
+      "detail": "Comandos esenciales de systemctl explicados en el manual para recargar el demonio, arrancar, habilitar y verificar el estado de las unidades '.mount' y '.automount' creadas por el administrador."
+    },
+    {
+      "kind": "flag",
+      "item": "umount -f",
+      "page": 491,
+      "detail": "Bandera de desmontaje forzado ('force'), fundamental cuando un sistema de archivos remoto (NFS) se vuelve inalcanzable por fallo de red (objeto directo del Ejercicio Exploratorio 2 del PDF)."
+    },
+    {
+      "kind": "flag",
+      "item": "umount -r",
+      "page": 491,
+      "detail": "Bandera de desmontaje con degradación segura: si el sistema de archivos no se puede desmontar, intenta volver a montarlo inmediatamente como de solo lectura ('remount ro')."
+    },
+    {
+      "kind": "flag",
+      "item": "mount -r / -ro y -w / -rw",
+      "page": 490,
+      "detail": "Modificadores directos de mount en línea de comandos para montar en modo solo lectura o lectura/escritura sin requerir el parámetro compuesto '-o ro/rw'."
+    },
+    {
+      "kind": "flag",
+      "item": "mount -t <tipo1,tipo2>",
+      "page": 490,
+      "detail": "Sintaxis para filtrar la lista de montajes activos por múltiples tipos de sistemas de archivos separados por comas (evaluado en el Ejercicio Guiado 6 con 'mount -t ext3,ntfs')."
+    },
+    {
+      "kind": "path",
+      "item": "/etc/systemd/system/",
+      "page": 498,
+      "detail": "Ubicación canónica donde el administrador de sistemas debe depositar los archivos de unidad '.mount' y '.automount' para su persistencia y control."
+    },
+    {
+      "kind": "term",
+      "item": "Opciones fstab: group y owner",
+      "page": 494,
+      "detail": "Opciones de montaje en /etc/fstab que permiten montar a usuarios no privilegiados si pertenecen al mismo grupo del dispositivo ('group') o son sus propietarios ('owner')."
+    },
+    {
+      "kind": "term",
+      "item": "Estructura de unidad .mount ([Unit], [Mount], [Automount], [Install])",
+      "page": 497,
+      "detail": "Directivas internas de los archivos .mount y .automount (What=, Where=, Type=, Options=, WantedBy=multi-user.target), evaluadas en los Ejercicios Exploratorios 4 y 5 del manual."
+    }
+  ],
+  "extra_in_web": [
+    {
+      "kind": "command",
+      "item": "findfs (UUID= / LABEL=)",
+      "detail": "Comando para localizar el nodo de dispositivo físico a partir de su UUID o LABEL; forma parte del objetivo 104.3 de LPI pero no se describe en el texto de la lección del PDF."
+    },
+    {
+      "kind": "command",
+      "item": "fuser (-vm / -km)",
+      "detail": "Herramienta altamente pedagógica y evaluada en certificaciones para diagnosticar y matar procesos asociados al error 'target is busy' al desmontar."
+    },
+    {
+      "kind": "feature",
+      "item": "Montajes especiales: mount --bind y mount -o loop",
+      "detail": "Diapositiva 10 dedicada a la duplicación de árboles mediante bind mounts y al montaje de imágenes ISO con dispositivos loop (/dev/loop*)."
+    },
+    {
+      "kind": "widget",
+      "item": "Visualizadores interactivos de fstab y árbol VFS",
+      "detail": "Desgloses visuales en diapositivas 2, 6 y 7 que clarifican el efecto de ocultación y la regla mnemotécnica de los 6 campos de /etc/fstab."
+    }
+  ],
+  "distortions_or_errors": [
+    {
+      "severity": "P2",
+      "item": "Omisión del Ejercicio Guiado 6 del PDF (mount -t ext3,ntfs)",
+      "page": 500,
+      "detail": "El ejercicio oficial 6 pregunta cómo listar simultáneamente todos los sistemas ext3 y ntfs montados en el sistema; la web no enseña el uso de listas separadas por comas en mount -t."
+    },
+    {
+      "severity": "P2",
+      "item": "Omisión del Ejercicio Exploratorio 2 del PDF (umount -f / umount -r)",
+      "page": 501,
+      "detail": "El ejercicio oficial 2 evalúa cómo recuperar o forzar el desmontaje de un sistema remoto inalcanzable en /mnt/server; la web solo ofrece fuser/lsof y umount -l (lazy) sin mencionar -f ni -r."
+    },
+    {
+      "severity": "P3",
+      "item": "Ausencia de directivas internas en unidades systemd .mount",
+      "page": 497,
+      "detail": "La diapositiva 9 explica la regla de nomenclatura de archivos .mount pero omite las secciones [Mount] con What= y Where= y cómo traducir entre /etc/fstab y un .mount (ejercicios exploratorios 4 y 5)."
+    }
+  ],
+  "actionable_fixes": [
+    "Añadir en la diapositiva 5 (umount) las opciones '-f' (forzar desmontaje en fallos de red) y '-r' (degradación a solo lectura si no puede desmontar).",
+    "Incorporar en la diapositiva 3 (mount) la sintaxis de lista separada por comas para filtrar tipos de FS ('mount -t ext3,ntfs') y las banderas directas '-r' / '-w'.",
+    "Ampliar la diapositiva 9 (unidades systemd) incluyendo la estructura interna del archivo .mount (What=, Where=, Type=, WantedBy=) en '/etc/systemd/system/' y los comandos 'systemctl daemon-reload', 'systemctl start' y 'systemctl enable'.",
+    "Agregar en la tabla de opciones de /etc/fstab (diapositiva 4) las opciones 'group' y 'owner', así como 'sync'/'async'.",
+    "Actualizar las diapositivas 13 y 15 para incorporar textualmente la resolución del Ejercicio Guiado 6 ('mount -t ext3,ntfs') y el Ejercicio Exploratorio 2 ('umount -f / umount -r')."
+  ]
+}
