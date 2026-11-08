@@ -347,6 +347,17 @@ export class ExamService {
   }
 
   /**
+   * Elimina un intento completado del historial por su ID.
+   */
+  deleteAttempt(attemptId: string): void {
+    this.historyStore.update((h) => ({
+      ...h,
+      attempts: h.attempts.filter((a) => a.id !== attemptId)
+    }));
+    this.historyStore.flush();
+  }
+
+  /**
    * Recupera un intento finalizado por ID desde el historial persistido.
    */
   getAttemptById(id: string): ExamAttempt | undefined {
