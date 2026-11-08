@@ -76,10 +76,29 @@ export class FlashcardsPageComponent implements OnInit {
 
   readonly reviewedCards = signal<string[]>([]);
 
+  readonly showGuide = signal<boolean>(false);
+  readonly activeCategoryTab = signal<'topics' | 'general'>('topics');
+
+  readonly topicDecks: { id: DeckType; label: string; title: string; name: string; exam: '101' | '102' }[] = [
+    { id: 'topic-101', label: '101', title: 'Tema 101', name: 'Arquitectura del sistema', exam: '101' },
+    { id: 'topic-102', label: '102', title: 'Tema 102', name: 'Instalación y paquetes', exam: '101' },
+    { id: 'topic-103', label: '103', title: 'Tema 103', name: 'Comandos GNU y Unix', exam: '101' },
+    { id: 'topic-104', label: '104', title: 'Tema 104', name: 'Dispositivos y FHS', exam: '101' },
+    { id: 'topic-105', label: '105', title: 'Tema 105', name: 'Shells y scripts', exam: '102' },
+    { id: 'topic-106', label: '106', title: 'Tema 106', name: 'Interfaces y escritorios', exam: '102' },
+    { id: 'topic-107', label: '107', title: 'Tema 107', name: 'Tareas administrativas', exam: '102' },
+    { id: 'topic-108', label: '108', title: 'Tema 108', name: 'Servicios esenciales', exam: '102' },
+    { id: 'topic-109', label: '109', title: 'Tema 109', name: 'Fundamentos de redes', exam: '102' },
+    { id: 'topic-110', label: '110', title: 'Tema 110', name: 'Seguridad', exam: '102' }
+  ];
+
+  readonly exam101Topics = computed(() => this.topicDecks.filter((t) => t.exam === '101'));
+  readonly exam102Topics = computed(() => this.topicDecks.filter((t) => t.exam === '102'));
+
   readonly availableDecks: { id: DeckType; label: string; icon: string }[] = [
     { id: 'all', label: 'Todo el Catálogo', icon: '📚' },
-    { id: 'exam-101', label: 'Examen 101', icon: '🐧' },
-    { id: 'exam-102', label: 'Examen 102', icon: '🛡️' },
+    { id: 'exam-101', label: 'Examen 101 Completo', icon: '🐧' },
+    { id: 'exam-102', label: 'Examen 102 Completo', icon: '🛡️' },
     { id: 'commands', label: 'Solo Comandos', icon: '💻' },
     { id: 'flags', label: 'Opciones / Flags', icon: '⚙️' },
     { id: 'glossary', label: 'Solo Glosario', icon: '📖' },
@@ -114,10 +133,20 @@ export class FlashcardsPageComponent implements OnInit {
     const deck = this.selectedDeck();
     const found = this.availableDecks.find((d) => d.id === deck);
     if (found) return found.label;
+    const foundTopic = this.topicDecks.find((t) => t.id === deck);
+    if (foundTopic) return `${foundTopic.title}: ${foundTopic.name}`;
     if (deck.startsWith('subtopic-')) return `Subtema ${deck.replace('subtopic-', '')}`;
     if (deck.startsWith('topic-')) return `Tema ${deck.replace('topic-', '')}`;
     return 'Mazo Personalizado';
   });
+
+  toggleGuide(): void {
+    this.showGuide.update((v) => !v);
+  }
+
+  setActiveCategoryTab(tab: 'topics' | 'general'): void {
+    this.activeCategoryTab.set(tab);
+  }
 
   // Filtrado reactivo de tarjetas en el Explorador (< 1 ms sobre 1 200+ tarjetas)
   readonly filteredExplorerCards = computed(() => {
@@ -261,13 +290,23 @@ export class FlashcardsPageComponent implements OnInit {
       this.allCards.set(all);
 
       const mazoParam = this.route.snapshot.queryParamMap.get('mazo') as DeckType;
+      const temaParam = this.route.snapshot.queryParamMap.get('tema');
       const subtemaParam = this.route.snapshot.queryParamMap.get('subtema');
       let initialDeck: DeckType = 'all';
 
       if (subtemaParam) {
         initialDeck = `subtopic-${subtemaParam}`;
+        this.activeCategoryTab.set('topics');
+      } else if (temaParam) {
+        initialDeck = `topic-${temaParam}`;
+        this.activeCategoryTab.set('topics');
       } else if (mazoParam) {
         initialDeck = mazoParam;
+        if (mazoParam.startsWith('topic-') || mazoParam.startsWith('subtopic-') || mazoParam === 'all') {
+          this.activeCategoryTab.set('topics');
+        } else {
+          this.activeCategoryTab.set('general');
+        }
       }
 
       await this.selectDeck(initialDeck);
@@ -279,6 +318,11 @@ export class FlashcardsPageComponent implements OnInit {
   async selectDeck(deck: DeckType): Promise<void> {
     this.loading.set(true);
     this.selectedDeck.set(deck);
+    if (deck.startsWith('topic-') || deck.startsWith('subtopic-')) {
+      this.activeCategoryTab.set('topics');
+    } else if (deck !== 'all') {
+      this.activeCategoryTab.set('general');
+    }
     this.isCompleted.set(false);
     this.currentIndex.set(0);
     this.isFlipped.set(false);

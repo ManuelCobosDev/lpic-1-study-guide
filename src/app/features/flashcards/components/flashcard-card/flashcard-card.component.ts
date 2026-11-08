@@ -28,6 +28,40 @@ export class FlashcardCardComponent {
 
   readonly boxBadge = computed(() => `Caja ${this.currentBox()}`);
 
+  readonly boxSubtext = computed(() => {
+    switch (this.currentBox()) {
+      case 1:
+        return 'Repaso diario';
+      case 2:
+        return 'Repaso en 1 día';
+      case 3:
+        return 'Repaso en 3 días';
+      case 4:
+        return 'Repaso en 7 días';
+      case 5:
+        return 'Dominada (21 días)';
+      default:
+        return '';
+    }
+  });
+
+  readonly boxDescription = computed(() => {
+    switch (this.currentBox()) {
+      case 1:
+        return 'Caja 1: Tarjeta nueva o fallada. Se repasa hoy mismo.';
+      case 2:
+        return 'Caja 2: En progreso inicial. Próximo repaso en 1 día.';
+      case 3:
+        return 'Caja 3: Consolidada. Próximo repaso en 3 días.';
+      case 4:
+        return 'Caja 4: Avanzada. Próximo repaso en 7 días.';
+      case 5:
+        return 'Caja 5: Dominada. Próximo repaso en 21 días (afianzada para examen).';
+      default:
+        return '';
+    }
+  });
+
   readonly intervals = computed(() => {
     const box = (this.currentBox() || 1) as LeitnerBox;
     const againBox = calculateNextBox(box, 'again');
