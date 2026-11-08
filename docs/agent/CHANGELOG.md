@@ -894,4 +894,19 @@
 - Verificación: ejecución real de `pdf_validation_server.py init` sobre `LPI-Learning-Material-101-500-es.pdf` (571 págs, 4 temas, 23 subtemas) y `LPI-Learning-Material-102-500-es.pdf` (594 págs, 6 temas, 19 subtemas), prueba de extremo a extremo de `extract-section`, `pre-compare`, `save-comparison` y `progress` en SQLite, `npm run typecheck` y `npm run lint` en verde.
 - Pendiente / deuda: Ejecutar `/validar-temario-pdf 101` o `/validar-temario-pdf 102` cuando el usuario indique iniciar el barrido masivo completo.
 
+## C-0082 · 2026-11-08 · Paralelismo Hardware-Aware por Oleadas (`ThreadPoolExecutor` + Semáforo de Subagentes) en `/validar-temario-pdf`
+- Qué: ampliación del motor y protocolos de `.agents/skills/validar-temario-pdf/` para ejecución masiva en paralelo adaptada automáticamente al hardware de la máquina:
+  (1) Auto-detección de hardware en `pdf_validation_server.py` (`detect_hardware_profile` y `compute_concurrency_plan` con `GlobalMemoryStatusEx` y `os.cpu_count()`):
+      - Detecta en la máquina actual 16 CPUs lógicos y 31.34 GB RAM (19.2+ GB libres, perfil `HIGH_END_WORKSTATION`).
+      - Calcula dinámicamente `python_thread_pool_workers = 14`, `max_parallel_layer2_topic_agents = 4` (todos los temas de 101 en paralelo), `max_global_layer3_subagents = 12` y `subtopics_per_wave_per_topic = 3` (oleadas paralelas de 3 subtemas por tema).
+  (2) Planificador de oleadas (`next-wave`) y motores paralelos multi-hilo (`extract-wave-parallel` y `pre-compare-wave-parallel`):
+      - Ejecución simultánea con `concurrent.futures.ThreadPoolExecutor` abriendo descriptores `pymupdf.Document` independientes por hilo y vectorizando la búsqueda de comandos en un único regex precompilado C-level (`get_compiled_commands_regex`).
+      - Transacciones SQLite protegidas con `DB_WRITE_LOCK`, `busy_timeout=45000` y backoff exponencial (`run_db_write_transaction`), eliminando colisiones al escribir desde 9–14 hilos concurrentes.
+  (3) Actualización de `SKILL.md`, `references/system-prompts-capas.md` y `references/esquemas-datos-y-api.md` para exigir invocación simultánea de subagentes por oleada (`invoke_subagent` múltiples en el mismo turno).
+- Por qué: solicitud del usuario para garantizar que el proceso no sea secuencial, sino paralelo con límites de concurrencia calculados según el hardware real de su equipo.
+- Archivos: .agents/skills/validar-temario-pdf/scripts/pdf_validation_server.py, .agents/skills/validar-temario-pdf/SKILL.md, .agents/skills/validar-temario-pdf/references/system-prompts-capas.md, .agents/skills/validar-temario-pdf/references/esquemas-datos-y-api.md, docs/agent/CHANGELOG.md, docs/agent/STATUS.md.
+- Verificación: prueba real de `init`, `next-wave --topic 103`, `extract-wave-parallel --exam 101-500 --subtopics 103.1,103.2,103.3` (9 secciones extraídas en paralelo en 9 hilos con 0 errores) y `pre-compare-wave-parallel` (3 subtemas comparados en paralelo en 3.18s con 0 errores).
+- Pendiente / deuda: Lanzar la validación masiva paralela sobre `101-500` o `102-500` cuando el usuario lo indique.
+
+
 

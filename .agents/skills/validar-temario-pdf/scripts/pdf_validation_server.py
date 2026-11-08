@@ -1,35 +1,45 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 r"""
-Servidor Micro-API Jerárquico + Motor SQLite + Extractor PyMuPDF y Pre-Comparador Web
+Servidor Micro-API Jerárquico + Planificador Hardware-Aware en Paralelo + Motor SQLite WAL
 para la Skill `/validar-temario-pdf`.
 
 Propósito:
-1. Analizar la estructura completa de un PDF oficial LPI (~600 páginas), detectar Temas,
-   Subtemas y Secciones internas (Portada/Metadatos, Lecciones de Teoría, Ejercicios Guiados,
-   Ejercicios Exploratorios, Resumen y Respuestas) y generar `structure-input.json`.
-2. Mantener una base de datos SQLite local (`content-src/_extract/validation_state.db`) en
-   modo WAL para controlar el estado exacto de cada página (page_ledger), tema, subtema,
-   sección extraída y validación comparativa contra la web.
-3. Montar un servidor HTTP con rutas dinámicas por Tema (`/api/topic/<topic_id>`) y Sub-APIs
-   internas por Sección (`/api/topic/<topic_id>/subtopic/<subtopic_id>/section/<section_slug>`),
-   además de ofrecer una interfaz CLI idéntica para que los subagentes de Capa 2 y Capa 3
-   (`flash_lite` / `flash`) operen con un ahorro de tokens superior al 95%.
+1. Detectar automáticamente el hardware real de la máquina (CPUs lógicos, RAM total, RAM libre y
+   carga de memoria en Windows/Linux/macOS) y calcular un Plan de Concurrencia Óptimo:
+   - Número de hilos del pool Python (`ThreadPoolExecutor`) para extracción/comparación multi-core.
+   - Límite de subagentes de Capa 2 (Temas) en paralelo.
+   - Límite de subagentes de Capa 3 (Extracción/Comparación) simultáneos por Tema y globales
+     mediante oleadas (`execution_waves`) para máxima velocidad sin saturar RAM ni rate-limits.
+2. Analizar la estructura completa de un PDF oficial LPI (~600 páginas), detectar Temas,
+   Subtemas y Secciones internas y generar `structure-input.json` incluyendo el plan de oleadas
+   paralelas adaptado al hardware.
+3. Mantener una base de datos SQLite local (`content-src/_extract/validacion-masiva/validation_state.db`)
+   en modo WAL con bloqueo transaccional (`DB_WRITE_LOCK` + retry exponencial) para soportar
+   escrituras paralelas masivas sin errores de bloqueo.
+4. Exponer APIs por Tema (`/api/topic/<topic_id>`), Sub-APIs por Sección y endpoints de ejecución
+   paralela por oleada (`/api/topic/<topic_id>/extract-wave`, `/api/topic/<topic_id>/pre-compare-wave`,
+   `/api/topic/<topic_id>/next-wave`), además de sus equivalentes CLI.
 """
 
 import argparse
+import concurrent.futures
+import ctypes
 import hashlib
 import json
+import math
 import os
+import platform
 import re
 import sqlite3
 import sys
+import threading
 import time
 import unicodedata
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Any, Dict, List, Optional, Set, Tuple
-from urllib.parse import parse_qs, urlparse
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from urllib.parse import urlparse
 
 import pymupdf
 import yaml
@@ -45,6 +55,9 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", 
 EXTRACT_BASE_DIR = os.path.join(REPO_ROOT, "content-src", "_extract", "validacion-masiva")
 DB_DEFAULT_PATH = os.path.join(EXTRACT_BASE_DIR, "validation_state.db")
 REPORTS_BASE_DIR = os.path.join(REPO_ROOT, "docs", "agent", "validacion-temario")
+
+# Cerrojo global en memoria para coordinar escrituras multihilo dentro del servidor HTTP
+DB_WRITE_LOCK = threading.RLock()
 
 # Expresiones regulares de tokenización técnica (Spec 11 §11.4 + ampliaciones 101/102)
 ROMAN_NUMERALS = {
@@ -111,6 +124,139 @@ RE_CONFIG_FILE = re.compile(
 RE_ACRONYM = re.compile(r"\b[A-Z]{2,}[a-z]?\b")
 
 
+# ============================================================================
+# DETECTOR DE HARDWARE Y PLANIFICADOR DINÁMICO DE CONCURRENCIA
+# ============================================================================
+
+def detect_hardware_profile() -> Dict[str, Any]:
+    """
+    Inspecciona los recursos físicos reales de la máquina (CPUs lógicos, RAM total,
+    RAM libre disponible y porcentaje de uso de memoria) sin requerir librerías externas.
+    """
+    logical_cpus = os.cpu_count() or 4
+    total_ram_gb = 8.0
+    avail_ram_gb = 4.0
+    memory_load_pct = 50
+
+    if os.name == "nt":
+        try:
+            class MEMORYSTATUSEX(ctypes.Structure):
+                _fields_ = [
+                    ("dwLength", ctypes.c_ulong),
+                    ("dwMemoryLoad", ctypes.c_ulong),
+                    ("ullTotalPhys", ctypes.c_ulonglong),
+                    ("ullAvailPhys", ctypes.c_ulonglong),
+                    ("ullTotalPageFile", ctypes.c_ulonglong),
+                    ("ullAvailPageFile", ctypes.c_ulonglong),
+                    ("ullTotalVirtual", ctypes.c_ulonglong),
+                    ("ullAvailVirtual", ctypes.c_ulonglong),
+                    ("sullAvailExtendedVirtual", ctypes.c_ulonglong),
+                ]
+
+            mem = MEMORYSTATUSEX()
+            mem.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
+            if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(mem)):
+                total_ram_gb = round(mem.ullTotalPhys / (1024 ** 3), 2)
+                avail_ram_gb = round(mem.ullAvailPhys / (1024 ** 3), 2)
+                memory_load_pct = int(mem.dwMemoryLoad)
+        except Exception:
+            pass
+    else:
+        try:
+            if hasattr(os, "sysconf"):
+                page_size = os.sysconf("SC_PAGE_SIZE")
+                phys_pages = os.sysconf("SC_PHYS_PAGES")
+                avail_pages = os.sysconf("SC_AVPHYS_PAGES")
+                total_ram_gb = round((page_size * phys_pages) / (1024 ** 3), 2)
+                avail_ram_gb = round((page_size * avail_pages) / (1024 ** 3), 2)
+                memory_load_pct = int(round((1.0 - (avail_ram_gb / max(total_ram_gb, 0.1))) * 100))
+        except Exception:
+            pass
+
+    if logical_cpus >= 12 and avail_ram_gb >= 12.0:
+        tier = "HIGH_END_WORKSTATION"
+    elif logical_cpus >= 6 and avail_ram_gb >= 6.0:
+        tier = "MID_RANGE_MULTI_CORE"
+    else:
+        tier = "CONSERVATIVE_LOW_RAM"
+
+    return {
+        "os": f"{platform.system()} {platform.release()}",
+        "logical_cpus": logical_cpus,
+        "total_ram_gb": total_ram_gb,
+        "available_ram_gb": avail_ram_gb,
+        "memory_load_pct": memory_load_pct,
+        "hardware_tier": tier,
+    }
+
+
+def compute_concurrency_plan(topics_count: int = 4, subtopics_count: int = 23) -> Dict[str, Any]:
+    """
+    Calcula cuántos hilos Python (`ThreadPoolExecutor`), cuántos Coordinadores de Tema (Capa 2)
+    y cuántos Subagentes de Bajo Nivel (Capa 3A y 3B) deben ejecutarse en paralelo según el
+    hardware detectado.
+    """
+    hw = detect_hardware_profile()
+    cpus = hw["logical_cpus"]
+    avail_gb = hw["available_ram_gb"]
+
+    # 1. Hilos del servidor Python para extracción/comparación paralela con PyMuPDF
+    # Reservamos 2 hilos para el SO y acotamos según RAM libre (~300 MB por worker PDF en pico)
+    max_by_cpu = max(2, cpus - 2)
+    max_by_ram = max(2, int(avail_gb * 2.5))
+    python_worker_threads = min(max_by_cpu, max_by_ram, 16)
+
+    # 2. Límite global de subagentes LLM concurrentes (Capa 3A / 3B) para no saturar red/CPU/cuota
+    if hw["hardware_tier"] == "HIGH_END_WORKSTATION":
+        max_parallel_topics = min(topics_count, 6)  # Todos los temas a la vez (4 en 101; 6 en 102)
+        max_global_layer3_agents = 12
+    elif hw["hardware_tier"] == "MID_RANGE_MULTI_CORE":
+        max_parallel_topics = min(topics_count, 3)
+        max_global_layer3_agents = 6
+    else:
+        max_parallel_topics = min(topics_count, 2)
+        max_global_layer3_agents = 4
+
+    # 3. Cuántos subagentes de Capa 3 (o subtemas en paralelo) puede lanzar cada Tema a la vez
+    max_layer3_per_topic = max(2, math.floor(max_global_layer3_agents / max(1, max_parallel_topics)))
+
+    # 4. Cuántos subtemas simultáneos por oleada dentro de cada Tema
+    subtopics_per_wave_per_topic = max(2, min(max_layer3_per_topic, 4))
+
+    return {
+        "hardware": hw,
+        "limits": {
+            "python_thread_pool_workers": python_worker_threads,
+            "max_parallel_layer2_topic_agents": max_parallel_topics,
+            "max_global_layer3_subagents": max_global_layer3_agents,
+            "max_parallel_layer3_subagents_per_topic": max_layer3_per_topic,
+            "subtopics_per_wave_per_topic": subtopics_per_wave_per_topic,
+            "sections_per_subtopic_in_parallel": 3,
+        },
+        "execution_strategy": {
+            "mode": "PARALLEL_WAVES_HARDWARE_ADAPTIVE",
+            "layer1_instruction": (
+                f"Lanza hasta {max_parallel_topics} subagentes `coordinador-tema` (Capa 2) EN PARALELO "
+                f"en un mismo turno (tu máquina tiene {cpus} CPUs lógicos y {avail_gb} GB de RAM libre)."
+            ),
+            "layer2_instruction": (
+                f"Dentro de cada Tema, procesa los subtemas en oleadas paralelas de "
+                f"{subtopics_per_wave_per_topic} subtemas simultáneos (`next-wave`). "
+                f"Para la extracción física del PDF usa `extract-wave-parallel` ({python_worker_threads} hilos CPU) "
+                f"o lanza hasta {max_layer3_per_topic} subagentes de Capa 3 en paralelo por turno."
+            ),
+        },
+    }
+
+
+def chunk_list(items: List[Any], chunk_size: int) -> List[List[Any]]:
+    return [items[i : i + chunk_size] for i in range(0, len(items), max(1, chunk_size))]
+
+
+# ============================================================================
+# UTILIDADES DE TEXTO Y TOKENIZACIÓN TÉCNICA
+# ============================================================================
+
 def normalize_text(text: str) -> str:
     """Normaliza texto en Unicode NFC y colapsa espacios horizontales."""
     if not text:
@@ -128,21 +274,49 @@ def strip_accents_lower(text: str) -> str:
     return "".join(ch for ch in nfd if unicodedata.category(ch) != "Mn")
 
 
+_KNOWN_COMMANDS_CACHE: Optional[Set[str]] = None
+_RE_KNOWN_COMMANDS_CACHE: Optional[re.Pattern] = None
+_GLOBAL_REPO_DATA_CACHE: Optional[Dict[str, Any]] = None
+_CACHE_LOCK = threading.Lock()
+
+
 def load_known_commands_from_repo() -> Set[str]:
-    """Carga los nombres de comandos existentes en content-src/commands.yaml + set base."""
-    cmds = set(CORE_LINUX_COMMANDS)
-    cmd_path = os.path.join(REPO_ROOT, "content-src", "commands.yaml")
-    if os.path.exists(cmd_path):
-        try:
-            with open(cmd_path, "r", encoding="utf-8") as f:
-                data = yaml.safe_load(f)
-                if isinstance(data, list):
-                    for item in data:
-                        if isinstance(item, dict) and item.get("name"):
-                            cmds.add(str(item["name"]).strip())
-        except Exception:
-            pass
-    return cmds
+    """Carga y cachea en memoria los nombres de comandos existentes en content-src/commands.yaml + set base."""
+    global _KNOWN_COMMANDS_CACHE
+    if _KNOWN_COMMANDS_CACHE is not None:
+        return _KNOWN_COMMANDS_CACHE
+    with _CACHE_LOCK:
+        if _KNOWN_COMMANDS_CACHE is not None:
+            return _KNOWN_COMMANDS_CACHE
+        cmds = set(CORE_LINUX_COMMANDS)
+        cmd_path = os.path.join(REPO_ROOT, "content-src", "commands.yaml")
+        if os.path.exists(cmd_path):
+            try:
+                with open(cmd_path, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f)
+                    if isinstance(data, list):
+                        for item in data:
+                            if isinstance(item, dict) and item.get("name"):
+                                cmds.add(str(item["name"]).strip())
+            except Exception:
+                pass
+        _KNOWN_COMMANDS_CACHE = cmds
+        return cmds
+
+
+def get_compiled_commands_regex() -> re.Pattern:
+    """Compila una única expresión regular C-level para todos los comandos conocidos (~100x más rápido)."""
+    global _RE_KNOWN_COMMANDS_CACHE
+    if _RE_KNOWN_COMMANDS_CACHE is not None:
+        return _RE_KNOWN_COMMANDS_CACHE
+    cmds = load_known_commands_from_repo()
+    with _CACHE_LOCK:
+        if _RE_KNOWN_COMMANDS_CACHE is not None:
+            return _RE_KNOWN_COMMANDS_CACHE
+        sorted_cmds = sorted(cmds, key=len, reverse=True)
+        pattern = r"(?<![\w\-/])(?:" + "|".join(re.escape(c) for c in sorted_cmds) + r")(?![\w\-/])"
+        _RE_KNOWN_COMMANDS_CACHE = re.compile(pattern)
+        return _RE_KNOWN_COMMANDS_CACHE
 
 
 def extract_technical_tokens(
@@ -185,12 +359,11 @@ def extract_technical_tokens(
         if word in KNOWN_ENV_VARS:
             variables.add(word)
 
-    # 4. Comandos
+    # 4. Comandos (búsqueda vectorizada con un único regex precompilado)
     commands: Set[str] = set()
-    for cmd in known_commands:
-        pattern = r"(?<![\w\-/])" + re.escape(cmd) + r"(?![\w\-/])"
-        if re.search(pattern, clean):
-            commands.add(cmd)
+    cmd_regex = get_compiled_commands_regex()
+    for m_cmd in cmd_regex.finditer(clean):
+        commands.add(m_cmd.group(0))
     for ms in mono_spans:
         ms_clean = normalize_text(ms)
         parts = ms_clean.split()
@@ -227,17 +400,41 @@ def extract_technical_tokens(
 
 
 # ============================================================================
-# CAPA DE PERSISTENCIA SQLITE (WAL Mode para concurrencia de subagentes)
+# CAPA DE PERSISTENCIA SQLITE CON BLOQUEO CONCURRENTE Y RETRY EXPONENCIAL
 # ============================================================================
 
 def get_db_connection(db_path: str = DB_DEFAULT_PATH) -> sqlite3.Connection:
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    conn = sqlite3.connect(db_path, timeout=30.0)
+    conn = sqlite3.connect(db_path, timeout=45.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA busy_timeout=45000;")
     conn.execute("PRAGMA synchronous=NORMAL;")
     conn.execute("PRAGMA foreign_keys=ON;")
     return conn
+
+
+def run_db_write_transaction(db_path: str, fn: Callable[[sqlite3.Connection], Any]) -> Any:
+    """
+    Ejecuta una transacción de escritura en SQLite protegida por `DB_WRITE_LOCK` y
+    reintentos automáticos con backoff para soportar múltiples subagentes e hilos en paralelo.
+    """
+    max_retries = 8
+    for attempt in range(max_retries):
+        with DB_WRITE_LOCK:
+            conn = get_db_connection(db_path)
+            try:
+                res = fn(conn)
+                conn.commit()
+                return res
+            except sqlite3.OperationalError as exc:
+                conn.rollback()
+                if "locked" in str(exc).lower() and attempt < max_retries - 1:
+                    time.sleep(0.08 * (attempt + 1))
+                    continue
+                raise
+            finally:
+                conn.close()
 
 
 def init_database_schema(conn: sqlite3.Connection) -> None:
@@ -253,6 +450,7 @@ def init_database_schema(conn: sqlite3.Connection) -> None:
             subtopics_count INTEGER NOT NULL,
             sections_count INTEGER NOT NULL,
             structure_json_path TEXT NOT NULL,
+            concurrency_plan_json TEXT DEFAULT NULL,
             status TEXT NOT NULL DEFAULT 'INITIALIZED',
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
@@ -265,6 +463,7 @@ def init_database_schema(conn: sqlite3.Connection) -> None:
             start_page INTEGER NOT NULL,
             end_page INTEGER NOT NULL,
             subtopics_count INTEGER NOT NULL,
+            waves_count INTEGER NOT NULL DEFAULT 1,
             api_endpoint TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'PENDING',
             updated_at TEXT NOT NULL,
@@ -275,6 +474,7 @@ def init_database_schema(conn: sqlite3.Connection) -> None:
             subtopic_id TEXT PRIMARY KEY,
             exam_id TEXT NOT NULL,
             topic_id TEXT NOT NULL,
+            wave_index INTEGER NOT NULL DEFAULT 1,
             title TEXT NOT NULL,
             weight INTEGER DEFAULT 0,
             start_page INTEGER NOT NULL,
@@ -342,11 +542,24 @@ def init_database_schema(conn: sqlite3.Connection) -> None:
         );
         """
     )
+    # Migración suave por si la tabla existía antes de añadir columnas de oleadas
+    try:
+        conn.execute("ALTER TABLE pdf_runs ADD COLUMN concurrency_plan_json TEXT DEFAULT NULL;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        conn.execute("ALTER TABLE topics ADD COLUMN waves_count INTEGER NOT NULL DEFAULT 1;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        conn.execute("ALTER TABLE subtopics ADD COLUMN wave_index INTEGER NOT NULL DEFAULT 1;")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
 
 
 # ============================================================================
-# DESCUBRIMIENTO DE ESTRUCTURA DEL PDF (TOC + PÁGINAS + SUB-APIS)
+# DESCUBRIMIENTO DE ESTRUCTURA DEL PDF + PLANIFICACIÓN DE OLEADAS PARALELAS
 # ============================================================================
 
 def detect_exam_id_from_pdf(pdf_path: str, doc: pymupdf.Document) -> str:
@@ -366,9 +579,9 @@ def detect_exam_id_from_pdf(pdf_path: str, doc: pymupdf.Document) -> str:
 
 def analyze_pdf_structure(pdf_path: str, db_path: str = DB_DEFAULT_PATH) -> Dict[str, Any]:
     """
-    Inspecciona el PDF completo (~600 páginas), descubre Temas, Subtemas, Lecciones y Secciones,
-    construye las rutas de las APIs por Tema y Sub-APIs por Sección, guarda `structure-input.json`
-    y puebla la base de datos SQLite (`pdf_runs`, `topics`, `subtopics`, `sections`, `page_ledger`).
+    Inspecciona el PDF completo (~600 páginas), detecta el hardware de la máquina, calcula
+    el plan de concurrencia y divide los subtemas de cada Tema en oleadas paralelas (`execution_waves`),
+    guardando `structure-input.json` y poblando SQLite.
     """
     abs_pdf = os.path.abspath(pdf_path)
     if not os.path.exists(abs_pdf):
@@ -397,7 +610,6 @@ def analyze_pdf_structure(pdf_path: str, db_path: str = DB_DEFAULT_PATH) -> Dict
                     "start_page": pno,
                 })
 
-    # Calcular end_page de cada Tema
     curriculum_end_page = imprint_page - 1 if imprint_page > 1 else total_pages
     for i, t in enumerate(raw_topics):
         if i + 1 < len(raw_topics):
@@ -422,14 +634,16 @@ def analyze_pdf_structure(pdf_path: str, db_path: str = DB_DEFAULT_PATH) -> Dict
                     "toc_start_page": pno,
                 })
 
-    # Ajustar rangos de páginas por subtema (incluyendo portada de tema si es el primer subtema del tema)
+    # Calcular plan de concurrencia adaptado al hardware real de la máquina
+    concurrency_plan = compute_concurrency_plan(len(raw_topics), len(raw_subtopics))
+    wave_size = concurrency_plan["limits"]["subtopics_per_wave_per_topic"]
+
     topic_starts_by_id = {t["topic_id"]: t["start_page"] for t in raw_topics}
     topic_ends_by_id = {t["topic_id"]: t["end_page"] for t in raw_topics}
 
     for i, st in enumerate(raw_subtopics):
         tid = st["topic_id"]
         start_p = st["toc_start_page"]
-        # Si es el primer subtema de un tema, su página anterior suele ser la portada del tema
         if i == 0 or raw_subtopics[i - 1]["topic_id"] != tid:
             t_start = topic_starts_by_id.get(tid, start_p)
             st["topic_cover_page"] = t_start if t_start < start_p else None
@@ -447,7 +661,7 @@ def analyze_pdf_structure(pdf_path: str, db_path: str = DB_DEFAULT_PATH) -> Dict
         else:
             st["end_page"] = curriculum_end_page
 
-    # 3. Dentro de cada subtema, descubrir sus Secciones y Lecciones desde el TOC y texto de portada
+    # 3. Dentro de cada Tema, organizar Subtemas en Oleadas Paralelas (`execution_waves`)
     structured_topics: List[Dict[str, Any]] = []
     all_sections_db: List[Dict[str, Any]] = []
 
@@ -456,38 +670,36 @@ def analyze_pdf_structure(pdf_path: str, db_path: str = DB_DEFAULT_PATH) -> Dict
         t_subtopics = [s for s in raw_subtopics if s["topic_id"] == tid]
         subtopics_out: List[Dict[str, Any]] = []
 
+        # Dividir los subtemas de este tema en oleadas de tamaño `wave_size`
+        waves_chunks = chunk_list([s["subtopic_id"] for s in t_subtopics], wave_size)
+        subtopic_to_wave: Dict[str, int] = {}
+        for w_idx, w_list in enumerate(waves_chunks, start=1):
+            for sid_item in w_list:
+                subtopic_to_wave[sid_item] = w_idx
+
         for st in t_subtopics:
             sid = st["subtopic_id"]
             sp, ep = st["start_page"], st["end_page"]
+            w_idx = subtopic_to_wave[sid]
 
-            # Extraer peso ("Importancia: N") de la primera página del subtema
             intro_text = doc[sp - 1].get_text("text")
             m_weight = re.search(r"Importancia\s*[:\n]\s*(\d+)", intro_text, re.IGNORECASE)
             weight = int(m_weight.group(1)) if m_weight else 0
 
-            # Buscar entradas TOC dentro del rango [sp, ep]
             sub_toc = [
                 {"level": lvl, "title": normalize_text(title), "page": pno}
                 for lvl, title, pno in toc
                 if sp <= pno <= ep and normalize_text(title) != f"{sid} {st['title']}"
             ]
 
-            # Detectar lecciones ("101.1 Lección 1", "103.1 Lección 2", etc.)
             lesson_markers = [
                 entry for entry in sub_toc
                 if re.search(r"Lecci[oó]n\s+\d+", entry["title"], re.IGNORECASE)
             ]
             lessons_count = max(1, len(lesson_markers))
-
-            # Detectar el inicio de la primera lección y de los bloques de ejercicios/resumen
             first_lesson_page = lesson_markers[0]["page"] if lesson_markers else min(sp + 1, ep)
             intro_end_page = max(sp, first_lesson_page - 1)
 
-            # Crear las 3 Sub-Secciones canónicas por Subtema para máxima modularidad y ahorro de tokens:
-            #   1) `metadatos_y_portada`: Áreas de conocimiento clave + Lista parcial de archivos/términos/utilidades + Resumen
-            #   2) `teoria_lecciones`: Todo el cuerpo teórico, tablas, bloques de código, comandos y definiciones de las Lecciones 1..N
-            #   3) `ejercicios_y_respuestas`: Ejercicios Guiados + Ejercicios Exploratorios + Respuestas oficiales
-            # Además anotamos las páginas exactas donde caen dentro del subtema.
             guided_pages = [
                 e["page"] for e in sub_toc
                 if any(k in e["title"].lower() for k in ("ejercicios guiados", "ejercicios exploratorios", "ejercicios de exploraci", "respuestas a"))
@@ -541,6 +753,7 @@ def analyze_pdf_structure(pdf_path: str, db_path: str = DB_DEFAULT_PATH) -> Dict
             subtopics_out.append({
                 "subtopic_id": sid,
                 "topic_id": tid,
+                "wave_index": w_idx,
                 "title": st["title"],
                 "weight": weight,
                 "start_page": sp,
@@ -565,9 +778,29 @@ def analyze_pdf_structure(pdf_path: str, db_path: str = DB_DEFAULT_PATH) -> Dict
             "start_page": t["start_page"],
             "end_page": t["end_page"],
             "subtopics_count": len(subtopics_out),
+            "waves_count": len(waves_chunks),
+            "parallel_execution_waves": [
+                {"wave_index": idx, "subtopics_in_parallel": chunk}
+                for idx, chunk in enumerate(waves_chunks, start=1)
+            ],
             "topic_api_base": f"/api/topic/{tid}",
+            "topic_parallel_apis": {
+                "next_wave": f"/api/topic/{tid}/next-wave",
+                "extract_wave": f"/api/topic/{tid}/extract-wave",
+                "pre_compare_wave": f"/api/topic/{tid}/pre-compare-wave",
+            },
             "subtopics": subtopics_out,
         })
+
+    # Organizar también las oleadas de Temas (Capa 2) según `max_parallel_layer2_topic_agents`
+    topic_waves = chunk_list(
+        [t["topic_id"] for t in structured_topics],
+        concurrency_plan["limits"]["max_parallel_layer2_topic_agents"],
+    )
+    concurrency_plan["topic_waves_for_layer1"] = [
+        {"topic_wave_index": idx, "topics_in_parallel": ch}
+        for idx, ch in enumerate(topic_waves, start=1)
+    ]
 
     # 4. Guardar `structure-input.json`
     exam_extract_dir = os.path.join(EXTRACT_BASE_DIR, exam_id)
@@ -584,7 +817,9 @@ def analyze_pdf_structure(pdf_path: str, db_path: str = DB_DEFAULT_PATH) -> Dict
         "subtopics_count": len(raw_subtopics),
         "sections_count": len(all_sections_db),
         "generated_at": now_iso,
+        "concurrency_plan": concurrency_plan,
         "server_apis": {
+            "hardware_plan": "/api/hardware-plan",
             "exam_progress": f"/api/exam/{exam_id}/progress",
             "exam_structure": f"/api/exam/{exam_id}/structure",
             "topic_apis": {t["topic_id"]: t["topic_api_base"] for t in structured_topics},
@@ -595,175 +830,178 @@ def analyze_pdf_structure(pdf_path: str, db_path: str = DB_DEFAULT_PATH) -> Dict
     with open(structure_json_path, "w", encoding="utf-8") as f:
         json.dump(structure_payload, f, ensure_ascii=False, indent=2)
 
-    # 5. Poblar SQLite (`pdf_runs`, `topics`, `subtopics`, `sections`, `page_ledger`)
-    conn = get_db_connection(db_path)
-    init_database_schema(conn)
-
-    conn.execute(
-        """
-        INSERT INTO pdf_runs (
-            exam_id, pdf_path, total_pages, curriculum_start_page, curriculum_end_page,
-            topics_count, subtopics_count, sections_count, structure_json_path, status,
-            created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'IN_PROGRESS', ?, ?)
-        ON CONFLICT(exam_id) DO UPDATE SET
-            pdf_path=excluded.pdf_path,
-            total_pages=excluded.total_pages,
-            curriculum_start_page=excluded.curriculum_start_page,
-            curriculum_end_page=excluded.curriculum_end_page,
-            topics_count=excluded.topics_count,
-            subtopics_count=excluded.subtopics_count,
-            sections_count=excluded.sections_count,
-            structure_json_path=excluded.structure_json_path,
-            updated_at=excluded.updated_at;
-        """,
-        (
-            exam_id,
-            os.path.relpath(abs_pdf, REPO_ROOT).replace("\\", "/"),
-            total_pages,
-            curriculum_start_page,
-            curriculum_end_page,
-            len(structured_topics),
-            len(raw_subtopics),
-            len(all_sections_db),
-            os.path.relpath(structure_json_path, REPO_ROOT).replace("\\", "/"),
-            now_iso,
-            now_iso,
-        ),
-    )
-
-    for t in structured_topics:
+    # 5. Poblar SQLite dentro de transacción protegida
+    def _populate_db(conn: sqlite3.Connection) -> None:
+        init_database_schema(conn)
         conn.execute(
             """
-            INSERT INTO topics (topic_id, exam_id, title, start_page, end_page, subtopics_count, api_endpoint, status, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)
-            ON CONFLICT(topic_id) DO UPDATE SET
-                title=excluded.title,
-                start_page=excluded.start_page,
-                end_page=excluded.end_page,
+            INSERT INTO pdf_runs (
+                exam_id, pdf_path, total_pages, curriculum_start_page, curriculum_end_page,
+                topics_count, subtopics_count, sections_count, structure_json_path,
+                concurrency_plan_json, status, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'IN_PROGRESS', ?, ?)
+            ON CONFLICT(exam_id) DO UPDATE SET
+                pdf_path=excluded.pdf_path,
+                total_pages=excluded.total_pages,
+                curriculum_start_page=excluded.curriculum_start_page,
+                curriculum_end_page=excluded.curriculum_end_page,
+                topics_count=excluded.topics_count,
                 subtopics_count=excluded.subtopics_count,
-                api_endpoint=excluded.api_endpoint,
+                sections_count=excluded.sections_count,
+                structure_json_path=excluded.structure_json_path,
+                concurrency_plan_json=excluded.concurrency_plan_json,
                 updated_at=excluded.updated_at;
             """,
             (
-                t["topic_id"],
                 exam_id,
-                t["title"],
-                t["start_page"],
-                t["end_page"],
-                t["subtopics_count"],
-                t["topic_api_base"],
+                os.path.relpath(abs_pdf, REPO_ROOT).replace("\\", "/"),
+                total_pages,
+                curriculum_start_page,
+                curriculum_end_page,
+                len(structured_topics),
+                len(raw_subtopics),
+                len(all_sections_db),
+                os.path.relpath(structure_json_path, REPO_ROOT).replace("\\", "/"),
+                json.dumps(concurrency_plan, ensure_ascii=False),
+                now_iso,
                 now_iso,
             ),
         )
-        for st in t["subtopics"]:
+
+        for t in structured_topics:
             conn.execute(
                 """
-                INSERT INTO subtopics (
-                    subtopic_id, exam_id, topic_id, title, weight, start_page, end_page,
-                    lessons_count, extraction_status, comparison_status, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 'PENDING', ?)
-                ON CONFLICT(subtopic_id) DO UPDATE SET
+                INSERT INTO topics (topic_id, exam_id, title, start_page, end_page, subtopics_count, waves_count, api_endpoint, status, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)
+                ON CONFLICT(topic_id) DO UPDATE SET
                     title=excluded.title,
-                    weight=excluded.weight,
                     start_page=excluded.start_page,
                     end_page=excluded.end_page,
-                    lessons_count=excluded.lessons_count,
+                    subtopics_count=excluded.subtopics_count,
+                    waves_count=excluded.waves_count,
+                    api_endpoint=excluded.api_endpoint,
                     updated_at=excluded.updated_at;
                 """,
                 (
-                    st["subtopic_id"],
-                    exam_id,
                     t["topic_id"],
-                    st["title"],
-                    st["weight"],
-                    st["start_page"],
-                    st["end_page"],
-                    st["lessons_count"],
+                    exam_id,
+                    t["title"],
+                    t["start_page"],
+                    t["end_page"],
+                    t["subtopics_count"],
+                    t["waves_count"],
+                    t["topic_api_base"],
+                    now_iso,
+                ),
+            )
+            for st in t["subtopics"]:
+                conn.execute(
+                    """
+                    INSERT INTO subtopics (
+                        subtopic_id, exam_id, topic_id, wave_index, title, weight, start_page, end_page,
+                        lessons_count, extraction_status, comparison_status, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 'PENDING', ?)
+                    ON CONFLICT(subtopic_id) DO UPDATE SET
+                        wave_index=excluded.wave_index,
+                        title=excluded.title,
+                        weight=excluded.weight,
+                        start_page=excluded.start_page,
+                        end_page=excluded.end_page,
+                        lessons_count=excluded.lessons_count,
+                        updated_at=excluded.updated_at;
+                    """,
+                    (
+                        st["subtopic_id"],
+                        exam_id,
+                        t["topic_id"],
+                        st["wave_index"],
+                        st["title"],
+                        st["weight"],
+                        st["start_page"],
+                        st["end_page"],
+                        st["lessons_count"],
+                        now_iso,
+                    ),
+                )
+
+        for sec in all_sections_db:
+            conn.execute(
+                """
+                INSERT INTO sections (
+                    section_id, exam_id, topic_id, subtopic_id, section_slug, section_kind,
+                    title, start_page, end_page, api_endpoint, status, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)
+                ON CONFLICT(section_id) DO UPDATE SET
+                    title=excluded.title,
+                    start_page=excluded.start_page,
+                    end_page=excluded.end_page,
+                    api_endpoint=excluded.api_endpoint,
+                    updated_at=excluded.updated_at;
+                """,
+                (
+                    sec["section_id"],
+                    sec["exam_id"],
+                    sec["topic_id"],
+                    sec["subtopic_id"],
+                    sec["section_slug"],
+                    sec["section_kind"],
+                    sec["title"],
+                    sec["start_page"],
+                    sec["end_page"],
+                    sec["api_endpoint"],
                     now_iso,
                 ),
             )
 
-    for sec in all_sections_db:
-        conn.execute(
-            """
-            INSERT INTO sections (
-                section_id, exam_id, topic_id, subtopic_id, section_slug, section_kind,
-                title, start_page, end_page, api_endpoint, status, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?)
-            ON CONFLICT(section_id) DO UPDATE SET
-                title=excluded.title,
-                start_page=excluded.start_page,
-                end_page=excluded.end_page,
-                api_endpoint=excluded.api_endpoint,
-                updated_at=excluded.updated_at;
-            """,
-            (
-                sec["section_id"],
-                sec["exam_id"],
-                sec["topic_id"],
-                sec["subtopic_id"],
-                sec["section_slug"],
-                sec["section_kind"],
-                sec["title"],
-                sec["start_page"],
-                sec["end_page"],
-                sec["api_endpoint"],
-                now_iso,
-            ),
-        )
+        page_to_subtopic: Dict[int, Tuple[str, str]] = {}
+        topic_cover_pages: Dict[int, str] = {}
+        for t in structured_topics:
+            topic_cover_pages[t["start_page"]] = t["topic_id"]
+            for st in t["subtopics"]:
+                for p in range(st["start_page"], st["end_page"] + 1):
+                    page_to_subtopic[p] = (t["topic_id"], st["subtopic_id"])
 
-    # Mapear todas las ~600 páginas en `page_ledger`
-    page_to_subtopic: Dict[int, Tuple[str, str]] = {}
-    topic_cover_pages: Dict[int, str] = {}
-    for t in structured_topics:
-        topic_cover_pages[t["start_page"]] = t["topic_id"]
-        for st in t["subtopics"]:
-            for p in range(st["start_page"], st["end_page"] + 1):
-                page_to_subtopic[p] = (t["topic_id"], st["subtopic_id"])
+        for pno in range(1, total_pages + 1):
+            txt = doc[pno - 1].get_text("text")
+            char_len = len(txt.strip())
+            if pno < curriculum_start_page:
+                role = "FRONT_MATTER"
+                tid, sid = None, None
+                ext_status = "EXEMPT_FRONT_MATTER"
+            elif pno > curriculum_end_page:
+                role = "IMPRINT"
+                tid, sid = None, None
+                ext_status = "EXEMPT_IMPRINT"
+            elif pno in topic_cover_pages and pno not in page_to_subtopic:
+                role = "TOPIC_COVER"
+                tid, sid = topic_cover_pages[pno], None
+                ext_status = "EXEMPT_TOPIC_COVER"
+            else:
+                role = "CURRICULUM"
+                tid, sid = page_to_subtopic.get(pno, (None, None))
+                ext_status = "PENDING"
 
-    for pno in range(1, total_pages + 1):
-        txt = doc[pno - 1].get_text("text")
-        char_len = len(txt.strip())
-        if pno < curriculum_start_page:
-            role = "FRONT_MATTER"
-            tid, sid = None, None
-            ext_status = "EXEMPT_FRONT_MATTER"
-        elif pno > curriculum_end_page:
-            role = "IMPRINT"
-            tid, sid = None, None
-            ext_status = "EXEMPT_IMPRINT"
-        elif pno in topic_cover_pages and pno not in page_to_subtopic:
-            role = "TOPIC_COVER"
-            tid, sid = topic_cover_pages[pno], None
-            ext_status = "EXEMPT_TOPIC_COVER"
-        else:
-            role = "CURRICULUM"
-            tid, sid = page_to_subtopic.get(pno, (None, None))
-            ext_status = "PENDING"
+            conn.execute(
+                """
+                INSERT INTO page_ledger (exam_id, page_number, page_role, topic_id, subtopic_id, char_count, extracted_status, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(exam_id, page_number) DO UPDATE SET
+                    page_role=excluded.page_role,
+                    topic_id=excluded.topic_id,
+                    subtopic_id=excluded.subtopic_id,
+                    char_count=excluded.char_count,
+                    updated_at=excluded.updated_at;
+                """,
+                (exam_id, pno, role, tid, sid, char_len, ext_status, now_iso),
+            )
 
-        conn.execute(
-            """
-            INSERT INTO page_ledger (exam_id, page_number, page_role, topic_id, subtopic_id, char_count, extracted_status, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(exam_id, page_number) DO UPDATE SET
-                page_role=excluded.page_role,
-                topic_id=excluded.topic_id,
-                subtopic_id=excluded.subtopic_id,
-                char_count=excluded.char_count,
-                updated_at=excluded.updated_at;
-            """,
-            (exam_id, pno, role, tid, sid, char_len, ext_status, now_iso),
-        )
-
-    conn.commit()
-    conn.close()
+    run_db_write_transaction(db_path, _populate_db)
     doc.close()
     return structure_payload
 
 
 # ============================================================================
-# EXTRACCIÓN EXACTA POR SUB-API DE SECCIÓN (CAPA 3A - AHORRO DE TOKENS)
+# EXTRACCIÓN EXACTA POR SUB-API DE SECCIÓN Y EN PARALELO MULTI-HILO (CAPA 3A)
 # ============================================================================
 
 def classify_pdf_block(
@@ -819,27 +1057,23 @@ def extract_subtopic_section(
 ) -> Dict[str, Any]:
     """
     Extrae de forma determinista con PyMuPDF únicamente la sección solicitada (`metadatos_y_resumen`,
-    `teoria_lecciones`, o `ejercicios_y_respuestas`) del subtema indicado, la estructura en JSON/YAML
-    compacto de bajo consumo de tokens, actualiza `sections` y `page_ledger` en SQLite y devuelve el
-    resumen listo para el subagente de Capa 3A.
+    `teoria_lecciones`, o `ejercicios_y_respuestas`). Cada invocación abre su propio descriptor de
+    `pymupdf.Document` independiente para permitir paralelismo real en `ThreadPoolExecutor`.
     """
-    conn = get_db_connection(db_path)
-    run_row = conn.execute("SELECT * FROM pdf_runs WHERE exam_id = ?", (exam_id,)).fetchone()
-    if not run_row:
-        conn.close()
-        raise ValueError(f"El examen '{exam_id}' no está inicializado en la BBDD. Ejecuta primero `init`.")
-
-    st_row = conn.execute(
+    conn_ro = get_db_connection(db_path)
+    run_row = conn_ro.execute("SELECT * FROM pdf_runs WHERE exam_id = ?", (exam_id,)).fetchone()
+    st_row = conn_ro.execute(
         "SELECT * FROM subtopics WHERE exam_id = ? AND subtopic_id = ?", (exam_id, subtopic_id)
     ).fetchone()
-    if not st_row:
-        conn.close()
-        raise ValueError(f"No existe el subtema '{subtopic_id}' en el examen '{exam_id}'.")
-
     sec_id = f"{subtopic_id}#{section_slug}"
-    sec_row = conn.execute("SELECT * FROM sections WHERE section_id = ?", (sec_id,)).fetchone()
+    sec_row = conn_ro.execute("SELECT * FROM sections WHERE section_id = ?", (sec_id,)).fetchone()
+    conn_ro.close()
+
+    if not run_row:
+        raise ValueError(f"El examen '{exam_id}' no está inicializado en la BBDD. Ejecuta primero `init`.")
+    if not st_row:
+        raise ValueError(f"No existe el subtema '{subtopic_id}' en el examen '{exam_id}'.")
     if not sec_row:
-        conn.close()
         raise ValueError(f"No existe la sección '{section_slug}' para el subtema '{subtopic_id}'.")
 
     pdf_abs = os.path.join(REPO_ROOT, run_row["pdf_path"])
@@ -886,7 +1120,6 @@ def extract_subtopic_section(
             if not lines:
                 continue
 
-            # Ignorar cabeceras/pies de página (y < 42 o y > 790)
             bbox = block.get("bbox", [0, 0, 0, 0])
             if bbox[1] < 40 or bbox[1] > 790:
                 continue
@@ -947,7 +1180,6 @@ def extract_subtopic_section(
             ):
                 continue
 
-            # Detectar cambios de lección / sección
             if first_size >= 22.0:
                 m_les = re.search(r"Lecci[oó]n\s+(\d+)", norm_text, re.IGNORECASE)
                 if m_les:
@@ -972,7 +1204,6 @@ def extract_subtopic_section(
                 norm_text, first_font, first_size, current_section, is_intro_page, active_intro_mode, is_code_block
             )
 
-            # Filtrar según la Sub-API de sección solicitada
             belongs_to_section = False
             if section_slug == "metadatos_y_resumen":
                 belongs_to_section = kind in ("key-knowledge", "key-files", "summary") or (is_intro_page and kind == "paragraph")
@@ -980,11 +1211,9 @@ def extract_subtopic_section(
                 belongs_to_section = kind in ("heading-major", "heading-sub", "paragraph", "list-item", "code", "callout") and not is_intro_page
             elif section_slug == "ejercicios_y_respuestas":
                 belongs_to_section = kind in ("exercise-guided", "exercise-explor", "answer-guided", "answer-explor")
-                # También capturar bloques de código o listas dentro de secciones de ejercicios/respuestas
                 sec_l = current_section.lower()
                 if any(w in sec_l for w in ("ejercicios guiados", "ejercicios exploratorios", "ejercicios de exploraci", "respuestas a")):
                     belongs_to_section = True
-                    # Si es teoría que se coló, excluir de teoria_lecciones
             if section_slug == "teoria_lecciones":
                 sec_l = current_section.lower()
                 if any(w in sec_l for w in ("ejercicios guiados", "ejercicios exploratorios", "ejercicios de exploraci", "respuestas a", "resumen")):
@@ -995,7 +1224,6 @@ def extract_subtopic_section(
 
             pages_touched.add(pno)
             unit_idx += 1
-            # Evitar extraer los propios títulos de sección como términos de glosario en negrita
             effective_bold = [] if kind in ("heading-major", "heading-sub") else bold_spans
             effective_italic = [] if kind in ("heading-major", "heading-sub") else italic_spans
             tokens = extract_technical_tokens(norm_text, mono_spans, effective_bold, effective_italic, known_commands)
@@ -1048,7 +1276,8 @@ def extract_subtopic_section(
                         "context": norm_text,
                     })
 
-    # Construir payload estructurado de la sección
+    doc.close()
+
     structured_section = {
         "exam_id": exam_id,
         "topic_id": st_row["topic_id"],
@@ -1083,7 +1312,6 @@ def extract_subtopic_section(
             "exploratory_answers": exploratory_answers,
         }
 
-    # Guardar en disco (JSON y YAML)
     out_dir = os.path.join(EXTRACT_BASE_DIR, exam_id, "subtopics", subtopic_id)
     os.makedirs(out_dir, exist_ok=True)
     json_out_path = os.path.join(out_dir, f"{section_slug}.json")
@@ -1094,57 +1322,53 @@ def extract_subtopic_section(
     with open(yaml_out_path, "w", encoding="utf-8") as f:
         yaml.safe_dump(structured_section, f, allow_unicode=True, sort_keys=False)
 
-    # Actualizar estado en SQLite
     now_iso = datetime.now(timezone.utc).isoformat()
     rel_json = os.path.relpath(json_out_path, REPO_ROOT).replace("\\", "/")
     exercises_cnt = len(guided_exercises) + len(exploratory_exercises) + len(guided_answers) + len(exploratory_answers)
 
-    conn.execute(
-        """
-        UPDATE sections SET
-            status = 'OK',
-            extracted_json_path = ?,
-            units_count = ?,
-            commands_count = ?,
-            terms_count = ?,
-            exercises_count = ?,
-            updated_at = ?
-        WHERE section_id = ?;
-        """,
-        (
-            rel_json,
-            unit_idx,
-            len(agg_tokens["commands"]),
-            len(agg_tokens["terms"]),
-            exercises_cnt,
-            now_iso,
-            sec_id,
-        ),
-    )
-
-    # Si todas las secciones del subtema están en 'OK', marcar subtopic.extraction_status = 'OK'
-    # y marcar todas las páginas del subtema [sp..ep] en `page_ledger` como 'EXTRACTED'
-    pending_secs = conn.execute(
-        "SELECT COUNT(*) AS cnt FROM sections WHERE subtopic_id = ? AND status != 'OK'",
-        (subtopic_id,),
-    ).fetchone()["cnt"]
-
-    if pending_secs == 0:
-        conn.execute(
-            "UPDATE subtopics SET extraction_status = 'OK', updated_at = ? WHERE subtopic_id = ?",
-            (now_iso, subtopic_id),
-        )
+    def _update_section_db(conn: sqlite3.Connection) -> int:
         conn.execute(
             """
-            UPDATE page_ledger SET extracted_status = 'EXTRACTED', updated_at = ?
-            WHERE exam_id = ? AND subtopic_id = ?;
+            UPDATE sections SET
+                status = 'OK',
+                extracted_json_path = ?,
+                units_count = ?,
+                commands_count = ?,
+                terms_count = ?,
+                exercises_count = ?,
+                updated_at = ?
+            WHERE section_id = ?;
             """,
-            (now_iso, exam_id, subtopic_id),
+            (
+                rel_json,
+                unit_idx,
+                len(agg_tokens["commands"]),
+                len(agg_tokens["terms"]),
+                exercises_cnt,
+                now_iso,
+                sec_id,
+            ),
         )
+        pending_secs = conn.execute(
+            "SELECT COUNT(*) AS cnt FROM sections WHERE subtopic_id = ? AND status != 'OK'",
+            (subtopic_id,),
+        ).fetchone()["cnt"]
 
-    conn.commit()
-    conn.close()
-    doc.close()
+        if pending_secs == 0:
+            conn.execute(
+                "UPDATE subtopics SET extraction_status = 'OK', updated_at = ? WHERE subtopic_id = ?",
+                (now_iso, subtopic_id),
+            )
+            conn.execute(
+                """
+                UPDATE page_ledger SET extracted_status = 'EXTRACTED', updated_at = ?
+                WHERE exam_id = ? AND subtopic_id = ? AND extracted_status = 'PENDING';
+                """,
+                (now_iso, exam_id, subtopic_id),
+            )
+        return pending_secs
+
+    pending_secs = run_db_write_transaction(db_path, _update_section_db)
 
     return {
         "status": "OK",
@@ -1160,18 +1384,60 @@ def extract_subtopic_section(
     }
 
 
+def extract_wave_in_parallel(
+    exam_id: str,
+    subtopics_list: List[str],
+    db_path: str = DB_DEFAULT_PATH,
+    max_workers: Optional[int] = None,
+) -> Dict[str, Any]:
+    """
+    Ejecuta en paralelo usando `ThreadPoolExecutor` (ajustado automáticamente a los núcleos
+    de CPU y RAM disponibles en la máquina) la extracción de todas las secciones de una oleada
+    de subtemas.
+    """
+    plan = compute_concurrency_plan()
+    workers = max_workers or plan["limits"]["python_thread_pool_workers"]
+    tasks: List[Tuple[str, str]] = []
+    for sid in subtopics_list:
+        for slug in ("metadatos_y_resumen", "teoria_lecciones", "ejercicios_y_respuestas"):
+            tasks.append((sid, slug))
+
+    t0 = time.perf_counter()
+    results: List[Dict[str, Any]] = []
+    errors: List[Dict[str, Any]] = []
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(workers, max(1, len(tasks)))) as executor:
+        future_to_task = {
+            executor.submit(extract_subtopic_section, exam_id, sid, slug, db_path): (sid, slug)
+            for sid, slug in tasks
+        }
+        for fut in concurrent.futures.as_completed(future_to_task):
+            sid, slug = future_to_task[fut]
+            try:
+                results.append(fut.result())
+            except Exception as exc:
+                errors.append({"subtopic_id": sid, "section_slug": slug, "error": str(exc)})
+
+    elapsed = round(time.perf_counter() - t0, 2)
+    return {
+        "status": "OK" if not errors else "PARTIAL_ERROR",
+        "exam_id": exam_id,
+        "subtopics_processed": subtopics_list,
+        "parallel_threads_used": min(workers, max(1, len(tasks))),
+        "sections_extracted_count": len(results),
+        "elapsed_seconds": elapsed,
+        "errors": errors,
+        "results": sorted(results, key=lambda x: (x["subtopic_id"], x["section_slug"])),
+    }
+
+
 # ============================================================================
-# PRE-COMPARADOR DETERMINISTA PDF vs WEB (CAPA 3B - AHORRO DE TOKENS)
+# PRE-COMPARADOR DETERMINISTA PDF vs WEB Y EJECUCIÓN EN PARALELO (CAPA 3B)
 # ============================================================================
 
 def load_web_bundle_for_subtopic(subtopic_id: str) -> Dict[str, Any]:
     """
-    Reúne todo el contenido actual de la aplicación web correspondiente a `subtopic_id`:
-    - `content-src/lessons/<subtopic_id>.json`
-    - `content-src/labs/<subtopic_id>.json`
-    - Entradas de `content-src/commands.yaml` vinculadas al subtema (o globales)
-    - Entradas de `content-src/glossary.yaml` vinculadas al subtema (o globales)
-    - Preguntas de `content-src/questions/*.json` con `subtopicId == subtopic_id`
+    Reúne todo el contenido actual de la aplicación web correspondiente a `subtopic_id`.
     """
     lesson_path = os.path.join(REPO_ROOT, "content-src", "lessons", f"{subtopic_id}.json")
     lab_path = os.path.join(REPO_ROOT, "content-src", "labs", f"{subtopic_id}.json")
@@ -1207,7 +1473,6 @@ def load_web_bundle_for_subtopic(subtopic_id: str) -> Dict[str, Any]:
             }
             web_texts.append(json.dumps(lab_data, ensure_ascii=False))
 
-    # Comandos globales y del subtema
     all_web_commands: Set[str] = set()
     subtopic_commands: List[Dict[str, Any]] = []
     if os.path.exists(commands_path):
@@ -1226,7 +1491,6 @@ def load_web_bundle_for_subtopic(subtopic_id: str) -> Dict[str, Any]:
                         })
                         web_texts.append(json.dumps(c, ensure_ascii=False))
 
-    # Glosario global y del subtema
     all_web_terms: Set[str] = set()
     subtopic_terms: List[Dict[str, Any]] = []
     if os.path.exists(glossary_path):
@@ -1244,7 +1508,6 @@ def load_web_bundle_for_subtopic(subtopic_id: str) -> Dict[str, Any]:
                         })
                         web_texts.append(json.dumps(g, ensure_ascii=False))
 
-    # Preguntas del subtema
     subtopic_questions_count = 0
     if os.path.exists(questions_dir):
         for fname in os.listdir(questions_dir):
@@ -1281,9 +1544,7 @@ def load_web_bundle_for_subtopic(subtopic_id: str) -> Dict[str, Any]:
 def pre_compare_subtopic(exam_id: str, subtopic_id: str, db_path: str = DB_DEFAULT_PATH) -> Dict[str, Any]:
     """
     Cruza los 3 JSON extraídos del PDF para `subtopic_id` contra el contenido real de la web,
-    calculando métricas objetivas preliminares y devolviendo un informe compacto de diferencias
-    para que el subagente de Capa 3B (`validador-comparador-web`) emita el dictamen semántico
-    sin saturar su ventana de contexto.
+    calculando métricas objetivas preliminares y devolviendo un informe compacto de diferencias.
     """
     sub_dir = os.path.join(EXTRACT_BASE_DIR, exam_id, "subtopics", subtopic_id)
     meta_path = os.path.join(sub_dir, "metadatos_y_resumen.json")
@@ -1294,7 +1555,7 @@ def pre_compare_subtopic(exam_id: str, subtopic_id: str, db_path: str = DB_DEFAU
         if not os.path.exists(p):
             raise ValueError(
                 f"Falta el archivo de extracción '{os.path.basename(p)}' para {subtopic_id}. "
-                "Asegúrate de que los subagentes de Capa 3A hayan extraído las 3 secciones primero."
+                "Asegúrate de que las 3 secciones hayan sido extraídas primero."
             )
 
     with open(meta_path, "r", encoding="utf-8") as f:
@@ -1308,14 +1569,12 @@ def pre_compare_subtopic(exam_id: str, subtopic_id: str, db_path: str = DB_DEFAU
     web_corpus = web_bundle["raw_corpus"]
     web_corpus_norm = strip_accents_lower(web_corpus)
 
-    # Unificar tokens del PDF en las 3 secciones
     pdf_tokens: Dict[str, Set[str]] = {k: set() for k in ("commands", "flags", "paths", "vars", "terms", "acronyms")}
     for sec_j in (meta_json, theo_json, exer_json):
         for k, vals in sec_j.get("aggregated_tokens", {}).items():
             if k in pdf_tokens:
                 pdf_tokens[k].update(vals)
 
-    # Comprobar presencia de cada token del PDF en el corpus del subtema en la web
     def check_presence(items: Set[str], case_sensitive: bool = True) -> Tuple[List[str], List[str]]:
         present: List[str] = []
         missing: List[str] = []
@@ -1339,7 +1598,6 @@ def pre_compare_subtopic(exam_id: str, subtopic_id: str, db_path: str = DB_DEFAU
     term_present, term_missing = check_presence(pdf_tokens["terms"], case_sensitive=False)
     acr_present, acr_missing = check_presence(pdf_tokens["acronyms"], case_sensitive=True)
 
-    # Comprobar Lista Parcial oficial de archivos, términos y utilidades del PDF
     partial_list = meta_json.get("data", {}).get("partial_files_terms_utilities", [])
     partial_present: List[str] = []
     partial_missing: List[str] = []
@@ -1350,13 +1608,11 @@ def pre_compare_subtopic(exam_id: str, subtopic_id: str, db_path: str = DB_DEFAU
         else:
             partial_missing.append(item)
 
-    # Elementos en la Web que NO aparecen en el PDF (contenido extra / de autor)
     web_sub_cmds = set(web_bundle["web_tokens_in_subtopic"]["commands"])
     extra_web_commands = sorted(web_sub_cmds - pdf_tokens["commands"])
     web_sub_paths = set(web_bundle["web_tokens_in_subtopic"]["paths"])
     extra_web_paths = sorted(web_sub_paths - pdf_tokens["paths"])
 
-    # Cálculo de puntajes base deterministas (0–100) por dimensión
     def ratio_pct(pres: int, tot: int) -> float:
         return round((pres / tot) * 100.0, 1) if tot > 0 else 100.0
 
@@ -1368,16 +1624,13 @@ def pre_compare_subtopic(exam_id: str, subtopic_id: str, db_path: str = DB_DEFAU
     pres_def_items = len(term_present) + len(acr_present) + len(partial_present)
     auto_score_definitions = ratio_pct(pres_def_items, total_def_items)
 
-    # Evaluar cobertura de teoría y ejercicios
     pdf_guided = exer_json.get("data", {}).get("guided_exercises", [])
     pdf_explor = exer_json.get("data", {}).get("exploratory_exercises", [])
     pdf_theory_units = theo_json.get("data", {}).get("theory_units", [])
 
-    # Penalizar si la lección o el lab en la web están marcados como placeholder/esqueleto
     if web_bundle["lesson"]["placeholder"] or web_bundle["lesson"]["slides_count"] <= 3:
         auto_score_theory = 15.0
     else:
-        # Medir qué porcentaje de unidades teóricas del PDF tienen sus términos/comandos reflejados
         covered_units = 0
         for u in pdf_theory_units:
             utoks = u.get("tokens", {})
@@ -1462,6 +1715,96 @@ def pre_compare_subtopic(exam_id: str, subtopic_id: str, db_path: str = DB_DEFAU
     return pre_comp_result
 
 
+def pre_compare_wave_in_parallel(
+    exam_id: str,
+    subtopics_list: List[str],
+    db_path: str = DB_DEFAULT_PATH,
+    max_workers: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Ejecuta `pre_compare_subtopic` en paralelo multi-hilo para toda una oleada de subtemas."""
+    plan = compute_concurrency_plan()
+    workers = max_workers or plan["limits"]["python_thread_pool_workers"]
+    t0 = time.perf_counter()
+    results: List[Dict[str, Any]] = []
+    errors: List[Dict[str, Any]] = []
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(workers, max(1, len(subtopics_list)))) as executor:
+        future_to_sid = {
+            executor.submit(pre_compare_subtopic, exam_id, sid, db_path): sid
+            for sid in subtopics_list
+        }
+        for fut in concurrent.futures.as_completed(future_to_sid):
+            sid = future_to_sid[fut]
+            try:
+                res = fut.result()
+                results.append({
+                    "subtopic_id": sid,
+                    "baseline_score": res["automated_baseline_scores"]["total_weighted"],
+                    "pre_comparison_file": f"content-src/_extract/validacion-masiva/{exam_id}/subtopics/{sid}/pre_comparison.json",
+                })
+            except Exception as exc:
+                errors.append({"subtopic_id": sid, "error": str(exc)})
+
+    elapsed = round(time.perf_counter() - t0, 2)
+    return {
+        "status": "OK" if not errors else "PARTIAL_ERROR",
+        "exam_id": exam_id,
+        "subtopics_compared": sorted(results, key=lambda x: x["subtopic_id"]),
+        "parallel_threads_used": min(workers, max(1, len(subtopics_list))),
+        "elapsed_seconds": elapsed,
+        "errors": errors,
+    }
+
+
+def get_next_parallel_wave_for_topic(topic_id: str, db_path: str = DB_DEFAULT_PATH) -> Dict[str, Any]:
+    """
+    Devuelve la siguiente oleada de subtemas pendientes del Tema indicado según el límite
+    de concurrencia calculado para el hardware de la máquina.
+    """
+    conn = get_db_connection(db_path)
+    t_row = conn.execute("SELECT * FROM topics WHERE topic_id = ?", (topic_id,)).fetchone()
+    if not t_row:
+        conn.close()
+        raise ValueError(f"El tema {topic_id} no existe en la BBDD.")
+
+    pending_subs = [
+        dict(r)
+        for r in conn.execute(
+            """
+            SELECT * FROM subtopics
+            WHERE topic_id = ? AND (extraction_status != 'OK' OR comparison_status != 'OK')
+            ORDER BY wave_index ASC, subtopic_id ASC;
+            """,
+            (topic_id,),
+        ).fetchall()
+    ]
+    conn.close()
+
+    plan = compute_concurrency_plan()
+    wave_limit = plan["limits"]["subtopics_per_wave_per_topic"]
+
+    if not pending_subs:
+        return {
+            "topic_id": topic_id,
+            "topic_completed": True,
+            "next_wave_subtopics": [],
+            "concurrency_limit_applied": wave_limit,
+        }
+
+    current_wave_idx = pending_subs[0]["wave_index"]
+    wave_batch = [s for s in pending_subs if s["wave_index"] == current_wave_idx][:wave_limit]
+
+    return {
+        "topic_id": topic_id,
+        "topic_completed": False,
+        "wave_index": current_wave_idx,
+        "concurrency_limit_applied": wave_limit,
+        "next_wave_subtopic_ids": [s["subtopic_id"] for s in wave_batch],
+        "next_wave_details": wave_batch,
+        "remaining_subtopics_in_topic": len(pending_subs),
+    }
+
+
 def save_subtopic_validation_report(
     exam_id: str,
     subtopic_id: str,
@@ -1469,15 +1812,15 @@ def save_subtopic_validation_report(
     db_path: str = DB_DEFAULT_PATH,
 ) -> Dict[str, Any]:
     """
-    Registra el dictamen final y puntaje del subagente de Capa 3B en SQLite y genera los ficheros
-    de validación en `docs/agent/validacion-temario/<exam_id>/subtemas/<subtopic_id>-validacion.{json,md}`.
+    Registra el dictamen final y puntaje del subagente de Capa 3B en SQLite (de forma
+    thread-safe) y genera los ficheros `.json` y `.md` en `docs/agent/validacion-temario/`.
     """
-    conn = get_db_connection(db_path)
-    st_row = conn.execute(
+    conn_ro = get_db_connection(db_path)
+    st_row = conn_ro.execute(
         "SELECT * FROM subtopics WHERE exam_id = ? AND subtopic_id = ?", (exam_id, subtopic_id)
     ).fetchone()
+    conn_ro.close()
     if not st_row:
-        conn.close()
         raise ValueError(f"Subtema {subtopic_id} no encontrado en {exam_id}.")
 
     topic_id = st_row["topic_id"]
@@ -1539,7 +1882,6 @@ def save_subtopic_validation_report(
     with open(json_report_path, "w", encoding="utf-8") as f:
         json.dump(full_report, f, ensure_ascii=False, indent=2)
 
-    # Generar informe Markdown legible para el usuario
     md_lines = [
         f"# Informe de Validación Oficial · Subtema {subtopic_id}: {st_row['title']}",
         "",
@@ -1603,92 +1945,87 @@ def save_subtopic_validation_report(
     rel_json = os.path.relpath(json_report_path, REPO_ROOT).replace("\\", "/")
     rel_md = os.path.relpath(md_report_path, REPO_ROOT).replace("\\", "/")
 
-    conn.execute(
-        """
-        INSERT INTO validation_reports (
-            subtopic_id, exam_id, topic_id, score_total, score_commands, score_definitions,
-            score_theory, score_exercises, verdict, missing_items_count, extra_items_count,
-            distorted_items_count, summary_text, report_json, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(subtopic_id) DO UPDATE SET
-            score_total=excluded.score_total,
-            score_commands=excluded.score_commands,
-            score_definitions=excluded.score_definitions,
-            score_theory=excluded.score_theory,
-            score_exercises=excluded.score_exercises,
-            verdict=excluded.verdict,
-            missing_items_count=excluded.missing_items_count,
-            extra_items_count=excluded.extra_items_count,
-            distorted_items_count=excluded.distorted_items_count,
-            summary_text=excluded.summary_text,
-            report_json=excluded.report_json,
-            updated_at=excluded.updated_at;
-        """,
-        (
-            subtopic_id,
-            exam_id,
-            topic_id,
-            s_tot,
-            s_cmd,
-            s_def,
-            s_the,
-            s_exe,
-            verdict,
-            len(missing_items),
-            len(extra_items),
-            len(distorted_items),
-            summary_text,
-            json.dumps(full_report, ensure_ascii=False),
-            now_iso,
-        ),
-    )
-
-    conn.execute(
-        """
-        UPDATE subtopics SET
-            comparison_status = 'OK',
-            score_total = ?,
-            verdict = ?,
-            report_json_path = ?,
-            report_md_path = ?,
-            updated_at = ?
-        WHERE subtopic_id = ?;
-        """,
-        (s_tot, verdict, rel_json, rel_md, now_iso, subtopic_id),
-    )
-
-    conn.execute(
-        """
-        UPDATE page_ledger SET extracted_status = 'VALIDATED', updated_at = ?
-        WHERE exam_id = ? AND subtopic_id = ?;
-        """,
-        (now_iso, exam_id, subtopic_id),
-    )
-
-    # Comprobar si todo el Tema está ya validado
-    pending_in_topic = conn.execute(
-        "SELECT COUNT(*) AS cnt FROM subtopics WHERE topic_id = ? AND comparison_status != 'OK'",
-        (topic_id,),
-    ).fetchone()["cnt"]
-    if pending_in_topic == 0:
+    def _save_report_db(conn: sqlite3.Connection) -> Tuple[int, int]:
         conn.execute(
-            "UPDATE topics SET status = 'VALIDATED', updated_at = ? WHERE topic_id = ?",
-            (now_iso, topic_id),
+            """
+            INSERT INTO validation_reports (
+                subtopic_id, exam_id, topic_id, score_total, score_commands, score_definitions,
+                score_theory, score_exercises, verdict, missing_items_count, extra_items_count,
+                distorted_items_count, summary_text, report_json, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(subtopic_id) DO UPDATE SET
+                score_total=excluded.score_total,
+                score_commands=excluded.score_commands,
+                score_definitions=excluded.score_definitions,
+                score_theory=excluded.score_theory,
+                score_exercises=excluded.score_exercises,
+                verdict=excluded.verdict,
+                missing_items_count=excluded.missing_items_count,
+                extra_items_count=excluded.extra_items_count,
+                distorted_items_count=excluded.distorted_items_count,
+                summary_text=excluded.summary_text,
+                report_json=excluded.report_json,
+                updated_at=excluded.updated_at;
+            """,
+            (
+                subtopic_id,
+                exam_id,
+                topic_id,
+                s_tot,
+                s_cmd,
+                s_def,
+                s_the,
+                s_exe,
+                verdict,
+                len(missing_items),
+                len(extra_items),
+                len(distorted_items),
+                summary_text,
+                json.dumps(full_report, ensure_ascii=False),
+                now_iso,
+            ),
         )
-
-    # Comprobar si todo el Examen (~600 páginas) está validado
-    pending_in_exam = conn.execute(
-        "SELECT COUNT(*) AS cnt FROM subtopics WHERE exam_id = ? AND comparison_status != 'OK'",
-        (exam_id,),
-    ).fetchone()["cnt"]
-    if pending_in_exam == 0:
         conn.execute(
-            "UPDATE pdf_runs SET status = 'COMPLETED', updated_at = ? WHERE exam_id = ?",
-            (now_iso, exam_id),
+            """
+            UPDATE subtopics SET
+                comparison_status = 'OK',
+                score_total = ?,
+                verdict = ?,
+                report_json_path = ?,
+                report_md_path = ?,
+                updated_at = ?
+            WHERE subtopic_id = ?;
+            """,
+            (s_tot, verdict, rel_json, rel_md, now_iso, subtopic_id),
         )
+        conn.execute(
+            """
+            UPDATE page_ledger SET extracted_status = 'VALIDATED', updated_at = ?
+            WHERE exam_id = ? AND subtopic_id = ?;
+            """,
+            (now_iso, exam_id, subtopic_id),
+        )
+        p_topic = conn.execute(
+            "SELECT COUNT(*) AS cnt FROM subtopics WHERE topic_id = ? AND comparison_status != 'OK'",
+            (topic_id,),
+        ).fetchone()["cnt"]
+        if p_topic == 0:
+            conn.execute(
+                "UPDATE topics SET status = 'VALIDATED', updated_at = ? WHERE topic_id = ?",
+                (now_iso, topic_id),
+            )
+        p_exam = conn.execute(
+            "SELECT COUNT(*) AS cnt FROM subtopics WHERE exam_id = ? AND comparison_status != 'OK'",
+            (exam_id,),
+        ).fetchone()["cnt"]
+        if p_exam == 0:
+            conn.execute(
+                "UPDATE pdf_runs SET status = 'COMPLETED', updated_at = ? WHERE exam_id = ?",
+                (now_iso, exam_id),
+            )
+        return p_topic, p_exam
 
-    conn.commit()
-    conn.close()
+    pending_in_topic, pending_in_exam = run_db_write_transaction(db_path, _save_report_db)
 
     return {
         "status": "OK",
@@ -1705,7 +2042,7 @@ def save_subtopic_validation_report(
 
 
 def get_exam_progress(exam_id: str, db_path: str = DB_DEFAULT_PATH) -> Dict[str, Any]:
-    """Devuelve el estado global de progreso en SQLite (páginas, temas, subtemas, secciones, puntajes)."""
+    """Devuelve el estado global de progreso en SQLite (páginas, temas, subtemas, oleadas, puntajes)."""
     conn = get_db_connection(db_path)
     run_row = conn.execute("SELECT * FROM pdf_runs WHERE exam_id = ?", (exam_id,)).fetchone()
     if not run_row:
@@ -1729,7 +2066,6 @@ def get_exam_progress(exam_id: str, db_path: str = DB_DEFAULT_PATH) -> Dict[str,
         (exam_id,),
     ).fetchall()
     s_map = {r["status"]: r["cnt"] for r in sections_stats}
-
     conn.close()
 
     total_pages = int(run_row["total_pages"])
@@ -1739,6 +2075,8 @@ def get_exam_progress(exam_id: str, db_path: str = DB_DEFAULT_PATH) -> Dict[str,
 
     scored = [s["score_total"] for s in subtopics_rows if s["score_total"] is not None]
     avg_score = round(sum(scored) / len(scored), 1) if scored else None
+
+    c_plan = json.loads(run_row["concurrency_plan_json"]) if run_row["concurrency_plan_json"] else compute_concurrency_plan()
 
     return {
         "exam_id": exam_id,
@@ -1751,6 +2089,7 @@ def get_exam_progress(exam_id: str, db_path: str = DB_DEFAULT_PATH) -> Dict[str,
         "sections_breakdown": s_map,
         "average_validation_score": avg_score,
         "can_stop": pending_pages == 0 and all(s["comparison_status"] == "OK" for s in subtopics_rows),
+        "concurrency_plan": c_plan,
         "topics": topics_rows,
         "subtopics": subtopics_rows,
     }
@@ -1809,7 +2148,7 @@ def generate_master_exam_report(exam_id: str, db_path: str = DB_DEFAULT_PATH) ->
 
 
 # ============================================================================
-# SERVIDOR HTTP CON SUB-APIS DINÁMICAS POR TEMA Y SECCIÓN
+# SERVIDOR HTTP MULTIHILO CON SUB-APIS Y OLEADAS PARALELAS
 # ============================================================================
 
 class ValidationAPIHandler(BaseHTTPRequestHandler):
@@ -1842,13 +2181,15 @@ class ValidationAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, {"status": "UP", "db_path": self.db_path})
                 return
 
-            # GET /api/exam/<exam_id>/progress
+            if path == "/api/hardware-plan":
+                self._send_json(200, compute_concurrency_plan())
+                return
+
             m_prog = re.match(r"^/api/exam/([^/]+)/progress$", path)
             if m_prog:
                 self._send_json(200, get_exam_progress(m_prog.group(1), self.db_path))
                 return
 
-            # GET /api/exam/<exam_id>/structure
             m_struct = re.match(r"^/api/exam/([^/]+)/structure$", path)
             if m_struct:
                 exam_id = m_struct.group(1)
@@ -1860,7 +2201,6 @@ class ValidationAPIHandler(BaseHTTPRequestHandler):
                     self._send_json(200, json.load(f))
                 return
 
-            # API de Tema: GET /api/topic/<topic_id>
             m_top = re.match(r"^/api/topic/(\d{3})$", path)
             if m_top:
                 tid = m_top.group(1)
@@ -1873,10 +2213,15 @@ class ValidationAPIHandler(BaseHTTPRequestHandler):
                 subs = [dict(r) for r in conn.execute("SELECT * FROM subtopics WHERE topic_id = ? ORDER BY subtopic_id", (tid,)).fetchall()]
                 secs = [dict(r) for r in conn.execute("SELECT * FROM sections WHERE topic_id = ? ORDER BY section_id", (tid,)).fetchall()]
                 conn.close()
-                self._send_json(200, {"topic": dict(t_row), "subtopics": subs, "sections": secs})
+                next_wave = get_next_parallel_wave_for_topic(tid, self.db_path)
+                self._send_json(200, {"topic": dict(t_row), "next_parallel_wave": next_wave, "subtopics": subs, "sections": secs})
                 return
 
-            # Sub-API de Sección: GET /api/topic/<topic_id>/subtopic/<subtopic_id>/section/<section_slug>
+            m_next_wave = re.match(r"^/api/topic/(\d{3})/next-wave$", path)
+            if m_next_wave:
+                self._send_json(200, get_next_parallel_wave_for_topic(m_next_wave.group(1), self.db_path))
+                return
+
             m_sec = re.match(r"^/api/topic/(\d{3})/subtopic/(\d{3}\.\d+)/section/([a-z_]+)$", path)
             if m_sec:
                 tid, sid, slug = m_sec.group(1), m_sec.group(2), m_sec.group(3)
@@ -1890,7 +2235,6 @@ class ValidationAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, res)
                 return
 
-            # Sub-API Pre-Comparación: GET /api/topic/<topic_id>/subtopic/<subtopic_id>/pre-compare
             m_pre = re.match(r"^/api/topic/(\d{3})/subtopic/(\d{3}\.\d+)/pre-compare$", path)
             if m_pre:
                 tid, sid = m_pre.group(1), m_pre.group(2)
@@ -1914,7 +2258,6 @@ class ValidationAPIHandler(BaseHTTPRequestHandler):
         body = self._read_body_json()
 
         try:
-            # POST /api/init  {"pdf_path": "..."}
             if path == "/api/init":
                 pdf_path = body.get("pdf_path")
                 if not pdf_path:
@@ -1924,7 +2267,33 @@ class ValidationAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(200, res)
                 return
 
-            # POST /api/topic/<topic_id>/subtopic/<subtopic_id>/save-comparison
+            # POST /api/topic/<topic_id>/extract-wave  {"subtopics": ["101.1", "101.2", ...]}
+            m_ext_wave = re.match(r"^/api/topic/(\d{3})/extract-wave$", path)
+            if m_ext_wave:
+                tid = m_ext_wave.group(1)
+                subtopics_list = body.get("subtopics") or get_next_parallel_wave_for_topic(tid, self.db_path)["next_wave_subtopic_ids"]
+                if not subtopics_list:
+                    self._send_json(200, {"status": "OK", "message": "No quedan subtemas pendientes en este tema"})
+                    return
+                conn = get_db_connection(self.db_path)
+                t_row = conn.execute("SELECT exam_id FROM topics WHERE topic_id = ?", (tid,)).fetchone()
+                conn.close()
+                res = extract_wave_in_parallel(t_row["exam_id"], subtopics_list, self.db_path)
+                self._send_json(200, res)
+                return
+
+            # POST /api/topic/<topic_id>/pre-compare-wave  {"subtopics": ["101.1", "101.2", ...]}
+            m_pre_wave = re.match(r"^/api/topic/(\d{3})/pre-compare-wave$", path)
+            if m_pre_wave:
+                tid = m_pre_wave.group(1)
+                subtopics_list = body.get("subtopics") or get_next_parallel_wave_for_topic(tid, self.db_path)["next_wave_subtopic_ids"]
+                conn = get_db_connection(self.db_path)
+                t_row = conn.execute("SELECT exam_id FROM topics WHERE topic_id = ?", (tid,)).fetchone()
+                conn.close()
+                res = pre_compare_wave_in_parallel(t_row["exam_id"], subtopics_list, self.db_path)
+                self._send_json(200, res)
+                return
+
             m_save = re.match(r"^/api/topic/(\d{3})/subtopic/(\d{3}\.\d+)/save-comparison$", path)
             if m_save:
                 tid, sid = m_save.group(1), m_save.group(2)
@@ -1956,27 +2325,48 @@ def run_http_server(host: str, port: int, db_path: str) -> None:
 
 
 # ============================================================================
-# CLI DIRECTA (MISMA LÓGICA QUE LAS SUB-APIS HTTP)
+# CLI DIRECTA (SOPORTE COMPLETO DE EJECUCIÓN EN PARALELO Y POR OLEADAS)
 # ============================================================================
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Servidor HTTP y CLI para extracción estructurada de PDFs LPI y validación contra la Web."
+        description="Servidor HTTP, Planificador Hardware-Aware y CLI paralela para validación de PDFs LPI."
     )
     parser.add_argument("--db", default=DB_DEFAULT_PATH, help="Ruta de la base de datos SQLite")
     subparsers = parser.add_subparsers(dest="cmd", required=True)
 
+    # 0. hardware-plan
+    p_hw = subparsers.add_parser("hardware-plan", help="Detecta CPU/RAM de la máquina y muestra el plan de concurrencia óptima")
+    p_hw.add_argument("--topics", type=int, default=4)
+    p_hw.add_argument("--subtopics", type=int, default=23)
+
     # 1. init
-    p_init = subparsers.add_parser("init", help="Analiza estructura completa del PDF, crea structure-input.json e inicializa SQLite")
+    p_init = subparsers.add_parser("init", help="Analiza estructura del PDF, calcula oleadas paralelas según hardware e inicializa SQLite")
     p_init.add_argument("--pdf", required=True, help="Ruta al PDF oficial (101-500 o 102-500)")
 
     # 2. serve
-    p_serve = subparsers.add_parser("serve", help="Levanta el servidor HTTP con APIs por Tema y Sub-APIs por Sección")
+    p_serve = subparsers.add_parser("serve", help="Levanta el servidor HTTP multihilo con APIs por Tema y Sub-APIs por Sección")
     p_serve.add_argument("--host", default="127.0.0.1")
     p_serve.add_argument("--port", type=int, default=8765)
     p_serve.add_argument("--pdf", default=None, help="Opcional: inicializar este PDF al arrancar el servidor")
 
-    # 3. extract-section
+    # 3. next-wave
+    p_nw = subparsers.add_parser("next-wave", help="Obtiene la siguiente oleada paralela de subtemas pendientes de un Tema")
+    p_nw.add_argument("--topic", required=True, help="ID del tema (ej. 101)")
+
+    # 4. extract-wave-parallel
+    p_ew = subparsers.add_parser("extract-wave-parallel", help="Extrae en paralelo multi-hilo todas las secciones de una oleada de subtemas")
+    p_ew.add_argument("--exam", required=True, help="ID del examen (ej. 101-500 o 102-500)")
+    p_ew.add_argument("--subtopics", required=True, help="Lista de subtemas separados por coma (ej. 101.1,101.2,101.3)")
+    p_ew.add_argument("--workers", type=int, default=None, help="Opcional: nº de hilos paralelos (por defecto auto-detectado)")
+
+    # 5. pre-compare-wave-parallel
+    p_pw = subparsers.add_parser("pre-compare-wave-parallel", help="Ejecuta pre-comparación en paralelo multi-hilo para una oleada de subtemas")
+    p_pw.add_argument("--exam", required=True, help="ID del examen (ej. 101-500 o 102-500)")
+    p_pw.add_argument("--subtopics", required=True, help="Lista de subtemas separados por coma (ej. 101.1,101.2,101.3)")
+    p_pw.add_argument("--workers", type=int, default=None, help="Opcional: nº de hilos paralelos")
+
+    # 6. extract-section
     p_ext = subparsers.add_parser("extract-section", help="Extrae una sección específica de un subtema (Capa 3A)")
     p_ext.add_argument("--exam", required=True, help="ID del examen (ej. 101-500 o 102-500)")
     p_ext.add_argument("--subtopic", required=True, help="ID del subtema (ej. 101.1)")
@@ -1984,29 +2374,33 @@ def main() -> int:
         "--section",
         required=True,
         choices=["metadatos_y_resumen", "teoria_lecciones", "ejercicios_y_respuestas", "ALL"],
-        help="Sección interna a extraer (o ALL para extraer las 3 del subtema)",
+        help="Sección interna a extraer (o ALL para extraer las 3 del subtema en paralelo)",
     )
 
-    # 4. pre-compare
+    # 7. pre-compare
     p_pre = subparsers.add_parser("pre-compare", help="Ejecuta la pre-comparación determinista PDF vs Web (Capa 3B)")
     p_pre.add_argument("--exam", required=True, help="ID del examen (ej. 101-500 o 102-500)")
     p_pre.add_argument("--subtopic", required=True, help="ID del subtema (ej. 101.1)")
 
-    # 5. save-comparison
+    # 8. save-comparison
     p_save = subparsers.add_parser("save-comparison", help="Guarda el dictamen final y puntaje de un subtema en SQLite y disco")
     p_save.add_argument("--exam", required=True, help="ID del examen (ej. 101-500 o 102-500)")
     p_save.add_argument("--subtopic", required=True, help="ID del subtema (ej. 101.1)")
     p_save.add_argument("--input-json", required=True, help="Ruta al fichero JSON con el resultado de evaluación o 'AUTO' para usar baseline")
 
-    # 6. progress
+    # 9. progress
     p_prog = subparsers.add_parser("progress", help="Consulta el estado de progreso en SQLite (páginas, temas, subtemas)")
     p_prog.add_argument("--exam", required=True, help="ID del examen (ej. 101-500 o 102-500)")
 
-    # 7. master-report
+    # 10. master-report
     p_rep = subparsers.add_parser("master-report", help="Genera el informe consolidado global del examen")
     p_rep.add_argument("--exam", required=True, help="ID del examen (ej. 101-500 o 102-500)")
 
     args = parser.parse_args()
+
+    if args.cmd == "hardware-plan":
+        print(json.dumps(compute_concurrency_plan(args.topics, args.subtopics), ensure_ascii=False, indent=2))
+        return 0
 
     if args.cmd == "init":
         res = analyze_pdf_structure(args.pdf, args.db)
@@ -2018,6 +2412,7 @@ def main() -> int:
             "subtopics_count": res["subtopics_count"],
             "sections_count": res["sections_count"],
             "structure_input_file": f"content-src/_extract/validacion-masiva/{res['exam_id']}/structure-input.json",
+            "concurrency_plan": res["concurrency_plan"],
             "server_apis": res["server_apis"],
         }, ensure_ascii=False, indent=2))
         return 0
@@ -2028,12 +2423,26 @@ def main() -> int:
         run_http_server(args.host, args.port, args.db)
         return 0
 
+    if args.cmd == "next-wave":
+        print(json.dumps(get_next_parallel_wave_for_topic(args.topic, args.db), ensure_ascii=False, indent=2))
+        return 0
+
+    if args.cmd == "extract-wave-parallel":
+        s_list = [s.strip() for s in args.subtopics.split(",") if s.strip()]
+        res = extract_wave_in_parallel(args.exam, s_list, args.db, args.workers)
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.cmd == "pre-compare-wave-parallel":
+        s_list = [s.strip() for s in args.subtopics.split(",") if s.strip()]
+        res = pre_compare_wave_in_parallel(args.exam, s_list, args.db, args.workers)
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+        return 0
+
     if args.cmd == "extract-section":
         if args.section == "ALL":
-            results = []
-            for slug in ("metadatos_y_resumen", "teoria_lecciones", "ejercicios_y_respuestas"):
-                results.append(extract_subtopic_section(args.exam, args.subtopic, slug, args.db))
-            print(json.dumps({"status": "OK", "subtopic_id": args.subtopic, "sections": results}, ensure_ascii=False, indent=2))
+            res = extract_wave_in_parallel(args.exam, [args.subtopic], args.db, max_workers=3)
+            print(json.dumps(res, ensure_ascii=False, indent=2))
         else:
             res = extract_subtopic_section(args.exam, args.subtopic, args.section, args.db)
             print(json.dumps(res, ensure_ascii=False, indent=2))
