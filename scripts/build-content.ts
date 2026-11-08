@@ -16,6 +16,7 @@ import {
   CurriculumManifest,
   Lesson,
   Lab,
+  LabStep,
   Question,
   Command,
   GlossaryTerm,

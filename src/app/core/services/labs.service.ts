@@ -60,7 +60,7 @@ export class LabsService {
     }
 
     // Prácticas globales integradoras por tema
-    for (const topic of manifest.topics) {
+    for (const topic of manifest.topics ?? []) {
       const globalLabId = topic.globalLabId || `lab-${topic.id}-global`;
       list.push({
         id: globalLabId,
