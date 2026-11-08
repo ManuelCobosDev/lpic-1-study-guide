@@ -10,7 +10,7 @@ Web **Angular 100% cliente** para preparar la certificación LPIC-1 (101-500 y 1
 | Qué | Dónde |
 |---|---|
 | Reglas siempre activas | `.agents/rules/` |
-| Procedimientos (skills) | `.agents/skills/`: `/iniciar-sesion` · `/ejecutar-fase N` · `/verificar-gate N` · `/cerrar-sesion` · `/inventario-legacy` · `/importar-contenido-legacy` · `/registrar-decision` · **Ronda 2:** `/ejecutar-paso-r2 <R0…RF>` · `/extraer-pdf` · `/verificar-cobertura <id>` · `/procesar-subtema <id>` · `/auditar-subtema <id>` · `/registrar-validacion <id>` · `/corregir-bug` |
+| Procedimientos (skills) | `.agents/skills/`: `/iniciar-sesion` · `/ejecutar-fase N` · `/verificar-gate N` · `/cerrar-sesion` · `/inventario-legacy` · `/importar-contenido-legacy` · `/registrar-decision` · `/validar-temario-pdf` · **Ronda 2:** `/ejecutar-paso-r2 <R0…RF>` · `/extraer-pdf` · `/verificar-cobertura <id>` · `/procesar-subtema <id>` · `/auditar-subtema <id>` · `/registrar-validacion <id>` · `/corregir-bug` |
 | Especificación (lee SOLO la parte que toque) | `docs/spec/00` … `09` (índice abajo) |
 | Memoria del proyecto | `docs/agent/` → `STATUS.md` · `CHANGELOG.md` · `DECISIONS.md` · `BACKLOG.md` · (Ronda 2) `PROGRESO_R2.md` · `VALIDACIONES.md` · `validaciones.json` |
 | Material antiguo del curso (SOLO LECTURA) | `_legacy/` |

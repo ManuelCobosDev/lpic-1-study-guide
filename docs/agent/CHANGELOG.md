@@ -880,3 +880,18 @@
 - Verificación: npm run typecheck (OK), npm run lint (OK), npm test (444 tests en verde), npm run build (OK, bundle initial 439 kB < 500 kB budget).
 - Pendiente / deuda: Feedback de testeo del usuario y continuación de la Ronda 2 de fidelidad LPI para subtemas pendientes.
 
+## C-0081 · 2026-11-08 · Skill Autónoma `/validar-temario-pdf`: Servidor Python, BBDD SQLite y Arquitectura de 3 Capas de Subagentes
+- Qué: diseño e implementación de la skill especializada `.agents/skills/validar-temario-pdf/` para extracción estructurada de bajo consumo de tokens y validación comparativa masiva de los PDFs oficiales LPI (`101-500` de 571 páginas y `102-500` de 594 páginas en `docs/lpic1-original-content/`) frente al contenido de la aplicación web:
+  (1) Motor Python + Servidor HTTP + Base de Datos SQLite (`.agents/skills/validar-temario-pdf/scripts/pdf_validation_server.py`):
+      - Descubrimiento estructural completo (`init`) generando `structure-input.json` (4 temas, 23 subtemas y 69 secciones en 101-500; 6 temas, 19 subtemas y 57 secciones en 102-500).
+      - Base de datos SQLite en modo WAL (`validation_state.db`) con 6 tablas (`pdf_runs`, `topics`, `subtopics`, `sections`, `page_ledger`, `validation_reports`) para rastrear página a página las ~600 páginas del PDF y garantizar condición de parada (`can_stop == true`).
+      - Servidor HTTP multihilo con rutas dinámicas por Tema (`/api/topic/<topic_id>`) y Sub-APIs por Sección (`/api/topic/<tid>/subtopic/<sid>/section/<slug>`), más pre-comparador determinista (`pre-compare`) y consolidador (`save-comparison`, `master-report`).
+  (2) Definición de System Prompts y Protocolos de las 3 Capas (`.agents/skills/validar-temario-pdf/references/system-prompts-capas.md` y `esquemas-datos-y-api.md`):
+      - Capa 1 (`Orquestador General PDF`), Capa 2 (`coordinador-tema`, modelo `flash`), Capa 3A (`extractor-seccion-pdf`, modelo `flash_lite`) y Capa 3B (`validador-comparador-web`, modelo `flash`).
+  (3) Registro de `/validar-temario-pdf` en `AGENTS.md` y protección de `docs/lpic1-original-content/` en `.gitignore`.
+- Por qué: petición expresa del usuario para contar con una skill autónoma, potente y optimizada en tokens que permita a subagentes ligeros extraer en JSON/YAML y validar al 100% los manuales oficiales de ~600 páginas contra la web asignando puntajes por subtema.
+- Archivos: .agents/skills/validar-temario-pdf/SKILL.md, .agents/skills/validar-temario-pdf/scripts/pdf_validation_server.py, .agents/skills/validar-temario-pdf/references/system-prompts-capas.md, .agents/skills/validar-temario-pdf/references/esquemas-datos-y-api.md, AGENTS.md, .gitignore, docs/agent/CHANGELOG.md, docs/agent/STATUS.md.
+- Verificación: ejecución real de `pdf_validation_server.py init` sobre `LPI-Learning-Material-101-500-es.pdf` (571 págs, 4 temas, 23 subtemas) y `LPI-Learning-Material-102-500-es.pdf` (594 págs, 6 temas, 19 subtemas), prueba de extremo a extremo de `extract-section`, `pre-compare`, `save-comparison` y `progress` en SQLite, `npm run typecheck` y `npm run lint` en verde.
+- Pendiente / deuda: Ejecutar `/validar-temario-pdf 101` o `/validar-temario-pdf 102` cuando el usuario indique iniciar el barrido masivo completo.
+
+
