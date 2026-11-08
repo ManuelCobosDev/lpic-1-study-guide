@@ -3,7 +3,7 @@
   "subtopicId": "103.6",
   "title": "Práctica 103.6 — Modificar la Prioridad de Procesos (Nice y Renice)",
   "estimatedMinutes": 30,
-  "difficulty": "basic",
+  "difficulty": "intermediate",
   "type": "subtopic",
   "placeholder": false,
   "steps": [
@@ -11,34 +11,46 @@
       "id": "step-103-6-1",
       "stepNumber": 1,
       "title": "Misión 1 — Lanzamiento con Prioridad Modificada mediante nice",
-      "instruction": "El valor Nice va de -20 (máxima prioridad) a +19 (mínima prioridad). El valor por defecto al nacer un proceso es 0.",
-      "command": "# Lanzar un proceso con menor prioridad (nice +10, 'más amable' con el resto)\r\nnice -n 10 sleep 300 &\r\n\r\n# Comprobar el PID y el valor Nice asignado mediante ps\r\nps -o pid,ni,pri,comm -C sleep",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "instruction": "Lanza procesos con diferentes niveles de niceness (-20 a +19), verificando tanto la sintaxis estándar '-n' como la sintaxis histórica de guiones.",
+      "command": "# Lanzar un proceso con menor prioridad (nice +10, más amable con la CPU)\nnice -n 10 sleep 400 &\n\n# Lanzar un segundo proceso usando la sintaxis histórica (nice -5 equivale a nice -n 5)\nnice -5 sleep 500 &\n\n# Comprobar el PID, niceness (NI) y prioridad (PRI) asignados mediante ps\nps -o pid,ni,pri,comm -C sleep",
+      "expectedOutput": "Comprobación de que sleep 400 tiene NI=10 y sleep 500 tiene NI=5.",
+      "hint": "Recuerda que nice sin argumentos aplica por defecto un incremento de +10."
     },
     {
       "id": "step-103-6-2",
       "stepNumber": 2,
-      "title": "Misión 2 — Modificación en Vivo con renice y Privilegios de Root",
-      "instruction": "Regla de oro LPIC-1: un usuario normal puede SUBIR su valor Nice (hacerse menos prioritario), pero solo ROOT puede BAJARLO (prioridad negativa o mayor favoritismo).",
-      "command": "# Intentar como usuario normal subir la amabilidad a +15 (permitido)\r\nPID_SLEEP=$(pgrep -f \"sleep 300\" | head -n 1)\r\nrenice -n 15 -p $PID_SLEEP\r\n\r\n# Verificar el cambio con ps\r\nps -o pid,ni,pri,comm -p $PID_SLEEP\r\n\r\n# Asignar prioridad máxima (-5) usando sudo (requiere root)\r\nsudo renice -n -5 -p $PID_SLEEP\r\n\r\n# Verificar el nuevo valor negativo de alta prioridad\r\nps -o pid,ni,pri,comm -p $PID_SLEEP",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "title": "Misión 2 — Modificación en Vivo con renice y Restricción de Privilegios",
+      "instruction": "Modifica la prioridad de un proceso en ejecución y comprueba que los usuarios sin privilegios no pueden asignar prioridades negativas ni aumentarlas.",
+      "command": "# Obtener el PID de uno de los procesos sleep\nPID_SLEEP=$(pgrep -f \"sleep 400\" | head -n 1)\n\n# Subir la amabilidad a +15 como usuario normal (permitido)\nrenice -n 15 -p $PID_SLEEP\n\n# Intentar asignar prioridad negativa sin privilegios (debe fallar con Permission denied)\nrenice -n -5 -p $PID_SLEEP || echo \"Fallo esperado: solo root puede asignar valores negativos o aumentar prioridad\"\n\n# Asignar prioridad de alta preferencia (-5) con permisos de superusuario (sudo)\nsudo renice -n -5 -p $PID_SLEEP\n\n# Verificar el nuevo valor NI negativo y el cambio en la prioridad PRI\nps -o pid,ni,pri,stat,comm -p $PID_SLEEP",
+      "expectedOutput": "Confirmación del error de permisos para usuario normal y cambio exitoso a NI=-5 con sudo.",
+      "hint": "En ps aux, los procesos con niceness negativo muestran el indicador '<' en la columna STAT."
     },
     {
       "id": "step-103-6-3",
       "stepNumber": 3,
-      "title": "Misión 3 — Inspección de Columnas NI y PR en top",
-      "instruction": "Aprenderás a supervisar las prioridades en el monitor en vivo top.",
-      "command": "# Lanzar top en modo por lotes (-b) extrayendo las líneas de sleep\r\ntop -b -n 1 | grep -E \"PID USER|sleep\"\r\n\r\n# Limpiar el proceso de prueba\r\nkillall sleep",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "title": "Misión 3 — Inspección de Columnas NI y PR en top (Fórmula PR = 20 + NI)",
+      "instruction": "Examina la relación matemática entre el valor Niceness (NI) y la prioridad dinámica del kernel (PR) en el monitor top.",
+      "command": "# Ejecutar top en modo batch (-b) para filtrar los procesos sleep\ntop -b -n 1 | grep -E \"PID USER|sleep\"\n\n# Verificar la regla matemática de examen:\n# Para sleep con NI=-5 -> PR = 20 + (-5) = 15\n# Para sleep con NI=0  -> PR = 20 + 0 = 20\n# Para sleep con NI=15 -> PR = 20 + 15 = 35",
+      "expectedOutput": "Visualización de las columnas PR y NI en la salida de top confirmando PR = 20 + NI.",
+      "hint": "En una sesión interactiva de top, pulsar la tecla 'r' permite ejecutar renice en caliente."
     },
     {
       "id": "step-103-6-4",
       "stepNumber": 4,
-      "title": "Misión 4 — Sintaxis Histórica vs Estándar de nice",
-      "instruction": "El examen LPIC-1 puede formular preguntas con la sintaxis antigua de guiones.",
-      "command": "# Repaso de sintaxis para examen:\r\n# Sintaxis estándar: nice -n 5 comando   (Nice = 5)\r\n# Sintaxis estándar: nice -n -5 comando  (Nice = -5, requiere root)\r\n# Sintaxis antigua:  nice -5 comando     (Nice = 5)\r\n# Sintaxis antigua:  nice --5 comando    (Nice = -5, doble guión)",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
-      "examAlert": "Ver pista desplegable si te atascas</summary>"
+      "title": "Misión 4 — Auditoría Interna en /proc/sched y Ordenación con ps --sort",
+      "instruction": "Consulta la prioridad estática directa en la interfaz del kernel /proc y ordena procesos por uso de CPU con --sort.",
+      "command": "# Consultar la prioridad estática interna del kernel en /proc (escala 100-139, base 120)\ngrep ^prio /proc/1/sched\n\n# Listar procesos en formato largo ordenados de menor a mayor uso de CPU (ascendente)\nps -el --sort=pcpu | head -n 10\n\n# Listar procesos ordenados de mayor a menor uso de CPU (descendente con signo menos)\nps -el --sort=-pcpu | head -n 10",
+      "expectedOutput": "Muestra del valor prio: 120 en /proc/1/sched y lista ordenada por CPU con ps.",
+      "hint": "En 'ps -el', la columna PRI muestra un desfase de 40: PRI 80 + 40 = 120."
+    },
+    {
+      "id": "step-103-6-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Políticas de Planificación y Procesos de Tiempo Real",
+      "instruction": "Inspecciona procesos con prioridad de tiempo real (rt) y herramientas especializadas de programación como schedtool.",
+      "command": "# Identificar procesos de tiempo real (con PR rt en top o PRI -40 en ps)\nps -el | grep -E \"PRI|migration\"\n\n# Sintaxis de la herramienta schedtool evaluada en ejercicios exploratorios:\n# schedtool <PID>                -> Muestra parámetros de planificación actuales\n# sudo schedtool -R -p 89 <PID>  -> Cambia a política Round-Robin en tiempo real\n\n# Limpiar los procesos de prueba\nkillall sleep",
+      "expectedOutput": "Confirmación de procesos con prioridad especial y limpieza del entorno.",
+      "hint": "Los procesos en tiempo real tienen precedencia absoluta sobre cualquier proceso ordinario del CFS."
     }
   ]
 }

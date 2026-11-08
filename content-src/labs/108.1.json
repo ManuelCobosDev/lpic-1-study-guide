@@ -2,7 +2,7 @@
   "id": "lab-108-1",
   "subtopicId": "108.1",
   "title": "Práctica 108.1 — Sincronización Horaria, timedatectl, Reloj Hardware RTC y Demonios NTP",
-  "estimatedMinutes": 30,
+  "estimatedMinutes": 35,
   "difficulty": "basic",
   "type": "subtopic",
   "placeholder": false,
@@ -10,10 +10,42 @@
     {
       "id": "step-108-1-1",
       "stepNumber": 1,
-      "title": "Misión 1: Configuración y verificación de 108.1",
-      "instruction": "Ejecuta los comandos fundamentales del objetivo 108.1 en tu entorno de pruebas Debian.",
-      "command": "man 108_1",
-      "expectedOutput": "El sistema despliega la documentación y sintaxis oficial de las herramientas."
+      "title": "Misión 1 — Inspección y Formateo del Reloj del Sistema con date y Diagnóstico con --debug",
+      "instruction": "Consultaremos la hora del sistema en horario local y UTC, utilizaremos secuencias de formato para extraer componentes de tiempo específicos y depuraremos el análisis léxico de fechas con `--debug`.",
+      "command": "# 1. Mostrar la hora local completa con zona horaria\ndate '+%Y-%m-%d %T (%Z)'\n\n# 2. Consultar la hora en Tiempo Universal Coordinado (UTC)\ndate -u\n\n# 3. Obtener el timestamp Epoch (segundos desde el 01/01/1970)\ndate +%s\n\n# 4. Probar la bandera de validación --debug para depurar una cadena de fecha\ndate --debug --date '2026-12-31 23:59:59 -03'",
+      "expectedOutput": "date muestra la fecha local, la hora UTC sin salto estacional, el timestamp numérico y el análisis léxico detallado de depuración."
+    },
+    {
+      "id": "step-108-1-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Sincronización Bidireccional del Reloj Hardware (RTC) con hwclock",
+      "instruction": "Leeremos la hora almacenada en el chip físico RTC de la placa base, sincronizaremos la hora del kernel hacia el hardware (`--systohc`) y hacia el sistema (`--hctosys`), e inspeccionaremos `/etc/adjtime`.",
+      "command": "# 1. Leer y mostrar la hora del reloj de hardware (RTC)\nsudo hwclock -r\n\n# 2. Volcar la hora actual del sistema hacia el reloj de hardware (--systohc)\nsudo hwclock -w\n\n# 3. Cargar la hora del RTC hacia el reloj de software del kernel (--hctosys)\nsudo hwclock -s\n\n# 4. Inspeccionar el archivo de deriva y calibración /etc/adjtime\ncat /etc/adjtime 2>/dev/null || true",
+      "expectedOutput": "hwclock lee el RTC con precisión de microsegundos y ejecuta la sincronización en ambos sentidos registrando los factores de deriva."
+    },
+    {
+      "id": "step-108-1-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Gestión Tradicional de Zonas Horarias: /usr/share/zoneinfo/ y /etc/localtime",
+      "instruction": "Exploraremos los archivos binarios compilados de zonas horarias en `/usr/share/zoneinfo/` y estableceremos manualmente la zona horaria del sistema mediante el enlace simbólico clásico.",
+      "command": "# 1. Listar las zonas horarias compiladas en la base de datos tzdata\nls /usr/share/zoneinfo/Europe | head -n 12\n\n# 2. Enlazar manualmente la zona Europe/Madrid hacia /etc/localtime\nsudo ln -sf /usr/share/zoneinfo/Europe/Madrid /etc/localtime\n\n# 3. Comprobar a qué fichero apunta el enlace simbólico\nls -l /etc/localtime\n\n# 4. Verificar el archivo /etc/timezone si existe en la distribución\ncat /etc/timezone 2>/dev/null || true",
+      "expectedOutput": "El enlace simbólico /etc/localtime queda apuntando al archivo binario de zona horaria en /usr/share/zoneinfo/."
+    },
+    {
+      "id": "step-108-1-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Control Centralizado con timedatectl y Control del Servicio NTP",
+      "instruction": "Utilizaremos `timedatectl` para auditar los tres relojes simultáneamente (local, UTC y RTC), cambiar la zona horaria en caliente y gestionar la activación del cliente NTP de red.",
+      "command": "# 1. Inspeccionar el estado global de tiempo y sincronización\ntimedatectl status\n\n# 2. Listar zonas horarias admitidas filtrando por una región\ntimedatectl list-timezones | grep -i \"madrid\"\n\n# 3. Fijar la zona horaria del sistema de forma persistente\nsudo timedatectl set-timezone Europe/Madrid\n\n# 4. Activar la sincronización automática de tiempo por red (NTP)\nsudo timedatectl set-ntp true\ntimedatectl status | grep \"NTP service\"",
+      "expectedOutput": "timedatectl reporta la sincronización activa y la zona horaria Europe/Madrid configurada de forma persistente."
+    },
+    {
+      "id": "step-108-1-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Diagnóstico y Métricas de Sincronización con chronyc",
+      "instruction": "Auditaremos las fuentes NTP remotas conectadas, comprobaremos el estrato y el offset del reloj local con `tracking`, e inspeccionaremos las estadísticas de fluctuación (jitter).",
+      "command": "# 1. Comprobar el estado y pares de sincronización con chronyc sources -v\nsudo chronyc sources -v 2>/dev/null || timedatectl timesync-status\n\n# 2. Consultar los parámetros de disciplinado local (estrato, offset y deriva)\nsudo chronyc tracking 2>/dev/null || true\n\n# 3. Inspeccionar el número de fuentes en línea con activity\nsudo chronyc activity 2>/dev/null || true\n\n# 4. Forzar un salto de compensación instantáneo si fuera necesario\nsudo chronyc makestep 2>/dev/null || true",
+      "expectedOutput": "chronyc reporta las fuentes de tiempo activas (*), el estrato del servidor y el offset respecto a la referencia de red."
     }
   ]
 }

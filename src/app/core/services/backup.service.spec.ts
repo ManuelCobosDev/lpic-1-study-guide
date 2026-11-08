@@ -5,7 +5,7 @@ import { ProgressService } from './progress.service';
 import { PreferencesService } from './preferences.service';
 import { ClockService } from './clock.service';
 import { ContentService } from './content.service';
-import { BACKUP_FORMAT, CURRENT_SCHEMA_VERSION, BackupPayload } from '../models/backup.model';
+import { BACKUP_FORMAT, CURRENT_SCHEMA_VERSION, APP_VERSION, BackupPayload } from '../models/backup.model';
 
 describe('BackupService', () => {
   let service: BackupService;
@@ -59,7 +59,7 @@ describe('BackupService', () => {
 
       expect(payload.format).toBe(BACKUP_FORMAT);
       expect(payload.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
-      expect(payload.appVersion).toBe('0.1.0');
+      expect(payload.appVersion).toBe(APP_VERSION);
       expect(payload.exportedAt).toBeTruthy();
       expect(payload.data).toBeTruthy();
       expect(payload.checksum.length).toBe(64);
@@ -230,6 +230,50 @@ describe('BackupService', () => {
       const mergedNotesRaw = storage.getItem('notes');
       expect(mergedNotesRaw).toContain('Nota 101');
       expect(mergedNotesRaw).toContain('Nota 102');
+    });
+
+    it('debe fusionar flashcards_progress bajo data.progress preservando compatibilidad', async () => {
+      const currentRaw = JSON.stringify({
+        schemaVersion: 1,
+        data: {
+          progress: {
+            'fc-1': { cardId: 'fc-1', box: 1, lastReviewedAt: '2026-01-01T00:00:00Z' }
+          }
+        },
+        updatedAt: '2026-01-01T00:00:00Z'
+      });
+      storage.setItem('flashcards_progress', currentRaw);
+
+      const backupData = {
+        flashcards_progress: {
+          schemaVersion: 1,
+          data: {
+            progress: {
+              'fc-1': { cardId: 'fc-1', box: 3, lastReviewedAt: '2026-02-01T00:00:00Z' },
+              'fc-2': { cardId: 'fc-2', box: 2, lastReviewedAt: '2026-02-01T00:00:00Z' }
+            }
+          },
+          updatedAt: '2026-02-01T00:00:00Z'
+        }
+      };
+
+      const payload: BackupPayload = {
+        format: BACKUP_FORMAT,
+        schemaVersion: 1,
+        appVersion: '0.1.0',
+        exportedAt: '2026-02-01T00:00:00Z',
+        data: backupData,
+        checksum: await calculateChecksum(backupData)
+      };
+
+      await service.importBackup(payload, 'merge');
+
+      const updatedRaw = storage.getItem('flashcards_progress');
+      expect(updatedRaw).not.toBeNull();
+      const parsed = JSON.parse(updatedRaw!);
+      expect(parsed.data.progress).toBeDefined();
+      expect(parsed.data.progress['fc-1'].box).toBe(3);
+      expect(parsed.data.progress['fc-2'].box).toBe(2);
     });
   });
 

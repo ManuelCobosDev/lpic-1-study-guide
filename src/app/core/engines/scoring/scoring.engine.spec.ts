@@ -21,6 +21,12 @@ describe('ScoringEngine (Motor de Puntuación y Selección LPI)', () => {
       expect(normalizeAnswer('cat    /etc/passwd   ')).toBe('cat /etc/passwd');
     });
 
+    it('debe normalizar acentos diacríticos', () => {
+      expect(normalizeAnswer('opción')).toBe('opcion');
+      expect(normalizeAnswer('LÍNEA DE COMANDOS')).toBe('linea de comandos');
+      expect(normalizeAnswer('/etc/configuración')).toBe('/etc/configuracion');
+    });
+
     it('debe manejar cadenas vacías o undefined de forma segura', () => {
       expect(normalizeAnswer('')).toBe('');
       expect(normalizeAnswer(undefined)).toBe('');

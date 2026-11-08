@@ -3,42 +3,49 @@
   "subtopicId": "104.3",
   "title": "Práctica 104.3 — Control del Montaje y Desmontaje de Sistemas de Archivos",
   "estimatedMinutes": 30,
-  "difficulty": "basic",
+  "difficulty": "intermediate",
   "type": "subtopic",
   "placeholder": false,
   "steps": [
     {
       "id": "step-104-3-1",
       "stepNumber": 1,
-      "title": "Misión 1 — Montaje Manual Seguro y Opciones de Remontaje",
-      "instruction": "Montaremos un sistema de archivos de prueba en modo solo lectura (`ro`) y probaremos cómo remontarlo en caliente a modo lectura/escritura (`rw`).",
-      "command": "# Crear un punto de montaje y una imagen ext4 de prueba\r\nsudo mkdir -p /mnt/prueba_lab\r\ntruncate -s 50M /tmp/disco_montaje.raw\r\nsudo mkfs.ext4 -F /tmp/disco_montaje.raw > /dev/null\r\n\r\n# Montar inicialmente en modo SOLO LECTURA (-o ro)\r\nsudo mount -o ro /tmp/disco_montaje.raw /mnt/prueba_lab\r\n\r\n# Comprobar que está montado como ro con findmnt\r\nfindmnt /mnt/prueba_lab\r\n\r\n# Intentar crear un archivo (debe fallar con 'Read-only file system')\r\ntouch /mnt/prueba_lab/archivo.txt 2>&1 || true\r\n\r\n# Remontar en caliente a modo lectura y escritura (-o remount,rw)\r\nsudo mount -o remount,rw /mnt/prueba_lab\r\n\r\n# Ahora la creación del archivo tiene éxito\r\nsudo touch /mnt/prueba_lab/archivo_exito.txt && ls -l /mnt/prueba_lab/",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "title": "Misión 1 — Montaje Manual con Opciones Avanzadas y Remontaje en Caliente",
+      "instruction": "Crea una imagen de prueba formateada en ext4 y móntala en modo solo lectura con noatime y async, para luego remontarla a lectura/escritura en caliente.",
+      "command": "# 1. Crear punto de montaje y disco virtual ext4\nsudo mkdir -p /mnt/external\ntruncate -s 50M /tmp/disco_montaje.raw\nsudo mkfs.ext4 -F -L \"EXT_DATA\" /tmp/disco_montaje.raw > /dev/null\n\n# 2. Montar como solo lectura con noatime y async (Ejercicio Guiado 1)\nsudo mount -t ext4 -o noatime,async,ro /tmp/disco_montaje.raw /mnt/external\n\n# 3. Comprobar que está en modo 'ro' intentando escribir (debe fallar)\ntouch /mnt/external/prueba.txt 2>&1 || true\n\n# 4. Remontar en caliente a modo lectura y escritura (-o remount,rw)\nsudo mount -o remount,rw /mnt/external\nsudo touch /mnt/external/archivo_ok.txt && ls -l /mnt/external/",
+      "expectedOutput": "archivo_ok.txt"
     },
     {
       "id": "step-104-3-2",
       "stepNumber": 2,
-      "title": "Misión 2 — Desmontaje Limpio (umount) y Desmontaje Perezoso (-l)",
-      "instruction": "Cuando un proceso tiene un archivo abierto en el punto de montaje, umount falla con 'target is busy'. Aprenderás a resolverlo.",
-      "command": "# Desmontar el sistema de archivos normalmente\r\nsudo umount /mnt/prueba_lab\r\n\r\n# Comprobar que ya no aparece en findmnt\r\nfindmnt /mnt/prueba_lab || echo \"Desmontado correctamente.\"",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "title": "Misión 2 — Filtrado de Montajes Activos y Búsqueda Inversa con findfs",
+      "instruction": "Aprende a listar múltiples tipos de sistemas montados simultáneamente con mount -t y localiza dispositivos por UUID con findfs.",
+      "command": "# 1. Listar simultáneamente sistemas ext4 y tmpfs montados con una lista separada por comas\nmount -t ext4,tmpfs | head -n 8\n\n# 2. Obtener el UUID del archivo de disco con blkid y lsblk -f\nUUID_VAL=$(sudo blkid -s UUID -o value /tmp/disco_montaje.raw)\necho \"UUID detectado: $UUID_VAL\"\n\n# 3. Localizar el punto o dispositivo a partir de su UUID usando findfs\nsudo findfs UUID=$UUID_VAL 2>/dev/null || echo \"findfs ejecutado\"",
+      "expectedOutput": "UUID detectado: ..."
     },
     {
       "id": "step-104-3-3",
       "stepNumber": 3,
-      "title": "Misión 3 — Anatomía de los 6 Campos de /etc/fstab",
-      "instruction": "El archivo /etc/fstab gobierna qué sistemas de archivos se montan automáticamente al iniciar el servidor.",
-      "command": "# Inspeccionar el archivo /etc/fstab de tu máquina virtual\r\ncat /etc/fstab | grep -v \"^#\" | grep -v \"^$\"\r\n\r\n# Verificar la tabla de montajes activos leída por el kernel\r\nhead -n 8 /proc/mounts",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "title": "Misión 3 — Diagnóstico de 'Target is Busy' con lsof y Desmontaje Forzado",
+      "instruction": "Simula un proceso bloqueando el punto de montaje, identifícalo con lsof/fuser y practica el desmontaje seguro o forzado.",
+      "command": "# 1. Abrir un subshell en segundo plano manteniendo el directorio ocupado\n(cd /mnt/external && sleep 10) &\nPID_BG=$!\nsleep 1\n\n# 2. Intentar desmontar (debe devolver 'target is busy')\nsudo umount /mnt/external 2>&1 || true\n\n# 3. Localizar el proceso y archivos abiertos con lsof y fuser\nlsof /mnt/external 2>/dev/null || true\nsudo fuser -vm /mnt/external 2>/dev/null || true\n\n# 4. Desmontar de forma segura o forzada ante fallos de red (-fr o lazy -l)\nsudo kill $PID_BG 2>/dev/null || true\nsudo umount -fr /mnt/external 2>/dev/null || sudo umount -l /mnt/external",
+      "expectedOutput": "Verifica que el punto de montaje se desacopla sin dejar procesos huérfanos."
     },
     {
       "id": "step-104-3-4",
       "stepNumber": 4,
-      "title": "Misión 4 — Prueba de Montaje Automatizado con mount -a y Limpieza",
-      "instruction": "Aprenderás cómo validar /etc/fstab sin reiniciar la máquina mediante mount -a.",
-      "command": "# La orden 'sudo mount -a' monta todo lo declarado en /etc/fstab con la opción 'auto'\r\nsudo mount -a\r\n\r\n# Limpiar directorio y archivo temporal\r\nsudo rm -rf /mnt/prueba_lab /tmp/disco_montaje.raw\r\necho \"Limpieza completada.\"",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
-      "examAlert": "Ver pista desplegable si te atascas</summary>"
+      "title": "Misión 4 — Validación de /etc/fstab y Comportamiento de 'noauto'",
+      "instruction": "Inspecciona la estructura de /etc/fstab y comprende cómo mount -a ignora entradas con la directiva 'noauto'.",
+      "command": "# 1. Inspeccionar las entradas activas de /etc/fstab excluyendo comentarios y líneas en blanco\ngrep -v '^#' /etc/fstab | grep -v '^$'\n\n# 2. Simular prueba de montaje de fstab sin alterar el sistema\nsudo mount -a -v 2>&1 | head -n 10",
+      "expectedOutput": "Verifica que la salida muestra los puntos de montaje evaluados por mount -a."
+    },
+    {
+      "id": "step-104-3-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Creación de Unidad systemd .mount en /etc/systemd/system/",
+      "instruction": "Crea una unidad de montaje nativa de systemd con la nomenclatura canónica y gestiónala mediante systemctl.",
+      "command": "# 1. Crear el archivo de unidad /etc/systemd/system/mnt-external.mount\nsudo bash -c 'cat <<EOF > /etc/systemd/system/mnt-external.mount\n[Unit]\nDescription=Lab Data Disk\n\n[Mount]\nWhat=/tmp/disco_montaje.raw\nWhere=/mnt/external\nType=ext4\nOptions=defaults\n\n[Install]\nWantedBy=multi-user.target\nEOF'\n\n# 2. Recargar el demonio de systemd para reconocer la nueva unidad\nsudo systemctl daemon-reload\n\n# 3. Arrancar y comprobar el estado del montaje con systemctl\nsudo systemctl start mnt-external.mount\nsystemctl status mnt-external.mount --no-pager | grep -E \"Active:|Where:\"\n\n# 4. Desmontar la unidad y limpiar temporales\nsudo systemctl stop mnt-external.mount\nsudo rm -f /etc/systemd/system/mnt-external.mount /tmp/disco_montaje.raw\nsudo rm -rf /mnt/external\nsudo systemctl daemon-reload\necho \"Práctica 104.3 completada y limpiada exitosamente.\"",
+      "expectedOutput": "Práctica 104.3 completada y limpiada exitosamente."
     }
   ]
 }

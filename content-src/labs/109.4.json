@@ -1,19 +1,56 @@
 {
   "id": "lab-109-4",
   "subtopicId": "109.4",
-  "title": "Práctica 109.4 — Resolución DNS en el Cliente: /etc/resolv.conf, dig, host y NSSwitch",
-  "estimatedMinutes": 35,
-  "difficulty": "advanced",
+  "title": "Práctica 109.4 — Configuración DNS del Cliente: /etc/hosts, nsswitch.conf, getent, host y dig",
+  "estimatedMinutes": 30,
+  "difficulty": "intermediate",
   "type": "subtopic",
   "placeholder": false,
   "steps": [
     {
       "id": "step-109-4-1",
       "stepNumber": 1,
-      "title": "Misión 1: Configuración y verificación de 109.4",
-      "instruction": "Ejecuta los comandos fundamentales del objetivo 109.4 en tu entorno de pruebas Debian.",
-      "command": "man 109_4",
-      "expectedOutput": "El sistema despliega la documentación y sintaxis oficial de las herramientas."
+      "title": "Misión 1 — Inspección de Mapeos Estáticos y Servidores DNS",
+      "instruction": "Verifica las entradas canónicas de loopback IPv4 e IPv6 en /etc/hosts y comprueba la directiva nameserver configurada en /etc/resolv.conf.",
+      "command": "grep -E 'localhost' /etc/hosts && grep 'nameserver' /etc/resolv.conf",
+      "expectedOutput": "127.0.0.1       localhost\n::1             localhost ip6-localhost ip6-loopback\nnameserver 127.0.0.53",
+      "hint": "En /etc/hosts la columna de la izquierda siempre debe contener la dirección IP."
+    },
+    {
+      "id": "step-109-4-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Consulta de Nombres con getent y Aislamiento con -s",
+      "instruction": "Realiza una consulta de resolución respetando el orden de nsswitch.conf con getent y fuerza la consulta exclusiva a la base de datos de archivos locales con '-s files'.",
+      "command": "getent hosts localhost && getent -s files hosts localhost",
+      "expectedOutput": "127.0.0.1       localhost\n127.0.0.1       localhost",
+      "hint": "La opción -s permite aislar una fuente específica configurada en /etc/nsswitch.conf."
+    },
+    {
+      "id": "step-109-4-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Búsqueda de Servidores NS y Resolución Inversa con host",
+      "instruction": "Consulta los servidores de nombres autoritativos (NS) de lpi.org utilizando la opción -t y ejecuta una búsqueda inversa directa (PTR) suministrando una dirección IP.",
+      "command": "host -t NS lpi.org && host 8.8.8.8",
+      "expectedOutput": "lpi.org name server dns1.easydns.com.\nlpi.org name server dns2.easydns.net.\n8.8.8.8.in-addr.arpa domain name pointer dns.google.",
+      "hint": "'host' consulta directamente los servidores DNS ignorando /etc/hosts."
+    },
+    {
+      "id": "step-109-4-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Diagnóstico Exhaustivo e Inspección de Cabeceras con dig",
+      "instruction": "Realiza una consulta DNS sobre lpi.org inspeccionando el código de status (NOERROR) y las banderas de cabecera qr, rd y ra en la sección HEADER.",
+      "command": "dig lpi.org | grep -E 'status:|flags:'",
+      "expectedOutput": ";; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 63004\n;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 3, ADDITIONAL: 5",
+      "hint": "'qr' significa Query Response, 'rd' Recursion Desired y 'ra' Recursion Available."
+    },
+    {
+      "id": "step-109-4-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Filtrado con +short y Persistencia en ~/.digrc",
+      "instruction": "Obtén la salida neta con +short, configura las opciones '+noall +answer' en el archivo ~/.digrc y verifica que dig las aplique de forma predeterminada.",
+      "command": "dig +short lpi.org && echo '+noall +answer' > ~/.digrc && dig lpi.org",
+      "expectedOutput": "65.39.134.165\nlpi.org.               300     IN      A       65.39.134.165",
+      "hint": "El archivo ~/.digrc almacena opciones por defecto para evitar escribirlas en la línea de comandos."
     }
   ]
 }

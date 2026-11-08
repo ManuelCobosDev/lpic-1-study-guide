@@ -11,17 +11,17 @@
     {
       "id": "step-105-1-1",
       "stepNumber": 1,
-      "title": "Misión 1 — Variables Locales vs Variables Exportadas con export y unset",
-      "instruction": "En Bash, las variables son estrictamente privadas de la shell que las crea. Para que un script o comando hijo pueda ver su valor, deben ser promovidas al entorno del sistema mediante `export`. Con `unset` se eliminan por completo.",
-      "command": "# 1. Definir una variable estrictamente local\nAPP_ENV=\"desarrollo_local\"\necho \"Variable en shell actual: $APP_ENV\"\n\n# 2. Comprobar que aparece en set pero NO en env\nset | grep APP_ENV\nenv | grep APP_ENV || echo \"No está en env (es estrictamente local)\"\n\n# 3. Exportar la variable al entorno global\nexport APP_ENV\nenv | grep APP_ENV\n\n# 4. Probar su herencia en un subshell hijo\nbash -c 'echo \"En subshell hijo tras export: $APP_ENV\"'\n\n# 5. Eliminar la variable con unset\nunset APP_ENV\necho \"Tras unset: [$APP_ENV]\"",
+      "title": "Misión 1 — Variables Locales vs Exportadas con export (-p, -n) y readonly",
+      "instruction": "En Bash, las variables son estrictamente privadas de la shell que las crea salvo que se promuevan con `export`. Aprende a exportar, listar con `export -p`, desmarcar con `export -n`, y proteger valores críticos con `readonly`.",
+      "command": "# 1. Definir una variable estrictamente local\nAPP_ENV=\"desarrollo_local\"\necho \"Variable en shell actual: $APP_ENV\"\n\n# 2. Comprobar que aparece en set pero NO en env\nset | grep APP_ENV\nenv | grep APP_ENV || echo \"No está en env (es estrictamente local)\"\n\n# 3. Exportar la variable al entorno global y listar con export -p\nexport APP_ENV\nexport -p | grep APP_ENV\n\n# 4. Probar su herencia en un subshell hijo\nbash -c 'echo \"En subshell hijo tras export: $APP_ENV\"'\n\n# 5. Desmarcar del entorno global con export -n y verificar que vuelve a ser local\nexport -n APP_ENV\nbash -c 'echo \"En subshell tras export -n: [$APP_ENV]\"'\n\n# 6. Proteger variable con readonly\nreadonly SISTEMA_ID=\"SRV-PROD-01\"\nreadonly -p | grep SISTEMA_ID",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
       "id": "step-105-1-2",
       "stepNumber": 2,
-      "title": "Misión 2 — Archivos de Inicialización de Login vs No-Login y shopt",
-      "instruction": "Bash lee distintos archivos según si la sesión requirió autenticación (SSH, TTY virtual) o si fue abierta desde una ventana de terminal gráfica. Comprueba con `shopt login_shell` y `$0` el estado de la shell.",
-      "command": "# 1. Comprobar si el shell actual es de inicio de sesión\nshopt login_shell\necho \"Nombre de llamada del shell: $0\"\n\n# 2. Auditar archivos de inicio globales del sistema\nls -ld /etc/profile /etc/profile.d /etc/bash.bashrc\n\n# 3. Listar dotfiles de configuración personal en tu home\nls -la ~/ | grep -E \"\\.bash|\\.profile\"\n\n# 4. Lanzar un subshell interactivo sin login y verificar su nivel\nbash -c 'echo \"Nivel de shell anidado: $SHLVL\"'",
+      "title": "Misión 2 — Archivos de Inicialización de Login vs No-Login y Variables de Sesión",
+      "instruction": "Bash lee distintos archivos según si la sesión requirió autenticación (SSH, TTY virtual) o si fue abierta desde una ventana de terminal gráfica. Comprueba con `shopt login_shell`, `$0` y audita variables canónicas de sesión ($DISPLAY, $SSH_CONNECTION, $OSTYPE).",
+      "command": "# 1. Comprobar si el shell actual es de inicio de sesión\nshopt login_shell\necho \"Nombre de llamada del shell: $0\"\n\n# 2. Auditar variables de sesión del entorno gráfico y del sistema\necho \"DISPLAY: [$DISPLAY]  SSH: [$SSH_CONNECTION]  SO: [$OSTYPE]\"\n\n# 3. Auditar archivos de inicio globales del sistema\nls -ld /etc/profile /etc/profile.d /etc/bash.bashrc\n\n# 4. Listar dotfiles de configuración personal en tu home\nls -la ~/ | grep -E \"\\.bash|\\.profile\"\n\n# 5. Lanzar un subshell interactivo sin login y verificar su nivel\nbash -c 'echo \"Nivel de shell anidado: $SHLVL\"'",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
@@ -43,9 +43,9 @@
     {
       "id": "step-105-1-5",
       "stepNumber": 5,
-      "title": "Misión 5 — Ejecución en Entorno Modificado con env -i y Configuración de PATH",
-      "instruction": "El comando `env -i` permite iniciar procesos en un entorno completamente estéril sin heredar variables del padre. Comprueba cómo aislar ejecuciones y añadir directorios a PATH.",
-      "command": "# 1. Ejecutar una shell en un entorno completamente vacío con env -i\nenv -i HOME=/tmp bash -c 'echo \"Entorno aislado: HOME=[$HOME] PATH=[$PATH]\"'\n\n# 2. Crear una carpeta bin personal\nmkdir -p ~/bin\n\n# 3. Añadir ~/bin al principio de la variable PATH en la sesión actual\nexport PATH=\"$HOME/bin:$PATH\"\necho \"PATH actualizado: $PATH\"",
+      "title": "Misión 5 — Entorno Modificado (env -i), PATH y Protección con noclobber",
+      "instruction": "El comando `env -i` permite iniciar procesos en un entorno completamente estéril sin heredar variables del padre. Comprueba cómo aislar ejecuciones, manipular PATH y proteger archivos con `set -o noclobber` y bypass con `>|`.",
+      "command": "# 1. Ejecutar una shell en un entorno completamente vacío con env -i\nenv -i HOME=/tmp bash -c 'echo \"Entorno aislado: HOME=[$HOME] PATH=[$PATH]\"'\n\n# 2. Crear una carpeta bin personal y anteponerla en PATH\nmkdir -p ~/bin\nexport PATH=\"$HOME/bin:$PATH\"\necho \"PATH actualizado: $PATH\"\n\n# 3. Proteger archivos contra sobreescritura accidental con noclobber\ntouch ~/prueba_clobber.txt\nset -o noclobber\necho \"intento\" > ~/prueba_clobber.txt 2>/dev/null || echo \"noclobber impidió la sobreescritura\"\necho \"forzado\" >| ~/prueba_clobber.txt\nset +o noclobber",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     }
   ]

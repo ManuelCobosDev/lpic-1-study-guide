@@ -3,17 +3,49 @@
   "subtopicId": "108.3",
   "title": "Práctica 108.3 — Agentes de Correo MTA, Inspección con mailq, Alias Globales y ~/.forward",
   "estimatedMinutes": 30,
-  "difficulty": "basic",
+  "difficulty": "intermediate",
   "type": "subtopic",
   "placeholder": false,
   "steps": [
     {
       "id": "step-108-3-1",
       "stepNumber": 1,
-      "title": "Misión 1: Configuración y verificación de 108.3",
-      "instruction": "Ejecuta los comandos fundamentales del objetivo 108.3 en tu entorno de pruebas Debian.",
-      "command": "man 108_3",
-      "expectedOutput": "El sistema despliega la documentación y sintaxis oficial de las herramientas."
+      "title": "Misión 1 — Envío no interactivo con mailx y tuberías",
+      "instruction": "Utiliza el comando mail de mailx para enviar un correo automatizado a un buzón local inyectando el cuerpo mediante una tubería y especificando el asunto con la opción -s.",
+      "command": "uname -a | mail -s \"Auditoría de kernel\" root@localhost",
+      "expectedOutput": "El comando se ejecuta sin errores y el mensaje queda depositado en la cola local o en el buzón mbox de root."
+    },
+    {
+      "id": "step-108-3-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Verificación de conectividad SMTP en puerto TCP 25",
+      "instruction": "Comprueba con netcat (nc) que el servicio MTA local está escuchando activamente en el puerto estándar SMTP (TCP 25).",
+      "command": "nc -z -v 127.0.0.1 25",
+      "expectedOutput": "Connection to 127.0.0.1 25 port [tcp/smtp] succeeded!"
+    },
+    {
+      "id": "step-108-3-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Creación de alias de descarte y compilación con newaliases",
+      "instruction": "Configura un alias global en /etc/aliases para descartar silenciosamente en /dev/null los correos dirigidos a 'pruebas', y regenera la base de datos binaria /etc/aliases.db con newaliases.",
+      "command": "sudo sh -c 'echo \"pruebas: /dev/null\" >> /etc/aliases && newaliases'",
+      "expectedOutput": "/etc/aliases: X aliases, newer database /etc/aliases.db generated."
+    },
+    {
+      "id": "step-108-3-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Reenvío personal con escape local en ~/.forward",
+      "instruction": "Crea el fichero de reenvío ~/.forward en tu directorio personal configurando una copia externa y preservando una copia local con la barra invertida de escape (\\usuario), asegurando permisos estrictos 600.",
+      "command": "echo \"\\\\$USER, respaldo@externo.local\" > ~/.forward && chmod 600 ~/.forward && ls -l ~/.forward",
+      "expectedOutput": "-rw------- 1 usuario usuario ... /home/usuario/.forward"
+    },
+    {
+      "id": "step-108-3-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Inspección de la cola de correo con mailq y sendmail -bp",
+      "instruction": "Inspecciona los mensajes pendientes o retenidos en la cola saliente del MTA local utilizando tanto el comando mailq como su equivalente sendmail -bp.",
+      "command": "mailq && sendmail -bp",
+      "expectedOutput": "Mail queue is empty (o listado de mensajes aplazados con Q-ID, tamaño, fecha y remitente)."
     }
   ]
 }

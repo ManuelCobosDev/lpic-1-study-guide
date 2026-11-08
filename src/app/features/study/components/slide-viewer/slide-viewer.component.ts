@@ -14,7 +14,8 @@ import {
   viewChild
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Slide } from '../../../../core/models/slide.model';
+import { Slide, getVisibleSlideBlocks } from '../../../../core/models/slide.model';
+import { Block } from '../../../../core/models/block.model';
 import { BlockRendererComponent } from '../../../../shared/content-blocks/block-renderer.component';
 import { KbdComponent } from '../../../../shared/ui/kbd/kbd.component';
 import { WikiRefService } from '../../../../core/services/wiki-ref.service';
@@ -31,6 +32,9 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
     <div
       #viewerContainer
       tabindex="0"
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Visor interactivo de diapositivas de la lección"
       class="slide-viewer-container relative select-none rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] overflow-hidden shadow-md flex flex-col focus:outline-hidden"
       [class.fullscreen-active]="isFullscreen()"
       [class.cursor-none]="isFullscreen() && !showControls()"
@@ -94,7 +98,7 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
           [style.zoom]="textZoom() !== 100 ? textZoom() + '%' : null"
         >
           @if (currentSlide(); as slide) {
-            <article class="slide-content-wrapper flex-1 p-12 lg:p-16 flex flex-col justify-between overflow-y-auto">
+            <article class="slide-content-wrapper flex-1 px-8 py-7 lg:px-12 lg:py-8 flex flex-col justify-between overflow-y-auto">
               <!-- Cabecera de la diapositiva -->
               <header class="slide-header mb-6">
                 @if (slide.layout === 'cover') {
@@ -130,7 +134,7 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
                 [class.grid-cols-2]="slide.layout === 'two-column'"
                 [class.gap-8]="slide.layout === 'two-column'"
               >
-                @for (block of slide.blocks; track $index) {
+                @for (block of getVisibleBlocks(slide); track $index) {
                   <app-block-renderer [block]="block" [highlightQuery]="highlightQuery()" />
                 }
               </div>
@@ -222,6 +226,7 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
             class="icon-tool-btn p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-muted)] transition-colors cursor-pointer"
             [class.text-[var(--primary-text)]]="showThumbnails()"
             [class.bg-[var(--primary-soft)]]="showThumbnails()"
+            [attr.aria-expanded]="showThumbnails()"
             (click)="toggleThumbnails()"
             title="Miniaturas (T)"
             aria-label="Alternar miniaturas de diapositivas"
@@ -234,6 +239,7 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
             class="icon-tool-btn p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-muted)] transition-colors cursor-pointer"
             [class.text-[var(--primary-text)]]="showNotes()"
             [class.bg-[var(--primary-soft)]]="showNotes()"
+            [attr.aria-expanded]="showNotes()"
             (click)="toggleNotes()"
             title="Notas del instructor (N)"
             aria-label="Alternar notas del instructor"
@@ -266,6 +272,7 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
             type="button"
             class="icon-tool-btn p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-muted)] transition-colors cursor-pointer"
             [class.text-[var(--primary-text)]]="isFullscreen()"
+            [attr.aria-expanded]="isFullscreen()"
             (click)="toggleFullscreen()"
             title="Pantalla completa (F)"
             aria-label="Alternar pantalla completa"
@@ -277,6 +284,7 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
           <button
             type="button"
             class="icon-tool-btn p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-muted)] transition-colors cursor-pointer"
+            [attr.aria-expanded]="showHelp()"
             (click)="toggleHelp()"
             title="Atajos de teclado (?)"
             aria-label="Ver atajos de teclado"
@@ -509,6 +517,10 @@ export class SlideViewerComponent implements OnInit, OnDestroy {
   private viewTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly totalSlides = computed(() => this.slides().length);
+
+  getVisibleBlocks(slide: Slide): Block[] {
+    return getVisibleSlideBlocks(slide);
+  }
 
   private readonly wikiRefService = inject(WikiRefService);
 

@@ -6,15 +6,35 @@ import { Injectable, signal } from '@angular/core';
 export class StorageService {
   private readonly PREFIX = 'lpic1.v1.';
   private readonly memoryStorage = new Map<string, string>();
+  private readonly storageChangeListeners: ((key: string | null) => void)[] = [];
   readonly isFallbackMode = signal(false);
 
   constructor() {
     if (typeof window !== 'undefined') {
       window.addEventListener('storage', (event) => {
-        if (event.key?.startsWith(this.PREFIX)) {
-          // Permite que otros servicios escuchen si fuera necesario
+        if (!event.key) {
+          this.notifyStorageChange(null);
+        } else if (event.key.startsWith(this.PREFIX)) {
+          const rawKey = event.key.slice(this.PREFIX.length);
+          this.notifyStorageChange(rawKey);
         }
       });
+    }
+  }
+
+  onStorageChange(listener: (key: string | null) => void): () => void {
+    this.storageChangeListeners.push(listener);
+    return () => {
+      const idx = this.storageChangeListeners.indexOf(listener);
+      if (idx !== -1) {
+        this.storageChangeListeners.splice(idx, 1);
+      }
+    };
+  }
+
+  private notifyStorageChange(key: string | null): void {
+    for (const listener of this.storageChangeListeners) {
+      listener(key);
     }
   }
 

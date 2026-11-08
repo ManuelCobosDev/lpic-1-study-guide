@@ -22,3 +22,21 @@ export interface Slide {
   src?: string; // Trazabilidad de cobertura Ronda 2 (Spec 11 §11.5)
 }
 
+/**
+ * Retorna los bloques visibles de la diapositiva omitiendo encabezados
+ * iniciales que dupliquen de forma redundante el título de la diapositiva (A3-003, S-04).
+ */
+export function getVisibleSlideBlocks(slide: Slide): Block[] {
+  if (!slide.blocks || slide.blocks.length === 0) return [];
+  const first = slide.blocks[0];
+  if (first && first.type === 'heading') {
+    const normSlide = slide.title.toLowerCase().replace(/^[0-9.]+\s*/, '').trim();
+    const normHeading = first.text.toLowerCase().replace(/^[0-9.]+\s*/, '').trim();
+    if (normSlide === normHeading || slide.title.trim().toLowerCase() === first.text.trim().toLowerCase()) {
+      return slide.blocks.slice(1);
+    }
+  }
+  return slide.blocks;
+}
+
+

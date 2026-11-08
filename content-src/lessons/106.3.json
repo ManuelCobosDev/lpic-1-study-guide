@@ -3,23 +3,35 @@
   "topicId": "106",
   "examId": "102",
   "title": "Accesibilidad",
-  "version": "1.0.0",
+  "version": "5.0",
   "language": "es",
   "estimatedMinutes": 25,
+  "description": "Dominar las tecnologías de accesibilidad (a11y) y asistencia en Linux: extensión AccessX y comando xkbset, Sticky Keys (Shift 5 veces), Slow Keys (Shift 8 segundos), Bounce Keys (filtrado de temblores), Mouse Keys, prevención de RSI con KMouseTool, teclado en pantalla Onboard, asistencia visual con KMagnifier / Alt+rueda en Xfce, alto contraste, campana visual (Visual Bell para personas sordas), reconocimiento de voz y lector de pantalla Orca con soporte para pantallas Braille efímeras.",
   "objectives": [
-    "Tecnologías de asistencia en Linux: Sticky Keys, Slow Keys, Bounce Keys, Mouse Keys, teclado en pantalla (Onboard), KMouseTool, temas de alto contraste, y lector de pantalla Orca con soporte Braille.",
-    "Dominio técnico de las herramientas y configuración del subtema 106.3"
+    "Diferenciar y configurar las tecnologías de asistencia de teclado: Sticky Keys, Slow Keys y Bounce Keys.",
+    "Conocer la extensión AccessX de X11 y su configuración mediante la herramienta de consola xkbset.",
+    "Dominar los gestos de activación: Shift 5 veces para Sticky Keys y Shift 8 segundos para Slow Keys.",
+    "Comprender el control alternativo del puntero: Mouse Keys, KMouseTool y clic asistido / dwell click.",
+    "Identificar herramientas de asistencia visual y auditiva: KMagnifier, zoom Alt+rueda en Xfce, campana visual (alerta visual) y temas de alto contraste.",
+    "Manejar el lector de pantalla Orca con síntesis de voz (TTS) y soporte para terminales Braille actualizables."
   ],
   "keyTerms": [
     "Sticky Keys (Teclas Adhesivas)",
     "Bounce Keys (Teclas de Rebote)",
     "Slow Keys (Teclas Lentas)",
-    "Orca",
-    "KMouseTool"
+    "AccessX y xkbset",
+    "Mouse Keys",
+    "KMouseTool (prevención RSI)",
+    "Campana visual (Visual Bell)",
+    "KMagnifier y Zoom Xfce",
+    "Orca y Refreshable Braille Display"
   ],
   "commands": [
     "kmousetool",
-    "orca"
+    "orca",
+    "xkbset",
+    "onboard",
+    "gsettings"
   ],
   "placeholder": false,
   "slides": [
@@ -32,11 +44,17 @@
         {
           "type": "heading",
           "level": 1,
-          "text": "Accesibilidad en el Escritorio Linux"
+          "text": "106.3 Accesibilidad"
         },
         {
           "type": "paragraph",
-          "text": "Subtema 106.3 · Peso LPI: 1 · Examen LPIC-1 102-500"
+          "text": "Tema 106: Interfaces de usuario y escritorios · Peso LPI: 1 · Examen LPIC-1 (102-500)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Objetivo de Certificación LPI",
+          "content": "Aprende a configurar las tecnologías de asistencia para usuarios con movilidad reducida, temblores, fatiga motora (RSI) o dificultades visuales y auditivas: extensión AccessX (xkbset), Sticky/Slow/Bounce Keys, Mouse Keys, KMouseTool, campana visual, KMagnifier y el lector Orca con soporte Braille."
         }
       ],
       "notes": "Bienvenido al Subtema 106.3. Analizaremos las tecnologías de asistencia para usuarios con movilidad reducida o dificultades visuales: Sticky/Slow/Bounce Keys, Orca, Onboard y KMouseTool."
@@ -44,51 +62,68 @@
     {
       "id": "106.3-slide-2",
       "slideNumber": 2,
-      "title": "Los 3 Pilares de la Accesibilidad en Linux",
+      "title": "Los 4 Pilares de la Accesibilidad en Linux",
       "layout": "diagram",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Los 3 Pilares de la Accesibilidad en Linux"
+          "text": "Los 4 Pilares de la Accesibilidad en Linux"
         },
         {
           "type": "paragraph",
-          "text": "¿Qué tecnologías proporciona el sistema operativo para adaptar teclado, ratón y elementos visuales?"
+          "text": "¿Qué tecnologías proporciona el sistema operativo para adaptar teclado, ratón, pantalla y audio?"
         },
         {
           "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>♿ Clasificación de Tecnologías de Asistencia (AT)</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Estándares POSIX / Linux</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:11.5px;\">\n    <!-- Pilar 1: Teclado -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF; font-size:12px; display:block; margin-bottom:4px;\">1. Teclado Adaptado</strong>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • <strong>Sticky Keys:</strong> Atajos secuenciales (Shift 5x).<br>\n        • <strong>Slow Keys:</strong> Mantener pulsado para aceptar.<br>\n        • <strong>Bounce Keys:</strong> Filtra rebotes por temblor.<br>\n        • <strong>Onboard:</strong> Teclado en pantalla.\n      </div>\n    </div>\n\n    <!-- Pilar 2: Ratón -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#15803D; font-size:12px; display:block; margin-bottom:4px;\">2. Movilidad y Ratón</strong>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • <strong>Mouse Keys:</strong> Controlar el puntero con el teclado numérico.<br>\n        • <strong>KMouseTool:</strong> Clic automático al detener el cursor (prevención de RSI).<br>\n        • <strong>Clic asistido:</strong> Simular botón derecho manteniendo presionado el izquierdo.\n      </div>\n    </div>\n\n    <!-- Pilar 3: Visión y Audio -->\n    <div style=\"background:#FEF3C7; border:1.5px solid #F59E0B; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#92400E; font-size:12px; display:block; margin-bottom:4px;\">3. Visión y Pantalla</strong>\n      <div style=\"color:#78350F; line-height:1.4;\">\n        • <strong>Alto Contraste:</strong> Temas visuales de gran legibilidad.<br>\n        • <strong>Lupa:</strong> Aumento de área de pantalla.<br>\n        • <strong>Orca:</strong> Síntesis de voz y pantallas Braille táctiles.<br>\n        • <strong>Emacspeak:</strong> Audio en consola.\n      </div>\n    </div>\n  </div>\n</div>\n"
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>♿ Clasificación de Tecnologías de Asistencia (AT) en LPIC-1</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Objetivo 106.3 LPI</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11px;\">\n    <!-- 1. Teclado -->\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#1E40AF; display:block; margin-bottom:3px;\">1. Teclado (AccessX)</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">\n        • <strong>Sticky Keys:</strong> Shift 5x.<br>\n        • <strong>Slow Keys:</strong> Shift 8s.<br>\n        • <strong>Bounce Keys:</strong> Filtro de temblores.<br>\n        • <strong>Onboard:</strong> Teclado en pantalla.<br>\n        • <strong>xkbset:</strong> Configuración CLI.\n      </div>\n    </div>\n\n    <!-- 2. Ratón -->\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#15803D; display:block; margin-bottom:3px;\">2. Movilidad y Ratón</strong>\n      <div style=\"color:#14532D; line-height:1.35;\">\n        • <strong>Mouse Keys:</strong> Mover puntero con teclado numérico.<br>\n        • <strong>KMouseTool:</strong> Clic automático al detenerse (alivia RSI).<br>\n        • <strong>Dwell Click:</strong> Clic flotante asistido.\n      </div>\n    </div>\n\n    <!-- 3. Visión -->\n    <div style=\"background:#FEF3C7; border:1px solid #FCD34D; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#92400E; display:block; margin-bottom:3px;\">3. Visión y Pantalla</strong>\n      <div style=\"color:#78350F; line-height:1.35;\">\n        • <strong>Alto Contraste:</strong> Temas de máxima legibilidad.<br>\n        • <strong>KMagnifier:</strong> Lupa de aumento (KDE).<br>\n        • <strong>Alt+Rueda:</strong> Zoom de pantalla (Xfce).<br>\n        • <strong>Orca:</strong> Síntesis de voz y Braille táctil.\n      </div>\n    </div>\n\n    <!-- 4. Audición / Voz -->\n    <div style=\"background:#FDF2F8; border:1px solid #F472B6; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#9D174D; display:block; margin-bottom:3px;\">4. Audición y Voz</strong>\n      <div style=\"color:#831843; line-height:1.35;\">\n        • <strong>Campana Visual:</strong> Destello gráfico en vez de pitidos.<br>\n        • <strong>Reconocimiento de voz:</strong> Control por órdenes habladas.<br>\n        • <strong>Emacspeak:</strong> Audio en terminal.\n      </div>\n    </div>\n  </div>\n</div>\n"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: La accesibilidad se divide en: 1) Teclado (Sticky, Slow, Bounce Keys), 2) Ratón (Mouse Keys, KMouseTool), 3) Visión (Temas de alto contraste, fuentes grandes y lector Orca con soporte Braille)."
+          "content": "🎯 Clave de Examen: La accesibilidad cubre: 1) Teclado (Sticky, Slow, Bounce Keys con AccessX/xkbset), 2) Ratón (Mouse Keys, KMouseTool para RSI), 3) Visión (Alto contraste, KMagnifier, Orca con Braille) y 4) Audición (Campana visual / Visual Bell para sustituir pitidos por parpadeos de pantalla)."
         }
       ],
-      "notes": "Muestra los 3 bloques principales de asistencia evaluados por LPI."
+      "notes": "Muestra los 4 bloques principales de asistencia evaluados por LPI."
     },
     {
       "id": "106.3-slide-3",
       "slideNumber": 3,
-      "title": "Sticky Keys (Teclas Adhesivas) y el Gesto Shift 5x",
+      "title": "Sticky Keys (Teclas Adhesivas), Latch Keys y el Gesto Shift 5x",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Sticky Keys (Teclas Adhesivas) y el Gesto Shift 5x"
+          "text": "Sticky Keys (Teclas Adhesivas) y Teclas de Bloqueo"
         },
         {
           "type": "paragraph",
           "text": "¿Cómo pulsar atajos complejos como Alt+Tab o Ctrl+Alt+Supr con un solo dedo o puntero?"
         },
         {
+          "type": "table",
+          "headers": ["Característica", "Comportamiento Técnico", "Gesto / Activación"],
+          "rows": [
+            [
+              "Sticky Keys (Teclas Adhesivas)",
+              "Permite teclear combinaciones de teclas de forma secuencial. Al pulsar Shift, Ctrl o Alt, la tecla modificadora permanece 'enganchada' virtualmente hasta que se pulsa la tecla normal.",
+              "Pulsar la tecla Shift CINCO (5) veces consecutivas activa o desactiva Sticky Keys."
+            ],
+            [
+              "Latch / Lock Keys (KDE)",
+              "Función en KDE que permite bloquear una tecla modificadora (Shift, Ctrl, Alt) pulsándola dos veces seguidas, manteniendo su efecto de forma indefinida hasta volver a tocarla.",
+              "Doble pulsación rápida sobre la tecla modificadora deseada."
+            ]
+          ],
+          "caption": "Mecanismo de teclas modificadoras secuenciales"
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen:\n1. Sticky Keys permite teclear atajos de una tecla a la vez (secuencialmente).\n2. Gesto de activación: Pulsar la tecla Shift CINCO veces consecutivas."
+          "content": "🎯 Clave de Examen:\n1. Sticky Keys permite teclear atajos de una tecla a la vez (secuencialmente, sin pulsar simultáneamente).\n2. Gesto de activación: Pulsar la tecla Shift CINCO veces seguidas."
         }
       ],
       "notes": "Al activar Sticky Keys, pulsar 'Ctrl', luego soltarlo, y luego pulsar 'c' equivale a 'Ctrl+c'."
@@ -96,27 +131,27 @@
     {
       "id": "106.3-slide-4",
       "slideNumber": 4,
-      "title": "Slow Keys (Teclas Lentas) frente a Bounce Keys (Rebote)",
+      "title": "Slow Keys (Shift 8 seg), Bounce Keys y la Extensión AccessX (xkbset)",
       "layout": "diagram",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Slow Keys (Teclas Lentas) frente a Bounce Keys (Rebote)"
+          "text": "Slow Keys frente a Bounce Keys y Control con xkbset"
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo diferenciar dos funciones de filtrado temporal de teclado indispensables en el examen?"
+          "text": "La extensión **AccessX** de X11 proporciona el filtrado temporal del teclado mediante utilidades gráficas o la orden de consola `xkbset`:"
         },
         {
           "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⏱️ Comparativa Funcional: Slow Keys frente a Bounce Keys</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Filtrado Temporal</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:11.5px;\">\n    <!-- Slow Keys -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">Slow Keys (Teclas Lentas)</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Mantener presionado</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • <strong>Problema:</strong> El usuario roza teclas por accidente al desplazar la mano.<br>\n        • <strong>Solución:</strong> La pulsación se acepta <strong>SOLO SI</strong> la tecla se mantiene presionada durante un tiempo umbral (ej. 500 ms).<br>\n        • Toques rápidos o accidentales son completamente ignorados.\n      </div>\n    </div>\n\n    <!-- Bounce Keys -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#B91C1C; font-size:12.5px;\">Bounce Keys (Teclas de Rebote)</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Filtrar temblores</span>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.4;\">\n        • <strong>Problema:</strong> Temblores involuntarios en las manos generan pulsaciones dobles ('hoollaa').<br>\n        • <strong>Solución:</strong> Una nueva pulsación de la misma tecla se acepta <strong>SOLO DESPUÉS</strong> de que haya transcurrido un retardo desde la anterior.<br>\n        • Rebotes inmediatos son descartados.\n      </div>\n    </div>\n  </div>\n</div>\n"
+          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⏱️ Comparativa Funcional: Slow Keys frente a Bounce Keys (AccessX)</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">CLI: xkbset</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:11.5px;\">\n    <!-- Slow Keys -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">Slow Keys (Teclas Lentas)</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Shift durante 8 s</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • <strong>Problema:</strong> El usuario roza teclas por accidente al mover la mano.<br>\n        • <strong>Solución:</strong> La pulsación se acepta <strong>SOLO SI</strong> la tecla se mantiene presionada durante un tiempo umbral (ej. 500 ms).<br>\n        • <strong>Gesto de activación:</strong> Mantener presionada la tecla <strong>Shift durante 8 segundos</strong>.<br>\n        • <strong>Comando CLI:</strong> <code>xkbset slowkeys</code> o <code>xkbset sl</code>.\n      </div>\n    </div>\n\n    <!-- Bounce Keys -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#B91C1C; font-size:12.5px;\">Bounce Keys (Teclas de Rebote)</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Filtro de temblores</span>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.4;\">\n        • <strong>Problema:</strong> Temblores involuntarios generan pulsaciones repetidas de la misma tecla ('hhoollaa').<br>\n        • <strong>Solución:</strong> Una nueva pulsación de la misma tecla se acepta <strong>SOLO TRAS</strong> transcurrir un retardo mínimo.<br>\n        • Rebotes inmediatos son descartados.<br>\n        • <strong>Comando CLI:</strong> <code>xkbset bouncekeys &lt;retardo_ms&gt;</code>.\n      </div>\n    </div>\n  </div>\n</div>\n"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Regla Mnemotécnica de Examen:\n• Slow Keys = Evita pulsaciones accidentales breves (exige mantener pulsada la tecla).\n• Bounce Keys = Evita dobles pulsaciones involuntarias causadas por temblores en las manos."
+          "content": "🎯 Regla Mnemotécnica de Examen:\n• Slow Keys = Evita pulsaciones accidentales breves (exige mantener pulsada la tecla; gesto: Shift durante 8 segundos).\n• Bounce Keys = Evita dobles pulsaciones involuntarias causadas por temblores en las manos.\n• Comando 'xkbset' = Controla los ajustes de AccessX desde terminal."
         }
       ],
       "notes": "Ambas funciones utilizan temporizadores en milisegundos para filtrar eventos del teclado."
@@ -137,12 +172,6 @@
           "text": "¿Cómo mover el cursor sin ratón físico y evitar el esfuerzo repetitivo de hacer clic?"
         },
         {
-          "type": "code",
-          "language": "bash",
-          "code": "kmousetool",
-          "title": "Sintaxis del comando"
-        },
-        {
           "type": "terminal",
           "lines": [
             {
@@ -155,28 +184,28 @@
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
+            "Herramienta / Tecnología",
+            "Nombre / Entorno",
+            "Descripción y Propósito"
           ],
           "rows": [
             [
-              "",
-              "",
-              "Genera clic automático al pausar el ratón (configurable en milisegundos)."
+              "KMouseTool",
+              "Herramienta de clic automático (KDE)",
+              "Genera un clic del ratón automáticamente cuando el cursor se detiene durante una fracción de segundo ajustable. Alivia el dolor por esfuerzo repetitivo (RSI)."
             ],
             [
-              "",
-              "",
-              "Mapea las flechas del teclado numérico para desplazar el puntero."
+              "Mouse Keys (Teclas de ratón)",
+              "Control numérico del cursor",
+              "Mapea las teclas del bloque numérico (8 arriba, 2 abajo, 4 izquierda, 6 derecha, 5 clic) para desplazar el puntero sin ratón físico."
             ],
             [
-              "",
-              "",
-              "Equivalente en GNOME para clics automáticos sin pulsar botones."
+              "Dwell Click (Clic flotante / asistido)",
+              "Clic asistido en GNOME",
+              "Equivalente en el escritorio GNOME (mousetweaks) para ejecutar clics automáticos y menús contextuales por reposo del puntero."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Tecnologías de asistencia para control del ratón y cursor"
         },
         {
           "type": "callout",
@@ -190,23 +219,54 @@
     {
       "id": "106.3-slide-6",
       "slideNumber": 6,
-      "title": "Teclado en Pantalla (Onboard) y Temas Visuales",
+      "title": "Asistencia Visual: Lupas (KMagnifier, Xfce), Alto Contraste y Campana Visual",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Teclado en Pantalla (Onboard) y Temas Visuales"
+          "text": "Adaptaciones Visuales, Lupas y la Campana Visual"
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo interactuar con el sistema sin teclado físico y mejorar la discriminación de elementos?"
+          "text": "Opciones para usuarios con visión reducida, fatiga ocular o dificultades auditivas:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Tecnología Asistencial",
+            "Entorno / Atajo",
+            "Propósito y Funcionamiento"
+          ],
+          "rows": [
+            [
+              "KMagnifier (kmag)",
+              "Lupa en KDE",
+              "Aplicación de aumento de pantalla que amplía la sección situada bajo el cursor del ratón en una ventana independiente o pantalla completa."
+            ],
+            [
+              "Zoom mediante Alt + Rueda",
+              "Lupa nativa en Xfce",
+              "En el entorno Xfce, mantener pulsada la tecla Alt y girar la rueda del ratón amplía o reduce dinámicamente todo el escritorio."
+            ],
+            [
+              "Temas de Alto Contraste",
+              "GNOME / KDE / Xfce",
+              "Paletas de colores con fuerte contraste (blanco sobre negro o viceversa) e iconos de bordes reforzados para mejorar la discriminación visual."
+            ],
+            [
+              "Campana Visual (Visual Bell)",
+              "Alerta visual para audición",
+              "Sustituye los pitidos o señales sonoras del sistema por un destello gráfico o parpadeo de pantalla completo para usuarios sordos o con hipoacusia."
+            ]
+          ],
+          "caption": "Tecnologías de asistencia visual y auditiva evaluadas en 106.3"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Claves LPI:\n• Paquete 'onboard': Teclado en pantalla estándar para interacción con ratón o pantallas táctiles.\n• Temas de Alto Contraste (High Contrast) y fuentes aumentadas: Facilitan la lectura a personas con baja visión."
+          "content": "🎯 Claves LPI:\n• 'KMagnifier' es la lupa de KDE.\n• En Xfce el zoom se activa con 'Alt + rueda del ratón'.\n• La 'Campana visual' (Visual Bell) emite un destello en pantalla para reemplazar las alertas sonoras."
         }
       ],
       "notes": "Onboard ofrece predicción de palabras y perfiles para dispositivos táctiles."
@@ -227,46 +287,45 @@
           "text": "¿Cómo permite Orca a usuarios invidentes navegar por escritorios gráficos y recibir salida táctil?"
         },
         {
-          "type": "code",
-          "language": "bash",
-          "code": "orca",
-          "title": "Sintaxis del comando"
-        },
-        {
           "type": "terminal",
           "lines": [
             {
               "prompt": "$ ",
               "command": "orca --version",
-              "output": "Orca 43.1\n(Síntesis de voz activa mediante Speech-Dispatcher)\n(Soporte Braille habilitado mediante BrlAPI)"
+              "output": "Orca 43.1\n(Síntesis de voz activa mediante Speech-Dispatcher)\n(Soporte Braille habilitado mediante BrlAPI / brltty)"
             }
           ]
         },
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
+            "Comando / Opción",
             "Nombre",
             "Descripción"
           ],
           "rows": [
             [
-              "",
-              "",
-              "Configura velocidad de habla, tono y parámetros de salida Braille."
+              "orca -s (o orca --setup)",
+              "Configuración gráfica de Orca",
+              "Abre el panel para configurar velocidad de habla, voz, tono y parámetros de salida a pantallas Braille."
             ],
             [
-              "",
-              "",
-              "Reinicia el lector de pantalla si la síntesis de audio se ha bloqueado."
+              "orca --replace",
+              "Reemplazo de instancia",
+              "Reinicia el lector de pantalla reemplazando una instancia colgada sin cerrar la sesión del usuario."
             ],
             [
-              "",
-              "",
-              "Entorno auditivo alternativo integrado en Emacs para consola de texto."
+              "Emacspeak",
+              "Audio en terminal / consola",
+              "Entorno auditivo completo para GNU Emacs que transforma la consola de texto en una interfaz sonora rica."
+            ],
+            [
+              "Refreshable Braille Display",
+              "Pantalla Braille actualizable",
+              "Dispositivo periférico táctil conectado por USB/Bluetooth cuyas clavijas electromecánicas representan texto en Braille dinámico."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Comandos y componentes del lector de pantalla Orca"
         },
         {
           "type": "callout",
@@ -290,7 +349,13 @@
         },
         {
           "type": "paragraph",
-          "text": "Preguntas 1 y 2 de los Guided Exercises de la página 171 del manual."
+          "text": "Preguntas 1 y 2 de los Guided Exercises de la página 171 del manual:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# 1. Solución para quien no puede pulsar Alt y Tab a la vez:\n# Activar Teclas Adhesivas (Sticky Keys):\nxkbset sticky -twokey -latchlock\n# Permite pulsar 'Alt', soltarlo y luego pulsar 'Tab'.\n\n# 2. Solución para temblores que pulsan dos veces la misma tecla:\n# Activar Teclas de Rebote (Bounce Keys):\nxkbset bouncekeys 300\n# Ignora repeticiones de la misma tecla si ocurren antes de 300 ms.",
+          "title": "Configuración práctica con xkbset para Sticky y Bounce Keys"
         },
         {
           "type": "callout",
@@ -304,23 +369,32 @@
     {
       "id": "106.3-slide-9",
       "slideNumber": 9,
-      "title": "Ejercicio Guiado 2: Gesto de Activación de Sticky Keys",
+      "title": "Ejercicio Guiado 2: Gestos de Activación de Sticky Keys y Slow Keys",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicio Guiado 2: Gesto de Activación de Sticky Keys"
+          "text": "Ejercicio Guiado 2: Gestos de Activación en Teclado"
         },
         {
           "type": "paragraph",
-          "text": "Pregunta 3 de los ejercicios oficiales de la página 171 del manual."
+          "text": "Gestos rápidos de teclado evaluados por el manual oficial LPI:"
+        },
+        {
+          "type": "table",
+          "headers": ["Tecnología", "Gesto de Activación con Teclado", "Efecto"],
+          "rows": [
+            ["Sticky Keys (Adhesivas)", "Pulsar la tecla Shift 5 VECES consecutivas", "Activa/desactiva la fijación de modificadores."],
+            ["Slow Keys (Lentas)", "Mantener presionada la tecla Shift durante 8 SEGUNDOS", "Activa el filtro de retraso de pulsación."]
+          ],
+          "caption": "Gestos rápidos universales de teclado en Linux"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave LPI: El gesto universal de activación de las teclas adhesivas es pulsar la tecla Shift CINCO veces consecutivas."
+          "content": "🎯 Clave LPI:\n• Shift 5 veces = Sticky Keys (Teclas Adhesivas).\n• Shift durante 8 segundos = Slow Keys (Teclas Lentas)."
         }
       ],
       "notes": "Pregunta de examen muy común en LPIC-1."
@@ -338,7 +412,13 @@
         },
         {
           "type": "paragraph",
-          "text": "Preguntas de exploración práctica tomadas de las páginas 172 y 175 del manual."
+          "text": "Preguntas de exploración práctica tomadas de las páginas 172 y 175 del manual:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# 1. Lanzar KMouseTool para mitigar lesiones RSI:\nkmousetool &\n# Abre la interfaz para ajustar el retardo de reposo antes del clic.\n\n# 2. Configurar Orca para síntesis de voz y terminal Braille:\norca --setup\n# Permite elegir motor de voz (espeak, festival) y tabla Braille (brltty).",
+          "title": "Comprobación de herramientas asistenciales"
         },
         {
           "type": "callout",
@@ -358,17 +438,26 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Pregunta de Examen 1: Funciones de Filtrado de Teclado"
+          "text": "Pregunta 1: Filtrado de Pulsaciones Repetidas"
         },
         {
           "type": "paragraph",
-          "text": "Comprueba tu preparación para el examen oficial LPIC-1 102-500."
+          "text": "¿Qué función de accesibilidad debe habilitarse para un usuario cuyos temblores en las manos provocan pulsaciones dobles o triples accidentales de una misma tecla?"
+        },
+        {
+          "type": "list",
+          "items": [
+            "A) Sticky Keys",
+            "B) Slow Keys",
+            "C) Bounce Keys (Correcta: 'Teclas de rebote' descarta repeticiones rápidas causadas por temblores)",
+            "D) Mouse Keys"
+          ]
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave: Temblores = Bounce Keys (Rebote). Roce accidental = Slow Keys (Lentas)."
+          "content": "🎯 Clave: Temblores involuntarios = Bounce Keys (Rebote). Roce accidental breve = Slow Keys (Lentas)."
         }
       ],
       "notes": "Pregunta de examen para verificar que no se confunden Bounce y Slow Keys."
@@ -382,17 +471,26 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Pregunta de Examen 2: Atajos y Gestos de Accesibilidad"
+          "text": "Pregunta 2: Gesto de Activación de Sticky Keys"
         },
         {
           "type": "paragraph",
-          "text": "Gesto de activación rápida de las Teclas Adhesivas."
+          "text": "¿Cuál es el gesto predeterminado en el Sistema X Window para activar la función Sticky Keys sin acceder a los menús de configuración?"
+        },
+        {
+          "type": "list",
+          "items": [
+            "A) Mantener pulsada la tecla Shift durante 8 segundos.",
+            "B) Pulsar la tecla Shift cinco veces seguidas. (Correcta: gesto universal de Sticky Keys)",
+            "C) Pulsar simultáneamente Ctrl + Alt + Supr tres veces.",
+            "D) Pulsar la tecla espaciadora 5 veces."
+          ]
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave: Pulsar Shift 5 veces seguidas activa Sticky Keys."
+          "content": "🎯 Clave: Pulsar Shift 5 veces seguidas activa Sticky Keys. Mantener Shift por 8 segundos activa Slow Keys."
         }
       ],
       "notes": "Pregunta literal del temario de certificación."
@@ -406,11 +504,20 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Pregunta de Examen 3: Asistencia para Discapacidad Visual"
+          "text": "Pregunta 3: Lector de Pantalla Oficial en Linux"
         },
         {
           "type": "paragraph",
-          "text": "Capacidades de la herramienta Orca en entornos de escritorio."
+          "text": "¿Qué herramienta proporciona a la vez síntesis de voz y soporte para pantallas Braille dinámicas en el escritorio GNOME?"
+        },
+        {
+          "type": "list",
+          "items": [
+            "A) KMagnifier",
+            "B) KMouseTool",
+            "C) Orca (Correcta: lector de pantalla integral con soporte de habla y terminal Braille)",
+            "D) Onboard"
+          ]
         },
         {
           "type": "callout",
@@ -430,11 +537,22 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Baraja de Memorización: 8 Conceptos Clave de Accesibilidad"
+          "text": "8 Tarjetas Mnemotécnicas de Accesibilidad en Linux"
         },
         {
-          "type": "paragraph",
-          "text": "Repaso mnemotécnico interactivo de conceptos indispensables para el examen LPIC-1."
+          "type": "table",
+          "headers": ["Concepto", "Herramienta / Gesto", "Regla de Certificación LPIC-1"],
+          "rows": [
+            ["Sticky Keys", "Shift 5 veces", "Permite pulsar modificadores en secuencia sin mantenerlos simultáneamente."],
+            ["Slow Keys", "Shift 8 segundos", "Exige mantener pulsada la tecla un tiempo para descartar roces accidentales."],
+            ["Bounce Keys", "xkbset bouncekeys", "Descarta repeticiones rápidas de la misma tecla provocadas por temblores."],
+            ["Extensión AccessX", "xkbset", "Extensión de X11 y herramienta CLI para configurar filtrado de teclado."],
+            ["KMouseTool", "kmousetool", "Emite clics automáticos al pausar el puntero para prevenir lesiones RSI (KDE)."],
+            ["Lupa KMagnifier", "kmag", "Programa de aumento de pantalla de KDE para personas con visión reducida."],
+            ["Campana Visual", "Visual Bell", "Sustituye pitidos del sistema por destellos en pantalla para usuarios sordos."],
+            ["Lector Orca", "orca / brltty", "Lector con síntesis de voz y soporte para pantallas Braille táctiles."]
+          ],
+          "caption": "Resumen mnemotécnico para repaso ágil de la baraja 106.3"
         },
         {
           "type": "callout",
@@ -454,334 +572,25 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Resumen de Unidad 106.3: Accesibilidad en Linux"
+          "text": "Resumen Maestro de Accesibilidad en Linux (a11y)"
         },
         {
-          "type": "paragraph",
-          "text": "Conceptos dominados, herramientas prioritarias para examen y acceso a la práctica de laboratorio."
+          "type": "list",
+          "items": [
+            "Teclado y AccessX: Sticky Keys (Shift 5x para atajos secuenciales), Slow Keys (Shift 8s para exigir retardo), Bounce Keys (filtra temblores y dobles toques). Configuración CLI con 'xkbset'.",
+            "Movilidad y Ratón: Mouse Keys (control con teclado numérico), KMouseTool (clic automático por reposo para evitar RSI en KDE), Dwell Click (clic asistido) y Onboard (teclado virtual en pantalla).",
+            "Visión y Lupas: Temas de Alto Contraste, KMagnifier (lupa de aumento en KDE), zoom con 'Alt + rueda' en Xfce, y lector de pantalla Orca (síntesis de voz y pantallas Braille táctiles con brltty).",
+            "Audición y Voz: Campana Visual (Visual Bell / alerta visual que sustituye pitidos por parpadeos de pantalla para personas sordas) y reconocimiento de voz (Speech Recognition)."
+          ]
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Resumen Maestro: Sticky (Shift 5x) + Slow (mantener) + Bounce (temblores) + KMouseTool (clic automático) + Orca (voz/Braille)."
+          "content": "🎯 Resumen Maestro: Sticky (Shift 5x) + Slow (Shift 8s) + Bounce (temblores) + AccessX/xkbset + KMouseTool (clic automático RSI) + Campana visual + Orca (voz y Braille)."
         }
       ],
       "notes": "Cierre de la unidad 106.3 con enlaces a la práctica de laboratorio interactiva."
-    }
-  ],
-  "webDocument": [
-    {
-      "id": "sec-106-3-1",
-      "title": "Los 3 Pilares de la Accesibilidad en Linux",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Los 3 Pilares de la Accesibilidad en Linux"
-        },
-        {
-          "type": "paragraph",
-          "text": "¿Qué tecnologías proporciona el sistema operativo para adaptar teclado, ratón y elementos visuales?"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>♿ Clasificación de Tecnologías de Asistencia (AT)</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Estándares POSIX / Linux</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:11.5px;\">\n    <!-- Pilar 1: Teclado -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#1E40AF; font-size:12px; display:block; margin-bottom:4px;\">1. Teclado Adaptado</strong>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • <strong>Sticky Keys:</strong> Atajos secuenciales (Shift 5x).<br>\n        • <strong>Slow Keys:</strong> Mantener pulsado para aceptar.<br>\n        • <strong>Bounce Keys:</strong> Filtra rebotes por temblor.<br>\n        • <strong>Onboard:</strong> Teclado en pantalla.\n      </div>\n    </div>\n\n    <!-- Pilar 2: Ratón -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#15803D; font-size:12px; display:block; margin-bottom:4px;\">2. Movilidad y Ratón</strong>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • <strong>Mouse Keys:</strong> Controlar el puntero con el teclado numérico.<br>\n        • <strong>KMouseTool:</strong> Clic automático al detener el cursor (prevención de RSI).<br>\n        • <strong>Clic asistido:</strong> Simular botón derecho manteniendo presionado el izquierdo.\n      </div>\n    </div>\n\n    <!-- Pilar 3: Visión y Audio -->\n    <div style=\"background:#FEF3C7; border:1.5px solid #F59E0B; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#92400E; font-size:12px; display:block; margin-bottom:4px;\">3. Visión y Pantalla</strong>\n      <div style=\"color:#78350F; line-height:1.4;\">\n        • <strong>Alto Contraste:</strong> Temas visuales de gran legibilidad.<br>\n        • <strong>Lupa:</strong> Aumento de área de pantalla.<br>\n        • <strong>Orca:</strong> Síntesis de voz y pantallas Braille táctiles.<br>\n        • <strong>Emacspeak:</strong> Audio en consola.\n      </div>\n    </div>\n  </div>\n</div>\n"
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: La accesibilidad se divide en: 1) Teclado (Sticky, Slow, Bounce Keys), 2) Ratón (Mouse Keys, KMouseTool), 3) Visión (Temas de alto contraste, fuentes grandes y lector Orca con soporte Braille)."
-        }
-      ]
-    },
-    {
-      "id": "sec-106-3-2",
-      "title": "Sticky Keys (Teclas Adhesivas) y el Gesto Shift 5x",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Sticky Keys (Teclas Adhesivas) y el Gesto Shift 5x"
-        },
-        {
-          "type": "paragraph",
-          "text": "¿Cómo pulsar atajos complejos como Alt+Tab o Ctrl+Alt+Supr con un solo dedo o puntero?"
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen:\n1. Sticky Keys permite teclear atajos de una tecla a la vez (secuencialmente).\n2. Gesto de activación: Pulsar la tecla Shift CINCO veces consecutivas."
-        }
-      ]
-    },
-    {
-      "id": "sec-106-3-3",
-      "title": "Slow Keys (Teclas Lentas) frente a Bounce Keys (Rebote)",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Slow Keys (Teclas Lentas) frente a Bounce Keys (Rebote)"
-        },
-        {
-          "type": "paragraph",
-          "text": "¿Cómo diferenciar dos funciones de filtrado temporal de teclado indispensables en el examen?"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⏱️ Comparativa Funcional: Slow Keys frente a Bounce Keys</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Filtrado Temporal</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:11.5px;\">\n    <!-- Slow Keys -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#1E40AF; font-size:12.5px;\">Slow Keys (Teclas Lentas)</strong>\n        <span style=\"background:#2563EB; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Mantener presionado</span>\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.4;\">\n        • <strong>Problema:</strong> El usuario roza teclas por accidente al desplazar la mano.<br>\n        • <strong>Solución:</strong> La pulsación se acepta <strong>SOLO SI</strong> la tecla se mantiene presionada durante un tiempo umbral (ej. 500 ms).<br>\n        • Toques rápidos o accidentales son completamente ignorados.\n      </div>\n    </div>\n\n    <!-- Bounce Keys -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;\">\n        <strong style=\"color:#B91C1C; font-size:12.5px;\">Bounce Keys (Teclas de Rebote)</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:3px;\">Filtrar temblores</span>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.4;\">\n        • <strong>Problema:</strong> Temblores involuntarios en las manos generan pulsaciones dobles ('hoollaa').<br>\n        • <strong>Solución:</strong> Una nueva pulsación de la misma tecla se acepta <strong>SOLO DESPUÉS</strong> de que haya transcurrido un retardo desde la anterior.<br>\n        • Rebotes inmediatos son descartados.\n      </div>\n    </div>\n  </div>\n</div>\n"
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Regla Mnemotécnica de Examen:\n• Slow Keys = Evita pulsaciones accidentales breves (exige mantener pulsada la tecla).\n• Bounce Keys = Evita dobles pulsaciones involuntarias causadas por temblores en las manos."
-        }
-      ]
-    },
-    {
-      "id": "sec-106-3-4",
-      "title": "Control del Puntero: Mouse Keys y KMouseTool",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Control del Puntero: Mouse Keys y KMouseTool"
-        },
-        {
-          "type": "paragraph",
-          "text": "¿Cómo mover el cursor sin ratón físico y evitar el esfuerzo repetitivo de hacer clic?"
-        },
-        {
-          "type": "code",
-          "language": "bash",
-          "code": "kmousetool",
-          "title": "Sintaxis del comando"
-        },
-        {
-          "type": "terminal",
-          "lines": [
-            {
-              "prompt": "$ ",
-              "command": "which kmousetool onboard orca",
-              "output": "/usr/bin/kmousetool\n/usr/bin/onboard\n/usr/bin/orca"
-            }
-          ]
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
-          ],
-          "rows": [
-            [
-              "",
-              "",
-              "Genera clic automático al pausar el ratón (configurable en milisegundos)."
-            ],
-            [
-              "",
-              "",
-              "Mapea las flechas del teclado numérico para desplazar el puntero."
-            ],
-            [
-              "",
-              "",
-              "Equivalente en GNOME para clics automáticos sin pulsar botones."
-            ]
-          ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Pregunta Oficial LPI: En KDE, ¿qué aplicación ayuda a personas con lesiones por esfuerzo repetitivo (RSI) haciendo clic en el ratón automáticamente cuando el cursor se detiene? -> KMouseTool."
-        }
-      ]
-    },
-    {
-      "id": "sec-106-3-5",
-      "title": "Teclado en Pantalla (Onboard) y Temas Visuales",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Teclado en Pantalla (Onboard) y Temas Visuales"
-        },
-        {
-          "type": "paragraph",
-          "text": "¿Cómo interactuar con el sistema sin teclado físico y mejorar la discriminación de elementos?"
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Claves LPI:\n• Paquete 'onboard': Teclado en pantalla estándar para interacción con ratón o pantallas táctiles.\n• Temas de Alto Contraste (High Contrast) y fuentes aumentadas: Facilitan la lectura a personas con baja visión."
-        }
-      ]
-    },
-    {
-      "id": "sec-106-3-6",
-      "title": "El Lector de Pantalla Orca y Pantallas Braille",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "El Lector de Pantalla Orca y Pantallas Braille"
-        },
-        {
-          "type": "paragraph",
-          "text": "¿Cómo permite Orca a usuarios invidentes navegar por escritorios gráficos y recibir salida táctil?"
-        },
-        {
-          "type": "code",
-          "language": "bash",
-          "code": "orca",
-          "title": "Sintaxis del comando"
-        },
-        {
-          "type": "terminal",
-          "lines": [
-            {
-              "prompt": "$ ",
-              "command": "orca --version",
-              "output": "Orca 43.1\n(Síntesis de voz activa mediante Speech-Dispatcher)\n(Soporte Braille habilitado mediante BrlAPI)"
-            }
-          ]
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
-          ],
-          "rows": [
-            [
-              "",
-              "",
-              "Configura velocidad de habla, tono y parámetros de salida Braille."
-            ],
-            [
-              "",
-              "",
-              "Reinicia el lector de pantalla si la síntesis de audio se ha bloqueado."
-            ],
-            [
-              "",
-              "",
-              "Entorno auditivo alternativo integrado en Emacs para consola de texto."
-            ]
-          ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 'orca' es un lector de pantalla que combina voz sintetizada (Text-To-Speech) con soporte para dispositivos Braille actualizables ('refreshable braille displays')."
-        }
-      ]
-    },
-    {
-      "id": "sec-106-3-7",
-      "title": "Ejercicio Guiado 1: Alternar Ventanas y Temblores en Manos",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Ejercicio Guiado 1: Alternar Ventanas y Temblores en Manos"
-        },
-        {
-          "type": "paragraph",
-          "text": "Preguntas 1 y 2 de los Guided Exercises de la página 171 del manual."
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Claves LPI:\n1. Sticky Keys asiste a quien no puede pulsar Alt y Tab simultáneamente.\n2. Bounce Keys filtra las pulsaciones repetidas por temblores en las manos."
-        }
-      ]
-    },
-    {
-      "id": "sec-106-3-8",
-      "title": "Ejercicio Guiado 2: Gesto de Activación de Sticky Keys",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Ejercicio Guiado 2: Gesto de Activación de Sticky Keys"
-        },
-        {
-          "type": "paragraph",
-          "text": "Pregunta 3 de los ejercicios oficiales de la página 171 del manual."
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave LPI: El gesto universal de activación de las teclas adhesivas es pulsar la tecla Shift CINCO veces consecutivas."
-        }
-      ]
-    },
-    {
-      "id": "sec-106-3-9",
-      "title": "Retos de Exploración: KMouseTool y Lector de Pantalla Orca",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Retos de Exploración: KMouseTool y Lector de Pantalla Orca"
-        },
-        {
-          "type": "paragraph",
-          "text": "Preguntas de exploración práctica tomadas de las páginas 172 y 175 del manual."
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Claves Críticas:\n1. KMouseTool genera clics automáticos al detener el ratón para evitar lesiones RSI.\n2. Orca genera voz sintetizada y es compatible con pantallas Braille táctiles."
-        }
-      ]
-    },
-    {
-      "id": "sec-106-3-10",
-      "title": "Pregunta de Examen 1: Funciones de Filtrado de Teclado",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Pregunta de Examen 1: Funciones de Filtrado de Teclado"
-        },
-        {
-          "type": "paragraph",
-          "text": "Comprueba tu preparación para el examen oficial LPIC-1 102-500."
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave: Temblores = Bounce Keys (Rebote). Roce accidental = Slow Keys (Lentas)."
-        }
-      ]
     }
   ]
 }

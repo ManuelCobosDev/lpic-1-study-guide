@@ -17,8 +17,11 @@ export interface PersistedStoreOptions<T> {
 }
 
 export class PersistedStore<T> {
+  private static readonly activeStores = new Set<PersistedStore<unknown>>();
+
   private readonly state: WritableSignal<T>;
   private readonly storage: StorageService;
+  private readonly options: PersistedStoreOptions<T>;
   private readonly key: string;
   private readonly schemaVersion: number;
   private readonly debounceMs: number;
@@ -29,6 +32,7 @@ export class PersistedStore<T> {
 
   constructor(storage: StorageService, options: PersistedStoreOptions<T>) {
     this.storage = storage;
+    this.options = options;
     this.key = options.key;
     this.schemaVersion = options.schemaVersion;
     this.debounceMs = options.debounceMs ?? 300;
@@ -36,6 +40,17 @@ export class PersistedStore<T> {
     const initial = this.loadInitial(options);
     this.state = signal<T>(initial);
     this.data = this.state.asReadonly();
+
+    PersistedStore.activeStores.add(this as unknown as PersistedStore<unknown>);
+
+    // Sincronización reactiva entre pestañas concurrentes (A8-010)
+    if (typeof this.storage?.onStorageChange === 'function') {
+      this.storage.onStorageChange((changedKey) => {
+        if (changedKey === null || changedKey === this.key) {
+          this.reload();
+        }
+      });
+    }
 
     // Si se proporciona un injector o estamos en un contexto de inyeccion, podemos enlazar un effect
     if (options.injector) {
@@ -71,6 +86,22 @@ export class PersistedStore<T> {
       this.debounceTimer = null;
       this.persist(this.pendingValue);
       this.pendingValue = null;
+    }
+  }
+
+  reload(): void {
+    if (this.debounceTimer !== null) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
+    this.pendingValue = null;
+    const reloaded = this.loadInitial(this.options);
+    this.state.set(reloaded);
+  }
+
+  static reloadAll(): void {
+    for (const store of PersistedStore.activeStores) {
+      store.reload();
     }
   }
 

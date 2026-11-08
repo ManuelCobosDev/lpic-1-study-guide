@@ -78,7 +78,10 @@ describe('FlashcardsService', () => {
   const mockContentService = {
     getCommands: () => Promise.resolve(mockCommands),
     getGlossary: () => Promise.resolve(mockGlossary),
-    getFlashcards: () => Promise.resolve(mockFlashcardsCatalog)
+    getFlashcards: (examId?: '101' | '102') =>
+      Promise.resolve(
+        examId ? mockFlashcardsCatalog.filter((f) => f.examId === examId) : mockFlashcardsCatalog
+      )
   };
 
   const mockStorageService = {

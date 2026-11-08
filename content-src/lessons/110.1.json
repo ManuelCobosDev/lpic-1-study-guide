@@ -5,377 +5,726 @@
   "title": "Tareas de administración de seguridad",
   "version": "1.0.0",
   "language": "es",
-  "estimatedMinutes": 30,
+  "estimatedMinutes": 35,
   "objectives": [
-    "Auditoría de permisos SUID/SGID con find, gestión del ciclo de vida y expiración de contraseñas con passwd y chage, descubrimiento de puertos abiertos con lsof, fuser, netstat y nmap, límites de recursos con ulimit y limits.conf, supervisión de sesiones con who, w, last, lastb y lastlog, y escalada de privilegios con su y sudoers/visudo.",
-    "Dominio técnico de las herramientas y configuración del subtema 110.1"
+    "Auditar un sistema para encontrar archivos con el bit SUID/SGID activo.",
+    "Establecer o cambiar contraseñas de usuario e información de caducidad de contraseña.",
+    "Usar nmap y netstat para descubrir puertos y sockets abiertos en un sistema.",
+    "Establecer límites en los inicios de sesión, procesos y uso de memoria mediante ulimit y limits.conf.",
+    "Supervisar qué usuarios han iniciado sesión o están conectados actualmente (who, w, last, lastb).",
+    "Configuración y delegación de privilegios administrativos mediante su y sudoers/visudo."
   ],
   "keyTerms": [
     "SUID (Set User ID)",
     "SGID (Set Group ID)",
     "Sticky Bit",
     "Password Aging",
+    "/etc/shadow",
     "ulimit",
-    "/etc/sudoers"
+    "Soft Limit vs Hard Limit",
+    "/etc/security/limits.conf",
+    "wtmp y btmp",
+    "su vs su -",
+    "/etc/sudoers",
+    "visudo",
+    "NOPASSWD"
   ],
-  "commands": [],
+  "commands": [
+    "find",
+    "passwd",
+    "chage",
+    "usermod",
+    "lsof",
+    "fuser",
+    "netstat",
+    "nmap",
+    "ulimit",
+    "who",
+    "w",
+    "last",
+    "lastb",
+    "lastlog",
+    "su",
+    "sudo",
+    "visudo"
+  ],
   "placeholder": false,
   "slides": [
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-1",
+      "slideNumber": 1,
       "title": "Tareas de administración de seguridad",
       "layout": "cover",
       "blocks": [
         {
           "type": "heading",
           "level": 1,
-          "text": "Tareas de administración de seguridad"
+          "text": "Tema 110.1: Tareas de administración de seguridad"
+        },
+        {
+          "type": "paragraph",
+          "text": "En el examen LPIC-1 (102-500), el subtema 110.1 cuenta con un peso oficial de 3 y evalúa las competencias indispensables para salvaguardar y auditar la integridad de un host Linux: detección de binarios con permisos especiales, políticas de envejecimiento de contraseñas, auditoría de puertos de red, control de consumo de recursos y delegación controlada de privilegios."
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Peso en la certificación LPIC-1",
+          "content": "Este subtema aporta 3 preguntas directas al examen 102. Las preguntas combinan sintaxis exacta de flags (especialmente chage, find -perm, netstat y ulimit) y conceptos de arquitectura como los campos de /etc/shadow y las directivas de /etc/sudoers."
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-2",
+      "slideNumber": 2,
       "title": "Permisos Especiales: SUID, SGID y Sticky Bit",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Permisos Especiales: SUID, SGID y Sticky Bit"
+          "text": "Mecanismos y valores octales de permisos especiales"
+        },
+        {
+          "type": "paragraph",
+          "text": "Además de los permisos estándar de lectura (r), escritura (w) y ejecución (x), Linux implementa tres bits especiales cruciales para la seguridad del sistema:"
+        },
+        {
+          "type": "table",
+          "headers": ["Permiso Especial", "Octal", "Posición simbólica", "Efecto en archivos ejecutables", "Efecto en directorios"],
+          "rows": [
+            ["SUID (Set User ID)", "4000", "Columna de usuario: rws------", "El proceso se ejecuta con los privilegios del propietario del archivo (ej. /usr/bin/passwd de root).", "Sin efecto práctico en sistemas Linux modernos."],
+            ["SGID (Set Group ID)", "2000", "Columna de grupo: rwxr-s---", "El proceso se ejecuta con los privilegios del grupo propietario del archivo.", "Los archivos creados dentro heredan automáticamente el grupo del directorio padre."],
+            ["Sticky Bit", "1000", "Columna de otros: rwxrwxrwt", "Sin efecto en archivos normales (antiguamente mantenía el texto en memoria swap).", "Solo el propietario de un archivo o root puede borrarlo o renombrarlo (ej. /tmp)."]
+          ],
+          "caption": "Resumen de permisos especiales en sistemas Linux"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Distinción entre 's' minúscula y 'S' mayúscula",
+          "content": "Si el permiso aparece con letra mayúscula ('S' o 'T'), significa que el bit especial está ACTIVO pero el bit de ejecución ('x') subyacente está INACTIVO. Una letra minúscula ('s' o 't') confirma que tanto el bit especial como el de ejecución están presentes."
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-3",
+      "slideNumber": 3,
       "title": "Rastreo de Binarios SUID y SGID con find",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Rastreo de Binarios SUID y SGID con find"
+          "text": "Sintaxis precisa de -perm para auditoría de archivos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los binarios con SUID indebido son el vector principal de escalada de privilegios local. El comando find permite localizarlos mediante tres modos de coincidencia de permisos:"
+        },
+        {
+          "type": "table",
+          "headers": ["Sintaxis de find", "Criterio de búsqueda", "Comportamiento del filtro"],
+          "rows": [
+            ["find / -perm 4000", "Modo exacto", "Coincide ÚNICAMENTE si los permisos del archivo son exactamente 4000 (sin r, w ni x en otros). Rara vez útil."],
+            ["find / -perm -4000", "Todos los bits requeridos", "Coincide si el bit 4000 (SUID) está activo, independientemente del resto de permisos (ej. 4755 coincide). Es el modo estándar de auditoría."],
+            ["find / -perm /4000 (o +4000)", "Al menos uno de los bits", "Coincide si al menos uno de los bits indicados está presente. En GNU find la sintaxis moderna es '/4000' ('+4000' está deprecada)."],
+            ["find / -perm /6000", "SUID o SGID", "Localiza archivos que tengan activo el bit SUID (4000) O el bit SGID (2000)."]
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "#",
+              "command": "find / -perm -4000 -type f -exec ls -ld {} + 2>/dev/null",
+              "output": "-rwsr-xr-x 1 root root 68208 May 12  2024 /usr/bin/passwd\n-rwsr-xr-x 1 root root 55528 Mar 23  2024 /usr/bin/mount\n-rwsr-xr-x 1 root root 35112 Mar 23  2024 /usr/bin/umount\n-rwsr-xr-x 1 root root 71912 Jan 10  2024 /usr/bin/su"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Redirección de errores",
+          "content": "Al auditar todo el sistema desde la raíz (/), siempre redirige la salida de errores '2>/dev/null' para descartar las alertas de 'Permission denied' en pseudofilesystems como /proc o /sys."
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-4",
+      "slideNumber": 4,
       "title": "El Archivo /etc/shadow y sus 9 Campos",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "El Archivo /etc/shadow y sus 9 Campos"
+          "text": "Estructura interna y política de contraseñas de /etc/shadow"
+        },
+        {
+          "type": "paragraph",
+          "text": "A diferencia de /etc/passwd (legible por todos los usuarios con permisos 0644), /etc/shadow posee permisos restrictivos (0640 o 0600) y almacena las contraseñas cifradas y los parámetros de caducidad divididos en 9 campos separados por dos puntos (:):"
+        },
+        {
+          "type": "table",
+          "headers": ["Campo", "Nombre del parámetro", "Descripción técnica", "Ejemplo"],
+          "rows": [
+            ["1", "Login name", "Nombre de usuario del sistema.", "carol"],
+            ["2", "Encrypted password", "Hash de la contraseña cifrada. Comienza con el identificador del algoritmo ($6$ = SHA-512, $1$ = MD5, $5$ = SHA-256). '!' o '*' denotan cuenta bloqueada.", "$6$qT8...f"],
+            ["3", "Last password change", "Días transcurridos desde el 1 de enero de 1970 (Época UNIX) hasta el último cambio.", "19850"],
+            ["4", "Minimum password age", "Días mínimos que deben transcurrir antes de permitir otro cambio de clave (0 = sin espera).", "0"],
+            ["5", "Maximum password age", "Días máximos de validez de la contraseña antes de obligar a renovarla (ej. 90).", "90"],
+            ["6", "Warning period", "Días de aviso previo al usuario antes de que la contraseña expire.", "7"],
+            ["7", "Inactivity period", "Días de margen tras la expiración antes de bloquear la cuenta por inactividad.", "14"],
+            ["8", "Expiration date", "Fecha absoluta de expiración de la cuenta expresada en días desde la época UNIX.", "20000"],
+            ["9", "Reserved", "Campo reservado para uso futuro. Permanece vacío.", ""]
+          ]
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "title": "Línea representativa de /etc/shadow",
+          "code": "carol:$6$8zX...mQ:19850:0:90:7:14:20088:"
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-5",
+      "slideNumber": 5,
       "title": "Control de Caducidad de Contraseñas con chage",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Control de Caducidad de Contraseñas con chage"
+          "text": "Comando chage (Change Age): Sintaxis y flags de examen"
+        },
+        {
+          "type": "paragraph",
+          "text": "La utilidad chage permite visualizar y modificar los campos de caducidad en /etc/shadow sin necesidad de editar el archivo a mano:"
+        },
+        {
+          "type": "table",
+          "headers": ["Opción corta", "Opción larga", "Efecto sobre /etc/shadow", "Uso frecuente en LPIC-1"],
+          "rows": [
+            ["-l <user>", "--list", "Muestra la información de caducidad formateada en fechas legibles.", "chage -l carol"],
+            ["-m <días>", "--mindays", "Fija los días mínimos entre cambios de contraseña (campo 4).", "chage -m 2 carol"],
+            ["-M <días>", "--maxdays", "Fija los días máximos de validez de la clave (campo 5).", "chage -M 60 carol"],
+            ["-W <días>", "--warndays", "Fija los días de advertencia antes de la expiración (campo 6).", "chage -W 7 carol"],
+            ["-I <días>", "--inactive", "Días de inactividad antes de deshabilitar la cuenta expirada (campo 7).", "chage -I 30 carol"],
+            ["-E <fecha>", "--expiredate", "Fecha absoluta de expiración de la cuenta (YYYY-MM-DD o días). Valor '-1' elimina la caducidad.", "chage -E 2026-12-31 carol\nchage -E -1 carol"],
+            ["-d <fecha>", "--lastday", "Establece el día del último cambio. Si se pasa '0', obliga a cambiar la clave en el próximo login.", "chage -d 0 carol"]
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "#",
+              "command": "chage -l carol",
+              "output": "Último cambio de contraseña                              : feb 10, 2024\nLa contraseña caduca                                     : may 11, 2024\nContraseña inactiva                                      : may 25, 2024\nLa cuenta caduca                                         : nunca\nNúmero mínimo de días entre cambios de contraseña        : 0\nNúmero máximo de días entre cambios de contraseña        : 90\nNúmero de días de aviso antes de que caduque la contraseña: 7"
+            }
+          ]
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
-      "title": "Bloqueo y Estado de Cuentas con passwd",
+      "id": "110.1-slide-6",
+      "slideNumber": 6,
+      "title": "Bloqueo y Estado de Cuentas con passwd y usermod",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Bloqueo y Estado de Cuentas con passwd"
+          "text": "Manipulación del hash con passwd y usermod"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los comandos passwd y usermod proporcionan operaciones directas para inspeccionar, bloquear y rehabilitar cuentas de usuario alterando el campo de hash en /etc/shadow:"
+        },
+        {
+          "type": "table",
+          "headers": ["Comando y flag", "Propósito", "Mecanismo técnico en /etc/shadow"],
+          "rows": [
+            ["passwd -S <user>", "Consultar estado de la contraseña", "Devuelve el usuario y estado: 'P' (usable/password set), 'L' (locked) o 'NP' (no password)."],
+            ["passwd -l <user>", "Bloquear la cuenta (lock)", "Inserta el carácter '!' al principio del hash cifrado en /etc/shadow. El hash deja de coincidir con cualquier entrada."],
+            ["passwd -u <user>", "Desbloquear la cuenta (unlock)", "Retira el carácter '!' del principio del hash, restaurando el acceso normal."],
+            ["passwd -d <user>", "Eliminar contraseña (delete)", "Borra el hash. La cuenta queda sin contraseña (acceso sin credenciales si PAM lo permite)."],
+            ["passwd -e <user>", "Expirar contraseña inmediatamente", "Establece el campo de último cambio a 0 (idéntico a 'chage -d 0'). Fuerza el cambio en el login."],
+            ["usermod -L <user>", "Bloquear cuenta con usermod", "Equivalente a 'passwd -l', antepone '!' al hash en /etc/shadow."],
+            ["usermod -U <user>", "Desbloquear cuenta con usermod", "Equivalente a 'passwd -u', retira el prefijo '!' del hash."],
+            ["usermod -e YYYY-MM-DD", "Expirar cuenta en fecha", "Fija la fecha de expiración absoluta de la cuenta (campo 8 de /etc/shadow)."]
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Cuentas bloqueadas con clave vacía o doble exclamación",
+          "content": "Si una cuenta no tenía contraseña asignada o tiene prefijo '!!' o '*', ejecutar 'passwd -u' fallará protegiendo la seguridad, salvo que se invoque con la opción forzada 'passwd -u -f'."
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-7",
+      "slideNumber": 7,
       "title": "Detección de Puertos y Sockets en Escucha",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Detección de Puertos y Sockets en Escucha"
+          "text": "Supervisión de sockets de red con netstat y ss"
+        },
+        {
+          "type": "paragraph",
+          "text": "La superficie de ataque de un host depende de los servicios que escuchan conexiones en la red. Tradicionalmente se empleaba netstat (del paquete net-tools), sustituido modernamente por ss (iproute2):"
+        },
+        {
+          "type": "table",
+          "headers": ["Opción netstat / ss", "Significado", "Justificación en auditoría"],
+          "rows": [
+            ["-t (--tcp)", "Sockets TCP", "Filtra únicamente el protocolo de transporte orientado a conexión."],
+            ["-u (--udp)", "Sockets UDP", "Filtra conexiones de datagramas no orientadas a conexión (DNS, DHCP, SNMP)."],
+            ["-l (--listening)", "En escucha", "Muestra solo sockets esperando conexiones entrantes (excluye conexiones ya establecidas)."],
+            ["-a (--all)", "Todos los sockets", "Muestra tanto sockets en escucha como conexiones activas establecidas."],
+            ["-n (--numeric)", "Numérico", "Evita resoluciones inversas DNS y de nombres de servicio. Acelera drásticamente la salida."],
+            ["-p (--program)", "PID y Programa", "Muestra el identificador de proceso (PID) y el nombre del ejecutable que posee el socket (requiere root)."],
+            ["-e (--extend)", "Extendido", "Incluye el usuario propietario del socket y el número de inodo de la conexión."]
+          ]
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "title": "Combinación dorada de examen para netstat y ss",
+          "code": "# Listar todos los puertos TCP y UDP en escucha con PID y direcciones numéricas\nnetstat -tlpn\nss -tlpn"
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-8",
+      "slideNumber": 8,
       "title": "Inspección de Puertos de Red con lsof",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Inspección de Puertos de Red con lsof"
+          "text": "Uso de lsof (List Open Files) para sockets y puertos"
+        },
+        {
+          "type": "paragraph",
+          "text": "En UNIX todo es un archivo, incluidos los sockets de red. El comando lsof es una herramienta potente para determinar exactamente qué proceso mantiene abierto un descriptor de red:"
+        },
+        {
+          "type": "table",
+          "headers": ["Sintaxis de lsof", "Resultado"],
+          "rows": [
+            ["lsof -i", "Lista todos los sockets de red abiertos en el sistema (IPv4 e IPv6)."],
+            ["lsof -i tcp:22", "Muestra procesos que escuchan o están conectados al puerto 22 TCP."],
+            ["lsof -i :80", "Muestra procesos vinculados al puerto 80 (tanto TCP como UDP)."],
+            ["lsof -i4", "Filtra exclusivamente sockets y conexiones IPv4."],
+            ["lsof -i6", "Filtra exclusivamente sockets y conexiones IPv6."],
+            ["lsof -i -sTCP:LISTEN", "Filtra solo los sockets TCP que se encuentran en estado de escucha (LISTEN)."]
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "#",
+              "command": "lsof -i :22",
+              "output": "COMMAND  PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME\nsshd     812 root    3u  IPv4  19245      0t0  TCP *:ssh (LISTEN)\nsshd     812 root    4u  IPv6  19247      0t0  TCP *:ssh (LISTEN)\nsshd    2104 root    4u  IPv4  24110      0t0  TCP 192.168.1.50:ssh->192.168.1.10:52410 (ESTABLISHED)"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Interpretación de columnas",
+          "content": "Fíjate en las columnas COMMAND, PID, USER y NAME: permiten saber de un vistazo quién ejecutó el servicio y qué sockets remotos están conectados al equipo."
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-9",
+      "slideNumber": 9,
       "title": "Identificación y Terminación de Procesos con fuser",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Identificación y Terminación de Procesos con fuser"
+          "text": "Comando fuser: Identificar y liquidar procesos atados a puertos"
+        },
+        {
+          "type": "paragraph",
+          "text": "La utilidad fuser identifica qué procesos están utilizando archivos, directorios o sockets de red. Es especialmente valiosa cuando un puerto está bloqueado y se necesita finalizar el proceso responsable:"
+        },
+        {
+          "type": "table",
+          "headers": ["Opción fuser", "Descripción", "Ejemplo práctico"],
+          "rows": [
+            ["-v (--verbose)", "Salida detallada mostrando USER, PID, ACCESS y COMMAND.", "fuser -v 80/tcp"],
+            ["-n (--namespace)", "Especifica el espacio de nombres (file, tcp, udp).", "fuser -vn tcp 22"],
+            ["-k (--kill)", "Envía una señal de terminación (SIGKILL por defecto) a todos los procesos identificados.", "fuser -k 8080/tcp"],
+            ["-SIGNAL", "Envía una señal específica en lugar de SIGKILL (ej. -HUP o -TERM).", "fuser -k -TERM 80/tcp"],
+            ["-m (--mount)", "Identifica todos los procesos que acceden a un sistema de archivos montado.", "fuser -vm /mnt/usb"]
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "#",
+              "command": "fuser -vn tcp 80",
+              "output": "                     USER        PID ACCESS COMMAND\n80/tcp:              root       1240 F.... nginx\n                     www-data   1241 F.... nginx"
+            },
+            {
+              "prompt": "#",
+              "command": "fuser -k -n tcp 8080",
+              "output": "8080/tcp:             3451"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Pregunta típica de examen",
+          "content": "¿Qué comando permite ver qué proceso usa el puerto 80 TCP y matarlo en una sola orden? Respuesta: 'fuser -k 80/tcp' o 'fuser -k -n tcp 80'."
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-10",
+      "slideNumber": 10,
       "title": "Escaneo de Puertos y Servicios con nmap",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Escaneo de Puertos y Servicios con nmap"
+          "text": "Auditoría de red externa e interna con nmap"
+        },
+        {
+          "type": "paragraph",
+          "text": "nmap es el estándar para el escaneo de puertos de red. Permite verificar la perspectiva externa de seguridad descubriendo puertos abiertos y servicios expuestos:"
+        },
+        {
+          "type": "table",
+          "headers": ["Bandera de nmap", "Tipo de escaneo / Función", "Detalle técnico"],
+          "rows": [
+            ["-F (Fast)", "Escaneo rápido", "Escanea los 100 puertos más populares en lugar de los 1.000 habituales."],
+            ["-p <puertos>", "Puertos específicos", "Define la lista o rango: '-p 22,80,443' o '-p 1-1024'."],
+            ["-p-", "Todos los puertos", "Escanea el rango completo de 65.535 puertos TCP (1-65535)."],
+            ["-sT (TCP Connect)", "Escaneo de conexión completa", "Completa el apretón de manos SYN/SYN-ACK/ACK. No requiere privilegios de root pero es detectable."],
+            ["-sS (SYN Stealth)", "Escaneo semi-abierto (stealth)", "Envía paquetes SYN; responde con RST al recibir SYN-ACK. No completa la conexión. Requiere root."],
+            ["-sU (UDP Scan)", "Escaneo UDP", "Envía paquetes UDP vacíos; detecta puertos abiertos por falta de respuesta ICMP Port Unreachable."],
+            ["-v / -vv", "Verbose", "Aumenta la verbosidad de la salida mostrando resultados en tiempo real."]
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "#",
+              "command": "nmap -sT -p 22,80,3306 192.168.1.50",
+              "output": "Starting Nmap ( https://nmap.org )\nNmap scan report for server1 (192.168.1.50)\nPORT     STATE SERVICE\n22/tcp   open  ssh\n80/tcp   open  http\n3306/tcp open  mysql\nNmap done: 1 IP address scanned in 0.12 seconds"
+            }
+          ]
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-11",
+      "slideNumber": 11,
       "title": "Límites de Recursos: ulimit y limits.conf",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Límites de Recursos: ulimit y limits.conf"
+          "text": "Control de consumo y archivo /etc/security/limits.conf"
+        },
+        {
+          "type": "paragraph",
+          "text": "Para evitar ataques de denegación de servicio (DoS) por fork bombs o consumo desmedido de memoria, el módulo PAM pam_limits.so lee la configuración en /etc/security/limits.conf y /etc/security/limits.d/:"
+        },
+        {
+          "type": "table",
+          "headers": ["Componente de la regla", "Opciones válidas", "Ejemplo práctico"],
+          "rows": [
+            ["Dominio", "Usuario concreto, grupo con prefijo '@', o '*' para todos los usuarios.", "carol, @developers, *"],
+            ["Tipo de límite", "'soft' (límite flexible de trabajo), 'hard' (límite estricto infranqueable) o '-' (ambos a la vez).", "soft, hard, -"],
+            ["Ítem de recurso", "nofile (archivos abiertos), nproc (procesos concurrentes), maxlogins (sesiones), fsize, core, cpu, as.", "nofile, nproc, maxlogins"],
+            ["Valor", "Número entero o la palabra clave 'unlimited'.", "1024, 200, 4, unlimited"]
+          ]
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "title": "Ejemplo de sintaxis en /etc/security/limits.conf",
+          "code": "# <domain>      <type>  <item>         <value>\n*               soft    core           0\n*               hard    nofile         4096\n@developers     -       nproc          300\ncarol           hard    maxlogins      2"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Regla dura de Soft vs Hard limits",
+          "content": "Un usuario común puede AUMENTAR su límite blando (soft limit) hasta el valor del límite duro (hard limit). Sin embargo, un usuario común NUNCA puede aumentar su límite duro; solo el superusuario root puede elevar un hard limit."
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-12",
+      "slideNumber": 12,
       "title": "Gestión de Límites por Sesión con ulimit",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Gestión de Límites por Sesión con ulimit"
+          "text": "Comando integrado ulimit: Banderas de examen"
+        },
+        {
+          "type": "paragraph",
+          "text": "ulimit es un comando interno de la shell (builtin) que consulta y altera los límites de recursos de la sesión activa y de sus procesos hijos:"
+        },
+        {
+          "type": "table",
+          "headers": ["Bandera", "Recurso que gestiona", "Ejemplo de comando"],
+          "rows": [
+            ["-a", "Lista todos los límites actuales de la sesión (soft por defecto).", "ulimit -a"],
+            ["-H / -S", "Modificadores para operar sobre límites duros (-H) o blandos (-S).", "ulimit -Ha\nulimit -Sa"],
+            ["-c", "Tamaño máximo de archivos de volcado de memoria (core dump) en bloques.", "ulimit -c 0 (desactiva dumps)"],
+            ["-f", "Tamaño máximo de archivos creados por la shell en bloques de 512 bytes.", "ulimit -f 100000"],
+            ["-n", "Número máximo de descriptores de archivos abiertos concurrentemente.", "ulimit -n 2048"],
+            ["-u", "Número máximo de procesos de usuario (evita fork bombs).", "ulimit -u 150"],
+            ["-t", "Tiempo máximo de CPU acumulado por un proceso (en segundos).", "ulimit -t 60"],
+            ["-v", "Memoria virtual total disponible para el proceso (en KB).", "ulimit -v 2097152"],
+            ["-m", "Memoria física máxima residente (RSS) asignable (en KB).", "ulimit -m 1048576"]
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "ulimit -Sn 1024 && ulimit -Hn 4096",
+              "output": ""
+            },
+            {
+              "prompt": "$",
+              "command": "ulimit -n",
+              "output": "1024"
+            }
+          ]
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-13",
+      "slideNumber": 13,
       "title": "Supervisión de Sesiones de Usuarios: who, w y last",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Supervisión de Sesiones de Usuarios: who, w y last"
+          "text": "Monitoreo de sesiones en curso e historial de accesos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Linux registra continuamente los inicios de sesión, terminales asignadas y eventos de apagado en archivos binarios de contabilidad en /var/log/:"
+        },
+        {
+          "type": "table",
+          "headers": ["Comando", "Archivo origen", "Información que proporciona", "Opciones clave"],
+          "rows": [
+            ["who", "/var/run/utmp", "Usuarios conectados actualmente, terminales (tty/pts) y hora de conexión.", "-b (fecha del último arranque),\n-r (runlevel actual),\n-a (todos los datos),\n-u (inactividad y PID)"],
+            ["w", "/var/run/utmp", "Muestra quién está conectado Y qué proceso ejecuta (WHAT). Cabecera con uptime y load average de 1, 5 y 15 minutos.", "-h (sin cabecera),\n-s (formato corto)"],
+            ["last", "/var/log/wtmp", "Historial completo de inicios de sesión pasados, reinicios y desconexiones.", "-n <núm> (últimas N líneas),\n-F (fechas completas)"],
+            ["lastb", "/var/log/btmp", "Historial de intentos fallidos de autenticación (requiere permisos de root).", "-n <núm> (filtrar líneas)"],
+            ["lastlog", "/var/log/lastlog", "Reporta la fecha y terminal del último inicio de sesión de CADA usuario del sistema.", "-u <user> (usuario concreto)"]
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "w",
+              "output": " 14:22:10 up 3 days,  4:12,  2 users,  load average: 0.08, 0.03, 0.01\nUSER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT\nroot     pts/0    192.168.1.100    12:05    1.00s  0.15s  0.02s w\ncarol    pts/1    192.168.1.105    13:40   42:15   0.08s  0.08s bash"
+            }
+          ]
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-14",
+      "slideNumber": 14,
       "title": "Elevación de Privilegios: su frente a sudo",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Elevación de Privilegios: su frente a sudo"
+          "text": "Comparativa técnica entre su y sudo"
+        },
+        {
+          "type": "paragraph",
+          "text": "Existen dos modelos clásicos para ejecutar comandos con privilegios elevados en sistemas GNU/Linux:"
+        },
+        {
+          "type": "table",
+          "headers": ["Característica", "Comando su (Switch User)", "Comando sudo (SuperUser Do)"],
+          "rows": [
+            ["Contraseña solicitada", "Pide la contraseña del usuario OBJETIVO (de root).", "Pide la contraseña del PROPIO usuario que ejecuta la orden."],
+            ["Granularidad", "Acceso total a la cuenta objetivo sin restricciones de comandos.", "Control granular por comando, argumentos y usuarios definidos en /etc/sudoers."],
+            ["Auditoría y logs", "No registra qué comandos concretos ejecuta el usuario tras el cambio de shell.", "Registra cada comando ejecutado en syslog (/var/log/auth.log o /var/log/secure)."],
+            ["Riesgo de seguridad", "Exige compartir la contraseña de root entre varios administradores.", "Permite revocar permisos individuales sin cambiar la clave de root."]
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Pregunta crítica de examen: 'su' frente a 'su -'",
+          "content": "• 'su root': Cambia al usuario root pero MANTIENE las variables de entorno, PATH y el directorio de trabajo del usuario original (inseguro).\n• 'su -' (o 'su -l' / 'su --login'): Inicia una shell de login completa, cargando /root/.profile, /root/.bashrc, el PATH oficial de root y cambiando al directorio /root."
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-15",
+      "slideNumber": 15,
       "title": "Configuración Segura de /etc/sudoers con visudo",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Configuración Segura de /etc/sudoers con visudo"
+          "text": "Sintaxis de sudoers y edición exclusiva con visudo"
+        },
+        {
+          "type": "paragraph",
+          "text": "El archivo /etc/sudoers NUNCA debe modificarse con un editor estándar. El comando visudo bloquea el fichero contra accesos concurrentes y comprueba la sintaxis antes de guardar los cambios (visudo -c para verificación sin editar):"
+        },
+        {
+          "type": "table",
+          "headers": ["Elemento sintáctico", "Estructura general", "Significado técnico"],
+          "rows": [
+            ["Regla de usuario", "carol ALL=(ALL:ALL) ALL", "La usuaria 'carol' en cualquier host (ALL), puede actuar como cualquier usuario y grupo (ALL:ALL) y ejecutar cualquier comando (ALL)."],
+            ["Regla de grupo", "%admin ALL=(ALL) ALL", "El prefijo '%' indica grupo. Todos los miembros de 'admin' tienen permisos sudo completos."],
+            ["Etiqueta NOPASSWD", "carol ALL=(root) NOPASSWD: /bin/systemctl restart nginx", "Permite a carol reiniciar nginx como root sin ingresar su contraseña."],
+            ["Directiva modular", "#includedir /etc/sudoers.d", "Incluye todos los ficheros de /etc/sudoers.d. ¡El carácter '#' NO es un comentario aquí!"]
+          ]
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "title": "Definición de alias en /etc/sudoers",
+          "code": "# Alias de usuarios, hosts y comandos\nUser_Alias  OPS = carol, dave\nHost_Alias  SERVERS = web01, db01\nCmnd_Alias  NETWORKING = /sbin/ifconfig, /sbin/ip, /sbin/route\n\n# Asignación de la regla combinada\nOPS SERVERS = NETWORKING"
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-16",
+      "slideNumber": 16,
       "title": "Flashcards de Memorización — Seguridad 110.1",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Flashcards de Memorización — Seguridad 110.1"
+          "text": "Tarjetas mnemotécnicas esenciales para el examen 102"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**¿Qué octal activa el Sticky bit?** -> `1000`. En `ls -l` aparece como `t` (con 'x') o `T` (sin 'x').",
+            "**¿Qué comando busca binarios con SUID activo?** -> `find / -perm -4000 -type f 2>/dev/null`.",
+            "**¿Qué campo de /etc/shadow es el aviso de expiración?** -> El **campo 6** (Warning days).",
+            "**¿Cómo forzar cambio de contraseña en el siguiente inicio?** -> `chage -d 0 <usuario>` o `passwd -e <usuario>`.",
+            "**¿Qué comando bloquea una contraseña anteponiendo '!'?** -> `passwd -l <user>` o `usermod -L <user>`.",
+            "**¿Diferencia entre soft y hard limit en ulimit?** -> El usuario sube el *soft limit* hasta el *hard limit*. Solo `root` eleva el *hard limit*.",
+            "**¿Contabilidad y privilegios con visudo?** -> `last` lee `/var/log/wtmp`, `lastb` lee `/var/log/btmp`. `visudo` valida sintaxis y evita colisiones."
+          ]
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-17",
+      "slideNumber": 17,
       "title": "Ejercicio Práctico Guiado: Auditoría de Seguridad y Sudoers",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicio Práctico Guiado: Auditoría de Seguridad y Sudoers"
+          "text": "Misión paso a paso en terminal"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "Auditar SUID en binarios",
+              "description": "Localiza ejecutables con SUID en el directorio /usr/bin evitando errores."
+            },
+            {
+              "number": 2,
+              "title": "Configurar política de caducidad",
+              "description": "Configura a 'carol' con caducidad máxima de 60 días, 7 de aviso y cambio inmediato."
+            },
+            {
+              "number": 3,
+              "title": "Auditar puertos con netstat",
+              "description": "Lista los puertos TCP y UDP en escucha con PID y formato numérico."
+            },
+            {
+              "number": 4,
+              "title": "Crear regla modular de sudoers",
+              "description": "Genera una regla para delegar el comando systemctl sin contraseña a los operadores."
+            }
+          ]
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "title": "Comandos de ejecución de la misión",
+          "code": "# 1. Auditoría SUID\nfind /usr/bin -perm -4000 -type f\n\n# 2. Caducidad chage y passwd\nchage -M 60 -W 7 -d 0 carol\npasswd -S carol\n\n# 3. Auditoría de red\nnetstat -tlpn\n\n# 4. Regla sudoers en /etc/sudoers.d/\necho '%ops ALL=(ALL) NOPASSWD: /bin/systemctl' > /etc/sudoers.d/ops\nvisudo -c"
         }
       ]
     },
     {
-      "id": "110.1-slide-110",
-      "slideNumber": 110,
+      "id": "110.1-slide-18",
+      "slideNumber": 18,
       "title": "Resumen y Trampas de Examen — Tema 110.1",
       "layout": "checkpoint",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Resumen y Trampas de Examen — Tema 110.1"
+          "text": "Puntos de control y trampas frecuentes"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Trampas clásicas del examen LPIC-1 (102-500)",
+          "content": "1. **find -perm 4000 frente a -perm -4000**: Pregunta capciosa sobre encontrar binarios SUID; la opción correcta casi siempre incluye el guión '-4000' para requerir que el bit esté activo sin importar los demás.\n2. **su frente a su -**: Preguntan qué comando carga el entorno completo de root. Respuesta: 'su -' (o 'su -l').\n3. **lastb vs last**: last lee /var/log/wtmp (éxitos); lastb lee /var/log/btmp (fallos).\n4. **limits.conf**: El carácter '-' en el tipo significa 'soft Y hard' a la vez.\n5. **chage -d 0**: Fuerza el cambio inmediato en el siguiente login, poniendo el campo 3 de shadow a 0."
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**find**: `-perm -4000` (SUID), `-perm -2000` (SGID), `-perm -1000` (Sticky).",
+            "**shadow**: 9 campos. Algoritmo `$6$` indica hash seguro SHA-512.",
+            "**chage y passwd**: envejecimiento (`-M`, `-W`, `-E`, `-d 0`) y bloqueo de contraseñas (`-l`, `-u`, `-S`).",
+            "**netstat y ss**: auditoría de sockets en escucha con `-tulpn`.",
+            "**lsof y fuser**: inspección detallada (`lsof -i :puerto`) y terminación directa (`fuser -k -n tcp puerto`).",
+            "**ulimit y sudoers**: control de recursos (`-H`, `-S`, `-n`, `-u`) y delegación administrativa segura (`visudo`)."
+          ]
         }
       ]
     }
   ],
-  "webDocument": [
-    {
-      "id": "sec-110-1-1",
-      "title": "Permisos Especiales: SUID, SGID y Sticky Bit",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Permisos Especiales: SUID, SGID y Sticky Bit"
-        }
-      ]
-    },
-    {
-      "id": "sec-110-1-2",
-      "title": "Rastreo de Binarios SUID y SGID con find",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Rastreo de Binarios SUID y SGID con find"
-        }
-      ]
-    },
-    {
-      "id": "sec-110-1-3",
-      "title": "El Archivo /etc/shadow y sus 9 Campos",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "El Archivo /etc/shadow y sus 9 Campos"
-        }
-      ]
-    },
-    {
-      "id": "sec-110-1-4",
-      "title": "Control de Caducidad de Contraseñas con chage",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Control de Caducidad de Contraseñas con chage"
-        }
-      ]
-    },
-    {
-      "id": "sec-110-1-5",
-      "title": "Bloqueo y Estado de Cuentas con passwd",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Bloqueo y Estado de Cuentas con passwd"
-        }
-      ]
-    },
-    {
-      "id": "sec-110-1-6",
-      "title": "Detección de Puertos y Sockets en Escucha",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Detección de Puertos y Sockets en Escucha"
-        }
-      ]
-    },
-    {
-      "id": "sec-110-1-7",
-      "title": "Inspección de Puertos de Red con lsof",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Inspección de Puertos de Red con lsof"
-        }
-      ]
-    },
-    {
-      "id": "sec-110-1-8",
-      "title": "Identificación y Terminación de Procesos con fuser",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Identificación y Terminación de Procesos con fuser"
-        }
-      ]
-    },
-    {
-      "id": "sec-110-1-9",
-      "title": "Escaneo de Puertos y Servicios con nmap",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Escaneo de Puertos y Servicios con nmap"
-        }
-      ]
-    },
-    {
-      "id": "sec-110-1-10",
-      "title": "Límites de Recursos: ulimit y limits.conf",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Límites de Recursos: ulimit y limits.conf"
-        }
-      ]
-    }
-  ]
+  "totalSlides": 18
 }

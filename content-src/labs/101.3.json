@@ -19,8 +19,8 @@
       "id": "step-101-3-2",
       "stepNumber": 2,
       "title": "Misión 2 — Avisos Masivos con wall y Programación de Apagado con shutdown",
-      "instruction": "Antes de reiniciar un servidor en producción, se debe avisar a todos los usuarios conectados y programar un apagado con margen de tiempo cancelable.",
-      "command": "# Enviar un aviso inmediato a todas las terminales abiertas\r\necho \"AVISO: Mantenimiento programado de kernel en 15 min.\" | sudo wall\r\n\r\n# Programar un reinicio para dentro de 15 minutos con mensaje explicativo\r\nsudo shutdown -r +15 \"Reinicio por actualización de seguridad LPIC-1\"\r\n\r\n# Cancelar inmediatamente el apagado programado para evitar cortar el servicio\r\nsudo shutdown -c \"Mantenimiento pospuesto. Continuad trabajando.\"",
+      "instruction": "Antes de reiniciar en producción, se avisa a los usuarios con wall, se programa el apagado cancelable con shutdown y se comprueba el archivo /etc/shutdown.allow.",
+      "command": "# Enviar aviso inmediato a todas las terminales abiertas\necho \"AVISO: Mantenimiento programado de kernel en 15 min.\" | sudo wall\n\n# Verificar el archivo de control de reinicio por teclado /etc/shutdown.allow\nls -l /etc/shutdown.allow 2>/dev/null || echo \"No existe /etc/shutdown.allow (solo root autorizado a reiniciar)\"\n\n# Programar un reinicio para dentro de 15 minutos con mensaje\nsudo shutdown -r +15 \"Reinicio por actualizacion de seguridad LPIC-1\"\n\n# Cancelar inmediatamente el apagado programado\nsudo shutdown -c \"Mantenimiento pospuesto. Continuad trabajando.\"",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
     },
     {
@@ -35,10 +35,10 @@
       "id": "step-101-3-4",
       "stepNumber": 4,
       "title": "Misión 4 — Comandos de Apagado de Bajo Nivel vs Systemd",
-      "instruction": "Conoceremos los comandos evaluados en el examen para apagar y apagar de emergencia la máquina.",
-      "command": "# Comprobar qué binarios de apagado apuntan a systemctl en Debian\r\nls -l /sbin/reboot /sbin/poweroff /sbin/halt /sbin/shutdown\r\n\r\n# Ver el manual de systemd-halt.service para entender el apagado de bajo nivel\r\nman -f poweroff halt reboot",
+      "instruction": "Conoceremos las rutas oficiales de unidades de systemd (/usr/lib/systemd/ y /etc/systemd/system/) y los binarios de apagado del sistema.",
+      "command": "# Verificar las rutas de unidades evaluadas en LPIC-1\nls -d /etc/systemd/system /usr/lib/systemd 2>/dev/null || ls -d /etc/systemd/system /lib/systemd/system\n\n# Comprobar que los binarios tradicionales de apagado enlazan con systemctl\nls -l /sbin/reboot /sbin/poweroff /sbin/halt /sbin/shutdown 2>/dev/null || which reboot poweroff shutdown\n\n# Comprobar la disponibilidad del comando de login de rescate sulogin\nwhich sulogin",
       "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
-      "examAlert": "Ver pista desplegable si te atascas</summary>"
+      "hint": "En sistemas systemd, comandos como reboot, poweroff y halt son symlinks hacia systemctl, garantizando un apagado coordinado."
     }
   ]
 }

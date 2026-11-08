@@ -7,14 +7,14 @@ import { parseInlineMarkdown } from '../../core/engines/markdown/markdown.engine
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="table-block-wrapper my-5 overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xs">
+    <div class="table-block-wrapper my-3 max-h-[380px] overflow-auto rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xs">
       <table class="table-block w-full border-collapse text-left text-xs sm:text-sm">
         @if (caption()) {
           <caption class="p-2 text-xs font-semibold text-[var(--text-muted)] text-left bg-[var(--surface-muted)] border-b border-[var(--border)]">
             {{ caption() }}
           </caption>
         }
-        <thead>
+        <thead class="sticky top-0 z-10">
           <tr class="border-b border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text)]">
             @for (header of headers(); track $index) {
               <th scope="col" class="py-2.5 px-3 font-semibold font-mono text-xs">

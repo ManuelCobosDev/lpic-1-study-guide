@@ -15,6 +15,8 @@ export interface WikiRefData {
   description?: string;
   synopsis?: string;
   link: string;
+  targetPath?: string;
+  queryParams?: Record<string, string>;
   locations?: WikiLocation[];
   sinExplicacion?: string;
   x: number;

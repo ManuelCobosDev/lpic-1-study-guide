@@ -87,7 +87,8 @@ import { WikiRefService } from '../../../core/services/wiki-ref.service';
           <!-- Pie con enlace a catálogo y botón cerrar -->
           <div class="flex items-center justify-between pt-2 border-t border-[var(--border)] text-xs">
             <a
-              [routerLink]="item.link"
+              [routerLink]="item.targetPath || item.link"
+              [queryParams]="item.queryParams"
               class="font-semibold text-[var(--primary-text)] hover:underline inline-flex items-center gap-1"
               (click)="wikiRefService.closePopover()"
             >

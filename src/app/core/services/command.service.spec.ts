@@ -36,6 +36,26 @@ describe('CommandService', () => {
       subtopicIds: ['103.2'],
       example: 'grep root /etc/passwd',
       flags: [{ flag: '-i', description: 'Ignorar mayúsculas' }]
+    },
+    {
+      id: 'kill',
+      name: 'kill',
+      synopsis: 'kill [-s SEÑAL] PID...',
+      description: 'Envía señales a procesos.',
+      category: 'Crear, supervisar y matar procesos',
+      subtopicIds: ['103.5'],
+      example: 'kill -9 1234',
+      flags: [{ flag: '-9', description: 'SIGKILL' }]
+    },
+    {
+      id: 'pkill',
+      name: 'pkill',
+      synopsis: 'pkill [OPCIONES] NOMBRE',
+      description: 'Envía señales a procesos según su nombre.',
+      category: 'Crear, monitorizar y matar procesos',
+      subtopicIds: ['103.5'],
+      example: 'pkill -u root nginx',
+      flags: [{ flag: '-u', description: 'Por usuario' }]
     }
   ];
 
@@ -59,7 +79,7 @@ describe('CommandService', () => {
 
   it('getCommands debe devolver los comandos del ContentService', async () => {
     const list = await service.getCommands();
-    expect(list.length).toBe(3);
+    expect(list.length).toBe(5);
     expect(list[0]?.id).toBe('tee');
   });
 
@@ -69,9 +89,15 @@ describe('CommandService', () => {
     expect(cmd?.name).toBe('tee');
   });
 
-  it('getCategories debe listar categorías únicas ordenadas', async () => {
+  it('getCategories debe consolidar categorías duplicadas en nombres canónicos ordenados (A8-011)', async () => {
     const cats = await service.getCategories();
-    expect(cats).toEqual(['Búsqueda de Texto', 'Procesamiento', 'Redirecciones y Tuberías']);
+    expect(cats).toEqual(['Búsqueda de Texto', 'Gestión de procesos', 'Procesamiento', 'Redirecciones y Tuberías']);
+  });
+
+  it('filterCommands debe filtrar por categoría canónica consolidada', () => {
+    const filtered = service.filterCommands(mockCommands, '', 'Gestión de procesos', '');
+    expect(filtered.length).toBe(2);
+    expect(filtered.map((c) => c.name)).toEqual(['kill', 'pkill']);
   });
 
   it('filterCommands debe filtrar por texto insensible a mayúsculas y acentos', () => {

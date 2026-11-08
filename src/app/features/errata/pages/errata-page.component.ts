@@ -29,7 +29,7 @@ export class ErrataPageComponent implements OnInit {
   readonly selectedStatus = signal<string>('all');
   readonly searchQuery = signal<string>('');
 
-  readonly githubIssuesUrl = 'https://github.com/usuario/lpic-1-study-guide/issues';
+  readonly githubIssuesUrl = 'https://github.com/ManuelCobosDev/lpic-1-study-guide/issues';
 
   async ngOnInit(): Promise<void> {
     try {

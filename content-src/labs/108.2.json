@@ -10,10 +10,42 @@
     {
       "id": "step-108-2-1",
       "stepNumber": 1,
-      "title": "Misión 1: Configuración y verificación de 108.2",
-      "instruction": "Ejecuta los comandos fundamentales del objetivo 108.2 en tu entorno de pruebas Debian.",
-      "command": "man 108_2",
-      "expectedOutput": "El sistema despliega la documentación y sintaxis oficial de las herramientas."
+      "title": "Misión 1 — Inspección de Registros Binarios de Sesiones y Archivos Comprimidos",
+      "instruction": "Auditaremos los archivos de contabilidad binaria de usuarios (/var/log/wtmp, btmp y lastlog) y consultaremos archivos de bitácora comprimidos mediante herramientas z-utils sin descomprimirlos en disco.",
+      "command": "# 1. Consultar el historial de logins y arranques del sistema con last (lee /var/log/wtmp)\nlast -n 5\n\n# 2. Consultar los intentos de inicio de sesión fallidos con lastb (lee /var/log/btmp)\nsudo lastb -n 5 2>/dev/null || true\n\n# 3. Consultar la fecha del último login de cada cuenta con lastlog\nlastlog | head -n 12\n\n# 4. Leer y buscar patrones en registros comprimidos gzip mediante zgrep y zless\nsudo zgrep -i \"error\" /var/log/*.gz 2>/dev/null | head -n 5 || echo \"Sin coincidencias comprimidas\"",
+      "expectedOutput": "last y lastlog muestran los registros de usuarios y zgrep busca directamente en ficheros .gz."
+    },
+    {
+      "id": "step-108-2-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Configuración de Selectores en rsyslog e Inyección con logger",
+      "instruction": "Crearemos una regla modular en `/etc/rsyslog.d/` para capturar la instalación personalizada `local3` de forma asíncrona, reiniciaremos el servicio e inyectaremos un mensaje con la utilidad `logger`.",
+      "command": "# 1. Crear regla de selector y acción asíncrona para local3 en /etc/rsyslog.d/\necho \"local3.* -/var/log/practica_lpic.log\" | sudo tee /etc/rsyslog.d/50-practica.conf\n\n# 2. Reiniciar el demonio rsyslog para aplicar la regla\nsudo systemctl restart rsyslog\n\n# 3. Inyectar un mensaje de severidad warning mediante logger con etiqueta identificativa\nlogger -p local3.warn -t LPIC_TEST \"Mensaje de prueba inyectado en local3\"\n\n# 4. Validar que el mensaje se registró correctamente en el fichero destino\ncat /var/log/practica_lpic.log",
+      "expectedOutput": "rsyslog filtra el mensaje inyectado por logger y lo escribe en /var/log/practica_lpic.log."
+    },
+    {
+      "id": "step-108-2-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Consultas Avanzadas y Filtrado de Bitácoras con journalctl",
+      "instruction": "Utilizaremos `journalctl` para filtrar mensajes por unidad de systemd, por nivel de severidad mínima, por eventos del kernel buffer y por ventana temporal.",
+      "command": "# 1. Filtrar los últimos eventos generados por el servicio systemd-journald\njournalctl -u systemd-journald.service -n 5\n\n# 2. Filtrar mensajes de advertencia, error y pánico (prioridad warning o superior)\njournalctl -p warning -n 5\n\n# 3. Mostrar exclusivamente mensajes del buffer del kernel (-k o dmesg)\njournalctl -k -n 5\n\n# 4. Filtrar eventos registrados durante la última hora con --since\njournalctl --since \"1 hour ago\" -n 5",
+      "expectedOutput": "journalctl filtra los registros de forma selectiva aplicando filtros de servicio, prioridad y kernel."
+    },
+    {
+      "id": "step-108-2-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Mantenimiento de Cuota, Verificación de Integridad y Rescate Offline",
+      "instruction": "Comprobaremos el espacio en disco consumido por los diarios de systemd, verificaremos su integridad criptográfica con `--verify`, forzaremos la rotación activa y reduciremos el tamaño total con `--vacuum-size`.",
+      "command": "# 1. Medir el espacio en disco ocupado por los diarios de journald\njournalctl --disk-usage\n\n# 2. Comprobar la integridad criptográfica y firmas internas del diario\nsudo journalctl --verify 2>/dev/null || true\n\n# 3. Forzar el archivado y rotación inmediata de los diarios activos actuales\nsudo journalctl --rotate\n\n# 4. Purgar diarios archivados antiguos para que no superen 200 MB de almacenamiento\nsudo journalctl --vacuum-size=200M",
+      "expectedOutput": "journalctl reporta el uso de disco, valida la integridad de los ficheros y purga logs antiguos con vacuum."
+    },
+    {
+      "id": "step-108-2-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Automatización y Simulación de Rotación con logrotate",
+      "instruction": "Crearemos un bloque de rotación cíclica para nuestro archivo de pruebas en `/etc/logrotate.d/` y comprobaremos su sintaxis y comportamiento mediante el modo de depuración (`-d`) y forzado (`-f`).",
+      "command": "# 1. Crear archivo de configuración de rotación en /etc/logrotate.d/\nsudo tee /etc/logrotate.d/practica_lpic << 'EOF'\n/var/log/practica_lpic.log {\n    weekly\n    rotate 4\n    compress\n    delaycompress\n    missingok\n    notifempty\n}\nEOF\n\n# 2. Probar la configuración en modo simulación de depuración (-d, dry run)\nsudo logrotate -d /etc/logrotate.d/practica_lpic 2>&1 | head -n 15\n\n# 3. Forzar la rotación inmediata del archivo con la opción -f\nsudo logrotate -f /etc/logrotate.d/practica_lpic\n\n# 4. Listar los archivos para verificar la creación de practica_lpic.log.1\nls -l /var/log/practica_lpic*",
+      "expectedOutput": "logrotate simula las directivas en modo -d y genera el archivo rotado practica_lpic.log.1 con -f."
     }
   ]
 }

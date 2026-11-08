@@ -267,26 +267,6 @@ export function generatePlaceholderLesson(subtopic: Subtopic, topic: Topic): Les
     commands: ['ls', 'cat', 'man'],
     placeholder: true,
     slides,
-    webDocument: [
-      {
-        id: 'sec-1',
-        title: 'Introducción y Fundamentos',
-        level: 2,
-        blocks: slides[1]?.blocks ?? []
-      },
-      {
-        id: 'sec-2',
-        title: 'Comandos y Demostración Práctica',
-        level: 2,
-        blocks: [...(slides[2]?.blocks ?? []), ...(slides[2]?.secondaryBlocks ?? [])]
-      },
-      {
-        id: 'sec-3',
-        title: 'Resumen y Consejos de Examen',
-        level: 2,
-        blocks: slides[7]?.blocks ?? []
-      }
-    ],
     wikiReferences: [
       {
         id: 'cmd-ls',
@@ -428,6 +408,62 @@ export function generatePlaceholderQuestions(topicId: string): Question[] {
   ];
 }
 
+function generateSitemap(subtopics: Subtopic[], publicDir: string): void {
+  const baseUrl = 'https://lpic1.manuelcobos.dev';
+  const staticRoutes = [
+    { path: '', priority: '1.0', changefreq: 'daily' },
+    { path: '/temario', priority: '0.9', changefreq: 'weekly' },
+    { path: '/temario/101', priority: '0.8', changefreq: 'weekly' },
+    { path: '/temario/102', priority: '0.8', changefreq: 'weekly' },
+    { path: '/laboratorios', priority: '0.8', changefreq: 'weekly' },
+    { path: '/simulador', priority: '0.8', changefreq: 'weekly' },
+    { path: '/simulador/examen', priority: '0.7', changefreq: 'monthly' },
+    { path: '/simulador/practica', priority: '0.7', changefreq: 'monthly' },
+    { path: '/comandos', priority: '0.8', changefreq: 'weekly' },
+    { path: '/glosario', priority: '0.8', changefreq: 'weekly' },
+    { path: '/flashcards', priority: '0.7', changefreq: 'weekly' },
+    { path: '/mapa-mental', priority: '0.7', changefreq: 'monthly' },
+    { path: '/buscar', priority: '0.6', changefreq: 'monthly' },
+    { path: '/progreso', priority: '0.6', changefreq: 'monthly' },
+    { path: '/erratas', priority: '0.5', changefreq: 'weekly' },
+    { path: '/acerca-de', priority: '0.5', changefreq: 'monthly' }
+  ];
+
+  const lines: string[] = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+  ];
+
+  for (const r of staticRoutes) {
+    lines.push('  <url>');
+    lines.push(`    <loc>${baseUrl}${r.path}</loc>`);
+    lines.push(`    <changefreq>${r.changefreq}</changefreq>`);
+    lines.push(`    <priority>${r.priority}</priority>`);
+    lines.push('  </url>');
+  }
+
+  for (const s of subtopics) {
+    lines.push('  <url>');
+    lines.push(`    <loc>${baseUrl}/estudiar/${s.id}</loc>`);
+    lines.push('    <changefreq>weekly</changefreq>');
+    lines.push('    <priority>0.8</priority>');
+    lines.push('  </url>');
+
+    const labId = s.labId || `lab-${s.id.replace('.', '-')}`;
+    lines.push('  <url>');
+    lines.push(`    <loc>${baseUrl}/laboratorios/${labId}</loc>`);
+    lines.push('    <changefreq>weekly</changefreq>');
+    lines.push('    <priority>0.7</priority>');
+    lines.push('  </url>');
+  }
+
+  lines.push('</urlset>');
+  lines.push('');
+
+  const sitemapXmlPath = path.join(publicDir, 'sitemap.xml');
+  fs.writeFileSync(sitemapXmlPath, lines.join('\n'), 'utf-8');
+}
+
 export function buildContent(options: BuildContentOptions = {}): CurriculumManifest {
   const rootDir = process.cwd();
   const contentSrcDir = options.contentSrcDir ?? path.resolve(rootDir, 'content-src');
@@ -485,6 +521,18 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
       process.exit(1);
     }
     commands = parsed.data;
+
+    // Validación estricta anti-flags truncados o vacíos
+    for (const cmd of commands) {
+      if (cmd.flags) {
+        for (const f of cmd.flags) {
+          if (f.flag === '-' || f.flag === '--' || !f.flag || f.flag.trim() === '') {
+            console.error(`FAIL: El comando "${cmd.name}" contiene una bandera inválida o vacía: "${f.flag}"`);
+            process.exit(1);
+          }
+        }
+      }
+    }
   }
 
   // Glosario (precarga para autolink y explainedIn)
@@ -529,6 +577,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
   const lessonsDir = path.join(contentSrcDir, 'lessons');
   const enrichedSubtopics: Subtopic[] = [];
   const loadedLessons: { subtopic: Subtopic; lesson: Lesson }[] = [];
+  const globalSlideIds = new Set<string>();
 
   for (const subtopic of curriculum.subtopics) {
     const topic = curriculum.topics.find(t => t.id === subtopic.topicId);
@@ -551,9 +600,22 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     } else {
       lesson = generatePlaceholderLesson(subtopic, topic);
     }
-    // Normalizar numeración 1-based correlativa en las diapositivas
+
+    // Validación estricta anti-IDs duplicados y numeración 1-based correlativa en las diapositivas
+    const lessonSlideIds = new Set<string>();
     lesson.slides.forEach((s, idx) => {
       s.slideNumber = idx + 1;
+      if (lessonSlideIds.has(s.id)) {
+        console.error(`FAIL: ID de diapositiva duplicado internamente en la lección ${subtopic.id}: "${s.id}"`);
+        process.exit(1);
+      }
+      lessonSlideIds.add(s.id);
+
+      if (globalSlideIds.has(s.id)) {
+        console.error(`FAIL: Colisión global de ID de diapositiva: "${s.id}" en el subtema ${subtopic.id}`);
+        process.exit(1);
+      }
+      globalSlideIds.add(s.id);
     });
     loadedLessons.push({ subtopic, lesson });
   }
@@ -737,7 +799,11 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
         process.exit(1);
       }
       lab = parsedLab.data;
-      totalLabsReal++;
+      if (lab.placeholder) {
+        totalLabsPlaceholder++;
+      } else {
+        totalLabsReal++;
+      }
     } else if (fs.existsSync(jsonLabPath)) {
       const rawLab = JSON.parse(fs.readFileSync(jsonLabPath, 'utf-8'));
       const parsedLab = LabSchema.safeParse(rawLab);
@@ -746,7 +812,11 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
         process.exit(1);
       }
       lab = parsedLab.data;
-      totalLabsReal++;
+      if (lab.placeholder) {
+        totalLabsPlaceholder++;
+      } else {
+        totalLabsReal++;
+      }
     } else {
       lab = generatePlaceholderLab(subtopic.id, subtopic.title);
       totalLabsPlaceholder++;
@@ -764,6 +834,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
 
   // Procesamos preguntas por tema
   const questionsDir = path.join(contentSrcDir, 'questions');
+  const globalQuestionIds = new Set<string>();
   for (const topic of curriculum.topics) {
     let questions: Question[];
     const yamlQuestionsPath = path.join(questionsDir, `${topic.id}.yaml`);
@@ -792,6 +863,15 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     } else {
       questions = generatePlaceholderQuestions(topic.id);
       totalQuestionsPlaceholder += questions.length;
+    }
+
+    // Validación estricta anti-IDs duplicados de preguntas
+    for (const q of questions) {
+      if (globalQuestionIds.has(q.id)) {
+        console.error(`FAIL: Colisión global de ID de pregunta: "${q.id}" en el tema ${topic.id}`);
+        process.exit(1);
+      }
+      globalQuestionIds.add(q.id);
     }
 
     if (!options.validateOnly) {
@@ -838,12 +918,39 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     );
   }
 
-  // Generación de Flashcards Masivas
+  // Generación de Flashcards Masivas (con particionado optimizado por examen A7-011)
   const flashcards = generateFlashcards(rootDir);
   if (!options.validateOnly) {
     fs.writeFileSync(
       path.join(outputDir, 'flashcards.json'),
       JSON.stringify(flashcards, null, 2),
+      'utf-8'
+    );
+
+    const flashcards101 = flashcards.filter(f => {
+      if (f.examId === '101') return true;
+      return f.subtopicIds.some(s => {
+        const num = parseInt(s.split('.')[0] || '0', 10);
+        return num >= 101 && num <= 104;
+      });
+    });
+
+    const flashcards102 = flashcards.filter(f => {
+      if (f.examId === '102') return true;
+      return f.subtopicIds.some(s => {
+        const num = parseInt(s.split('.')[0] || '0', 10);
+        return num >= 105 && num <= 110;
+      });
+    });
+
+    fs.writeFileSync(
+      path.join(outputDir, 'flashcards-101.json'),
+      JSON.stringify(flashcards101, null, 2),
+      'utf-8'
+    );
+    fs.writeFileSync(
+      path.join(outputDir, 'flashcards-102.json'),
+      JSON.stringify(flashcards102, null, 2),
       'utf-8'
     );
   }
@@ -888,7 +995,11 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
       JSON.stringify(manifest, null, 2),
       'utf-8'
     );
-    console.log(`PASS: build-content genero con exito el manifiesto y ${enrichedSubtopics.length} lecciones en ${outputDir}.`);
+    const publicDir = path.resolve(rootDir, 'public');
+    if (fs.existsSync(publicDir)) {
+      generateSitemap(enrichedSubtopics, publicDir);
+    }
+    console.log(`PASS: build-content genero con exito el manifiesto, sitemap.xml y ${enrichedSubtopics.length} lecciones en ${outputDir}.`);
   } else {
     console.log('PASS: validate:content valido correctamente todo el contenido del curriculo.');
   }

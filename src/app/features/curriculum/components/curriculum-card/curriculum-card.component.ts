@@ -114,7 +114,7 @@ import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
       <footer class="card-footer">
         @if (isPlanned()) {
           <div class="planned-footer-note">
-            <span class="text-xs text-[var(--text-muted)] font-mono">Práctica global planificada para Fase 11</span>
+            <span class="text-xs text-[var(--text-muted)] font-mono">Prácticas disponibles por subtema</span>
           </div>
         } @else {
           <a

@@ -7,8 +7,12 @@
   "language": "es",
   "estimatedMinutes": 30,
   "objectives": [
-    "Arquitectura de correo en Linux: roles MUA, MTA y MDA, programas MTA comunes (Postfix, Sendmail, Exim, qmail), comandos de compatibilidad, colas con mailq, utilidades de cliente con mail/mailx, reenvío individual ~/.forward y alias globales con /etc/aliases y newaliases.",
-    "Dominio técnico de las herramientas y configuración del subtema 108.3"
+    "Arquitectura de mensajería en Linux: roles de MUA, MTA y MDA, programas MTA más comunes (Postfix, Sendmail, Exim, qmail) y su capa de emulación estándar de comandos Sendmail.",
+    "Protocolo SMTP en puerto TCP 25, registros DNS MX, peligro de Open Relay y sesiones interactivas de diagnóstico con netcat (nc).",
+    "Uso del cliente de consola mail/mailx en modo interactivo y no interactivo (asuntos con -s, adjuntos con -a, finalización con Ctrl+D).",
+    "Configuración de alias globales en /etc/aliases (usuarios, ficheros, comandos en pipe |, inclusiones, descarte en /dev/null) y compilación a /etc/aliases.db con newaliases y sendmail -bi / -I.",
+    "Reenvío de correo personal por usuario con ~/.forward, prevención de bucles con escape \\usuario y requisitos estrictos de permisos (600/644).",
+    "Inspección y gestión de la cola de correo con mailq, sendmail -bp y forzado de entrega con sendmail -q."
   ],
   "keyTerms": [
     "MTA (Mail Transfer Agent)",
@@ -18,16 +22,28 @@
     "Registro MX (Mail Exchanger)",
     "Open Relay (Retransmisión abierta)",
     "/etc/aliases",
+    "/etc/aliases.db",
     "newaliases",
+    "sendmail -bi",
     "~/.forward",
-    "mailq"
+    "mailq",
+    "sendmail -bp",
+    "mbox (/var/spool/mail/)",
+    "/dev/null"
   ],
-  "commands": [],
+  "commands": [
+    "mail",
+    "mailx",
+    "mailq",
+    "newaliases",
+    "sendmail",
+    "nc"
+  ],
   "placeholder": false,
   "slides": [
     {
-      "id": "108.3-slide-108",
-      "slideNumber": 108,
+      "id": "108.3-slide-1",
+      "slideNumber": 1,
       "title": "108.3 Conceptos básicos del MTA",
       "layout": "cover",
       "blocks": [
@@ -38,426 +54,727 @@
         },
         {
           "type": "paragraph",
-          "text": "Servicios esenciales del sistema · Peso 3"
+          "text": "Servicios esenciales del sistema · Peso 3 · Examen LPIC-1 102-500"
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Objetivo oficial de certificación",
+          "content": "Dominar la arquitectura de correo en Linux (MUA, MTA, MDA), el transporte SMTP en el puerto TCP 25, los MTAs clave (Postfix, Sendmail, Exim, qmail), el cliente mail/mailx, la inspección de colas con mailq y sendmail -bp, los alias globales en /etc/aliases y newaliases, y el reenvío personal con ~/.forward."
         }
-      ]
+      ],
+      "notes": "Bienvenido al subtema 108.3. Este subtema tiene peso 3 en el examen 102-500 y se centra en entender cómo viaja el correo y cómo se gestionan alias y reenvíos."
     },
     {
-      "id": "108.3-slide-108",
-      "slideNumber": 108,
+      "id": "108.3-slide-2",
+      "slideNumber": 2,
       "title": "Arquitectura de mensajería: MUA vs MTA vs MDA",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Arquitectura de mensajería: MUA vs MTA vs MDA"
+          "text": "Arquitectura modular de correo en Linux"
         },
         {
           "type": "paragraph",
-          "text": "Separación modular de responsabilidades en sistemas tipo Unix"
+          "text": "En los sistemas tipo Unix, el correo electrónico se gestiona mediante tres piezas modulares e independientes, cada una con una responsabilidad delimitada:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Componente",
+            "Acrónimo",
+            "Función principal en el sistema",
+            "Ejemplos en Linux"
+          ],
+          "rows": [
+            [
+              "Mail User Agent",
+              "MUA",
+              "Cliente que permite al usuario o script redactar, leer y enviar correos.",
+              "mail, mailx, mutt, Thunderbird, Evolution, KMail"
+            ],
+            [
+              "Mail Transfer Agent",
+              "MTA",
+              "Servidor que enruta y transfiere correos entre equipos a través de la red usando SMTP.",
+              "Postfix, Sendmail, Exim, qmail"
+            ],
+            [
+              "Mail Delivery Agent",
+              "MDA / LDA",
+              "Agente local que toma el mensaje entregado por el MTA y lo deposita en el buzón local (/var/spool/mail). Puede aplicar filtros.",
+              "procmail, Dovecot LDA, maildrop, SpamAssassin"
+            ]
+          ],
+          "caption": "Módulos fundamentales de la pila de correo en Linux"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Pregunta clásica LPIC-1",
+          "content": "Distingue claramente los roles: el MUA compone y muestra mensajes al usuario; el MTA transporta los mensajes por la red vía SMTP; el MDA realiza la entrega final y el filtrado en el buzón local de disco."
         }
-      ]
+      ],
+      "notes": "SpamAssassin suele actuar junto con el MTA o el MDA analizando el texto del mensaje y añadiendo cabeceras de spam."
     },
     {
-      "id": "108.3-slide-108",
-      "slideNumber": 108,
+      "id": "108.3-slide-3",
+      "slideNumber": 3,
       "title": "Topología SMTP, Puerto TCP 25 y Registros DNS MX",
-      "layout": "content",
+      "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Topología SMTP, Puerto TCP 25 y Registros DNS MX"
+          "text": "Topología SMTP y Resolución de Destino"
         },
         {
           "type": "paragraph",
-          "text": "Rutas de entrega, resolución de nombres y el peligro de Open Relay"
+          "text": "El estándar de intercambio entre servidores de correo es el protocolo SMTP (Simple Mail Transfer Protocol):"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Puerto TCP 25**: Puerto estándar para la comunicación entre MTAs a través de la red.",
+            "**Puertos alternativos**: TCP 587 (Submission / STARTTLS para clientes MUA) y TCP 465 (SMTPS cifrado).",
+            "**Registros DNS MX (Mail Exchanger)**: Cuando un MTA envía correo a `usuario@dominio.com`, consulta en el DNS los registros MX del dominio. El valor numérico indica prioridad: el número más bajo tiene la mayor prioridad.",
+            "**Fallback a Hostname**: Si el dominio no tiene registro MX o la dirección no especifica dominio completo, el MTA contacta directamente con el host situado tras la arroba (@)."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "El peligro de Open Relay (Retransmisión Abierta)",
+          "content": "Un MTA configurado como **Open Relay** acepta y retransmite correos de cualquier origen hacia cualquier destino sin autenticación. Los spammers lo utilizan para ocultar su identidad. Un MTA seguro solo acepta correos dirigidos a sus propios buzones locales o de clientes autenticados."
         }
-      ]
+      ],
+      "notes": "Si un host MX de alta prioridad no responde, el MTA intenta contactar con los de menor prioridad. Si ninguno responde, el correo queda en cola."
     },
     {
-      "id": "108.3-slide-108",
-      "slideNumber": 108,
+      "id": "108.3-slide-4",
+      "slideNumber": 4,
       "title": "Los 4 MTAs clave en Linux: Compatibilidad y Reemplazos",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Los 4 MTAs clave en Linux: Compatibilidad y Reemplazos"
+          "text": "Los 4 programas MTA evaluados por LPI"
         },
         {
           "type": "paragraph",
-          "text": "Todos los MTAs alternativos ofrecen emulación binaria de comandos Sendmail"
+          "text": "El temario oficial de LPIC-1 exige conocer los 4 MTAs más utilizados en distribuciones Linux (sin entrar en su configuración interna avanzada):"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "MTA",
+            "Origen y Características",
+            "Directorio de Cola",
+            "Capa de compatibilidad Sendmail"
+          ],
+          "rows": [
+            [
+              "Sendmail",
+              "El MTA clásico y tradicional de Unix. Altamente flexible pero con configuración histórica compleja (/etc/mail/sendmail.mc).",
+              "/var/spool/mqueue/",
+              "Nativo (estableció los estándares de comandos del sistema)."
+            ],
+            [
+              "Postfix",
+              "Creado por Wietse Venema como alternativa segura, modular y rápida a Sendmail. Es el MTA por defecto en Debian, Ubuntu y RHEL.",
+              "/var/spool/postfix/",
+              "Proporciona wrappers binarios de sendmail, mailq y newaliases."
+            ],
+            [
+              "Exim",
+              "MTA flexible y ligero con un único binario. Muy común en servidores Debian y entornos de alojamiento web.",
+              "/var/spool/exim/ o /var/spool/exim4/",
+              "Incluye comandos compatibles sendmail, mailq y newaliases."
+            ],
+            [
+              "qmail",
+              "Desarrollado por Daniel J. Bernstein (DJB) con un enfoque estricto en seguridad y arquitectura modular de procesos.",
+              "/var/qmail/queue/",
+              "Proporciona scripts y wrappers de emulación de Sendmail."
+            ]
+          ],
+          "caption": "Comparativa de los 4 MTAs principales en el ecosistema Linux"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen: Capa de Emulación de Sendmail",
+          "content": "Independientemente del MTA instalado (Postfix, Exim o qmail), todos proporcionan una capa de compatibilidad binaria con los comandos tradicionales de Sendmail: `/usr/sbin/sendmail`, `mailq` y `newaliases`. Cualquier script o aplicación de Linux puede invocar sendmail sin importar qué demonio esté corriendo."
         }
-      ]
+      ],
+      "notes": "Para que Sendmail acepte conexiones no locales se edita /etc/mail/sendmail.mc ajustando DAEMON_OPTIONS."
     },
     {
-      "id": "108.3-slide-108",
-      "slideNumber": 108,
+      "id": "108.3-slide-5",
+      "slideNumber": 5,
       "title": "Diálogo SMTP interactivo con netcat (nc host 25)",
+      "layout": "code-explain",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Depuración manual del protocolo SMTP con netcat"
+        },
+        {
+          "type": "paragraph",
+          "text": "La utilidad `nc` (netcat, provista por `ncat` o `nmap-ncat`) permite conectarse directamente al puerto TCP 25 de un MTA para verificar su funcionamiento y comprender el protocolo:"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "nc lab2.campus 25",
+              "output": "220 lab2.campus ESMTP Sendmail 8.15.2; Sat, 16 Nov 2019 00:16:07 GMT"
+            },
+            {
+              "prompt": "",
+              "command": "HELO lab1.campus",
+              "output": "250 lab2.campus Hello lab1.campus [10.0.3.134], pleased to meet you"
+            },
+            {
+              "prompt": "",
+              "command": "MAIL FROM: emma@lab1.campus",
+              "output": "250 2.1.0 emma@lab1.campus... Sender ok"
+            },
+            {
+              "prompt": "",
+              "command": "RCPT TO: dave@lab2.campus",
+              "output": "250 2.1.5 dave@lab2.campus... Recipient ok"
+            },
+            {
+              "prompt": "",
+              "command": "DATA",
+              "output": "354 Enter mail, end with \".\" on a line by itself\nSubject: Recipient MTA Test\n\nHi Dave, this is a test for your MTA.\n."
+            },
+            {
+              "prompt": "",
+              "command": "",
+              "output": "250 2.0.0 Message accepted for delivery"
+            },
+            {
+              "prompt": "",
+              "command": "QUIT",
+              "output": "221 2.0.0 lab2.campus closing connection"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Códigos numéricos de respuesta SMTP",
+          "content": "• **220**: Servicio listo / banner del servidor · **250**: Comando aceptado correctamente · **354**: Inicio de entrada de cuerpo (finalizar con un punto '.' en línea solitaria) · **550**: Error de entrega (ej. '550 Relaying denied' si no es destinatario local ni autorizado) · **221**: Conexión cerrada con QUIT."
+        }
+      ],
+      "notes": "Observa que en la sección DATA, tras la cabecera Subject: se deja una línea vacía obligatoria antes del texto del cuerpo."
+    },
+    {
+      "id": "108.3-slide-6",
+      "slideNumber": 6,
+      "title": "Buzones locales de usuario (mbox) y Cabeceras",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Diálogo SMTP interactivo con netcat (nc host 25)"
+          "text": "Almacenamiento mbox y lectura de cabeceras Received"
         },
         {
           "type": "paragraph",
-          "text": "Comandos elementales del protocolo para diagnóstico y depuración"
+          "text": "Cuando un MTA entrega un mensaje localmente a un usuario, lo añade al buzón estándar del sistema:"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Ubicación canónica**: `/var/spool/mail/<usuario>` o `/var/mail/<usuario>` (suelen ser enlaces simbólicos mutuos según la distribución).",
+            "**Formato mbox**: Es un archivo de texto plano único donde los correos se concatenan secuencialmente. Cada mensaje inicia con una línea delimitadora especial `From remitente fecha`.",
+            "**Notificación en shell**: Al iniciar sesión interactiva, la shell avisa: *\"You have new mail in /var/spool/mail/dave\"*.",
+            "**Cabeceras Received**: Se leen de **abajo hacia arriba** para trazar la ruta exacta de saltos que siguió el mensaje desde su origen hasta el destino."
+          ]
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "title": "Mensaje en /var/spool/mail/dave",
+          "code": "From emma@lab1.campus Sat Nov 16 00:19:13 2019\nReturn-Path: <emma@lab1.campus>\nReceived: from lab1.campus by lab2.campus with ESMTPS id xAG0G7Y0000595 for dave@lab2.campus;\nDate: Sat, 16 Nov 2019 00:16:07 GMT\nFrom: emma@lab1.campus\nTo: dave@lab2.campus\nSubject: Recipient MTA Test\n\nHi Dave, this is a test for your MTA."
         }
-      ]
+      ],
+      "notes": "Aunque es posible ver el buzón con cat o less, la práctica recomendada es gestionarlo con un MUA como mail, mutt o Thunderbird."
     },
     {
-      "id": "108.3-slide-108",
-      "slideNumber": 108,
+      "id": "108.3-slide-7",
+      "slideNumber": 7,
       "title": "El cliente de consola: comando mail (paquete mailx)",
-      "layout": "content",
+      "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "El cliente de consola: comando mail (paquete mailx)"
+          "text": "Modos de operación del comando mail"
         },
         {
           "type": "paragraph",
-          "text": "Operación en modo interactivo (lectura) y modo no interactivo (scripts)"
+          "text": "El comando `mail` (enlace al paquete `mailx` o provisto por `GNU mailutils`) opera en dos modos según se invoque con o sin destinatario:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Modo",
+            "Invocación",
+            "Comportamiento y Comandos"
+          ],
+          "rows": [
+            [
+              "Modo Normal (Lectura)",
+              "mail",
+              "Abre el buzón mbox del usuario. Lista mensajes numerados. Comandos: 'p' o 'print' (leer), 'd' o 'delete' (borrar), 'r' o 'reply' (responder), 'q' o 'quit' (guardar cambios y salir), 'x' o 'exit' (salir sin alterar el buzón)."
+            ],
+            [
+              "Modo de Envío (Send mode)",
+              "mail destinatario",
+              "Permite redactar un nuevo correo. El cuerpo se introduce por teclado o se canaliza desde la entrada estándar (stdin)."
+            ]
+          ],
+          "caption": "Modos de funcionamiento de la utilidad mail/mailx"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Pregunta de Examen Oficial (Ejercicio Guiado 1)",
+          "content": "Al redactar un mensaje interactivo con `mail henry@lab3.campus`, la combinación de teclas obligatoria para finalizar el mensaje, cerrar la entrada estándar y despachar el correo es **Ctrl + D** (carácter EOF / fin de archivo)."
         }
-      ]
+      ],
+      "notes": "Si en el prompt interactivo de mail no indicas número de mensaje, opera por defecto sobre el mensaje actual o el último recibido."
     },
     {
-      "id": "108.3-slide-108",
-      "slideNumber": 108,
+      "id": "108.3-slide-8",
+      "slideNumber": 8,
       "title": "Automatización avanzada con mail: Asunto (-s) y Adjuntos (-a)",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Automatización avanzada con mail: Asunto (-s) y Adjuntos (-a)"
+          "text": "Uso de mail en scripts, tuberías y alertas de sistema"
         },
         {
           "type": "paragraph",
-          "text": "Ejemplos oficiales del manual LPI para envío no interactivo"
+          "text": "En tareas de administración y automatización (como cron jobs o monitorización), `mailx` permite inyectar contenido sin intervención humana:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Técnica / Opción",
+            "Sintaxis",
+            "Propósito técnico"
+          ],
+          "rows": [
+            [
+              "-s \"Asunto\"",
+              "mail -s \"Reporte diario\" admin@lab.local < reporte.txt",
+              "Establece la cabecera Subject del mensaje."
+            ],
+            [
+              "-a archivo",
+              "mail -a logs.tar.gz -s \"Logs\" admin@lab.local < cuerpo.txt",
+              "Adjunta un archivo binario o comprimido (opción estándar de mailx)."
+            ],
+            [
+              "Tubería estándar (|)",
+              "uname -a | mail -a logs.tar.gz emma@lab1.campus",
+              "Canaliza la salida de un comando directamente como cuerpo del correo."
+            ],
+            [
+              "Hereline (<<<)",
+              "mail -s \"Aviso\" admin@local <<<\"Script finalizado en `date`\"",
+              "Pasa una cadena de texto directa al cuerpo del mensaje sin ficheros temporales."
+            ]
+          ],
+          "caption": "Opciones clave de automatización con mail/mailx"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Ejercicio Exploratorio 1 Oficial LPI",
+          "content": "¿Qué comando envía un mensaje a `emma@lab1.campus` con el archivo `logs.tar.gz` como adjunto y la salida de `uname -a` como cuerpo?\nRespuesta oficial: **`uname -a | mail -a logs.tar.gz emma@lab1.campus`**."
         }
-      ]
+      ],
+      "notes": "Recuerda que mail toma el cuerpo de stdin; si no hay tubería ni redirección, esperará entrada del teclado hasta recibir Ctrl+D."
     },
     {
-      "id": "108.3-slide-108",
-      "slideNumber": 108,
+      "id": "108.3-slide-9",
+      "slideNumber": 9,
       "title": "Fichero global de alias: /etc/aliases",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Fichero global de alias: /etc/aliases"
+          "text": "Enrutamiento administrativo de correos locales"
         },
         {
           "type": "paragraph",
-          "text": "Enrutamiento administrativo a usuarios, ficheros, comandos o inclusiones"
+          "text": "El archivo `/etc/aliases` permite definir destinatarios virtuales a nivel de sistema. Cada línea sigue el formato `<alias>: <destino1>, <destino2>, ...`:"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Tipo de destino",
+            "Ejemplo en /etc/aliases",
+            "Comportamiento de entrega"
+          ],
+          "rows": [
+            [
+              "Usuario local ordinario",
+              "postmaster: carol",
+              "Redirige los mensajes dirigidos a postmaster al buzón local del usuario carol."
+            ],
+            [
+              "Múltiples destinatarios",
+              "soporte: ana, juan, dave@externo.org",
+              "Distribuye una copia del mensaje a cada uno de los destinatarios listados."
+            ],
+            [
+              "Fichero absoluto (/)",
+              "auditoria: /var/log/mail-archive",
+              "Anexa el texto del correo directamente al fichero indicado (debe iniciar con barra '/')."
+            ],
+            [
+              "Comando en tubería (|)",
+              "subscribe: |/usr/local/bin/sub.sh",
+              "Pasa el correo por stdin al comando (debe iniciar con '|'). Sendmail lo restringe con /etc/smrsh/."
+            ],
+            [
+              "Archivo de inclusión",
+              "anuncios: :include:/var/local/destinos",
+              "Lee dinámicamente la lista de destinatarios desde el archivo externo especificado."
+            ],
+            [
+              "Descarte silencioso (/dev/null)",
+              "test: /dev/null",
+              "Descarta automáticamente los correos sin saturar ningún buzón (Ejercicio Exploratorio 2)."
+            ]
+          ],
+          "caption": "Tipos de destinos válidos en /etc/aliases"
         }
-      ]
+      ],
+      "notes": "smrsh (Sendmail Restricted Shell) en /etc/smrsh/ limita qué binarios pueden ser invocados mediante tuberías desde los alias."
     },
     {
-      "id": "108.3-slide-108",
-      "slideNumber": 108,
-      "title": "Activación de alias: comando newaliases",
-      "layout": "content",
+      "id": "108.3-slide-10",
+      "slideNumber": 10,
+      "title": "Activación de alias: comando newaliases y sendmail -bi",
+      "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Activación de alias: comando newaliases"
+          "text": "Compilación e indexación en /etc/aliases.db"
         },
         {
           "type": "paragraph",
-          "text": "El demonio MTA solo consulta la base de datos binaria indexada (.db)"
+          "text": "Por razones de eficiencia y rendimiento, el demonio MTA no lee directamente el archivo de texto plano `/etc/aliases`; consulta la base de datos binaria indexada Berkeley DB `/etc/aliases.db`:"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "Modificar el fichero de texto",
+              "description": "El administrador edita `/etc/aliases` añadiendo los alias deseados (por ejemplo: `postmaster: root`)."
+            },
+            {
+              "number": 2,
+              "title": "Regenerar la base de datos indexada",
+              "description": "Se ejecuta el comando `newaliases` para compilar el fichero de texto en `/etc/aliases.db`."
+            },
+            {
+              "number": 3,
+              "title": "Comandos alternativos de Sendmail",
+              "description": "El manual oficial y el examen evalúan las alternativas exactas: `sendmail -bi` y `sendmail -I`."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Pregunta de Examen Oficial (Ejercicio Exploratorio 3)",
+          "content": "¿Qué comando, además de `newaliases`, se puede utilizar para actualizar la base de datos tras modificar `/etc/aliases`?\nRespuesta oficial: **`sendmail -bi`** o **`sendmail -I`**."
         }
-      ]
+      ],
+      "notes": "Si modificas /etc/aliases y no ejecutas newaliases, tus cambios no tendrán efecto alguno."
     },
     {
-      "id": "108.3-slide-108",
-      "slideNumber": 108,
+      "id": "108.3-slide-11",
+      "slideNumber": 11,
       "title": "Redirección individual por usuario: ~/.forward",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Redirección individual por usuario: ~/.forward"
+          "text": "Reenvío personal sin privilegios de superusuario"
         },
         {
           "type": "paragraph",
-          "text": "Gestión autónoma de reenvío sin requerir permisos de superusuario"
+          "text": "Cualquier usuario sin privilegios puede configurar el reenvío automático de su propio correo editando el archivo `.forward` en su directorio personal (`~/.forward`):"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Sintaxis simple**: No lleva la parte de `alias:`. Solo se especifican los destinos (uno por línea o separados por comas, ej: `dave@lab2.campus`).",
+            "**Sin compilación**: **NO** es necesario ejecutar `newaliases`. El MTA lee directamente el fichero en texto plano en el momento de la entrega.",
+            "**Regla de escape local con barra invertida (\\\\usuario)**: Para reenviar una copia a otra dirección y conservar simultáneamente una copia en el buzón local sin provocar un bucle infinito de reenvíos, se antepone una barra invertida al nombre de usuario: `\\dave, dave@externo.com`.",
+            "**Permisos de seguridad estrictos**: El archivo DEBE pertenecer al usuario y tener permisos `600` o `644`. Si tiene permisos de escritura para grupo u otros (`chmod g+w` o `chmod o+w`), el MTA **lo ignorará por completo** por razones de seguridad."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Ejercicio Guiado 3 Oficial LPI",
+          "content": "¿Cómo puede un usuario sin privilegios utilizar el método estándar para reenviar todo su correo entrante a `dave@lab2.campus`?\nRespuesta oficial: Añadiendo `dave@lab2.campus` al archivo **`~/.forward`** en su directorio personal."
         }
-      ]
+      ],
+      "notes": "Al iniciar con un punto, ~/.forward está oculto a ls simple. Ante problemas de entrega, verifica siempre con ls -la."
     },
     {
-      "id": "108.3-slide-108",
-      "slideNumber": 108,
+      "id": "108.3-slide-12",
+      "slideNumber": 12,
+      "title": "Matriz Comparativa: /etc/aliases vs ~/.forward",
+      "layout": "comparison",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Diferencias críticas para responder preguntas de examen"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Criterio",
+            "Fichero global /etc/aliases",
+            "Fichero de usuario ~/.forward"
+          ],
+          "rows": [
+            [
+              "Ámbito de aplicación",
+              "A todo el sistema (requiere permisos de root)",
+              "Exclusivo para la cuenta del usuario propietario"
+            ],
+            [
+              "Ubicación en disco",
+              "/etc/aliases",
+              "~/.forward (en el home del usuario)"
+            ],
+            [
+              "Formato de sintaxis",
+              "alias: destino1, destino2",
+              "destino1, destino2 (sin prefijo de alias)"
+            ],
+            [
+              "Compilación requerida",
+              "SÍ: newaliases (o sendmail -bi / sendmail -I)",
+              "NO: el MTA lo lee al vuelo en cada mensaje"
+            ],
+            [
+              "Fichero binario indexado",
+              "/etc/aliases.db",
+              "Ninguno"
+            ],
+            [
+              "Permisos de seguridad",
+              "Propietario root (644)",
+              "Propietario usuario; NUNCA escribible por grupo u otros (600/644)"
+            ],
+            [
+              "Evitar bucle de copia local",
+              "Regla explícita en tabla de alias",
+              "Barra invertida de escape: \\usuario"
+            ]
+          ],
+          "caption": "Tabla comparativa de enrutamiento y reenvío de correo"
+        }
+      ],
+      "notes": "Esta tabla resume 3 preguntas típicas del examen LPIC-1 102-500 sobre administración de correo."
+    },
+    {
+      "id": "108.3-slide-13",
+      "slideNumber": 13,
       "title": "Inspección de la cola de correo: comando mailq",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Inspección de la cola de correo: comando mailq"
+          "text": "Gestión e inspección de mensajes no entregados"
         },
         {
           "type": "paragraph",
-          "text": "Visualización de mensajes pendientes, retenidos y causas de fallo"
-        }
-      ]
-    },
-    {
-      "id": "108.3-slide-108",
-      "slideNumber": 108,
-      "title": "Matriz Comparativa: /etc/aliases vs ~/.forward",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Matriz Comparativa: /etc/aliases vs ~/.forward"
+          "text": "Cuando el servidor de destino no está accesible, los mensajes permanecen retenidos en la cola de salida (`/var/spool/mqueue/` en Sendmail o `/var/spool/postfix/` en Postfix):"
         },
         {
-          "type": "paragraph",
-          "text": "Síntesis fundamental para acertar cualquier pregunta de examen"
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "#",
+              "command": "mailq",
+              "output": "/var/spool/mqueue (1 request)\n-----Q-ID----- --Size-- -----Q-Time----- ------------Sender/Recipient-----------\nxAIK3D9S000453 36 Mon Nov 18 20:03 <emma@lab1.campus>\n (Deferred: Connection refused by lab2.campus.)\n <dave@lab2.campus>\nTotal requests: 1"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Comando",
+            "Comando equivalente",
+            "Función operativa"
+          ],
+          "rows": [
+            [
+              "mailq",
+              "sendmail -bp",
+              "Muestra todos los mensajes retenidos en cola, su ID, tamaño, remitente y motivo del aplazamiento (Deferred)."
+            ],
+            [
+              "sendmail -q",
+              "postfix flush",
+              "Fuerza un intento de entrega inmediato de todos los mensajes pendientes en la cola."
+            ]
+          ],
+          "caption": "Comandos de diagnóstico y gestión de la cola de correo"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Ejercicio Guiado 2 Oficial LPI",
+          "content": "¿Qué comando puede ejecutar el usuario root para listar los mensajes no entregados que se originaron en el sistema local?\nRespuesta oficial: **`mailq`** o **`sendmail -bp`**."
         }
-      ]
+      ],
+      "notes": "Ejecutar mailq como usuario ordinario suele mostrar únicamente los mensajes encolados por ese propio usuario."
     },
     {
-      "id": "108.3-slide-108",
-      "slideNumber": 108,
+      "id": "108.3-slide-14",
+      "slideNumber": 14,
       "title": "Ciclo Integral de Envío y Recepción de Correo",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ciclo Integral de Envío y Recepción de Correo"
+          "text": "Flujo de entrega de un correo en 5 etapas"
         },
         {
           "type": "paragraph",
-          "text": "Flujo de datos desde la redacción hasta el depósito en el buzón local"
+          "text": "Visión global del camino que recorre un mensaje desde su redacción hasta su almacenamiento final:"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "1. Redacción (MUA)",
+              "description": "El remitente redacta el mensaje mediante `mailx`, Thunderbird o una tubería bash."
+            },
+            {
+              "number": 2,
+              "title": "2. Encolado local (MTA de origen)",
+              "description": "El MTA de origen encola el mensaje en `/var/spool/mqueue/`, resuelve el registro DNS MX del destino y abre conexión TCP en el puerto 25."
+            },
+            {
+              "number": 3,
+              "title": "3. Transmisión de red (SMTP)",
+              "description": "Ambos MTAs dialogan con comandos SMTP (HELO, MAIL FROM, RCPT TO, DATA). Si hay fallos temporales, el mensaje queda en cola y se consulta con `mailq` / `sendmail -bp`."
+            },
+            {
+              "number": 4,
+              "title": "4. Enrutamiento y Alias (MTA de destino)",
+              "description": "El MTA de destino consulta `/etc/aliases.db` para resolver alias globales o revisa el fichero `~/.forward` del usuario."
+            },
+            {
+              "number": 5,
+              "title": "5. Entrega en Buzón (MDA)",
+              "description": "El MDA entrega el mensaje en `/var/spool/mail/<usuario>` (mbox), alertando al usuario en su siguiente inicio de sesión."
+            }
+          ]
         }
-      ]
+      ],
+      "notes": "Recuerda que cada salto añade una cabecera Received: al inicio del mensaje."
     },
     {
-      "id": "108.3-slide-108",
-      "slideNumber": 108,
+      "id": "108.3-slide-15",
+      "slideNumber": 15,
       "title": "Trampas Críticas de Examen: 108.3 MTA",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Trampas Críticas de Examen: 108.3 MTA"
+          "text": "Trampas y Errores Recurrentes en el Examen 102-500"
         },
         {
-          "type": "paragraph",
-          "text": "4 escenarios engañosos recurrentes en las preguntas de certificación"
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Trampa 1: Olvidar newaliases tras modificar /etc/aliases",
+          "content": "Si editas `/etc/aliases` y no ejecutas `newaliases` (o `sendmail -bi` / `sendmail -I`), los cambios NUNCA surten efecto, ya que el demonio MTA lee exclusivamente el fichero binario compilado `/etc/aliases.db`."
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Trampa 2: Intentar ejecutar newaliases con ~/.forward",
+          "content": "`~/.forward` es leído directamente en texto plano por el MTA en cada entrega. NUNCA requiere ejecutar `newaliases` ni permisos de root."
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Trampa 3: Permisos inseguros en ~/.forward",
+          "content": "Si `~/.forward` tiene permisos de escritura para grupo u otros (ej: 664 o 777), el MTA lo ignorará silenciosamente por seguridad y entregará el correo al buzón local."
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Trampa 4: Confundir sendmail -bp con sendmail -q",
+          "content": "• `sendmail -bp`: Equivale a `mailq` (lista mensajes en cola).\n• `sendmail -q`: Fuerza el procesamiento inmediato de la cola.\n• `sendmail -bi`: Equivale a `newaliases` (reconstruye /etc/aliases.db)."
         }
-      ]
+      ],
+      "notes": "Ten muy presentes estas 4 trampas antes de realizar las preguntas del examen oficial."
     },
     {
-      "id": "108.3-slide-108",
-      "slideNumber": 108,
-      "title": "Ejercicios Guiados Oficiales (Manual LPI)",
+      "id": "108.3-slide-16",
+      "slideNumber": 16,
+      "title": "Ejercicios Guiados y Exploratorios Oficiales (Manual LPI)",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales (Manual LPI)"
+          "text": "Banco Oficial de Ejercicios del Manual LPIC-1"
         },
         {
-          "type": "paragraph",
-          "text": "Casos prácticos interactivos con solución oficial comprobada"
-        }
-      ]
-    },
-    {
-      "id": "108.3-slide-108",
-      "slideNumber": 108,
-      "title": "Flashcards de Memorización Rápida: 108.3 MTA",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Flashcards de Memorización Rápida: 108.3 MTA"
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Ejercicios Guiados 1, 2 y 3 (Pág. 366)",
+          "content": "• **1. Tecla para cerrar y enviar con mail**: **Ctrl + D** (EOF).\n• **2. Listar mensajes no entregados**: Comando **`mailq`** o **`sendmail -bp`**.\n• **3. Reenvío sin privilegios a dave@lab2.campus**: Añadir `dave@lab2.campus` a **`~/.forward`**."
         },
         {
-          "type": "paragraph",
-          "text": "Fija los conceptos esenciales antes de avanzar a impresión (CUPS)"
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Ejercicios de Exploración 1, 2 y 3 (Pág. 367)",
+          "content": "• **1. Enviar adjunto con cuerpo desde comando**: `uname -a | mail -a logs.tar.gz emma@lab1.campus`.\n• **2. Alias para descartar mensajes de pruebas**: Añadir la línea **`test: /dev/null`** en `/etc/aliases` y compilar con `newaliases`.\n• **3. Actualizar alias sin newaliases**: Comandos **`sendmail -bi`** o **`sendmail -I`**."
         }
-      ]
+      ],
+      "notes": "Estos 6 ejercicios han sido evaluados directamente de las páginas 366-370 del manual oficial LPIC-1."
     }
   ],
-  "webDocument": [
-    {
-      "id": "sec-108-3-1",
-      "title": "Arquitectura de mensajería: MUA vs MTA vs MDA",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Arquitectura de mensajería: MUA vs MTA vs MDA"
-        },
-        {
-          "type": "paragraph",
-          "text": "Separación modular de responsabilidades en sistemas tipo Unix"
-        }
-      ]
-    },
-    {
-      "id": "sec-108-3-2",
-      "title": "Topología SMTP, Puerto TCP 25 y Registros DNS MX",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Topología SMTP, Puerto TCP 25 y Registros DNS MX"
-        },
-        {
-          "type": "paragraph",
-          "text": "Rutas de entrega, resolución de nombres y el peligro de Open Relay"
-        }
-      ]
-    },
-    {
-      "id": "sec-108-3-3",
-      "title": "Los 4 MTAs clave en Linux: Compatibilidad y Reemplazos",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Los 4 MTAs clave en Linux: Compatibilidad y Reemplazos"
-        },
-        {
-          "type": "paragraph",
-          "text": "Todos los MTAs alternativos ofrecen emulación binaria de comandos Sendmail"
-        }
-      ]
-    },
-    {
-      "id": "sec-108-3-4",
-      "title": "Diálogo SMTP interactivo con netcat (nc host 25)",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Diálogo SMTP interactivo con netcat (nc host 25)"
-        },
-        {
-          "type": "paragraph",
-          "text": "Comandos elementales del protocolo para diagnóstico y depuración"
-        }
-      ]
-    },
-    {
-      "id": "sec-108-3-5",
-      "title": "El cliente de consola: comando mail (paquete mailx)",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "El cliente de consola: comando mail (paquete mailx)"
-        },
-        {
-          "type": "paragraph",
-          "text": "Operación en modo interactivo (lectura) y modo no interactivo (scripts)"
-        }
-      ]
-    },
-    {
-      "id": "sec-108-3-6",
-      "title": "Automatización avanzada con mail: Asunto (-s) y Adjuntos (-a)",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Automatización avanzada con mail: Asunto (-s) y Adjuntos (-a)"
-        },
-        {
-          "type": "paragraph",
-          "text": "Ejemplos oficiales del manual LPI para envío no interactivo"
-        }
-      ]
-    },
-    {
-      "id": "sec-108-3-7",
-      "title": "Fichero global de alias: /etc/aliases",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Fichero global de alias: /etc/aliases"
-        },
-        {
-          "type": "paragraph",
-          "text": "Enrutamiento administrativo a usuarios, ficheros, comandos o inclusiones"
-        }
-      ]
-    },
-    {
-      "id": "sec-108-3-8",
-      "title": "Activación de alias: comando newaliases",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Activación de alias: comando newaliases"
-        },
-        {
-          "type": "paragraph",
-          "text": "El demonio MTA solo consulta la base de datos binaria indexada (.db)"
-        }
-      ]
-    },
-    {
-      "id": "sec-108-3-9",
-      "title": "Redirección individual por usuario: ~/.forward",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Redirección individual por usuario: ~/.forward"
-        },
-        {
-          "type": "paragraph",
-          "text": "Gestión autónoma de reenvío sin requerir permisos de superusuario"
-        }
-      ]
-    },
-    {
-      "id": "sec-108-3-10",
-      "title": "Inspección de la cola de correo: comando mailq",
-      "level": 2,
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Inspección de la cola de correo: comando mailq"
-        },
-        {
-          "type": "paragraph",
-          "text": "Visualización de mensajes pendientes, retenidos y causas de fallo"
-        }
-      ]
-    }
-  ]
+  "totalSlides": 16
 }

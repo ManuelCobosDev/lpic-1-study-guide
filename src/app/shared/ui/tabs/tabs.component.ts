@@ -5,6 +5,7 @@ export interface TabItem {
   label: string;
   badge?: string | number;
   disabled?: boolean;
+  panelId?: string;
 }
 
 @Component({
@@ -12,26 +13,29 @@ export interface TabItem {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <nav class="tabs-container" role="tablist" aria-label="Pestañas de navegación">
-      @for (tab of tabs(); track tab.id) {
-        <button
-          type="button"
-          role="tab"
-          class="tab-btn"
-          [class.tab-active]="tab.id === activeId()"
-          [class.tab-disabled]="tab.disabled"
-          [attr.aria-selected]="tab.id === activeId()"
-          [attr.data-testid]="'tab-' + tab.id"
-          [id]="'tab-' + tab.id"
-          [disabled]="tab.disabled"
-          (click)="selectTab(tab.id)"
-        >
-          <span>{{ tab.label }}</span>
-          @if (tab.badge !== undefined && tab.badge !== null) {
-            <span class="tab-badge">{{ tab.badge }}</span>
-          }
-        </button>
-      }
+    <nav class="tabs-container" aria-label="Navegación por pestañas">
+      <div class="tabs-list" role="tablist" aria-label="Pestañas de contenido">
+        @for (tab of tabs(); track tab.id) {
+          <button
+            type="button"
+            role="tab"
+            class="tab-btn"
+            [class.tab-active]="tab.id === activeId()"
+            [class.tab-disabled]="tab.disabled"
+            [attr.aria-selected]="tab.id === activeId()"
+            [attr.aria-controls]="tab.panelId ?? null"
+            [attr.data-testid]="'tab-' + tab.id"
+            [id]="'tab-' + tab.id"
+            [disabled]="tab.disabled"
+            (click)="selectTab(tab.id)"
+          >
+            <span>{{ tab.label }}</span>
+            @if (tab.badge !== undefined && tab.badge !== null) {
+              <span class="tab-badge">{{ tab.badge }}</span>
+            }
+          </button>
+        }
+      </div>
     </nav>
   `,
   styles: [`
@@ -41,6 +45,11 @@ export interface TabItem {
     }
 
     .tabs-container {
+      display: block;
+      width: 100%;
+    }
+
+    .tabs-list {
       display: flex;
       gap: 16px;
       border-bottom: 1px solid var(--border);
@@ -48,7 +57,7 @@ export interface TabItem {
       scrollbar-width: none;
     }
 
-    .tabs-container::-webkit-scrollbar {
+    .tabs-list::-webkit-scrollbar {
       display: none;
     }
 

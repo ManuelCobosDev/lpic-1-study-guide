@@ -8,7 +8,7 @@ import {
   signal
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Slide } from '../../../../core/models/slide.model';
+import { Slide, getVisibleSlideBlocks } from '../../../../core/models/slide.model';
 import { BlockRendererComponent } from '../../../../shared/content-blocks/block-renderer.component';
 
 @Component({
@@ -18,7 +18,7 @@ import { BlockRendererComponent } from '../../../../shared/content-blocks/block-
   template: `
     <div class="lesson-web-view relative flex flex-col lg:flex-row gap-8 items-start my-6">
       <!-- Columna Principal: Documento de Lectura Continuo (760 px de ancho) -->
-      <main class="web-reading-column flex-1 max-w-[760px] w-full mx-auto space-y-12 select-text font-sans">
+      <article class="web-reading-column flex-1 max-w-[760px] w-full mx-auto space-y-12 select-text font-sans">
         @for (slide of slides(); track slide.slideNumber; let idx = $index) {
           <section
             [id]="'section-' + slide.slideNumber"
@@ -54,7 +54,7 @@ import { BlockRendererComponent } from '../../../../shared/content-blocks/block-
 
             <!-- Bloques de contenido -->
             <div class="web-blocks-list space-y-6">
-              @for (block of slide.blocks; track $index) {
+              @for (block of getVisibleBlocks(slide); track $index) {
                 <app-block-renderer [block]="block" />
               }
             </div>
@@ -72,7 +72,7 @@ import { BlockRendererComponent } from '../../../../shared/content-blocks/block-
             }
           </section>
         }
-      </main>
+      </article>
 
       <!-- Columna Lateral Derecha Sticky (240 px): Índice "En esta página" con Scrollspy -->
       <aside
@@ -123,6 +123,10 @@ export class LessonWebViewComponent implements AfterViewInit, OnDestroy {
   readonly sectionVisible = output<number>();
 
   readonly activeSection = signal<number>(1);
+
+  getVisibleBlocks(slide: Slide) {
+    return getVisibleSlideBlocks(slide);
+  }
 
   private intersectionObserver: IntersectionObserver | null = null;
 

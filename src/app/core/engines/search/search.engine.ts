@@ -14,6 +14,55 @@ export function normalizeSearchText(text: string): string {
     .toLowerCase();
 }
 
+export const TECHNICAL_SYNONYMS: Record<string, readonly string[]> = {
+  borrar: ['rm', 'unlink'],
+  eliminar: ['rm', 'unlink'],
+  matar: ['kill', 'pkill', 'killall'],
+  parar: ['kill', 'pkill', 'systemctl', 'stop'],
+  particionar: ['fdisk', 'parted', 'gdisk'],
+  particion: ['fdisk', 'parted', 'gdisk'],
+  particiones: ['fdisk', 'parted', 'gdisk'],
+  red: ['network', 'ip', 'ifconfig', 'route'],
+  redes: ['network', 'ip', 'ifconfig', 'route'],
+  apagar: ['shutdown', 'poweroff', 'halt', 'init'],
+  reiniciar: ['reboot', 'shutdown'],
+  permisos: ['chmod', 'chown', 'chgrp', 'umask'],
+  procesos: ['ps', 'top', 'htop', 'kill'],
+  comprimir: ['tar', 'gzip', 'bzip2', 'xz'],
+  descomprimir: ['tar', 'gunzip', 'bunzip2', 'unxz'],
+  paquetes: ['dpkg', 'apt', 'rpm', 'yum'],
+  instalar: ['apt', 'dpkg', 'rpm', 'yum'],
+  buscar: ['find', 'locate', 'grep', 'which'],
+  usuarios: ['useradd', 'usermod', 'userdel', 'passwd'],
+  grupos: ['groupadd', 'groupmod', 'groupdel'],
+  disco: ['df', 'du', 'lsblk', 'fdisk'],
+  espacio: ['df', 'du'],
+  memoria: ['free', 'vmstat']
+};
+
+export function expandQueryWithSynonyms(query: string): string {
+  if (!query) return '';
+  const tokens = query.trim().split(/\s+/);
+  const synonymsToAdd: string[] = [];
+
+  for (const token of tokens) {
+    const cleanToken = normalizeSearchText(token);
+    const syns = TECHNICAL_SYNONYMS[cleanToken];
+    if (syns) {
+      for (const s of syns) {
+        if (!tokens.includes(s) && !synonymsToAdd.includes(s)) {
+          synonymsToAdd.push(s);
+        }
+      }
+    }
+  }
+
+  if (synonymsToAdd.length === 0) {
+    return query;
+  }
+  return `${query} ${synonymsToAdd.join(' ')}`;
+}
+
 export function highlightTextSnippet(
   text: string,
   query: string,
@@ -277,10 +326,11 @@ export class SearchEngine {
     // 1. Detección de coincidencia exacta con código de subtema (ej. "103.4") o comando (ej. "grep")
     const exactSubtopic = this.findExactCodeMatch(trimmed, normalizedQuery);
 
-    // 2. Búsqueda con MiniSearch
+    // 2. Búsqueda con MiniSearch (con expansión de sinónimos técnicos)
     const searchFilter = options?.filter && options.filter !== 'all' ? options.filter : undefined;
+    const expandedQuery = expandQueryWithSynonyms(trimmed);
 
-    const miniResults = this.miniSearch.search(trimmed, {
+    const miniResults = this.miniSearch.search(expandedQuery, {
       filter: searchFilter ? (doc) => doc['type'] === searchFilter : undefined
     });
 

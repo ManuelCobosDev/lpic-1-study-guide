@@ -94,6 +94,20 @@ export class FlashcardsService {
     }
 
     if (deck === 'exam-101') {
+      try {
+        const cards101 = await this.contentService.getFlashcards('101');
+        if (cards101 && cards101.length > 0) {
+          return cards101.filter((c) => {
+            if (c.examId) return c.examId === '101';
+            return c.subtopicIds.some((s) => {
+              const num = parseInt(s.split('.')[0] || '0', 10);
+              return num >= 101 && num <= 104;
+            });
+          });
+        }
+      } catch {
+        // Fallback al filtro sobre allCards
+      }
       return allCards.filter((c) => {
         if (c.examId) return c.examId === '101';
         return c.subtopicIds.some((s) => {
@@ -104,6 +118,20 @@ export class FlashcardsService {
     }
 
     if (deck === 'exam-102') {
+      try {
+        const cards102 = await this.contentService.getFlashcards('102');
+        if (cards102 && cards102.length > 0) {
+          return cards102.filter((c) => {
+            if (c.examId) return c.examId === '102';
+            return c.subtopicIds.some((s) => {
+              const num = parseInt(s.split('.')[0] || '0', 10);
+              return num >= 105 && num <= 110;
+            });
+          });
+        }
+      } catch {
+        // Fallback al filtro sobre allCards
+      }
       return allCards.filter((c) => {
         if (c.examId) return c.examId === '102';
         return c.subtopicIds.some((s) => {

@@ -16,7 +16,7 @@ import { SearchService } from '../../../core/services/search.service';
         <div class="flex h-16 items-center justify-between gap-4">
           <!-- Logo & Marca -->
           <div class="flex items-center gap-6">
-            <a routerLink="/" class="flex items-center gap-2 text-decoration-none group">
+            <a routerLink="/" class="flex items-center gap-2 text-decoration-none group shrink-0">
               <svg
                 class="w-7 h-7 text-[var(--primary)] shrink-0"
                 width="28"
@@ -29,11 +29,11 @@ import { SearchService } from '../../../core/services/search.service';
                 <rect width="28" height="28" rx="6" fill="currentColor" fill-opacity="0.12" />
                 <path d="M7 20L14 7L21 20H7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
-              <span class="font-bold text-lg text-[var(--text)] tracking-tight">LPIC-1 Aula</span>
+              <span class="font-bold text-base sm:text-lg text-[var(--text)] tracking-tight whitespace-nowrap"><span class="sm:hidden">LPIC-1</span><span class="hidden sm:inline">LPIC-1 Study Guide</span></span>
             </a>
 
             <!-- Navegacion escritorio -->
-            <nav class="hidden md:flex items-center gap-1" aria-label="Navegación principal">
+            <nav class="hidden lg:flex items-center gap-1 xl:gap-1.5" aria-label="Navegación principal">
               <a
                 routerLink="/temario"
                 routerLinkActive="nav-link-active"
@@ -78,15 +78,18 @@ import { SearchService } from '../../../core/services/search.service';
           </div>
 
           <!-- Acciones Derecha -->
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <app-button
               variant="secondary"
               size="sm"
               routerLink="/buscar"
               (btnClick)="openSearchPalette($event)"
             >
-              <span class="hidden sm:inline">Buscar…</span>
-              <kbd class="ml-1 text-[11px] px-1 py-0.5 rounded border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)]">Ctrl K</kbd>
+              <svg class="w-4 h-4 sm:mr-1.5 shrink-0" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span class="sr-only sm:not-sr-only sm:inline">Buscar…</span>
+              <kbd class="hidden md:inline-block ml-1 text-[11px] px-1 py-0.5 rounded border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)]">Ctrl K</kbd>
             </app-button>
 
             <!-- Theme Toggle -->
@@ -124,11 +127,12 @@ import { SearchService } from '../../../core/services/search.service';
             <!-- Menu Movil Toggle -->
             <button
               type="button"
-              class="md:hidden flex items-center justify-center w-10 h-10 rounded border border-[var(--border)] text-[var(--text)]"
-              aria-label="Abrir menú de navegación"
+              class="lg:hidden flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded border border-[var(--border)] text-[var(--text)] hover:bg-[var(--surface-muted)] transition-colors cursor-pointer"
+              [attr.aria-expanded]="mobileMenuOpen()"
+              [attr.aria-label]="mobileMenuOpen() ? 'Cerrar menú de navegación' : 'Abrir menú de navegación'"
               (click)="toggleMobileMenu()"
             >
-              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
@@ -137,7 +141,7 @@ import { SearchService } from '../../../core/services/search.service';
 
         <!-- Menu movil desplegado -->
         @if (mobileMenuOpen()) {
-          <div class="md:hidden border-t border-[var(--border)] py-4 space-y-2">
+          <div class="lg:hidden border-t border-[var(--border)] py-4 space-y-2">
             <a routerLink="/temario" (click)="closeMobileMenu()" class="block px-3 py-2 rounded text-[var(--text)] hover:bg-[var(--surface-muted)]">Temario</a>
             <a routerLink="/laboratorios" (click)="closeMobileMenu()" class="block px-3 py-2 rounded text-[var(--text)] hover:bg-[var(--surface-muted)]">Laboratorios</a>
             <a routerLink="/simulador" (click)="closeMobileMenu()" class="block px-3 py-2 rounded text-[var(--text)] hover:bg-[var(--surface-muted)]">Simulador</a>
@@ -153,13 +157,20 @@ import { SearchService } from '../../../core/services/search.service';
   `,
   styles: [`
     .nav-link {
-      padding: 6px 12px;
-      font-size: 14px;
+      padding: 6px 10px;
+      font-size: 13px;
       font-weight: 500;
       color: var(--text-muted);
       border-radius: var(--radius-sm);
       text-decoration: none;
+      white-space: nowrap;
       transition: color var(--transition-fast), background-color var(--transition-fast);
+    }
+    @media (min-width: 1280px) {
+      .nav-link {
+        padding: 6px 12px;
+        font-size: 14px;
+      }
     }
     .nav-link:hover {
       color: var(--text);

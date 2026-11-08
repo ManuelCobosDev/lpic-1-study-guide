@@ -2,7 +2,7 @@
   "id": "lab-107-2",
   "subtopicId": "107.2",
   "title": "Práctica 107.2 — Automatización de Tareas con cron, anacron, at y systemd-run",
-  "estimatedMinutes": 30,
+  "estimatedMinutes": 35,
   "difficulty": "basic",
   "type": "subtopic",
   "placeholder": false,
@@ -12,25 +12,40 @@
       "stepNumber": 1,
       "title": "Misión 1 — Creación y Control de Tareas con crontab de Usuario",
       "instruction": "Crearemos un script de mantenimiento en el directorio personal del usuario y programaremos su ejecución periódica en su crontab individual de 6 campos sin tocar `/etc/crontab`.",
-      "command": "# 1. Crear un script de prueba que registre fecha y memoria libre\r\nmkdir -p ~/scripts\r\ncat << 'EOF' > ~/scripts/registro_mem.sh\r\n#!/bin/bash\r\necho \"$(date '+%Y-%m-%d %H:%M:%S') - Memoria libre: $(free -m | awk '/Mem:/ {print $4}') MB\" >> ~/registro_memoria.log\r\nEOF\r\nchmod +x ~/scripts/registro_mem.sh\r\n\r\n# 2. Programar en el crontab personal del usuario cada 5 minutos (*/5 * * * *)\r\n(crontab -l 2>/dev/null; echo \"*/5 * * * * $HOME/scripts/registro_mem.sh\") | crontab -\r\n\r\n# 3. Listar el crontab activo para verificar los 6 campos\r\ncrontab -l\r\n\r\n# 4. Inspeccionar la ubicación real del archivo en el sistema\r\nsudo ls -la /var/spool/cron/crontabs/",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "command": "# 1. Crear un script de prueba que registre fecha y memoria libre\nmkdir -p ~/scripts\ncat << 'EOF' > ~/scripts/registro_mem.sh\n#!/bin/bash\necho \"$(date '+%Y-%m-%d %H:%M:%S') - Memoria libre: $(free -m | awk '/Mem:/ {print $4}') MB\" >> ~/registro_memoria.log\nEOF\nchmod +x ~/scripts/registro_mem.sh\n\n# 2. Programar en el crontab personal del usuario cada 5 minutos (*/5 * * * *)\n(crontab -l 2>/dev/null; echo \"*/5 * * * * $HOME/scripts/registro_mem.sh\") | crontab -\n\n# 3. Listar el crontab activo para verificar los 6 campos\ncrontab -l\n\n# 4. Inspeccionar la ubicación real del archivo en el sistema\nsudo ls -la /var/spool/cron/crontabs/",
+      "expectedOutput": "El crontab personal contiene la línea con la programación cada 5 minutos y se almacena en /var/spool/cron/crontabs/."
     },
     {
       "id": "step-107-2-2",
       "stepNumber": 2,
       "title": "Misión 2 — Tareas Periódicas del Sistema en /etc/cron.* y run-parts",
       "instruction": "Instalaremos un script de mantenimiento del sistema en `/etc/cron.daily/`, verificando la regla de oro de Debian (no debe llevar extensión) y probaremos su ejecución mediante `run-parts`.",
-      "command": "# 1. Crear un script en /etc/cron.daily/ SIN extensión .sh\r\nsudo tee /etc/cron.daily/limpieza-tmp << 'EOF'\r\n#!/bin/sh\r\n# Script de mantenimiento diario\r\necho \"[$(date)] Limpieza diaria ejecutada correctamente\" >> /var/log/limpieza_diaria.log\r\nEOF\r\n\r\n# 2. Asignar permisos de ejecución obligatorios\r\nsudo chmod +x /etc/cron.daily/limpieza-tmp\r\n\r\n# 3. Probar la ejecución manual mediante run-parts\r\nsudo run-parts --test /etc/cron.daily | grep limpieza-tmp\r\nsudo run-parts --report /etc/cron.daily\r\n\r\n# 4. Verificar que se generó el registro en /var/log/\r\nsudo cat /var/log/limpieza_diaria.log",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas."
+      "command": "# 1. Crear un script en /etc/cron.daily/ SIN extensión .sh\nsudo tee /etc/cron.daily/limpieza-tmp << 'EOF'\n#!/bin/sh\n# Script de mantenimiento diario\necho \"[$(date)] Limpieza diaria ejecutada correctamente\" >> /var/log/limpieza_diaria.log\nEOF\n\n# 2. Asignar permisos de ejecución obligatorios\nsudo chmod +x /etc/cron.daily/limpieza-tmp\n\n# 3. Probar la ejecución manual mediante run-parts\nsudo run-parts --test /etc/cron.daily | grep limpieza-tmp\nsudo run-parts --report /etc/cron.daily\n\n# 4. Verificar que se generó el registro en /var/log/\nsudo cat /var/log/limpieza_diaria.log",
+      "expectedOutput": "run-parts valida y ejecuta el script /etc/cron.daily/limpieza-tmp generando la entrada en /var/log/limpieza_diaria.log."
     },
     {
       "id": "step-107-2-3",
       "stepNumber": 3,
-      "title": "Misión 3 — Programación Diferida con at, atq, atrm y systemd-run",
-      "instruction": "Programaremos tareas únicas para ejecutarse en el futuro mediante `at`, inspeccionaremos y cancelaremos tareas con `atq` y `atrm`, y probaremos la alternativa moderna `systemd-run`.",
-      "command": "# 1. Programar una tarea puntual para dentro de 10 minutos con at\r\necho \"echo 'Alerta: Tarea at ejecutada' > /tmp/alerta_at.txt\" | at now + 10 minutes\r\n\r\n# 2. Programar una segunda tarea para las 16:00 (teatime)\r\necho \"logger 'Mensaje registrado a la hora del té'\" | at teatime\r\n\r\n# 3. Listar los trabajos en cola con atq (o at -l)\r\natq\r\n\r\n# 4. Cancelar el último trabajo mediante atrm (o at -d)\r\nID_CANCELAR=$(atq | sort -n | tail -n 1 | awk '{print $1}')\r\natrm $ID_CANCELAR\r\natq\r\n\r\n# 5. Probar un temporizador transitorio con systemd-run relativo a 1 minuto\r\nsudo systemd-run --on-active=\"1m\" --unit=\"mi-alerta-lpic\" logger \"Alerta lanzada por systemd timer transitorio\"\r\nsystemctl list-timers | grep mi-alerta-lpic || true",
-      "expectedOutput": "Verifica que la terminal ejecuta los comandos sin errores y muestra las líneas esperadas.",
-      "examAlert": "Ver pista desplegable si te atascas</summary>"
+      "title": "Misión 3 — Programación Diferida con at, atq, atrm y Volcado con at -c",
+      "instruction": "Programaremos tareas únicas diferidas con `at`, inspeccionaremos los comandos exactos y el entorno de un trabajo con `at -c`, y eliminaremos tareas con `atrm`.",
+      "command": "# 1. Programar una tarea puntual para dentro de 15 minutos con at\necho \"echo 'Alerta diferida ejecutada' > /tmp/alerta_at.txt\" | at now + 15 minutes\n\n# 2. Programar una segunda tarea para las 16:00 (teatime)\necho \"logger -t AUDITORIA 'Verificación de disco a las 16:00'\" | at teatime\n\n# 3. Listar los trabajos en cola con atq\natq\n\n# 4. Inspeccionar el script completo y entorno del trabajo programado con at -c\nJOB_ID=$(atq | sort -n | tail -n 1 | awk '{print $1}')\nat -c $JOB_ID | tail -n 15\n\n# 5. Cancelar el trabajo con atrm\natrm $JOB_ID\natq",
+      "expectedOutput": "atq muestra los trabajos, at -c muestra el script completo de la tarea y atrm la elimina de la cola."
+    },
+    {
+      "id": "step-107-2-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Control de Acceso al Servicio con cron.allow y cron.deny",
+      "instruction": "Comprobaremos la jerarquía de listas blancas y negras creando `/etc/cron.allow` para verificar que prevalece de manera absoluta sobre `/etc/cron.deny`.",
+      "command": "# 1. Crear política de lista blanca: permitir únicamente a root y a un usuario específico\necho \"root\" | sudo tee /etc/cron.allow\necho \"$(whoami)\" | sudo tee -a /etc/cron.allow\n\n# 2. Comprobar que el usuario actual puede seguir listando su crontab\ncrontab -l\n\n# 3. Añadir ficticiamente al usuario a cron.deny para probar que cron.allow prevalece\necho \"$(whoami)\" | sudo tee /etc/cron.deny\ncrontab -l\n\n# 4. Limpiar los archivos de prueba para restaurar el acceso normal\nsudo rm -f /etc/cron.allow /etc/cron.deny",
+      "expectedOutput": "El usuario conserva acceso porque cron.allow tiene máxima precedencia e ignora por completo a cron.deny."
+    },
+    {
+      "id": "step-107-2-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Temporizadores Modernos con systemd-run y systemctl list-timers",
+      "instruction": "Crearemos un temporizador transitorio relativo con `systemd-run` y auditaremos todos los temporizadores del sistema con `systemctl list-timers --all`.",
+      "command": "# 1. Programar temporizador transitorio a 2 minutos usando systemd-run\nsudo systemd-run --on-active=\"2m\" --unit=\"diagnostico-red\" logger \"Diagnóstico de red ejecutado\"\n\n# 2. Listar temporizadores con columna de tiempo restante y unidad de servicio asociada\nsystemctl list-timers | grep -E \"UNIT|diagnostico-red\" || true\n\n# 3. Listar temporizadores cargados tanto activos como inactivos con la opción --all\nsystemctl list-timers --all | head -n 15\n\n# 4. Verificar el registro de la orden tras su ejecución en journalctl\njournalctl -u diagnostico-red.service -n 5 || true",
+      "expectedOutput": "systemd-run registra el temporizador, systemctl list-timers --all lo enumera y journalctl captura su evento."
     }
   ]
 }

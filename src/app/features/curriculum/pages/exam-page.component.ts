@@ -38,7 +38,7 @@ import { CurriculumCardComponent } from '../components/curriculum-card/curriculu
                   LPIC-1 {{ exam.code }}
                 </app-badge>
                 <span class="status-pill" [class.status-available]="!isPlanned()">
-                  {{ isPlanned() ? 'Planificado para Fase 11' : 'Disponible completo' }}
+                  {{ isPlanned() ? 'En preparación' : 'Disponible completo' }}
                 </span>
               </div>
 

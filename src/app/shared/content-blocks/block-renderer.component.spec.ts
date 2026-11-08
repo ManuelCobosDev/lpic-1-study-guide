@@ -138,5 +138,45 @@ describe('BlockRendererComponent', () => {
     expect(feedback.textContent).toContain('¡Respuesta correcta!');
     expect(feedback.textContent).toContain('modo append');
   });
+
+  it('renderiza bloque html sanitizado correctamente (A6-001, A1-001)', () => {
+    const htmlBlock: Block = {
+      type: 'html',
+      sanitizedHtml: '<div class="test-diagram"><span style="color:red">Capa 1 BIOS</span></div>'
+    };
+
+    fixture.componentRef.setInput('block', htmlBlock);
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement.querySelector('app-html-block .html-block-wrapper');
+    expect(el).toBeTruthy();
+    expect(el.innerHTML).toContain('test-diagram');
+    expect(el.textContent).toContain('Capa 1 BIOS');
+  });
+
+  it('renderiza bloque list con formato markdown enriquecido y enlaces wiki (A1-006)', () => {
+    const listBlock: Block = {
+      type: 'list',
+      ordered: false,
+      items: [
+        'Elemento con **negrita** y [tee](cmd:tee)',
+        'Segundo elemento con *cursiva* y [stdout](term:stdout)'
+      ]
+    };
+
+    fixture.componentRef.setInput('block', listBlock);
+    fixture.detectChanges();
+
+    const listEl = fixture.nativeElement.querySelector('app-list-block');
+    expect(listEl).toBeTruthy();
+
+    const liElements = fixture.nativeElement.querySelectorAll('app-list-block li');
+    expect(liElements.length).toBe(2);
+
+    expect(liElements[0].innerHTML).toContain('<strong>negrita</strong>');
+    expect(liElements[0].innerHTML).toContain('wiki-cmd-link');
+    expect(liElements[1].innerHTML).toContain('<em>cursiva</em>');
+    expect(liElements[1].innerHTML).toContain('wiki-term-link');
+  });
 });
 

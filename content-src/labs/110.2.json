@@ -10,10 +10,42 @@
     {
       "id": "step-110-2-1",
       "stepNumber": 1,
-      "title": "Misión 1: Configuración y verificación de 110.2",
-      "instruction": "Ejecuta los comandos fundamentales del objetivo 110.2 en tu entorno de pruebas Debian.",
-      "command": "man 110_2",
-      "expectedOutput": "El sistema despliega la documentación y sintaxis oficial de las herramientas."
+      "title": "Misión 1 — Auditoría de puertos y sockets en escucha con ss",
+      "instruction": "Inspecciona los sockets TCP y UDP en estado de escucha en el sistema utilizando la herramienta moderna ss con resolución numérica y visualización de PIDs.",
+      "command": "ss -tulpn",
+      "expectedOutput": "Netid State  Recv-Q Send-Q Local Address:Port  Peer Address:PortProcess\ntcp   LISTEN 0      128          0.0.0.0:22         0.0.0.0:*    users:((\"sshd\",pid=812,fd=3))\ntcp   LISTEN 0      128        127.0.0.1:631        0.0.0.0:*    users:((\"cupsd\",pid=650,fd=7))"
+    },
+    {
+      "id": "step-110-2-2",
+      "stepNumber": 2,
+      "title": "Misión 2 — Desactivación y parada de servicios con systemctl",
+      "instruction": "Detén inmediatamente y deshabilita del arranque del sistema el servicio de impresión CUPS (tanto el servicio como el socket) utilizando el modificador --now de systemctl.",
+      "command": "systemctl disable --now cups.service cups.socket && systemctl is-active cups",
+      "expectedOutput": "Removed /etc/systemd/system/multi-user.target.wants/cups.service.\nRemoved /etc/systemd/system/sockets.target.wants/cups.socket.\ninactive"
+    },
+    {
+      "id": "step-110-2-3",
+      "stepNumber": 3,
+      "title": "Misión 3 — Restricción de inicios de sesión con /etc/nologin y usermod",
+      "instruction": "Crea el archivo /etc/nologin con un aviso de mantenimiento y asigna una shell restrictiva /sbin/nologin a la cuenta 'invitado'.",
+      "command": "echo 'Servidor en mantenimiento programado.' > /etc/nologin && usermod -s /sbin/nologin invitado && grep invitado /etc/passwd",
+      "expectedOutput": "invitado:x:1005:1005:Usuario Invitado:/home/invitado:/sbin/nologin"
+    },
+    {
+      "id": "step-110-2-4",
+      "stepNumber": 4,
+      "title": "Misión 4 — Comprobación de compatibilidad con TCP Wrappers mediante ldd",
+      "instruction": "Inspecciona las bibliotecas dinámicas compartidas del demonio OpenSSH (sshd) para verificar si soporta el control de acceso de libwrap.so.",
+      "command": "ldd /usr/sbin/sshd | grep libwrap",
+      "expectedOutput": "libwrap.so.0 => /lib/x86_64-linux-gnu/libwrap.so.0 (0x00007fc465134000)"
+    },
+    {
+      "id": "step-110-2-5",
+      "stepNumber": 5,
+      "title": "Misión 5 — Configuración de políticas de acceso en hosts.deny y hosts.allow",
+      "instruction": "Aplica una política de denegación predeterminada universal en /etc/hosts.deny y autoriza de forma selectiva en /etc/hosts.allow el acceso SSH para la subred local 192.168.1.0/24.",
+      "command": "echo 'ALL : ALL' >> /etc/hosts.deny && echo 'sshd : 192.168.1.0/24' >> /etc/hosts.allow && tail -n 1 /etc/hosts.deny /etc/hosts.allow",
+      "expectedOutput": "==> /etc/hosts.deny <==\nALL : ALL\n\n==> /etc/hosts.allow <==\nsshd : 192.168.1.0/24"
     }
   ]
 }
