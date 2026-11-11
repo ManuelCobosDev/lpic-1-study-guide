@@ -10,216 +10,118 @@
           </span>
         </div>
         <p class="page-subtitle">
-          Sistema de repetición espaciada en 5 cajas para memorizar comandos, opciones de examen y conceptos clave de la certificación LPIC-1.
+          Sistema de repetición espaciada en 5 cajas por tandas aleatorias de 10 tarjetas para dominar comandos, opciones y conceptos clave de LPIC-1.
         </p>
       </div>
+    </header>
 
-      <!-- Selector de Modo de Mazos: Por Temas vs Globales -->
-      <div class="deck-mode-tabs" role="tablist" aria-label="Modo de selección de mazo">
-        <button
-          type="button"
-          role="tab"
-          class="mode-tab-btn"
-          [class.active]="activeCategoryTab() === 'topics'"
-          [attr.aria-selected]="activeCategoryTab() === 'topics'"
-          (click)="setActiveCategoryTab('topics')"
-        >
-          <span>🎯 Por Temas LPIC-1 (Recomendado)</span>
-        </button>
-        <button
-          type="button"
-          role="tab"
-          class="mode-tab-btn"
-          [class.active]="activeCategoryTab() === 'general'"
-          [attr.aria-selected]="activeCategoryTab() === 'general'"
-          (click)="setActiveCategoryTab('general')"
-        >
-          <span>🌐 Mazos Globales y Tipos</span>
-        </button>
-      </div>
+    <!-- Panel de Configuración de Tanda (2 Pasos Limpios) -->
+    <section class="batch-setup-panel" aria-label="Configuración de la tanda de estudio">
+      <!-- Paso 1: Ámbito / Tema -->
+      <div class="setup-step step-scope">
+        <div class="step-label-row">
+          <span class="step-badge">Paso 1</span>
+          <h2 class="step-title">Ámbito o tema</h2>
+          <span class="step-current-tag">{{ activeDeckLabel() }}</span>
+        </div>
 
-      <!-- Selector por Temas LPIC-1 -->
-      @if (activeCategoryTab() === 'topics') {
-        <div class="topics-deck-container" role="region" aria-label="Selección de tema oficial">
-          <!-- Opción General: Todo el catálogo -->
-          <div class="global-all-row">
+        <div class="scope-selector-wrap">
+          <!-- Ámbitos Globales -->
+          <div class="scope-group-global" role="group" aria-label="Ámbitos generales">
             <button
               type="button"
-              class="topic-btn topic-btn-all"
+              class="scope-btn"
               [class.active]="selectedDeck() === 'all'"
               [attr.aria-pressed]="selectedDeck() === 'all'"
               data-testid="deck-all"
               (click)="selectDeck('all')"
             >
-              <span class="topic-num font-mono">ALL</span>
-              <span class="topic-name">Todo el Catálogo LPIC-1 (Catálogo completo)</span>
+              <span class="scope-icon" aria-hidden="true">🌐</span>
+              <span class="scope-text">Todo LPIC-1</span>
+            </button>
+            <button
+              type="button"
+              class="scope-btn"
+              [class.active]="selectedDeck() === 'exam-101'"
+              [attr.aria-pressed]="selectedDeck() === 'exam-101'"
+              data-testid="deck-exam-101"
+              (click)="selectDeck('exam-101')"
+            >
+              <span class="scope-icon" aria-hidden="true">🐧</span>
+              <span class="scope-text">Examen 101</span>
+            </button>
+            <button
+              type="button"
+              class="scope-btn"
+              [class.active]="selectedDeck() === 'exam-102'"
+              [attr.aria-pressed]="selectedDeck() === 'exam-102'"
+              data-testid="deck-exam-102"
+              (click)="selectDeck('exam-102')"
+            >
+              <span class="scope-icon" aria-hidden="true">🛡️</span>
+              <span class="scope-text">Examen 102</span>
             </button>
           </div>
 
-          <!-- Examen 101 -->
-          <div class="exam-topics-group">
-            <span class="exam-group-badge">Examen LPIC-1 101</span>
-            <div class="topic-buttons-grid">
-              @for (topic of exam101Topics(); track topic.id) {
-                <button
-                  type="button"
-                  class="topic-btn"
-                  [class.active]="selectedDeck() === topic.id"
-                  [attr.aria-pressed]="selectedDeck() === topic.id"
-                  [attr.data-testid]="'deck-' + topic.id"
-                  (click)="selectDeck(topic.id)"
-                  [title]="topic.title + ': ' + topic.name"
-                >
-                  <span class="topic-num font-mono">{{ topic.label }}</span>
-                  <span class="topic-name">{{ topic.name }}</span>
-                </button>
-              }
-            </div>
-          </div>
-
-          <!-- Examen 102 -->
-          <div class="exam-topics-group">
-            <span class="exam-group-badge">Examen LPIC-1 102</span>
-            <div class="topic-buttons-grid">
-              @for (topic of exam102Topics(); track topic.id) {
-                <button
-                  type="button"
-                  class="topic-btn"
-                  [class.active]="selectedDeck() === topic.id"
-                  [attr.aria-pressed]="selectedDeck() === topic.id"
-                  [attr.data-testid]="'deck-' + topic.id"
-                  (click)="selectDeck(topic.id)"
-                  [title]="topic.title + ': ' + topic.name"
-                >
-                  <span class="topic-num font-mono">{{ topic.label }}</span>
-                  <span class="topic-name">{{ topic.name }}</span>
-                </button>
-              }
-            </div>
+          <!-- Temas 101 a 110 -->
+          <div class="scope-group-topics" role="group" aria-label="Temas específicos LPIC-1">
+            @for (topic of topicDecks; track topic.id) {
+              <button
+                type="button"
+                class="topic-pill-btn"
+                [class.active]="selectedDeck() === topic.id"
+                [attr.aria-pressed]="selectedDeck() === topic.id"
+                [attr.data-testid]="'deck-' + topic.id"
+                (click)="selectDeck(topic.id)"
+                [title]="topic.title + ': ' + topic.name"
+              >
+                <span class="topic-pill-num font-mono">{{ topic.label }}</span>
+                <span class="topic-pill-name">{{ topic.name }}</span>
+              </button>
+            }
           </div>
         </div>
-      }
+      </div>
 
-      <!-- Selector de Mazos Generales -->
-      @if (activeCategoryTab() === 'general') {
-        <div class="deck-selector" role="group" aria-label="Seleccionar mazo global de flashcards">
-          @for (deck of availableDecks; track deck.id) {
+      <!-- Paso 2: Caja Leitner / Estado a Repasar -->
+      <div class="setup-step step-box">
+        <div class="step-label-row">
+          <span class="step-badge">Paso 2</span>
+          <h2 class="step-title">Caja o estado a practicar</h2>
+          <span class="step-current-tag">{{ activeBoxLabel() }}</span>
+        </div>
+
+        <div class="boxes-grid" role="group" aria-label="Seleccionar caja Leitner">
+          @for (opt of boxFilterOptions; track opt.id) {
             <button
               type="button"
-              class="deck-btn"
-              [class.active]="selectedDeck() === deck.id"
-              [attr.aria-pressed]="selectedDeck() === deck.id"
-              [attr.data-testid]="'deck-' + deck.id"
-              (click)="selectDeck(deck.id)"
+              class="box-filter-card"
+              [class.active]="selectedBoxFilter() === opt.id"
+              [attr.aria-pressed]="selectedBoxFilter() === opt.id"
+              [attr.data-testid]="'box-filter-' + opt.id"
+              (click)="setBoxFilter(opt.id)"
             >
-              <span class="deck-icon" aria-hidden="true">{{ deck.icon }}</span>
-              <span class="deck-label">{{ deck.label }}</span>
+              <div class="box-card-top">
+                <span class="box-badge-tag {{ opt.colorClass }}">{{ opt.badge }}</span>
+                <span class="box-count-badge font-mono">{{ getBoxFilterCount(opt.id) }}</span>
+              </div>
+              <div class="box-card-main">
+                <strong class="box-card-name">{{ opt.name }}</strong>
+                <span class="box-card-desc">{{ opt.shortDesc }}</span>
+              </div>
             </button>
           }
         </div>
-      }
-    </header>
-
-    <!-- Guía Explicativa del Método Leitner (Colapsable y Educativa) -->
-    <div class="leitner-guide-card" role="region" aria-label="Explicación del método Leitner">
-      <button
-        type="button"
-        class="guide-header-btn"
-        (click)="toggleGuide()"
-        [attr.aria-expanded]="showGuide()"
-        aria-controls="leitner-guide-body"
-      >
-        <div class="guide-header-title">
-          <span class="guide-icon" aria-hidden="true">💡</span>
-          <span class="guide-title-text">¿Cómo funciona el método de repaso en 5 cajas?</span>
-        </div>
-        <span class="guide-toggle-badge">
-          {{ showGuide() ? 'Ocultar explicación ▲' : '¿No entiendes las cajas? Clic para ver cómo funciona ▼' }}
-        </span>
-      </button>
-
-      @if (showGuide()) {
-        <div id="leitner-guide-body" class="guide-body">
-          <p class="guide-intro">
-            El método Leitner optimiza tu memoria repitiendo con mayor frecuencia los conceptos que te resultan difíciles y espaciando en el tiempo aquellos que ya dominas:
-          </p>
-          <div class="leitner-boxes-diagram">
-            <div class="box-step-item box-step-1">
-              <div class="box-step-top">
-                <span class="box-step-pill">Caja 1</span>
-                <span class="box-step-time">Hoy</span>
-              </div>
-              <strong class="box-step-name">Nuevas / Difíciles</strong>
-              <p class="box-step-desc">Se repasan hoy mismo. Si fallas una tarjeta en cualquier caja, vuelve aquí.</p>
-            </div>
-            <div class="box-step-item box-step-2">
-              <div class="box-step-top">
-                <span class="box-step-pill">Caja 2</span>
-                <span class="box-step-time">1 día</span>
-              </div>
-              <strong class="box-step-name">En aprendizaje</strong>
-              <p class="box-step-desc">Primer nivel de consolidación. Se repasan al día siguiente.</p>
-            </div>
-            <div class="box-step-item box-step-3">
-              <div class="box-step-top">
-                <span class="box-step-pill">Caja 3</span>
-                <span class="box-step-time">3 días</span>
-              </div>
-              <strong class="box-step-name">Afianzando</strong>
-              <p class="box-step-desc">Memoria a corto plazo afianzada. Repaso cada 3 días.</p>
-            </div>
-            <div class="box-step-item box-step-4">
-              <div class="box-step-top">
-                <span class="box-step-pill">Caja 4</span>
-                <span class="box-step-time">7 días</span>
-              </div>
-              <strong class="box-step-name">Avanzada</strong>
-              <p class="box-step-desc">Retención a largo plazo. Repaso espaciado cada semana.</p>
-            </div>
-            <div class="box-step-item box-step-5">
-              <div class="box-step-top">
-                <span class="box-step-pill">Caja 5</span>
-                <span class="box-step-time">21 días</span>
-              </div>
-              <strong class="box-step-name">¡Dominada!</strong>
-              <p class="box-step-desc">Concepto fijado para el examen oficial LPIC-1.</p>
-            </div>
-          </div>
-          <div class="guide-rules-footer">
-            <span class="rule-title">⚡ Cómo calificar las tarjetas:</span>
-            <ul class="rule-list">
-              <li><strong>Bien (+1 caja)</strong> o <strong>Fácil (+2 cajas):</strong> La tarjeta asciende de caja y se espaciará en el tiempo.</li>
-              <li><strong>Difícil (0 cajas):</strong> Se queda en la caja actual para que no tardes en verla de nuevo.</li>
-              <li><strong>Otra vez (vuelve a Caja 1):</strong> Reinicia su ciclo para que nunca se quede en el olvido.</li>
-            </ul>
-          </div>
-        </div>
-      }
-    </div>
-
-    <!-- Barra de Estado del Mazo Activo -->
-    @if (deckStats(); as stats) {
-      <div class="deck-metrics-bar">
-        <div class="metrics-deck-name">
-          <span class="metrics-label">Estudiando:</span>
-          <strong>{{ activeDeckLabel() }}</strong>
-        </div>
-        <div class="metrics-counters">
-          <span class="metric-pill pill-session" title="Tarjetas preparadas para esta sesión de estudio">
-            <strong>{{ totalCardsInSession() }}</strong> en esta sesión
-          </span>
-          <span class="metric-pill pill-due" title="Tarjetas que toca repasar hoy según su intervalo Leitner">
-            <strong>{{ stats.dueToday }}</strong> pendientes hoy
-          </span>
-          <span class="metric-pill pill-new" title="Tarjetas nuevas que aún no has estudiado">
-            <strong>{{ stats.unseen }}</strong> nuevas
-          </span>
-          <span class="metric-pill pill-total" title="Total de tarjetas incluidas en este tema o mazo">
-            <strong>{{ stats.total }}</strong> en este tema
-          </span>
-        </div>
       </div>
-    }
+
+      <!-- Micro-guía de una sola línea integrada -->
+      <div class="micro-guide-banner" role="note">
+        <span class="micro-guide-icon" aria-hidden="true">💡</span>
+        <span class="micro-guide-text">
+          <strong>Cómo funciona:</strong> Elige un tema (o Global) y una caja &rarr; practica una tanda aleatoria de hasta 10 tarjetas &rarr; al valorar cada tarjeta (1 Otra vez &middot; 2 Dif&iacute;cil &middot; 3 Bien &middot; 4 F&aacute;cil) pasa autom&aacute;ticamente a su caja correspondiente.
+        </span>
+      </div>
+    </section>
 
     <!-- Estado de Carga -->
     @if (loading()) {
@@ -229,14 +131,28 @@
       </div>
     }
 
-    <!-- SECCIÓN 1: Sesión de Estudio Leitner -->
+    <!-- SECCIÓN 1: Sesión de Estudio (Tanda de 10) -->
     @if (!loading() && !isCompleted() && currentCard()) {
       <section class="study-session" aria-label="Sesión de estudio de flashcards">
-        <!-- Barra de Progreso de la Sesión -->
+        <!-- Barra de Progreso de la Tanda -->
         <div class="session-progress-header">
           <div class="progress-info">
-            <span class="card-counter">Tarjeta {{ currentIndex() + 1 }} de {{ totalCardsInSession() }}</span>
-            <span class="deck-indicator">{{ activeDeckLabel() }}</span>
+            <div class="session-meta">
+              <span class="card-counter font-mono">
+                Tarjeta {{ currentIndex() + 1 }} de {{ totalCardsInSession() }}
+              </span>
+              <span class="deck-indicator">
+                {{ activeDeckLabel() }} &middot; {{ activeBoxLabel() }}
+              </span>
+            </div>
+            <button
+              type="button"
+              class="shuffle-batch-btn"
+              (click)="restartSession()"
+              title="Obtener otra tanda aleatoria de 10 tarjetas con el mismo filtro"
+            >
+              🔀 Otra tanda de 10
+            </button>
           </div>
           <app-progress-bar [value]="progressPercent()" size="sm"></app-progress-bar>
         </div>
@@ -252,76 +168,77 @@
       </section>
     }
 
-    <!-- Estado Vacío (Sin tarjetas para hoy) -->
+    <!-- Estado Vacío (Sin tarjetas en el filtro seleccionado) -->
     @if (!loading() && !isCompleted() && totalCardsInSession() === 0) {
       <app-empty-state
-        title="¡Estás al día!"
-        description="No tienes tarjetas pendientes de repaso para hoy en este mazo según el algoritmo Leitner."
+        [title]="'Sin tarjetas en ' + activeBoxLabel()"
+        [description]="'Actualmente hay 0 tarjetas en la caja seleccionada para ' + activeDeckLabel() + '. ¡Elige \'Todas\' o \'Nuevas\' para empezar a practicar!'"
       >
         <div class="empty-state-actions">
-          <app-button variant="secondary" (btnClick)="restartSession()">
-            Actualizar sesión
+          <app-button variant="primary" (btnClick)="setBoxFilter('all')">
+            Ver todas las de este tema
           </app-button>
-          <a href="#explorer" class="explorer-jump-link">
-            Explorar biblioteca completa ↓
-          </a>
+          <app-button variant="secondary" (btnClick)="setBoxFilter('unseen')">
+            Ver tarjetas nuevas
+          </app-button>
         </div>
       </app-empty-state>
     }
 
-    <!-- Resumen de Sesión Completada -->
+    <!-- Resumen de Tanda Completada -->
     @if (!loading() && isCompleted()) {
-      <section class="session-summary-card" aria-label="Resumen de sesión completada">
+      <section class="session-summary-card" aria-label="Resumen de tanda completada">
         <div class="summary-header">
           <div class="trophy-badge" aria-hidden="true">🎉</div>
-          <h2 class="summary-title">¡Sesión completada con éxito!</h2>
+          <h2 class="summary-title">¡Tanda de {{ reviewedCards().length }} tarjetas completada!</h2>
           <p class="summary-subtitle">
-            Has repasado {{ reviewedCards().length }} tarjetas en esta sesión. Tu progreso ha sido registrado en el motor Leitner.
+            Has completado esta tanda de repaso. Tus respuestas han actualizado el estado de las tarjetas en las cajas Leitner de {{ activeDeckLabel() }}.
           </p>
         </div>
 
-        <!-- Desglose de Calificaciones -->
+        <!-- Desglose de Calificaciones de la Tanda -->
         <div class="ratings-breakdown">
-          <h3 class="breakdown-title">Resultados de la sesión</h3>
+          <h3 class="breakdown-title">Resultados de esta tanda</h3>
           <div class="breakdown-grid">
             <div class="breakdown-item item-again">
-              <span class="item-count">{{ ratingsCount().again }}</span>
+              <span class="item-count font-mono">{{ ratingsCount().again }}</span>
               <span class="item-label">Otra vez</span>
             </div>
             <div class="breakdown-item item-hard">
-              <span class="item-count">{{ ratingsCount().hard }}</span>
+              <span class="item-count font-mono">{{ ratingsCount().hard }}</span>
               <span class="item-label">Difícil</span>
             </div>
             <div class="breakdown-item item-good">
-              <span class="item-count">{{ ratingsCount().good }}</span>
+              <span class="item-count font-mono">{{ ratingsCount().good }}</span>
               <span class="item-label">Bien</span>
             </div>
             <div class="breakdown-item item-easy">
-              <span class="item-count">{{ ratingsCount().easy }}</span>
+              <span class="item-count font-mono">{{ ratingsCount().easy }}</span>
               <span class="item-label">Fácil</span>
             </div>
           </div>
         </div>
 
-        <!-- Estadísticas del Mazo -->
-        @if (deckStats(); as stats) {
-          <div class="deck-stats-panel">
-            <h3 class="breakdown-title">Distribución en Cajas Leitner</h3>
-            <div class="boxes-visual">
-              @for (boxNum of leitnerBoxes; track boxNum) {
-                <div class="box-column">
-                  <div class="box-number">Caja {{ boxNum }}</div>
-                  <div class="box-cards-count font-mono">{{ getBoxCount(boxNum) }}</div>
-                </div>
-              }
-            </div>
+        <!-- Estadísticas actualizadas de las cajas del mazo -->
+        <div class="deck-stats-panel">
+          <h3 class="breakdown-title">Distribución en Cajas Leitner de {{ activeDeckLabel() }}</h3>
+          <div class="boxes-visual">
+            @for (boxNum of leitnerBoxes; track boxNum) {
+              <div class="box-column">
+                <div class="box-number">Caja {{ boxNum }}</div>
+                <div class="box-cards-count font-mono">{{ getBoxCount(boxNum) }}</div>
+              </div>
+            }
           </div>
-        }
+        </div>
 
-        <!-- Botones de Acción -->
+        <!-- Botones de Acción de Fin de Tanda -->
         <footer class="summary-actions">
           <app-button variant="primary" (btnClick)="restartSession()">
-            Repasar de nuevo
+            🔀 Siguiente tanda aleatoria de 10
+          </app-button>
+          <app-button variant="secondary" (btnClick)="setBoxFilter('all')">
+            Ver todas las cajas
           </app-button>
           <app-button variant="secondary" routerLink="/temario">
             Volver al Temario
@@ -330,18 +247,18 @@
       </section>
     }
 
-    <!-- SECCIÓN 2: Biblioteca y Explorador de Tarjetas Masivas -->
+    <!-- SECCIÓN 2: Biblioteca y Explorador de Tarjetas -->
     <section
       id="explorer"
       class="flashcards-explorer"
       data-testid="flashcards-explorer"
-      aria-label="Explorador de biblioteca de flashcards"
+      aria-label="Biblioteca y explorador de flashcards"
     >
       <div class="explorer-header">
         <div class="explorer-title-row">
           <h2 class="explorer-title">Biblioteca y Explorador de Tarjetas</h2>
-          <span class="explorer-results-count">
-            Mostrando {{ filteredExplorerCards().length }} de {{ allCards().length }} tarjetas
+          <span class="explorer-results-count font-mono">
+            {{ filteredExplorerCards().length }} de {{ activeDeckCards().length }} tarjetas en {{ activeDeckLabel() }}
           </span>
         </div>
         <p class="explorer-subtitle">
@@ -361,7 +278,7 @@
             class="explorer-search-input"
             [ngModel]="searchQuery()"
             (ngModelChange)="onSearchQueryChange($event)"
-            placeholder="Buscar tarjetas por comando, término, flag o subtema..."
+            placeholder="Buscar por comando, término, flag o subtema..."
           />
           @if (searchQuery()) {
             <button
@@ -410,14 +327,6 @@
             >
               Glosario
             </button>
-            <button
-              type="button"
-              class="chip-btn"
-              [class.active]="filterKind() === 'archivo'"
-              (click)="setFilterKind('archivo')"
-            >
-              Archivos clave
-            </button>
           </div>
 
           <!-- Filtro por Caja Leitner -->
@@ -459,12 +368,12 @@
             <article class="explorer-card" [class.revealed]="isCardRevealed(card.id)">
               <header class="card-meta">
                 <div class="card-tags">
-                  <span class="card-type-tag tag-{{ card.kind || card.type }}">
+                  <span class="card-type-tag">
                     {{ card.kind || card.type }}
                   </span>
                   @if (card.subtopicIds[0]) {
-                    <span class="card-subtopic-tag">
-                      Subtema {{ card.subtopicIds[0] }}
+                    <span class="card-subtopic-tag font-mono">
+                      {{ card.subtopicIds[0] }}
                     </span>
                   }
                 </div>
@@ -478,7 +387,7 @@
               </header>
 
               <div class="card-front-content">
-                <h3 class="card-front-title">{{ card.frontTitle }}</h3>
+                <h3 class="card-front-title font-mono">{{ card.frontTitle }}</h3>
                 @if (card.frontSubtitle) {
                   <p class="card-front-subtitle">{{ card.frontSubtitle }}</p>
                 }
@@ -488,7 +397,7 @@
               <!-- Reverso Desplegable -->
               @if (isCardRevealed(card.id)) {
                 <div class="card-back-content">
-                  <h4 class="card-back-title">{{ card.backTitle }}</h4>
+                  <h4 class="card-back-title font-mono">{{ card.backTitle }}</h4>
                   <p class="card-back-description">{{ card.backDescription }}</p>
                   @if (card.backSyntax) {
                     <code class="card-syntax font-mono">{{ card.backSyntax }}</code>
@@ -520,7 +429,7 @@
           >
             ← Anterior
           </button>
-          <span class="pagination-info">
+          <span class="pagination-info font-mono">
             Página {{ explorerPage() }} de {{ totalExplorerPages() }}
           </span>
           <button
@@ -537,7 +446,11 @@
           <p class="explorer-empty-text">
             No se encontraron tarjetas que coincidan con la búsqueda o los filtros seleccionados.
           </p>
-          <button type="button" class="reset-filters-btn" (click)="onSearchQueryChange(''); setFilterKind('all'); setFilterBox('all')">
+          <button
+            type="button"
+            class="reset-filters-btn"
+            (click)="onSearchQueryChange(''); setFilterKind('all'); setFilterBox('all')"
+          >
             Restablecer filtros
           </button>
         </div>
