@@ -46,9 +46,6 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
       <div class="ring-content">
         @if (showText()) {
           <span class="ring-value">{{ clampedValue() }}%</span>
-          @if (subtitle()) {
-            <span class="ring-subtitle">{{ subtitle() }}</span>
-          }
         } @else {
           <ng-content />
         }
@@ -101,17 +98,10 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
     }
 
     .ring-value {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 700;
       font-family: var(--font-mono);
       color: var(--text);
-      line-height: 1;
-    }
-
-    .ring-subtitle {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 4px;
       line-height: 1;
     }
   `]
