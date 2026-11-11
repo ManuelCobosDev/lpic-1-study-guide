@@ -28,7 +28,7 @@ import {
         <div class="hero-grid">
           <div class="hero-text-col">
             <div class="hero-eyebrow">
-              <span class="hero-badge">PREPARACIÓN OFICIAL LPIC-1 · 101 Y 102</span>
+              <span class="hero-badge">GUÍA DE APOYO VISUAL · NO OFICIAL · LPIC-1 (101 Y 102)</span>
             </div>
 
             <h1 class="hero-title">
@@ -36,7 +36,7 @@ import {
             </h1>
 
             <p class="hero-desc">
-              Contenido completo de los exámenes 101-500 y 102-500. Diapositivas interactivas,
+              Guía de apoyo visual interactiva con el contenido completo de los exámenes 101-500 y 102-500. Diapositivas interactivas,
               laboratorios guiados con terminal y simulador de examen real guardados solo en tu navegador.
             </p>
 

@@ -153,4 +153,35 @@ describe('HomePageComponent', () => {
     fixture.detectChanges();
     expect(component.exam101Progress()).toBe(100);
   });
+
+  it('renderiza enlaces a la documentación oficial LPI y ambos botones de temario como primarios en las tarjetas de examen', () => {
+    const root: HTMLElement = fixture.nativeElement;
+    const examsSection = root.querySelector('.exams-section');
+    expect(examsSection).toBeTruthy();
+
+    const textContent = examsSection?.textContent ?? '';
+    expect(textContent).not.toContain('Disponible completo');
+    expect(textContent).not.toContain('Disponible');
+
+    const docLinks = Array.from(root.querySelectorAll<HTMLAnchorElement>('.official-doc-link'));
+    expect(docLinks.length).toBe(2);
+
+    expect(docLinks[0]?.href).toBe('https://learning.lpi.org/es/learning-materials/101-500/');
+    expect(docLinks[0]?.target).toBe('_blank');
+    expect(docLinks[0]?.rel).toContain('noopener');
+
+    expect(docLinks[1]?.href).toBe('https://learning.lpi.org/es/learning-materials/102-500/');
+    expect(docLinks[1]?.target).toBe('_blank');
+    expect(docLinks[1]?.rel).toContain('noopener');
+
+    const heroBadge = root.querySelector('.hero-badge');
+    expect(heroBadge?.textContent).toContain('GUÍA DE APOYO VISUAL · NO OFICIAL');
+
+    const examButtons = Array.from(examsSection?.querySelectorAll('app-button') ?? []);
+    expect(examButtons.length).toBe(2);
+    for (const btn of examButtons) {
+      expect(btn.getAttribute('variant')).toBe('primary');
+      expect(btn.textContent).toContain('Ver temario →');
+    }
+  });
 });
