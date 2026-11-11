@@ -94,5 +94,78 @@ describe('CommandsPageComponent', () => {
     await component.copyText('ls | tee out.txt', 'ex-tee');
     expect(component.copiedCommandId()).toBe('ex-tee');
   });
-});
 
+  it('debe calcular expandedCommand con el comando activo', () => {
+    expect(component.expandedCommand()).toBeNull();
+    component.toggleExpand('tee');
+    expect(component.expandedCommand()?.name).toBe('tee');
+  });
+
+  it('debe cerrar la ventana popup con closePopup() y reiniciar la posición', () => {
+    component.toggleViewMode('cards');
+    component.toggleExpand('tee');
+    expect(component.expandedCommandId()).toBe('tee');
+
+    component.closePopup();
+    expect(component.expandedCommandId()).toBeNull();
+    expect(component.popupOffset()).toEqual({ x: 0, y: 0 });
+  });
+
+  it('debe cerrar la ventana popup al presionar Escape en modo tarjetas', () => {
+    component.toggleViewMode('cards');
+    component.toggleExpand('tee');
+    expect(component.expandedCommandId()).toBe('tee');
+
+    component.onEscapePress();
+    expect(component.expandedCommandId()).toBeNull();
+  });
+
+  it('debe permitir mover la ventana popup mediante pointer events', () => {
+    component.toggleViewMode('cards');
+    component.toggleExpand('tee');
+
+    const header = document.createElement('div');
+    const pointerDownEvent = new PointerEvent('pointerdown', {
+      button: 0,
+      clientX: 200,
+      clientY: 200,
+      bubbles: true
+    });
+    Object.defineProperty(pointerDownEvent, 'currentTarget', { value: header });
+
+    component.onPopupPointerDown(pointerDownEvent);
+    expect(component.isDraggingPopup()).toBe(true);
+
+    const pointerMoveEvent = new PointerEvent('pointermove', {
+      clientX: 250,
+      clientY: 240
+    });
+    component.onPopupPointerMove(pointerMoveEvent);
+
+    expect(component.popupOffset().x).not.toBe(0);
+
+    const pointerUpEvent = new PointerEvent('pointerup', { bubbles: true });
+    Object.defineProperty(pointerUpEvent, 'currentTarget', { value: header });
+    component.onPopupPointerUp(pointerUpEvent);
+
+    expect(component.isDraggingPopup()).toBe(false);
+  });
+
+  it('debe restablecer la posición con resetPopupPosition()', () => {
+    component.toggleViewMode('cards');
+    component.toggleExpand('tee');
+
+    const header = document.createElement('div');
+    const downEvt = new PointerEvent('pointerdown', { button: 0, clientX: 100, clientY: 100 });
+    Object.defineProperty(downEvt, 'currentTarget', { value: header });
+    component.onPopupPointerDown(downEvt);
+
+    component.onPopupPointerMove(new PointerEvent('pointermove', { clientX: 180, clientY: 150 }));
+    component.onPopupPointerUp(downEvt);
+
+    expect(component.popupOffset().x).not.toBe(0);
+
+    component.resetPopupPosition();
+    expect(component.popupOffset()).toEqual({ x: 0, y: 0 });
+  });
+});

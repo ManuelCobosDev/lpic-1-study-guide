@@ -332,7 +332,185 @@
           />
         }
       </div>
+
+      <!-- Ventana Flotante Arrastrable para Detalles (solo modo tarjetas) -->
+      @if (expandedCommand(); as expCmd) {
+        <div
+          class="popup-window-container"
+          data-testid="command-detail-popup"
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby="popup-cmd-title"
+          [class.is-dragging]="isDraggingPopup()"
+          [style.transform]="'translate3d(calc(-50% + ' + popupOffset().x + 'px), calc(-50% + ' + popupOffset().y + 'px), 0)'"
+        >
+          <!-- Barra de título arrastrable -->
+          <div
+            class="popup-window-header"
+            (pointerdown)="onPopupPointerDown($event)"
+            (pointermove)="onPopupPointerMove($event)"
+            (pointerup)="onPopupPointerUp($event)"
+            (pointercancel)="onPopupPointerUp($event)"
+          >
+            <div class="popup-title-group">
+              <span class="popup-window-icon" aria-hidden="true">🗗</span>
+              <h3 id="popup-cmd-title" class="popup-title font-mono">{{ expCmd.name }}</h3>
+              <span class="category-pill">{{ expCmd.category }}</span>
+              <span class="popup-drag-hint" aria-hidden="true">⋮⋮ Mover</span>
+            </div>
+
+            <div class="popup-header-actions">
+              @if (popupOffset().x !== 0 || popupOffset().y !== 0) {
+                <button
+                  type="button"
+                  class="popup-action-btn popup-reset-btn"
+                  (click)="resetPopupPosition()"
+                  title="Centrar ventana"
+                  aria-label="Centrar ventana"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="action-svg" aria-hidden="true">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                  </svg>
+                  <span class="action-text">Centrar</span>
+                </button>
+              }
+              <button
+                type="button"
+                class="popup-action-btn popup-close-btn"
+                data-testid="close-command-popup"
+                aria-label="Cerrar ventana de detalles"
+                (click)="closePopup()"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <!-- Cuerpo desplazable de la ventana -->
+          <div class="popup-window-body">
+            <!-- Ubicación de explicación -->
+            @if (expCmd.explainedIn && expCmd.explainedIn.length > 0) {
+              <div class="popup-meta-row">
+                <span class="meta-label">Se explica en:</span>
+                <div class="meta-links">
+                  @for (loc of expCmd.explainedIn; track loc) {
+                    <a
+                      [routerLink]="['/estudiar', parseSubtopic(loc)]"
+                      [queryParams]="{ slide: parseSlide(loc), q: expCmd.name }"
+                      class="explained-in-badge inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--primary-soft)] text-[var(--primary-text)] hover:opacity-80 transition-opacity"
+                      data-testid="explained-in"
+                      title="Ver explicación en {{ loc }}"
+                    >
+                      <span>📍 {{ loc }}</span>
+                    </a>
+                  }
+                </div>
+              </div>
+            } @else if (expCmd.sinExplicacion) {
+              <div class="popup-meta-row">
+                <span
+                  class="explained-in-badge text-xs text-[var(--text-muted)] italic"
+                  data-testid="explained-in"
+                  [title]="expCmd.sinExplicacion"
+                >
+                  {{ expCmd.sinExplicacion }}
+                </span>
+              </div>
+            }
+
+            <!-- Descripción -->
+            <p class="popup-description">{{ expCmd.description }}</p>
+
+            <!-- Sinopsis de uso -->
+            <div class="detail-block detail-block-synopsis">
+              <div class="block-header">
+                <div class="block-title-group">
+                  <span class="block-icon" aria-hidden="true">💻</span>
+                  <span class="block-title">Sinopsis de uso</span>
+                  <span class="block-badge badge-synopsis">Sintaxis oficial</span>
+                </div>
+                <button
+                  type="button"
+                  class="copy-btn"
+                  (click)="copyText(expCmd.synopsis, 'popup-syn-' + expCmd.id)"
+                  aria-label="Copiar sinopsis"
+                >
+                  @if (copiedCommandId() === 'popup-syn-' + expCmd.id) {
+                    <span class="copied-badge">✓ ¡Copiado!</span>
+                  } @else {
+                    <span>Copiar</span>
+                  }
+                </button>
+              </div>
+              <pre class="code-preview font-mono" tabindex="0" role="region" aria-label="Sinopsis de uso"><code>{{ expCmd.synopsis }}</code></pre>
+            </div>
+
+            <!-- Ejemplo práctico -->
+            @if (expCmd.example) {
+              <div class="detail-block detail-block-example">
+                <div class="block-header">
+                  <div class="block-title-group">
+                    <span class="block-icon" aria-hidden="true">▶</span>
+                    <span class="block-title">Ejemplo práctico</span>
+                    <span class="block-badge badge-example">Terminal / Uso real</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="copy-btn"
+                    (click)="copyText(expCmd.example, 'popup-ex-' + expCmd.id)"
+                    aria-label="Copiar ejemplo"
+                  >
+                    @if (copiedCommandId() === 'popup-ex-' + expCmd.id) {
+                      <span class="copied-badge">✓ ¡Copiado!</span>
+                    } @else {
+                      <span>Copiar</span>
+                    }
+                  </button>
+                </div>
+                <pre class="code-preview font-mono code-example-highlight" tabindex="0" role="region" aria-label="Ejemplo práctico"><code>{{ expCmd.example }}</code></pre>
+              </div>
+            }
+
+            <!-- Opciones y Flags -->
+            <div class="detail-block detail-block-flags">
+              <div class="block-header">
+                <div class="block-title-group">
+                  <span class="block-icon" aria-hidden="true">⚙</span>
+                  <span class="block-title">Opciones principales (flags)</span>
+                  @if (expCmd.flags.length > 0) {
+                    <span class="block-badge badge-flags">{{ expCmd.flags.length }} opciones</span>
+                  }
+                </div>
+              </div>
+              @if (expCmd.flags.length > 0) {
+                <ul class="flags-list">
+                  @for (f of expCmd.flags; track f.flag) {
+                    <li class="flag-item">
+                      <code class="flag-code font-mono">{{ f.flag }}</code>
+                      <span class="flag-desc">{{ f.description }}</span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="flags-empty-text">Este comando no presenta opciones o banderas específicas requeridas en LPIC-1.</p>
+              }
+            </div>
+
+            <!-- Enlaces a subtemas -->
+            <div class="detail-footer popup-footer">
+              <span class="footer-label">Subtemas del examen:</span>
+              <div class="footer-links">
+                @for (sub of expCmd.subtopicIds; track sub) {
+                  <a [routerLink]="['/estudiar', sub]" class="lesson-deeplink">
+                    Subtema {{ sub }} →
+                  </a>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      }
     }
   </div>
 </app-container>
-

@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  HostListener,
   OnInit,
   computed,
   inject,
@@ -53,6 +54,12 @@ export class CommandsPageComponent implements OnInit {
   readonly selectedCategory = signal<string>('todas');
   readonly selectedTopic = signal<string>('todos');
 
+  // Ventana flotante arrastrable (modo tarjetas)
+  readonly popupOffset = signal<{ x: number; y: number }>({ x: 0, y: 0 });
+  readonly isDraggingPopup = signal<boolean>(false);
+  private dragStartPointerPos = { x: 0, y: 0 };
+  private dragStartOffset = { x: 0, y: 0 };
+
   readonly availableTopics = [
     { id: 'todos', label: 'Todos los temas' },
     { id: '101', label: 'Tema 101: Arquitectura del sistema' },
@@ -82,6 +89,12 @@ export class CommandsPageComponent implements OnInit {
 
   readonly counterText = computed(() => {
     return `${this.filteredCount()} de ${this.totalCommands()} comandos`;
+  });
+
+  readonly expandedCommand = computed<Command | null>(() => {
+    const id = this.expandedCommandId();
+    if (!id) return null;
+    return this.commands().find((c) => c.id === id) ?? null;
   });
 
   parseSubtopic(loc: string): string {
@@ -135,14 +148,105 @@ export class CommandsPageComponent implements OnInit {
 
   toggleViewMode(mode: 'table' | 'cards'): void {
     this.viewMode.set(mode);
+    this.resetPopupPosition();
   }
 
   toggleExpand(cmdId: string): void {
     if (this.expandedCommandId() === cmdId) {
       this.expandedCommandId.set(null);
+      this.resetPopupPosition();
     } else {
+      if (this.expandedCommandId() === null) {
+        this.resetPopupPosition();
+      }
       this.expandedCommandId.set(cmdId);
     }
+  }
+
+  closePopup(): void {
+    this.expandedCommandId.set(null);
+    this.resetPopupPosition();
+  }
+
+  resetPopupPosition(): void {
+    this.popupOffset.set({ x: 0, y: 0 });
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapePress(): void {
+    if (this.viewMode() === 'cards' && this.expandedCommandId() !== null) {
+      this.closePopup();
+    }
+  }
+
+  onPopupPointerDown(event: PointerEvent): void {
+    if (event.button !== 0) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('button') || target?.closest('a')) {
+      return;
+    }
+
+    const headerEl = event.currentTarget as HTMLElement | null;
+    if (headerEl && typeof headerEl.setPointerCapture === 'function') {
+      try {
+        headerEl.setPointerCapture(event.pointerId);
+      } catch {
+        // Entornos sin soporte de pointer capture
+      }
+    }
+
+    this.isDraggingPopup.set(true);
+    this.dragStartPointerPos = { x: event.clientX, y: event.clientY };
+    this.dragStartOffset = { ...this.popupOffset() };
+    event.preventDefault();
+  }
+
+  onPopupPointerMove(event: PointerEvent): void {
+    if (!this.isDraggingPopup()) return;
+    const deltaX = event.clientX - this.dragStartPointerPos.x;
+    const deltaY = event.clientY - this.dragStartPointerPos.y;
+    const targetX = this.dragStartOffset.x + deltaX;
+    const targetY = this.dragStartOffset.y + deltaY;
+
+    const clamped = this.clampPopupOffset(targetX, targetY);
+    this.popupOffset.set(clamped);
+  }
+
+  onPopupPointerUp(event: PointerEvent): void {
+    if (this.isDraggingPopup()) {
+      this.isDraggingPopup.set(false);
+      const headerEl = event.currentTarget as HTMLElement | null;
+      if (headerEl && typeof headerEl.releasePointerCapture === 'function') {
+        try {
+          headerEl.releasePointerCapture(event.pointerId);
+        } catch {
+          // Ignorar
+        }
+      }
+    }
+  }
+
+  private clampPopupOffset(x: number, y: number): { x: number; y: number } {
+    if (typeof window === 'undefined') {
+      return { x, y };
+    }
+    const vpW = window.innerWidth || 1024;
+    const vpH = window.innerHeight || 768;
+
+    const popupW = Math.min(vpW * 0.92, 580);
+    const popupH = Math.min(vpH * 0.85, 660);
+
+    const maxDeltaX = Math.max(0, (vpW - popupW) / 2 - 16);
+    const minX = -maxDeltaX;
+    const maxX = maxDeltaX;
+
+    const maxDeltaYUp = Math.max(0, (vpH - popupH) / 2 - 16);
+    const maxDeltaYDown = Math.max(0, (vpH / 2) - 60);
+
+    const clampedX = Math.min(Math.max(x, minX), maxX);
+    const clampedY = Math.min(Math.max(y, -maxDeltaYUp), maxDeltaYDown);
+
+    return { x: clampedX, y: clampedY };
   }
 
   async copyText(text: string, id: string): Promise<void> {
@@ -181,4 +285,3 @@ export class CommandsPageComponent implements OnInit {
     });
   }
 }
-
