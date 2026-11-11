@@ -1537,12 +1537,6 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
       totalQuestionsPlaceholder += questions.length;
     }
 
-    questions = questions.map((q) => ({
-      ...q,
-      status: q.status ?? (q.placeholder ? 'pendiente-verificacion' : 'verificada'),
-      verified: q.verified ?? !q.placeholder
-    }));
-
     // Validación estricta anti-IDs duplicados de preguntas
     for (const q of questions) {
       if (globalQuestionIds.has(q.id)) {

@@ -27,12 +27,6 @@ describe('SimulatorHubPageComponent', () => {
       activeSession: signal(null),
       selectedExamId: signal<'101' | '102'>('101'),
       setSelectedExamId: vi.fn(),
-      getVerifiedQuestionsStats: vi.fn().mockResolvedValue({
-        total: 120,
-        verified: 0,
-        pending: 120,
-        hasPending: true
-      }),
       getRecentAttempts: vi.fn().mockReturnValue([]),
       getRemainingSeconds: vi.fn().mockReturnValue(3600),
       startExam: vi.fn().mockResolvedValue({ id: 'test-session' } as unknown as ActiveExamSession),
@@ -71,8 +65,7 @@ describe('SimulatorHubPageComponent', () => {
     await component.startTimedExam();
     expect(examServiceMock.startExam).toHaveBeenCalledWith({
       mode: 'exam',
-      examId: '101',
-      onlyVerified: false
+      examId: '101'
     });
     expect(router.navigate).toHaveBeenCalledWith(['/simulador/examen']);
   });
