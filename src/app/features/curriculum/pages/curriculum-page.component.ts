@@ -24,7 +24,7 @@ import { CurriculumCardComponent } from '../components/curriculum-card/curriculu
         <!-- Cabecera del Temario -->
         <header class="page-header">
           <div class="header-badges">
-            <app-badge variant="primary">CERTIFICACIÓN OFICIAL</app-badge>
+            <app-badge variant="primary">GUÍA DE APOYO VISUAL · NO OFICIAL</app-badge>
             <span class="version-tag font-mono">Versión 5.0 (101-500 & 102-500)</span>
           </div>
 
@@ -66,9 +66,12 @@ import { CurriculumCardComponent } from '../components/curriculum-card/curriculu
             <!-- Barra informativa del Examen 101 -->
             <div class="exam-banner">
               <div class="exam-info-col">
-                <div class="flex items-center gap-2 mb-1">
+                <div class="flex flex-wrap items-center gap-2 mb-1">
                   <span class="text-xs font-mono font-bold text-[var(--primary-text)]">EXAMEN 101-500</span>
-                  <app-badge variant="success">Disponible completo</app-badge>
+                  <app-badge variant="info">Guía visual no oficial</app-badge>
+                  <a href="https://learning.lpi.org/es/learning-materials/101-500/" target="_blank" rel="noopener noreferrer" class="text-xs text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors inline-flex items-center gap-1">
+                    Manual oficial LPI ↗
+                  </a>
                 </div>
                 <h2 class="exam-heading">LPIC-1 Exam 101: Arquitectura, paquetes y comandos GNU/Linux</h2>
                 <p class="exam-desc">
@@ -105,9 +108,12 @@ import { CurriculumCardComponent } from '../components/curriculum-card/curriculu
             <!-- Barra informativa del Examen 102 -->
             <div class="exam-banner">
               <div class="exam-info-col">
-                <div class="flex items-center gap-2 mb-1">
+                <div class="flex flex-wrap items-center gap-2 mb-1">
                   <span class="text-xs font-mono font-bold text-[var(--primary-text)]">EXAMEN 102-500</span>
-                  <app-badge variant="success">Disponible completo</app-badge>
+                  <app-badge variant="info">Guía visual no oficial</app-badge>
+                  <a href="https://learning.lpi.org/es/learning-materials/102-500/" target="_blank" rel="noopener noreferrer" class="text-xs text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors inline-flex items-center gap-1">
+                    Manual oficial LPI ↗
+                  </a>
                 </div>
                 <h2 class="exam-heading">LPIC-1 Exam 102: Shells, scripting, redes y seguridad</h2>
                 <p class="exam-desc">

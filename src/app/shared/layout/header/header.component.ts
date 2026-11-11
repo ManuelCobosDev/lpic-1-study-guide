@@ -29,7 +29,10 @@ import { SearchService } from '../../../core/services/search.service';
                 <rect width="28" height="28" rx="6" fill="currentColor" fill-opacity="0.12" />
                 <path d="M7 20L14 7L21 20H7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
-              <span class="font-bold text-base sm:text-lg text-[var(--text)] tracking-tight whitespace-nowrap"><span class="sm:hidden">LPIC-1</span><span class="hidden sm:inline">LPIC-1 Study Guide</span></span>
+              <span class="flex flex-col leading-none">
+                <span class="font-bold text-base sm:text-lg text-[var(--text)] tracking-tight whitespace-nowrap"><span class="sm:hidden">LPIC-1</span><span class="hidden sm:inline">LPIC-1 Study Guide</span></span>
+                <span class="hidden sm:inline text-[10px] font-medium text-[var(--text-muted)] tracking-tight whitespace-nowrap mt-0.5">Guía de apoyo visual · No oficial</span>
+              </span>
             </a>
 
             <!-- Navegacion escritorio -->
