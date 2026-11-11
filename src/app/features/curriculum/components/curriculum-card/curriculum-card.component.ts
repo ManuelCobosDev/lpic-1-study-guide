@@ -140,9 +140,9 @@ import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      height: 640px;
-      min-height: 640px;
-      max-height: 640px;
+      height: 668px;
+      min-height: 668px;
+      max-height: 668px;
       box-sizing: border-box;
       border-radius: var(--radius-2xl, 16px);
       background-color: var(--surface);
@@ -163,14 +163,12 @@ import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
 
     /* Cabecera */
     .card-header {
-      padding: 24px;
-      height: 156px;
-      min-height: 156px;
-      max-height: 156px;
+      padding: 20px 24px;
+      flex: 0 0 auto;
+      min-height: 184px;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
       border-bottom: 1px solid var(--border);
       background-color: var(--surface);
     }
@@ -223,7 +221,7 @@ import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
       gap: 6px;
       font-size: 13px;
       color: var(--text-muted);
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
     .meta-dot {
@@ -231,16 +229,15 @@ import { BadgeComponent, WeightMeterComponent } from '../../../../shared/ui';
     }
 
     .weight-row {
-      margin-top: 4px;
+      margin-top: 0;
     }
 
     /* Lista de subtemas */
     .subtopics-list {
       display: flex;
       flex-direction: column;
-      flex: 1 1 auto;
-      height: 420px;
-      max-height: 420px;
+      flex: 1 1 0;
+      min-height: 0;
       overflow-y: auto;
       background-color: var(--surface);
     }

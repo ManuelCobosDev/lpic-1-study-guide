@@ -14,7 +14,7 @@ import { APP_VERSION } from '../../../core/constants/version';
         <div class="flex flex-col md:flex-row items-center justify-between gap-4">
           <!-- Aviso legal LPI -->
           <p class="text-xs text-center md:text-left max-w-xl">
-            Material didáctico no oficial basado en los LPI Learning Materials del Linux Professional Institute. No afiliado al LPI.
+            Guía de apoyo visual no oficial para preparar LPIC-1, basada en los LPI Learning Materials del Linux Professional Institute. No es una web oficial ni está afiliada al LPI.
           </p>
 
           <!-- Enlaces de utilidad -->

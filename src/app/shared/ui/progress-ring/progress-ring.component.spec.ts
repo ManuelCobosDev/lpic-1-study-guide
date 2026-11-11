@@ -43,7 +43,7 @@ describe('ProgressRingComponent', () => {
     expect(valueEl.textContent).toContain('45%');
 
     const subEl = fixture.nativeElement.querySelector('.ring-subtitle');
-    expect(subEl.textContent).toContain('Completado');
+    expect(subEl).toBeNull();
   });
 
   it('debe aplicar la clase ring-complete cuando el valor llega a 100', () => {

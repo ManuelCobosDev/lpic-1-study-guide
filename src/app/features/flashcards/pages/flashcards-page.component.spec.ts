@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { FlashcardsPageComponent } from './flashcards-page.component';
+import { FlashcardsPageComponent, BATCH_SIZE } from './flashcards-page.component';
 import { FlashcardsService } from '../../../core/services/flashcards.service';
 import { FlashcardItem, LeitnerStats } from '../../../core/models/flashcard.model';
 import { signal } from '@angular/core';
@@ -139,5 +139,51 @@ describe('FlashcardsPageComponent', () => {
     component.toggleCardReveal('cmd-tee');
     expect(component.isCardRevealed('cmd-tee')).toBe(false);
   });
-});
 
+  it('debe filtrar la tanda por una caja Leitner específica (ej. Caja 1)', () => {
+    component.setBoxFilter(1);
+    expect(component.selectedBoxFilter()).toBe(1);
+    expect(component.totalCardsInSession()).toBe(1);
+    expect(component.currentCard()?.id).toBe('cmd-tee');
+  });
+
+  it('debe filtrar la tanda por tarjetas no estudiadas (unseen)', () => {
+    component.setBoxFilter('unseen');
+    expect(component.selectedBoxFilter()).toBe('unseen');
+    expect(component.totalCardsInSession()).toBe(1);
+    expect(component.currentCard()?.id).toBe('term-stdin');
+  });
+
+  it('debe limitar el tamaño de la tanda a un máximo de 10 tarjetas (BATCH_SIZE = 10)', () => {
+    const fifteenCards: FlashcardItem[] = Array.from({ length: 15 }, (_, i) => ({
+      id: `card-${i}`,
+      type: 'command',
+      frontTitle: `cmd-${i}`,
+      prompt: `¿Qué hace cmd-${i}?`,
+      backTitle: `cmd-${i}`,
+      backDescription: `Descripción ${i}`,
+      subtopicIds: ['101.1']
+    }));
+
+    component.allCards.set(fifteenCards);
+    component.setBoxFilter('all');
+
+    expect(component.totalCardsInSession()).toBe(BATCH_SIZE);
+    expect(component.totalCardsInSession()).toBe(10);
+  });
+
+  it('debe reflejar el conteo dinámico por caja en deckBoxCounts', () => {
+    expect(component.deckBoxCounts()['all']).toBe(2);
+    expect(component.deckBoxCounts()['1']).toBe(1);
+    expect(component.deckBoxCounts()['unseen']).toBe(1);
+    expect(component.deckBoxCounts()['5']).toBe(0);
+    expect(component.getBoxCount(1)).toBe(1);
+    expect(component.getBoxFilterCount('unseen')).toBe(1);
+  });
+
+  it('debe permitir seleccionar un tema específico y reiniciar la tanda', async () => {
+    await component.selectDeck('topic-103');
+    expect(component.selectedDeck()).toBe('topic-103');
+    expect(component.totalCardsInSession()).toBe(2);
+  });
+});

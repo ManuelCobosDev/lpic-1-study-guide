@@ -26,6 +26,26 @@ import {
 } from '../../../core/models/flashcard.model';
 import { isCardDue } from '../../../core/engines/leitner/leitner.engine';
 
+export const BATCH_SIZE = 10;
+
+export type BoxFilter = 'all' | 'unseen' | LeitnerBox;
+
+export interface BoxFilterOption {
+  id: BoxFilter;
+  name: string;
+  badge: string;
+  shortDesc: string;
+  colorClass: string;
+}
+
+export interface TopicDeckItem {
+  id: DeckType;
+  label: string;
+  title: string;
+  name: string;
+  exam: '101' | '102';
+}
+
 @Component({
   selector: 'app-flashcards-page',
   standalone: true,
@@ -52,6 +72,7 @@ export class FlashcardsPageComponent implements OnInit {
 
   readonly allCards = signal<FlashcardItem[]>([]);
   readonly selectedDeck = signal<DeckType>('all');
+  readonly selectedBoxFilter = signal<BoxFilter>('all');
   readonly deckStats = signal<LeitnerStats | null>(null);
   readonly sessionCards = signal<FlashcardItem[]>([]);
   readonly currentIndex = signal<number>(0);
@@ -76,10 +97,19 @@ export class FlashcardsPageComponent implements OnInit {
 
   readonly reviewedCards = signal<string[]>([]);
 
-  readonly showGuide = signal<boolean>(false);
-  readonly activeCategoryTab = signal<'topics' | 'general'>('topics');
+  // Opciones de configuración de cajas Leitner
+  readonly boxFilterOptions: readonly BoxFilterOption[] = [
+    { id: 'all', name: 'Todas', badge: 'Mezcla', shortDesc: 'Tanda aleatoria', colorClass: 'box-badge-all' },
+    { id: 'unseen', name: 'Nuevas', badge: 'Sin ver', shortDesc: 'Sin clasificar', colorClass: 'box-badge-unseen' },
+    { id: 1, name: 'Caja 1', badge: 'Urgente', shortDesc: 'Falladas (Otra vez)', colorClass: 'box-badge-1' },
+    { id: 2, name: 'Caja 2', badge: 'Aprendizaje', shortDesc: 'Primer acierto', colorClass: 'box-badge-2' },
+    { id: 3, name: 'Caja 3', badge: 'Afianzadas', shortDesc: 'Bien recordadas', colorClass: 'box-badge-3' },
+    { id: 4, name: 'Caja 4', badge: 'Avanzadas', shortDesc: 'Consolidadas', colorClass: 'box-badge-4' },
+    { id: 5, name: 'Caja 5', badge: 'Dominadas', shortDesc: 'Fijadas en memoria', colorClass: 'box-badge-5' }
+  ];
 
-  readonly topicDecks: { id: DeckType; label: string; title: string; name: string; exam: '101' | '102' }[] = [
+  // Catálogo ordenado de temas oficiales LPIC-1
+  readonly topicDecks: readonly TopicDeckItem[] = [
     { id: 'topic-101', label: '101', title: 'Tema 101', name: 'Arquitectura del sistema', exam: '101' },
     { id: 'topic-102', label: '102', title: 'Tema 102', name: 'Instalación y paquetes', exam: '101' },
     { id: 'topic-103', label: '103', title: 'Tema 103', name: 'Comandos GNU y Unix', exam: '101' },
@@ -95,15 +125,46 @@ export class FlashcardsPageComponent implements OnInit {
   readonly exam101Topics = computed(() => this.topicDecks.filter((t) => t.exam === '101'));
   readonly exam102Topics = computed(() => this.topicDecks.filter((t) => t.exam === '102'));
 
-  readonly availableDecks: { id: DeckType; label: string; icon: string }[] = [
+  readonly availableDecks: readonly { id: DeckType; label: string; icon: string }[] = [
     { id: 'all', label: 'Todo el Catálogo', icon: '📚' },
     { id: 'exam-101', label: 'Examen 101 Completo', icon: '🐧' },
-    { id: 'exam-102', label: 'Examen 102 Completo', icon: '🛡️' },
-    { id: 'commands', label: 'Solo Comandos', icon: '💻' },
-    { id: 'flags', label: 'Opciones / Flags', icon: '⚙️' },
-    { id: 'glossary', label: 'Solo Glosario', icon: '📖' },
-    { id: 'due-today', label: 'Vencidas hoy', icon: '⏰' }
+    { id: 'exam-102', label: 'Examen 102 Completo', icon: '🛡️' }
   ];
+
+  // Tarjetas filtradas pertenecientes al mazo o tema seleccionado
+  readonly activeDeckCards = computed(() => {
+    return this.getCardsForDeck(this.selectedDeck(), this.allCards());
+  });
+
+  // Conteo reactivo por caja para el mazo/tema seleccionado (se actualiza en tiempo real al valorar)
+  readonly deckBoxCounts = computed(() => {
+    const cards = this.activeDeckCards();
+    const progress = this.flashcardsService.progress();
+    const counts: Record<string, number> = {
+      all: cards.length,
+      unseen: 0,
+      '1': 0,
+      '2': 0,
+      '3': 0,
+      '4': 0,
+      '5': 0
+    };
+
+    for (const card of cards) {
+      const p = progress[card.id];
+      if (!p) {
+        counts['unseen'] = (counts['unseen'] ?? 0) + 1;
+      } else {
+        const box = p.box;
+        if (box >= 1 && box <= 5) {
+          const key = box.toString();
+          counts[key] = (counts[key] ?? 0) + 1;
+        }
+      }
+    }
+
+    return counts;
+  });
 
   readonly currentCard = computed(() => {
     return this.sessionCards()[this.currentIndex()] ?? null;
@@ -131,8 +192,9 @@ export class FlashcardsPageComponent implements OnInit {
 
   readonly activeDeckLabel = computed(() => {
     const deck = this.selectedDeck();
-    const found = this.availableDecks.find((d) => d.id === deck);
-    if (found) return found.label;
+    if (deck === 'all') return 'Todo LPIC-1 (Global)';
+    if (deck === 'exam-101') return 'Examen 101 Completo';
+    if (deck === 'exam-102') return 'Examen 102 Completo';
     const foundTopic = this.topicDecks.find((t) => t.id === deck);
     if (foundTopic) return `${foundTopic.title}: ${foundTopic.name}`;
     if (deck.startsWith('subtopic-')) return `Subtema ${deck.replace('subtopic-', '')}`;
@@ -140,33 +202,22 @@ export class FlashcardsPageComponent implements OnInit {
     return 'Mazo Personalizado';
   });
 
-  toggleGuide(): void {
-    this.showGuide.update((v) => !v);
-  }
+  readonly activeBoxLabel = computed(() => {
+    const filter = this.selectedBoxFilter();
+    const found = this.boxFilterOptions.find((o) => o.id === filter);
+    if (found) {
+      return `${found.name} (${found.badge})`;
+    }
+    return `Caja ${filter}`;
+  });
 
-  setActiveCategoryTab(tab: 'topics' | 'general'): void {
-    this.activeCategoryTab.set(tab);
-  }
-
-  // Filtrado reactivo de tarjetas en el Explorador (< 1 ms sobre 1 200+ tarjetas)
-  readonly filteredExplorerCards = computed(() => {
-    const q = this.searchQuery().toLowerCase().trim();
-    const deck = this.selectedDeck();
-    const kind = this.filterKind();
-    const boxFilter = this.filterBox();
-    const progress = this.flashcardsService.progress();
-
-    let list = this.allCards();
-
-    // Filtro por mazo activo
-    if (deck === 'commands') {
-      list = list.filter((c) => c.type === 'command' || c.kind === 'comando');
-    } else if (deck === 'flags') {
-      list = list.filter((c) => c.type === 'flag' || c.kind === 'opcion');
-    } else if (deck === 'glossary') {
-      list = list.filter((c) => c.type === 'glossary' || c.kind === 'termino');
-    } else if (deck === 'exam-101') {
-      list = list.filter(
+  // Métodos de compatibilidad y selección
+  getCardsForDeck(deck: DeckType, cards: FlashcardItem[]): FlashcardItem[] {
+    if (deck === 'all') {
+      return cards;
+    }
+    if (deck === 'exam-101') {
+      return cards.filter(
         (c) =>
           c.examId === '101' ||
           c.subtopicIds.some((s) => {
@@ -174,8 +225,9 @@ export class FlashcardsPageComponent implements OnInit {
             return num >= 101 && num <= 104;
           })
       );
-    } else if (deck === 'exam-102') {
-      list = list.filter(
+    }
+    if (deck === 'exam-102') {
+      return cards.filter(
         (c) =>
           c.examId === '102' ||
           c.subtopicIds.some((s) => {
@@ -183,18 +235,43 @@ export class FlashcardsPageComponent implements OnInit {
             return num >= 105 && num <= 110;
           })
       );
-    } else if (deck === 'due-today') {
-      list = list.filter((c) => {
+    }
+    if (deck === 'commands') {
+      return cards.filter((c) => c.type === 'command' || c.kind === 'comando');
+    }
+    if (deck === 'flags') {
+      return cards.filter((c) => c.type === 'flag' || c.kind === 'opcion');
+    }
+    if (deck === 'glossary') {
+      return cards.filter((c) => c.type === 'glossary' || c.kind === 'termino');
+    }
+    if (deck === 'due-today') {
+      const progress = this.flashcardsService.progress();
+      return cards.filter((c) => {
         const p = progress[c.id];
         return p !== undefined && isCardDue(p.nextReviewDate);
       });
-    } else if (deck.startsWith('topic-')) {
-      const tid = deck.replace('topic-', '');
-      list = list.filter((c) => c.topicId === tid || c.subtopicIds.some((s) => s.startsWith(`${tid}.`)));
-    } else if (deck.startsWith('subtopic-')) {
-      const sid = deck.replace('subtopic-', '');
-      list = list.filter((c) => c.subtopicIds.includes(sid));
     }
+    if (deck.startsWith('topic-')) {
+      const tid = deck.replace('topic-', '');
+      return cards.filter((c) => c.topicId === tid || c.subtopicIds.some((s) => s.startsWith(`${tid}.`)));
+    }
+    if (deck.startsWith('subtopic-')) {
+      const sid = deck.replace('subtopic-', '');
+      return cards.filter((c) => c.subtopicIds.includes(sid));
+    }
+    return cards;
+  }
+
+  // Filtrado reactivo de tarjetas en el Explorador
+  readonly filteredExplorerCards = computed(() => {
+    const q = this.searchQuery().toLowerCase().trim();
+    const deckCards = this.activeDeckCards();
+    const kind = this.filterKind();
+    const boxFilter = this.filterBox();
+    const progress = this.flashcardsService.progress();
+
+    let list = deckCards;
 
     // Filtro por tipo/kind
     if (kind !== 'all') {
@@ -296,17 +373,10 @@ export class FlashcardsPageComponent implements OnInit {
 
       if (subtemaParam) {
         initialDeck = `subtopic-${subtemaParam}`;
-        this.activeCategoryTab.set('topics');
       } else if (temaParam) {
         initialDeck = `topic-${temaParam}`;
-        this.activeCategoryTab.set('topics');
       } else if (mazoParam) {
         initialDeck = mazoParam;
-        if (mazoParam.startsWith('topic-') || mazoParam.startsWith('subtopic-') || mazoParam === 'all') {
-          this.activeCategoryTab.set('topics');
-        } else {
-          this.activeCategoryTab.set('general');
-        }
       }
 
       await this.selectDeck(initialDeck);
@@ -318,16 +388,6 @@ export class FlashcardsPageComponent implements OnInit {
   async selectDeck(deck: DeckType): Promise<void> {
     this.loading.set(true);
     this.selectedDeck.set(deck);
-    if (deck.startsWith('topic-') || deck.startsWith('subtopic-')) {
-      this.activeCategoryTab.set('topics');
-    } else if (deck !== 'all') {
-      this.activeCategoryTab.set('general');
-    }
-    this.isCompleted.set(false);
-    this.currentIndex.set(0);
-    this.isFlipped.set(false);
-    this.ratingsCount.set({ again: 0, hard: 0, good: 0, easy: 0 });
-    this.reviewedCards.set([]);
     this.explorerPage.set(1);
 
     try {
@@ -337,9 +397,60 @@ export class FlashcardsPageComponent implements OnInit {
       ]);
 
       this.deckStats.set(stats);
-      this.sessionCards.set(session.sessionCards);
+
+      // Si allCards estaba vacío y el servicio devolvió tarjetas (caso de mock o prueba unitaria)
+      if (this.allCards().length === 0 && session?.sessionCards && session.sessionCards.length > 0) {
+        this.allCards.set(session.sessionCards);
+      }
+
+      this.startNewBatch(true);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  setBoxFilter(filter: BoxFilter): void {
+    this.selectedBoxFilter.set(filter);
+    this.startNewBatch(true);
+  }
+
+  startNewBatch(preserveOrderIfSmall = false): void {
+    this.isCompleted.set(false);
+    this.currentIndex.set(0);
+    this.isFlipped.set(false);
+    this.ratingsCount.set({ again: 0, hard: 0, good: 0, easy: 0 });
+    this.reviewedCards.set([]);
+
+    const boxFilter = this.selectedBoxFilter();
+    const progress = this.flashcardsService.progress();
+    const deckCards = this.activeDeckCards();
+
+    let candidates: FlashcardItem[] = [];
+
+    if (boxFilter === 'all') {
+      candidates = [...deckCards];
+    } else if (boxFilter === 'unseen') {
+      candidates = deckCards.filter((c) => !progress[c.id]);
+    } else {
+      candidates = deckCards.filter((c) => progress[c.id]?.box === boxFilter);
+    }
+
+    if (candidates.length === 0) {
+      this.sessionCards.set([]);
+      return;
+    }
+
+    // Si hay más de BATCH_SIZE (10), barajar aleatoriamente y recortar a 10
+    if (candidates.length > BATCH_SIZE) {
+      const shuffled = this.shuffleArray(candidates);
+      this.sessionCards.set(shuffled.slice(0, BATCH_SIZE));
+    } else {
+      // Si hay <= 10: conservamos sin perder ninguna
+      if (!preserveOrderIfSmall && candidates.length > 1) {
+        this.sessionCards.set(this.shuffleArray(candidates));
+      } else {
+        this.sessionCards.set(candidates);
+      }
     }
   }
 
@@ -353,7 +464,7 @@ export class FlashcardsPageComponent implements OnInit {
 
     this.flashcardsService.rateCard(card.id, rating);
 
-    // Actualiza métricas de la sesión
+    // Actualiza métricas de la tanda
     this.ratingsCount.update((prev) => ({
       ...prev,
       [rating]: prev[rating] + 1
@@ -370,11 +481,15 @@ export class FlashcardsPageComponent implements OnInit {
   }
 
   async restartSession(): Promise<void> {
-    await this.selectDeck(this.selectedDeck());
+    this.startNewBatch(false);
   }
 
   getBoxCount(box: LeitnerBox): number {
-    return this.deckStats()?.byBox[box] ?? 0;
+    return this.deckBoxCounts()[box.toString()] ?? this.deckStats()?.byBox[box] ?? 0;
+  }
+
+  getBoxFilterCount(filter: BoxFilter): number {
+    return this.deckBoxCounts()[filter.toString()] ?? 0;
   }
 
   // Métodos del Explorador
@@ -423,5 +538,16 @@ export class FlashcardsPageComponent implements OnInit {
 
   getCardBox(cardId: string): number | null {
     return this.flashcardsService.progress()[cardId]?.box ?? null;
+  }
+
+  private shuffleArray<T>(array: readonly T[]): T[] {
+    const result = [...array];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = result[i]!;
+      result[i] = result[j]!;
+      result[j] = temp;
+    }
+    return result;
   }
 }

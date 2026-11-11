@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { ExamService } from '../../../core/services/exam.service';
 import { ContentService } from '../../../core/services/content.service';
 import { Topic } from '../../../core/models/curriculum.model';
@@ -25,7 +24,6 @@ import { DialogComponent } from '../../../shared/ui/dialog/dialog.component';
   imports: [
     RouterLink,
     DatePipe,
-    FormsModule,
     ContainerComponent,
     ButtonComponent,
     BadgeComponent,
@@ -44,13 +42,6 @@ export class SimulatorHubPageComponent implements OnInit {
   readonly topics = signal<Topic[]>([]);
   readonly selectedExam = signal<'101' | '102'>('101');
   readonly isStartingExam = signal<boolean>(false);
-  readonly onlyVerifiedQuestions = signal<boolean>(false);
-  readonly verifiedStats = signal<{
-    total: number;
-    verified: number;
-    pending: number;
-    hasPending: boolean;
-  }>({ total: 0, verified: 0, pending: 0, hasPending: false });
 
   // Modal de confirmación para eliminar intento o descartar sesión activa
   readonly isConfirmModalOpen = signal<boolean>(false);
@@ -83,21 +74,14 @@ export class SimulatorHubPageComponent implements OnInit {
     try {
       const manifest = await this.contentService.getManifest();
       this.topics.set(manifest.topics);
-      await this.refreshVerifiedStats();
     } catch {
       this.topics.set([]);
     }
   }
 
-  async selectExam(examId: '101' | '102'): Promise<void> {
+  selectExam(examId: '101' | '102'): void {
     this.selectedExam.set(examId);
     this.examService.setSelectedExamId(examId);
-    await this.refreshVerifiedStats();
-  }
-
-  private async refreshVerifiedStats(): Promise<void> {
-    const stats = await this.examService.getVerifiedQuestionsStats(this.selectedExam());
-    this.verifiedStats.set(stats);
   }
 
   async startTimedExam(): Promise<void> {
@@ -107,8 +91,7 @@ export class SimulatorHubPageComponent implements OnInit {
     try {
       await this.examService.startExam({
         mode: 'exam',
-        examId: exam,
-        onlyVerified: this.onlyVerifiedQuestions()
+        examId: exam
       });
       await this.router.navigate(['/simulador/examen']);
     } finally {

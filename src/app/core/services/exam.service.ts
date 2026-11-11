@@ -80,7 +80,6 @@ export class ExamService {
     topicId?: string;
     seed?: number;
     questionLimit?: number;
-    onlyVerified?: boolean;
   }): Promise<ActiveExamSession> {
     const manifest = await this.contentService.getManifest();
 
@@ -109,16 +108,9 @@ export class ExamService {
 
     // Filtrar preguntas según preferencias (incluir o excluir placeholders/ejemplo)
     const includePlaceholders = this.preferencesService.includeExampleContent();
-    let pool = includePlaceholders
+    const pool = includePlaceholders
       ? allQuestions
       : allQuestions.filter((q) => !q.placeholder);
-
-    if (options.onlyVerified) {
-      const verifiedOnly = pool.filter((q) => q.status === 'verificada' || q.verified === true || (!q.placeholder && q.status !== 'pendiente-verificacion'));
-      if (verifiedOnly.length > 0) {
-        pool = verifiedOnly;
-      }
-    }
 
     const topicsToLoadSet = new Set(topicsToLoad);
     const subtopicWeights: SubtopicWeightInfo[] = manifest.subtopics
@@ -294,48 +286,6 @@ export class ExamService {
     this.sessionStore.flush();
 
     return completedAttempt;
-  }
-
-  /**
-   * Obtiene estadísticas de preguntas verificadas vs pendientes de revisión para el examen indicado.
-   */
-  async getVerifiedQuestionsStats(examId: '101' | '102'): Promise<{
-    total: number;
-    verified: number;
-    pending: number;
-    hasPending: boolean;
-  }> {
-    try {
-      const manifest = await this.contentService.getManifest();
-      const topics = manifest.topics.filter((t) =>
-        examId === '102' ? parseInt(t.id) >= 105 : parseInt(t.id) <= 104
-      );
-      let total = 0;
-      let verified = 0;
-      let pending = 0;
-
-      for (const t of topics) {
-        const qList = await this.contentService.getQuestions(t.id);
-        for (const q of qList) {
-          if (q.placeholder) continue;
-          total++;
-          const isVerified = q.status === 'verificada' || q.verified === true || (!q.placeholder && q.status !== 'pendiente-verificacion');
-          if (isVerified) {
-            verified++;
-          } else {
-            pending++;
-          }
-        }
-      }
-      return {
-        total,
-        verified,
-        pending,
-        hasPending: pending > 0
-      };
-    } catch {
-      return { total: 0, verified: 0, pending: 0, hasPending: false };
-    }
   }
 
   /**
