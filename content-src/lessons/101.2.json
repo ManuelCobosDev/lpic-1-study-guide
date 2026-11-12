@@ -78,7 +78,7 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 CLAVE TOP DE EXAMEN: El primer proceso que ejecuta el Kernel siempre tiene el PID 1 (/sbin/init o systemd). Si el kernel no lo encuentra en el disco, el arranque se bloquea con un Kernel Panic («Attempted to kill init!»)."
+          "content": "🎯 CLAVE TOP DE EXAMEN: El primer proceso que ejecuta el kernel siempre tiene el PID 1 (/sbin/init o systemd). Si el kernel no localiza un iniciador válido en el disco, el arranque se detiene con un Kernel Panic y el equipo queda bloqueado sin llegar al login."
         },
         {
           "type": "callout",
@@ -92,53 +92,58 @@
     {
       "id": "101.2-slide-3",
       "slideNumber": 3,
-      "title": "Firmware de Arranque: BIOS/MBR frente a UEFI/GPT",
+      "title": "Firmware de arranque: BIOS/MBR frente a UEFI/ESP",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Firmware de Arranque: BIOS/MBR frente a UEFI/GPT"
+          "text": "Firmware de arranque: BIOS/MBR frente a UEFI/ESP"
         },
         {
           "type": "paragraph",
-          "text": "¿Dónde busca el firmware el gestor de arranque en cada arquitectura?"
+          "text": "¿Dónde busca el arranque cada firmware y qué sistemas de archivos es capaz de leer?"
         },
         {
           "type": "table",
           "headers": [
-            "Característica Clave",
-            "BIOS Clásica + MBR (Antiguo)",
-            "UEFI Moderna + GPT (Estándar Actual)"
+            "Característica",
+            "BIOS + MBR",
+            "UEFI + GPT"
           ],
           "rows": [
             [
               "¿Dónde busca el arranque?",
-              "En el sector físico 0 (MBR rígido de 512 bytes).",
-              "En un archivo ejecutable '.efi' dentro de la partición ESP (FAT32)."
+              "Sector físico 0: el MBR rígido de 512 bytes.",
+              "Un ejecutable .efi dentro de la partición ESP, señalado en la NVRAM."
+            ],
+            [
+              "Sistemas de archivos que lee",
+              "Ninguno: lee sectores crudos del disco.",
+              "FAT12, FAT16 y FAT32 en discos; ISO-9660 en medios ópticos."
             ],
             [
               "Capacidad máxima de disco",
-              "Máximo 2 TB (incompatible con discos modernos más grandes).",
-              "Discos gigantes (>2 TB, hasta Zettabytes sin límite práctico)."
+              "2 TB (no admite discos mayores).",
+              "GPT: sin límite práctico, admite discos de más de 2 TB."
             ],
             [
-              "Límite de particiones",
-              "Solo 4 particiones primarias (requiere partición extendida).",
-              "Hasta 128 particiones directas sin necesidad de trucos."
+              "Particiones",
+              "Solo 4 primarias (o una extendida con lógicas).",
+              "Hasta 128 entradas de partición."
             ],
             [
-              "Seguridad (Secure Boot)",
-              "❌ Sin protección (cualquiera puede sobreescribir el MBR).",
-              "🛡️ Secure Boot (solo arranca código con firma criptográfica válida)."
+              "Secure Boot",
+              "No existe: cualquiera puede reescribir el MBR.",
+              "Solo ejecuta aplicaciones EFI firmadas por el fabricante."
             ],
             [
-              "Configuración del firmware",
-              "Menú azul antiguo de la placa base (CMOS).",
-              "Menú moderno con ratón y configurable desde Linux con efibootmgr."
+              "Partición ESP",
+              "No aplica.",
+              "No debe compartirse con la raíz ni con los datos de usuario."
             ]
           ],
-          "caption": "Firmware de Arranque: BIOS/MBR frente a UEFI/GPT"
+          "caption": "Firmware de arranque: BIOS/MBR frente a UEFI/ESP"
         },
         {
           "type": "html",
@@ -147,11 +152,11 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: En BIOS, si se sobreescriben los primeros 446 bytes del MBR, el sistema no arrancará pero las particiones seguirán intactas (están en los 64 bytes siguientes)."
+          "title": "Clave de examen LPIC-1",
+          "content": "🎯 El manual LPI cifra la primera etapa del cargador (bootstrap) en los primeros 440 bytes del MBR. Los 446 B del gráfico engloban el bootstrap (440 B) más la firma de disco (4 B) y 2 B reservados; después vienen los 64 B de la tabla de particiones y los 2 B de firma 0x55AA, hasta completar los 512 B del sector. Sobrescribir el MBR no toca las particiones."
         }
       ],
-      "notes": "Explica la estructura física del MBR: 446 + 64 + 2 = 512 bytes. Es una pregunta clásica de certificación."
+      "notes": "Anatomía del MBR sin perder el dato del manual: 440 B de bootstrap + 4 B de firma de disco + 2 B reservados + 64 B de tabla de particiones + 2 B de firma 0x55AA = 512 B. Recuerda que la ESP es FAT12/16/32 (ISO-9660 en ópticos) y que el firmware UEFI no lee el MBR: usa las entradas de la NVRAM."
     },
     {
       "id": "101.2-slide-4",
@@ -194,23 +199,23 @@
     {
       "id": "101.2-slide-5",
       "slideNumber": 5,
-      "title": "Parámetros del Kernel en Tiempo de Arranque",
+      "title": "Parámetros del kernel en tiempo de arranque",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Parámetros del Kernel en Tiempo de Arranque"
+          "text": "Parámetros del kernel en tiempo de arranque"
         },
         {
           "type": "paragraph",
-          "text": "¿Qué opciones pasamos al kernel en la línea 'linux /vmlinuz...' y cómo ver con cuáles arrancó el sistema?"
+          "text": "¿Qué opciones se pasan al kernel en la línea `linux /vmlinuz...` y cómo saber con cuáles arrancó?"
         },
         {
           "type": "code",
           "language": "bash",
           "code": "linux /boot/vmlinuz root=UUID=... [opciones]",
-          "title": "Inspeccionar con /proc/cmdline los parámetros reales y saber cuándo añadir opciones de emergencia"
+          "title": "Línea de arranque que edita GRUB"
         },
         {
           "type": "terminal",
@@ -225,43 +230,48 @@
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
+            "Opción",
+            "Qué hace",
+            "Clave de examen"
           ],
           "rows": [
             [
-              "root=UUID=... (o /dev/sda1)",
-              "",
-              "🎯 Clave de Examen: Indica qué partición del disco contiene el sistema operativo real '/'. Se prefiere UUID porque nunca cambia."
+              "`root=UUID=...` o `root=/dev/sda3`",
+              "Indica la partición que contiene el sistema de archivos raíz `/`. Se prefiere UUID porque no cambia.",
+              "Si el UUID cambia tras clonar el disco aparece `VFS: Unable to mount root fs`."
             ],
             [
-              "ro",
-              "",
-              "Monta inicialmente la raíz en Solo Lectura para que el sistema revise el disco de forma segura antes de escribir nada."
+              "`ro` · `rw` · `rootflags=`",
+              "Montaje inicial de la raíz: solo lectura, lectura-escritura u opciones extra de montaje.",
+              "`ro` permite revisar el disco con `fsck` antes de escribir nada."
             ],
             [
-              "quiet splash",
-              "",
-              "Silencia los mensajes técnicos del kernel y muestra la pantalla gráfica con el logotipo de carga de la distribución."
+              "`quiet splash`",
+              "Silencia los mensajes técnicos y muestra el logotipo de carga.",
+              "Si el arranque falla, se quitan para ver el error real."
             ],
             [
-              "nomodeset",
-              "",
-              "Ejemplo real: Desactiva los drivers gráficos avanzados si la pantalla se queda congelada en negro al arrancar."
+              "`nomodeset`",
+              "Desactiva los drivers gráficos avanzados.",
+              "Pantalla en negro al arrancar: primer remedio."
             ],
             [
-              "acpi=off",
-              "",
-              "Ejemplo real: Desactiva la gestión de energía de la placa base si el equipo se bloquea al suspender o encender."
+              "`acpi=off`",
+              "Deshabilita la compatibilidad con ACPI (gestión de energía de la placa).",
+              "Equipos que se bloquean al suspender o al apagar: se descarta la gestión de energía."
             ],
             [
-              "mem=2G",
-              "",
-              "Ejemplo real: Limita la RAM a 2 GB para simular servidores pequeños o esquivar un módulo de memoria roto."
+              "`mem=512M`",
+              "Limita la RAM que verá el sistema operativo.",
+              "Útil en máquinas virtuales o con un módulo de memoria defectuoso."
+            ],
+            [
+              "`maxcpus=2` · `nosmp`",
+              "Limita los procesadores visibles; `nosmp` (o `maxcpus=0`) desactiva el multiprocesador.",
+              "Equivalencia: `maxcpus=0` hace lo mismo que `nosmp`."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Parámetros del kernel más usados en el arranque"
         },
         {
           "type": "html",
@@ -270,11 +280,11 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 PREGUNTA TOP DE EXAMEN: El archivo /proc/cmdline contiene exactamente la línea de comandos con la que arrancó el kernel actual."
+          "title": "Clave de examen LPIC-1",
+          "content": "🎯 `/proc/cmdline` contiene exactamente la línea de comandos con la que arrancó el kernel actual. `maxcpus=0` desactiva el multiprocesador igual que `nosmp`."
         }
       ],
-      "notes": "Enseña a los alumnos por qué 'ro' es tan importante: si la raíz se montara en 'rw' de inmediato, fsck no podría reparar posibles fallos en el sistema de archivos de forma segura."
+      "notes": "Insiste en `ro`: si la raíz se montara en `rw` de inmediato, `fsck` no podría reparar el sistema de archivos con seguridad. Añade que `acpi=off` deshabilita ACPI y que `maxcpus`/`nosmp` se preguntan juntos: `maxcpus=0` es el equivalente numérico de `nosmp`."
     },
     {
       "id": "101.2-slide-6",
@@ -364,15 +374,16 @@
         },
         {
           "type": "paragraph",
-          "text": "La Regla de Oro: Nunca edites /boot/grub/grub.cfg a mano. Editas el archivo sencillo y luego compilas:"
+          "text": "La regla de oro: nunca edites `/boot/grub/grub.cfg` a mano. Editas el archivo sencillo y luego lo compilas."
         },
         {
           "type": "list",
           "ordered": false,
           "items": [
-            "**La Regla de Oro que no puedes olvidar** — GRUB lee el archivo '/boot/grub/grub.cfg', pero NUNCA se modifica directamente porque tiene cientos de líneas complejas y se borra solo en las actualizaciones. Siempre se edita '/etc/default/grub'.",
-            "**GRUB_TIMEOUT=10 y GRUB_DEFAULT=0** — Ejemplos reales: 'GRUB_TIMEOUT=10' hace que el menú espere 10 segundos antes de arrancar solo. 'GRUB_DEFAULT=0' arranca la primera opción de la lista.",
-            "**Compilar cambios: update-grub o grub-mkconfig** — 🎯 Pregunta de Examen: Tras editar '/etc/default/grub', debes compilar con: 'grub-mkconfig -o /boot/grub/grub.cfg' (o el atajo 'update-grub' en Debian/Ubuntu). Si no lo haces, los cambios no se aplican."
+            "**La regla de oro** — GRUB lee `/boot/grub/grub.cfg`, pero NUNCA se modifica directamente: tiene cientos de líneas y se regenera en cada actualización. Siempre se edita `/etc/default/grub`.",
+            "**GRUB_TIMEOUT=10 y GRUB_DEFAULT=0** — `GRUB_TIMEOUT=10` hace que el menú espere 10 segundos antes de arrancar solo; `GRUB_DEFAULT=0` arranca la primera entrada de la lista.",
+            "**Persistencia: GRUB_CMDLINE_LINUX** — Los parámetros del kernel que deben sobrevivir a los reinicios (por ejemplo `quiet` o `mem=512M`) se añaden a la línea `GRUB_CMDLINE_LINUX` de `/etc/default/grub`.",
+            "**Compilar cambios: update-grub o grub-mkconfig** — 🎯 Pregunta de examen: hay que ejecutar `grub-mkconfig -o /boot/grub/grub.cfg` (o el atajo `update-grub` en Debian/Ubuntu); sin eso los cambios no se aplican."
           ]
         },
         {
@@ -388,11 +399,11 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 CLAVE TOP DE EXAMEN: Si modificas /etc/default/grub y no ejecutas 'grub-mkconfig -o /boot/grub/grub.cfg' (o update-grub), el cambio NUNCA tendrá efecto en el siguiente arranque."
+          "title": "Clave de examen LPIC-1",
+          "content": "🎯 Si modificas `/etc/default/grub` y no ejecutas `grub-mkconfig -o /boot/grub/grub.cfg` (o `update-grub`), el cambio NUNCA tendrá efecto en el siguiente arranque."
         }
       ],
-      "notes": "Pregunta de examen habitual: ¿Cuál es el archivo de configuración generado automáticamente por grub-mkconfig? Respuesta: /boot/grub/grub.cfg."
+      "notes": "Pregunta habitual: ¿cuál es el archivo generado automáticamente por grub-mkconfig? Respuesta: /boot/grub/grub.cfg. Añade que los parámetros del kernel se hacen persistentes en GRUB_CMDLINE_LINUX y que después hay que regenerar la configuración."
     },
     {
       "id": "101.2-slide-8",
@@ -435,41 +446,77 @@
     {
       "id": "101.2-slide-9",
       "slideNumber": 9,
-      "title": "Evolución de los Sistemas de Inicio: SysV frente a systemd",
+      "title": "Evolución de los sistemas de inicio: SysV frente a systemd",
       "layout": "diagram",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Evolución de los Sistemas de Inicio: SysV frente a systemd"
+          "text": "Evolución de los sistemas de inicio: SysV frente a systemd"
         },
         {
           "type": "paragraph",
-          "text": "¿Por qué Linux abandonó el clásico SysVinit y adoptó el estándar moderno systemd?"
+          "text": "¿Por qué Linux abandonó el clásico SysVinit y qué gana con systemd?"
         },
         {
           "type": "html",
           "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:12px; margin:8px 0;\">\n  <!-- 3 Columnas Visuales Comparativas -->\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:14px;\">\n    \n    <!-- SysVinit -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:4px solid #64748B; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;\">\n          <span style=\"font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase;\">El Pasado (Años 80–2000)</span>\n          <span style=\"font-size:18px;\">🐢</span>\n        </div>\n        <div style=\"font-size:17px; font-weight:800; color:var(--text); margin-bottom:6px;\">SysVinit (Heredado)</div>\n        <div style=\"font-size:12.5px; color:var(--text-muted); line-height:1.45;\">\n          • <strong>Fila India (Secuencial):</strong> Un servicio no empieza hasta que el anterior termina.<br>\n          • <strong>Scripts Bash:</strong> Enlaces en carpetas <code>/etc/rc0.d/</code> a <code>/etc/rc6.d/</code>.<br>\n          • <strong>Niveles (Runlevels):</strong> Runlevel 1 (rescate), 3 (servidor), 5 (gráfico).<br>\n          • <strong>Comando:</strong> <code>service apache2 restart</code> o <code>telinit 3</code>.\n        </div>\n      </div>\n      <div style=\"margin-top:10px; padding:4px 8px; background:var(--surface); border:1px solid var(--border); border-radius:6px; font-size:11.5px; font-weight:700; color:var(--text-muted);\">\n        Arranque lento y rígido\n      </div>\n    </div>\n\n    <!-- Upstart -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:4px solid #0284C7; border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;\">\n          <span style=\"font-size:11px; font-weight:800; color:#0284C7; text-transform:uppercase;\">Transición (2006–2014)</span>\n          <span style=\"font-size:18px;\">⚡</span>\n        </div>\n        <div style=\"font-size:17px; font-weight:800; color:var(--text); margin-bottom:6px;\">Upstart (Ubuntu)</div>\n        <div style=\"font-size:12.5px; color:var(--text-muted); line-height:1.45;\">\n          • <strong>Basado en Eventos:</strong> Reacciona cuando pasa algo (ej: «se conectó el cable de red»).<br>\n          • <strong>Archivos .conf:</strong> Trabajos guardados en la carpeta <code>/etc/init/</code>.<br>\n          • <strong>Compatibilidad:</strong> Emulaba los runlevels de SysVinit.<br>\n          • <strong>Comando:</strong> <code>initctl</code>, <code>start</code>, <code>stop</code>.\n        </div>\n      </div>\n      <div style=\"margin-top:10px; padding:4px 8px; background:var(--surface); border:1px solid var(--border); border-radius:6px; font-size:11.5px; font-weight:700; color:#0284C7;\">\n        Paso intermedio hacia eventos\n      </div>\n    </div>\n\n    <!-- systemd -->\n    <div style=\"background:var(--surface-alt); border:2px solid var(--border-strong); border-top:4px solid var(--success); border-radius:12px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;\">\n      <div>\n        <div style=\"display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;\">\n          <span style=\"font-size:11px; font-weight:800; color:var(--success); text-transform:uppercase;\">El Estándar Actual (2010 a hoy)</span>\n          <span style=\"font-size:18px;\">🚀</span>\n        </div>\n        <div style=\"font-size:17px; font-weight:800; color:var(--text); margin-bottom:6px;\">systemd (Moderno)</div>\n        <div style=\"font-size:12.5px; color:var(--text-muted); line-height:1.45;\">\n          • <strong>Paralelo Masivo:</strong> Enciende todos los servicios a la vez usando todos los núcleos de la CPU.<br>\n          • <strong>Targets en vez de Runlevels:</strong> <code>multi-user.target</code> (servidor) y <code>graphical.target</code> (escritorio).<br>\n          • <strong>Unidades .service:</strong> En <code>/lib/systemd/system/</code>.<br>\n          • <strong>Comando Único:</strong> <code>systemctl</code>.\n        </div>\n      </div>\n      <div style=\"margin-top:10px; padding:4px 8px; background:var(--surface); border:1px solid var(--border); border-radius:6px; font-size:11.5px; font-weight:700; color:var(--success);\">\n        El estándar en Debian, Ubuntu, RHEL\n      </div>\n    </div>\n\n  </div>\n\n  <!-- Tabla de Equivalencias de Examen -->\n  <div style=\"background:var(--surface); border:2px solid var(--border-strong); border-radius:12px; padding:10px 16px;\">\n    <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:6px;\">\n      🎯 Tabla de Equivalencias que SIEMPRE cae en el examen:\n    </div>\n    <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; font-size:12.5px;\">\n      <div style=\"background:var(--surface-alt); padding:6px 10px; border-radius:6px;\">\n        <strong>Modo Rescate / Monousuario:</strong><br>\n        Runlevel 1 ➔ <code>rescue.target</code>\n      </div>\n      <div style=\"background:var(--surface-alt); padding:6px 10px; border-radius:6px;\">\n        <strong>Modo Servidor (Texto y Red):</strong><br>\n        Runlevel 3 ➔ <code>multi-user.target</code>\n      </div>\n      <div style=\"background:var(--surface-alt); padding:6px 10px; border-radius:6px;\">\n        <strong>Modo Escritorio Gráfico:</strong><br>\n        Runlevel 5 ➔ <code>graphical.target</code>\n      </div>\n    </div>\n  </div>\n</div>\n"
         },
         {
+          "type": "table",
+          "headers": [
+            "Runlevel SysV",
+            "Target systemd",
+            "Para qué sirve"
+          ],
+          "rows": [
+            [
+              "0",
+              "poweroff.target",
+              "Apagar el sistema."
+            ],
+            [
+              "1 / S (single)",
+              "rescue.target",
+              "Usuario único: tareas de rescate."
+            ],
+            [
+              "3",
+              "multi-user.target",
+              "Multiusuario sin entorno gráfico (servidor)."
+            ],
+            [
+              "5",
+              "graphical.target",
+              "Multiusuario con entorno gráfico."
+            ],
+            [
+              "6",
+              "reboot.target",
+              "Reiniciar el sistema."
+            ]
+          ],
+          "caption": "Solo los runlevels 0, 1 y 6 están definidos igual en todas las distribuciones"
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 CLAVE TOP DE EXAMEN: Aunque hoy casi todo Linux usa systemd, /sbin/init sigue existiendo como un enlace simbólico que apunta al binario /lib/systemd/systemd."
+          "title": "Clave de examen LPIC-1",
+          "content": "🎯 Aunque hoy casi todo Linux usa systemd, `/sbin/init` sigue existiendo como enlace simbólico al binario de systemd; systemd acepta los runlevels numéricos de SysV (1 o S → rescate)."
         }
       ],
-      "notes": "En clase:\n1. Explica la analogía de la fila india: SysV era como una fila en la que nadie puede avanzar hasta que el de delante termine.\n2. systemd es como una autopista de 8 carriles: arranca la red, los discos y los servicios a la vez.\n3. Pregunta típica: Runlevels en SysV (0 a 6) vs Targets en systemd (multi-user.target, graphical.target)."
+      "notes": "Analogía de la fila india (SysV) frente a la autopista de varios carriles (systemd). Fija el dato de examen: SysVinit numera 0-6 y solo 0, 1 y 6 comparten definición en todas las distribuciones; systemd los mapea a targets."
     },
     {
       "id": "101.2-slide-10",
       "slideNumber": 10,
-      "title": "El Registro del Kernel: dmesg y el Búfer Circular",
+      "title": "El registro del kernel: dmesg y el búfer circular",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "El Registro del Kernel: dmesg y el Búfer Circular"
+          "text": "El registro del kernel: `dmesg` y el búfer circular"
         },
         {
           "type": "paragraph",
@@ -479,7 +526,7 @@
           "type": "code",
           "language": "bash",
           "code": "dmesg",
-          "title": "Inspeccionar el historial de detección de hardware en la memoria RAM con el comando dmesg"
+          "title": "Historial de detección de hardware en la memoria RAM"
         },
         {
           "type": "terminal",
@@ -502,32 +549,32 @@
             [
               "¿Para qué sirve dmesg?",
               "",
-              "Es la primera herramienta del SysAdmin cuando algo de hardware falla: un disco que da errores de lectura, una controladora o un puerto USB que no reconoce un periférico."
+              "Es la primera herramienta del SysAdmin cuando falla el hardware: un disco con errores de lectura, una controladora o un puerto USB que no reconoce el periférico."
             ],
             [
               "dmesg -T",
               "Human-readable time",
-              "🎯 Clave de Examen: Convierte los segundos relativos [ 12.451234] en fechas y horas humanas reales (ej: Sun Oct 25 10:14:02 2026)."
+              "🎯 Clave de examen: convierte los segundos relativos [ 12.451234] en fechas y horas reales."
             ],
             [
               "dmesg -H / --human",
               "Paginación y formato legible",
-              "🎯 Clave Oficial LPI: Activa paginación integrada interactiva automática (estilo less integrado) y marcas de tiempo humanas sin requerir entubar con less."
+              "🎯 Clave oficial LPI: activa un paginador interactivo interno y marcas de tiempo humanas sin entubar con less."
             ],
             [
               "dmesg --clear",
-              "Vaciar buffer circular",
-              "🎯 Mantenimiento: Limpia y borra el contenido actual del búfer circular en RAM. Ideal antes de conectar un dispositivo sospechoso para aislar nuevos logs."
+              "Vaciar búfer circular",
+              "🎯 Mantenimiento: borra el contenido actual del búfer en RAM; ideal antes de conectar un dispositivo sospechoso."
             ],
             [
               "dmesg -l err,warn",
               "Filtro de severidad",
-              "Filtra la salida para omitir mensajes informativos y ver únicamente los errores y advertencias de hardware."
+              "Omite los mensajes informativos y deja solo errores y advertencias."
             ],
             [
               "dmesg -w",
               "Seguimiento en directo",
-              "Permanece a la escucha en vivo (como tail -f): conectas un periférico y ves salir los mensajes del kernel al instante."
+              "Permanece a la escucha (como `tail -f`): conectas un periférico y ves sus mensajes al instante."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -539,32 +586,32 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 CLAVE TOP DE EXAMEN: El búfer del kernel es circular (Ring Buffer). Está en memoria RAM y tiene tamaño fijo: si se llena de mensajes, los nuevos sobrescriben a los más antiguos."
+          "title": "Clave de examen LPIC-1",
+          "content": "🎯 El búfer del kernel es circular (ring buffer), está en RAM y tiene tamaño fijo: los mensajes nuevos sobrescriben a los antiguos. Pierde todo su contenido al apagar el equipo o con `dmesg --clear`."
         }
       ],
-      "notes": "Muestra la diferencia entre 'dmesg' a secas (que muestra segundos flotantes tipo [    0.000000]) y 'dmesg -T' que muestra fechas reales."
+      "notes": "Diferencia entre `dmesg` a secas (segundos flotantes tipo [ 0.000000]) y `dmesg -T` (fechas reales). Cierra con la doble causa de pérdida del búfer: apagado del sistema y `dmesg --clear`."
     },
     {
       "id": "101.2-slide-11",
       "slideNumber": 11,
-      "title": "El Diario Digital de systemd: journalctl",
+      "title": "El diario digital de systemd: journalctl",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "El Diario Digital de systemd: journalctl"
+          "text": "El diario digital de systemd: journalctl"
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo busca un administrador los fallos del sistema sin tener que abrir 10 archivos de texto distintos?"
+          "text": "¿Cómo busca un administrador los fallos del sistema sin abrir diez archivos de texto distintos?"
         },
         {
           "type": "code",
           "language": "bash",
           "code": "journalctl",
-          "title": "Consultar y filtrar en segundos los logs del kernel, del arranque y de los servicios en una base de datos indexada"
+          "title": "Consultar y filtrar los logs del kernel, del arranque y de los servicios"
         },
         {
           "type": "terminal",
@@ -587,32 +634,32 @@
             [
               "journalctl -b / --boot",
               "Arranque actual",
-              "Muestra todos los logs generados desde que encendiste el ordenador en la sesión actual."
+              "Muestra los logs generados desde que encendiste el equipo."
             ],
             [
               "journalctl -b -1 / --boot=-1",
               "Arranque anterior",
-              "🎯 Clave de Examen: Muestra los logs del arranque previo (vital para diagnosticar caídas inesperadas del servidor). Acepta sinónimos --boot=0, --boot=-1."
+              "🎯 Clave de examen: logs del arranque previo (vital para diagnosticar caídas). Acepta `--boot=0` y `--boot=-1`."
             ],
             [
               "journalctl -D / --directory=DIR",
               "Directorio alternativo",
-              "🎯 Clave de Examen: Consulta archivos de journald en un directorio externo o montaje forense (ej: --directory=/mnt/disco/var/log/journal)."
+              "🎯 Clave de examen: consulta el journal en un directorio externo o montaje forense."
             ],
             [
               "journalctl -u nginx -f",
               "Seguimiento de servicio",
-              "Filtra por una unidad concreta y permanece en directo (-f / follow) monitorizando eventos."
+              "Filtra por una unidad concreta y permanece en directo (`-f`)."
             ],
             [
-              "journalctl -k -p err",
-              "Errores del Kernel",
-              "Muestra exclusivamente mensajes del Kernel (-k) con prioridad de error grave (-p err)."
+              "journalctl -k / --dmesg",
+              "Mensajes del kernel",
+              "🎯 `--dmesg` es equivalente a `-k`; con `-p err` deja solo los errores."
             ],
             [
               "journalctl --list-boots",
               "Historial de arranques",
-              "Lista todos los arranques registrados por el sistema con sus identificadores UUID, fechas y horas."
+              "Lista todos los arranques registrados con su hash, fechas y horas."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -624,31 +671,31 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 PREGUNTA TOP DE EXAMEN: Para investigar qué provocó la caída de un servidor en el reinicio anterior, se usa: 'journalctl -b -1'."
+          "title": "Clave de examen LPIC-1",
+          "content": "🎯 Para investigar qué provocó la caída de un servidor en el arranque anterior se usa `journalctl -b -1`. Las opciones `-b`, `--boot`, `-k` y `--dmesg` muestran mensajes de inicialización."
         }
       ],
-      "notes": "Explica la enorme ventaja de journalctl frente a los archivos .log planos antiguos: los logs de journald están indexados y no se corrompen en caídas."
+      "notes": "Ventaja de journalctl frente a los .log planos: los logs de journald están indexados y no se corrompen en una caída. Fija el alias `--dmesg` = `-k`, que el manual repite."
     },
     {
       "id": "101.2-slide-12",
       "slideNumber": 12,
-      "title": "Persistencia de Logs y Análisis Forense: /etc/systemd/journald.conf",
+      "title": "Persistencia de logs y análisis forense: /etc/systemd/journald.conf",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Persistencia de Logs y Análisis Forense: /etc/systemd/journald.conf"
+          "text": "Persistencia de logs y análisis forense: /etc/systemd/journald.conf"
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo evitar que los logs se borren al reiniciar y cómo auditar un servidor que no arranca con journalctl -D?"
+          "text": "¿Cómo evitar que los logs se borren al reiniciar y cómo auditar un servidor que no arranca con `journalctl -D`?"
         },
         {
           "type": "code",
-          "language": "bash",
-          "code": "",
+          "language": "ini",
+          "code": "[Journal]\nStorage=persistent\nSystemMaxUse=500M",
           "title": "/etc/systemd/journald.conf"
         },
         {
@@ -658,39 +705,39 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 CLAVE TOP DE EXAMEN: Si /var/log/journal/ no existe o Storage=volatile, los logs van a la RAM (/run) y se pierden al apagar. Para auditar los logs de un disco de servidor roto conectado a otro equipo, el comando oficial de certificación es: 'journalctl -D <ruta_al_directorio_journal>'."
+          "title": "Clave de examen LPIC-1",
+          "content": "🎯 Si `/var/log/journal/` no existe o `Storage=volatile`, los logs van a la RAM (`/run`) y se pierden al apagar. Los mensajes de arranque también se guardan como archivos en `/var/log/`. Para auditar el journal de un disco ajeno: `journalctl -D <ruta>`."
         }
       ],
-      "notes": "Guión didáctico sencillo para el profesor:\n1. EL PROBLEMA DE LOS LOGS VOLÁTILES:\n   - Por defecto en muchas instalaciones mínimas, systemd guarda los logs en /run/log/journal (RAM). Si el servidor se apaga o se bloquea, ¡pierdes todas las pistas de por qué falló!\n   - Para que sea persistente en disco duro, debe existir la ruta /var/log/journal/.\n2. DOS FORMAS DE ACTIVAR LA PERSISTENCIA:\n   - Método A (Automático): Ejecutar 'mkdir -p /var/log/journal && systemctl restart systemd-journald'.\n   - Método B (Configuración): Editar /etc/systemd/journald.conf y poner 'Storage=persistent'.\n3. LA PREGUNTA ESTRELLA DE EXAMEN - ANÁLISIS FORENSE CON -D:\n   - Imagina que un servidor se rompe y no arranca ni a modo rescate.\n   - Sacas el disco, lo pinchas en tu portátil o arrancas con un LiveCD y lo montas en /mnt/servidor_caido.\n   - ¿Cómo lees sus logs de systemd si journalctl por defecto lee los de tu máquina actual?\n   - Usando la opción -D (Directory): 'journalctl -D /mnt/servidor_caido/var/log/journal/'."
+      "notes": "Dos formas de activar la persistencia: crear /var/log/journal/ y reiniciar systemd-journald, o poner Storage=persistent. Cierra con /var/log/: si el sistema no arranca, un medio alternativo permite buscar allí las causas, y `journalctl -D` lee el journal de un disco montado."
     },
     {
       "id": "101.2-slide-13",
       "slideNumber": 13,
-      "title": "Ejercicios Guiados Oficiales (Parte 1: Firmware, BIOS y ESP)",
+      "title": "Ejercicios guiados oficiales (parte 1: firmware, BIOS y ESP)",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales (Parte 1: Firmware, BIOS y ESP)"
+          "text": "Ejercicios guiados oficiales (parte 1: firmware, BIOS y ESP)"
         },
         {
           "type": "list",
           "ordered": true,
           "items": [
-            "Caso 1: En un sistema BIOS tradicional, ¿dónde reside físicamente el código que la BIOS ejecuta tras el POST y cuántos bytes ocupa? — Comando: `Primer sector del disco duro (MBR / Sector 0), en los primeros 446 bytes` (El MBR ocupa 512 bytes: los primeros 446 son código ejecutable (Stage 1 de GRUB); los siguientes 64 bytes son la tabla de 4 particiones primarias y los 2 últimos la firma 0x55AA.)",
-            "Caso 2: En un equipo UEFI, el sistema no encuentra el bootloader tras clonar el disco. ¿Qué se debe comprobar? — Comando: `Comprobar que la partición ESP es tipo 'c12a7328-f81f-11d2-ba4b-00a0c93ec93b', tiene sistema FAT32 y contiene el archivo /EFI/debian/grubx64.efi` (El firmware UEFI no lee el MBR; navega directamente por la partición FAT32 buscando el binario .efi registrado en la NVRAM mediante efibootmgr.)"
+            "Caso 1: En un sistema BIOS tradicional, ¿dónde reside físicamente el código que la BIOS ejecuta tras el POST y cuántos bytes ocupa? — Comando: `Primer sector del disco duro (MBR / sector 0); la primera etapa del cargador (bootstrap) ocupa los primeros 440 bytes` (El MBR completo son 512 bytes: 440 B de bootstrap + 4 B de firma de disco + 2 B reservados + 64 B de tabla con 4 particiones primarias + 2 B de firma 0x55AA.)",
+            "Caso 2: En un equipo UEFI, el sistema no encuentra el bootloader tras clonar el disco. ¿Qué se debe comprobar? — Comando: `Comprobar que la partición ESP es de tipo 'c12a7328-f81f-11d2-ba4b-00a0c93ec93b', tiene sistema FAT32 y contiene el archivo /EFI/debian/grubx64.efi` (El firmware UEFI no lee el MBR; navega por la partición FAT buscando el binario .efi registrado en la NVRAM mediante efibootmgr.)"
           ]
         },
         {
           "type": "callout",
           "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "El examen compara continuamente la arquitectura de sectores físicos del MBR tradicional frente al sistema de archivos FAT de la partición ESP de UEFI."
+          "title": "Solución y explicación del ejercicio",
+          "content": "El examen compara la arquitectura de sectores físicos del MBR tradicional (bootstrap en los primeros 440 bytes) con el sistema de archivos FAT de la partición ESP de UEFI."
         }
       ],
-      "notes": "Haz énfasis en que en BIOS el código se ejecuta directamente de los sectores crudos del disco; en UEFI se ejecuta un binario dentro de un sistema de archivos."
+      "notes": "En BIOS el código se ejecuta desde sectores crudos del disco (440 B de bootstrap de los 512 B del MBR); en UEFI se ejecuta un binario dentro de un sistema de archivos FAT. El dato del manual son 440 bytes, no 446."
     },
     {
       "id": "101.2-slide-14",
@@ -723,34 +770,26 @@
     {
       "id": "101.2-slide-15",
       "slideNumber": 15,
-      "title": "Retos de Exploración del Manual Oficial",
-      "layout": "two-column",
+      "title": "Retos de exploración (2 casos)",
+      "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Retos de Exploración del Manual Oficial"
+          "text": "Retos de exploración (2 casos)"
         },
         {
-          "type": "callout",
-          "calloutType": "warning",
-          "title": "Escenario del Desafío",
-          "content": "Resuelve estos 4 retos de examen planteados en el manual oficial LPIC-1 (Páginas 41-44):\n1. ¿Qué ocurre exactamente si en un disco GPT ejecutas 'dd if=/dev/zero of=/dev/sda bs=446 count=1'?\n2. ¿Cómo forzarías al kernel a ignorar los primeros 8 GB de RAM si sospechas que un módulo DIMM falla?\n3. ¿Cómo examinar el búfer de dmesg con paginación integrada de forma nativa sin usar tuberías con less?\n4. ¿Cómo analizar los logs de un disco de servidor montado en /mnt/recuperacion con journalctl?"
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Pista",
-          "content": "Recuerda: Protective MBR en GPT; parámetro mem= en el kernel; buffer circular en RAM; y la opción de directorio de journalctl."
+          "type": "paragraph",
+          "text": "Dos retos del manual: (1) ¿qué ocurre exactamente si en un disco GPT ejecutas `dd if=/dev/zero of=/dev/sda bs=446 count=1`? (2) si sospechas que un módulo DIMM falla, ¿cómo limitas la RAM que usa el kernel?"
         },
         {
           "type": "callout",
           "calloutType": "tip",
-          "title": "Solución y Explicación del Desafío",
-          "content": "1. En GPT el Protective MBR solo ocupa el LBA 0 para protección; el arranque UEFI ignora el código del MBR y seguirá arrancando normalmente desde la partición ESP.\n2. Para limitar la memoria se añade el parámetro 'mem=8G' en la línea de arranque del kernel en GRUB.\n3. El manual oficial LPI destaca la opción 'dmesg -H' (o '--human'): activa un paginador interactivo interno nativo y traduce los timestamps a formato legible.\n4. Se utiliza la opción de directorio alternativo: 'journalctl --directory=/mnt/recuperacion/var/log/journal/' (o el sinónimo corto '-D')."
+          "title": "Soluciones",
+          "content": "1. Nada: en GPT el Protective MBR solo ocupa el LBA 0 como protección y el arranque UEFI ignora su código; el sistema sigue arrancando desde la partición ESP.\n2. Añadiendo `mem=8G` en la línea de arranque del kernel en GRUB: el sistema solo verá 8 GB de RAM disponibles, lo que descarta la memoria defectuosa."
         }
       ],
-      "notes": "Estos retos cubren preguntas de situaciones límite en el examen de certificación."
+      "notes": "Los otros dos retos del manual (dmesg -H y journalctl -D) ya están cubiertos en las diapositivas de dmesg y journalctl. Corrige la idea de «ignorar» RAM: `mem=` limita la cantidad disponible, no desactiva módulos."
     },
     {
       "id": "101.2-slide-16",
@@ -889,20 +928,6 @@
         }
       ],
       "notes": "Estas 8 tarjetas resumen las preguntas más frecuentes de todo el bloque de arranque de LPIC-1."
-    },
-    {
-      "id": "101.2-slide-19",
-      "slideNumber": 19,
-      "title": "Resumen y Claves de Examen: Subtema 101.2",
-      "layout": "summary",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Resumen y Claves de Examen: Subtema 101.2"
-        }
-      ],
-      "notes": "Concluimos el subtema 101.2. Los alumnos tienen una comprensión sólida del proceso de inicio completo de Linux."
     }
   ]
 }
