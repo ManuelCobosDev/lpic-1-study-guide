@@ -73,11 +73,27 @@
         },
         {
           "type": "table",
-          "headers": ["Clase DNS", "Denominación", "Uso Técnico y Relevancia en LPIC-1"],
+          "headers": [
+            "Clase DNS",
+            "Denominación",
+            "Uso Técnico y Relevancia en LPIC-1"
+          ],
           "rows": [
-            ["IN", "Internet", "La clase estándar utilizada por la pila TCP/IP para direcciones IPv4/IPv6 y nombres de dominio."],
-            ["CH", "ChaosNet", "Tecnología de red histórica de los laboratorios MIT, actualmente en desuso en tráfico de red real."],
-            ["HS", "Hesiod", "Mecanismo desarrollado en el MIT para almacenar bases de datos de sistema (usuarios y grupos) en DNS."]
+            [
+              "IN",
+              "Internet",
+              "La clase estándar utilizada por la pila TCP/IP para direcciones IPv4/IPv6 y nombres de dominio."
+            ],
+            [
+              "CH",
+              "ChaosNet",
+              "Tecnología de red histórica de los laboratorios MIT, actualmente en desuso en tráfico de red real."
+            ],
+            [
+              "HS",
+              "Hesiod",
+              "Mecanismo desarrollado en el MIT para almacenar bases de datos de sistema (usuarios y grupos) en DNS."
+            ]
           ],
           "caption": "Clases oficiales de registros DNS explicadas en el manual LPI"
         },
@@ -106,15 +122,47 @@
         },
         {
           "type": "table",
-          "headers": ["Directiva / Opción", "Función Técnica", "Límites y Sintaxis"],
+          "headers": [
+            "Directiva / Opción",
+            "Función Técnica",
+            "Límites y Sintaxis"
+          ],
           "rows": [
-            ["nameserver <IP>", "Dirección IPv4 o IPv6 del servidor DNS a consultar.", "Hasta 3 servidores como máximo. Si se omite, usa 127.0.0.1."],
-            ["search <dominios>", "Lista de dominios de búsqueda para completar nombres cortos.", "Hasta 6 dominios o 256 caracteres separados por espacios."],
-            ["domain <dominio>", "Define el nombre de dominio local del equipo.", "Obsoleto frente a 'search'. Si ambos existen, el último prevalece."],
-            ["options timeout:<seg>", "Segundos de espera antes de reintentar con el siguiente servidor.", "Por defecto suele ser 5 segundos."],
-            ["options attempts:<n>", "Número máximo de intentos de consulta por servidor.", "Por defecto suele ser 2 intentos."],
-            ["options rotate", "Distribución de consultas round-robin entre los nameservers.", "Reparte la carga entre los servidores configurados."],
-            ["options ndots:<n>", "Umbral de puntos en un nombre para considerarlo FQDN directo.", "Por defecto ndots:1 (si tiene menos de n puntos, aplica search primero)."]
+            [
+              "nameserver <IP>",
+              "Dirección IPv4 o IPv6 del servidor DNS a consultar.",
+              "Hasta 3 servidores como máximo. Si se omite, se usa el servidor de nombres de la máquina local (típicamente '127.0.0.1')."
+            ],
+            [
+              "search <dominios>",
+              "Lista de dominios de búsqueda para completar nombres cortos.",
+              "Hasta 6 dominios o 256 caracteres separados por espacios."
+            ],
+            [
+              "domain <dominio>",
+              "Define el nombre de dominio local del equipo.",
+              "Solo admite un dominio, frente a los 6 de 'search'. Si ambos existen, prevalece el último declarado."
+            ],
+            [
+              "options timeout:<seg>",
+              "Segundos de espera antes de reintentar con el siguiente servidor.",
+              "Por defecto suele ser 5 segundos."
+            ],
+            [
+              "options attempts:<n>",
+              "Número máximo de intentos de consulta por servidor.",
+              "Por defecto suele ser 2 intentos."
+            ],
+            [
+              "options rotate",
+              "Distribución de consultas round-robin entre los nameservers.",
+              "Reparte la carga entre los servidores configurados."
+            ],
+            [
+              "options ndots:<n>",
+              "Umbral de puntos en un nombre para considerarlo FQDN directo.",
+              "Por defecto ndots:1 (si tiene menos de n puntos, aplica search primero)."
+            ]
           ],
           "caption": "Directivas canónicas de configuración en /etc/resolv.conf"
         },
@@ -180,6 +228,10 @@
           "title": "Ejemplo de archivo /etc/hosts estándar"
         },
         {
+          "type": "paragraph",
+          "text": "La tabla se consulta en ambos sentidos: de nombre a IP y también de IP a nombre (resolución inversa). Por ejemplo, `getent hosts 10.0.1.53` devuelve `dns1.lpi.org`, la entrada definida arriba."
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "🎯 Trampa de Examen: Orden de Columnas en /etc/hosts",
@@ -196,29 +248,73 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Sintaxis Condicional [STATUS=ACTION] en la base 'hosts:'"
+          "text": "Orden de Fuentes y Lógica Condicional [STATUS=ACTION]"
         },
         {
           "type": "paragraph",
           "text": "El Name Service Switch ('/etc/nsswitch.conf') determina en qué orden se consultan las fuentes de información del sistema (como 'passwd:', 'group:', 'services:' y 'hosts:')."
         },
         {
+          "type": "code",
+          "language": "text",
+          "title": "Lógica condicional en /etc/nsswitch.conf",
+          "code": "# La columna entre corchetes condiciona a la fuente de su izquierda\nhosts:          dns [!UNAVAIL=return] files\nservices:       nis [NOTFOUND=return] files"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**`[STATUS=ACTION]`** aplica la acción solo a la fuente que tiene a su izquierda: en `hosts: dns [!UNAVAIL=return] files`, la condición afecta a `dns`, no a `files`.",
+            "**`!ESTADO`** significa «distinto de»: `[!UNAVAIL=return]` se cumple cuando el estado no es `UNAVAIL`, es decir, cuando la fuente sí responde.",
+            "**Consecuencia**: si el estado no es `UNAVAIL`, `return` corta la búsqueda y `files` no se consulta; solo se pasa a `files` cuando el DNS no está disponible."
+          ]
+        },
+        {
           "type": "table",
-          "headers": ["Estado (STATUS)", "Significado Técnico", "Condición"],
+          "headers": [
+            "Estado (STATUS)",
+            "Significado Técnico",
+            "Condición"
+          ],
           "rows": [
-            ["SUCCESS", "Éxito", "La entrada se encontró en la fuente consultada."],
-            ["NOTFOUND", "No encontrada", "La fuente está operativa pero no contiene el registro buscado."],
-            ["UNAVAIL", "No disponible", "La fuente no responde o el servicio no está accesible (ej. DNS caído)."],
-            ["TRYAGAIN", "Reintentar", "La fuente está ocupada o bloqueada temporalmente."]
+            [
+              "SUCCESS",
+              "Éxito",
+              "La entrada se encontró en la fuente consultada."
+            ],
+            [
+              "NOTFOUND",
+              "No encontrada",
+              "La fuente está operativa pero no contiene el registro buscado."
+            ],
+            [
+              "UNAVAIL",
+              "No disponible",
+              "La fuente no responde o el servicio no está accesible (ej. DNS caído)."
+            ],
+            [
+              "TRYAGAIN",
+              "Reintentar",
+              "La fuente está ocupada o bloqueada temporalmente."
+            ]
           ],
           "caption": "Estados de retorno posibles en /etc/nsswitch.conf"
         },
         {
           "type": "table",
-          "headers": ["Acción (ACTION)", "Efecto en el Flujo de Búsqueda"],
+          "headers": [
+            "Acción (ACTION)",
+            "Efecto en el Flujo de Búsqueda"
+          ],
           "rows": [
-            ["return", "Detiene la búsqueda de inmediato y devuelve el resultado actual (éxito o fallo)."],
-            ["continue", "Pasa a la siguiente fuente listada en la línea ignorando el estado actual."]
+            [
+              "return",
+              "Detiene la búsqueda de inmediato y devuelve el resultado actual (éxito o fallo)."
+            ],
+            [
+              "continue",
+              "Pasa a la siguiente fuente listada en la línea ignorando el estado actual."
+            ]
           ],
           "caption": "Acciones condicionales en /etc/nsswitch.conf"
         },
@@ -244,12 +340,12 @@
         {
           "type": "code",
           "language": "bash",
-          "code": "# Consultar todas las entradas de hosts según nsswitch.conf:\ngetent hosts\n\n# Resolver un host específico usando las librerías glibc:\ngetent hosts dns1.lpi.org\n# Salida: 10.0.1.53 dns1.lpi.org\n\n# Forzar una fuente de datos específica con la opción -s (glibc 2.2.5+):\ngetent -s files hosts localhost      # Consulta exclusivamente /etc/hosts\ngetent -s dns hosts lpi.org          # Consulta exclusivamente el servicio DNS\n\n# Consultar otras bases de datos de nsswitch.conf (ej. grupo openldap):\ngetent group openldap\n# Lee /etc/nsswitch.conf, busca 'openldap' en 'group:' y muestra su GID/miembros",
-          "title": "Uso de getent para consultar bases de nombres"
+          "title": "Uso de getent para consultar bases de nombres",
+          "code": "# Consultar todas las entradas de hosts según nsswitch.conf:\ngetent hosts\n\n# Resolver un host específico usando las librerías glibc:\ngetent hosts dns1.lpi.org\n# Salida: 10.0.1.53 dns1.lpi.org\n\n# Forzar la fuente con -s (glibc 2.2.5+): misma consulta, resultado distinto\ngetent -s files hosts learning.lpi.org   # 192.168.10.25   learning.lpi.org\ngetent -s dns   hosts learning.lpi.org   # 208.94.166.198  learning.lpi.org\n\n# Consultar otras bases de datos de nsswitch.conf (ej. grupo openldap):\ngetent group openldap\n# Lee /etc/nsswitch.conf, busca 'openldap' en 'group:' y muestra su GID/miembros"
         },
         {
           "type": "paragraph",
-          "text": "'getent' es la única herramienta de línea de comandos que emula con absoluta fidelidad cómo una aplicación cualquiera resuelve nombres, ya que utiliza internamente las funciones del resolver de glibc respetando '/etc/nsswitch.conf'."
+          "text": "'getent' emula con exactitud cómo resuelve nombres cualquier aplicación: usa el resolver de glibc y respeta '/etc/nsswitch.conf'. Por eso sirve para diagnosticar la configuración del sistema, mientras que 'host' y 'dig' solo hablan con el servidor DNS."
         }
       ]
     },
@@ -270,22 +366,57 @@
         },
         {
           "type": "table",
-          "headers": ["Tipo de Registro (-t)", "Descripción", "Ejemplo de Comando"],
+          "headers": [
+            "Tipo de Registro (-t)",
+            "Descripción",
+            "Ejemplo de Comando"
+          ],
           "rows": [
-            ["A", "Dirección IPv4 de 32 bits de un host.", "host -t A lpi.org"],
-            ["AAAA", "Dirección IPv6 de 128 bits de un host.", "host -t AAAA lpi.org"],
-            ["MX", "Mail Exchanger (servidor de correo y prioridad).", "host -t MX lpi.org"],
-            ["NS", "Name Server (servidores autoritativos del dominio).", "host -t NS lpi.org"],
-            ["SOA", "Start of Authority (número de serie y temporizadores).", "host -t SOA lpi.org"],
-            ["TXT", "Texto arbitrario (usado para SPF, DKIM, verificación).", "host -t TXT lpi.org"],
-            ["CNAME", "Canonical Name (alias hacia otro nombre canónico).", "host -t CNAME www.lpi.org"]
+            [
+              "A",
+              "Dirección IPv4 de 32 bits de un host.",
+              "host -t A lpi.org"
+            ],
+            [
+              "AAAA",
+              "Dirección IPv6 de 128 bits de un host.",
+              "host -t AAAA lpi.org"
+            ],
+            [
+              "MX",
+              "Mail Exchanger (servidor de correo y prioridad).",
+              "host -t MX lpi.org"
+            ],
+            [
+              "NS",
+              "Name Server (servidores autoritativos del dominio).",
+              "host -t NS lpi.org"
+            ],
+            [
+              "SOA",
+              "Start of Authority (número de serie y temporizadores).",
+              "host -t SOA lpi.org"
+            ],
+            [
+              "TXT",
+              "Texto arbitrario (usado para SPF, DKIM, verificación).",
+              "host -t TXT lpi.org"
+            ],
+            [
+              "CNAME",
+              "Canonical Name (alias hacia otro nombre canónico).",
+              "host -t CNAME www.lpi.org"
+            ]
           ],
           "caption": "Tipos de registros más frecuentes evaluados con host -t"
         },
         {
           "type": "terminal",
           "lines": [
-            { "prompt": "$", "command": "host -t NS lpi.org", "output": "lpi.org name server dns1.easydns.com.\nlpi.org name server dns2.easydns.net.\nlpi.org name server dns3.easydns.ca." }
+            {
+              "command": "host -t NS lpi.org",
+              "output": "lpi.org name server dns1.easydns.com.\nlpi.org name server dns2.easydns.net.\nlpi.org name server dns3.easydns.ca."
+            }
           ]
         }
       ]
@@ -308,8 +439,16 @@
         {
           "type": "terminal",
           "lines": [
-            { "prompt": "$", "command": "host 208.80.154.224", "output": "224.154.80.208.in-addr.arpa domain name pointer text-lb.eqiad.wikimedia.org." },
-            { "prompt": "$", "command": "host -t MX lpi.org dns1.easydns.com", "output": "Using domain server:\nName: dns1.easydns.com\nAddress: 64.68.192.10#53\nlpi.org mail is handled by 10 aspmx4.googlemail.com." }
+            {
+              "prompt": "$",
+              "command": "host 208.80.154.224",
+              "output": "224.154.80.208.in-addr.arpa domain name pointer text-lb.eqiad.wikimedia.org."
+            },
+            {
+              "prompt": "$",
+              "command": "host -t MX lpi.org dns1.easydns.com",
+              "output": "Using domain server:\nName: dns1.easydns.com\nAddress: 64.68.192.10#53\nlpi.org mail is handled by 10 aspmx4.googlemail.com."
+            }
           ]
         },
         {
@@ -331,23 +470,27 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Domain Information Groper y sus 4 Secciones Principales"
+          "text": "La Salida de dig: Cabecera, Secciones y Estadísticas"
         },
         {
           "type": "paragraph",
-          "text": "'dig' es la herramienta estándar más potente para depurar servidores y configuraciones DNS. Por defecto consulta registros A e imprime un informe estructurado en secciones:"
+          "text": "'dig' es la herramienta estándar más potente para depurar servidores y configuraciones DNS. Por defecto consulta registros A e imprime un informe estructurado en secciones. En la sección ANSWER el TTL ocupa la segunda columna: `nombre  TTL  clase  tipo  valor`."
         },
         {
           "type": "list",
+          "ordered": false,
           "items": [
-            "**1. Cabecera (HEADER)**: Indica la versión de dig, el opcode ('QUERY'), el código de estado ('status: NOERROR'), identificador y contadores de registros.",
-            "**2. OPT PSEUDOSECTION**: Datos de extensiones EDNS (versión, tamaño de buffer UDP y cookie de transacción).",
-            "**3. QUESTION SECTION**: La consulta exacta enviada al servidor (ej. ';lpi.org. IN A').",
-            "**4. ANSWER SECTION**: Los registros devueltos correspondientes a la consulta con su TTL, clase y valor.",
-            "**5. AUTHORITY SECTION**: Servidores autoritativos (registros NS o SOA) responsables de la zona.",
-            "**6. ADDITIONAL SECTION**: Direcciones IP (A y AAAA) de los servidores de nombres listados en AUTHORITY.",
-            "**7. Estadísticas finales**: 'Query time' (latencia en ms), 'SERVER' (IP y puerto del servidor que respondió, ej. '192.168.1.20#53'), 'WHEN' (fecha/hora) y 'MSG SIZE rcvd'."
+            "**1. Cabecera (HEADER)**: versión de dig, opcode ('QUERY'), código de estado ('status: NOERROR'), identificador y contadores de registros.",
+            "**2. OPT PSEUDOSECTION**: extensiones EDNS (versión, tamaño de buffer UDP y cookie de transacción).",
+            "**3. QUESTION SECTION**: la consulta exacta enviada al servidor (ej. ';lpi.org. IN A').",
+            "**4. ANSWER SECTION**: los registros devueltos, con el TTL en la segunda columna, la clase y el valor.",
+            "**5. AUTHORITY SECTION**: servidores autoritativos (registros NS o SOA) responsables de la zona.",
+            "**6. ADDITIONAL SECTION**: direcciones IP (A y AAAA) de los servidores de nombres listados en AUTHORITY."
           ]
+        },
+        {
+          "type": "paragraph",
+          "text": "El informe cierra con las estadísticas finales: 'Query time' (latencia en ms), 'SERVER' (IP y puerto del servidor que respondió, p. ej. '192.168.1.20#53'), 'WHEN' (fecha y hora) y 'MSG SIZE rcvd'."
         }
       ]
     },
@@ -370,23 +513,63 @@
         },
         {
           "type": "table",
-          "headers": ["Código status", "Significado", "Causa en Diagnóstico"],
+          "headers": [
+            "Código status",
+            "Significado",
+            "Causa en Diagnóstico"
+          ],
           "rows": [
-            ["NOERROR", "Sin errores", "La consulta se completó con éxito (pudo o no encontrar datos)."],
-            ["NXDOMAIN", "Non-Existent Domain", "El dominio o nombre de host consultado no existe en el DNS."],
-            ["SERVFAIL", "Server Failure", "El servidor DNS tuvo un fallo interno o no pudo contactar con la zona autoritativa."],
-            ["REFUSED", "Consulta Rechazada", "El servidor denegó la consulta (por política de recursión, ACL o zona privada)."]
+            [
+              "NOERROR",
+              "Sin errores",
+              "La consulta se completó con éxito (pudo o no encontrar datos)."
+            ],
+            [
+              "NXDOMAIN",
+              "Non-Existent Domain",
+              "El dominio o nombre de host consultado no existe en el DNS."
+            ],
+            [
+              "SERVFAIL",
+              "Server Failure",
+              "El servidor DNS tuvo un fallo interno o no pudo contactar con la zona autoritativa."
+            ],
+            [
+              "REFUSED",
+              "Consulta Rechazada",
+              "El servidor denegó la consulta (por política de recursión, ACL o zona privada)."
+            ]
           ],
           "caption": "Códigos de estado DNS devueltos en la cabecera de dig"
         },
         {
           "type": "table",
-          "headers": ["Bandera (Flag)", "Nombre Completo", "Significado"],
+          "headers": [
+            "Bandera (Flag)",
+            "Nombre Completo",
+            "Significado"
+          ],
           "rows": [
-            ["qr", "Query Response", "El mensaje recibido es una respuesta a una consulta, no una solicitud."],
-            ["rd", "Recursion Desired", "El cliente solicitó al servidor que realice resolución recursiva."],
-            ["ra", "Recursion Available", "El servidor DNS confirma que ofrece y tiene habilitada la recursión."],
-            ["aa", "Authoritative Answer", "La respuesta proviene directamente de un servidor con autoridad para esa zona."]
+            [
+              "qr",
+              "Query Response",
+              "El mensaje recibido es una respuesta a una consulta, no una solicitud."
+            ],
+            [
+              "rd",
+              "Recursion Desired",
+              "El cliente solicitó al servidor que realice resolución recursiva."
+            ],
+            [
+              "ra",
+              "Recursion Available",
+              "El servidor DNS confirma que ofrece y tiene habilitada la recursión."
+            ],
+            [
+              "aa",
+              "Authoritative Answer",
+              "La respuesta proviene directamente de un servidor con autoridad para esa zona."
+            ]
           ],
           "caption": "Flags de cabecera en respuestas DNS evaluadas en LPIC-1"
         },
@@ -411,15 +594,47 @@
         },
         {
           "type": "table",
-          "headers": ["Modificador de dig", "Efecto en la Salida", "Ejemplo"],
+          "headers": [
+            "Modificador de dig",
+            "Efecto en la Salida",
+            "Ejemplo"
+          ],
           "rows": [
-            ["+short", "Muestra únicamente el resultado neto (ideal para scripts)", "dig +short lpi.org (devuelve solo la IP)"],
-            ["+trace", "Realiza traza jerárquica recursiva desde los root servers (.)", "dig +trace lpi.org"],
-            ["+noall +answer", "Oculta todas las secciones salvo la sección ANSWER", "dig +noall +answer lpi.org"],
-            ["+question", "Vuelve a mostrar la sección QUESTION (usado con +noall)", "dig +noall +answer +question lpi.org"],
-            ["-x <IP>", "Búsqueda inversa directa para registros PTR", "dig -x 208.80.154.224 +short"],
-            ["@servidor", "Envía la consulta a un servidor DNS alternativo específico", "dig @8.8.8.8 lpi.org MX"],
-            ["+nocookie", "Desactiva el envío de la cookie EDNS en la consulta", "dig +nocookie lpi.org"]
+            [
+              "+short",
+              "Muestra únicamente el resultado neto (ideal para scripts)",
+              "dig +short lpi.org (devuelve solo la IP)"
+            ],
+            [
+              "+trace",
+              "Realiza traza jerárquica recursiva desde los root servers (.)",
+              "dig +trace lpi.org"
+            ],
+            [
+              "+noall +answer",
+              "Oculta todas las secciones salvo la sección ANSWER",
+              "dig +noall +answer lpi.org"
+            ],
+            [
+              "+question",
+              "Vuelve a mostrar la sección QUESTION (usado con +noall)",
+              "dig +noall +answer +question lpi.org"
+            ],
+            [
+              "-x <IP>",
+              "Búsqueda inversa directa para registros PTR",
+              "dig -x 208.80.154.224 +short"
+            ],
+            [
+              "@servidor",
+              "Envía la consulta a un servidor DNS alternativo específico",
+              "dig @8.8.8.8 lpi.org MX"
+            ],
+            [
+              "+nocookie",
+              "Desactiva el envío de la cookie EDNS en la consulta",
+              "dig +nocookie lpi.org"
+            ]
           ],
           "caption": "Opciones avanzadas y filtros de dig"
         },
@@ -444,14 +659,49 @@
         },
         {
           "type": "table",
-          "headers": ["Característica", "getent hosts", "host", "dig"],
+          "headers": [
+            "Característica",
+            "getent hosts",
+            "host",
+            "dig"
+          ],
           "rows": [
-            ["Librería subyacente", "glibc resolver del sistema", "Cliente de red BIND propio", "Cliente de red BIND propio"],
-            ["¿Respeta /etc/hosts?", "SÍ (según nsswitch.conf)", "NO (ignora /etc/hosts)", "NO (ignora /etc/hosts)"],
-            ["¿Respeta nsswitch.conf?", "SÍ (sigue el orden de fuentes)", "NO (solo consulta DNS)", "NO (solo consulta DNS)"],
-            ["Búsqueda inversa PTR", "getent hosts <IP>", "host <IP>", "dig -x <IP>"],
-            ["Uso en administración", "Ver cómo resuelve el sistema", "Consultas rápidas de registros", "Depuración exhaustiva y DNSSEC"],
-            ["Aislamiento de fuente", "getent -s files/dns hosts", "host dominio [servidor]", "dig @servidor dominio [tipo]"]
+            [
+              "Librería subyacente",
+              "glibc resolver del sistema",
+              "Cliente de red BIND propio",
+              "Cliente de red BIND propio"
+            ],
+            [
+              "¿Respeta /etc/hosts?",
+              "SÍ (según nsswitch.conf)",
+              "NO (ignora /etc/hosts)",
+              "NO (ignora /etc/hosts)"
+            ],
+            [
+              "¿Respeta nsswitch.conf?",
+              "SÍ (sigue el orden de fuentes)",
+              "NO (solo consulta DNS)",
+              "NO (solo consulta DNS)"
+            ],
+            [
+              "Búsqueda inversa PTR",
+              "getent hosts <IP>",
+              "host <IP>",
+              "dig -x <IP>"
+            ],
+            [
+              "Uso en administración",
+              "Ver cómo resuelve el sistema",
+              "Consultas rápidas de registros",
+              "Depuración exhaustiva y DNSSEC"
+            ],
+            [
+              "Aislamiento de fuente",
+              "getent -s files/dns hosts",
+              "host dominio [servidor]",
+              "dig @servidor dominio [tipo]"
+            ]
           ],
           "caption": "Matriz técnica de diferencias entre herramientas de resolución"
         },
@@ -466,112 +716,32 @@
     {
       "id": "109.4-slide-14",
       "slideNumber": 14,
-      "title": "Trampas Críticas de Examen: 109.4 DNS Cliente",
-      "layout": "two-column",
+      "title": "Repaso: Ejercicios Oficiales del Manual LPI",
+      "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Escenarios Engañosos en la Certificación LPIC-1"
+          "text": "Los Ejercicios del Manual Condensados en Seis Casos"
         },
         {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Trampa 1: [SUCCESS=continue] en nsswitch.conf",
-          "content": "La sintaxis estándar es 'hosts: files dns'. Si aparece 'hosts: files [SUCCESS=continue] dns', el resolver busca en /etc/hosts y, aunque lo encuentre con éxito, continuará hacia el DNS. Si el DNS responde, su respuesta reemplaza a la local."
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Trampa 2: host y dig no leen /etc/hosts",
-          "content": "Nunca asumas que un cambio en /etc/hosts se probará con 'dig' o 'host'. Esas utilidades se comunican únicamente por UDP/TCP con el servidor de nombres. Para validar /etc/hosts usa 'getent hosts' o 'ping'."
-        }
-      ],
-      "secondaryBlocks": [
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Trampa 3: Inversión en /etc/hosts",
-          "content": "La primera columna siempre es la IP. 'localhost 127.0.0.1' es un error común en opciones múltiples; la forma válida es '127.0.0.1 localhost' y '::1 localhost'."
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Trampa 4: search frente a domain",
-          "content": "'search' permite hasta 6 dominios de búsqueda delimitados por espacios (ej. 'search lpi.org sub.lpi.org'). 'domain' solo permite uno. Si se configuran ambos en /etc/resolv.conf, prevalece el último declarado."
-        }
-      ]
-    },
-    {
-      "id": "109.4-slide-15",
-      "slideNumber": 15,
-      "title": "Ejercicios Guiados Oficiales (Manual LPI)",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Casos Prácticos Oficiales (1 a 3)"
+          "type": "paragraph",
+          "text": "Los ejercicios guiados y de exploración de la lección original se resumen en los seis casos que más se preguntan."
         },
         {
           "type": "list",
+          "ordered": false,
           "items": [
-            "**1. Comando 'getent group openldap'**: Lee `/etc/nsswitch.conf`, busca la entrada para el grupo `openldap` en las fuentes configuradas (`group:`) y despliega su información (nombre, password y GID).",
-            "**2. Diferencia de getent frente a host/dig**: `getent` utiliza las librerías del sistema glibc respetando `/etc/nsswitch.conf` y `/etc/hosts`. Por el contrario, `host` y `dig` son clientes directos que solo consultan servidores DNS.",
-            "**3. Opción para tipo de registro en host y dig**: Ambos programas utilizan la opción `-t` seguida del tipo de registro buscado (ej. `-t MX`, `-t NS`, `-t SOA`)."
-          ]
-        }
-      ],
-      "secondaryBlocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Casos Prácticos Oficiales (4 y 5)"
-        },
-        {
-          "type": "list",
-          "items": [
-            "**4. Entrada correcta en /etc/hosts**: La opción correcta es `::1 localhost`. La columna de la izquierda siempre debe ser una dirección IPv4 o IPv6; la variante `localhost 127.0.0.1` es errónea.",
-            "**5. Especificar fuente de datos en getent**: Se utiliza la opción `-s <fuente>` (ej. `getent -s files hosts localhost` para consultar solo `/etc/hosts` o `getent -s dns hosts lpi.org`)."
-          ]
-        }
-      ]
-    },
-    {
-      "id": "109.4-slide-16",
-      "slideNumber": 16,
-      "title": "Ejercicios de Exploración Oficiales (Manual LPI)",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Exploración Avanzada (1 a 3)"
-        },
-        {
-          "type": "list",
-          "items": [
-            "**1. Edición de resolv.conf con NetworkManager**: Si el archivo contiene `# Generated by NetworkManager`, cualquier cambio manual será sobrescrito en cuanto el gestor de red se reinicie o renueve la concesión DHCP.",
-            "**2. Significado de 'hosts: files [SUCCESS=continue] dns'**: Las búsquedas de nombres comprobarán `/etc/hosts` y luego DNS. Si una entrada se encuentra en files pero también existe en DNS, se utilizará la respuesta del DNS porque la búsqueda continúa.",
-            "**3. Fichero resolv.conf con servidores comentados**: Si las líneas `nameserver` tienen un `#` al inicio (`#nameserver ...`) y no hay un servidor DNS local, el sistema no podrá resolver ningún nombre por DNS."
-          ]
-        }
-      ],
-      "secondaryBlocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Exploración Avanzada (4 y 5)"
-        },
-        {
-          "type": "list",
-          "items": [
-            "**4. Comando 'dig +noall +answer +question lpi.org'**: Suprime todas las secciones informativas (`+noall`) y muestra únicamente la consulta enviada (`+question`) y la respuesta limpia con el registro A (`+answer`).",
-            "**5. Modificar valores predeterminados de dig sin la línea de comandos**: Se crea un archivo de configuración `.digrc` en el directorio personal del usuario (`~/.digrc`) con las opciones deseadas (ej. `+noall +answer`)."
+            "**`getent group openldap`**: lee `/etc/nsswitch.conf`, busca el grupo en las fuentes de `group:` y muestra su nombre, contraseña y GID si lo encuentra.",
+            "**getent frente a host y dig**: solo `getent` usa las librerías de resolución y respeta `/etc/nsswitch.conf`; `host` y `dig` consultan únicamente el DNS.",
+            "**Opción `-t` en host y dig**: `host -t MX lpi.org` y `dig -t SOA lpi.org` eligen el tipo de registro que se busca.",
+            "**`getent -s files` frente a `-s dns`**: la misma consulta devuelve IPs distintas, así que la fuente elegida cambia el resultado.",
+            "**`::1 localhost` es válido** porque la IP va siempre a la izquierda. Con `hosts: files [SUCCESS=continue] dns`, si el nombre está en ambos, gana el DNS.",
+            "**`dig +noall +answer +question`** deja solo consulta y respuesta y puede fijarse en `~/.digrc`; un `nameserver` comentado o NetworkManager explican por qué falla o no persiste la resolución."
           ]
         }
       ]
     }
   ],
-  "totalSlides": 16
+  "totalSlides": 14
 }
