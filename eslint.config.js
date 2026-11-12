@@ -17,7 +17,8 @@ export default tseslint.config(
       'test-results/**',
       'scripts/**',
       'content-src/**',
-      'docs/**'
+      'docs/**',
+      '.agents/**'
     ]
   },
   {
