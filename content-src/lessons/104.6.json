@@ -58,25 +58,25 @@
     {
       "id": "104.6-slide-2",
       "slideNumber": 2,
-      "title": "Arquitectura Interna: Entradas de Directorio e Inodos",
+      "title": "Arquitectura interna: entradas de directorio e inodos",
       "layout": "diagram",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Arquitectura Interna: Entradas de Directorio e Inodos"
+          "text": "Arquitectura interna: entradas de directorio e inodos"
         },
         {
           "type": "paragraph",
-          "text": "En Linux el nombre de un archivo nunca se guarda en el inodo. Esta separación permite la magia de los enlaces:"
+          "text": "En Linux el nombre de un archivo nunca se guarda en el inodo. Esa separación es la que hace posibles los enlaces:"
         },
         {
           "type": "list",
           "ordered": false,
           "items": [
-            "**El Inodo almacena los datos y metadatos** — El inodo contiene los permisos, el propietario, el tamaño, las fechas y los punteros a los bloques de disco físicos. Pero el inodo NO contiene el nombre del archivo.",
-            "**El Directorio es una tabla de correspondencias** — Un directorio en Linux es simplemente un archivo especial que contiene una lista de parejas: 'Nombre de Archivo -> Número de Inodo'.",
-            "**¿Qué es un Enlace Duro (Hard Link)?** — 🎯 Es sencillamente una SEGUNDA ENTRADA de directorio que apunta AL MISMO NÚMERO DE INODO exacto. No duplica los datos; dos nombres distintos apuntan al mismo archivo físico."
+            "**El inodo guarda datos y metadatos** — Permisos, propietario, tamaño, fechas y punteros a los bloques de disco. El inodo NO contiene el nombre del archivo.",
+            "**El directorio es una tabla de correspondencias** — Un archivo especial que contiene parejas «nombre de archivo → número de inodo».",
+            "**Enlace duro = segunda entrada de directorio** — 🎯 Apunta al MISMO número de inodo exacto y no duplica los datos. Como no hay inodo nuevo, no existe «original» ni «copia»: todos los nombres son iguales."
           ]
         },
         {
@@ -86,21 +86,22 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Un enlace duro comparte el mismo número de inodo que el archivo original. Se comprueba con 'ls -i'."
+          "title": "Clave de examen LPIC-1",
+          "content": "🎯 Un enlace duro comparte el número de inodo del archivo original y se comprueba con 'ls -i'."
         }
-      ]
+      ],
+      "notes": "Insiste en la separación nombre/inodo: sin ella no se entienden los enlaces. Los duros son entradas de directorio adicionales al mismo inodo, sin original ni copia."
     },
     {
       "id": "104.6-slide-3",
       "slideNumber": 3,
-      "title": "Matriz Comparativa: Enlace Duro frente a Enlace Simbólico",
+      "title": "Matriz comparativa: enlace duro frente a enlace simbólico",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Matriz Comparativa: Enlace Duro frente a Enlace Simbólico"
+          "text": "Matriz comparativa: enlace duro frente a enlace simbólico"
         },
         {
           "type": "paragraph",
@@ -110,34 +111,39 @@
           "type": "table",
           "headers": [
             "Característica",
-            "Enlace Duro (Hard Link)",
-            "Enlace Simbólico (Soft / Symlink)"
+            "Enlace duro (hard link)",
+            "Enlace simbólico (soft / symlink)"
           ],
           "rows": [
             [
-              "Comando de Creación",
+              "Comando de creación",
               "ln origen enlace",
-              "🎯 ln -s origen enlace (con opción -s)"
+              "🎯 ln -s origen enlace (con la opción -s)"
             ],
             [
-              "Número de Inodo",
+              "Número de inodo",
               "🎯 IDÉNTICO al del archivo original (mismo inodo).",
-              "🎯 NUEVO inodo independiente exclusivo para el enlace."
+              "🎯 NUEVO inodo independiente, exclusivo del enlace."
             ],
             [
-              "¿Cruza Sistemas de Archivos?",
+              "¿Aumenta el Link Count?",
+              "🎯 Sí: cada enlace duro suma +1 al contador del inodo.",
+              "⚠️ No: tiene inodo propio y no altera el contador del destino."
+            ],
+            [
+              "¿Cruza sistemas de archivos?",
               "⚠️ ¡NO! Falla con 'Invalid cross-device link'.",
               "🎯 SÍ, puede apuntar a cualquier partición o recurso de red."
             ],
             [
-              "¿Puede apuntar a Directorios?",
+              "¿Puede apuntar a directorios?",
               "⚠️ ¡NO! Prohibido para evitar bucles infinitos en el árbol.",
               "🎯 SÍ, puede enlazar carpetas libremente."
             ],
             [
-              "Si se BORRA el archivo original...",
+              "Si se borra el archivo original...",
               "🎯 Los datos SIGUEN INTACTOS y accesibles por el enlace.",
-              "⚠️ El enlace queda ROTO e inservible (Dangling Symlink)."
+              "⚠️ El enlace queda ROTO e inservible (dangling symlink)."
             ],
             [
               "Permisos en ls -l",
@@ -145,7 +151,7 @@
               "🎯 Aparece siempre como 'lrwxrwxrwx' (cosmético)."
             ]
           ],
-          "caption": "Matriz Comparativa: Enlace Duro frente a Enlace Simbólico"
+          "caption": "Matriz comparativa: enlace duro frente a enlace simbólico"
         },
         {
           "type": "html",
@@ -154,26 +160,26 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave Absoluta de Examen: Los enlaces duros NO pueden cruzar entre particiones ni apuntar a directorios. Los enlaces simbólicos (ln -s) pueden hacer ambas cosas."
+          "title": "Clave de examen LPIC-1",
+          "content": "🎯 Los enlaces duros no cruzan particiones ni apuntan a directorios, y cada uno suma +1 al contador de enlaces. Los simbólicos (ln -s) pueden hacer ambas cosas y no alteran el contador."
         }
       ],
-      "notes": "Pide a los alumnos que repitan: 'Hard link = mismo inodo, misma partición. Soft link = ln -s, cualquier sitio'."
+      "notes": "Pide a los alumnos que repitan: 'Duro = mismo inodo, misma partición, suma en el contador. Simbólico = ln -s, cualquier sitio, contador intacto'."
     },
     {
       "id": "104.6-slide-4",
       "slideNumber": 4,
-      "title": "Creación de Enlaces con ln: Duro y Simbólico (-s)",
+      "title": "Creación de enlaces con ln: duro y simbólico (-s)",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Creación de Enlaces con ln: Duro y Simbólico (-s)"
+          "text": "Creación de enlaces con ln: duro y simbólico (-s)"
         },
         {
           "type": "paragraph",
-          "text": "Sintaxis oficial y verificación de inodos en la consola:"
+          "text": "Sintaxis oficial y verificación de inodos. El TARGET debe existir; si omites LINK_NAME, el enlace se crea en el directorio actual con el nombre del objetivo:"
         },
         {
           "type": "code",
@@ -201,28 +207,28 @@
           "rows": [
             [
               "ln origen destino",
-              "ln (Duro)",
+              "ln (duro)",
               "🎯 Crea un enlace duro: ambos comparten el mismo número de inodo y el Link Count sube a 2."
             ],
             [
               "ln -s origen destino",
-              "-s (Simbólico)",
-              "🎯 Clave de Examen: Crea un enlace simbólico con su propio inodo apuntando a la ruta de origen."
+              "-s (simbólico)",
+              "🎯 Clave de examen: crea un enlace simbólico con su propio inodo apuntando a la ruta del origen."
             ],
             [
               "ln -f",
-              "-f (Force)",
+              "-f (force)",
               "Force: elimina el archivo destino si ya existía antes de crear el nuevo enlace."
             ],
             [
-              "Ruta Absoluta",
-              "ln -s /ruta/abs",
-              "Enlace simbólico absoluto: funcionará siempre sin importar desde dónde se invoque."
+              "cp origen copia",
+              "copia (no es enlace)",
+              "🎯 Un 'cp' crea un inodo nuevo y duplica los bloques de datos: el Link Count del original no cambia. Un enlace duro no ocupa espacio adicional."
             ],
             [
-              "Ruta Relativa",
-              "ln -s rel/path",
-              "Enlace simbólico relativo: depende de la ubicación del propio enlace (si se mueve de carpeta, se rompe)."
+              "Ruta absoluta",
+              "ln -s /ruta/abs",
+              "Enlace simbólico absoluto: funcionará siempre sin importar desde dónde se invoque."
             ],
             [
               "ls -lhi / ls -lahi",
@@ -239,11 +245,11 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Sintaxis de Examen: 'ln -s <archivo_existente_origen> <nombre_nuevo_enlace>'. ¡Siempre origen primero, destino después! Para validar inodos y enlaces, emplea 'ls -lhi'."
+          "title": "Clave de examen LPIC-1",
+          "content": "🎯 Sintaxis de examen: 'ln -s <origen_existente> <nombre_nuevo_enlace>'. ¡Siempre origen primero, destino después! Si omites LINK_NAME, el enlace toma el nombre del objetivo. Para validar inodos, 'ls -lhi'."
         }
       ],
-      "notes": "Muestra que en 'ls -li', doc.txt y duro.txt tienen exactamente el mismo número de inodo (184520)."
+      "notes": "Muestra que en 'ls -li' doc.txt y duro.txt comparten el inodo 184520. Aclara que 'cp' sí duplica datos, mientras que 'ln' solo añade un nombre al mismo inodo."
     },
     {
       "id": "104.6-slide-5",
@@ -541,35 +547,35 @@
     {
       "id": "104.6-slide-11",
       "slideNumber": 11,
-      "title": "Permisos y Metadatos en Enlaces Simbólicos",
+      "title": "Permisos y metadatos en enlaces simbólicos",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Permisos y Metadatos en Enlaces Simbólicos"
+          "text": "Permisos y metadatos en enlaces simbólicos"
         },
         {
           "type": "paragraph",
-          "text": "¿Por qué los enlaces simbólicos siempre muestran lrwxrwxrwx y qué permisos aplican?"
+          "text": "¿Por qué los enlaces simbólicos siempre muestran lrwxrwxrwx y qué permisos aplican realmente?"
         },
         {
           "type": "table",
           "headers": [
-            "Aspecto de Metadatos",
-            "Comportamiento del Enlace Simbólico",
-            "Efecto Real de Seguridad"
+            "Aspecto de metadatos",
+            "Comportamiento del enlace simbólico",
+            "Efecto real de seguridad"
           ],
           "rows": [
             [
               "Permisos en ls -l",
               "🎯 Aparece SIEMPRE como 'lrwxrwxrwx' (777).",
-              "🎯 Los permisos mostrados son puramente cosméticos. El kernel IGNORA los permisos del enlace y aplica estrictamente los permisos del archivo destino real."
+              "🎯 Los permisos mostrados son puramente cosméticos. El kernel IGNORA los permisos del enlace y aplica estrictamente los del archivo destino."
             ],
             [
-              "Comando chmod sobre symlink",
-              "🎯 Si ejecutas 'chmod 700 enlace', vi NO modifica el enlace: ¡modifica los permisos del archivo destino!",
-              "Para cambiar permisos de un enlace simbólico en sí mismo se debe usar 'chmod -h' (en sistemas que lo soporten)."
+              "Comando chmod sobre el enlace",
+              "🎯 Si ejecutas 'chmod 700 enlace', no modificas el enlace: modificas los permisos del archivo destino.",
+              "El enlace no tiene permisos propios modificables; 'chmod -h' no existe en GNU coreutils (solo en sistemas BSD)."
             ],
             [
               "Propietario del enlace",
@@ -578,121 +584,126 @@
             ],
             [
               "Tamaño del enlace",
-              "El tamaño en bytes en 'ls -l' equivale exactamente al NÚMERO DE CARACTERES de la ruta a la que apunta.",
+              "En 'ls -l' el tamaño en bytes equivale al NÚMERO DE CARACTERES de la ruta apuntada.",
               "Ejemplo: si apunta a 'doc.txt', el enlace mide exactamente 7 bytes."
             ]
           ],
-          "caption": "Permisos y Metadatos en Enlaces Simbólicos"
+          "caption": "Permisos y metadatos en enlaces simbólicos"
         },
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Los permisos 'lrwxrwxrwx' de un enlace simbólico no significan que cualquiera pueda escribir: los permisos efectivos siempre son los del archivo destino."
+          "title": "Clave de examen LPIC-1",
+          "content": "🎯 Los permisos 'lrwxrwxrwx' de un enlace simbólico no permiten escribir a cualquiera: los permisos efectivos son siempre los del archivo destino."
         }
       ],
-      "notes": "Muestra que si el archivo destino es 600 de root, un usuario normal no puede leerlo aunque el symlink diga 'rwxrwxrwx'."
+      "notes": "Corregido: GNU chmod no admite -h; los permisos del symlink no se pueden cambiar y los efectivos son los del destino. Muestra que si el destino es 600 de root, un usuario normal no puede leerlo aunque el enlace diga rwxrwxrwx."
     },
     {
       "id": "104.6-slide-12",
       "slideNumber": 12,
-      "title": "Trampas Clásicas de Examen en Enlaces",
+      "title": "Trampas de examen y symlinks con ruta relativa (mv)",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Trampas Clásicas de Examen en Enlaces"
+          "text": "Trampas de examen y symlinks con ruta relativa (mv)"
         },
         {
           "type": "paragraph",
-          "text": "Los 3 errores que hacen perder preguntas en el objetivo 104.6:"
+          "text": "Los errores que más preguntas hacen perder en el objetivo 104.6:"
         },
         {
           "type": "list",
           "ordered": false,
           "items": [
-            "**1. Invertir el orden de argumentos en 'ln -s'** — 🎯 El error más común: escribir 'ln -s enlace destino'. La sintaxis universal SIEMPRE es: 'ln -s archivo_existente_que_ya_tienes nombre_del_nuevo_enlace'.",
-            "**2. Creer que borrar el archivo original destruye el enlace duro** — En un enlace duro no hay 'original' ni 'copia': ambos son nombres gemelos del mismo inodo. Si borras uno, el otro conserva los datos al 100%.",
-            "**3. Olvidar que un symlink relativo se evalúa desde su propia carpeta** — Si estás en /home y haces 'ln -s archivo /tmp/enlace', el enlace en /tmp buscará '/tmp/archivo' y estará roto. Debes usar rutas absolutas ('ln -s /home/archivo /tmp/enlace').",
-            "**4. El sutil peligro de reubicar un symlink relativo (Caso Oficial Pág 543)** — 🎯 Si dentro de 'somedir' creas 'partners.txt -> clients.txt' y luego mueves 'partners.txt' al directorio padre '~/Documents', si en ese padre existe otro 'clients.txt', el symlink NO queda roto: ¡pasa a apuntar al archivo de la nueva carpeta de forma silenciosa!"
+            "**1. Invertir el orden de argumentos en 'ln -s'** — 🎯 La sintaxis SIEMPRE es 'ln -s archivo_existente nombre_del_nuevo_enlace'.",
+            "**2. Creer que borrar el archivo original destruye el enlace duro** — En un enlace duro no hay 'original' ni 'copia': ambos son nombres del mismo inodo. Si borras uno, el otro conserva los datos al 100%.",
+            "**3. Olvidar que un symlink relativo se evalúa desde su propia carpeta** — Si estás en /home y haces 'ln -s archivo /tmp/enlace', el enlace buscará '/tmp/archivo' y estará roto. Solución: ruta absoluta ('ln -s /home/archivo /tmp/enlace').",
+            "**4. Reubicar un symlink relativo junto a un archivo homónimo** — 🎯 Si dentro de 'somedir' creas 'partners.txt -> clients.txt' y mueves el enlace al directorio padre, donde existe otro 'clients.txt', NO queda roto: pasa a apuntar al archivo de la nueva carpeta en silencio."
+          ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "ln -s original.txt softlink",
+              "output": "softlink -> original.txt"
+            },
+            {
+              "prompt": "$ ",
+              "command": "mv softlink ../",
+              "output": "# El enlace se mueve, pero la ruta interna no cambia."
+            },
+            {
+              "prompt": "$ ",
+              "command": "less ../softlink",
+              "output": "../softlink: No such file or directory"
+            }
           ]
         },
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Mnemotecnia Rápida: Origen primero, enlace después. Hard link sobrevive a rm. Los symlinks relativos se resuelven respecto a la carpeta donde residen (si los mueves a otra carpeta con un archivo homónimo, cambian de destino silenciosamente)."
+          "title": "Clave de examen LPIC-1",
+          "content": "🎯 Origen primero, enlace después. El enlace duro sobrevive a 'rm'. Un symlink relativo se resuelve desde su propia carpeta: si lo mueves junto a un archivo homónimo cambia de destino en silencio. Usa rutas absolutas para evitarlo."
         }
       ],
-      "notes": "Repite estos tres axiomas antes de pasar al bloque de ejercicios."
+      "notes": "Ejemplo oficial del manual: tras 'mv softlink ../', 'less ../softlink' devuelve '../softlink: No such file or directory'. Solución: crear el enlace con la ruta completa al destino."
     },
     {
       "id": "104.6-slide-13",
       "slideNumber": 13,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: ln e Inodos)",
+      "title": "Ejercicios guiados del manual LPIC-1 (5 casos)",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: ln e Inodos)"
+          "text": "Ejercicios guiados del manual LPIC-1 (5 casos)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Resuelve cada caso con una sola línea de comandos."
         },
         {
           "type": "list",
           "ordered": true,
           "items": [
-            "Caso 1 (Oficial Pág 530): ¿Cuál es el comando exacto para crear un enlace duro llamado 'hosts.bak' que apunte al archivo '/etc/hosts' en el directorio actual? — Comando: `ln /etc/hosts hosts.bak` (El comando 'ln' sin modificadores crea un enlace duro compartiendo el mismo inodo en la misma partición.)",
-            "Caso 2 (Oficial Pág 530): ¿Qué comando permite verificar en la consola que dos archivos 'a.txt' y 'b.txt' son en realidad dos enlaces duros que apuntan al mismo inodo físico? — Comando: `ls -li a.txt b.txt` (La opción -i (--inode) muestra el número de inodo en la primera columna; si ambos números son idénticos, comparten los mismos datos.)",
-            "Caso 3 (Oficial Pág 530): ¿Qué comando crea un enlace simbólico llamado '/usr/local/bin/python' que apunte al binario '/usr/bin/python3'? — Comando: `sudo ln -s /usr/bin/python3 /usr/local/bin/python` (La opción -s (symbolic) crea el acceso directo enlazando la ruta destino.)"
+            "¿Comando exacto para crear un enlace duro llamado 'hosts.bak' que apunte a '/etc/hosts' en el directorio actual? — Comando: 'ln /etc/hosts hosts.bak' (ln sin modificadores crea un enlace duro en la misma partición).",
+            "¿Qué comando verifica que 'a.txt' y 'b.txt' son dos enlaces duros al mismo inodo? — Comando: 'ls -li a.txt b.txt' (con -i se ven los números de inodo; si coinciden, comparten datos).",
+            "¿Qué comando crea un enlace simbólico '/usr/local/bin/python' hacia el binario '/usr/bin/python3'? — Comando: 'sudo ln -s /usr/bin/python3 /usr/local/bin/python' (-s crea el acceso directo)."
+          ]
+        }
+      ],
+      "secondaryBlocks": [
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Casos 4 y 5: readlink y cp"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "¿Qué comando imprime la ruta real a la que apunta el enlace '/etc/systemd/system/default.target'? — Comando: 'readlink /etc/systemd/system/default.target' (o 'readlink -f' para resolver toda la cadena).",
+            "Necesitas copiar un directorio con varios symlinks sin duplicar los archivos reales. ¿Qué opción de 'cp' usas? — Comando: 'cp -d' (--no-dereference; 'cp -a' también lo incluye)."
           ]
         },
         {
           "type": "callout",
           "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "ln para hard link, ls -li (o ls -lhi) para validar inodos idénticos, y ln -s para enlaces simbólicos."
-        },
-        {
-          "type": "callout",
-          "calloutType": "info",
-          "title": "Inspección Completa en el Manual LPI",
-          "content": "El manual oficial emplea con frecuencia 'ls -lhi' para contrastar simultáneamente el inodo (-i), los permisos con flecha de destino (-l), el contador de enlaces y el tamaño legible (-h). (Nota: la pregunta 1 de la pág. 541 del PDF oficial contenía por errata una cuestión sobre 'chmod +t'; el examen 104.6 evalúa estrictamente enlaces)."
+          "title": "Solución y explicación",
+          "content": "'ln' crea enlaces duros que se validan con 'ls -li'; 'ln -s' crea simbólicos; 'readlink' lee el destino y 'cp -d' copia el enlace sin desreferenciar los datos."
         }
       ],
-      "notes": "Enseña a comprobar con 'ls -lhi' la flechita '->' en el enlace simbólico. Aclara a los alumnos la errata tipográfica de la pág. 541 del manual LPI."
+      "notes": "Enseña a comprobar con 'ls -lhi' la flecha '->' del symlink. Los cinco casos se resuelven con ln, ls -li, ln -s, readlink y cp -d."
     },
     {
       "id": "104.6-slide-14",
       "slideNumber": 14,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: readlink y cp -d)",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: readlink y cp -d)"
-        },
-        {
-          "type": "list",
-          "ordered": true,
-          "items": [
-            "Caso 4 (Oficial Pág 530): ¿Qué comando de una sola línea imprime en la terminal la ruta real a la que apunta el enlace simbólico '/etc/systemd/system/default.target'? — Comando: `readlink /etc/systemd/system/default.target (o readlink -f)` (El comando 'readlink' lee el contenido de la cadena de texto del inodo del symlink y lo imprime en stdout.)",
-            "Caso 5 (Oficial Pág 530): Necesitas copiar un directorio que contiene múltiples enlaces simbólicos sin duplicar los archivos reales a los que apuntan. ¿Qué opción de 'cp' debes utilizar? — Comando: `cp -d (o cp -a)` (La opción -d (--no-dereference) copia los enlaces simbólicos tal cual en lugar de copiar el contenido de los archivos originales.)"
-          ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "readlink resuelve enlaces simbólicos; cp -d preserva la estructura de punteros sin multiplicar el uso de disco."
-        }
-      ],
-      "notes": "Recuerda que si usas cp normal sin -d, copiará el archivo completo llenando el disco."
-    },
-    {
-      "id": "104.6-slide-15",
-      "slideNumber": 15,
       "title": "Retos de Exploración Oficiales (Cross-Device y Enlaces Rotos)",
       "layout": "two-column",
       "blocks": [
@@ -723,20 +734,20 @@
       "notes": "El cálculo del contador de enlaces en directorios es una pregunta matemática clásica de LPIC-1."
     },
     {
-      "id": "104.6-slide-16",
-      "slideNumber": 16,
-      "title": "Pregunta de Examen LPIC-1: Permisos de un Enlace Simbólico",
+      "id": "104.6-slide-15",
+      "slideNumber": 15,
+      "title": "Preguntas de examen: permisos y contador de enlaces",
       "layout": "checkpoint",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Pregunta de Examen LPIC-1: Permisos de un Enlace Simbólico"
+          "text": "Preguntas de examen: permisos y contador de enlaces"
         },
         {
           "type": "quiz-inline",
           "id": "quiz-104-6-16",
-          "question": "Al ejecutar 'ls -l' sobre un enlace simbólico se observan los permisos 'lrwxrwxrwx'. Si el archivo original al que apunta tiene permisos '-rw-------' pertenecientes al usuario root, ¿puede un usuario ordinario leer el archivo a través del enlace?",
+          "question": "Al ejecutar 'ls -l' sobre un enlace simbólico se observan los permisos 'lrwxrwxrwx'. Si el archivo original al que apunta tiene permisos '-rw-------' y pertenece a root, ¿puede un usuario ordinario leer el archivo a través del enlace?",
           "options": [
             {
               "key": "a",
@@ -758,26 +769,12 @@
           "correct": [
             "b"
           ],
-          "explanation": "En Linux, los permisos 'lrwxrwxrwx' que muestra 'ls -l' para un enlace simbólico son puramente cosméticos e informativos. El kernel ignora por completo los permisos del enlace y aplica estrictamente los permisos del archivo destino original (-rw------- de root), denegando el acceso a cualquier usuario ordinario."
-        }
-      ],
-      "notes": "Pregunta de examen garantizada sobre la naturaleza de los permisos en enlaces simbólicos."
-    },
-    {
-      "id": "104.6-slide-17",
-      "slideNumber": 17,
-      "title": "Pregunta de Examen LPIC-1: Contador de Enlaces de un Directorio",
-      "layout": "checkpoint",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Pregunta de Examen LPIC-1: Contador de Enlaces de un Directorio"
+          "explanation": "Los permisos 'lrwxrwxrwx' de un enlace simbólico son cosméticos: el kernel ignora los permisos del enlace y aplica los del archivo destino (-rw------- de root), denegando el acceso."
         },
         {
           "type": "quiz-inline",
           "id": "quiz-104-6-17",
-          "question": "Si un directorio en el sistema de archivos muestra un contador de enlaces (link count) de 8 en la salida del comando 'ls -ld', ¿cuántos subdirectorios directos contiene en su interior?",
+          "question": "Si un directorio muestra un contador de enlaces (link count) de 8 en 'ls -ld', ¿cuántos subdirectorios directos contiene?",
           "options": [
             {
               "key": "a",
@@ -799,86 +796,14 @@
           "correct": [
             "c"
           ],
-          "explanation": "Todo directorio nace con un contador de enlaces de 2 (su nombre en el directorio padre y el enlace '.' que apunta a sí mismo). Cada subdirectorio que se crea dentro añade exactamente 1 al contador del padre a través de su entrada '..'. Por tanto: 8 - 2 = 6 subdirectorios."
+          "explanation": "Todo directorio nace con contador 2 (su nombre en el padre y el enlace '.'). Cada subdirectorio suma +1 por su entrada '..': 8 - 2 = 6 subdirectorios."
         }
       ],
-      "notes": "Pregunta matemática recurrente en el examen 101-500."
+      "notes": "Dos preguntas recurrentes del examen 101-500: permisos efectivos de un symlink y la fórmula Link Count - 2."
     },
     {
-      "id": "104.6-slide-18",
-      "slideNumber": 18,
-      "title": "Tarjetas Nemotécnicas: Enlaces 104.6",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Tarjetas Nemotécnicas: Enlaces 104.6"
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Concepto",
-            "Significado / Uso"
-          ],
-          "rows": [
-            [
-              "¿Qué comando crea un enlace duro y cuál uno simbólico?",
-              "ln origen enlace (duro); ln -s origen enlace (simbólico)."
-            ],
-            [
-              "¿Qué sucede con el inodo en un enlace duro?",
-              "Es idéntico al inodo del archivo original (comparten el mismo inodo)."
-            ],
-            [
-              "¿Puede un enlace duro apuntar a otra partición de disco?",
-              "NO (falla con 'Invalid cross-device link')."
-            ],
-            [
-              "¿Puede un enlace duro apuntar a un directorio?",
-              "NO (está prohibido por el kernel para evitar bucles)."
-            ],
-            [
-              "¿Qué sucede con los datos si borras el archivo original de un enlace duro?",
-              "Los datos siguen intactos y accesibles a través del enlace."
-            ],
-            [
-              "¿Qué comando revela a qué ruta apunta un enlace simbólico?",
-              "readlink <enlace> (o readlink -f)."
-            ],
-            [
-              "¿Por qué un directorio vacío tiene contador de enlaces = 2?",
-              "Por su nombre en el padre y el enlace '.' que apunta a sí mismo."
-            ],
-            [
-              "¿Qué opción de 'cp' copia el enlace simbólico sin duplicar datos?",
-              "cp -d (o cp -a)."
-            ],
-            [
-              "¿Qué combinación de opciones emplea el manual LPI para auditar inodos?",
-              "ls -lhi (o ls -lahi), mostrando inodo (-i), formato largo (-l) y tamaño legible (-h)."
-            ],
-            [
-              "¿Qué ocurre si mueves un symlink relativo a un directorio con un archivo homónimo?",
-              "Pasa a apuntar silenciosamente a ese nuevo archivo sin romperse (comportamiento relativo LPI pág. 543)."
-            ],
-            [
-              "¿Qué función cumple la llamada/comando 'unlink'?",
-              "Elimina una única entrada de directorio (enlace duro o archivo) desvinculando el nombre del inodo."
-            ],
-            [
-              "¿Cómo encuentras todos los enlaces duros hermanos de un archivo con find?",
-              "find <directorio> -samefile <archivo> (o find <directorio> -inum <inodo>)."
-            ]
-          ],
-          "caption": "Tarjetas de memorización"
-        }
-      ],
-      "notes": "Repasa estas 12 tarjetas para asegurar el pleno de aciertos en el objetivo 104.6."
-    },
-    {
-      "id": "104.6-slide-19",
-      "slideNumber": 19,
+      "id": "104.6-slide-16",
+      "slideNumber": 16,
       "title": "Resumen y Claves de Examen: Subtema 104.6",
       "layout": "summary",
       "blocks": [

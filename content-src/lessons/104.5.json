@@ -35,6 +35,8 @@
     "umask",
     "ls",
     "getent",
+    "groups",
+    "groupmems",
     "sudo",
     "touch",
     "mkdir"
@@ -54,7 +56,7 @@
         },
         {
           "type": "paragraph",
-          "text": "Modelo DAC, chmod (simbólico/octal), chown, chgrp, permisos especiales (SUID, SGID, Sticky) y umask (Modo Examen)"
+          "text": "Modelo DAC, lectura de `ls -l`, chmod (simbólico/octal), chown, chgrp, permisos especiales (SUID, SGID, Sticky) y umask (Modo Examen)"
         }
       ],
       "notes": "Iniciamos el subtema 104.5 (peso 3). La seguridad de archivos es obligatoria en LPIC-1. Dominaremos el modelo de permisos Unix tradicional (r, w, x para usuario, grupo y otros), la asignación con chmod, chown y chgrp, los tres permisos especiales (SUID, SGID, Sticky Bit) y el cálculo matemático de la máscara umask."
@@ -80,7 +82,8 @@
           "items": [
             "**Permisos sobre un Archivo Ordinario** — 🎯 'r' (read) = leer el contenido del archivo. 'w' (write) = modificar o sobreescribir el contenido del archivo. 'x' (execute) = ejecutar el archivo como un programa o script.",
             "**Permisos sobre un Directorio (¡Diferencia de Examen!)** — 🎯 'r' = listar los nombres de los archivos que contiene (con ls). 'w' = CREAR, BORRAR o RENOMBRAR archivos dentro de esa carpeta. 'x' = ATRAVESAR / ENTRAR en el directorio (hacer cd) y acceder a los inodos de sus archivos.",
-            "**⚠️ La Gran Trampa de Borrado de Archivos** — 🎯 Pregunta de Examen: ¿Quién tiene derecho a borrar un archivo? La capacidad de borrar un archivo NO DEPENDE de los permisos del archivo, sino de tener permiso 'w' en el DIRECTORIO PADRE donde reside el archivo."
+            "**⚠️ La Gran Trampa de Borrado de Archivos** — 🎯 Pregunta de Examen: ¿Quién tiene derecho a borrar un archivo? La capacidad de borrar un archivo NO DEPENDE de los permisos del archivo, sino de tener permiso 'w' en el DIRECTORIO PADRE donde reside el archivo.",
+            "**⚠️ `w` en un directorio exige también `x`** — 🎯 El manual lo subraya: con `w` solo no se puede crear ni borrar nada dentro de la carpeta, hace falta además `x` para atravesarla. Y `r` en un directorio solo deja ver los nombres, nunca leer los archivos."
           ]
         },
         {
@@ -145,6 +148,86 @@
     {
       "id": "104.5-slide-3",
       "slideNumber": 3,
+      "title": "Leer ls -l: columnas, -d y -a",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Leer ls -l: columnas, -d y -a"
+        },
+        {
+          "type": "paragraph",
+          "text": "`ls` sin opciones solo lista nombres; `-l` (formato largo) añade tipo, permisos, propietario, grupo, tamaño, fecha y nombre."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "ls -l",
+              "output": "total 24\ndrwxrwxr-x 2 carol carol   4096 Dec 10 15:57 Another_Directory\n-rw------- 1 carol carol 539663 Dec 10 10:43 picture.jpg\n-rw-rw-r-- 1 carol carol   1881 Dec 10 15:57 text.txt"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Columna",
+            "Contenido"
+          ],
+          "rows": [
+            [
+              "1",
+              "Tipo de archivo y permisos (ej. `drwxrwxr-x`)"
+            ],
+            [
+              "2",
+              "Número de enlaces físicos"
+            ],
+            [
+              "3",
+              "Usuario propietario"
+            ],
+            [
+              "4",
+              "Grupo propietario"
+            ],
+            [
+              "5",
+              "Tamaño"
+            ],
+            [
+              "6",
+              "Fecha y hora de la última modificación"
+            ],
+            [
+              "7",
+              "Nombre del archivo"
+            ]
+          ],
+          "caption": "Las columnas de ls -l"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**`ls -ld carpeta/`** (o `ls -l -d`) — muestra la información del directorio en sí, no la de su contenido.",
+            "**`ls -la`** (o `ls -l -a`) — incluye los archivos ocultos, los que empiezan por punto (ej. `.thisIsHidden`)."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "`.` y `..`",
+          "content": "Cada directorio contiene `.` (el propio directorio) y `..` (el directorio padre); `-a` los muestra. Para ver los permisos de una carpeta usa `-d`: `ls -ld /tmp`."
+        }
+      ],
+      "notes": "Ejemplos del manual (pp.508-510): las columnas 3 y 4 son usuario y grupo, la 7 el nombre. -d evita listar el contenido; -a muestra los ocultos; . es el directorio actual y .. el padre."
+    },
+    {
+      "id": "104.5-slide-4",
+      "slideNumber": 4,
       "title": "Correspondencia entre Notación Simbólica y Octal",
       "layout": "content",
       "blocks": [
@@ -231,8 +314,8 @@
       "notes": "Haz que los alumnos practiquen sumas mentales rápidas: rw-r--r-- es 4+2=6, 4=4, 4=4 -> 644."
     },
     {
-      "id": "104.5-slide-4",
-      "slideNumber": 4,
+      "id": "104.5-slide-5",
+      "slideNumber": 5,
       "title": "Modificación de Permisos con chmod: Simbólico y Octal",
       "layout": "content",
       "blocks": [
@@ -298,6 +381,16 @@
           "caption": "Opciones y parámetros del comando"
         },
         {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Último dígito = «otros»** — `chmod 4 archivo` deja `-------r--`.",
+            "**Penúltimo = «grupo»** — `chmod 44 archivo` deja `----r--r--`.",
+            "**Tercero desde el final = propietario** — `chmod 644` deja `-rw-r--r--`.",
+            "**Cuarto dígito = permisos especiales** — el `0` inicial se puede omitir: `chmod 0755` = `chmod 755`."
+          ]
+        },
+        {
           "type": "html",
           "sanitizedHtml": "\n<div style=\"display:flex; gap:12px; margin-top:10px;\">\n  <div style=\"flex:1; background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:10px 14px;\">\n    <div style=\"font-size:12px; font-weight:800; color:#1E40AF; margin-bottom:4px; text-transform:uppercase;\">\n      Sintaxis Simbólica Desglosada\n    </div>\n    <div style=\"font-family:monospace; font-size:13px; color:#1D4ED8; background:#DBEAFE; padding:4px 8px; border-radius:4px; font-weight:700;\">\n      chmod u=rwx,g=rx,o=r archivo.txt\n    </div>\n    <div style=\"font-size:11.5px; color:#1E3A8A; margin-top:4px;\">\n      Equivale exactamente al modo octal <code>chmod 754 archivo.txt</code>.\n    </div>\n  </div>\n  <div style=\"flex:1; background:#F0FDF4; border:2px solid #22C55E; border-radius:10px; padding:10px 14px;\">\n    <div style=\"font-size:12px; font-weight:800; color:#166534; margin-bottom:4px; text-transform:uppercase;\">\n      El Atajo +X (Mayúscula)\n    </div>\n    <div style=\"font-family:monospace; font-size:13px; color:#15803D; background:#DCFCE7; padding:4px 8px; border-radius:4px; font-weight:700;\">\n      chmod -R a+rX /var/www\n    </div>\n    <div style=\"font-size:11.5px; color:#14532D; margin-top:4px;\">\n      Permite recorrer subcarpetas sin convertir erróneamente en ejecutables los ficheros .html o .txt.\n    </div>\n  </div>\n</div>\n"
         },
@@ -311,8 +404,8 @@
       "notes": "Muestra la ventaja de 'chmod a+X' al procesar carpetas recursivas para no hacer ejecutables los documentos de texto por error."
     },
     {
-      "id": "104.5-slide-5",
-      "slideNumber": 5,
+      "id": "104.5-slide-6",
+      "slideNumber": 6,
       "title": "Los Tres Permisos Especiales: SUID, SGID y Sticky Bit",
       "layout": "diagram",
       "blocks": [
@@ -348,8 +441,8 @@
       "notes": "Explica la analogía de la taquilla pública en /tmp gracias al Sticky Bit: todos pueden meter cosas, pero solo tú puedes llevarte lo tuyo."
     },
     {
-      "id": "104.5-slide-6",
-      "slideNumber": 6,
+      "id": "104.5-slide-7",
+      "slideNumber": 7,
       "title": "Representación Simbólica: minúsculas (s, t) frente a MAYÚSCULAS (S, T)",
       "layout": "content",
       "blocks": [
@@ -406,8 +499,8 @@
       "notes": "Pregunta típica de certificación: '¿Qué significa que un archivo tenga permisos -rwSr--r--?'. Respuesta: Tiene el bit SUID activo pero carece de permiso de ejecución para el dueño."
     },
     {
-      "id": "104.5-slide-7",
-      "slideNumber": 7,
+      "id": "104.5-slide-8",
+      "slideNumber": 8,
       "title": "Asignación Práctica de Permisos Especiales con chmod",
       "layout": "content",
       "blocks": [
@@ -482,9 +575,9 @@
       "notes": "Muestra que si sumas SGID (2) y Sticky (1) sobre una carpeta, el prefijo es 3xxx (chmod 3777)."
     },
     {
-      "id": "104.5-slide-8",
-      "slideNumber": 8,
-      "title": "Gestión de Propietarios y Grupos: chown y chgrp",
+      "id": "104.5-slide-9",
+      "slideNumber": 9,
+      "title": "Gestión de Propietarios y Grupos: chown, chgrp y consulta de grupos",
       "layout": "content",
       "blocks": [
         {
@@ -526,6 +619,16 @@
               "🎯 Consulta la base de datos de grupos (/etc/group) para verificar qué grupos y miembros existen en el sistema antes de asignar titularidades."
             ],
             [
+              "groups [usuario]",
+              "groups",
+              "🎯 Muestra a qué grupos pertenece un usuario (ej: `groups carol`)."
+            ],
+            [
+              "groupmems -g grupo -l",
+              "groupmems",
+              "Lista los miembros de un grupo; solo root o con `sudo` (ej: `sudo groupmems -g cdrom -l`)."
+            ],
+            [
               "chown user file",
               "chown (Dueño)",
               "🎯 Cambia únicamente el propietario del archivo."
@@ -562,14 +665,14 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 'chown usuario:grupo archivo' cambia ambos en un solo paso; 'chown -h' modifica el dueño de un enlace simbólico."
+          "content": "🎯 Clave de Examen: `chown usuario:grupo archivo` cambia ambos en un solo paso; `chown -h` modifica el dueño de un enlace simbólico. Sin ser root, cambiar la propiedad a otro usuario o grupo falla con `Operation not permitted`."
         }
       ],
       "notes": "Recuerda que solo el superusuario root puede cambiar el propietario de un archivo con chown."
     },
     {
-      "id": "104.5-slide-9",
-      "slideNumber": 9,
+      "id": "104.5-slide-10",
+      "slideNumber": 10,
       "title": "La Máscara de Creación umask: Cálculo Matemático",
       "layout": "diagram",
       "blocks": [
@@ -615,8 +718,8 @@
       "notes": "Enseña a los alumnos que para la mayoría de casos ordinarios, basta con restar matemáticamente dígito a dígito."
     },
     {
-      "id": "104.5-slide-10",
-      "slideNumber": 10,
+      "id": "104.5-slide-11",
+      "slideNumber": 11,
       "title": "Matriz de Valores umask Evaluados en el Examen",
       "layout": "content",
       "blocks": [
@@ -684,8 +787,8 @@
       "notes": "Alerta sobre el cálculo lógico si la máscara tiene un número impar como 023: 666 - 023 = 644 (porque el archivo no tenía bit '1' que quitar)."
     },
     {
-      "id": "104.5-slide-11",
-      "slideNumber": 11,
+      "id": "104.5-slide-12",
+      "slideNumber": 12,
       "title": "Persistencia de umask: /etc/login.defs y Configuración de Usuario",
       "layout": "content",
       "blocks": [
@@ -712,39 +815,6 @@
       "notes": "Explica con claridad los 3 niveles: 1) /etc/login.defs fija la política global; 2) /etc/profile inicializa la shell; 3) ~/.bashrc permite que cada usuario tenga su propia máscara."
     },
     {
-      "id": "104.5-slide-12",
-      "slideNumber": 12,
-      "title": "Trampas Clásicas de Examen en Permisos y umask",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Trampas Clásicas de Examen en Permisos y umask"
-        },
-        {
-          "type": "paragraph",
-          "text": "Los 3 errores conceptuales que más puntos restan en el objetivo 104.5:"
-        },
-        {
-          "type": "list",
-          "ordered": false,
-          "items": [
-            "**1. Creer que un archivo nuevo puede nacer ejecutable con umask** — 🎯 Pregunta trampa: '¿Qué umask debo poner para que los archivos creados con touch nazcan con permisos 755?'. ¡IMPOSIBLE! La base de archivos es 666 (no tiene bit 'x'). NINGÚN archivo nace ejecutable por umask; para hacerlo ejecutable es obligatorio usar 'chmod +x' a posteriori.",
-            "**2. Confundir el orden de usuario y grupo en chown** — La sintaxis es 'chown usuario:grupo archivo'. Si escribes 'chown grupo:usuario archivo', chown intentará buscar un usuario llamado 'grupo' y fallará.",
-            "**3. Creer que para borrar un archivo se necesita permiso en el archivo** — Aunque un archivo tenga permisos de solo lectura (r--r--r--) o incluso 000, cualquier usuario que tenga permiso de escritura 'w' en el directorio contenedor puede borrarlo sin problemas."
-          ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Mnemotecnia Rápida: Los archivos nunca nacen con 'x' por umask. Para borrar se mira la carpeta. En chown primero usuario, luego grupo."
-        }
-      ],
-      "notes": "Repite estos tres conceptos antes de los ejercicios prácticos."
-    },
-    {
       "id": "104.5-slide-13",
       "slideNumber": 13,
       "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: chmod y umask)",
@@ -760,7 +830,7 @@
           "ordered": true,
           "items": [
             "Caso 1 (Oficial Pág 514): Un usuario tiene configurada la máscara 'umask 027'. ¿Cuáles serán los permisos exactos en notación octal y simbólica de un nuevo archivo creado con touch y de un nuevo directorio creado con mkdir? — Comando: `Archivo: 640 (rw-r-----). Directorio: 750 (rwxr-x---)` (Para archivos: 666 - 027 = 640 (rw-r-----). Para directorios: 777 - 027 = 750 (rwxr-x---).)",
-            "Caso 2 (Oficial Pág 514): ¿Cuál es el comando exacto en modo simbólico para retirar los permisos de escritura al grupo y retirar absolutamente todos los permisos a otros en el archivo 'informe.txt' en una sola orden? — Comando: `chmod g-w,o-rwx informe.txt (o chmod go-w,o-rx informe.txt)` (La notación simbólica permite combinar acciones en una lista separada por comas sin espacios.)",
+            "Caso 2 (Oficial Pág 514): ¿Cuál es el comando exacto en modo simbólico para retirar los permisos de escritura al grupo y retirar absolutamente todos los permisos a otros en el archivo 'informe.txt' en una sola orden? — Comando: `chmod g-w,o-rwx informe.txt` (La notación simbólica permite combinar acciones en una lista separada por comas sin espacios.)",
             "Caso 3 (Oficial Pág 514): ¿Qué comando cambia el propietario a 'nginx' y el grupo a 'www-data' de todo el directorio '/var/www' y todos sus subdirectorios de forma recursiva? — Comando: `sudo chown -R nginx:www-data /var/www` (La opción -R aplica la modificación recursiva y la sintaxis 'usuario:grupo' actualiza ambas identidades.)"
           ]
         },
@@ -919,78 +989,6 @@
     {
       "id": "104.5-slide-18",
       "slideNumber": 18,
-      "title": "Tarjetas Nemotécnicas: Permisos y Propietarios 104.5",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Tarjetas Nemotécnicas: Permisos y Propietarios 104.5"
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Concepto",
-            "Significado / Uso"
-          ],
-          "rows": [
-            [
-              "¿Cuáles son los permisos base máximos de archivos y de directorios?",
-              "666 para archivos (ninguno nace con 'x'); 777 para directorios."
-            ],
-            [
-              "¿Qué permisos produce 'umask 022' en un archivo y en un directorio?",
-              "644 en archivos (rw-r--r--); 755 en directorios (rwxr-xr-x)."
-            ],
-            [
-              "¿Qué permisos produce 'umask 027' en un archivo y en un directorio?",
-              "640 en archivos (rw-r-----); 750 en directorios (rwxr-x---)."
-            ],
-            [
-              "¿Qué valor octal tiene el permiso SUID y sobre qué se aplica?",
-              "Valor 4000 (se aplica sobre binarios para ejecutar con privilegios del dueño)."
-            ],
-            [
-              "¿Qué función cumple el permiso SGID (2000) en un directorio?",
-              "Hace que todos los archivos nuevos creados dentro hereden el grupo del directorio."
-            ],
-            [
-              "¿Qué función cumple el Sticky Bit (1000) en /tmp?",
-              "Impide que un usuario borre o renombre los archivos de otros usuarios."
-            ],
-            [
-              "¿Qué diferencia hay entre ver 's' minúscula o 'S' mayúscula en ls -l?",
-              "'s' minúscula = tiene 'x' de ejecución; 'S' mayúscula = le falta el permiso 'x'."
-            ],
-            [
-              "¿Qué comando cambia el propietario y el grupo a la vez?",
-              "chown usuario:grupo <archivo>."
-            ],
-            [
-              "¿Qué muestra la opción 'umask -S' en la terminal?",
-              "Muestra la máscara en notación simbólica (los permisos que SÍ se otorgan, ej: u=rwx,g=rx,o=rx)."
-            ],
-            [
-              "¿Qué denominaciones oficiales en español tiene el Sticky Bit (1000)?",
-              "Bit adhesivo y bandera de eliminación restringida (restringe el borrado al dueño del archivo o a root)."
-            ],
-            [
-              "¿Qué representan 'b' y 'c' en la primera columna de ls -l?",
-              "'b' = dispositivo de bloque (/dev/sda, discos); 'c' = dispositivo de caracteres (/dev/tty, /dev/null)."
-            ],
-            [
-              "¿Qué utilidad tiene 'getent group' en la administración de permisos?",
-              "Consulta la base de datos /etc/group para conocer grupos y miembros antes de reasignar con chown o chgrp."
-            ]
-          ],
-          "caption": "Tarjetas de memorización"
-        }
-      ],
-      "notes": "Repasa estas 12 tarjetas para asegurar el pleno de aciertos en el objetivo 104.5."
-    },
-    {
-      "id": "104.5-slide-19",
-      "slideNumber": 19,
       "title": "Resumen y Claves de Examen: Subtema 104.5",
       "layout": "summary",
       "blocks": [

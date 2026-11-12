@@ -13,18 +13,31 @@
   "keyTerms": [
     "Punto de montaje",
     "Efecto de ocultación VFS",
+    "Sintaxis mount -t TYPE DEVICE MOUNTPOINT",
+    "Formato de salida: SOURCE on TARGET type TYPE OPTIONS",
     "fstab (6 campos)",
     "fsck pass (1 para /, 2 para otros, 0 para swap/red)",
-    "Opciones fstab (defaults, ro, rw, noexec, nosuid, noatime, user, users, auto, noauto, group, owner, sync, async)",
-    "remount",
+    "defaults (rw, suid, dev, exec, auto, nouser, async)",
+    "dev / nodev",
+    "noexec y nosuid",
+    "noatime",
+    "user / users / group / owner",
+    "auto / noauto",
+    "sync (desgasta memorias flash)",
+    "remount (parámetro de mount -o, no va en fstab)",
     "target is busy",
-    "umount -f (forzar red NFS)",
-    "umount -r (fallback ro)",
+    "umount -f (forzar NFS inalcanzable)",
+    "umount -r (fallback a solo lectura)",
     "mount -t <tipo1,tipo2>",
+    "UUID= / LABEL= (idénticos en fstab y en mount)",
+    "lsblk -f, blkid y findfs",
     "systemd .mount",
     "systemd .automount",
-    "/etc/systemd/system/",
-    "systemctl daemon-reload"
+    "[Automount] Where=",
+    "/dev/disk/by-uuid/VOL_UUID",
+    "systemctl daemon-reload",
+    "systemctl start (sesión) frente a enable (cada arranque)",
+    "/etc/systemd/system/"
   ],
   "commands": [
     "mount",
@@ -97,23 +110,33 @@
     {
       "id": "104.3-slide-3",
       "slideNumber": 3,
-      "title": "El Comando mount: Acoplamiento Manual y Filtros de Tipo",
+      "title": "mount: sintaxis canónica, filtros y formato de salida",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "El Comando mount: Acoplamiento Manual y Filtros de Tipo"
+          "text": "mount: sintaxis canónica, filtros y formato de salida"
         },
         {
           "type": "paragraph",
-          "text": "Sintaxis básica, modificadores operativos de montaje en tiempo real y filtrado por tipos:"
+          "text": "Montar es adjuntar un sistema de archivos a un punto de montaje que debe existir; `mount` sin argumentos sirve además para listar lo que ya está montado."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "# 1. Montar ext4 en /mnt/external como solo lectura con noatime y async (Ejercicio Guiado 1):\nsudo mount -t ext4 -o noatime,async,ro /dev/sdc1 /mnt/external\n\n# 2. Listar simultáneamente sistemas ext3 y ntfs montados (Ejercicio Guiado 6):\nmount -t ext3,ntfs\n\n# 3. Montar directamente en solo lectura con la bandera corta -r (o -w para lectura/escritura):\nsudo mount -r /dev/sdb1 /mnt/backup",
-          "title": "Sintaxis oficial completa del comando mount"
+          "title": "Sintaxis canónica, montaje real y filtros",
+          "code": "# Sintaxis canónica: mount -t TYPE DEVICE MOUNTPOINT\nsudo mount -t ext4 /dev/sdc1 /mnt/external\n\n# Ejercicio Guiado 1: solo lectura con noatime y async\nsudo mount -t ext4 -o noatime,async,ro /dev/sdc1 /mnt/external\n\n# Banderas cortas: -r equivale a -o ro, -w a -o rw\nsudo mount -r /dev/sdb1 /mnt/backup\n\n# Listar todo, o filtrar por uno o varios tipos separados por coma (Guiado 6)\nmount\nmount -t ext3,ntfs"
+        },
+        {
+          "type": "paragraph",
+          "text": "La salida de `mount`, con filtro `-t` o sin él, sigue siempre el mismo formato `SOURCE on TARGET type TYPE OPTIONS`:"
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "title": "Formato de salida del listado",
+          "code": "/dev/sda1 on / type ext4 (rw,noatime,errors=remount-ro)\n# SOURCE   on TARGET type TYPE  OPTIONS\n# partición    punto   tipo   opciones activas"
         },
         {
           "type": "table",
@@ -164,16 +187,16 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave Oficial de Examen LPIC-1 (Ejercicios Guiados 1, 5 y 6)",
-          "content": "🎯 Recuerda: 1) Para listar múltiples tipos de sistemas usa comas: 'mount -t ext3,ntfs'. 2) Para remontar exFAT en /mnt/data como ro: 'mount -o remount,ro /mnt/data'. 3) Las banderas directas '-r' y '-w' equivalen a '-o ro' y '-o rw'."
+          "title": "Clave de Examen LPIC-1 (Ejercicios Guiados 1, 5 y 6)",
+          "content": "🎯 `mount -t TYPE DEVICE MOUNTPOINT` es la forma canónica; `-t ext3,ntfs` filtra varios tipos; `-r` y `-w` equivalen a `-o ro` y `-o rw`; y el listado siempre se lee como `SOURCE on TARGET type TYPE OPTIONS`."
         }
       ],
-      "notes": "Advierte: si editas /etc/fstab con un error tipográfico y reinicias sin probar 'mount -a', el servidor entrará en modo emergencia."
+      "notes": "La salida de `mount` es una pregunta de examen recurrente: identifica SOURCE, TARGET, TYPE y OPTIONS sobre una línea real. Si editas /etc/fstab con un error tipográfico y reinicias sin probar 'mount -a', el servidor entra en modo emergencia."
     },
     {
       "id": "104.3-slide-4",
       "slideNumber": 4,
-      "title": "Opciones de Montaje de Examen: mount -o y /etc/fstab",
+      "title": "Opciones de montaje de examen: `mount -o` y /etc/fstab",
       "layout": "content",
       "blocks": [
         {
@@ -214,9 +237,14 @@
               "Evita escaladas de privilegios en particiones de usuario y USBs."
             ],
             [
+              "dev / nodev",
+              "🎯 'dev' permite interpretar los nodos de dispositivo (carácter y bloque) de la partición; 'nodev' lo prohíbe.",
+              "'dev' es el valor de 'defaults'; 'nodev' se añade en /home y en medios extraíbles."
+            ],
+            [
               "noatime",
               "🎯 No actualiza la fecha de último acceso al leer archivos.",
-              "Incrementa drásticamente el rendimiento de E/S en SSDs y bases de datos."
+              "Incrementa el rendimiento de E/S en SSDs y bases de datos."
             ],
             [
               "user / nouser",
@@ -240,8 +268,8 @@
             ],
             [
               "sync / async",
-              "'sync' escribe de forma síncrona en disco; 'async' usa búferes de memoria.",
-              "'async' es el valor por defecto para máximo rendimiento."
+              "'sync' escribe de forma síncrona en disco; 'async' usa búferes de memoria y es el valor por defecto.",
+              "🎯 Cuidado con 'sync' en memorias flash y tarjetas SD: sus ciclos de escritura son limitados y acorta su vida útil."
             ]
           ],
           "caption": "Catálogo completo de opciones de montaje en /etc/fstab y mount -o"
@@ -250,10 +278,10 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Diferencias Críticas: 'user' = monta usuario normal y solo él desmonta; 'users' = cualquier usuario desmonta; 'group'/'owner' = valida grupo o dueño del dispositivo; 'noauto' = 'mount -a' lo ignora por completo."
+          "content": "🎯 'user' = monta un usuario normal y solo él desmonta; 'users' = cualquiera desmonta; 'group'/'owner' = validan grupo o dueño del dispositivo; 'noauto' = 'mount -a' la ignora; 'nodev' anula los nodos de dispositivo de esa partición."
         }
       ],
-      "notes": "Pregunta frecuente: '¿Qué opción en /tmp evita ejecutar malware?'. Respuesta: noexec."
+      "notes": "Pregunta frecuente: '¿Qué opción en /tmp evita ejecutar malware?'. Respuesta: noexec. Y si preguntan por el desgaste de una tarjeta SD, la opción implicada es 'sync'."
     },
     {
       "id": "104.3-slide-5",
@@ -432,17 +460,23 @@
     {
       "id": "104.3-slide-8",
       "slideNumber": 8,
-      "title": "Identificación Fiable: blkid, lsblk y findfs",
+      "title": "Identificación fiable y montaje por UUID o LABEL",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Identificación Fiable: blkid, lsblk y findfs"
+          "text": "Identificación fiable y montaje por UUID o LABEL"
         },
         {
           "type": "paragraph",
-          "text": "¿Por qué nunca debes usar nombres como /dev/sda1 en /etc/fstab y cómo obtener el UUID?"
+          "text": "Un nombre como `/dev/sdb1` depende del puerto y del orden de conexión; el UUID y la etiqueta se fijan al crear el sistema de archivos y valen igual en `/etc/fstab` que en `mount`."
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "title": "UUID= y LABEL= como DEVICE, tanto en mount como en fstab",
+          "code": "# La misma sintaxis del primer campo de fstab funciona en mount:\n$ mount -t ntfs UUID=56C11DCC5D2E1334 /mnt/external\n$ mount LABEL=Backup /mnt/backup\n\n# Y en /etc/fstab, idéntico primer campo:\nUUID=56C11DCC5D2E1334  /mnt/external  ntfs  defaults  0  0"
         },
         {
           "type": "terminal",
@@ -470,7 +504,7 @@
             [
               "lsblk -f [disp]",
               "Dispositivo o vacío",
-              "🎯 Clave de Examen (Guiado 4): Muestra nombres, FSTYPE, LABEL, UUID y MOUNTPOINTS en árbol limpio."
+              "🎯 Clave de Examen (Guiado 4): muestra NAME, FSTYPE, LABEL, UUID y el punto de montaje en árbol limpio."
             ],
             [
               "blkid [disp]",
@@ -494,10 +528,10 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Para averiguar el UUID de un disco se usa 'blkid' o 'lsblk -f'; para buscar el dispositivo a partir de su UUID se usa 'findfs'."
+          "content": "🎯 Para obtener el UUID: 'blkid' o 'lsblk -f'; para el camino inverso (UUID → dispositivo): 'findfs'. Y `UUID=`/`LABEL=` se escriben igual en `/etc/fstab` y en `mount`."
         }
       ],
-      "notes": "Muestra a la clase cómo copiar el UUID de blkid directamente con el ratón para pegarlo en /etc/fstab."
+      "notes": "El manual demuestra que UUID y etiqueta no son exclusivos de fstab: `mount -t ntfs UUID=... /mnt/external` es válido. Aprovecha para que copien un UUID real con el ratón."
     },
     {
       "id": "104.3-slide-9",
@@ -563,6 +597,143 @@
     {
       "id": "104.3-slide-10",
       "slideNumber": 10,
+      "title": "Montaje automático con `.automount` y ciclo de `systemctl`",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Montaje automático con .automount y ciclo de systemctl"
+        },
+        {
+          "type": "paragraph",
+          "text": "El `.mount` monta al arrancar; el `.automount` monta en el primer acceso al punto de montaje y necesita los dos archivos, no solo uno."
+        },
+        {
+          "type": "code",
+          "language": "ini",
+          "title": "Unidad /etc/systemd/system/mnt-external.automount",
+          "code": "[Unit]\nDescription=Automount for the external data disk\n\n[Automount]\nWhere=/mnt/external\n\n[Install]\nWantedBy=multi-user.target"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Paso / Directiva",
+            "Comando o valor",
+            "Qué consigue"
+          ],
+          "rows": [
+            [
+              "[Automount] Where=",
+              "/mnt/external",
+              "Punto de montaje que dispara el montaje; el CÓMO (What=, Type=, Options=) lo aporta el `.mount`."
+            ],
+            [
+              "Nombre del archivo",
+              "mnt-external.automount",
+              "🎯 Mismo nombre que el punto de montaje, junto al `.mount` y en `/etc/systemd/system/`."
+            ],
+            [
+              "Recargar systemd",
+              "systemctl daemon-reload",
+              "Obligatorio después de crear o editar cualquier unidad."
+            ],
+            [
+              "systemctl start",
+              "start mnt-external.automount",
+              "🎯 Habilita la unidad solo para la sesión actual."
+            ],
+            [
+              "systemctl enable",
+              "enable mnt-external.automount",
+              "🎯 Habilita el montaje automático en cada arranque (se reemplaza start por enable)."
+            ],
+            [
+              "systemctl status",
+              "status mnt-external.mount",
+              "Verifica el estado real del montaje y sus directivas Where:/What:."
+            ]
+          ],
+          "caption": "Del `.mount` al `.automount`: directivas y ciclo de vida"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 `.automount` monta al primer acceso y exige el `.mount`; `systemctl start` = sesión actual y `systemctl enable` = cada arranque; tras editar unidades, `systemctl daemon-reload`."
+        }
+      ],
+      "notes": "Insiste en la pareja de archivos: el .automount solo sabe DÓNDE (Where=); el CÓMO lo define el .mount. Sin daemon-reload, systemd no ve los cambios."
+    },
+    {
+      "id": "104.3-slide-11",
+      "slideNumber": 11,
+      "title": "Remontaje en caliente con `mount -o remount`",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Remontaje en Caliente con mount -o remount"
+        },
+        {
+          "type": "paragraph",
+          "text": "Cambiar las opciones de un sistema de archivos que ya está montado, sin desmontarlo ni interrumpir servicios. `remount` no es nunca una línea de `/etc/fstab`: es un parámetro de `mount -o`."
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "title": "Remontar: no hace falta indicar el tipo de sistema de archivos",
+          "code": "# Basta el dispositivo o el punto de montaje, sin -t:\nsudo mount -o remount,ro /dev/sdb1\nsudo mount -o remount,<nuevas_opciones> <punto_montaje>"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "sudo mount -o remount,ro /mnt/backup; mount | grep /mnt/backup",
+              "output": "/dev/sdb1 on /mnt/backup type ext4 (ro,relatime)"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Descripción"
+          ],
+          "rows": [
+            [
+              "mount -o remount,ro /",
+              "",
+              "🎯 Caso de Rescate Clásico: Pasa la partición raíz (/) a modo de solo lectura para evitar escrituras en situaciones de emergencia o antes de apagar."
+            ],
+            [
+              "mount -o remount,rw /",
+              "",
+              "🎯 Si el sistema arranca en modo de rescate monousuario con la raíz en solo lectura, este comando la pasa a lectura/escritura para poder editar archivos de configuración rotos y reparar el arranque."
+            ],
+            [
+              "mount -o remount,noexec /tmp",
+              "",
+              "Añade directivas de endurecimiento de seguridad sobre la marcha sin reiniciar el servidor."
+            ]
+          ],
+          "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 'mount -o remount,rw /' es el primer comando en modo monousuario de rescate; al remontar no se especifica el tipo de sistema de archivos y 'remount' jamás se escribe como línea de /etc/fstab."
+        }
+      ],
+      "notes": "Trampa de examen: 'remount' no va en fstab y no necesita tipo de FS. Truco de rescate: si rompes fstab y caes en shell de solo lectura, 'mount -o remount,rw /' y edita con vi."
+    },
+    {
+      "id": "104.3-slide-12",
+      "slideNumber": 12,
       "title": "Montajes Especiales: mount --bind e Imágenes ISO",
       "layout": "content",
       "blocks": [
@@ -627,74 +798,8 @@
       "notes": "Muestra cómo un bind mount permite a un usuario sin permisos en /var acceder a su carpeta desde su propio $HOME."
     },
     {
-      "id": "104.3-slide-11",
-      "slideNumber": 11,
-      "title": "Remontaje en Caliente con mount -o remount",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Remontaje en Caliente con mount -o remount"
-        },
-        {
-          "type": "paragraph",
-          "text": "¿Cómo cambiar las opciones de una partición sin desmontarla ni interrumpir servicios?"
-        },
-        {
-          "type": "code",
-          "language": "bash",
-          "code": "sudo mount -o remount,<nuevas_opciones> <punto_montaje>",
-          "title": "Actualizar flags de montaje en un sistema de archivos que ya está activo sin desmontarlo"
-        },
-        {
-          "type": "terminal",
-          "lines": [
-            {
-              "prompt": "$ ",
-              "command": "sudo mount -o remount,ro /mnt/backup; mount | grep /mnt/backup",
-              "output": "/dev/sdb1 on /mnt/backup type ext4 (ro,relatime)"
-            }
-          ]
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
-          ],
-          "rows": [
-            [
-              "mount -o remount,ro /",
-              "",
-              "🎯 Caso de Rescate Clásico: Pasa la partición raíz (/) a modo de solo lectura para evitar escrituras en situaciones de emergencia o antes de apagar."
-            ],
-            [
-              "mount -o remount,rw /",
-              "",
-              "🎯 Si el sistema arranca en modo de rescate monousuario con la raíz en solo lectura, este comando la pasa a lectura/escritura para poder editar archivos de configuración rotos y reparar el arranque."
-            ],
-            [
-              "mount -o remount,noexec /tmp",
-              "",
-              "Añade directivas de endurecimiento de seguridad sobre la marcha sin reiniciar el servidor."
-            ]
-          ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 'mount -o remount,rw /' es el primer comando obligatorio que ejecuta un administrador en modo monousuario para poder reparar archivos."
-        }
-      ],
-      "notes": "Enseña este truco: si alguna vez rompes /etc/fstab y el sistema te deja en shell de emergencia de solo lectura, escribe 'mount -o remount,rw /' y podrás editar fstab con vi."
-    },
-    {
-      "id": "104.3-slide-12",
-      "slideNumber": 12,
+      "id": "104.3-slide-13",
+      "slideNumber": 13,
       "title": "Trampas Clásicas de Examen en Montajes",
       "layout": "content",
       "blocks": [
@@ -727,62 +832,63 @@
       "notes": "Pide a los alumnos que revisen siempre las opciones de fstab para asegurarse de que no hay espacios tras las comas."
     },
     {
-      "id": "104.3-slide-13",
-      "slideNumber": 13,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1)",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1)"
-        },
-        {
-          "type": "list",
-          "ordered": true,
-          "items": [
-            "**Ejercicio Guiado 1 (Oficial Pág 500):** Usando mount, ¿cómo se puede montar un sistema ext4 en /dev/sdc1 en /mnt/external como solo lectura, usando las opciones noatime y async? — **Respuesta:** `mount -t ext4 -o noatime,async,ro /dev/sdc1 /mnt/external`.",
-            "**Ejercicio Guiado 2 (Oficial Pág 500):** Al desmontar un sistema en /dev/sdd2 aparece 'target is busy'. ¿Cómo saber qué archivos están abiertos y qué procesos los abrieron? — **Respuesta:** `lsof /dev/sdd2` (o `fuser -vm /dev/sdd2`).",
-            "**Ejercicio Guiado 3 (Oficial Pág 500):** Entrada en /etc/fstab: `/dev/sdb1 /data ext4 noatime,noauto,async 0 2`. ¿Se montará si se emite 'mount -a'? ¿Por qué? — **Respuesta:** **No se montará**, porque la opción 'noauto' indica expresamente a 'mount -a' que ignore esta entrada."
-          ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Análisis Técnico",
-          "content": "mount -o ro,noatime,async combina parámetros sin espacios; lsof y fuser diagnostican 'target is busy'; y 'noauto' protege particiones de montajes masivos con mount -a."
-        }
-      ],
-      "notes": "Casos oficiales 1, 2 y 3 extraídos de las páginas 500 y 503-504 del manual LPI 101-500."
-    },
-    {
       "id": "104.3-slide-14",
       "slideNumber": 14,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2)",
-      "layout": "two-column",
+      "title": "Ejercicios guiados oficiales del manual (casos 1-6)",
+      "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2)"
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (casos 1-6)"
         },
         {
-          "type": "list",
-          "ordered": true,
+          "type": "paragraph",
+          "text": "Los seis casos de las páginas 500-504 con la respuesta oficial del solucionario:"
+        },
+        {
+          "type": "steps",
           "items": [
-            "**Ejercicio Guiado 4 (Oficial Pág 500):** ¿Cómo se puede averiguar el UUID de un sistema de archivos en /dev/sdb1? — **Respuesta:** `lsblk -f /dev/sdb1` (o alternativamente `blkid /dev/sdb1`).",
-            "**Ejercicio Guiado 5 (Oficial Pág 500):** ¿Cómo se puede usar mount para volver a montar como de solo lectura un sistema exFAT con UUID '6e2c12e3...', montado en /mnt/data? — **Respuesta:** `mount -o remount,ro /mnt/data` (al estar ya montado, no es necesario especificar UUID ni tipo).",
-            "**Ejercicio Guiado 6 (Oficial Pág 500):** ¿Cómo se puede obtener una lista de todos los sistemas de archivos ext3 y ntfs montados actualmente en un sistema? — **Respuesta:** `mount -t ext3,ntfs` (pasando una lista de tipos separados por comas sin espacios)."
+            {
+              "number": 1,
+              "title": "Montar ext4 en /dev/sdc1 sobre /mnt/external como solo lectura",
+              "description": "`sudo mount -t ext4 -o noatime,async,ro /dev/sdc1 /mnt/external` — opciones separadas por comas, sin espacios (Guiado 1)."
+            },
+            {
+              "number": 2,
+              "title": "Diagnosticar 'target is busy' al desmontar /dev/sdd2",
+              "description": "`lsof /dev/sdd2` (o `fuser -vm /dev/sdd2`) lista los procesos y archivos abiertos que impiden el desmontaje (Guiado 2)."
+            },
+            {
+              "number": 3,
+              "title": "¿Se monta `noauto` con `mount -a`?",
+              "description": "La entrada `/dev/sdb1 /data ext4 noatime,noauto,async 0 2` NO se monta: `noauto` hace que `mount -a` ignore esa línea (Guiado 3)."
+            },
+            {
+              "number": 4,
+              "title": "Averiguar el UUID de /dev/sdb1",
+              "description": "`lsblk -f /dev/sdb1` (o `blkid /dev/sdb1`) muestra FSTYPE, LABEL, UUID y punto de montaje (Guiado 4)."
+            },
+            {
+              "number": 5,
+              "title": "Remontar exFAT en /mnt/data como solo lectura",
+              "description": "`mount -o remount,ro /mnt/data` — al estar ya montado no hacen falta UUID ni tipo de sistema de archivos (Guiado 5)."
+            },
+            {
+              "number": 6,
+              "title": "Listar los sistemas ext3 y ntfs montados",
+              "description": "`mount -t ext3,ntfs` — lista de tipos separada por comas, sin espacios (Guiado 6)."
+            }
           ]
         },
         {
           "type": "callout",
           "calloutType": "tip",
           "title": "Solución y Análisis Técnico",
-          "content": "lsblk -f muestra el UUID de forma estructurada; remount,ro cambia los permisos en caliente; y mount -t tipo1,tipo2 filtra con precisión quirúrgica."
+          "content": "Comas sin espacios en `-o`; `lsof` diagnostica `target is busy`; `noauto` bloquea `mount -a`; `lsblk -f` revela el UUID; al remontar no hace falta el tipo; `-t` filtra con una lista de tipos."
         }
       ],
-      "notes": "Casos oficiales 4, 5 y 6 extraídos de las páginas 500 y 503-504 del manual LPI."
+      "notes": "Casos oficiales 1-6 del manual (pp. 500-504) unificados: misma respuesta oficial, sin aire entre dos slides. Corrige el error típico de escribir espacios tras las comas en -o."
     },
     {
       "id": "104.3-slide-15",
@@ -895,78 +1001,6 @@
     {
       "id": "104.3-slide-18",
       "slideNumber": 18,
-      "title": "Tarjetas Nemotécnicas: Montaje de Discos 104.3",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Tarjetas Nemotécnicas: Montaje de Discos 104.3"
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Concepto Clave",
-            "Significado / Respuesta en Examen LPIC-1"
-          ],
-          "rows": [
-            [
-              "Listar múltiples tipos con mount",
-              "mount -t ext3,ntfs (lista separada por comas sin espacios)."
-            ],
-            [
-              "Remontar en caliente a solo lectura",
-              "mount -o remount,ro <punto_montaje>."
-            ],
-            [
-              "Forzar desmontaje ante caída de red",
-              "umount -f -r <punto_montaje> (o umount -fr)."
-            ],
-            [
-              "Diagnosticar 'target is busy'",
-              "lsof <disp|dir> o fuser -vm <dir>."
-            ],
-            [
-              "Liberar procesos bloqueantes en un montaje",
-              "fuser -km <dir> (envía señal SIGKILL)."
-            ],
-            [
-              "Opción fstab para no montar con 'mount -a'",
-              "noauto (solo se monta si se invoca explícitamente)."
-            ],
-            [
-              "Diferencia entre 'user' y 'users'",
-              "'user': solo quien montó desmonta; 'users': cualquiera desmonta."
-            ],
-            [
-              "Opciones 'group' y 'owner'",
-              "Permiten montar si pertenece al grupo o es dueño del dispositivo."
-            ],
-            [
-              "Valor de Pass (6º campo) para la raíz /",
-              "Valor 1 exclusivo (otras particiones locales llevan 2; swap/red llevan 0)."
-            ],
-            [
-              "Ruta canónica de unidades .mount",
-              "/etc/systemd/system/."
-            ],
-            [
-              "Nombre de unidad para /mnt/external",
-              "mnt-external.mount (barras sustituidas por guiones)."
-            ],
-            [
-              "Recargar demonio tras editar unidad systemd",
-              "systemctl daemon-reload."
-            ]
-          ],
-          "caption": "12 Tarjetas maestras de memorización para el subtema 104.3"
-        }
-      ],
-      "notes": "Repasa estas 12 tarjetas para asegurar el pleno de aciertos en el objetivo 104.3."
-    },
-    {
-      "id": "104.3-slide-19",
-      "slideNumber": 19,
       "title": "Resumen y Claves de Examen: Subtema 104.3",
       "layout": "summary",
       "blocks": [

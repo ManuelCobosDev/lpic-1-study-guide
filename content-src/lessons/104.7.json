@@ -17,6 +17,7 @@
     "Filesystem Hierarchy Standard",
     "locate",
     "locate -A",
+    "locate -e",
     "updatedb",
     "/etc/updatedb.conf",
     "PRUNEPATHS",
@@ -38,13 +39,20 @@
     "which",
     "whereis",
     "type",
+    "type -t",
     "builtin",
+    "keyword",
+    "echo $PATH",
     "/var/tmp",
     "/tmp",
     "/run",
     "/srv",
     "/opt",
-    "/usr/local"
+    "/usr/local",
+    "/home",
+    "/proc",
+    "/media",
+    "/mnt"
   ],
   "commands": [
     "find",
@@ -114,50 +122,95 @@
     {
       "id": "104.7-slide-3",
       "slideNumber": 3,
-      "title": "Mapa Maestro de Directorios Esenciales de la Raíz (/)",
+      "title": "Mapa maestro del FHS: qué guarda cada directorio",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Mapa Maestro de Directorios Esenciales de la Raíz (/)"
+          "text": "Mapa Maestro del FHS: qué guarda cada directorio"
         },
         {
           "type": "paragraph",
-          "text": "El propósito exacto de cada directorio de primer nivel evaluado en LPIC-1:"
+          "text": "El FHS no es obligatorio, pero casi todas las distribuciones lo siguen. El examen pregunta por el propósito y las reglas de cada directorio de primer nivel."
         },
         {
           "type": "table",
           "headers": [
             "Directorio",
-            "Contenido y Propósito en el Estándar FHS",
-            "Reglas y Advertencias Críticas de Examen"
+            "Qué guarda",
+            "Regla de examen"
           ],
           "rows": [
             [
               "/etc",
-              "🎯 Archivos de configuración estáticos específicos de este equipo.",
-              "Solo archivos de texto de configuración; ¡prohibido almacenar binarios ejecutables!"
+              "Configuración estática y específica de este equipo.",
+              "Solo archivos de texto de configuración; nunca binarios."
             ],
             [
               "/bin / /sbin",
-              "🎯 Comandos binarios esenciales (/bin usuario general, /sbin administración root).",
-              "Necesarios para arrancar el sistema y en modo monousuario de rescate."
+              "Binarios esenciales: /bin para todos los usuarios, /sbin para administración.",
+              "Necesarios para arrancar y en modo monousuario."
             ],
             [
               "/dev",
-              "🎯 Archivos de dispositivo especiales (bloque y carácter).",
-              "Gestionados dinámicamente por udev en memoria RAM (devtmpfs)."
+              "Archivos de dispositivo (bloque y carácter).",
+              "Los gestiona udev en RAM (devtmpfs)."
             ],
             [
               "/lib / /lib64",
-              "🎯 Bibliotecas compartidas esenciales del SO y módulos del kernel (/lib/modules).",
-              "Librerías dinámicas necesarias para arrancar los binarios de /bin y /sbin."
+              "Bibliotecas compartidas y módulos del kernel (/lib/modules).",
+              "Necesarias para ejecutar los binarios de /bin y /sbin."
             ],
             [
               "/boot / /root",
-              "🎯 /boot: kernel (vmlinuz), initramfs y GRUB. /root: inicio de superusuario.",
-              "/boot accesible por firmware BIOS/UEFI. /root siempre en raíz física (/)."
+              "/boot: kernel (vmlinuz), initramfs y GRUB. /root: home del superusuario.",
+              "/boot lo lee el firmware; /root vive en la raíz, no en /home."
+            ],
+            [
+              "/home",
+              "Directorios personales de los usuarios (/home/usuario).",
+              "root es la excepción: su home es /root."
+            ],
+            [
+              "/proc",
+              "Sistema de archivos virtual con datos de los procesos en ejecución.",
+              "No consume disco: lo genera el kernel."
+            ],
+            [
+              "/media / /mnt",
+              "/media: medios extraíbles (USB, CD/DVD). /mnt: montajes temporales.",
+              "El FHS recomienda /mnt para montajes manuales."
+            ],
+            [
+              "/var",
+              "Datos variables: /var/log, /var/spool, /var/mail, /var/cache.",
+              "/var/tmp debe persistir entre reinicios."
+            ],
+            [
+              "/usr",
+              "Jerarquía secundaria de solo lectura: /usr/bin, /usr/sbin, /usr/lib, /usr/share.",
+              "Compartible por red; no se modifica en marcha."
+            ],
+            [
+              "/opt",
+              "Paquetes de software adicionales de terceros (add-on).",
+              "/opt no es /usr/local: aquí instala el fabricante."
+            ],
+            [
+              "/srv",
+              "Datos de servicios servidos a la red (/srv/www, /srv/ftp).",
+              "Datos de servicio, no ficheros de configuración."
+            ],
+            [
+              "/run",
+              "Datos variables de ejecución: archivos .pid y sockets.",
+              "Debe borrarse en el arranque; antes era /var/run."
+            ],
+            [
+              "/tmp vs /var/tmp",
+              "/tmp: temporales de un solo uso. /var/tmp: temporales que deben persistir.",
+              "Borrar /tmp al arrancar es recomendable, no obligatorio; /var/tmp no se borra."
             ]
           ],
           "caption": "Mapa Maestro de Directorios Esenciales de la Raíz (/)"
@@ -166,74 +219,14 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: /etc almacena SOLO configuración; /bin ejecutables de usuario; /sbin ejecutables de administración; /lib bibliotecas y módulos del kernel."
+          "content": "🎯 /etc = configuración del host; /bin y /sbin = ejecutables esenciales; /var = datos que cambian; /srv = datos servidos a la red; /opt = paquetes de terceros; /usr/local = software compilado a mano."
         }
       ],
-      "notes": "Pregunta de examen: '¿Qué tipo de archivos residen en /etc?'. Respuesta: Archivos de configuración de host."
+      "notes": "Pregunta típica: '¿Qué tipo de archivos residen en /etc?'. Respuesta: archivos de configuración del host. Insiste en la fila de temporales: borrar /tmp en el arranque es una recomendación, no una obligación; /var/tmp no se borra."
     },
     {
       "id": "104.7-slide-4",
       "slideNumber": 4,
-      "title": "Directorios de Datos Variables y Aplicaciones: /var, /usr, /opt y /srv",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Directorios de Datos Variables y Aplicaciones: /var, /usr, /opt y /srv"
-        },
-        {
-          "type": "paragraph",
-          "text": "¿Dónde se guardan los datos servidos, los paquetes externos y los logs?"
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Directorio",
-            "Propósito en el Examen LPIC-1",
-            "Subdirectorios Esenciales Evaluados"
-          ],
-          "rows": [
-            [
-              "/var",
-              "🎯 Datos variables que cambian continuamente durante la operación del sistema.",
-              "🎯 /var/log (archivos de log), /var/spool (colas de impresión y correo), /var/mail, /var/cache (caché APT/DNF)."
-            ],
-            [
-              "/usr",
-              "🎯 Jerarquía secundaria de solo lectura compartible por red.",
-              "/usr/bin (la mayoría de comandos de usuario), /usr/sbin, /usr/lib, /usr/share (datos independientes de arquitectura)."
-            ],
-            [
-              "/opt",
-              "🎯 Paquetes de software adicionales de terceros (Add-on applications).",
-              "Aplicaciones propietarias o comerciales independientes (ej: /opt/google/chrome)."
-            ],
-            [
-              "/srv",
-              "🎯 Datos de servicios servidos por este sistema hacia la red.",
-              "Datos de servidores web (/srv/www), FTP (/srv/ftp) o repositorios de software."
-            ],
-            [
-              "/tmp frente a /var/tmp",
-              "🎯 /tmp se usa para archivos temporales que pueden vaciarse en cada reinicio; /var/tmp almacena temporales que deben PERSISTIR entre reinicios.",
-              "Ambos disponen de Sticky Bit (1777)."
-            ]
-          ],
-          "caption": "Directorios de Datos Variables y Aplicaciones: /var, /usr, /opt y /srv"
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Diferencias Clave de Examen: /opt = software adicional empaquetado por terceros; /srv = datos de servicios de red; /var/tmp = temporales que sobreviven al reinicio."
-        }
-      ],
-      "notes": "Muestra que en distribuciones modernas /bin y /sbin son enlaces simbólicos a /usr/bin y /usr/sbin (el movimiento UsrMerge)."
-    },
-    {
-      "id": "104.7-slide-5",
-      "slideNumber": 5,
       "title": "La Jerarquía /usr/local: Software Compilado a Mano",
       "layout": "diagram",
       "blocks": [
@@ -269,9 +262,9 @@
       "notes": "Explica que cuando haces './configure && make && sudo make install', el destino por defecto siempre es /usr/local."
     },
     {
-      "id": "104.7-slide-6",
-      "slideNumber": 6,
-      "title": "Búsqueda Indexada Ultrarrápida con locate",
+      "id": "104.7-slide-5",
+      "slideNumber": 5,
+      "title": "Búsqueda indexada ultrarrápida con locate",
       "layout": "content",
       "blocks": [
         {
@@ -281,7 +274,7 @@
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo encontrar cualquier archivo en milisegundos sin hacer sufrir al disco duro?"
+          "text": "locate no recorre el disco: consulta la base de datos que construye updatedb. Responde en milisegundos, pero con la antigüedad del índice."
         },
         {
           "type": "code",
@@ -297,6 +290,13 @@
               "command": "locate -A 'report' 'updat'; locate -b '\\sshd_config'; locate -c '*.conf'",
               "output": "/var/log/reporting_updates.log\n/etc/ssh/sshd_config\n482"
             }
+          ]
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Coincide con patrones, no con extensiones** — 🎯 `locate jpg` también devuelve `jpg_specs.doc`: el patrón encaja en cualquier parte de la ruta completa (con `-b`, solo en el nombre final)."
           ]
         },
         {
@@ -356,11 +356,11 @@
           "content": "🎯 Clave de Examen: 'locate' no busca en el disco duro en tiempo real; consulta una base de datos indexada (/var/lib/mlocate/mlocate.db). Para buscar lo recién creado se debe usar 'updatedb' o 'find'."
         }
       ],
-      "notes": "Muestra a la clase: haz touch nuevo.txt, corre locate nuevo.txt (no sale), corre sudo updatedb y luego locate (¡ahora sí sale!)."
+      "notes": "Demuestra la trampa: touch nuevo.txt, locate nuevo.txt (no sale), sudo updatedb y locate nuevo.txt (ahora sí). Insiste en que 'locate jpg' devuelve también jpg_specs.doc porque coincide con patrones, no con extensiones."
     },
     {
-      "id": "104.7-slide-7",
-      "slideNumber": 7,
+      "id": "104.7-slide-6",
+      "slideNumber": 6,
       "title": "Actualización y Exclusiones: updatedb y /etc/updatedb.conf",
       "layout": "content",
       "blocks": [
@@ -420,9 +420,9 @@
       "notes": "Explica que si updatedb indexara NFS, saturaría la red de la empresa todas las noches."
     },
     {
-      "id": "104.7-slide-8",
-      "slideNumber": 8,
-      "title": "Localización de Programas y Documentación: which y whereis",
+      "id": "104.7-slide-7",
+      "slideNumber": 7,
+      "title": "Localización de programas y documentación: which y whereis",
       "layout": "content",
       "blocks": [
         {
@@ -432,13 +432,13 @@
         },
         {
           "type": "paragraph",
-          "text": "¿Dónde reside el binario ejecutable y dónde están sus páginas de manual oficial?"
+          "text": "¿Dónde reside el binario ejecutable, qué rutas consulta el sistema y dónde están las páginas de manual?"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "which <comando> | whereis [-b|-m|-s] <comando>",
-          "title": "Localizar rutas de ejecutables en PATH o encontrar código fuente y manuales"
+          "code": "which <comando> | whereis [-b|-m|-s] <comando>\necho $PATH",
+          "title": "Localizar rutas de ejecutables en PATH, ver las rutas consultadas o encontrar manuales y código fuente"
         },
         {
           "type": "terminal",
@@ -447,7 +447,19 @@
               "prompt": "$ ",
               "command": "which passwd; whereis passwd",
               "output": "/usr/bin/passwd\npasswd: /usr/bin/passwd /etc/passwd /usr/share/man/man1/passwd.1.gz /usr/share/man/man5/passwd.5.gz"
+            },
+            {
+              "prompt": "$ ",
+              "command": "echo $PATH",
+              "output": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
             }
+          ]
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**`echo $PATH`** — 🎯 Muestra las rutas que consulta `which`; si el binario no está en ninguna de ellas, `which` no lo encuentra y hay que usar `type`."
           ]
         },
         {
@@ -499,15 +511,15 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Diferencia Vital: 'which' solo busca ejecutables en $PATH; 'whereis' busca binarios (-b) y manuales (-m) en rutas estándar del sistema."
+          "content": "🎯 Diferencia Vital: 'which' solo busca ejecutables en $PATH ('echo $PATH' muestra esas rutas); 'whereis' busca binarios (-b) y manuales (-m) en rutas estándar del sistema."
         }
       ],
-      "notes": "Muestra que 'whereis -m passwd' devuelve exactamente /usr/share/man/man1/passwd.1.gz y man5/passwd.5.gz."
+      "notes": "Muestra que 'whereis -m passwd' devuelve exactamente las páginas man, y que 'echo $PATH' explica por qué which ignora un binario que no esté en esas rutas."
     },
     {
-      "id": "104.7-slide-9",
-      "slideNumber": 9,
-      "title": "Clasificación con type: Comandos Internos (Builtins)",
+      "id": "104.7-slide-8",
+      "slideNumber": 8,
+      "title": "Clasificación con type: builtins, alias, funciones y archivos",
       "layout": "content",
       "blocks": [
         {
@@ -517,7 +529,7 @@
         },
         {
           "type": "paragraph",
-          "text": "¿Por qué 'which cd' o 'which history' no devuelve nada y qué herramienta resuelve el misterio?"
+          "text": "¿Por qué 'which cd' o 'which history' no devuelve nada y qué herramienta distingue builtin, alias, función y ejecutable?"
         },
         {
           "type": "code",
@@ -551,7 +563,7 @@
             [
               "type -t <cmd>",
               "-t (Clasificador)",
-              "🎯 Clave de Examen: Devuelve una sola palabra: builtin, alias, file o function."
+              "🎯 Clave de Examen: Devuelve una sola palabra: alias, keyword, function, builtin o file."
             ],
             [
               "type -a <cmd>",
@@ -574,15 +586,15 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Pregunta Fija de Certificación: 'which cd' no encuentra nada porque 'cd' es un comando interno de la shell (shell builtin). Para identificarlo se debe usar 'type cd'."
+          "content": "🎯 Pregunta Fija de Certificación: 'which cd' no encuentra nada porque 'cd' es un comando interno de la shell (shell builtin). Para identificarlo se debe usar 'type cd', y 'type -t' devuelve alias, keyword, function, builtin o file."
         }
       ],
-      "notes": "Pide a los alumnos que comprueben la salida de 'type -t' para cada tipo de comando."
+      "notes": "Pide a los alumnos que comprueben la salida de 'type -t' para cada tipo de comando. Recuerda que 'type -t' devuelve cinco valores posibles: alias, keyword, function, builtin y file."
     },
     {
-      "id": "104.7-slide-10",
-      "slideNumber": 10,
-      "title": "Búsqueda en Tiempo Real con find: Criterios, Tiempos y Permisos",
+      "id": "104.7-slide-9",
+      "slideNumber": 9,
+      "title": "Búsqueda en tiempo real con find: criterios, tiempos y permisos",
       "layout": "content",
       "blocks": [
         {
@@ -616,6 +628,14 @@
           ]
         },
         {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**-maxdepth cuenta el directorio actual** — 🎯 `-maxdepth 1` busca solo en el directorio indicado y `-maxdepth 3` llega a dos niveles por debajo; `-mindepth` cuenta igual.",
+            "**Comillas simples en el patrón** — Sin ellas el shell expande el glob antes de que find lo vea: `find . -name '*.jpg'`. `-name` distingue mayúsculas y `-iname` no."
+          ]
+        },
+        {
           "type": "table",
           "headers": [
             "Parámetro de find",
@@ -636,7 +656,7 @@
             [
               "-maxdepth N / -mindepth N",
               "Profundidad",
-              "🎯 Limita niveles de descenso. N=1 busca solo en el directorio indicado sin entrar en subcarpetas."
+              "🎯 Limita niveles de descenso contando el directorio de partida: '-maxdepth 1' = solo ese directorio; '-maxdepth 3' = dos niveles por debajo."
             ],
             [
               "-mount (o -xdev)",
@@ -693,180 +713,67 @@
           "content": "🎯 Diferencias Temporales de find: 'mtime' evalúa cuándo cambió el CONTENIDO; 'ctime' cuándo cambiaron los METADATOS (permisos, propietario); 'atime' cuándo se LEYÓ. '-mount' evita saltar de partición. '-perm -NNN' exige que al menos estén encendidos los bits indicados."
         }
       ],
-      "notes": "Enseña a los alumnos que -maxdepth debe especificarse al principio de los criterios de find para optimizar el rendimiento."
+      "notes": "Recalca que -maxdepth cuenta el propio directorio de partida (1 = solo ese directorio) y que el patrón de -name debe ir entre comillas simples para que el shell no lo expanda."
+    },
+    {
+      "id": "104.7-slide-10",
+      "slideNumber": 10,
+      "title": "Ejercicios guiados oficiales (find, locate, whereis y FHS)",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (find, locate, whereis y FHS)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Casos de examen de la pág. 564 que combinan criterios; la solución y el motivo van en cada paso."
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "Archivos escribibles, recientes y grandes",
+              "description": "Solo en el directorio actual, archivos en los que el usuario pueda escribir, modificados en los últimos 10 días y de más de 4 GiB: `find . -maxdepth 1 -writable -mtime -10 -size +4G`."
+            },
+            {
+              "number": 2,
+              "title": "Página de manual de un comando",
+              "description": "Para localizar solo la página man de ifconfig, sin sus binarios: `whereis -m ifconfig`. La opción -m (manuals) restringe la búsqueda a la documentación."
+            },
+            {
+              "number": 3,
+              "title": "locate con dos patrones simultáneos",
+              "description": "Archivos cuyo nombre contenga 'report' y además 'updated', 'update' o 'updating': `locate -A \"report\" \"updat\"`. La opción -A exige que coincidan todos los patrones (AND)."
+            },
+            {
+              "number": 4,
+              "title": "Excluir ntfs del índice de updatedb",
+              "description": "En `/etc/updatedb.conf`, añadir `PRUNEFS=ntfs`: updatedb dejará de escanear ese tipo de sistema de archivos."
+            },
+            {
+              "number": 5,
+              "title": "Montaje temporal según el FHS",
+              "description": "Un disco interno provisional (/dev/sdc1) se monta en `/mnt`. En la práctica puede montarse en cualquier lugar, pero el FHS recomienda /mnt para montajes temporales."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "`-maxdepth 1` no baja de nivel; `whereis -m` solo devuelve manuales; `locate -A` es un AND de patrones; `PRUNEFS` excluye tipos de filesystem; y `/mnt` es el punto de montaje temporal recomendado por el FHS."
+        }
+      ],
+      "notes": "Los casos del manual sobre /etc, /run y /srv ya quedan resueltos en el mapa del FHS (diapositiva 3), así que aquí solo se practican find, locate, whereis y /mnt."
     },
     {
       "id": "104.7-slide-11",
       "slideNumber": 11,
-      "title": "Gran Matriz Comparativa de Búsqueda de Archivos",
+      "title": "Retos de exploración oficiales (find avanzado y updatedb)",
       "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Gran Matriz Comparativa de Búsqueda de Archivos"
-        },
-        {
-          "type": "paragraph",
-          "text": "El mapa de decisión definitivo: qué herramienta usar según el objetivo:"
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Herramienta",
-            "¿Dónde busca?",
-            "¿En tiempo real o en BD?",
-            "¿Qué encuentra?"
-          ],
-          "rows": [
-            [
-              "find",
-              "🎯 En el disco duro recorriendo el árbol recursivamente.",
-              "🎯 Tiempo real (100% actualizado al instante).",
-              "Cualquier archivo, directorio o enlace según atributos, fechas, tamaños y tipos."
-            ],
-            [
-              "locate",
-              "🎯 En la base de datos local (/var/lib/mlocate/mlocate.db).",
-              "Caché indexada (no ve archivos recién creados).",
-              "Nombres de archivo y rutas completas a velocidad instantánea."
-            ],
-            [
-              "which",
-              "🎯 Exclusivamente en las rutas listadas en la variable $PATH.",
-              "Tiempo real sobre las carpetas de $PATH.",
-              "🎯 Solo archivos binarios ejecutables."
-            ],
-            [
-              "whereis",
-              "En directorios estándar fijos (/bin, /sbin, /usr/share/man).",
-              "Tiempo real sobre rutas estándar.",
-              "🎯 Binarios (-b), páginas de manual man (-m) y código fuente (-s)."
-            ],
-            [
-              "type",
-              "🎯 En la memoria de la shell Bash activa.",
-              "Tiempo real en la sesión de shell.",
-              "🎯 Clasifica si es builtin, alias, función o archivo en disco."
-            ]
-          ],
-          "caption": "Gran Matriz Comparativa de Búsqueda de Archivos"
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Regla de Decisión de Examen: Para buscar por metadatos (tamaño, fecha) -> find. Para buscar por nombre al instante -> locate. Para ver ejecutables en PATH -> which. Para manuales -> whereis -m. Para builtins -> type."
-        }
-      ],
-      "notes": "Esta diapositiva resume todos los motores de búsqueda de Linux en una sola tabla."
-    },
-    {
-      "id": "104.7-slide-12",
-      "slideNumber": 12,
-      "title": "Trampas Clásicas de Examen en el FHS y Búsquedas",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Trampas Clásicas de Examen en el FHS y Búsquedas"
-        },
-        {
-          "type": "paragraph",
-          "text": "Los 3 descuidos más habituales en las preguntas de localización de ficheros:"
-        },
-        {
-          "type": "list",
-          "ordered": false,
-          "items": [
-            "**1. Confundir /opt con /srv y /usr/local** — 🎯 /opt es para aplicaciones empaquetadas por terceros (ej: Google Chrome); /srv es para datos servidos hacia la red (ej: páginas web o FTP); /usr/local es para software compilado a mano localmente con make install.",
-            "**2. Creer que locate sabe si un archivo fue borrado** — Si borraste un archivo hace 10 minutos, locate seguirá mostrándolo en la lista porque sigue anotado en la base de datos hasta que root ejecute 'updatedb'.",
-            "**3. Olvidar que /tmp se limpia y /var/tmp no** — Si un programa necesita guardar un archivo temporal grande que debe sobrevivir al reinicio del servidor, NO debe guardarlo en /tmp (que suele vaciarse o ser tmpfs en RAM), sino en /var/tmp."
-          ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Mnemotecnia Rápida: /opt = paquetes de terceros; /srv = servicios de red; /usr/local = compilado local; locate necesita updatedb; /var/tmp sobrevive a reboots."
-        }
-      ],
-      "notes": "Repasa estos tres conceptos antes de los ejercicios oficiales."
-    },
-    {
-      "id": "104.7-slide-13",
-      "slideNumber": 13,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: FHS y locate)",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: FHS, /run y locate -A)"
-        },
-        {
-          "type": "paragraph",
-          "text": "Aplica las directrices del estándar FHS y la indexación de locate para resolver casos de examen."
-        },
-        {
-          "type": "list",
-          "ordered": true,
-          "items": [
-            "Caso 1 (Oficial Pág 564): Según el estándar FHS, ¿en qué directorio exacto deben almacenarse los archivos de configuración estáticos de los servicios del equipo local? — Comando: `/etc (o /etc/<nombre_servicio>/)` (El estándar FHS reserva /etc exclusivamente para configuraciones del host local y prohíbe ejecutables en él.)",
-            "Caso 2 (Oficial Pág 564): ¿Cuál es el directorio temporal del sistema que DEBE borrarse obligatoriamente durante el proceso de arranque (boot)? — Comando: `/run (o /var/run)` (/run almacena datos de tiempo de ejecución volátiles del sistema como archivos PID de servicios activos y sockets de control; se reinicia en cada boot montado como tmpfs.)",
-            "Caso 3 (Oficial Pág 564): Usando locate, ¿qué comando busca cualquier archivo que contenga simultáneamente los patrones 'report' y 'updat' (o updated, update, updating) en su nombre? — Comando: `locate -A \"report\" \"updat\"` (La opción -A (--all) exige que coincidan todos los patrones indicados mediante un AND lógico.)",
-            "Caso 4 (Oficial Pág 564): ¿En qué directorio del estándar FHS deben residir los datos que un servidor ofrece hacia los clientes de red (web, FTP)? — Comando: `/srv (ej: /srv/www o /srv/ftp)` (/srv (Service Data) aloja los datos específicos servidos a la red.)"
-          ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "/etc para configuraciones locales; /run para datos de ejecución volátiles que se limpian en boot; locate -A exige coincidencia múltiple; y /srv para datos servidos en red."
-        }
-      ],
-      "notes": "Muestra que muchas distros usan /var/www por tradición histórica, pero el estándar estricto FHS es /srv."
-    },
-    {
-      "id": "104.7-slide-14",
-      "slideNumber": 14,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: whereis y which)",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: whereis, which y find)"
-        },
-        {
-          "type": "paragraph",
-          "text": "Casos prácticos oficiales de filtrado con find y localización de programas y manuales."
-        },
-        {
-          "type": "list",
-          "ordered": true,
-          "items": [
-            "Caso 5 (Oficial Pág 564 - Ejercicio Guiado 3): Usando find, busque solo en el directorio actual archivos regulares en los que el usuario tenga permiso de escritura, modificados en los últimos 10 días y con tamaño superior a 4 GiB — Comando: `find . -maxdepth 1 -type f -writable -mtime -10 -size +4G` (-writable comprueba permisos de escritura del usuario actual, -mtime -10 filtra los últimos 10 días y -size +4G tamaños mayores a 4 Gigabytes.)",
-            "Caso 6 (Oficial Pág 564 - Ejercicio Guiado 5): ¿Cómo puede encontrar de forma directa dónde se almacena la página del manual oficial de 'ifconfig' ignorando sus binarios? — Comando: `whereis -m ifconfig` (La opción -m (manuals) restringe la búsqueda exclusivamente a la documentación man.)",
-            "Caso 7 (Oficial Pág 564 - Ejercicio Guiado 6): ¿Qué variable debe añadirse a /etc/updatedb.conf para que updatedb ignore los sistemas de archivos ntfs? — Comando: `PRUNEFS=\"... ntfs\"` (La directiva PRUNEFS enumera los tipos de filesystem excluidos de la indexación.)",
-            "Caso 8 (Oficial Pág 564 - Ejercicio Guiado 7): Un administrador desea montar un disco interno de forma provisional (/dev/sdc1). Según el FHS, ¿dónde se recomienda montarlo? — Comando: `/mnt (o /mnt/<subdirectorio>)` (El FHS reserva /mnt como punto de montaje temporal para administradores.)"
-          ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "find combina -writable, -mtime y -size; whereis -m para páginas man; PRUNEFS para ignorar filesystems en updatedb; y /mnt para montajes temporales según FHS."
-        }
-      ],
-      "notes": "Recuerda que 'which export' fallaría porque export no existe en el disco."
-    },
-    {
-      "id": "104.7-slide-15",
-      "slideNumber": 15,
-      "title": "Retos de Exploración Oficiales (updatedb.conf y Binarios SUID)",
-      "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
@@ -874,29 +781,56 @@
           "text": "Retos de Exploración Oficiales (find Avanzado y updatedb)"
         },
         {
-          "type": "callout",
-          "calloutType": "warning",
-          "title": "Escenario del Desafío Oficial LPI",
-          "content": "Resuelve estos 4 retos de examen planteados en el manual oficial LPIC-1 (pág. 565):\n1. ¿Cómo hacer que locate muestre solo los archivos que existen realmente en disco ignorando entradas borradas de su índice?\n2. Busca en el directorio actual y subcarpetas hasta 2 niveles hacia abajo, excluyendo otros sistemas de archivos montados, archivos cuyo nombre contenga 'Status' o 'statute'.\n3. Limitando la búsqueda a sistemas ext4, busca en /mnt archivos que tengan al menos permisos de ejecución para el grupo, sean legibles por el usuario y hayan cambiado atributos en las últimas 2 horas.\n4. ¿Por qué 'which cd' no devuelve nada y 'type cd' sí?"
+          "type": "paragraph",
+          "text": "Seis retos del manual oficial (pág. 565) para fijar las reglas de niveles y la lectura de permisos octales:"
         },
         {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Pistas Técnicas",
-          "content": "locate con -e; find con -maxdepth 3 y -mount; find con -fstype ext4, -perm -410 y -cmin -120; y naturaleza de builtins."
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "locate sin archivos borrados",
+              "description": "¿Cómo hacer que locate muestre solo los archivos que existen realmente en disco?"
+            },
+            {
+              "number": 2,
+              "title": "Dos niveles y sin cruzar montajes",
+              "description": "Busca desde el directorio actual hasta 2 niveles hacia abajo, excluyendo sistemas de archivos montados, nombres que contengan 'Status' o 'statute'."
+            },
+            {
+              "number": 3,
+              "title": "ext4, permisos y 2 horas",
+              "description": "Limitado a ext4, en /mnt: al menos ejecución para el grupo, legible por el usuario y atributos cambiados en las últimas 2 horas."
+            },
+            {
+              "number": 4,
+              "title": "which cd frente a type cd",
+              "description": "¿Por qué 'which cd' no devuelve nada y 'type cd' sí?"
+            },
+            {
+              "number": 5,
+              "title": "Vacíos, antiguos y profundos",
+              "description": "Archivos vacíos, creados hace más de 30 días y al menos dos niveles por debajo del directorio actual."
+            },
+            {
+              "number": 6,
+              "title": "Legibles por otro usuario",
+              "description": "carol y john pertenecen al grupo mkt: busca en /home/john lo que también pueda leer carol."
+            }
+          ]
         },
         {
           "type": "callout",
           "calloutType": "tip",
           "title": "Solución Oficial Detallada",
-          "content": "1. Se usa la opción -e: `locate -e <patron>` (comprueba existencia real en disco antes de imprimir).\n2. Comando: `find . -maxdepth 3 -mount -iname \"*statu*\"` (-maxdepth 3 cuenta el directorio actual + 2 niveles abajo; -mount evita cruzar particiones).\n3. Comando: `find /mnt -fstype ext4 -perm -410 -cmin -120` (permiso al menos r para usuario (4), x para grupo (1) y cualquiera para otros (0) -> -410; -cmin -120 = 2 horas en minutos).\n4. 'cd' es una orden interna de Bash (shell builtin) que reside en la memoria de la shell; which solo busca archivos ejecutables en las rutas de $PATH."
+          "content": "1. `locate -e <patron>` comprueba que el archivo exista antes de imprimirlo.\n2. `find . -maxdepth 3 -mount -iname \"*statu*\"` (-maxdepth cuenta el directorio actual: 1 + 2 niveles).\n3. `find /mnt -fstype ext4 -perm -410 -cmin -120` (-410 = 4 para usuario, 1 para grupo, 0 para otros; -cmin en minutos).\n4. 'cd' es un builtin que vive en la memoria de la shell; which solo busca archivos en $PATH.\n5. `find . -empty -mtime +30 -mindepth 3` (-mindepth también cuenta el directorio actual).\n6. `find /home/john -perm -040` (el 4 en el segundo dígito = legible por el grupo mkt; primero y tercero no importan)."
         }
       ],
-      "notes": "El reto 2 evalúa una distinción fundamental del estándar FHS muy repetida en los exámenes oficiales."
+      "notes": "El reto 2 y el 5 evalúan la misma regla: el directorio de partida cuenta como nivel 1, por eso dos niveles por debajo se piden con 3. El reto 6 fija la lectura de -perm en dígitos usuario/grupo/otros."
     },
     {
-      "id": "104.7-slide-16",
-      "slideNumber": 16,
+      "id": "104.7-slide-12",
+      "slideNumber": 12,
       "title": "Pregunta de Examen LPIC-1: Propósito de /etc en el FHS",
       "layout": "checkpoint",
       "blocks": [
@@ -936,8 +870,8 @@
       "notes": "Pregunta clásica y fundamental de examen."
     },
     {
-      "id": "104.7-slide-17",
-      "slideNumber": 17,
+      "id": "104.7-slide-13",
+      "slideNumber": 13,
       "title": "Pregunta de Examen LPIC-1: Base de Datos de locate",
       "layout": "checkpoint",
       "blocks": [
@@ -977,8 +911,8 @@
       "notes": "Pregunta fija de examen para comprobar el conocimiento de locate vs updatedb."
     },
     {
-      "id": "104.7-slide-18",
-      "slideNumber": 18,
+      "id": "104.7-slide-14",
+      "slideNumber": 14,
       "title": "Pregunta de Examen LPIC-1: Búsqueda de Manuales con whereis",
       "layout": "checkpoint",
       "blocks": [
@@ -1018,8 +952,8 @@
       "notes": "Pregunta directa sobre los modificadores de whereis."
     },
     {
-      "id": "104.7-slide-19",
-      "slideNumber": 19,
+      "id": "104.7-slide-15",
+      "slideNumber": 15,
       "title": "Tarjetas Nemotécnicas: FHS y Búsquedas 104.7",
       "layout": "content",
       "blocks": [
@@ -1086,9 +1020,9 @@
       "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 104.7."
     },
     {
-      "id": "104.7-slide-20",
-      "slideNumber": 20,
-      "title": "Resumen y Claves de Examen: Subtema 104.7",
+      "id": "104.7-slide-16",
+      "slideNumber": 16,
+      "title": "Resumen: qué herramienta usar",
       "layout": "summary",
       "blocks": [
         {
@@ -1098,18 +1032,58 @@
         },
         {
           "type": "paragraph",
-          "text": "Checklist de conceptos críticos evaluados en el examen LPIC-1 101-500 (Tema 104.7):"
+          "text": "Checklist final del 104.7 y matriz de decisión para elegir la herramienta correcta en el examen:"
         },
         {
           "type": "list",
           "ordered": false,
           "items": [
-            "**Estándar FHS**: Clasificación 2x2 (Shareable vs Non-shareable, Static vs Variable). /etc (config host estática), /srv (datos de servicios de red), /opt (paquetes adicionales de terceros), /usr/local (software compilado localmente), /run y /tmp (temporales volátiles), /var/tmp (temporales persistentes).",
-            "**find**: Búsqueda en tiempo real en disco físico. Filtros por nombre (-name, -iname), tipo (-type f, d, l, b, c), tamaño (-size +/-N[c|k|M|G]), profundidad (-maxdepth, -mindepth), sistemas de archivos (-mount, -fstype), permisos (-perm exacto vs -perm -NNN), y tiempo (-mtime/-atime/-ctime en días, -mmin/-amin/-cmin en minutos).",
-            "**locate y updatedb**: Búsqueda indexada instantánea en /var/lib/mlocate/mlocate.db. 'locate -A' exige todos los patrones; 'locate -b' busca solo en basename; 'locate -e' verifica que el archivo aún exista. /etc/updatedb.conf define PRUNEPATHS, PRUNEFS, PRUNENAMES y PRUNE_BIND_MOUNTS.",
-            "**which vs whereis**: 'which' busca solo el primer ejecutable en las carpetas de $PATH. 'whereis' busca en rutas estándar binarios (-b), páginas de manual man (-m) y código fuente (-s).",
-            "**type**: Clasifica la naturaleza del comando en la sesión de shell. 'type -t' devuelve builtin (cd, history), alias, file (/usr/bin/find) o function."
+            "**FHS y temporales** — /etc configuración del host; /srv datos servidos; /opt paquetes de terceros; /usr/local software compilado; /run se borra en el arranque, /tmp es recomendable borrarla (no obligatorio) y /var/tmp persiste.",
+            "**locate y updatedb** — índice en /var/lib/mlocate/mlocate.db: -A exige todos los patrones, -b limita al nombre final, -e comprueba que exista. /etc/updatedb.conf define PRUNEPATHS, PRUNEFS, PRUNENAMES y PRUNE_BIND_MOUNTS.",
+            "**type y whereis** — 'type -t' devuelve alias, keyword, function, builtin o file (resuelve 'which cd'); 'whereis -m' ubica solo páginas de manual."
           ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Herramienta",
+            "¿Dónde busca?",
+            "¿En tiempo real o en BD?",
+            "¿Qué encuentra?"
+          ],
+          "rows": [
+            [
+              "find",
+              "🎯 En el disco duro recorriendo el árbol recursivamente.",
+              "🎯 Tiempo real (100% actualizado al instante).",
+              "Cualquier archivo, directorio o enlace según atributos, fechas, tamaños y tipos."
+            ],
+            [
+              "locate",
+              "🎯 En la base de datos local (/var/lib/mlocate/mlocate.db).",
+              "Caché indexada (no ve archivos recién creados).",
+              "Nombres de archivo y rutas completas a velocidad instantánea."
+            ],
+            [
+              "which",
+              "🎯 Exclusivamente en las rutas listadas en la variable $PATH.",
+              "Tiempo real sobre las carpetas de $PATH.",
+              "🎯 Solo archivos binarios ejecutables."
+            ],
+            [
+              "whereis",
+              "En directorios estándar fijos (/bin, /sbin, /usr/share/man).",
+              "Tiempo real sobre rutas estándar.",
+              "🎯 Binarios (-b), páginas de manual man (-m) y código fuente (-s)."
+            ],
+            [
+              "type",
+              "🎯 En la memoria de la shell Bash activa.",
+              "Tiempo real en la sesión de shell.",
+              "🎯 Clasifica si es builtin, alias, keyword, función o archivo en disco."
+            ]
+          ],
+          "caption": "Gran Matriz Comparativa de Búsqueda de Archivos"
         },
         {
           "type": "callout",
@@ -1118,8 +1092,8 @@
           "content": "🎯 Para buscar por atributos o fechas en vivo: find. Para buscar por nombre al instante: locate (requiere updatedb). Para ubicar páginas man: whereis -m. Para ejecutables en PATH: which. Para comandos internos de Bash: type."
         }
       ],
-      "notes": "Concluimos el subtema 104.7 y con él finalizamos completamente la refactorización integral del Tema 104 y de los temas 101 a 104 al 100%."
+      "notes": "Cierra con la matriz de decisión: el examen suele preguntar qué herramienta usar según el criterio (atributos, nombre, manual, PATH o builtin). Con esto termina el subtema 104.7."
     }
   ],
-  "totalSlides": 20
+  "totalSlides": 16
 }

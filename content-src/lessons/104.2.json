@@ -29,7 +29,15 @@
     "fsck -N (dry-run)",
     "fsck -R",
     "xfs_repair -l (log externo)",
-    "xfs_repair -d (ro peligroso)"
+    "xfs_repair -d (ro peligroso)",
+    "fsck.ext2 / fsck.ext3 / fsck.ext4",
+    "e2fsck -n (solo lectura)",
+    "tune2fs -l (listar parámetros)",
+    "tune2fs -e (continue | remount-ro | panic)",
+    "tune2fs -f (fuerza bruta)",
+    "xfs_repair -L (log sucio)",
+    "xfs_fsr (2 horas por defecto)",
+    "iused / ipcent"
   ],
   "commands": [
     "df",
@@ -117,13 +125,13 @@
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo saber cuánto espacio libre queda, filtrar por tipo y personalizar las columnas de df?"
+          "text": "`df` trabaja a nivel de sistema de archivos montado: tamaño total, espacio usado, disponible, porcentaje de uso y punto de montaje."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "# 1. Salida estándar legible para humanos y tipo de sistema de archivos:\ndf -hT\n\n# 2. Auditoría de inodos en la raíz:\ndf -i /\n\n# 3. Filtrar sistemas ext4 y personalizar columnas con --output (Ejercicio Guiado 2):\ndf -t ext4 --output=source,target,itotal,iavail,pcent",
-          "title": "Uso avanzado y opciones de personalización de df"
+          "title": "Uso avanzado y opciones de personalización de df",
+          "code": "# 1. Salida legible para humanos y tipo de sistema de archivos:\ndf -hT\n\n# 2. Auditoría de inodos en la raíz:\ndf -i /\n\n# 3. Filtrar ext4 y elegir columnas (Ejercicio Guiado 2):\ndf -t ext4 --output=source,target,itotal,iavail,pcent\n\n# 4. Inodos como campos de --output (itotal, iused, iavail, ipcent):\ndf --output=source,fstype,itotal,iused,ipcent"
         },
         {
           "type": "table",
@@ -136,32 +144,32 @@
             [
               "df -h",
               "-h (Humano)",
-              "🎯 Muestra tamaños en potencias de 1024 con sufijos legibles (K, M, G, T)."
+              "🎯 Tamaños en potencias de 1024 con sufijos legibles (K, M, G, T)."
             ],
             [
               "df -T",
               "-T (Tipo FS)",
-              "🎯 Añade una columna mostrando el TIPO de sistema de archivos (ext4, xfs, btrfs, vfat)."
+              "🎯 Añade la columna con el TIPO de sistema de archivos (ext4, xfs, btrfs, vfat)."
             ],
             [
               "df -t <tipo>",
               "-t (Filtro tipo)",
-              "🎯 Filtra para mostrar ÚNICAMENTE sistemas del tipo indicado (ej: 'df -t ext4')."
-            ],
-            [
-              "df -i",
-              "-i (Inodos)",
-              "🎯 Muestra estadísticas de inodos (total, usados, libres, %) en vez de bloques de disco."
-            ],
-            [
-              "--output=...",
-              "--output=campos",
-              "🎯 Personaliza las columnas a imprimir: 'source,target,itotal,iavail,pcent,fstype,size'."
+              "🎯 Muestra ÚNICAMENTE sistemas del tipo indicado (ej: 'df -t ext4')."
             ],
             [
               "df -x <tipo>",
               "-x (Excluir)",
-              "Excluye de la salida los sistemas del tipo especificado (ej: 'df -x tmpfs')."
+              "Excluye los sistemas del tipo indicado (ej: 'df -x tmpfs')."
+            ],
+            [
+              "df -i",
+              "-i (Inodos)",
+              "🎯 Estadísticas de inodos (total, usados, libres, %) en vez de bloques."
+            ],
+            [
+              "--output=campos",
+              "--output=",
+              "🎯 Elige columnas y su orden. Bloques: source, fstype, size, used, avail, pcent, target; inodos: itotal, iused, iavail, ipcent."
             ]
           ],
           "caption": "Opciones clave de df evaluadas en la certificación LPIC-1"
@@ -170,7 +178,7 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Diferencia Vital de Examen (Ejercicio Guiado 2 y Exploratorio 5)",
-          "content": "🎯 Diferencia Vital: 'df -T' (mayúscula) imprime el tipo de sistema de archivos; 'df -t <tipo>' (minúscula) es un FILTRO que solo muestra ese tipo. Con '--output=source,target,itotal,iavail,pcent' defines con precisión quirúrgica el orden de campos para informes."
+          "content": "🎯 'df -T' (mayúscula) imprime el tipo de sistema de archivos; 'df -t <tipo>' (minúscula) es un FILTRO que solo muestra ese tipo. Con '--output=source,target,itotal,iavail,pcent' fijas el orden exacto de los campos para informes."
         }
       ],
       "notes": "Muestra a los alumnos que si un servidor web crea millones de archivos de sesión vacíos, 'df -h' dirá 10% usado pero 'df -i' dirá 100% (disco bloqueado)."
@@ -247,13 +255,17 @@
           "caption": "Banderas esenciales de du en el temario LPIC-1"
         },
         {
+          "type": "paragraph",
+          "text": "⚠️ Ojo con los totales: con `-d N` los subdirectorios que no se muestran **siguen contando** en el total, y con `--exclude` el total **ya no** refleja los archivos excluidos."
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave Oficial de Examen LPIC-1 (Ejercicio Guiado 1)",
-          "content": "🎯 ¿Cómo verificar cuánto espacio usan SOLO los archivos en el directorio actual sin sumar los subdirectorios? Con 'du -S -h -d 0' (o su forma compacta 'du -Shd 0')."
+          "content": "🎯 ¿Cómo verificar cuánto espacio usan SOLO los archivos del directorio actual sin sumar los subdirectorios? Con 'du -S -h -d 0' (o su forma compacta 'du -Shd 0')."
         }
       ],
-      "notes": "Muestra cómo combinar 'du -h -d 1 /var | sort -h' para localizar rápidamente qué carpeta está saturando el servidor."
+      "notes": "Muestra cómo combinar 'du -h -d 1 /var | sort -h' para localizar rápidamente qué carpeta está saturando el servidor; recuerda que lo no mostrado sigue sumando."
     },
     {
       "id": "104.2-slide-5",
@@ -268,13 +280,13 @@
         },
         {
           "type": "paragraph",
-          "text": "fsck es un frontend que detecta el sistema de archivos y llama a la utilidad específica (e2fsck para ext2/3/4, xfs_repair para XFS):"
+          "text": "`fsck` es un front-end: detecta el tipo y llama a la utilidad concreta. Para ext2/3/4 llama a `e2fsck`, que también se invoca como `fsck.ext2`, `fsck.ext3` y `fsck.ext4` (enlaces al mismo binario)."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "# 1. Reparación automática no interactiva (preen) en ext4:\nsudo e2fsck -p /dev/sdc1\n\n# 2. Simulación en modo dry-run (no altera nada en disco):\nsudo fsck -N /dev/sdb1\n\n# 3. Comprobar todos los sistemas de fstab (-A) omitiendo la raíz / (-R):\nsudo fsck -AR",
-          "title": "Sintaxis oficial de fsck y e2fsck"
+          "title": "Sintaxis oficial de fsck y e2fsck",
+          "code": "# 1. Reparación automática no interactiva (preen) en ext4:\nsudo e2fsck -p /dev/sdc1\n\n# 2. Simulación en modo dry-run (no altera nada en disco):\nsudo fsck -N /dev/sdb1\n\n# 3. Comprobar todos los sistemas de fstab (-A) omitiendo la raíz / (-R):\nsudo fsck -AR"
         },
         {
           "type": "table",
@@ -295,6 +307,11 @@
               "Responde afirmativamente ('yes') a todas las preguntas de reparación de forma no interactiva."
             ],
             [
+              "-n",
+              "e2fsck",
+              "🎯 Responde 'no' a todo y abre el sistema en solo lectura: simula sin modificar nada."
+            ],
+            [
               "-f",
               "e2fsck / fsck",
               "🎯 'Force': fuerza la comprobación incluso si el superbloque marca el sistema como 'clean'."
@@ -312,7 +329,7 @@
             [
               "-A",
               "fsck",
-              "Recorre /etc/fstab y comprueba todos los sistemas de archivos según su orden (campo 6 'fsck pass')."
+              "Recorre /etc/fstab y comprueba todos los sistemas de archivos según su campo 6 ('fsck pass')."
             ]
           ],
           "caption": "Banderas maestras de fsck y e2fsck en el temario LPIC-1"
@@ -324,7 +341,7 @@
           "content": "⚠️ NUNCA ejecutes fsck ni e2fsck sobre un sistema de archivos montado en modo lectura/escritura (rw). ¡Causa corrupción de metadatos irreparable! Desmóntalo ('umount') o remóntalo en solo lectura ('mount -o remount,ro')."
         }
       ],
-      "notes": "Explica que fsck es un wrapper que invoca fsck.ext4, fsck.vfat, etc., según la partición."
+      "notes": "Explica que fsck es un wrapper que invoca fsck.ext4, fsck.vfat, etc. según la partición; en ext2/3/4 el binario real es e2fsck. En modo interactivo se responde y (arreglar), n (dejar) o a (arreglar todo)."
     },
     {
       "id": "104.2-slide-6",
@@ -339,7 +356,7 @@
         },
         {
           "type": "paragraph",
-          "text": "El valor devuelto por fsck ($?) define qué acción debe tomar el kernel o el administrador de sistemas:"
+          "text": "El valor devuelto por `fsck` (`$?`) indica qué debe hacer el administrador o el script de mantenimiento:"
         },
         {
           "type": "table",
@@ -362,7 +379,7 @@
             [
               "2",
               "🎯 El sistema debe reiniciarse (Reboot)",
-              "Se repararon estructuras críticas del kernel. Reiniciar inmediatamente."
+              "Las estructuras reparadas exigen que el sistema se reinicie para recargar su estado en memoria. Reiniciar inmediatamente."
             ],
             [
               "4",
@@ -414,7 +431,7 @@
         },
         {
           "type": "paragraph",
-          "text": "dumpe2fs imprime el contenido completo del superbloque y los descriptores de grupos de bloques en sistemas ext2, ext3 y ext4:"
+          "text": "`dumpe2fs` imprime el contenido del superbloque y los descriptores de grupos de bloques en sistemas ext2, ext3 y ext4. Sin `-h` añade el detalle de cada grupo."
         },
         {
           "type": "terminal",
@@ -422,7 +439,7 @@
             {
               "prompt": "$ ",
               "command": "sudo dumpe2fs -h /dev/sdb1",
-              "output": "Filesystem volume name:   DATOS\nFilesystem state:         clean\nMount count:              8\nMaximum mount count:      30\nLast checked:             Sun Nov  8 09:12:00 2026\nCheck interval:           2592000 (30 days)\nReserved block count:     131072 (1.0%)\nBackup superblock blocks: 32768, 98304, 163840"
+              "output": "Filesystem volume name:   DATOS\nFilesystem UUID:          6e2c12e3-472d-4bac-a257-c49ac07f3761\nFilesystem state:         clean\nMount count:              8\nMaximum mount count:      30\nCheck interval:           2592000 (30 days)\nBlock size:               4096\nInode count:              655360\nFree inodes:              612345\nReserved block count:     131072"
             }
           ]
         },
@@ -436,8 +453,8 @@
           "rows": [
             [
               "-h (--header-only)",
-              "Muestra solo la información del superbloque principal.",
-              "🎯 Evita miles de líneas de volcado de bloques de datos."
+              "Muestra solo la cabecera del superbloque, sin el volcado de cada grupo.",
+              "🎯 La vía rápida para ver estado, UUID, conteos de montaje e intervalo de chequeo."
             ],
             [
               "-b",
@@ -445,9 +462,9 @@
               "Auditoría preventiva de sectores dañados físicamente."
             ],
             [
-              "-ob <bloque>",
-              "Lee un superbloque de respaldo alternativo específico.",
-              "🎯 Permite rescatar la partición si el superbloque principal está destruido."
+              "-o superblock=<n>",
+              "Abre el sistema con un superbloque de respaldo concreto.",
+              "🎯 Lee una copia (ej: 32768) si el superbloque principal está destruido."
             ]
           ],
           "caption": "Uso de dumpe2fs para auditoría forense de ext4"
@@ -456,10 +473,10 @@
           "type": "callout",
           "calloutType": "tip",
           "title": "Técnica de Rescate con Superbloque Alternativo",
-          "content": "Si el superbloque de /dev/sdb1 se corrompe por un corte eléctrico, dumpe2fs localiza los backups (ej: bloque 32768). Luego puedes reparar el disco con: 'e2fsck -b 32768 /dev/sdb1'."
+          "content": "El volcado completo (sin -h) muestra las copias de respaldo de cada grupo. Si el superbloque principal se corrompe, lee una copia con 'dumpe2fs -o superblock=32768 /dev/sdb1' y repara con 'e2fsck -b 32768 /dev/sdb1'."
         }
       ],
-      "notes": "Enseña la bandera -h: sin ella dumpe2fs inunda el terminal con el detalle de cada grupo de bloques."
+      "notes": "Enseña la bandera -h: sin ella dumpe2fs inunda el terminal con el detalle de cada grupo de bloques. Para leer una copia de seguridad se usa -o superblock=N, no '-ob'."
     },
     {
       "id": "104.2-slide-8",
@@ -474,13 +491,13 @@
         },
         {
           "type": "paragraph",
-          "text": "tune2fs permite alterar los parámetros del superbloque en sistemas ext2/3/4 sin necesidad de formatear:"
+          "text": "`tune2fs` muestra o cambia parámetros del superbloque ext2/3/4 sin reformatear: con `-l` solo lista, con `-f` fuerza la operación aunque haya errores."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "# 1. Convertir ext2 a ext3 (-j), reiniciar conteo (-C 0) y renombrar etiqueta (-L UserData):\nsudo tune2fs -j -C 0 -L 'UserData' /dev/sdb1\n\n# 2. Crear journal en dispositivo externo /dev/sdc1 con chequeo cada 30 días (-i 30d):\nsudo tune2fs -j /dev/sdb1 -J device=/dev/sdc1 -i 30d\n\n# 3. Ajustar número máximo de montajes antes de fsck forzado (-c 9):\nsudo tune2fs -c 9 /dev/sda1",
-          "title": "Comandos de personalización avanzada con tune2fs"
+          "title": "Comandos de personalización avanzada con tune2fs",
+          "code": "# 1. Listar los parámetros actuales (Mount count, Maximum mount count…):\nsudo tune2fs -l /dev/sda1\n\n# 2. Convertir ext2 a ext3 (-j), reiniciar conteo (-C 0) y etiquetar (-L):\nsudo tune2fs -j -C 0 -L 'UserData' /dev/sdb1\n\n# 3. Journal externo en /dev/sdc1 y chequeo cada 30 días (-i 30d):\nsudo tune2fs -j /dev/sdb1 -J device=/dev/sdc1 -i 30d\n\n# 4. Tope de 9 montajes antes del fsck y remontaje ro ante error de disco:\nsudo tune2fs -c 9 /dev/sda1\nsudo tune2fs -e remount-ro /dev/sdb1"
         },
         {
           "type": "table",
@@ -491,39 +508,49 @@
           ],
           "rows": [
             [
-              "-j",
+              "-l",
               "(sin argumento)",
-              "🎯 Añade un diario (journal) ext3/ext4 a un sistema ext2 sin perder datos."
-            ],
-            [
-              "-J device=<dev>",
-              "device=/dev/sdc1",
-              "🎯 Aloja el journal en un dispositivo externo dedicado para alto rendimiento."
+              "Muestra los parámetros actuales del sistema de archivos sin modificar nada."
             ],
             [
               "-c <max>",
-              "Número (ej: 9, o 0 para deshabilitar)",
-              "🎯 Define el número máximo de montajes antes de forzar un chequeo con e2fsck."
+              "Número (ej: 9; 0 desactiva)",
+              "🎯 Tope de montajes antes de forzar e2fsck al arrancar."
             ],
             [
               "-C <num>",
               "Número (ej: 0)",
-              "🎯 Restablece o fija el contador actual de montajes acumulados."
+              "🎯 Restablece o fija el contador actual de montajes (¡distinto de -c!)."
             ],
             [
               "-i <tiempo>",
               "30d | 2m | 0",
-              "🎯 Intervalo máximo entre comprobaciones ('30d'=30 días; '0'=deshabilitado)."
+              "🎯 Intervalo máximo entre comprobaciones ('0' desactiva)."
             ],
             [
-              "-L <etiqueta>",
-              "Nombre (máx 16 chars)",
-              "Cambia la etiqueta de volumen del sistema de archivos."
+              "-L / -U",
+              "Etiqueta (16) / UUID",
+              "Cambia la etiqueta de volumen o asigna un UUID nuevo."
             ],
             [
-              "-U <UUID|random>",
-              "UUID o random",
-              "Genera o asigna un nuevo identificador UUID al sistema."
+              "-e <modo>",
+              "continue | remount-ro | panic",
+              "🎯 Comportamiento del kernel ante error: seguir, remontar en solo lectura o kernel panic."
+            ],
+            [
+              "-j",
+              "(sin argumento)",
+              "🎯 Añade un journal a ext2 y lo convierte en ext3 sin perder datos."
+            ],
+            [
+              "-J device=<dev>",
+              "device=/dev/sdc1",
+              "🎯 Aloja el journal en un dispositivo externo (también size= y location=)."
+            ],
+            [
+              "-f",
+              "(sin argumento)",
+              "⚠️ 'Fuerza bruta': completa la operación aunque encuentre errores."
             ]
           ],
           "caption": "Banderas evaluadas de tune2fs en el temario LPIC-1"
@@ -532,10 +559,10 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave Oficial de Examen LPIC-1 (Ejercicio Exploratorio 1 y 3)",
-          "content": "🎯 Dos preguntas fijas de examen: 1) Si Mount count es 8 y ejecutas 'tune2fs -c 9 /dev/sda1', en el siguiente arranque se disparará fsck obligatoriamente porque alcanzará el límite 9. 2) La sintaxis '-J device=/dev/sdc1' crea un journal externo en un disco independiente para maximizar la velocidad I/O."
+          "content": "🎯 Si Mount count es 8 y ejecutas 'tune2fs -c 9 /dev/sda1', el próximo arranque disparará fsck al alcanzar el límite. '-J device=/dev/sdc1' crea el journal externo y '-e remount-ro' remonta en solo lectura ante un error."
         }
       ],
-      "notes": "Destaca la opción -c 0 y -i 0: los administradores modernos suelen desactivar el fsck automático al arrancar para evitar tiempos muertos imprevistos."
+      "notes": "Destaca -l para inspeccionar antes de tocar, la pareja -c/-C (sensible a mayúsculas) y -e con sus tres valores. Con -c 0 e -i 0 se desactiva el fsck automático al arrancar."
     },
     {
       "id": "104.2-slide-9",
@@ -550,13 +577,13 @@
         },
         {
           "type": "paragraph",
-          "text": "Los sistemas XFS no utilizan e2fsck. Cuentan con su propia herramienta de comprobación y saneamiento de disco: xfs_repair."
+          "text": "Los sistemas XFS no utilizan e2fsck: su herramienta es xfs_repair, que trabaja con el sistema desmontado (o montado en ro con -d)."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "# 1. Comprobación segura de errores sin aplicar cambios (-n):\nsudo xfs_repair -n /dev/sdb1\n\n# 2. Comprobar XFS con sección de registro/log externa en /dev/sdc1 sin reparar (-l):\nsudo xfs_repair -l /dev/sdc1 -n /dev/sda1\n\n# 3. Modo peligroso ('dangerous'): reparar sistema montado en solo lectura (ro):\nsudo xfs_repair -d /dev/sdb1",
-          "title": "Sintaxis de comprobación y reparación de sistemas XFS"
+          "title": "Sintaxis de comprobación y reparación de sistemas XFS",
+          "code": "# 1. Comprobación segura de errores sin aplicar cambios (-n):\nsudo xfs_repair -n /dev/sdb1\n\n# 2. Comprobar XFS con sección de registro/log externa en /dev/sdc1 sin reparar (-l):\nsudo xfs_repair -l /dev/sdc1 -n /dev/sda1\n\n# 3. Modo peligroso ('dangerous'): reparar sistema montado en solo lectura (ro):\nsudo xfs_repair -d /dev/sdb1"
         },
         {
           "type": "table",
@@ -584,10 +611,14 @@
             [
               "-L",
               "Force Log Zeroing",
-              "⚠️ Destructivo: borra el journal sucio de XFS para forzar el montaje tras un desastre mayor."
+              "⚠️ Destructivo: pone a cero el log sucio de XFS como último recurso tras un desastre mayor."
             ]
           ],
           "caption": "Banderas críticas de xfs_repair en LPIC-1"
+        },
+        {
+          "type": "paragraph",
+          "text": "⚠️ `xfs_repair` no puede reparar un sistema con el registro «sucio»: si el montaje no recupera el log, `-L` lo pone a cero y puede provocar corrupción y pérdida de datos."
         },
         {
           "type": "callout",
@@ -611,7 +642,7 @@
         },
         {
           "type": "paragraph",
-          "text": "XFS ofrece una suite de utilidades especializadas para cada tarea de administración sobre particiones montadas o desmontadas:"
+          "text": "XFS ofrece una utilidad especializada por tarea; cada una exige el sistema montado o desmontado según el caso:"
         },
         {
           "type": "table",
@@ -629,7 +660,7 @@
             [
               "xfs_fsr [disp|punto]",
               "🎯 Montado (En línea)",
-              "FileSystem Reorganizer: desfragmenta en línea los archivos de XFS para recuperar rendimiento."
+              "Desfragmenta en línea. Sin argumentos recorre 2 horas todos los XFS montados y escribibles listados en /etc/mtab."
             ],
             [
               "xfs_info <punto_montaje>",
@@ -647,8 +678,8 @@
         {
           "type": "code",
           "language": "bash",
-          "code": "# 1. Inspeccionar geometría XFS de una partición montada:\nsudo xfs_info /mnt/datos\n\n# 2. Desfragmentar el sistema XFS en caliente:\nsudo xfs_fsr /dev/sdb2\n\n# 3. Asignar etiqueta en frío a una partición XFS:\nsudo xfs_admin -L 'BACKUP_PROD' /dev/sdb2",
-          "title": "Ejemplos prácticos de xfs_info, xfs_fsr y xfs_admin"
+          "title": "Ejemplos prácticos de xfs_info, xfs_fsr y xfs_admin",
+          "code": "# 1. Inspeccionar geometría XFS de una partición montada:\nsudo xfs_info /mnt/datos\n\n# 2. Desfragmentar en caliente (sin argumentos: 2 h sobre /etc/mtab):\nsudo xfs_fsr /dev/sdb2\n\n# 3. Asignar etiqueta en frío a una partición XFS:\nsudo xfs_admin -L 'BACKUP_PROD' /dev/sdb2"
         },
         {
           "type": "callout",
@@ -657,7 +688,7 @@
           "content": "🎯 xfs_fsr desfragmenta en caliente (sistema montado). xfs_admin modifica etiquetas y UUIDs pero exige que el sistema esté DESMONTADO."
         }
       ],
-      "notes": "Compara xfs_admin con tune2fs: xfs_admin es el equivalente en XFS para cambiar etiquetas y UUIDs."
+      "notes": "Compara xfs_admin con tune2fs: xfs_admin es el equivalente en XFS para cambiar etiquetas y UUIDs. Recuerda el dato de examen: xfs_fsr sin argumentos trabaja 2 horas sobre los XFS de /etc/mtab y puede requerir instalación."
     },
     {
       "id": "104.2-slide-11",
@@ -732,40 +763,6 @@
     {
       "id": "104.2-slide-12",
       "slideNumber": 12,
-      "title": "Trampas Clásicas de Examen en Integridad",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Trampas Clásicas de Examen en Integridad"
-        },
-        {
-          "type": "paragraph",
-          "text": "Los 4 errores más comunes donde caen los candidatos en el examen LPIC-1:"
-        },
-        {
-          "type": "list",
-          "ordered": false,
-          "items": [
-            "**1. Ejecutar fsck sobre un sistema montado en lectura/escritura (rw)** — <div style='margin-top:4px; line-height:1.4;'><span style='color:#DC2626; font-weight:700;'>❌ La Trampa:</span> Intentar reparar particiones en caliente sin desmontar.<br><span style='color:#16A34A; font-weight:700;'>✅ El Porqué:</span> El kernel y fsck colisionan en la modificación de inodos, provocando pérdida masiva de datos. Debe desmontarse ('umount') antes.</div>",
-            "**2. Confundir 'df -T' con 'df -t'** — <div style='margin-top:4px; line-height:1.4;'><span style='color:#DC2626; font-weight:700;'>❌ La Trampa:</span> Usar -t para mostrar la columna de tipo.<br><span style='color:#16A34A; font-weight:700;'>✅ El Porqué:</span> <code>-T</code> (mayúscula) imprime la columna del tipo de sistema; <code>-t &lt;tipo&gt;</code> (minúscula) es un filtro excluyente.</div>",
-            "**3. Ignorar que el disco puede llenarse por INODOS con espacio libre** — <div style='margin-top:4px; line-height:1.4;'><span style='color:#DC2626; font-weight:700;'>❌ La Trampa:</span> Mirar solo 'df -h' ante un fallo de disco lleno.<br><span style='color:#16A34A; font-weight:700;'>✅ El Porqué:</span> Millones de ficheros vacíos agotan los inodos (100% en <code>df -i</code>), bloqueando la creación de nuevos archivos aunque queden 100 GB libres.</div>",
-            "**4. Asumir que fsck repara sistemas XFS** — <div style='margin-top:4px; line-height:1.4;'><span style='color:#DC2626; font-weight:700;'>❌ La Trampa:</span> Intentar reparar XFS con 'e2fsck' o 'fsck'.<br><span style='color:#16A34A; font-weight:700;'>✅ El Porqué:</span> XFS cuenta con su motor nativo propio: <strong>xfs_repair</strong>.</div>"
-          ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Las 4 Leyes de Integridad: 1) fsck desmontado siempre. 2) df -T (columna) vs df -t (filtro). 3) df -i para inodos agotados. 4) XFS se repara con xfs_repair."
-        }
-      ],
-      "notes": "Recuerda a los alumnos que e2fsck -p repara automáticamente de forma no interactiva sin riesgos."
-    },
-    {
-      "id": "104.2-slide-13",
-      "slideNumber": 13,
       "title": "Ejercicios Guiados Oficiales del Manual LPIC-1",
       "layout": "two-column",
       "blocks": [
@@ -795,36 +792,8 @@
       "notes": "Casos literales 1 al 5 extraídos de las páginas 480 y 483-484 del manual oficial LPI 101-500."
     },
     {
-      "id": "104.2-slide-14",
-      "slideNumber": 14,
-      "title": "Casos Prácticos de Diagnóstico y Códigos de Salida",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Casos Prácticos de Diagnóstico y Códigos de Salida"
-        },
-        {
-          "type": "list",
-          "ordered": true,
-          "items": [
-            "**Caso 1 — Fallo de Escritura con Disco al 20%:** Un servidor de correo no puede guardar mensajes arrojando 'No space left on device'. Sin embargo, 'df -h' muestra que la partición /var tiene 80 GB libres de 100 GB. ¿Qué comando diagnostica el problema exacto? — **Respuesta:** `df -i /var`. El buzón de correo saturó la tabla de inodos al 100% con archivos diminutos.",
-            "**Caso 2 — Código de Retorno 2 en fsck:** Un script de mantenimiento nocturno ejecuta 'fsck /dev/sdb1' y el comando termina con '$? = 2'. ¿Qué debe hacer inmediatamente el script? — **Respuesta:** Forzar el reinicio inmediato de la máquina ('reboot'), ya que el código 2 indica que se corrigieron estructuras críticas del kernel que requieren reinicializar el sistema."
-          ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Regla Decisiva de Diagnóstico",
-          "content": "df -h mide bytes; df -i mide inodos. El código 2 de fsck siempre exige 'reboot'."
-        }
-      ],
-      "notes": "Estos dos escenarios representan situaciones reales de guardia en servidores de producción."
-    },
-    {
-      "id": "104.2-slide-15",
-      "slideNumber": 15,
+      "id": "104.2-slide-13",
+      "slideNumber": 13,
       "title": "Retos de Exploración Oficiales del Manual LPIC-1",
       "layout": "two-column",
       "blocks": [
@@ -849,8 +818,8 @@
       "notes": "Los 5 ejercicios exploratorios oficiales resueltos con total rigor pedagógico."
     },
     {
-      "id": "104.2-slide-16",
-      "slideNumber": 16,
+      "id": "104.2-slide-14",
+      "slideNumber": 14,
       "title": "Pregunta de Examen LPIC-1: Riesgo Crítico en la Ejecución de fsck",
       "layout": "checkpoint",
       "blocks": [
@@ -890,8 +859,8 @@
       "notes": "Pregunta de examen garantizada. Todo administrador debe tener este reflejo grabado a fuego."
     },
     {
-      "id": "104.2-slide-17",
-      "slideNumber": 17,
+      "id": "104.2-slide-15",
+      "slideNumber": 15,
       "title": "Pregunta de Examen LPIC-1: Parámetros de Intervalo en tune2fs",
       "layout": "checkpoint",
       "blocks": [
@@ -931,80 +900,8 @@
       "notes": "Pregunta directa y muy común sobre la administración del superbloque."
     },
     {
-      "id": "104.2-slide-18",
-      "slideNumber": 18,
-      "title": "Tarjetas Nemotécnicas: Integridad de Archivos 104.2",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Tarjetas Nemotécnicas: Integridad de Archivos 104.2"
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Concepto Clave",
-            "Significado / Respuesta en Examen LPIC-1"
-          ],
-          "rows": [
-            [
-              "Auditar espacio exclusivo de archivos en du",
-              "du -S (o 'du -Shd 0' para el directorio actual)."
-            ],
-            [
-              "Columnas personalizadas en df",
-              "df --output=source,target,itotal,iavail,pcent."
-            ],
-            [
-              "Diferencia entre df -T y df -t",
-              "-T añade columna de tipo; -t <tipo> filtra únicamente ese tipo."
-            ],
-            [
-              "Reparación automática sin interacción en e2fsck",
-              "e2fsck -p (preen seguro)."
-            ],
-            [
-              "Simulación dry-run en fsck",
-              "fsck -N (imprime sin ejecutar cambios)."
-            ],
-            [
-              "Omitir partición raíz / con fsck -A",
-              "fsck -AR."
-            ],
-            [
-              "Código de retorno 2 de fsck",
-              "El sistema debe reiniciarse inmediatamente ('Reboot')."
-            ],
-            [
-              "Código de retorno 4 de fsck",
-              "Errores no corregidos: requiere intervención manual."
-            ],
-            [
-              "Crear journal externo en ext3/ext4",
-              "tune2fs -j -J device=/dev/sdc1 <disp>."
-            ],
-            [
-              "Comprobar XFS sin reparar",
-              "xfs_repair -n <disp>."
-            ],
-            [
-              "XFS con dispositivo de log externo",
-              "xfs_repair -l <logdev> -n <disp>."
-            ],
-            [
-              "Reparar XFS montado en solo lectura",
-              "xfs_repair -d <disp> (modo peligroso)."
-            ]
-          ],
-          "caption": "12 Tarjetas maestras de memorización para el subtema 104.2"
-        }
-      ],
-      "notes": "Repasa estas 12 tarjetas para asegurar el pleno de aciertos en el objetivo 104.2."
-    },
-    {
-      "id": "104.2-slide-19",
-      "slideNumber": 19,
+      "id": "104.2-slide-16",
+      "slideNumber": 16,
       "title": "Resumen y Claves de Examen: Subtema 104.2",
       "layout": "summary",
       "blocks": [
@@ -1022,14 +919,20 @@
           "ordered": false,
           "items": [
             "**Superbloques e Inodos:** Diagnóstico de 'No space left on device' por bytes (`df -h`) o por inodos agotados (`df -i`).",
-            "**Auditoría con df y du:** Personalización con `df --output`, distinción `df -T` vs `df -t`, cálculo de archivos propios con `du -S` y exclusión con `du --exclude`.",
-            "**Comprobación con fsck y e2fsck:** Desmontaje obligatorio previo, modo seguro `e2fsck -p`, simulación `fsck -N`, códigos de retorno (código 2 = reboot, código 4 = manual).",
-            "**Ajustes con tune2fs y dumpe2fs:** Inspección con `dumpe2fs -h`, conversión a ext3 con `tune2fs -j`, journals externos con `-J device=`, y gestión de montajes (`-c`, `-C 0`, `-i`).",
-            "**Mantenimiento de XFS:** `xfs_repair` (flags `-n`, `-l <logdev>`, `-d`), desfragmentación en línea con `xfs_fsr`, inspección con `xfs_info`, y modificación de etiquetas con `xfs_admin`."
+            "**Auditoría con df y du:** Personalización con `df --output` (`size`, `used`, `avail`, `itotal`, `iused`, `iavail`, `ipcent`), distinción `df -T` vs `df -t`, cálculo de archivos propios con `du -S` y exclusión con `du --exclude`.",
+            "**Comprobación con fsck y e2fsck:** Desmontaje obligatorio previo, alias `fsck.ext2/3/4`, modos `e2fsck -p/-y/-n/-f`, simulación `fsck -N`, códigos de retorno (código 2 = reboot, código 4 = manual).",
+            "**Ajustes con tune2fs y dumpe2fs:** Inspección con `dumpe2fs -h` y `-o superblock=<n>`, conversión a ext3 con `tune2fs -j`, journal externo con `-J device=`, listado con `-l`, gestión de montajes (`-c`, `-C 0`, `-i`) y comportamiento ante error con `-e continue|remount-ro|panic`.",
+            "**Mantenimiento de XFS:** `xfs_repair` (flags `-n`, `-l <logdev>`, `-d` y `-L` como último recurso), desfragmentación en línea con `xfs_fsr` (2 h por defecto), inspección con `xfs_info` y modificación de etiquetas con `xfs_admin`."
           ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Las 4 Leyes de Integridad",
+          "content": "🎯 1) `fsck` siempre con el sistema desmontado o en solo lectura. 2) `df -T` imprime la columna de tipo; `df -t <tipo>` filtra. 3) `df -i` delata los inodos agotados con espacio libre. 4) XFS se repara con `xfs_repair`, nunca con `e2fsck`."
         }
       ],
-      "notes": "Concluimos el subtema 104.2 con cobertura total y trazabilidad completa del temario oficial LPIC-1."
+      "notes": "Concluimos el subtema 104.2 con cobertura total y trazabilidad completa del temario oficial LPIC-1. Cierra recordando las 4 leyes que resumen los fallos típicos de examen."
     }
   ]
 }
