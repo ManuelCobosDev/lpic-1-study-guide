@@ -21,7 +21,9 @@
     "Multitarea preventiva",
     "CFS (Completely Fair Scheduler)",
     "ps --sort=pcpu",
-    "schedtool"
+    "schedtool",
+    "política de programación",
+    "prioridad estática"
   ],
   "commands": [
     "ps",
@@ -69,9 +71,10 @@
           "type": "list",
           "ordered": false,
           "items": [
-            "**1. Multitarea Preventiva (Preemptive)** — 🎯 El kernel tiene el control supremo. Asigna a cada proceso una pequeña cuota de tiempo (time slice en ms). Cuando expira, desaloja al proceso por la fuerza para dar paso al siguiente.",
-            "**2. Planificador CFS (Completely Fair Scheduler)** — 🎯 Algoritmo de 'reparto equitativo': calcula dinámicamente qué proceso debe ejecutarse según el tiempo de CPU consumido y su factor de prioridad asignado.",
-            "**3. Niceness: La Palanca del Administrador** — 🎯 Permite al administrador graduar el peso de un proceso: los procesos más 'amables' reciben cuotas menores y los 'egoístas' acaparan mayor porcentaje de CPU."
+            "**1. Multitarea preventiva (preemptive)** — 🎯 El kernel manda: concede a cada proceso una cuota de tiempo (time slice) y, al expirar, lo desaloja para ceder la CPU.",
+            "**2. Planificador CFS** — 🎯 Reparte la CPU de forma equitativa según el tiempo ya consumido y el peso (prioridad) de cada proceso.",
+            "**3. Dos predicados: política y prioridad** — 🎯 Política de tiempo real (prioridad estática 0-99, siempre va antes) o normal (100-139, base 120); dentro de cada política decide la prioridad.",
+            "**4. Niceness: la palanca del administrador** — 🎯 Solo modula procesos de política normal: más amable (nice alto) = menos CPU; menos amable (nice bajo) = más CPU."
           ]
         },
         {
@@ -82,7 +85,7 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Linux utiliza multitarea preventiva: el kernel decide cuándo expulsar un proceso de la CPU; 'nice' y 'renice' son las herramientas para influir en esa decisión."
+          "content": "🎯 Clave de Examen: Linux usa multitarea preventiva, el kernel decide cuándo desaloja un proceso. nice y renice solo influyen en procesos de política normal (prioridad estática 100-139); los de tiempo real (0-99) van siempre antes y en top muestran rt."
         }
       ],
       "notes": "La alternancia entre procesos es tan rápida (cientos de veces por segundo) que da la ilusión de ejecución simultánea continua."
@@ -106,7 +109,7 @@
           "type": "list",
           "ordered": false,
           "items": [
-            "**Valor -20: MÁXIMA Prioridad (Menos amable)** — 🎯 El proceso es muy egoísta ('poco amable' con los demás). Exige la mayor cuota de CPU posible. Se reserva para servicios ultra-críticos de tiempo real.",
+            "**Valor -20: MÁXIMA Prioridad (Menos amable)** — 🎯 Dentro de la política normal exige la mayor cuota de CPU. Ojo: NO es tiempo real; un proceso RT (prioridad 0-99) se ejecuta antes aunque su NI sea -20.",
             "**Valor 0: Prioridad Estándar por Defecto** — 🎯 Todos los procesos ordinarios del sistema nacen con un valor de niceness fijado en 0 por defecto.",
             "**Valor +19: MÍNIMA Prioridad (Más amable)** — 🎯 El proceso es extremadamente cortés y generoso ('muy amable'). Solo consume CPU cuando ningún otro proceso la está utilizando (ideal para backups, renders o minería)."
           ]
@@ -145,8 +148,8 @@
           "items": [
             "**1. Niceness (NI) — La Escala de Usuario (-20 a +19)** — 🎯 Es el valor de 40 niveles que el administrador manipula con 'nice' y 'renice'. Cuanto más negativo, mayor prioridad exige el proceso.",
             "**2. Prioridad del Kernel (PR en top: 0 a 39)** — 🎯 Es la escala interna que usa el planificador del kernel para ordenar la cola de CPU. Menor número PR = el proceso se atiende antes.",
-            "**3. Procesos de Tiempo Real (RT)** — 🎯 Prioridades críticas de hardware (0 a 99 en kernel). En 'top' aparecen con la etiqueta 'rt' o valores negativos, con preferencia absoluta sobre todo lo demás.",
-            "**4. Escala Estática del Kernel y /proc/<PID>/sched** — 🎯 En el kernel la prioridad estática va de 100 a 139 (base 120 para NI=0, 100 para NI=-20). Se consulta con 'grep ^prio /proc/1/sched'. En 'ps -el', la columna PRI tiene un desfase histórico de 40: PRI 80 + 40 = 120 (y tiempo real muestra PRI -40, pues -40 + 40 = 0)."
+            "**3. Procesos de Tiempo Real (RT): prioridad estática 0 a 99** — 🎯 Se programan solo por su prioridad y siempre superan a cualquier proceso normal. En top, PR = -1 - prioridad_rt (prioridad RT entre 1 y 99): por eso aparecen como negativos o con la etiqueta rt.",
+            "**4. Prioridad estática del kernel y /proc/<PID>/sched** — 🎯 Va de 100 a 139 (120 con NI = 0; 100 con NI = -20) y se consulta con grep ^prio /proc/1/sched. En ps, la columna PRI lleva un desfase histórico de 40: PRI 80 + 40 = 120 (un proceso RT muestra PRI -40)."
           ]
         },
         {
@@ -180,8 +183,8 @@
         {
           "type": "code",
           "language": "bash",
-          "code": "ps -l | ps -el --sort=pcpu | ps -o pid,user,ni,pri,stat,cmd",
-          "title": "Comprobar las columnas NI y PRI, ordenar por uso de CPU y auditar los modificadores STAT"
+          "code": "# Alternativas independientes, no una tubería\nps -l\nps -el --sort=pcpu\nps -o pid,user,ni,pri,stat,cmd",
+          "title": "Tres formas de comprobar NI y PRI: formato largo, orden por uso de CPU y columnas a medida"
         },
         {
           "type": "terminal",
@@ -291,6 +294,11 @@
               "Tecla 'r' (Renice)",
               "Reasignar prioridad",
               "🎯 Clave de Examen: Solicita el PID y el nuevo valor de nice para aplicarlo al vuelo."
+            ],
+            [
+              "Mensajes de la tecla r",
+              "PID to renice / Renice PID ... to value",
+              "🎯 Clave de Examen: top pide el PID con PID to renice [default pid = 1] y después el nuevo nice con Renice PID 1 to value."
             ],
             [
               "Tecla 'q'",
@@ -440,7 +448,7 @@
           "type": "code",
           "language": "bash",
           "code": "renice [-n] <nuevo_nice> -p <PID> | -u <usuario> | -g <PGID>",
-          "title": "Reasignar el valor absoluto de niceness a procesos activos por PID, por usuario o por grupo"
+          "title": "Reasignar niceness a procesos activos: -n fija el valor absoluto y +5/-5 lo ajusta de forma relativa"
         },
         {
           "type": "terminal",
@@ -476,9 +484,9 @@
               "Modifica la prioridad de un grupo de procesos completo a la vez."
             ],
             [
-              "Valor Absoluto",
-              "No suma ni resta",
-              "🎯 Clave de Examen: 'renice 5' asigna exactamente nice = 5 (no suma 5 a la prioridad anterior)."
+              "Valor absoluto o relativo",
+              "Depende del signo usado",
+              "🎯 Clave de Examen: renice -n 10 -p 4120 fija el valor absoluto 10; renice +5 -g users eleva el nice en cinco (relativo)."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -491,7 +499,7 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Regla de Examen: 'renice' fija siempre el valor ABSOLUTO de nice; nunca suma ni resta. Para modificar procesos de otros usuarios o asignar nice negativo se requiere sudo."
+          "content": "🎯 Regla de Examen: renice -n 10 -p PID fija el valor absoluto; renice +5 -g users ajusta de forma relativa (suma 5). Para nice negativo o procesos de otros usuarios hace falta sudo."
         }
       ],
       "notes": "La comparativa detallada entre nice y renice se analiza en profundidad en la siguiente sección."
@@ -564,8 +572,8 @@
             ],
             [
               "<strong>Tipo de Valor</strong>",
-              "Relativo (suma al valor base).",
-              "🎯 <strong>Valor Absoluto</strong> (fija exactamente el valor indicado)."
+              "Relativo (suma al nice actual).",
+              "🎯 Fija el valor con <code>-n</code>; con <code>+5</code>/<code>-5</code> suma o resta de forma relativa."
             ],
             [
               "<strong>Privilegio de Usuario</strong>",
@@ -583,7 +591,7 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 FÓRMULA SAGRADA: 'nice' para procesos por nacer (suma +10 por defecto); 'renice' para procesos vivos (valor absoluto). Los usuarios normales solo pueden subir el nice, nunca reducirlo."
+          "content": "🎯 FÓRMULA SAGRADA: nice para procesos por nacer (suma +10 si se omite -n); renice para procesos vivos (absoluto con -n, relativo con signo). Los usuarios normales solo pueden subir el nice, nunca reducirlo."
         }
       ],
       "notes": "Esta diapositiva sintetiza todas las preguntas de comparación directa del examen 101-500."
@@ -698,7 +706,7 @@
           "type": "callout",
           "calloutType": "warning",
           "title": "Escenario del Desafío",
-          "content": "Resuelve estos 4 retos de examen planteados en el manual oficial LPIC-1:\n1. Si un administrador arranca una copia pesada con 'nice tar -czf backup.tar.gz /var', ¿con qué niceness exacto nacerá?\n2. En 'top', un proceso con PID 8420 gasta 99% de CPU. ¿Qué teclas pulsas para ponerle nice 19 sin cerrar top?\n3. ¿Puede un usuario normal que lanzó 'nice -n 10 script.sh' usar renice para devolverlo a nice 0?\n4. ¿Qué parámetro de 'ps --sort' ordena por uso de CPU ascendente, y qué comando avanzado inspecciona políticas de planificación y asigna tiempo real (-R)?\n   - Comando ps: ps -el --sort=pcpu\n   - Herramienta avanzada: schedtool (ej: 'schedtool 1750' o 'schedtool -R -p 89 1750')."
+          "content": "Resuelve estos 4 retos de examen planteados en el manual oficial LPIC-1:\n1. Si un administrador arranca una copia pesada con nice tar -czf backup.tar.gz /var, ¿con qué niceness exacto nacerá?\n2. En top, un proceso con PID 8420 gasta 99% de CPU. ¿Qué teclas pulsas para ponerle nice 19 sin cerrar top?\n3. ¿Puede un usuario normal que lanzó nice -n 10 script.sh usar renice para devolverlo a nice 0?\n4. ¿Qué valor de --sort de ps ordena por uso de CPU ascendente, y cómo muestra schedtool los parámetros de planificación de un proceso?"
         },
         {
           "type": "callout",
@@ -710,7 +718,7 @@
           "type": "callout",
           "calloutType": "tip",
           "title": "Solución y Explicación del Desafío",
-          "content": "1. Nacerá con nice = 10 (el comando nice sin argumentos añade 10 al valor base 0).\n2. Se pulsa la tecla 'r', se teclea el PID '8420' y Enter, y luego se introduce '19' y Enter.\n3. ¡NO! Un usuario ordinario no puede aumentar la prioridad de un proceso (pasar de 10 a 0 es un aumento de prioridad). Dará error 'Permission denied' a menos que lo ejecute root.\n4. Para ps se utiliza '--sort=pcpu' (ascendente) o '--sort=-pcpu' (descendente). Para consultar y cambiar parámetros avanzados de CPU en tiempo real se emplea 'schedtool'."
+          "content": "1. Nacerá con nice = 10 (nice sin argumentos añade 10 al valor base 0).\n2. Se pulsa la tecla r, se teclea el PID 8420 y Enter, y luego 19 y Enter.\n3. ¡NO! Un usuario ordinario no puede aumentar la prioridad: pasar de 10 a 0 es subirla, y da Permission denied salvo que lo ejecute root.\n4. ps -el --sort=pcpu ordena de forma ascendente (--sort=-pcpu, descendente). schedtool 1750 muestra los parámetros de planificación y schedtool -R -p 89 1750 cambia el proceso a tiempo real con prioridad (el manual menciona -90, su ejemplo usa -p 89)."
         }
       ],
       "notes": "El reto 3 ilustra una de las trampas más sutiles de la administración de sistemas."
@@ -755,76 +763,6 @@
         }
       ],
       "notes": "Pregunta clásica de certificación que todo candidato debe acertar sin dudar."
-    },
-    {
-      "id": "103.6-slide-17",
-      "slideNumber": 17,
-      "title": "Tarjetas Nemotécnicas: Prioridades de Proceso 103.6",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Tarjetas Nemotécnicas: Prioridades de Proceso 103.6"
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Concepto",
-            "Significado / Uso"
-          ],
-          "rows": [
-            [
-              "¿Cuál es el rango de valores de nice en Linux?",
-              "De -20 (máxima prioridad) a +19 (mínima prioridad)."
-            ],
-            [
-              "¿Qué valor de niceness tienen los procesos normales por defecto?",
-              "El valor 0."
-            ],
-            [
-              "¿Qué valor de niceness asigna 'nice comando' sin opciones?",
-              "El valor 10 (añade +10 al valor actual)."
-            ],
-            [
-              "¿Quién puede asignar valores de nice negativos (-1 a -20)?",
-              "Únicamente el superusuario root."
-            ],
-            [
-              "¿Qué comando modifica la prioridad de un proceso que ya está corriendo?",
-              "renice (ej: renice -n 5 -p <PID>)."
-            ],
-            [
-              "¿Qué fórmula relaciona la prioridad en top (PR) con el niceness (NI)?",
-              "PR = 20 + NI."
-            ],
-            [
-              "¿Qué tecla de 'top' permite cambiar la prioridad de un proceso?",
-              "La tecla 'r' (renice)."
-            ],
-            [
-              "¿Qué letra en la columna STAT de 'ps aux' indica un nice de alta prioridad?",
-              "El carácter '<' (alta prioridad); la letra 'N' indica baja prioridad."
-            ]
-          ],
-          "caption": "Tarjetas de memorización"
-        }
-      ],
-      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 103.6."
-    },
-    {
-      "id": "103.6-slide-18",
-      "slideNumber": 18,
-      "title": "Resumen y Claves de Examen: Subtema 103.6",
-      "layout": "summary",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Resumen y Claves de Examen: Subtema 103.6"
-        }
-      ],
-      "notes": "Concluimos el subtema 103.6. Los alumnos dominan ahora la planificación y prioridades de procesos."
     }
   ]
 }

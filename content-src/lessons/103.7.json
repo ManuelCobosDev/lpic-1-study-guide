@@ -17,10 +17,15 @@
     "regex(7)",
     "Átomo (atom)",
     "Bound / Límite",
+    "Clases POSIX (13 clases tradicionales)",
+    "findutils-default",
     "grep -z (--null-data)",
     "grep -H",
     "grep -f",
     "sed -f",
+    "sed: direcciones (número, regex, rango)",
+    "sed: flag g",
+    "s/// (sustitución)",
     "less (& / Ctrl+K)",
     "find -regex / -regextype"
   ],
@@ -170,23 +175,23 @@
     {
       "id": "103.7-slide-4",
       "slideNumber": 4,
-      "title": "Conjuntos y Clases de Caracteres POSIX",
+      "title": "Conjuntos, Rangos y las 13 Clases POSIX",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Conjuntos y Clases de Caracteres POSIX"
+          "text": "Conjuntos, Rangos y las 13 Clases POSIX"
         },
         {
           "type": "paragraph",
-          "text": "Emparejar caracteres por conjuntos y clases universales independientes del idioma (locales):"
+          "text": "Un conjunto `[...]` es un solo átomo: coincide con un carácter de la lista. Con `^` inicial se niega (`[^0-9]`) y con guion se define un rango (`[a-z]`)."
         },
         {
           "type": "code",
           "language": "bash",
           "code": "grep '[a-z]' | grep '[^0-9]' | grep '[[:alnum:]]'",
-          "title": "Definir conjuntos de caracteres y clases POSIX portables entre diferentes configuraciones regionales"
+          "title": "Definir conjuntos y clases POSIX portables entre configuraciones regionales"
         },
         {
           "type": "terminal",
@@ -194,64 +199,80 @@
             {
               "prompt": "$ ",
               "command": "ss -tuln | grep -E ':[[:digit:]]+' | head -n 2; grep -E '^[[:alpha:]]+:[^:]+:[[:digit:]]+:' /etc/passwd | head -n 2",
-              "output": "tcp   LISTEN 0      128          0.0.0.0:22        0.0.0.0:*\ntcp   LISTEN 0      511          0.0.0.0:80        0.0.0.0:*\nroot:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\n# Coincide con puertos numéricos :[[:digit:]]+ y usuarios alfabéticos con UID numérico."
+              "output": "tcp   LISTEN 0      128          0.0.0.0:22        0.0.0.0:*\ntcp   LISTEN 0      511          0.0.0.0:80        0.0.0.0:*\nroot:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\n# :[[:digit:]]+ captura puertos y ^[[:alpha:]]+:[^:]+:[[:digit:]]+ líneas de /etc/passwd con UID numérico."
             }
           ]
         },
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
+            "Clase POSIX",
+            "Representa"
           ],
           "rows": [
             [
-              "[abc] / [a-z]",
-              "",
-              "Coincide con exactamente UN carácter de los listados o dentro del rango alfabético especificado."
+              "[:alnum:]",
+              "Alfanumérico: letras y dígitos."
             ],
             [
-              "[^0-9] / [^abc]",
-              "",
-              "🎯 Negación de conjunto: coincide con cualquier carácter que NO sea uno de los indicados dentro del corchete."
+              "[:alpha:]",
+              "Alfabético (letras), respetando el idioma del locale."
             ],
             [
-              "[[:digit:]]",
-              "",
-              "🎯 Solo dígitos numéricos [0-9]. Totalmente portable ante cualquier configuración de idioma del servidor."
+              "[:ascii:]",
+              "Carácter que encaja en el juego ASCII."
             ],
             [
-              "[[:alpha:]]",
-              "",
-              "🎯 Solo letras alfabéticas [a-zA-Z], respetando caracteres del idioma."
+              "[:blank:]",
+              "Espacio o tabulación."
             ],
             [
-              "[[:alnum:]]",
-              "",
-              "🎯 Caracteres alfanuméricos: unión de letras y dígitos ([a-zA-Z0-9])."
+              "[:cntrl:]",
+              "Carácter de control."
             ],
             [
-              "[[:space:]]",
-              "",
-              "Espacios en blanco, tabulaciones (\\t) y saltos de línea (\\n)."
+              "[:digit:]",
+              "Dígito, del 0 al 9."
             ],
             [
-              "⚠️ Doble Corchete",
-              "",
-              "🎯 ¡Regla de Examen!: '[:digit:]' es el NOMBRE de la clase; para usarlo como conjunto DEBE ir dentro de '[ ]': '[[:digit:]]'."
+              "[:graph:]",
+              "Imprimible excepto el espacio."
+            ],
+            [
+              "[:lower:]",
+              "Minúscula."
+            ],
+            [
+              "[:print:]",
+              "Imprimible, incluido el espacio."
+            ],
+            [
+              "[:punct:]",
+              "Imprimible que no es espacio ni alfanumérico."
+            ],
+            [
+              "[:space:]",
+              "Espacio en blanco: espacio, \\f, \\n, \\r, \\t y \\v."
+            ],
+            [
+              "[:upper:]",
+              "Mayúscula."
+            ],
+            [
+              "[:xdigit:]",
+              "Dígito hexadecimal, del 0 a la F."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Las 13 clases de caracteres tradicionales (POSIX)"
         },
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: '[:digit:]' es solo el nombre. El conjunto requiere doble corchete obligatorio: '[[:digit:]]'. Si pones '[:digit:]' buscará literalmente ':', 'd', 'i', 'g', 't'."
+          "title": "Dos restricciones y el aviso de locale",
+          "content": "🎯 Clave de Examen: las clases solo existen dentro de corchetes (`[[:digit:]]`; `[:digit:]` suelto busca los caracteres ':', 'd', 'i', 'g', 't') y nunca pueden ser el punto final de un rango. Los rangos como `[a-z]` dependen del locale: en servidores internacionales usa `[[:alpha:]]`."
         }
       ],
-      "notes": "Muestra por qué en servidores internacionales [a-z] puede fallar si LC_COLLATE no es C, mientras que [[:alpha:]] siempre funciona."
+      "notes": "Recalca que un rango o una clase son UN átomo: el cuantificador que le siga afecta a todo el conjunto, y por eso '[[:blank:]]{2}' pide exactamente dos blancos."
     },
     {
       "id": "103.7-slide-5",
@@ -487,23 +508,23 @@
     {
       "id": "103.7-slide-8",
       "slideNumber": 8,
-      "title": "Opciones Clave de grep: -i, -v, -c y -n",
+      "title": "Opciones Clave de grep: -i, -v, -c, -n, -H, -f y -z",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Opciones Clave de grep: -i, -v, -c y -n"
+          "text": "Opciones Clave de grep: -i, -v, -c, -n, -H, -f y -z"
         },
         {
           "type": "paragraph",
-          "text": "Las 4 opciones indispensables en la administración diaria de servidores Linux:"
+          "text": "Las siete opciones indispensables en la administración diaria de servidores Linux:"
         },
         {
           "type": "code",
           "language": "bash",
           "code": "grep -i 'error' | grep -v 'nologin' | grep -c 'failed' | grep -n 'root'",
-          "title": "Filtrar por insensibilidad a mayúsculas, inversión de coincidencia, conteo y numeración de líneas"
+          "title": "Filtrar por insensibilidad a mayúsculas, inversión, conteo y numeración de líneas"
         },
         {
           "type": "terminal",
@@ -526,37 +547,37 @@
             [
               "-i, --ignore-case",
               "",
-              "🎯 Ignora diferencias entre mayúsculas y minúsculas: 'error', 'Error' y 'ERROR' coinciden por igual."
+              "🎯 Ignora mayúsculas y minúsculas: 'error', 'Error' y 'ERROR' coinciden por igual."
             ],
             [
               "-v, --invert-match",
               "",
-              "🎯 Invierte el filtro: muestra ÚNICAMENTE las líneas que NO contienen el patrón indicado (vital para filtrar ruido)."
+              "🎯 Invierte el filtro: muestra ÚNICAMENTE las líneas que NO contienen el patrón."
             ],
             [
               "-c, --count",
               "",
-              "🎯 Conteo de coincidencias: en lugar de imprimir las líneas de texto, imprime solo el número total de coincidencias."
+              "🎯 Imprime solo el número total de líneas coincidentes, no las líneas (sustituye a 'grep | wc -l')."
             ],
             [
               "-n, --line-number",
               "",
-              "🎯 Número de línea: antepone el número de línea original del fichero a cada coincidencia (ideal para abrir con vim +N)."
+              "🎯 Antepone el número de línea original del fichero a cada coincidencia."
             ],
             [
               "-H, --with-filename",
               "",
-              "🎯 Nombre de archivo: antepone el prefijo con el nombre del fichero a cada coincidencia (clave con 'find -exec grep -H')."
+              "🎯 Antepone el nombre del fichero. Se activa por defecto con VARIAS rutas, pero NO con un archivo individual: crítico cuando grep lo llama `find`."
             ],
             [
               "-f FILE, --file=FILE",
               "",
-              "🎯 Archivo de patrones: carga múltiples expresiones regulares desde un archivo de texto externo, una por línea."
+              "🎯 Carga las expresiones desde un fichero externo, una por línea; con `-v -f` se excluyen."
             ],
             [
               "-z, --null-data",
               "",
-              "🎯 Delimitador nulo: procesa entradas separadas por byte nulo (\\0) en lugar de newline (vital con 'find -print0 | grep -z')."
+              "🎯 Trata la entrada como registros separados por byte nulo (`\\0`) en lugar de newline: obligatorio con `find -print0`."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -569,10 +590,10 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: '-i' (ignore case); '-v' (inverso); '-c' (conteo); '-n' (número línea); '-H' (muestra nombre archivo); '-f' (carga patrones de fichero); '-z' (null-data para find -print0)."
+          "content": "🎯 Clave de Examen: '-i' ignora mayúsculas; '-v' invierte; '-c' cuenta; '-n' numera; '-H' no aparece con un único archivo; '-f' lee patrones de fichero; '-z' es la pareja de `find -print0`."
         }
       ],
-      "notes": "Explica que 'grep -c' sustituye elegantemente a 'grep | wc -l', ahorrando crear un subproceso de shell."
+      "notes": "Explica que 'grep -c' sustituye elegantemente a 'grep | wc -l' y que sin -H, cuando find llama a grep, no hay forma de saber de qué archivo viene cada línea."
     },
     {
       "id": "103.7-slide-9",
@@ -587,13 +608,13 @@
         },
         {
           "type": "paragraph",
-          "text": "Localizar nombres de archivos, acotar palabras completas y aislar datos específicos:"
+          "text": "Listar ficheros, acotar palabras completas, aislar la coincidencia y aplicar expresiones regulares con `find`:"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "grep -lw 'Port' /etc/ssh/* | grep -oE '[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+' | grep -x 'admin'",
-          "title": "Listar ficheros coincidentes (-l), acotar por límite de palabra (-w), línea exacta (-x) y extraer datos (-o)"
+          "code": "grep -lw 'PermitRootLogin' /etc/ssh/* | grep -oE '[0-9]{1,3}(\\.[0-9]{1,3}){3}'",
+          "title": "Listar ficheros (-l), acotar por palabra (-w) y extraer solo el trozo coincidente (-o)"
         },
         {
           "type": "terminal",
@@ -602,6 +623,11 @@
               "prompt": "$ ",
               "command": "grep -lw 'PermitRootLogin' /etc/ssh/*; grep -oE '[0-9]{1,3}(\\.[0-9]{1,3}){3}' /etc/hosts | head -n 2",
               "output": "/etc/ssh/sshd_config\n# -l imprime solo el nombre del fichero que contiene la palabra exacta 'PermitRootLogin'.\n127.0.0.1\n192.168.1.10\n# -o extrae ÚNICAMENTE la subcadena coincidente (la IP), descartando el resto de la línea."
+            },
+            {
+              "prompt": "$ ",
+              "command": "find . -type f -regextype egrep -not -regex '.*\\.[[:alnum:]]{1,}$'",
+              "output": "./README\n./Makefile\n# Sin -regextype, find no entiende '|', '+', '?' ni {n,m}: su estándar es findutils-default (clon de BRE)."
             }
           ]
         },
@@ -616,27 +642,32 @@
             [
               "-l, --files-with-matches",
               "",
-              "🎯 Clave de Examen: Imprime SOLO los nombres de los ficheros que contienen coincidencias, sin imprimir su contenido."
+              "🎯 Imprime SOLO los nombres de los ficheros que contienen coincidencias, sin su contenido."
             ],
             [
               "-w, --word-regexp",
               "",
-              "🎯 Palabra completa: solo coincide si el patrón está rodeado por límites de palabra (evita que 'red' coincida con 'redes')."
+              "🎯 Palabra completa: el patrón debe ir rodeado de límites de palabra ('red' no coincide con 'redes')."
             ],
             [
               "-x, --line-regexp",
               "",
-              "Coincidencia de línea completa estricta: toda la línea debe ser exactamente idéntica al patrón (equivale a '^patron$')."
+              "Toda la línea debe coincidir por completo (equivale a `^patron$`)."
             ],
             [
               "-o, --only-matching",
               "",
-              "🎯 La Navaja Suiza: Imprime ÚNICAMENTE el trozo de texto coincidente con la regex en lugar de la línea entera (ideal para extraer IPs/tokens)."
+              "🎯 La navaja suiza: imprime ÚNICAMENTE el trozo de texto que coincide (ideal para extraer IPs o tokens)."
             ],
             [
-              "find -regex y -regextype",
+              "find -regex / -iregex",
               "",
-              "🎯 Búsqueda en rutas: 'find . -regex <patron>' evalúa la ruta completa. '-regextype posix-extended' (o 'egrep') activa ERE y '-iregex' ignora mayúsculas."
+              "🎯 Evalúa la RUTA completa: `-iregex` ignora mayúsculas y `-not -regex` invierte la condición."
+            ],
+            [
+              "find -regextype",
+              "",
+              "🎯 `posix-extended` o `egrep` habilitan ERE; por defecto find usa `findutils-default`, prácticamente un clon de BRE."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -645,10 +676,10 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: '-l' devuelve nombres de archivos; '-w' busca palabras exactas; '-o' extrae solo el trozo coincidente; 'find -regextype egrep -regex' aplica expresiones regulares sobre rutas de archivos."
+          "content": "🎯 Clave de Examen: '-l' devuelve nombres de archivo; '-w' palabras exactas; '-x' línea completa; '-o' solo el trozo coincidente; 'find' es básico de fábrica (`findutils-default`) y pide `-regextype` para ERE."
         }
       ],
-      "notes": "Muestra a la clase el enorme poder de 'grep -o' combinado con 'sort -u' para obtener listas limpias de atacantes en logs."
+      "notes": "Muestra cómo 'grep -oE | sort -u' produce listas limpias de atacantes a partir de logs, y cómo `-not -regex` invierte el filtro de rutas."
     },
     {
       "id": "103.7-slide-10",
@@ -729,31 +760,31 @@
     {
       "id": "103.7-slide-11",
       "slideNumber": 11,
-      "title": "Expresiones Regulares en sed: -E y Backreferences",
+      "title": "sed: motor ERE, -n, -p, -f y direcciones",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Expresiones Regulares en sed: -E y Backreferences"
+          "text": "sed: motor ERE, -n, -p, -f y direcciones"
         },
         {
           "type": "paragraph",
-          "text": "Transformar flujos de texto y reorganizar campos mediante grupos capturados y referencias hacia atrás:"
+          "text": "Cada instrucción de `sed` se aplica línea a línea y puede ir precedida de una dirección: número de línea, expresión regular o rango."
         },
         {
           "type": "code",
           "language": "bash",
           "code": "sed -E 's/(patrón1) (patrón2)/\\2, \\1/' <archivo>",
-          "title": "Utilizar el motor ERE en sed (-E) y sustituir reutilizando subpatrones entre paréntesis (\\1, \\2)"
+          "title": "Motor ERE con sed -E y retroreferencias (\\1, \\2)"
         },
         {
           "type": "terminal",
           "lines": [
             {
               "prompt": "$ ",
-              "command": "echo '2026-10-28' | sed -E 's/([0-9]{4})-([0-9]{2})-([0-9]{2})/\\3\\/\\2\\/\\1/'; head -n 2 /etc/passwd | sed -E 's/^([^:]+):.*:([0-9]+):[0-9]+:.*$/User: \\1 (UID: \\2)/'",
-              "output": "28/10/2026\n# Convierte formato AAAA-MM-DD a DD/MM/AAAA usando 3 grupos y \\3/\\2/\\1.\nUser: root (UID: 0)\nUser: daemon (UID: 1)\n# Captura el nombre de usuario (\\1) y el UID (\\2) reformateando la salida en una línea limpia."
+              "command": "sed -n '/^root/p' /etc/passwd; sed -n '1,7p' /etc/passwd | wc -l; echo 'root:x:0:0:root:/root:/bin/bash' | sed -E 's/^([^:]+):.*:([0-9]+):[0-9]+:.*$/User: \\1 (UID: \\2)/'",
+              "output": "root:x:0:0:root:/root:/bin/bash\n# -n con p imita a grep: imprime solo las líneas que coinciden.\n7\n# Dirección de rango 1,7: la instrucción actúa solo sobre las líneas 1 a 7.\nUser: root (UID: 0)\n# Con -E los grupos van sin barras y se recuperan con \\1 y \\2."
             }
           ]
         },
@@ -768,32 +799,32 @@
             [
               "sed -E (o sed -r)",
               "",
-              "🎯 Clave de Examen: Activa expresiones regulares extendidas (ERE), permitiendo '(' ')' y '+' sin barras invertidas."
+              "🎯 Activa expresiones regulares extendidas: '(', ')', '+', '|' y '{n,m}' funcionan sin barra invertida."
             ],
             [
-              "Backreferences (\\1, \\2)",
+              "sed -n 'p'",
               "",
-              "🎯 Memorias de captura: reutiliza en la sustitución el texto exacto capturado por el primer grupo '\\1' o segundo '\\2'."
+              "🎯 Modo silencioso: no imprime por defecto e imprime solo las líneas coincidentes con 'p', emulando a grep."
             ],
             [
-              "sed -n '/^root/p'",
+              "Direcciones",
               "",
-              "🎯 Modo silencioso (-n): imprime ÚNICAMENTE las líneas coincidentes ('p' de print), emulando el filtrado de grep."
+              "🎯 Pueden ser un número de línea (`1d`), una expresión regular (`/^#/d`) o un rango (`1,7d`), y preceden a la instrucción."
             ],
             [
               "sed -f SCRIPT",
               "",
-              "🎯 Cargar archivo script: lee las órdenes e instrucciones de sed desde un fichero externo en lugar de argumentos."
+              "🎯 Lee las instrucciones de un fichero externo; `-e` las pasa directamente en la línea de comandos."
             ],
             [
               "Instrucciones c, a, r, w",
               "",
-              "🎯 Operaciones avanzadas: 'c' (cambia/reemplaza la línea), 'a' (añade texto), 'r FILE' (lee/inserta fichero) y 'w FILE' (escribe coincidencia a disco)."
+              "'c' cambia la línea, 'a' añade texto detrás, 'r FILE' inserta un fichero y 'w FILE' escribe la coincidencia en disco."
             ],
             [
               "Rangos /inicio/,/fin/",
               "",
-              "🎯 Delimitación por bloques: 'sed -n \"/<body>/,/<\\/body>/p\"' procesa únicamente las líneas contenidas entre ambos patrones."
+              "🎯 Delimitan un bloque: 'sed -n \"/<body>/,/<\\/body>/p\"' procesa solo lo que queda entre ambos patrones."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -802,14 +833,58 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 'sed -E' activa el motor ERE; '\\1' y '\\2' inyectan grupos capturados; 'sed -f' ejecuta scripts de sed; y las instrucciones 'c', 'a', 'r', 'w' permiten cambiar, añadir, leer y escribir datos."
+          "content": "🎯 Clave de Examen: 'sed -E' activa ERE; una dirección es un número, una regex o un rango; '-n' con 'p' filtra líneas; '-f' ejecuta un script de sed."
         }
       ],
-      "notes": "Muestra cómo invertir columnas o reordenar fechas de 'AAAA-MM-DD' a 'DD/MM/AAAA' con sed -E."
+      "notes": "Recuerda que varias instrucciones separadas por punto y coma deben ir entre comillas ('sed \"1,7d;11d\"') para que el shell no interprete el punto y coma."
     },
     {
       "id": "103.7-slide-12",
       "slideNumber": 12,
+      "title": "Sustitución con sed: s///, flag g y BRE por defecto",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Sustitución con sed: s///, flag g y BRE por defecto"
+        },
+        {
+          "type": "paragraph",
+          "text": "`s/FIND/REPLACE/` sustituye una coincidencia por línea; el flag `g` las sustituye todas. Sin `-E`, `sed` usa BRE y los paréntesis hay que escaparlos."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "echo 'hda hda' | sed 's/hda/sda/'",
+              "output": "sda hda\n# Sin g solo cambia la PRIMERA coincidencia de la línea."
+            },
+            {
+              "prompt": "$ ",
+              "command": "echo 'hda hda' | sed 's/hda/sda/g'",
+              "output": "sda sda\n# Con g cambia TODAS las coincidencias de la línea."
+            },
+            {
+              "prompt": "$ ",
+              "command": "echo '<p>Hola <b>mundo</b></p>' | sed 's/<[^>]*>//g'",
+              "output": "Hola mundo\n# [^>]* pasa por todo lo que no sea '>' y // lo sustituye por nada: borra las etiquetas y deja el texto."
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: `sed -e 's/(.*)(.*)/\\1/'` produce un ERROR ('invalid reference'): de forma predeterminada sed usa BRE y los paréntesis deben escaparse como `\\(` `\\)`, o usar `-E`. `s/<[^>]*>//g` es la respuesta oficial para eliminar etiquetas HTML."
+        }
+      ],
+      "notes": "Insiste en el punto de examen: sin -E ni \\( \\), las retroreferencias de sed fallan; con g el reemplazo alcanza a toda la línea."
+    },
+    {
+      "id": "103.7-slide-13",
+      "slideNumber": 13,
       "title": "Búsqueda Interactiva con Regex en el Paginador less",
       "layout": "content",
       "blocks": [
@@ -820,7 +895,7 @@
         },
         {
           "type": "paragraph",
-          "text": "Navegar y rastrear patrones en archivos gigantescos sin colapsar la memoria RAM del sistema:"
+          "text": "Navegar y filtrar archivos gigantescos sin cargarlos enteros en la memoria RAM del sistema:"
         },
         {
           "type": "code",
@@ -849,12 +924,12 @@
             [
               "/<patrón>",
               "",
-              "🎯 Clave de Examen: Busca hacia ADELANTE (hacia el final del fichero) el patrón de expresión regular indicado."
+              "🎯 Clave de Examen: busca hacia ADELANTE (hacia el final del fichero) el patrón de expresión regular indicado."
             ],
             [
               "?<patrón>",
               "",
-              "🎯 Clave de Examen: Busca hacia ATRÁS (hacia el inicio del fichero) el patrón de expresión regular indicado."
+              "🎯 Clave de Examen: busca hacia ATRÁS (hacia el inicio del fichero) el patrón de expresión regular indicado."
             ],
             [
               "n",
@@ -867,19 +942,19 @@
               "🎯 Coincidencia anterior: salta al resultado anterior en dirección opuesta."
             ],
             [
-              "q",
-              "",
-              "🎯 Salir inmediatamente de less regresando al prompt de la shell."
-            ],
-            [
               "&<patrón>",
               "",
-              "🎯 Filtrado interactivo: en less, escribir '&patrón' muestra ÚNICAMENTE las líneas que coinciden con la expresión regular."
+              "🎯 Filtrado interactivo: muestra ÚNICAMENTE las líneas que coinciden con la expresión regular."
             ],
             [
               "Ctrl + K",
               "",
-              "🎯 Resaltar sin mover: resalta las coincidencias de la búsqueda sin desplazarse de la pantalla o posición actual."
+              "🎯 Resaltar sin moverse: abre el campo con '/', pulsa Ctrl + K ANTES de escribir la expresión y confirma con Enter; la posición no cambia y solo se resaltan las coincidencias."
+            ],
+            [
+              "q",
+              "",
+              "🎯 Salir inmediatamente de less regresando al prompt de la shell."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -888,14 +963,14 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: '/' busca hacia abajo; '?' busca hacia arriba; 'n'/'N' repiten; '&' filtra líneas coincidentes en pantalla; 'Ctrl+K' resalta sin mover el cursor; 'q' sale."
+          "content": "🎯 Clave de Examen: '/' busca hacia abajo; '?' hacia arriba; 'n' y 'N' repiten; '&' filtra las líneas; 'Ctrl+K' ANTES de la expresión solo resalta sin mover; 'q' sale."
         }
       ],
-      "notes": "Recuerda que estas mismas teclas (/ y ?) funcionan exactamente igual en las páginas del manual (man) y en el editor vi/vim."
+      "notes": "Recuerda que estas mismas teclas funcionan en las páginas del manual (man) y en vi/vim, y que el manual pide Ctrl + K en el campo de búsqueda antes de teclear el patrón."
     },
     {
-      "id": "103.7-slide-13",
-      "slideNumber": 13,
+      "id": "103.7-slide-14",
+      "slideNumber": 14,
       "title": "Trampas Clásicas de Examen en Expresiones Regulares",
       "layout": "content",
       "blocks": [
@@ -928,93 +1003,104 @@
       "notes": "Pide a los alumnos que anoten en su cuaderno las 4 trampas, porque representan al menos 2 preguntas directas en el examen 101."
     },
     {
-      "id": "103.7-slide-14",
-      "slideNumber": 14,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Anclas y grep -v)",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Anclas y grep -v)"
-        },
-        {
-          "type": "list",
-          "ordered": true,
-          "items": [
-            "Caso 1 (Oficial Pág 386): Escribe el comando con 'grep' para visualizar el archivo '/etc/login.defs' omitiendo todas las líneas de comentarios (que empiezan por '#') y todas las líneas completamente vacías. — Comando: `grep -vE '^(#|$)' /etc/login.defs (o grep -v '^#' /etc/login.defs | grep -v '^$')` (El patrón '^#' detecta líneas que inician con almohadilla, '^$' detecta líneas vacías y '-v' invierte la coincidencia excluyéndolas.)",
-            "Caso 2 (Oficial Pág 386): ¿Qué comando localiza qué usuarios de '/etc/passwd' tienen asignada una shell que termine exactamente en 'sh' (ej: /bin/bash, /bin/sh, /bin/dash)? — Comando: `grep 'sh$' /etc/passwd` (El ancla '$' al final asegura que la línea concluya estrictamente con los caracteres 'sh'.)",
-            "Caso 3 (Oficial Pág 386): ¿Cómo buscar de forma insensible a mayúsculas la palabra 'timeout' en todos los archivos del directorio '/etc/systemd/' mostrando el número de línea? — Comando: `grep -rin 'timeout' /etc/systemd/ 2>/dev/null` (La opción -r busca recursivamente, -i ignora mayúsculas/minúsculas y -n añade el número de línea.)"
-          ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "grep -vE '^(#|$)' es el limpiador universal de configs; $ fija el final; -rin combina recursión con formato de línea."
-        }
-      ],
-      "notes": "Enseña que este filtro en login.defs reduce un archivo de 400 líneas a solo 30 directivas activas."
-    },
-    {
       "id": "103.7-slide-15",
       "slideNumber": 15,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: ERE y fgrep)",
-      "layout": "two-column",
+      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (casos 1 a 5)",
+      "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: ERE y fgrep)"
+          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (casos 1 a 5)"
         },
         {
-          "type": "list",
-          "ordered": true,
+          "type": "steps",
           "items": [
-            "Caso 4 (Oficial Pág 386): Un fichero de log contiene registros de 'warning', 'error' y 'critical'. ¿Qué comando con egrep muestra únicamente las líneas que contengan cualquiera de esos tres términos? — Comando: `egrep -i '(warning|error|critical)' app.log (o grep -Ei)` (El operador de alternancia '|' dentro de paréntesis en ERE realiza la operación lógica OR entre los tres patrones.)",
-            "Caso 5 (Oficial Pág 386): Tienes un archivo de código C y necesitas buscar la cadena literal 'printf(\"%d\");' de la forma más rápida y sin tener que escapar paréntesis ni comillas. ¿Qué comando utilizas? — Comando: `fgrep 'printf(\"%d\");' main.c (o grep -F)` (fgrep desactiva la interpretación de todos los caracteres especiales de expresiones regulares tratando todo como texto plano.)"
+            {
+              "number": 1,
+              "title": "Descartar comentarios y líneas vacías (pág. 386)",
+              "description": "`grep -vE '^(#|$)' /etc/login.defs` omite los comentarios (`^#`) y las líneas en blanco (`^$`)."
+            },
+            {
+              "number": 2,
+              "title": "Shells que terminan en 'sh' (pág. 386)",
+              "description": "`grep 'sh$' /etc/passwd`: la ancla `$` exige que la línea acabe en 'sh' (/bin/bash, /bin/dash)."
+            },
+            {
+              "number": 3,
+              "title": "'timeout' en /etc/systemd/ (pág. 386)",
+              "description": "`grep -rin 'timeout' /etc/systemd/ 2>/dev/null`: `-r` recursivo, `-i` ignora mayúsculas y `-n` numera la línea."
+            },
+            {
+              "number": 4,
+              "title": "'warning', 'error' o 'critical' (pág. 386)",
+              "description": "`egrep -i '(warning|error|critical)' app.log` (o `grep -Ei`): la alternancia `|` es nativa en ERE."
+            },
+            {
+              "number": 5,
+              "title": "Cadena literal 'printf(\"%d\");' (pág. 386)",
+              "description": "`fgrep 'printf(\"%d\");' main.c` (o `grep -F`): no interpreta paréntesis ni comillas, todo es texto plano."
+            }
           ]
         },
         {
           "type": "callout",
           "calloutType": "tip",
           "title": "Solución y Explicación del Ejercicio",
-          "content": "egrep maneja alternancias múltiples con |; fgrep garantiza velocidad y neutraliza caracteres especiales."
+          "content": "`grep -vE '^(#|$)'` es el limpiador universal de configs; `$` fija el final; `-rin` combina recursión con número de línea; `egrep` alterna varios términos; `fgrep` neutraliza los metacaracteres."
         }
       ],
-      "notes": "Recuerda a los alumnos que fgrep es ideal para buscar cadenas con muchos corchetes o símbolos de puntuación."
+      "notes": "El filtro de login.defs reduce un archivo de 400 líneas a unas 30 directivas activas; fgrep es la vía rápida para cadenas llenas de corchetes y comillas."
     },
     {
       "id": "103.7-slide-16",
       "slideNumber": 16,
-      "title": "Retos de Exploración Oficiales (Extracción de IPs y sed)",
-      "layout": "two-column",
+      "title": "Retos de Exploración Oficiales (correo, IPs, sed y find)",
+      "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Retos de Exploración Oficiales (Extracción de IPs y sed)"
+          "text": "Retos de Exploración Oficiales (correo, IPs, sed y find)"
         },
         {
-          "type": "callout",
-          "calloutType": "warning",
-          "title": "Escenario del Desafío",
-          "content": "Resuelve estos 4 retos de examen planteados en el manual oficial LPIC-1:\n1. ¿Qué expresión con grep -oE permite extraer únicamente direcciones IPv4 de la salida de un log (ej: last -i)?\n2. ¿Cómo reemplazar con sed y backreferences fechas 'AAAA-MM-DD' a 'DD/MM/AAAA'?\n3. ¿Qué comando de grep muestra los archivos en '/etc/' que NO contienen 'Linux'?\n4. ¿Cómo buscar con find archivos sin extensión estándar usando ERE, y qué flag de grep procesa 'find -print0'?"
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Pista",
-          "content": "Recuerda: grep -oE '[0-9]{1,3}(\\.[0-9]{1,3}){3}'; sed -E '\\1,\\2'; grep -rL; find -regextype egrep -regex y grep -z."
+          "type": "table",
+          "headers": [
+            "Reto",
+            "Enunciado"
+          ],
+          "rows": [
+            [
+              "1",
+              "¿Qué ERE coincide con cualquier dirección como `info@example.org`?"
+            ],
+            [
+              "2",
+              "¿Qué `grep -oE` extrae solo las IPv4 de la salida de `last -i`?"
+            ],
+            [
+              "3",
+              "¿Cómo pasar fechas `AAAA-MM-DD` a `DD/MM/AAAA` con `sed` y retroreferencias?"
+            ],
+            [
+              "4",
+              "¿Qué opción de `grep` lista los archivos de `/etc/` que NO contienen 'Linux'?"
+            ],
+            [
+              "5",
+              "¿Cómo busca `find` con ERE los nombres sin sufijo estándar y qué flag de `grep` procesa `find -print0`?"
+            ]
+          ],
+          "caption": "Cinco retos del manual oficial LPIC-1"
         },
         {
           "type": "callout",
           "calloutType": "tip",
           "title": "Solución y Explicación del Desafío",
-          "content": "1. Se ejecuta: last -i | grep -oE '([0-9]{1,3}\\.){3}[0-9]{1,3}'\n2. Se ejecuta: sed -E 's/([0-9]{4})-([0-9]{2})-([0-9]{2})/\\3\\/\\2\\/\\1/g' datos.txt\n3. Se ejecuta: grep -rL 'Linux' /etc/ 2>/dev/null\n4. find: find . -type f -regextype egrep -not -regex '.*\\.[[:alnum:]]{1,}$' ; grep: grep -z o --null-data (ej: find . -print0 | grep -z 'expresion')."
+          "content": "1. `egrep '\\S+@\\S+\\.\\S+'` (respuesta oficial del manual).\n2. `last -i | grep -oE '([0-9]{1,3}\\.){3}[0-9]{1,3}'`.\n3. `sed -E 's/([0-9]{4})-([0-9]{2})-([0-9]{2})/\\3\\/\\2\\/\\1/g' datos.txt`.\n4. `grep -rL 'Linux' /etc/ 2>/dev/null` (L = ficheros SIN coincidencia).\n5. `find . -type f -regextype egrep -not -regex '.*\\.[[:alnum:]]{1,}$'` y `find . -print0 | grep -z 'expresion'`."
         }
       ],
-      "notes": "El reto 1 y el reto 3 evalúan opciones avanzadas que distinguen a los candidatos de alta puntuación."
+      "notes": "Los retos 1, 2 y 4 evalúan opciones que distinguen a los candidatos de alta puntuación; corrige el orden de los grupos en la fecha (\\3\\/\\2\\/\\1) si alguien propone \\1,\\2."
     },
     {
       "id": "103.7-slide-17",
@@ -1112,20 +1198,6 @@
         }
       ],
       "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 103.7."
-    },
-    {
-      "id": "103.7-slide-19",
-      "slideNumber": 19,
-      "title": "Resumen y Claves de Examen: Subtema 103.7",
-      "layout": "summary",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Resumen y Claves de Examen: Subtema 103.7"
-        }
-      ],
-      "notes": "Concluimos el subtema 103.7. Los alumnos dominan ahora las expresiones regulares para el examen."
     }
   ]
 }

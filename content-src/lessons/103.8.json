@@ -20,7 +20,9 @@
     "~/.bash_profile",
     "$EDITOR",
     "$VISUAL",
+    "Modo Ex (:)",
     "Registros de vi (\"ly, \"lp)",
+    "Marcas de vi (m, ')",
     "Macros de vi (qa, @a)",
     "Modo Visual (v, V, Ctrl-V)",
     "Archivo .swp (vi -r)"
@@ -29,8 +31,10 @@
     "vi",
     "vim",
     "vimtutor",
+    "vi -r",
     "nano",
-    "emacs"
+    "emacs",
+    "update-alternatives"
   ],
   "placeholder": false,
   "slides": [
@@ -47,35 +51,33 @@
         },
         {
           "type": "paragraph",
-          "text": "Modos de vi, navegación h/j/k/l, inserción, borrado, yank/put, modo Ex (:), sustitución y recuperación (Modo Examen)"
+          "text": "Modos, navegación, edición, modo Ex (:) y recuperación del editor que siempre está en el sistema."
         }
       ],
-      "notes": "Finalizamos el Tema 103 con el subtema 103.8 (peso 3). El editor vi (y su versión mejorada vim) es el editor estándar indiscutible de los sistemas Unix/Linux. Está presente en todas las instalaciones mínimas, contenedores y entornos de rescate. Dominaremos sus 4 modos de trabajo, navegación eficiente, atajos de edición y comandos de guardado."
+      "notes": "Cerramos el Tema 103 con el editor estándar del entorno de shell. vi (y su versión mejorada vim) trabaja en 3 modos: normal (el de arranque), inserción y modo Ex o colon. Dominaremos navegación, edición, guardado y recuperación del archivo .swp."
     },
     {
       "id": "103.8-slide-2",
       "slideNumber": 2,
-      "title": "El Editor Estándar de Unix: Por qué vi es Obligatorio",
+      "title": "¿Por qué vi? El editor estándar de Unix",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "El Editor Estándar de Unix: Por qué vi es Obligatorio"
+          "text": "¿Por qué vi? El editor estándar de Unix"
         },
         {
           "type": "paragraph",
-          "text": "¿Por qué la certificación LPIC-1 exige dominar vi en lugar de editores más sencillos como nano?"
+          "text": "vi viene preinstalado en casi cualquier distribución Linux y es el editor que el sistema espera encontrar; vim lo mejora sin romper la compatibilidad."
         },
         {
           "type": "list",
           "ordered": false,
           "items": [
-            "**1. Rescate en Modo de Emergencia (Single-User / Initramfs)** — 🎯 Cuando un servidor no arranca por un fallo crítico (ej. error en /etc/fstab) y caes en una consola de emergencia, nano NO existe ni está instalado. El único editor presente y compilado en /bin es vi. Si no sabes vi, no puedes reparar el servidor.",
-            "**2. El Único Editor Obligatorio por el Estándar POSIX** — 🎯 El estándar universal POSIX (IEEE 1003.1) estipula que todo sistema Unix/Linux DEBE incluir vi. Está presente en el 100% de las distribuciones del mundo (Debian, Red Hat, SUSE, Arch, Alpine, Docker containers mínimos, BSD y Solaris).",
-            "**3. Conexiones Mínimas sin Ratón ni Teclas de Función** — Diseñado para operar sobre conexiones SSH inestables, consolas serie y terminales remotas. No depende del ratón ni de teclas especiales (F1..F12); todo se controla desde las teclas alfanuméricas centrales (h, j, k, l).",
-            "**4. Invocación Nativa por Herramientas Críticas** — Herramientas esenciales del sistema como 'visudo' (editar sudoers de forma segura), 'crontab -e', 'edquota' o 'git commit' invocan automáticamente vi por defecto si no se configura otra variable.",
-            "**5. El Ecosistema de Editores: nano, vi/vim, Emacs y vimtutor** — 🎯 El syllabus oficial exige conocer: **nano** (no modal, atajos en pantalla), **vi/vim** (estándar modal universal obligatorio) y **Emacs** (editor extensible que puede actuar como IDE con compilación, depuración y lector de correo/RSS). La herramienta 'vimtutor' ofrece un tutorial interactivo guiado para aprender vi."
+            "**Rescate**: si el sistema no arranca por un error en `/etc/fstab`, caes en una consola mínima donde `vi` está en `/bin` y `nano` puede no existir.",
+            "**Estándar POSIX**: todo Unix/Linux debe incluir `vi`; es el editor garantizado en instalaciones mínimas, contenedores y entornos de rescate.",
+            "**Invocación nativa**: `visudo`, `crontab -e` o `git commit` abren el editor por defecto (normalmente `vi`) si no defines `$VISUAL` ni `$EDITOR`."
           ]
         },
         {
@@ -86,10 +88,10 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Regla de Oro: nano es cómodo para usuarios noveles, pero vi es la herramienta universal de supervivencia del administrador de sistemas. Si el servidor se rompe, vi es el único editor que siempre estará disponible."
+          "content": "🎯 `nano` es cómodo para noveles, pero `vi` es la herramienta de supervivencia del administrador: si el servidor se rompe, es el editor que siempre estará disponible."
         }
       ],
-      "notes": "Insiste a los alumnos: en un examen de certificación y en un servidor de producción caído, nano no te salvará la vida; vi sí."
+      "notes": "Diferencia vi (estándar POSIX, siempre presente) de vim (compatible, con resaltado de sintaxis, deshacer multinivel y varios documentos). `vimtutor` abre el tutorial interactivo para practicar."
     },
     {
       "id": "103.8-slide-3",
@@ -122,31 +124,31 @@
     {
       "id": "103.8-slide-4",
       "slideNumber": 4,
-      "title": "Invocación y Navegación Fundamental: h, j, k, l y Saltos",
+      "title": "Invocación y navegación fundamental",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Invocación y Navegación Fundamental: h, j, k, l y Saltos"
+          "text": "Invocación y navegación fundamental"
         },
         {
           "type": "paragraph",
-          "text": "Moverse por el archivo sin despegar las manos de la fila central del teclado:"
+          "text": "Abrir un archivo en una línea concreta y moverse por él sin despegar las manos de la fila central del teclado:"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "vi [+<línea>] <archivo> (Navegación en Modo Normal)",
-          "title": "Abrir archivos en líneas específicas y desplazarse rápidamente por el documento"
+          "code": "vi [+N] <archivo>\nvi +9 /etc/fstab      # cursor en la 9ª línea; \"+\" sin número va a la última",
+          "title": "Invocar vi en una línea concreta y navegar por el documento"
         },
         {
           "type": "terminal",
           "lines": [
             {
               "prompt": "$ ",
-              "command": "vi +50 /etc/ssh/sshd_config",
-              "output": "# Abre el archivo posicionando el cursor directamente en la línea 50."
+              "command": "vi +9 /etc/fstab",
+              "output": "# Cursor en la novena línea del archivo.\n# Sin número, \"vi + /etc/fstab\" salta a la última línea."
             }
           ]
         },
@@ -159,32 +161,47 @@
           ],
           "rows": [
             [
-              "vi +<N> <archivo>",
-              "Abrir en línea N",
-              "🎯 Abre el archivo posicionando el cursor directamente en la línea N."
-            ],
-            [
               "h, j, k, l",
-              "Navegación fila central",
-              "🎯 'h' izquierda, 'j' abajo, 'k' arriba, 'l' derecha."
+              "Navegación por caracteres",
+              "🎯 Izquierda, abajo, arriba y derecha desde la fila central del teclado."
             ],
             [
-              "w / b",
-              "Palabra adelante/atrás",
-              "🎯 'w' salta a la palabra siguiente (word); 'b' salta a la anterior (back)."
+              "w / W",
+              "Palabra siguiente",
+              "🎯 `w` salta al inicio de la palabra siguiente; `W` ignora la puntuación."
+            ],
+            [
+              "b / e / E",
+              "Palabra anterior y final de palabra",
+              "`b` vuelve a la palabra anterior; `e` va al final de la palabra actual y `E` incluye la puntuación."
             ],
             [
               "0 / $",
-              "Inicio / Fin de línea",
-              "🎯 '0' salta al inicio de línea; '$' salta al final exacto."
+              "Inicio / fin de línea",
+              "🎯 `0` va al primer carácter de la línea; `$` al último."
             ],
             [
               "1G (o gg) / G",
-              "Inicio / Fin de archivo",
-              "🎯 '1G' o 'gg' salta a la primera línea; 'G' mayúscula a la última línea."
+              "Inicio / fin de archivo",
+              "🎯 `1G` o `gg` va a la primera línea; `G` a la última."
+            ],
+            [
+              "( / )",
+              "Oración",
+              "`(` va al principio de la oración; `)` al final."
+            ],
+            [
+              "{ / }",
+              "Párrafo",
+              "`{` va al principio del párrafo; `}` al final."
+            ],
+            [
+              "vi +N / vi +",
+              "Abrir en línea",
+              "🎯 `+N` abre el archivo en la línea N; `+` sin número abre en la última línea."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Navegación en Modo Normal"
         },
         {
           "type": "html",
@@ -194,38 +211,38 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: '1G' (o 'gg') primera línea; 'G' última línea; '0' inicio de línea; '$' fin de línea."
+          "content": "🎯 `1G` (o `gg`) primera línea, `G` última; `0` inicio de línea, `$` fin de línea; `W` y `E` ignoran la puntuación."
         }
       ],
-      "notes": "Muestra la mnemotecnia de h/j/k/l: j apunta hacia abajo (tiene cola hacia abajo), k apunta hacia arriba."
+      "notes": "Mnemotecnia h/j/k/l: j tiene cola hacia abajo, k apunta arriba. Un número delante repite el movimiento (regla general de vi: `5j` baja cinco líneas)."
     },
     {
       "id": "103.8-slide-5",
       "slideNumber": 5,
-      "title": "Transición al Modo Inserción: i, I, a, A, o, O",
+      "title": "Modo inserción y cambio: i, I, a, A, o, O, s, S",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Transición al Modo Inserción: i, I, a, A, o, O"
+          "text": "Modo inserción y cambio: i, I, a, A, o, O, s, S"
         },
         {
           "type": "paragraph",
-          "text": "Las 6 teclas para comenzar a redactar texto según la posición deseada:"
+          "text": "Las teclas que abren el modo inserción según dónde quieras escribir; `Esc` vuelve siempre al modo normal:"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "i | I | a | A | o | O (desde Modo Normal)",
-          "title": "Entrar en Modo Inserción para escribir texto en diferentes posiciones relativas al cursor"
+          "code": "i | I | a | A | o | O | s | S | c",
+          "title": "Entrar en Modo Inserción desde Modo Normal"
         },
         {
           "type": "terminal",
           "lines": [
             {
               "prompt": "$ ",
-              "command": "# En modo normal pulsas 'o' y vi abre una línea en blanco debajo:\n-- INSERT --",
+              "command": "# En modo normal pulsas \"o\" y vi abre una línea en blanco debajo:\n-- INSERT --",
               "output": "# Todo lo que teclees a continuación se escribe en el archivo."
             }
           ]
@@ -241,25 +258,40 @@
             [
               "i / I",
               "Insertar antes / al inicio",
-              "🎯 'i' inserta antes del cursor; 'I' salta al principio de la línea e inserta."
+              "🎯 `i` inserta antes del cursor; `I` salta al principio de la línea e inserta."
             ],
             [
               "a / A",
               "Añadir después / al final",
-              "🎯 'a' añade después del cursor; 'A' salta al final de la línea y añade."
+              "🎯 `a` añade después del cursor; `A` salta al final de la línea y añade."
             ],
             [
               "o (Open below)",
               "Nueva línea DEBAJO",
-              "🎯 Clave de Examen: Abre una nueva línea en blanco DEBAJO de la actual y entra en inserción."
+              "🎯 Clave de Examen: abre una línea en blanco debajo de la actual y entra en inserción."
             ],
             [
               "O (Open above)",
               "Nueva línea ENCIMA",
-              "🎯 Clave de Examen: Abre una nueva línea en blanco ENCIMA de la actual y entra en inserción."
+              "🎯 Clave de Examen: abre una línea en blanco encima de la actual y entra en inserción."
+            ],
+            [
+              "s",
+              "Sustituir carácter",
+              "🎯 Borra el carácter bajo el cursor y entra en modo inserción."
+            ],
+            [
+              "S",
+              "Sustituir línea completa",
+              "🎯 Borra toda la línea y entra en modo inserción."
+            ],
+            [
+              "c",
+              "Cambiar según movimiento",
+              "Cambia los caracteres bajo el cursor según el movimiento que le siga (ej. `cw`)."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Entrada al modo inserción"
         },
         {
           "type": "html",
@@ -269,10 +301,10 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Diferencia Clásica de Examen: 'o' (minúscula) abre línea debajo; 'O' (mayúscula) abre línea encima; 'i' inserta antes, 'a' inserta después."
+          "content": "🎯 `o` minúscula abre línea debajo; `O` mayúscula encima; `i` inserta antes y `a` después; `s` sustituye un carácter y `S` la línea entera."
         }
       ],
-      "notes": "Haz que los alumnos practiquen la combinación 'A' para ir al final de la línea y añadir código de inmediato."
+      "notes": "Insiste en `A` para añadir al final de la línea y en `s`/`S` como atajos de borrar e insertar. `Esc` devuelve siempre al modo normal."
     },
     {
       "id": "103.8-slide-6",
@@ -353,30 +385,30 @@
     {
       "id": "103.8-slide-7",
       "slideNumber": 7,
-      "title": "Comandos de Borrado y Sustitución: x, dw, dd y r",
+      "title": "Borrar, seleccionar y repetir: x, dw, dd, r y N",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Comandos de Borrado y Sustitución: x, dw, dd y r"
+          "text": "Borrar, seleccionar y repetir: x, dw, dd, r y N"
         },
         {
           "type": "paragraph",
-          "text": "Eliminar texto rápidamente en Modo Normal sin necesidad de pulsar Backspace 50 veces:"
+          "text": "Cada comando admite un número delante que lo repite N veces; `d` corta el texto y lo guarda en el búfer interno."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "x | dw | dd | <N>dd | D | r<char>",
-          "title": "Borrar caracteres, palabras o líneas completas en Modo Normal"
+          "code": "x | dw | dd | <N>dd | D | r<char> | dt<char>\nv | V | < | >",
+          "title": "Borrar, sustituir y seleccionar en Modo Normal"
         },
         {
           "type": "terminal",
           "lines": [
             {
               "prompt": "$ ",
-              "command": "# En modo normal tecleas '3dd' sobre una función obsoleta:\n# Borra inmediatamente 3 líneas completas y las guarda en el búfer de corte.",
+              "command": "# En modo normal tecleas \"3dd\" sobre una función obsoleta:\n# Borra inmediatamente 3 líneas completas y las guarda en el búfer de corte.",
               "output": "# El cursor se posiciona en la línea siguiente."
             }
           ]
@@ -391,78 +423,88 @@
           "rows": [
             [
               "x",
-              "",
-              "🎯 Borra el carácter individual que se encuentra bajo el cursor (equivale a la tecla Supr)."
+              "Borrar carácter",
+              "🎯 Borra el carácter bajo el cursor (equivale a la tecla Supr)."
             ],
             [
               "dw (Delete word)",
-              "",
-              "🎯 Borra desde la posición del cursor hasta el final de la palabra actual."
+              "Borrar palabra",
+              "🎯 Borra desde el cursor hasta el final de la palabra actual."
             ],
             [
               "dd (Delete line)",
-              "",
-              "🎯 Clave de Examen: Borra la LÍNEA COMPLETA donde está el cursor (y la copia al búfer de corte)."
+              "Borrar línea",
+              "🎯 Clave de Examen: borra la línea completa y la copia al búfer de corte."
             ],
             [
-              "<N>dd",
-              "",
-              "🎯 Borra N líneas consecutivas hacia abajo (ej: '5dd' borra 5 líneas de golpe)."
+              "<N><comando>",
+              "Repetición con prefijo",
+              "🎯 El número delante repite el comando N veces: `3dd`, `d5w`, `3yy`."
             ],
             [
               "D (o d$)",
-              "",
+              "Borrar hasta el final de línea",
               "Borra desde el cursor hasta el final de la línea actual."
             ],
             [
-              "r<carácter>",
-              "",
-              "🎯 Reemplaza el carácter bajo el cursor por el nuevo carácter pulsado sin entrar en modo inserción."
+              "r<char>",
+              "Reemplazar carácter",
+              "🎯 Sustituye el carácter bajo el cursor sin entrar en modo inserción."
             ],
             [
               "dt<char>",
-              "",
-              "🎯 Borra desde el cursor hasta encontrar el carácter indicado (delete to char)."
+              "Borrar hasta un carácter",
+              "🎯 Borra desde el cursor hasta el carácter indicado (delete to char)."
+            ],
+            [
+              "v / V",
+              "Selección",
+              "🎯 `v` inicia selección por caracteres; `V` selecciona la línea completa (incluye el salto de línea)."
+            ],
+            [
+              "< / >",
+              "Sangrado",
+              "`<` y `>` sangran la selección a la izquierda/derecha; con número se repite (`3<`)."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Edición en Modo Normal"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 'dd' borra la línea completa actual; 'x' borra un carácter; 'r' sustituye un solo carácter al vuelo."
+          "content": "🎯 `dd` corta la línea, `x` un carácter y `r` lo sustituye sin salir del modo normal; `3<` sangra la selección tres pasos."
         }
       ],
-      "notes": "Explica que en vi borrar (d) equivale a 'cortar': el texto borrado se guarda en el portapapeles interno para poder pegarlo."
+      "notes": "En vi borrar (d) equivale a cortar: el texto va al búfer interno y se puede pegar con `p`. Recuerda que el número delante también se aplica a la selección."
     },
     {
       "id": "103.8-slide-8",
       "slideNumber": 8,
-      "title": "Copiar (Yank), Pegar (Put) y Deshacer: yy, p, u y Ctrl+R",
+      "title": "Copiar, pegar, deshacer, registros y marcas: yy, p, u, m",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Copiar (Yank), Pegar (Put) y Deshacer: yy, p, u y Ctrl+R"
+          "text": "Copiar, pegar, deshacer, registros y marcas: yy, p, u, m"
         },
         {
           "type": "paragraph",
-          "text": "Duplicar bloques de configuración y deshacer errores tipográficos al instante:"
+          "text": "Duplicar bloques de configuración, revertir errores y guardar posiciones para volver a ellas:"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "yy | <N>yy | p | P | u | Ctrl+R",
-          "title": "Copiar líneas al portapapeles interno, pegarlas y revertir modificaciones"
+          "code": "yy | <N>yy | p | P | u | Ctrl+R | \"ay / \"ap | m<letra> / '<letra>",
+          "title": "Yank, put, undo, registros y marcas"
         },
         {
           "type": "terminal",
           "lines": [
             {
               "prompt": "$ ",
-              "command": "# Tecleas 'yy' en la línea de 'PermitRootLogin' y luego 'p':\n# Se duplica la línea exactamente debajo.",
+              "command": "# Tecleas \"yy\" en la línea de PermitRootLogin y luego \"p\":\n# Se duplica la línea exactamente debajo.",
               "output": "PermitRootLogin no\nPermitRootLogin no"
             }
           ]
@@ -483,12 +525,12 @@
             [
               "<N>yy",
               "Copiar N líneas",
-              "Copia N líneas consecutivas hacia abajo (ej: '3yy')."
+              "Copia N líneas consecutivas hacia abajo (ej. `3yy`)."
             ],
             [
               "p / P (Put)",
               "Pegar debajo / encima",
-              "🎯 'p' pega debajo de la línea actual; 'P' pega encima."
+              "🎯 `p` pega debajo de la línea actual; `P` pega encima."
             ],
             [
               "u (Undo)",
@@ -498,20 +540,25 @@
             [
               "Ctrl + R (Redo)",
               "Rehacer cambio",
-              "🎯 Rehace el cambio que se acaba de deshacer con 'u'."
+              "🎯 Rehace el cambio que se acaba de deshacer con `u`."
+            ],
+            [
+              "m<letra> / '<letra>",
+              "Marcas",
+              "🎯 `ma` marca la posición actual con la letra `a`; `'a` vuelve a esa posición."
             ],
             [
               "\"<reg>y / \"<reg>p",
               "Registros nombrados",
-              "🎯 Portapapeles múltiples: '\"ly' copia al registro l; '\"lp' pega desde el registro l (ej: '\"1p' a '\"9p')."
+              "🎯 Portapapeles múltiples: `\"ay` copia al registro `a`; `\"ap` pega desde él."
             ],
             [
               "q<reg> ... q / @<reg>",
               "Macros y ~/.vimrc",
-              "🎯 Grabación de macros: 'qa' graba en registro a, 'q' finaliza; '@a' reproduce la macro. Persistencia en ~/.vimrc."
+              "🎯 `qa` graba una macro en el registro `a`, `q` la finaliza y `@a` la reproduce; persiste en `~/.vimrc`."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Copia, pegado y deshacer"
         },
         {
           "type": "html",
@@ -521,31 +568,31 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Mnemotecnia de Edición: 'yy' copia; 'p' pega; 'u' deshace; 'Ctrl+R' rehace; '\"ly' guarda en registro l; 'qa..q' graba macro y '@a' la reproduce (persistencia en ~/.vimrc)."
+          "content": "🎯 `yy` copia, `p` pega, `u` deshace y `Ctrl+R` rehace; las marcas se crean con `m` y se recuperan con `'`."
         }
       ],
-      "notes": "Muestra que si borras con 'dd' y luego pulsas 'p', has hecho una operación de 'cortar y pegar' perfecta."
+      "notes": "Si borras con `dd` y pulsas `p` has hecho un cortar y pegar perfecto. Las marcas guardan una posición, no un texto."
     },
     {
       "id": "103.8-slide-9",
       "slideNumber": 9,
-      "title": "Modo Colon (:): Guardado, Salida y Emergencias",
+      "title": "Modo Ex (:): guardar, salir y comandos de shell",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Modo Colon (:): Guardado, Salida y Emergencias"
+          "text": "Modo Ex (:): guardar, salir y comandos de shell"
         },
         {
           "type": "paragraph",
-          "text": "Los comandos de la línea de estado inferior para guardar o salir sin romper nada:"
+          "text": "Los comandos que se escriben tras `:` en la línea inferior del editor:"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": ":w | :q | :q! | :wq | :x | ZZ | ZQ",
-          "title": "Escribir cambios en disco, salir del editor o forzar el cierre descartando modificaciones"
+          "code": ":w [archivo] | :q | :q! | :wq | :x | :!<comando> | :visual | ZZ | ZQ",
+          "title": "Guardar, salir, ejecutar en la shell y volver al modo normal"
         },
         {
           "type": "terminal",
@@ -568,30 +615,45 @@
             [
               ":w [archivo]",
               "Guardar cambios",
-              "Escribe los cambios en el disco sin salir de vi."
+              "Escribe los cambios en disco sin salir de vi."
             ],
             [
-              ":q",
-              "Salir (si no hay cambios)",
+              ":q / :quit",
+              "Salir",
               "Sale de vi; falla si hay modificaciones pendientes de guardar."
             ],
             [
-              ":q!",
+              ":q! / :quit!",
               "Salir forzado SIN guardar",
-              "🎯 Clave Absoluta de Examen: Descarta cambios y huye inmediatamente."
+              "🎯 Clave absoluta de examen: descarta los cambios y huye inmediatamente."
             ],
             [
-              ":wq (o :x)",
+              ":wq",
               "Guardar y salir",
               "🎯 Guarda el documento y cierra vi."
             ],
             [
+              ":x / :exit",
+              "Guardar y salir si es necesario",
+              "Guarda y sale solo si hubo cambios reales."
+            ],
+            [
+              ":! <comando>",
+              "Ejecutar comando de shell",
+              "🎯 Ejecuta un comando de shell y vuelve a vi con Enter."
+            ],
+            [
+              ":visual",
+              "Volver al Modo Normal",
+              "🎯 Abandona el modo Ex y regresa a la navegación (también Enter sin comando)."
+            ],
+            [
               "ZZ / ZQ",
               "Atajos sin dos puntos",
-              "🎯 En Modo Normal: 'ZZ' = guardar y salir; 'ZQ' = salir sin guardar."
+              "🎯 En Modo Normal: `ZZ` guarda y sale; `ZQ` sale sin guardar."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Comandos del modo Ex"
         },
         {
           "type": "html",
@@ -601,10 +663,10 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Los Dos Comandos Maestros de Salida: ':wq' (o 'ZZ') para guardar y salir; ':q!' (o 'ZQ') para huir sin guardar nada si te has equivocado."
+          "content": "🎯 `:wq` (o `ZZ`) guarda y sale; `:q!` (o `ZQ`) descarta cambios; `:!comando` ejecuta en la shell y `:visual` vuelve al modo normal."
         }
       ],
-      "notes": "Pregunta típica de principiante: '¿Cómo salgo de vi?'. Enseña ':q!' como la salida de emergencia universal."
+      "notes": "La pregunta clásica del principiante es cómo salir de vi. Enseña `:q!` como salida de emergencia y `:wq` como salida segura."
     },
     {
       "id": "103.8-slide-10",
@@ -685,13 +747,13 @@
     {
       "id": "103.8-slide-11",
       "slideNumber": 11,
-      "title": "Archivos Swap (.swp) y Recuperación tras Caídas",
+      "title": "Archivos swap (.swp) y recuperación tras caídas",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Archivos Swap (.swp) y Recuperación tras Caídas"
+          "text": "Archivos swap (.swp) y recuperación tras caídas"
         },
         {
           "type": "paragraph",
@@ -701,16 +763,17 @@
           "type": "list",
           "ordered": false,
           "items": [
-            "**El archivo oculto de intercambio (.archivo.swp)** — Mientras editas un fichero 'hosts', vi crea un archivo oculto '.hosts.swp' en la misma carpeta donde registra en tiempo real cada tecla pulsada.",
-            "**El mensaje 'ATTENTION: Found a swap file'** — Si vi se cierra bruscamente por caída de luz o corte SSH, al volver a abrir el archivo vi detecta el .swp y muestra un menú advirtiendo que otra sesión quedó a medias.",
-            "**Recuperación con vi -r** — 🎯 Clave de Examen: Para recuperar los cambios no guardados se ejecuta: 'vi -r <archivo>'. Una vez recuperado y guardado, se debe borrar manualmente el archivo oculto .swp ('rm .archivo.swp')."
+            "**El archivo oculto de intercambio (.archivo.swp)** — Mientras editas un fichero `hosts`, vi crea un archivo oculto `.hosts.swp` en la misma carpeta donde registra en tiempo real cada tecla pulsada.",
+            "**El mensaje ATTENTION: Found a swap file** — Tras una caída de luz o un corte SSH, al reabrir el archivo vi detecta el `.swp` y pregunta si quieres recuperarlo (`r`), descartarlo (`d`) o salir (`q`).",
+            "**Descartar el swap pulsando `d`** — 🎯 En el aviso, `d` elimina el archivo de intercambio y abre el archivo sin los cambios pendientes; `r` recupera el contenido guardado en el swap.",
+            "**Recuperación con vi -r** — 🎯 Para recuperar los cambios no guardados se ejecuta `vi -r <archivo>`. Una vez recuperado y guardado, hay que borrar manualmente el `.swp`."
           ]
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: El comando 'vi -r <archivo>' recupera el trabajo pendiente desde el archivo de intercambio .swp tras una caída del sistema."
+          "content": "🎯 `vi -r <archivo>` recupera el trabajo pendiente desde el `.swp`; en el aviso de swap, `r` recupera y `d` descarta."
         }
       ],
       "notes": "Recuerda que si no borras el archivo .swp tras recuperar, vi seguirá mostrando el cartel de advertencia cada vez que lo abras."
@@ -827,63 +890,65 @@
     {
       "id": "103.8-slide-14",
       "slideNumber": 14,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Invocación y Movimiento)",
-      "layout": "two-column",
+      "title": "Ejercicios guiados oficiales del manual (casos 1-6)",
+      "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Invocación y Movimiento)"
+          "text": "Ejercicios guiados oficiales del manual (casos 1-6)"
         },
         {
-          "type": "list",
-          "ordered": true,
+          "type": "paragraph",
+          "text": "Resuelve cada caso con las teclas exactas en Modo Normal:"
+        },
+        {
+          "type": "steps",
           "items": [
-            "Caso 1 (Oficial Pág 421): ¿Cómo ejecutar vi en terminal para abrir '~/.bash_profile' y saltar directamente a su última línea? — Comando: `vi + ~/.bash_profile` (El modificador '+' sin número salta a la última línea al arrancar, mientras '+N' salta a la línea N.)",
-            "Caso 2 (Oficial Pág 421): ¿Qué teclas en Modo Normal seleccionan toda la línea actual pero sin incluir el carácter final de salto de línea (\\n)? — Comando: `0v$h` (0 va al inicio, v activa selección por caracteres, $ va al final y h retrocede una posición antes del salto.)",
-            "Caso 3 (Oficial Pág 421): En modo normal, ¿qué combinación de teclas permite sangrar la selección actual tres pasos hacia la izquierda? — Comando: `3<` (El operador '<' indenta a la izquierda; anteceder el número 3 repite la acción tres pasos; para la derecha es '>')."
+            {
+              "number": 1,
+              "title": "Sangrar tres pasos a la izquierda",
+              "description": "`3<` — el número repite el operador de sangrado tres veces (a la derecha sería `>`)."
+            },
+            {
+              "number": 2,
+              "title": "Seleccionar la línea sin su salto de línea",
+              "description": "`0v$h` — inicio de línea, selección por caracteres, fin de línea y un retroceso."
+            },
+            {
+              "number": 3,
+              "title": "Abrir ~/.bash_profile en la última línea",
+              "description": "`vi + ~/.bash_profile` — el signo `+` sin número coloca el cursor al final."
+            },
+            {
+              "number": 4,
+              "title": "Borrar hasta el siguiente punto",
+              "description": "`dt.` — borra desde el cursor hasta el carácter `.`; `d/.` consigue lo mismo."
+            },
+            {
+              "number": 5,
+              "title": "Cortar 4 líneas y pegarlas más abajo",
+              "description": "`4dd` corta cuatro líneas; te desplazas al destino y `p` las pega debajo."
+            },
+            {
+              "number": 6,
+              "title": "Salir sin modificar el archivo",
+              "description": "`Esc` + `:q!` (o `ZQ`) descarta los cambios y vuelve a la shell."
+            }
           ]
         },
         {
           "type": "callout",
           "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "vi + archivo salta a la última línea; 0v$h selecciona la línea limpia sin \\n; 3< sangra 3 niveles a la izquierda."
+          "title": "Solución y Explicación",
+          "content": "Los ejercicios oficiales del manual se resuelven con `3<`, `0v$h`, `vi +`, `dt.`, `4dd` + `p` y `:q!`: sangrado, selección, invocación, borrado por movimiento y salida forzada."
         }
       ],
-      "notes": "Haz que los alumnos comprueben cómo 'G' salta al final de un archivo de 2000 líneas al instante."
+      "notes": "Corrige el error típico: `3<` sangra la selección, no escribe el número, y `0v$h` excluye el salto de línea que sí incluye `V`."
     },
     {
       "id": "103.8-slide-15",
       "slideNumber": 15,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: Edición y Salida)",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: Edición y Salida)"
-        },
-        {
-          "type": "list",
-          "ordered": true,
-          "items": [
-            "Caso 4 (Oficial Pág 410): Necesitas borrar 4 líneas completas a partir de la posición actual del cursor y pegarlas 10 líneas más abajo. ¿Qué secuencia de comandos en Modo Normal debes pulsar? — Comando: `Pulsar '4dd' (borra/corta 4 líneas), desplazarse al destino y pulsar 'p' (pega debajo)` ('4dd' corta las 4 líneas al búfer interno y 'p' las inserta debajo de la nueva posición.)",
-            "Caso 5 (Oficial Pág 410): Has abierto un archivo de configuración crítico, has borrado texto por error y necesitas salir inmediatamente a la shell garantizando que el archivo NO se modifique. — Comando: `Pulsar 'Esc' y teclear ':q!' seguido de Enter (o teclear 'ZQ')` (':q!' descarta todos los cambios del búfer y cierra el archivo sin escribir nada en el disco.)"
-          ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "4dd y p para cortar y mover bloques; :q! para salir descartando cambios con seguridad."
-        }
-      ],
-      "notes": "Recuerda que ':q!' es la acción más segura cuando no estás seguro de qué tocaste en un archivo de producción."
-    },
-    {
-      "id": "103.8-slide-16",
-      "slideNumber": 16,
       "title": "Retos de Exploración Oficiales (Sustitución Global y .swp)",
       "layout": "two-column",
       "blocks": [
@@ -914,115 +979,40 @@
       "notes": "El comando de sustitución con confirmación (:s///gc) es una de las preguntas de mayor dificultad en el objetivo 103.8."
     },
     {
-      "id": "103.8-slide-17",
-      "slideNumber": 17,
-      "title": "Pregunta de Examen LPIC-1: Salida Forzada sin Guardar en vi",
-      "layout": "checkpoint",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Pregunta de Examen LPIC-1: Salida Forzada sin Guardar en vi"
-        },
-        {
-          "type": "quiz-inline",
-          "id": "quiz-103-8-17",
-          "question": "¿Qué comando del Modo Ex (dos puntos) debe introducirse en el editor vi para salir inmediatamente a la shell descartando todas las modificaciones realizadas desde el último guardado?",
-          "options": [
-            {
-              "key": "a",
-              "text": ":exit!"
-            },
-            {
-              "key": "b",
-              "text": ":q!"
-            },
-            {
-              "key": "c",
-              "text": ":w!"
-            },
-            {
-              "key": "d",
-              "text": ":abort"
-            }
-          ],
-          "correct": [
-            "b"
-          ],
-          "explanation": "El comando ':q!' (Quit con signo de exclamación) fuerza la salida inmediata del editor vi ignorando y descartando cualquier cambio no guardado en el archivo. El comando alternativo en Modo Normal es 'ZQ'."
-        }
-      ],
-      "notes": "Pregunta directa y fundamental de certificación."
-    },
-    {
-      "id": "103.8-slide-18",
-      "slideNumber": 18,
-      "title": "Tarjetas Nemotécnicas: Editor vi/vim 103.8",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Tarjetas Nemotécnicas: Editor vi/vim 103.8"
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Concepto",
-            "Significado / Uso"
-          ],
-          "rows": [
-            [
-              "¿Cómo volver siempre al Modo Normal desde cualquier otro modo en vi?",
-              "Pulsando la tecla 'Esc'."
-            ],
-            [
-              "¿Qué teclas saltan a la primera y a la última línea del archivo en vi?",
-              "1G (o gg) para la primera; G (mayúscula) para la última."
-            ],
-            [
-              "¿Qué tecla abre una nueva línea en blanco DEBAJO de la actual?",
-              "La letra 'o' minúscula (la 'O' mayúscula la abre encima)."
-            ],
-            [
-              "¿Qué comando borra la línea completa actual en Modo Normal?",
-              "dd."
-            ],
-            [
-              "¿Qué comando copia una línea completa al portapapeles y cuál la pega?",
-              "yy copia (yank); p pega debajo (put)."
-            ],
-            [
-              "¿Qué tecla deshace el último cambio en vi?",
-              "La tecla 'u' (undo); Ctrl+R rehace (redo)."
-            ],
-            [
-              "¿Cómo salir de vi forzando el cierre sin guardar cambios?",
-              ":q! (o tecleando ZQ en Modo Normal)."
-            ],
-            [
-              "¿Cómo sustituir 'foo' por 'bar' en TODO el archivo pidiendo confirmación?",
-              ":%s/foo/bar/gc."
-            ]
-          ],
-          "caption": "Tarjetas de memorización"
-        }
-      ],
-      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 103.8."
-    },
-    {
-      "id": "103.8-slide-19",
-      "slideNumber": 19,
-      "title": "Resumen y Claves de Examen: Subtema 103.8",
+      "id": "103.8-slide-16",
+      "slideNumber": 16,
+      "title": "Resumen y claves de examen: subtema 103.8",
       "layout": "summary",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Resumen y Claves de Examen: Subtema 103.8"
+          "text": "Resumen y claves de examen: subtema 103.8"
+        },
+        {
+          "type": "paragraph",
+          "text": "vi trabaja en 3 modos: normal (el de arranque), inserción y modo Ex (colon). `Esc` te devuelve siempre al normal."
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Abrir**: `vi archivo`; `vi +N archivo` en la línea N; `vi + archivo` en la última línea.",
+            "**Navegar**: `h j k l`, `w`/`W`, `0`/`$`, `1G`/`G`, `(` `)` `{` `}`.",
+            "**Editar**: `i I a A o O` para insertar; `s S c r` para cambiar; `x dw dd D dt` para borrar.",
+            "**Copiar y repetir**: `v`/`V`, `<`/`>` para sangrar, `yy`, `p`/`P`, `u`, `Ctrl+R`; registros `\"a`, marcas `m` y macros `q`/`@`.",
+            "**Guardar y salir**: `:w`, `:q`, `:q!`, `:wq`/`:x`/`:exit`, `ZZ`, `ZQ`; `:!` ejecuta en la shell y `:visual` vuelve al normal.",
+            "**Fallo o swap**: `vi -r archivo` recupera el `.swp` y `d` lo descarta en el aviso; `$VISUAL` > `$EDITOR` > `update-alternatives`."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 `:q!` sale sin guardar y `ZZ` guarda al salir; `o` abre debajo y `O` encima; en un aviso de swap, `r` recupera y `d` descarta."
         }
       ],
-      "notes": "Concluimos el subtema 103.8 y finalizamos completamente la refactorización integral del Tema 103."
+      "notes": "Cierra el Tema 103. Repasa las 6 claves y los atajos de modo: la mayoría de preguntas del objetivo 103.8 piden el comando exacto."
     }
   ]
 }

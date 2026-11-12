@@ -16,7 +16,8 @@
     "virgulilla (~)",
     "sistema man (secciones 1, 5, 8)",
     "apropos y whatis",
-    "type, which, whereis y hash",
+    "type, which, whereis, hash y help",
+    "type hashed (comando ya cacheado)",
     "HISTSIZE frente a HISTFILESIZE",
     "~/.bash_history",
     "variables de entorno y export",
@@ -45,7 +46,9 @@
     "apropos",
     "whatis",
     "lsblk",
-    "tail"
+    "tail",
+    "help",
+    "touch"
   ],
   "placeholder": false,
   "slides": [
@@ -223,7 +226,7 @@
         },
         {
           "type": "paragraph",
-          "text": "¿Qué narices es una «Sección» y cómo encontrar siempre la ayuda adecuada en Linux?"
+          "text": "¿Qué es una «Sección» y cómo pedir siempre el manual correcto? Recuerda la regla dura: `man` **solo funciona cuando le das el nombre exacto del comando**; si no lo conoces, búscalo antes con `apropos`."
         },
         {
           "type": "html",
@@ -247,27 +250,27 @@
     {
       "id": "103.1-slide-5",
       "slideNumber": 5,
-      "title": "Clasificación de Comandos: type, which, whereis y hash",
+      "title": "Clasificación de Comandos: type, which, whereis, hash y help",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Clasificación de Comandos: type, which, whereis y hash"
+          "text": "Clasificación de Comandos: type, which, whereis, hash y help"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "type [-a] | which | whereis | hash [-r]",
-          "title": "Averiguar la naturaleza exacta de un comando y su ubicación en el sistema"
+          "code": "type [-a] | which | whereis | hash [-r|-d] | help",
+          "title": "Naturaleza, ubicación y caché en RAM de un comando"
         },
         {
           "type": "terminal",
           "lines": [
             {
               "prompt": "$ ",
-              "command": "type cd; which cd; type ls; type -a echo; whereis grep",
-              "output": ""
+              "command": "uname -a >/dev/null; type cd; type uname; which cd; hash",
+              "output": "cd is a shell builtin\nuname is hashed (/usr/bin/uname)\n\nhits\tcommand\n   1\t/usr/bin/uname"
             }
           ]
         },
@@ -282,7 +285,7 @@
             [
               "type <cmd>",
               "Clasificador universal",
-              "🎯 Comando interno de Bash. Descubre si es builtin, alias, función o archivo en disco."
+              "🎯 Comando interno de Bash. Responde si es builtin, alias, función o archivo en disco. Si dice `hashed`, ese comando ya se ejecutó y su ruta está cacheada en la tabla hash."
             ],
             [
               "type -a <cmd>",
@@ -296,13 +299,18 @@
             ],
             [
               "whereis <cmd>",
-              "Binario, src y manual",
-              "Localiza el archivo ejecutable, el código fuente y las páginas man en rutas estándar."
+              "Binario, fuentes y manual",
+              "Busca el ejecutable, el código fuente y las páginas man en las rutas estándar del sistema (no en `$PATH`)."
             ],
             [
-              "hash [-r]",
+              "hash [-r|-d]",
               "Caché de rutas de Bash",
-              "Muestra la tabla hash en RAM con rutas ya ejecutadas. 'hash -r' la vacía por completo."
+              "Muestra la tabla hash en RAM. `hash -r` vacía toda la tabla; `hash -d <cmd>` olvida solo la entrada de ese comando."
+            ],
+            [
+              "help <builtin>",
+              "Ayuda de los builtins",
+              "🎯 Documenta los comandos internos (`cd`, `exit`, `type`…): justo los que `which` no encuentra. También es un builtin (`help help`)."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -315,7 +323,7 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Diferencia Vital de Examen: 'which' solo busca ficheros ejecutables en $PATH; si le preguntas por 'cd', no devolverá nada porque 'cd' es un comando interno (shell builtin). Para builtins debes usar 'type' o 'help'."
+          "content": "🎯 Diferencia Vital de Examen: 'which' solo busca ficheros ejecutables en $PATH; si le preguntas por 'cd' no devolverá nada, porque es un comando interno (shell builtin). Para builtins usa 'type' o 'help'. Si 'type' responde 'is hashed', el comando ya se ejecutó y su ruta está cacheada ('hash -r' vacía la tabla)."
         }
       ],
       "notes": "Muestra a los alumnos qué ocurre con 'which cd' frente a 'type cd'. Enseña que 'type -a echo' muestra que existe una versión interna de Bash y un binario en /usr/bin/echo."
@@ -419,13 +427,28 @@
         },
         {
           "type": "paragraph",
-          "text": "¿Dónde se guardan los comandos entre sesiones y qué leches son HISTSIZE y HISTFILESIZE?"
+          "text": "¿Dónde se guardan los comandos entre sesiones? `HISTSIZE` limita la memoria de la sesión y `HISTFILESIZE` las líneas del archivo en disco. Los comandos nuevos llegan al historial al instante, pero solo se escriben en `~/.bash_history` al salir de la sesión (o con `history -w`)."
         },
         {
           "type": "code",
           "language": "bash",
           "code": "# Configuración de límites del historial en ~/.bashrc\nHISTSIZE=1000          # Comandos retenidos en la memoria RAM de la terminal activa\nHISTFILESIZE=2000      # Comandos máximos guardados en el archivo físico ~/.bash_history\nHISTCONTROL=ignoreboth # Ignora comandos con espacio inicial y comandos duplicados",
           "title": "~/.bashrc (Configuración del Historial)"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "history 20",
+              "output": ""
+            },
+            {
+              "prompt": "$ ",
+              "command": "tail -n 20 ~/.bash_history",
+              "output": ""
+            }
+          ]
         },
         {
           "type": "html",
@@ -435,7 +458,7 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Diferencia Vital de Examen: HISTSIZE = memoria RAM; HISTFILESIZE = archivo físico en disco (~/.bash_history)."
+          "content": "🎯 Diferencia Vital de Examen: HISTSIZE = memoria RAM; HISTFILESIZE = archivo físico en disco (~/.bash_history). La RAM se consulta con 'history 20' y el disco con 'tail -n 20 ~/.bash_history'; el volcado a disco ocurre al salir (o forzándolo con 'history -w')."
         }
       ],
       "notes": "Mnemotecnia para clase: 'SIZE' a secas es la RAM; 'FILESIZE' tiene la palabra 'FILE', por tanto es el archivo físico en el disco."
@@ -464,6 +487,11 @@
               "prompt": "$ ",
               "command": "APP_PORT=8080; bash -c 'echo \"En subshell: $APP_PORT\"'; export APP_PORT; bash -c 'echo \"Exportada: $APP_PORT\"'; unset APP_PORT",
               "output": ""
+            },
+            {
+              "prompt": "$ ",
+              "command": "mynewvar=goodbye; env | grep mynewvar; set | grep mynewvar",
+              "output": "mynewvar=goodbye"
             }
           ]
         },
@@ -493,7 +521,7 @@
             [
               "set",
               "Ver todas + funciones",
-              "🎯 Lista TODAS las variables (locales y exportadas) más las funciones activas de Bash."
+              "🎯 Lista TODAS las variables (locales y exportadas) más las funciones activas de Bash. Una variable local sale en `set | grep VAR` pero no en `env | grep VAR`."
             ],
             [
               "unset VAR",
@@ -511,7 +539,7 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Regla de Oro: 'VAR=1' es local a la terminal actual; 'export VAR' permite que los subprocesos y scripts hijos hereden su valor. 'unset VAR' la borra."
+          "content": "🎯 Regla de Oro: 'VAR=1' es local a la terminal actual; 'export VAR' permite que los subprocesos y scripts hijos hereden su valor. 'unset VAR' la borra. Comprobación rápida: 'set | grep VAR' sí la muestra y 'env | grep VAR' no."
         }
       ],
       "notes": "Peligro de examen: nunca uses espacios en 'VAR = val', Bash pensará que VAR es un programa y '=' su argumento. Al hacer unset, nunca pongas el '$'."
@@ -536,10 +564,16 @@
           "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:14px; padding:20px 26px; margin-top:12px;\">\n  <div style=\"font-size:17px; font-weight:800; color:var(--text); margin-bottom:10px;\">\n    🔍 ¿Cómo está formada la variable PATH y cómo busca Bash?\n  </div>\n\n  <div style=\"background:#0F172A; color:#F8FAFC; padding:14px 20px; border-radius:10px; font-family:monospace; font-size:17px; margin-bottom:14px; display:flex; align-items:center; gap:8px;\">\n    <span style=\"color:#38BDF8; font-weight:800;\">PATH=</span>\n    <span style=\"color:#4ADE80;\">/usr/local/bin</span><span style=\"color:#94A3B8;\">:</span>\n    <span style=\"color:#A78BFA;\">/usr/bin</span><span style=\"color:#94A3B8;\">:</span>\n    <span style=\"color:#FDE047;\">/bin</span><span style=\"color:#94A3B8;\">:</span>\n    <span style=\"color:#FB923C;\">/usr/local/games</span>\n  </div>\n\n  <div style=\"font-size:14.5px; color:var(--text-muted); line-height:1.5; margin-bottom:16px;\">\n    Es una cadena de rutas separadas por <strong>dos puntos (<code>:</code>)</strong>. Cuando tecleas <code>ls</code>, Bash revisa los directorios <strong>en orden estricto de izquierda a derecha</strong>. En la primera carpeta donde encuentre un ejecutable llamado <code>ls</code>, lo lanza y se detiene.\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; font-size:14px;\">\n    <!-- Aplicación práctica -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:10px; padding:16px;\">\n      <strong style=\"color:#1E40AF; font-size:15.5px;\">🛠️ Aplicación Real: Añadir tus scripts</strong><br>\n      <div style=\"color:#1E3A8A; line-height:1.45; margin-top:6px;\">\n        Si tienes herramientas en <code>/opt/scripts</code>, amplías el PATH concatenando:<br>\n        <code style=\"background:#DBEAFE; color:#1E40AF; padding:3px 8px; border-radius:4px; font-weight:700; font-size:14.5px;\">export PATH=\"$PATH:/opt/scripts\"</code><br>\n        Ahora puedes ejecutar tus scripts desde cualquier carpeta sin poner la ruta entera.\n      </div>\n    </div>\n\n    <!-- Peligro del punto -->\n    <div style=\"background:#FFF1F2; border:2px solid #F43F5E; border-radius:10px; padding:16px;\">\n      <strong style=\"color:#9F1239; font-size:15.5px;\">⚠️ El Peligro Mortal del Punto (<code>.</code>) en PATH</strong><br>\n      <div style=\"color:#881337; line-height:1.45; margin-top:6px;\">\n        Si alguien pone <code>export PATH=\".:$PATH\"</code>, Bash busca <strong>primero en la carpeta actual</strong>.<br>\n        <strong>Ataque de Caballo de Troya:</strong> Si un atacante deja un script dañino llamado <code>ls</code> en <code>/tmp</code> y el usuario <code>root</code> entra y escribe <code>ls</code>, ¡se ejecutará el virus del atacante con permisos de root en lugar del comando real!\n      </div>\n    </div>\n  </div>\n</div>\n"
         },
         {
+          "type": "code",
+          "language": "bash",
+          "title": "Ampliar PATH sin perder lo previo y sobrevivir a su borrado",
+          "code": "export PATH=\"/opt/scripts:$PATH\"   # añade delante y conserva el PATH previo\nunset PATH                        # sin PATH, Bash no encuentra ni sudo\n/usr/bin/sudo ls                  # sudo vive en /usr/bin/sudo: la ruta absoluta funciona"
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Si ejecutas 'unset PATH', el sistema no encontrará comandos como 'ls' o 'cp'. Para ejecutarlos deberás escribir su ruta absoluta: /bin/ls. El punto '.' NUNCA debe estar en el PATH de root."
+          "content": "🎯 Clave de Examen: Si ejecutas 'unset PATH', el sistema no encontrará comandos como 'ls', 'cp' ni 'sudo'. Para ejecutarlos escribe su ruta absoluta: /bin/ls, /usr/bin/sudo. El punto '.' NUNCA debe estar en el PATH de root."
         }
       ],
       "notes": "Muestra a los alumnos qué ocurre si haces 'export PATH=' y luego intentas ejecutar ls: te dirá 'command not found'. Para recuperarte tienes que invocar /usr/bin/export."
@@ -564,10 +598,25 @@
           "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: repeat(2, 1fr); gap:16px; margin-top:14px; font-size:14px;\">\n  <!-- 1. Comillas Simples -->\n  <div style=\"background:#FEF2F2; border:2px solid #EF4444; border-radius:12px; padding:16px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:12px; padding:3px 10px; border-radius:4px;\">BLINDAJE TOTAL</span>\n      <code style=\"font-size:16px; font-weight:800; color:#991B1B;\">'texto literal'</code>\n    </div>\n    <div style=\"font-size:17px; font-weight:800; color:#991B1B; margin-bottom:6px;\">Comillas Simples (Strong Quoting)</div>\n    <div style=\"color:#7F1D1D; line-height:1.45;\">\n      • <strong>Regla:</strong> Desactiva el significado de <strong>TODOS</strong> los caracteres especiales. Nada se expande.<br>\n      • <strong>Cuándo usarla:</strong> Cuando quieres que el texto salga exactamente tal como está escrito.<br>\n      • <strong>Ejemplo:</strong> <code>echo '$USER gana $100'</code> &rarr; Imprime: <code style=\"background:#FEE2E2; padding:2px 6px; font-weight:700;\">$USER gana $100</code>\n    </div>\n  </div>\n\n  <!-- 2. Comillas Dobles -->\n  <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:12px; padding:16px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:3px 10px; border-radius:4px;\">EXPANSIÓN CONTROLADA</span>\n      <code style=\"font-size:16px; font-weight:800; color:#14532D;\">\"texto con $VAR\"</code>\n    </div>\n    <div style=\"font-size:17px; font-weight:800; color:#14532D; margin-bottom:6px;\">Comillas Dobles (Weak Quoting)</div>\n    <div style=\"color:#14532D; line-height:1.45;\">\n      • <strong>Regla:</strong> Protege espacios, pero <strong>SÍ expande variables (<code>$</code>)</strong>, comandos (<code>$(cmd)</code>) y barras de escape (<code>\\</code>).<br>\n      • <strong>Cuándo usarla:</strong> Para mensajes dinámicos donde insertas variables.<br>\n      • <strong>Ejemplo:</strong> <code>echo \"Hola $USER\"</code> &rarr; Imprime: <code style=\"background:#DCFCE7; padding:2px 6px; font-weight:700;\">Hola sysadmin</code>\n    </div>\n  </div>\n\n  <!-- 3. Barra Invertida -->\n  <div style=\"background:#FAF5FF; border:2px solid #A855F7; border-radius:12px; padding:16px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:12px; padding:3px 10px; border-radius:4px;\">ESCAPE QUIRÚRGICO</span>\n      <code style=\"font-size:16px; font-weight:800; color:#6B21A8;\">\\carácter</code>\n    </div>\n    <div style=\"font-size:17px; font-weight:800; color:#6B21A8; margin-bottom:6px;\">Barra Invertida (Escape de 1 Símbolo)</div>\n    <div style=\"color:#581C87; line-height:1.45;\">\n      • <strong>Regla:</strong> Desactiva el significado especial de <strong>UN SOLO carácter inmediato</strong>.<br>\n      • <strong>Cuándo usarla:</strong> Para imprimir un <code>$</code> o comillas dentro de comillas dobles.<br>\n      • <strong>Ejemplo:</strong> <code>echo \"Precio: \\$50\"</code> &rarr; Imprime: <code style=\"background:#F3E8FF; padding:2px 6px; font-weight:700;\">Precio: $50</code>\n    </div>\n  </div>\n\n  <!-- 4. Sustitución de Comandos -->\n  <div style=\"background:#F0F9FF; border:2px solid #0EA5E9; border-radius:12px; padding:16px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;\">\n      <span style=\"background:#0284C7; color:#FFF; font-weight:800; font-size:12px; padding:3px 10px; border-radius:4px;\">INYECCIÓN DE SALIDA</span>\n      <code style=\"font-size:16px; font-weight:800; color:#0369A1;\">$(cmd) o `cmd`</code>\n    </div>\n    <div style=\"font-size:17px; font-weight:800; color:#0369A1; margin-bottom:6px;\">Sustitución de Comandos</div>\n    <div style=\"color:#0C4A6E; line-height:1.45;\">\n      • <strong>Regla:</strong> Ejecuta el comando en una subshell y reemplaza la expresión por el texto que arroje.<br>\n      • <strong>Cuándo usarla:</strong> Guardar fechas o estados en variables (<code>HOY=$(date +%F)</code>).<br>\n      • <strong>Ejemplo:</strong> <code>echo \"Hoy es $(date +%A)\"</code> &rarr; Imprime: <code style=\"background:#E0F2FE; padding:2px 6px; font-weight:700;\">Hoy es lunes</code>\n    </div>\n  </div>\n</div>\n"
         },
         {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "touch my big file; ls",
+              "output": "big  file  my"
+            },
+            {
+              "prompt": "$ ",
+              "command": "rm big file my; touch \"my big file\"; ls",
+              "output": "my big file"
+            }
+          ]
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 La Pregunta Fija de Examen: 'echo '$VAR'' imprime literalmente el texto $VAR; 'echo \"$VAR\"' expande e imprime el contenido de la variable. La barra '\\' escapa 1 solo símbolo."
+          "content": "🎯 La Pregunta Fija de Examen: `echo '$VAR'` imprime literalmente el texto `$VAR`; `echo \"$VAR\"` expande e imprime el contenido de la variable. La barra invertida escapa un solo símbolo y los espacios sin comillas separan argumentos: `touch my big file` crea TRES ficheros."
         }
       ],
       "notes": "Dedica 5 minutos a asegurar que todos los alumnos comprenden la diferencia radical entre comillas simples (blindaje total) y comillas dobles (expansión de variables)."
@@ -631,31 +680,45 @@
     {
       "id": "103.1-slide-13",
       "slideNumber": 13,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: man, uname y type)",
+      "title": "Ejercicios Guiados del Manual LPIC-1 (man, uname e historial)",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: man, uname y type)"
+          "text": "Ejercicios Guiados del Manual LPIC-1 (man, uname e historial)"
         },
         {
           "type": "list",
           "ordered": true,
           "items": [
-            "Caso 1 (Oficial Pág 203): Un administrador necesita consultar la página del manual oficial del archivo de configuración del sistema de archivos '/etc/fstab'. ¿Qué comando exacto debe utilizar para evitar abrir un comando ejecutable? — Comando: `man 5 fstab` (La sección 5 del manual de Linux contiene la documentación de los formatos de archivos de configuración y tablas del sistema.)",
-            "Caso 2 (Oficial Pág 203): ¿Qué comando muestra exclusivamente la versión exacta del kernel de Linux cargado en memoria? — Comando: `uname -r` (La opción -r (--kernel-release) imprime la versión de compilación del kernel (ej: 5.10.0-18-amd64).)",
-            "Caso 3 (Oficial Pág 203): ¿Qué comando determina si la orden 'cd' es un archivo ejecutable en disco o una función interna de la shell? — Comando: `type cd` (El comando 'type' analiza la naturaleza del identificador y devolverá 'cd is a shell builtin'.)"
+            "Caso 1 (pp. 193–195): ¿Cómo pedirle a `apropos` que envíe solo un mensaje corto de uso y salga? — Comando: `apropos --usage`; se descubre en `man apropos`, sección «Options», párrafo `--usage`.",
+            "Caso 2: ¿Qué licencia de copyright se asigna a `grep`? — Comando: `man grep`, sección «Copyright»: el programa utiliza los derechos de autor de la Free Software Foundation.",
+            "Caso 3: ¿Qué opción de `uname` da la versión del kernel y cuál la plataforma de hardware? — Comandos: `uname -r` (versión del kernel) y `uname -i` (plataforma de hardware), sección «Description» de `man uname`.",
+            "Caso 4: Compara las últimas veinte líneas de la base de datos dinámica `history` y del archivo `.bash_history`. — Comandos: `history 20` y `tail -n 20 ~/.bash_history`."
           ]
+        }
+      ],
+      "secondaryBlocks": [
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Método: buscar → leer → ejecutar"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "title": "Comandos de referencia para los cuatro casos",
+          "code": "man apropos          # sección Options → párrafo --usage\nman grep             # sección Copyright → Free Software Foundation\nuname -r; uname -i   # kernel release y plataforma de hardware\nhistory 20; tail -n 20 ~/.bash_history"
         },
         {
           "type": "callout",
           "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "man 5 para archivos de configuración, uname -r para versión de kernel y type para inspección de comandos internos."
+          "title": "Clave de examen",
+          "content": "El manual no da las respuestas: localiza la página con `man`, lee la sección correcta («Options», «Description», «Copyright») y ejecuta. `--usage` y la sección «Copyright» son las trampas típicas de este objetivo."
         }
       ],
-      "notes": "Insiste en que 'man fstab' funciona porque no hay comando fstab, pero con 'passwd' fallaría sin el 5."
+      "notes": "Los ejercicios son los del manual (pp. 193-195). Pide a los alumnos que localicen la sección correcta antes de ejecutar: en el examen se pregunta el método, no la memorización."
     },
     {
       "id": "103.1-slide-14",
@@ -802,62 +865,6 @@
     {
       "id": "103.1-slide-18",
       "slideNumber": 18,
-      "title": "Tarjetas Nemotécnicas: Línea de Comandos 103.1",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Tarjetas Nemotécnicas: Línea de Comandos 103.1"
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Concepto",
-            "Significado / Uso"
-          ],
-          "rows": [
-            [
-              "¿Qué comando muestra la versión de compilación del kernel cargado?",
-              "uname -r."
-            ],
-            [
-              "¿Qué sección del manual 'man' documenta los archivos de configuración?",
-              "Sección 5 (ej: man 5 fstab, man 5 passwd)."
-            ],
-            [
-              "¿Qué comando busca en las descripciones breves de todos los manuales?",
-              "apropos <palabra> (o man -k <palabra>)."
-            ],
-            [
-              "¿Qué comando averigua si una orden es un builtin, un alias o un archivo?",
-              "type <comando>."
-            ],
-            [
-              "¿Qué operador del historial vuelve a ejecutar el último comando tecleado?",
-              "!! (dos signos de exclamación)."
-            ],
-            [
-              "¿Qué comando elimina por completo una variable de la memoria?",
-              "unset NOMBRE (sin poner el signo $)."
-            ],
-            [
-              "¿Qué comillas desactivan absolutamente TODAS las expansiones en Bash?",
-              "Las comillas simples (' ')."
-            ],
-            [
-              "¿Qué diferencia hay entre HISTSIZE y HISTFILESIZE?",
-              "HISTSIZE es para la memoria RAM de la sesión; HISTFILESIZE es para el archivo en disco (~/.bash_history)."
-            ]
-          ],
-          "caption": "Tarjetas de memorización"
-        }
-      ],
-      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 103.1."
-    },
-    {
-      "id": "103.1-slide-19",
-      "slideNumber": 19,
       "title": "Resumen y Claves de Examen: Subtema 103.1",
       "layout": "summary",
       "blocks": [
@@ -873,10 +880,10 @@
             "**Prompt y privilegios:** `$` identifica usuario ordinario; `#` identifica al superusuario `root`. La virgulilla `~` abrevia el directorio personal `$HOME`.",
             "**Auditoría con uname:** `uname -r` revela la versión exacta del kernel, `uname -m` la arquitectura (x86_64/aarch64), y `uname -a` consolida todas las banderas (`-s`, `-n`, `-r`, `-v`, `-m`, `-p`, `-i`, `-o`).",
             "**Sistema man:** Sección 1 (comandos de usuario), Sección 5 (formatos de archivos de configuración como `/etc/passwd`), Sección 8 (administración de root). Búsqueda por palabras clave con `apropos` / `man -k` y resumen breve con `whatis` / `man -f`.",
-            "**Naturaleza de órdenes:** `type` distingue builtins, alias y binarios; `which` solo busca ejecutables en `$PATH`; `whereis` localiza binario, fuentes y manual; `hash` gestiona la caché de rutas en RAM.",
+            "**Naturaleza de órdenes:** `type` distingue builtins, alias y binarios (`is hashed` = ya cacheado en la tabla hash); `which` solo busca ejecutables en `$PATH`; `whereis` busca binario, fuentes y manual en rutas estándar; `hash -r` vacía la caché y `hash -d <cmd>` olvida una entrada.",
             "**Historial:** `HISTSIZE` gobierna comandos en memoria RAM (`history 20`), `HISTFILESIZE` gobierna líneas en disco (`~/.bash_history` consultable con `tail -n 20 ~/.bash_history`). Expansión con `!!` (último comando) y `!n` (por índice).",
             "**Variables y PATH:** `VAR=valor` (local), `export VAR` (heredable a hijos), `env`/`printenv` (solo exportadas), `set` (todas + funciones), `unset VAR` (borrado sin `$`). Seguridad: nunca incluir `.` al inicio de `PATH`.",
-            "**Quoting y Subshells:** Comillas simples `' '` (blindaje total), comillas dobles `\" \"` (permiten `$`, `\\` y `$()`). Las subshells hijas no pueden alterar la memoria del padre; `source` ejecuta en la shell actual."
+            "**Quoting y Subshells:** Comillas simples `' '` (blindaje total); las comillas dobles `\" \"` protegen espacios pero NO `$`, `` ` ``, `\\` ni `!` (en modo interactivo), por eso expanden variables y `$()`. Las subshells hijas no alteran la memoria del padre; `source` ejecuta en la shell actual."
           ]
         },
         {

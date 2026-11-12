@@ -25,10 +25,15 @@
     "~/.screenrc",
     "~/.tmux.conf",
     "~/.toprc",
-    "Job Control (bg/fg)"
+    "Job Control (bg/fg)",
+    "Jobspec",
+    "GNU Screen",
+    "tmux",
+    "Modelo cliente-servidor"
   ],
   "commands": [
     "bg",
+    "disown",
     "fg",
     "free",
     "jobs",
@@ -36,6 +41,7 @@
     "killall",
     "nohup",
     "pgrep",
+    "pidof",
     "pkill",
     "ps",
     "screen",
@@ -114,7 +120,7 @@
         },
         {
           "type": "paragraph",
-          "text": "Dominar tareas en primer plano (foreground) y segundo plano (background) en la shell:"
+          "text": "Dominar tareas en primer plano (foreground) y en segundo plano (background) dentro de la shell:"
         },
         {
           "type": "code",
@@ -127,8 +133,18 @@
           "lines": [
             {
               "prompt": "$ ",
-              "command": "tar -czf /backup/sistema.tar.gz /var/www; bg %1; jobs -l",
+              "command": "tar -czf /backup/sistema.tar.gz /var/www",
               "output": ""
+            },
+            {
+              "prompt": "",
+              "command": "Ctrl+Z",
+              "output": "[1]+  Stopped                 tar -czf /backup/sistema.tar.gz /var/www"
+            },
+            {
+              "prompt": "$ ",
+              "command": "bg %1; jobs -l",
+              "output": "[1]+   2451 Running                 tar -czf /backup/sistema.tar.gz /var/www"
             }
           ]
         },
@@ -179,11 +195,82 @@
           "content": "🎯 El Triángulo de Oro de Examen: 1º Si un comando largo bloquea tu consola: pulsa 'Ctrl+Z' (queda Detenido). 2º Escribe 'bg' (continúa en segundo plano). 3º Si quieres recuperarlo: escribe 'fg'."
         }
       ],
-      "notes": "Distingue entre Job ID (número local entre corchetes [1]) y PID (número global del sistema ej: 41205)."
+      "notes": "Distingue el Job ID (número local entre corchetes, [1]) del PID (número global del sistema). `bg` solo reanuda trabajos **detenidos**: sin el `Ctrl+Z` previo no hay nada que reanudar."
     },
     {
       "id": "103.5-slide-4",
       "slideNumber": 4,
+      "title": "Jobspec y Opciones de jobs",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Jobspec y Opciones de jobs"
+        },
+        {
+          "type": "paragraph",
+          "text": "El ID de trabajo (`[1]`) es local a cada shell y se referencia con `%` en `jobs`, `fg`, `bg` y `kill`. No es el PID global."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Jobspec",
+            "Significado",
+            "Ejemplo"
+          ],
+          "rows": [
+            [
+              "%n",
+              "Trabajo número n",
+              "`kill %1`"
+            ],
+            [
+              "%str",
+              "Trabajo cuya línea de comandos empieza por str",
+              "`bg %sl`"
+            ],
+            [
+              "%?str",
+              "Trabajo cuya línea de comandos contiene str",
+              "`fg %?le`"
+            ],
+            [
+              "%+ o %%",
+              "Trabajo actual (el último suspendido o enviado al fondo)",
+              "`fg %+`"
+            ],
+            [
+              "%-",
+              "Trabajo anterior (el que era %+ antes)",
+              "`bg %-`"
+            ]
+          ],
+          "caption": "Especificaciones de trabajo (jobspec)"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "`jobs -l`: añade el PID antes del estado (el Job ID sigue entre corchetes).",
+            "`jobs -n`: solo los trabajos que cambiaron de estado desde la última notificación.",
+            "`jobs -p`: solo los PIDs, sin estado ni comando.",
+            "`jobs -r`: solo los trabajos en ejecución.",
+            "`jobs -s`: solo los detenidos o suspendidos."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 `fg` y `bg` actúan sobre el trabajo actual (`%+`) si no indicas jobspec; `kill` **siempre** exige uno (`kill %1`, nunca `kill 1`). Los estados de `jobs` son Running, Stopped, Terminated y Done."
+        }
+      ],
+      "notes": "Con un solo trabajo, `%+` y `%-` apuntan al mismo. El signo `+` de la salida marca el trabajo actual y `-` el anterior."
+    },
+    {
+      "id": "103.5-slide-5",
+      "slideNumber": 5,
       "title": "Ejecución Inmune al Cierre: nohup, disown y watch",
       "layout": "content",
       "blocks": [
@@ -194,12 +281,12 @@
         },
         {
           "type": "paragraph",
-          "text": "Proteger procesos frente a desconexiones (SIGHUP) con nohup o disown, y monitorizar salidas cíclicas con watch:"
+          "text": "Proteger procesos frente a desconexiones (SIGHUP) con `nohup` o `disown`, y monitorizar salidas cíclicas con `watch`:"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "nohup <cmd> & | disown -h [%n] | watch [-n <seg>] <cmd>",
+          "code": "nohup <cmd> & | tail -f nohup.out | disown -h [%n] | watch [-n <seg>] <cmd>",
           "title": "Hacer un proceso inmune al cierre de terminal, rescatar jobs sin nohup y refrescar comandos en pantalla"
         },
         {
@@ -207,7 +294,17 @@
           "lines": [
             {
               "prompt": "$ ",
-              "command": "nohup ./backup.sh &; head -n 2 nohup.out; disown -h %1",
+              "command": "nohup ./backup.sh &",
+              "output": "[1] 1251\nnohup: ignoring input and appending output to 'nohup.out'"
+            },
+            {
+              "prompt": "$ ",
+              "command": "tail -f nohup.out",
+              "output": ""
+            },
+            {
+              "prompt": "$ ",
+              "command": "disown -h %1",
               "output": ""
             }
           ]
@@ -239,6 +336,11 @@
               "watch -n <seg> <cmd>",
               "Monitor cíclico en vivo",
               "🎯 Ejecuta un comando en bucle cada N segundos (defecto: 2s) a pantalla limpia para supervisar cambios."
+            ],
+            [
+              "`watch 'ps -ef | grep apache2'`",
+              "Dinamizar la salida de ps",
+              "🎯 `watch` convierte la foto estática de `ps` en un monitor en vivo de procesos y conexiones."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -251,14 +353,14 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave Absoluta de Examen: 'nohup' (preventivo) y 'disown -h' (reactivo) protegen de SIGHUP (señal 1). 'nohup' no duplica estados: solo bloquea la señal y redirige la pantalla a 'nohup.out'. 'watch' refresca cíclicamente (defecto: 2s)."
+          "content": "🎯 Clave Absoluta de Examen: `nohup` (preventivo) y `disown -h` (reactivo) protegen de SIGHUP (1); `nohup` redirige la salida a `nohup.out` y `tail -f` la sigue en vivo. `watch` refresca cada 2 s y dinamiza `ps`: `watch 'ps -ef | grep apache2'`."
         }
       ],
       "notes": "Si no tienes permisos de escritura en el directorio actual, nohup guarda automáticamente en ~/nohup.out ($HOME)."
     },
     {
-      "id": "103.5-slide-5",
-      "slideNumber": 5,
+      "id": "103.5-slide-6",
+      "slideNumber": 6,
       "title": "Tabla Oficial de Señales Críticas de Linux",
       "layout": "content",
       "blocks": [
@@ -333,8 +435,8 @@
       "notes": "Pregunta de examen garantizada: '¿Cuáles son las dos únicas señales que no se pueden capturar?'. Respuesta: SIGKILL (9) y SIGSTOP (19)."
     },
     {
-      "id": "103.5-slide-6",
-      "slideNumber": 6,
+      "id": "103.5-slide-7",
+      "slideNumber": 7,
       "title": "Envío de Señales con kill: por PID o Job ID",
       "layout": "content",
       "blocks": [
@@ -345,7 +447,7 @@
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo enviar señales de terminación, pausa o recarga a procesos específicos?"
+          "text": "Envía una señal a un proceso concreto. Cada llamada de `kill` admite **un único** PID o jobspec: para varios procesos se usan `pkill`, `killall` o la sustitución de comandos."
         },
         {
           "type": "code",
@@ -358,7 +460,17 @@
           "lines": [
             {
               "prompt": "$ ",
-              "command": "kill 41205; kill -9 41205; kill %1",
+              "command": "kill 41205",
+              "output": ""
+            },
+            {
+              "prompt": "$ ",
+              "command": "kill -9 41205",
+              "output": ""
+            },
+            {
+              "prompt": "$ ",
+              "command": "kill %1",
               "output": ""
             }
           ]
@@ -410,11 +522,11 @@
           "content": "🎯 Peligro Clásico de Examen: 'kill 1' intenta matar al proceso raíz del sistema (PID 1 / systemd); para matar al trabajo número 1 de tu terminal DEBES escribir 'kill %1'."
         }
       ],
-      "notes": "Explica la diferencia entre cortesía (15) y machetazo (9)."
+      "notes": "Cortesía (15) frente a machetazo (9): `kill` solo acepta un PID o jobspec por llamada."
     },
     {
-      "id": "103.5-slide-7",
-      "slideNumber": 7,
+      "id": "103.5-slide-8",
+      "slideNumber": 8,
       "title": "Terminación Masiva y Búsqueda: killall, pkill, pgrep y pidof",
       "layout": "content",
       "blocks": [
@@ -438,7 +550,22 @@
           "lines": [
             {
               "prompt": "$ ",
-              "command": "pidof nginx; pgrep -l nginx; sudo killall -u alumno sleep",
+              "command": "pidof nginx",
+              "output": "1187"
+            },
+            {
+              "prompt": "$ ",
+              "command": "pgrep -l nginx",
+              "output": "1187 nginx"
+            },
+            {
+              "prompt": "$ ",
+              "command": "sudo killall -u alumno sleep",
+              "output": ""
+            },
+            {
+              "prompt": "$ ",
+              "command": "kill $(pgrep sleep)",
               "output": ""
             }
           ]
@@ -475,6 +602,11 @@
               "pkill -u <usuario>",
               "Matar por usuario",
               "🎯 Clave de Examen: Mata todos los procesos pertenecientes al usuario especificado."
+            ],
+            [
+              "`kill $(pgrep <patrón>)`",
+              "kill con varios objetivos",
+              "🎯 `kill` solo admite un PID o jobspec; la sustitución de comandos le pasa la lista de PIDs de `pgrep`, igual que haría `pkill`."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -490,11 +622,11 @@
           "content": "🎯 Cuadro Mental: 'kill' usa PID; 'pidof' y 'killall' exigen el nombre EXACTO del binario; 'pgrep' y 'pkill' buscan por PATRONES (expresiones regulares) o por usuario (-u)."
         }
       ],
-      "notes": "Enseña la opción interactiva: 'killall -i comando' para pedir confirmación antes de matar."
+      "notes": "Opción interactiva: `killall -i comando` pide confirmación antes de matar. Y `kill -1 $(pgrep sleep)` equivale a `pkill sleep`."
     },
     {
-      "id": "103.5-slide-8",
-      "slideNumber": 8,
+      "id": "103.5-slide-9",
+      "slideNumber": 9,
       "title": "Inspección de Procesos con ps: Sintaxis BSD frente a Unix",
       "layout": "content",
       "blocks": [
@@ -573,8 +705,82 @@
       "notes": "Distingue entre el origen BSD (Universidad de Berkeley) y el origen Unix System V / POSIX."
     },
     {
-      "id": "103.5-slide-9",
-      "slideNumber": 9,
+      "id": "103.5-slide-10",
+      "slideNumber": 10,
+      "title": "Los Tres Estilos de Opciones de ps",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Los Tres Estilos de Opciones de ps"
+        },
+        {
+          "type": "paragraph",
+          "text": "`ps` acepta **tres estilos de opciones** que no deben mezclarse: BSD sin guión, UNIX con guión simple y GNU con doble guión."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Estilo",
+            "Por PID",
+            "Por usuario",
+            "Sintaxis típica"
+          ],
+          "rows": [
+            [
+              "BSD (sin guión)",
+              "`ps p 811`",
+              "`ps U carol`",
+              "`ps aux`"
+            ],
+            [
+              "UNIX (un guión)",
+              "`ps -p 811`",
+              "`ps -u carol`",
+              "`ps -ef`"
+            ],
+            [
+              "GNU (doble guión)",
+              "`ps --pid 811`",
+              "`ps --user carol`",
+              "`ps --sort=-%cpu`"
+            ]
+          ],
+          "caption": "Las tres convenciones de ps"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "ps U www-data",
+              "output": ""
+            },
+            {
+              "prompt": "$ ",
+              "command": "ps -u www-data",
+              "output": ""
+            },
+            {
+              "prompt": "$ ",
+              "command": "ps --user www-data",
+              "output": ""
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 La misma consulta se escribe de tres formas: `ps U www-data` (BSD), `ps -u www-data` (UNIX) y `ps --user www-data` (GNU). No mezcles estilos en un mismo comando."
+        }
+      ],
+      "notes": "Ejercicio oficial: mostrar los procesos de www-data con las tres sintaxis. `ps a` lista los procesos con terminal (tty)."
+    },
+    {
+      "id": "103.5-slide-11",
+      "slideNumber": 11,
       "title": "Códigos de Estado de Proceso (STAT en ps aux)",
       "layout": "content",
       "blocks": [
@@ -643,8 +849,8 @@
       "notes": "Ss+ es la firma clásica de una shell interactiva bash en primer plano esperando que el usuario teclee algo."
     },
     {
-      "id": "103.5-slide-10",
-      "slideNumber": 10,
+      "id": "103.5-slide-12",
+      "slideNumber": 12,
       "title": "Monitor Interactivo del Sistema: top",
       "layout": "content",
       "blocks": [
@@ -660,15 +866,15 @@
         {
           "type": "code",
           "language": "bash",
-          "code": "top [-d <seg>] [-u <usuario>] [-p <PID>] [-b -n 1]",
-          "title": "Monitorizar en tiempo real el consumo de recursos y ordenar o matar procesos interactivamente"
+          "code": "top [-d <seg>] [-u <usuario>] [-p <PID>] [-o <campo>] [-b -n 1]",
+          "title": "Monitorizar en tiempo real el consumo de recursos, ordenar por cualquier campo y matar procesos interactivamente"
         },
         {
           "type": "terminal",
           "lines": [
             {
               "prompt": "$ ",
-              "command": "top -b -n 1 | head -n 5",
+              "command": "top -b -n 1 -o %MEM | head -n 5",
               "output": ""
             }
           ]
@@ -676,45 +882,40 @@
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
+            "Entrada",
+            "Acción",
+            "Nota de examen"
           ],
           "rows": [
             [
-              "Tecla M (Mayúscula)",
-              "Ordenar por Memoria RAM",
-              "🎯 Clave de Examen: Reordena la lista de mayor a menor consumo de RAM."
+              "P y M",
+              "Ordenar por CPU y por RAM",
+              "P es el orden por defecto."
             ],
             [
-              "Tecla P (Mayúscula)",
-              "Ordenar por uso de CPU",
-              "🎯 Clave de Examen: Ordenación por defecto: procesos que más CPU gastan."
+              "N y T",
+              "Ordenar por PID y por tiempo de CPU",
+              "R invierte entre ascendente y descendente."
             ],
             [
-              "Tecla k (Kill)",
-              "Matar desde top",
-              "🎯 Clave de Examen: Pide un PID y el número de señal para matar el proceso sin salir de top."
+              "k y r",
+              "Matar un proceso o renicearlo",
+              "k pide PID y señal (15 por defecto); r pide el valor nice."
             ],
             [
-              "Tecla r (Renice)",
-              "Cambiar prioridad nice",
-              "🎯 Solicita un PID y un nuevo valor nice para ajustar su prioridad en caliente."
+              "u, V y c",
+              "Filtrar por usuario, ver árbol y rutas",
+              "V muestra la jerarquía de procesos; c la ruta del ejecutable."
             ],
             [
-              "Tecla 1 (Uno)",
-              "Desglose por núcleos",
-              "Alterna entre ver el uso de CPU combinado o desglosado núcleo a núcleo (CPU0, CPU1...)."
+              "1 y W",
+              "Desglose por núcleos y guardar vista",
+              "W escribe los ajustes en ~/.toprc."
             ],
             [
-              "Tecla W (Mayúscula)",
-              "Guardar vista en ~/.toprc",
-              "🎯 Clave de Examen: Escribe la configuración y orden interactivo en el archivo ~/.toprc para que persista."
-            ],
-            [
-              "top -b -n 1",
-              "Modo Batch para scripts",
-              "Ejecuta 1 iteración y sale como texto plano sin pantalla interactiva."
+              "top -o %MEM",
+              "Ordenar por campo al arrancar",
+              "En scripts: top -b -n 1 -o %MEM."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -727,14 +928,14 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Atajos Imprescindibles de top en Examen: 'M' para ordenar por Memoria; 'P' para ordenar por CPU; 'k' para matar un proceso; 'r' para cambiar el nice; 'W' para guardar la vista personalizada en ~/.toprc; 'q' para salir."
+          "content": "🎯 Atajos de top: M (RAM), P (CPU), N (PID), T (tiempo), V (árbol), c (rutas), u (usuario), k (matar), r (renice), W (guardar en ~/.toprc), q (salir)."
         }
       ],
       "notes": "Métricas de CPU en top: us (usuario), sy (sistema/kernel), id (idle/ocioso), wa (iowait/espera de disco)."
     },
     {
-      "id": "103.5-slide-11",
-      "slideNumber": 11,
+      "id": "103.5-slide-13",
+      "slideNumber": 13,
       "title": "Medición de Rendimiento y Memoria: uptime y free",
       "layout": "content",
       "blocks": [
@@ -808,32 +1009,47 @@
       "notes": "En Linux 'RAM libre' es RAM desperdiciada; el kernel aprovecha la memoria no usada para buff/cache."
     },
     {
-      "id": "103.5-slide-12",
-      "slideNumber": 12,
-      "title": "Multiplexadores de Terminal: GNU Screen y tmux",
+      "id": "103.5-slide-14",
+      "slideNumber": 14,
+      "title": "GNU Screen: Sesiones Persistentes y Regiones",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Multiplexadores de Terminal: GNU Screen y tmux"
+          "text": "GNU Screen: Sesiones Persistentes y Regiones"
         },
         {
           "type": "paragraph",
-          "text": "¿Qué es un multiplexador, por qué es imprescindible en administración y cómo se usa?"
+          "text": "Consolas virtuales persistentes: si se cae la conexión SSH, la sesión y sus programas siguen vivos en el servidor."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "screen [-S <nombre>] [-r] [-ls] | tmux [new|attach|ls]",
-          "title": "Crear consolas virtuales persistentes en el servidor que no mueren si cae el SSH y recuperar su pantalla"
+          "code": "screen [-S <nombre>] [-t <título>] [-ls] [-r <sesión> | -d -r] [-S <sesión> -X quit]",
+          "title": "Crear consolas virtuales que sobreviven al cierre del SSH, desacoplarlas y recuperarlas"
         },
         {
           "type": "terminal",
           "lines": [
             {
               "prompt": "$ ",
-              "command": "screen -S migracion; ./migrar.sh; [Ctrl+A d]; screen -ls; screen -r migracion",
+              "command": "screen -S migracion",
+              "output": ""
+            },
+            {
+              "prompt": "",
+              "command": "Ctrl+A d",
+              "output": "[detached from 2317.migracion]"
+            },
+            {
+              "prompt": "$ ",
+              "command": "screen -ls",
+              "output": "2317.migracion  (Detached)"
+            },
+            {
+              "prompt": "$ ",
+              "command": "screen -d -r migracion",
               "output": ""
             }
           ]
@@ -841,7 +1057,7 @@
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
+            "Opción / Atajo",
             "Nombre",
             "Descripción"
           ],
@@ -849,42 +1065,37 @@
             [
               "screen -S <nombre>",
               "Crear sesión con nombre",
-              "🎯 Inicia una consola virtual persistente e independiente vinculada al nombre que elijas."
+              "`-t <título>` nombra la ventana inicial desde el arranque."
             ],
             [
               "Ctrl + A y luego d",
-              "Desacoplar (Detach)",
-              "🎯 Clave de Examen: Desengancha tu terminal de la sesión; el proceso sigue trabajando en el servidor."
+              "Desacoplar (detach)",
+              "🎯 Clave de Examen: la terminal se desengancha; la sesión sigue trabajando en el servidor."
             ],
             [
               "screen -ls",
-              "Listar sesiones activas",
-              "🎯 Muestra las sesiones abiertas en el servidor y su estado: Detached (disponible) o Attached (en uso)."
+              "Listar sesiones",
+              "Muestra el estado: Detached (libre) o Attached (en uso)."
             ],
             [
-              "screen -r <nombre>",
-              "Reanudar (Resume/Attach)",
-              "🎯 Clave de Examen: Vuelve a conectar tu pantalla a una sesión desacoplada previamente."
+              "screen -r <nombre|PID>",
+              "Reanudar (attach)",
+              "🎯 Vuelve a enganchar tu terminal a una sesión desacoplada."
             ],
             [
-              "screen -d -r / -D -R",
-              "Desacople remoto forzado",
-              "🎯 Si la sesión quedó enganchada en otra terminal: '-d -r' la desacopla remotamente y la recupera aquí; '-D -R' fuerza desacople y reanuda (o crea nueva)."
+              "screen -d -r / -D -r",
+              "Reconexión forzada",
+              "🎯 -d -r desconecta la sesión y la reengancha aquí; -D -r además la CIERRA en el otro terminal."
             ],
             [
-              "tmux attach -t <nombre>",
-              "Homólogo en tmux",
-              "🎯 Comando homólogo en tmux (con el atajo de desacople universal 'Ctrl+B' seguido de 'd')."
+              "Ctrl + A S / Ctrl + A |",
+              "Regiones (pantalla dividida)",
+              "🎯 Ctrl+A Tab salta de región y Ctrl+A Q cierra las demás; cerrar una región NO cierra su ventana."
             ],
             [
-              "Modo Scrollback / Copia",
-              "Screen: Ctrl+A [ | tmux: Ctrl+B [",
-              "🎯 Navega el historial del buffer con flechas o RePág; permite seleccionar/copiar texto. Salir con Escape o 'q'."
-            ],
-            [
-              "Archivos de Configuración",
-              "/etc/screenrc y ~/.screenrc\n/etc/tmux.conf y ~/.tmux.conf",
-              "🎯 Ficheros de configuración global (en /etc/) y específicos por usuario (en su directorio $HOME)."
+              "screen -S <sesión> -X quit",
+              "Cerrar sesión en remoto",
+              "Termina la sesión indicada por nombre o PID sin volver a engancharte."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -897,99 +1108,194 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 FÓRMULA DE EXAMEN: Screen usa 'Ctrl+A' ('d' desacoplar, '[' scrollback/copia) y lee /etc/screenrc y ~/.screenrc. Si está bloqueada en otra consola, usa 'screen -d -r'. tmux usa 'Ctrl+B' ('d' desacoplar, '[' copia) y lee /etc/tmux.conf y ~/.tmux.conf. Reanudar con 'tmux attach'."
+          "content": "🎯 Screen usa el prefijo `Ctrl+A` (`d` desacoplar, `[` copia/scrollback) y lee `/etc/screenrc` y `~/.screenrc`. Para reconectar: `screen -r`; si está enganchada en otra consola, `screen -d -r`."
         }
       ],
-      "notes": "Diferencia con nohup: nohup desvía la salida a nohup.out y no puedes interactuar más con el comando. Screen conserva la pantalla interactiva viva para siempre."
+      "notes": "Diferencia con nohup: nohup desvía la salida a nohup.out y ya no interactúas con el comando; screen conserva la pantalla interactiva viva. Cerrar una región no cierra su ventana."
     },
     {
-      "id": "103.5-slide-13",
-      "slideNumber": 13,
-      "title": "Trampas Clásicas de Examen en Gestión de Procesos",
+      "id": "103.5-slide-15",
+      "slideNumber": 15,
+      "title": "tmux: Modelo Cliente-Servidor, Paneles y Sesiones",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Trampas Clásicas de Examen en Gestión de Procesos"
+          "text": "tmux: Modelo Cliente-Servidor, Paneles y Sesiones"
         },
         {
           "type": "paragraph",
-          "text": "Los 4 errores conceptuales más frecuentes en preguntas oficiales de certificación LPIC-1:"
+          "text": "`tmux` levanta un **servidor** que suministra sesiones compartibles entre varios clientes; su prefijo es `Ctrl+B` y sus divisiones son pseudo-terminales."
         },
         {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:14px; font-size:13px;\">\n  <!-- Trampa 1: kill señal por defecto -->\n  <div style=\"background:#FFF1F2; border:2px solid #FCA5A5; border-radius:12px; padding:16px 18px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:15px; margin-bottom:6px;\">1. Señal por Defecto de kill</div>\n    <div style=\"color:#7F1D1D; line-height:1.45;\">\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa:</span> Creer que <code>kill &lt;PID&gt;</code> envía la señal 9 (SIGKILL).<br>\n      <span style=\"color:#16A34A; font-weight:800;\">✅ Realidad:</span> Envía siempre la señal <strong>15 (SIGTERM)</strong>.<br>\n      <span style=\"color:#475569; font-size:12px; display:inline-block; margin-top:4px;\">💡 <strong>¿Por qué?</strong> Linux busca un cierre cortés para que el proceso guarde datos y cierre sockets antes de forzar.</span>\n    </div>\n  </div>\n\n  <!-- Trampa 2: PID frente a Job ID -->\n  <div style=\"background:#FFF1F2; border:2px solid #FCA5A5; border-radius:12px; padding:16px 18px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:15px; margin-bottom:6px;\">2. Confundir PID con Job ID en kill</div>\n    <div style=\"color:#7F1D1D; line-height:1.45;\">\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa:</span> Escribir <code>kill 1</code> para matar el trabajo 1 de tu shell.<br>\n      <span style=\"color:#16A34A; font-weight:800;\">✅ Realidad:</span> Para trabajos se DEBE usar el porcentaje: <code>kill %1</code>.<br>\n      <span style=\"color:#475569; font-size:12px; display:inline-block; margin-top:4px;\">💡 <strong>¿Por qué?</strong> <code>kill 1</code> intenta matar al proceso raíz PID 1 (systemd), lo cual el sistema deniega.</span>\n    </div>\n  </div>\n\n  <!-- Trampa 3: Matar procesos zombis -->\n  <div style=\"background:#FFF1F2; border:2px solid #FCA5A5; border-radius:12px; padding:16px 18px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:15px; margin-bottom:6px;\">3. Intentar matar a un Proceso Zombi</div>\n    <div style=\"color:#7F1D1D; line-height:1.45;\">\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa:</span> Ejecutar <code>kill -9 &lt;PID_zombi&gt;</code> creyendo que desaparecerá.<br>\n      <span style=\"color:#16A34A; font-weight:800;\">✅ Realidad:</span> Un zombi ya está muerto; hay que <strong>matar a su proceso padre</strong>.<br>\n      <span style=\"color:#475569; font-size:12px; display:inline-block; margin-top:4px;\">💡 <strong>¿Por qué?</strong> El zombi solo existe porque el padre no leyó su salida. Al matar al padre, PID 1 adopta al zombi y lo limpia.</span>\n    </div>\n  </div>\n\n  <!-- Trampa 4: Señales ineludibles -->\n  <div style=\"background:#FFF1F2; border:2px solid #FCA5A5; border-radius:12px; padding:16px 18px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:15px; margin-bottom:6px;\">4. Señales que NO se Pueden Ignorar</div>\n    <div style=\"color:#7F1D1D; line-height:1.45;\">\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa:</span> Creer que un proceso puede interceptar o bloquear cualquier señal.<br>\n      <span style=\"color:#16A34A; font-weight:800;\">✅ Realidad:</span> <strong>SIGKILL (9)</strong> y <strong>SIGSTOP (19)</strong> jamás pueden ser ignoradas.<br>\n      <span style=\"color:#475569; font-size:12px; display:inline-block; margin-top:4px;\">💡 <strong>¿Por qué?</strong> Estas dos señales las ejecuta el propio kernel de Linux directamente sin consultar al proceso.</span>\n    </div>\n  </div>\n</div>\n"
+          "type": "table",
+          "headers": [
+            "Entrada",
+            "Acción"
+          ],
+          "rows": [
+            [
+              "Ctrl + B c",
+              "Nueva ventana"
+            ],
+            [
+              "Ctrl + B \" / %",
+              "Dividir en paneles horizontal / vertical"
+            ],
+            [
+              "Ctrl + B flechas, z, x",
+              "Moverse entre paneles, zoom y cerrar el panel actual"
+            ],
+            [
+              "Ctrl + B d",
+              "Desacoplar la sesión (detach)"
+            ],
+            [
+              "Ctrl + B s / $",
+              "Listar y renombrar sesiones"
+            ],
+            [
+              "tmux new -s LPI",
+              "Crear sesión con nombre (-n nombra la ventana)"
+            ]
+          ],
+          "caption": "Prefijo por defecto: Ctrl+B"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "tmux new -s <nombre> [-n <ventana>] | tmux ls | tmux attach [-d] -t <nombre> | tmux kill-session -t <nombre>",
+          "title": "Crear, listar, reenganchar y cerrar sesiones tmux desde la línea de comandos"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Claves Fijas de Examen: 1. kill envía 15 (SIGTERM) por defecto. 2. Los jobs de shell llevan '%' (kill %1). 3. Los zombis no se matan (se mata al padre). 4. SIGKILL (9) y SIGSTOP (19) son ineludibles."
+          "content": "🎯 En tmux cerrar un panel cierra su pseudo-terminal y los programas que corren dentro; en screen cerrar una región no mata su ventana. Desacoplar: `Ctrl+B d`; reenganchar: `tmux attach -t <nombre>`."
         }
       ],
-      "notes": "Estas 4 trampas representan más del 80% de los fallos de alumnos en el tema de procesos."
-    },
-    {
-      "id": "103.5-slide-14",
-      "slideNumber": 14,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Jobs y nohup)",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Jobs y nohup)"
-        },
-        {
-          "type": "list",
-          "ordered": true,
-          "items": [
-            "Caso 1 (Oficial Pág 344): Lanza un comando 'sleep 500' en segundo plano y comprueba su estado en la tabla de trabajos de la shell. — Comando: `sleep 500 &; jobs -l` (El operador '&' lanza el proceso en background y 'jobs -l' muestra el Job ID junto con el PID asociado.)",
-            "Caso 2 (Oficial Pág 344): Un comando interactivo 'dd if=/dev/sda of=/backup/disk.img' está corriendo en primer plano y necesitas liberar la consola sin detener la copia definitivamente. — Comando: `Pulsar Ctrl+Z en la terminal y a continuación ejecutar 'bg'` (Ctrl+Z suspende el proceso con SIGTSTP y el comando 'bg' lo reanuda en segundo plano liberando el prompt.)",
-            "Caso 3 (Oficial Pág 344): ¿Cómo ejecutar un script 'actualizar.sh' de modo que continúe ejecutándose incluso si se cierra la sesión SSH y dónde se guardará su salida por defecto? — Comando: `nohup ./actualizar.sh & (salida guardada en 'nohup.out')` (nohup ignora la señal de desconexión SIGHUP y redirige automáticamente stdout y stderr a nohup.out.)"
-          ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "& lanza en segundo plano; Ctrl+Z seguido de bg libera la terminal; y nohup garantiza persistencia frente a desconexiones."
-        }
-      ],
-      "notes": "Enseña a comprobar con 'ps aux | grep sleep' que el proceso sigue corriendo tras cerrar la terminal si se usó nohup."
-    },
-    {
-      "id": "103.5-slide-15",
-      "slideNumber": 15,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: Señales y top)",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: Señales y top)"
-        },
-        {
-          "type": "list",
-          "ordered": true,
-          "items": [
-            "Caso 4 (Oficial Pág 344): ¿Cuál es el comando exacto para forzar la terminación inmediata e incondicional de un proceso con PID 4512 que no responde? — Comando: `kill -9 4512 (o kill -SIGKILL 4512)` (La señal 9 (SIGKILL) es ejecutada directamente por el kernel y no puede ser bloqueada ni ignorada por el proceso colgado.)",
-            "Caso 5 (Oficial Pág 344): Dentro del monitor 'top', ¿qué teclas de acceso directo se pulsan para ordenar los procesos por consumo de memoria RAM y para matar un proceso por su PID? — Comando: `Pulsar 'M' (mayúscula) para ordenar por RAM; pulsar 'k' para matar` ('M' reordena la tabla por %MEM; 'k' abre un cuadro de diálogo interactivo solicitando el PID y la señal a enviar.)"
-          ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "kill -9 es la terminación forzada final; en top 'M' ordena por RAM y 'k' envía señales de forma interactiva."
-        }
-      ],
-      "notes": "Recuerda que en top también se puede usar 'P' para volver a ordenar por uso de procesador."
+      "notes": "Cliente-servidor: una misma ventana puede vincularse a varias sesiones y compartirse entre clientes; la barra de estado muestra sesión, ventana, host y hora."
     },
     {
       "id": "103.5-slide-16",
       "slideNumber": 16,
+      "title": "Screen frente a tmux: Ejercicio de Clasificación",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Screen frente a tmux: Ejercicio de Clasificación"
+        },
+        {
+          "type": "paragraph",
+          "text": "Ejercicio oficial del manual: clasifica cada característica como **screen**, **tmux** o **ambos**."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Característica",
+            "Respuesta"
+          ],
+          "rows": [
+            [
+              "Prefijo de comando por defecto `Ctrl+A`",
+              "Screen"
+            ],
+            [
+              "Prefijo de comando por defecto `Ctrl+B`",
+              "tmux"
+            ],
+            [
+              "Modelo cliente-servidor",
+              "tmux"
+            ],
+            [
+              "Las divisiones son pseudo-terminales",
+              "tmux"
+            ],
+            [
+              "Cerrar una división no cierra su ventana",
+              "screen"
+            ],
+            [
+              "Sesiones con ventanas que se pueden desacoplar",
+              "Ambos"
+            ]
+          ],
+          "caption": "Ejercicio de clasificación de multiplexores"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Regla que resuelve el ejercicio",
+          "content": "🎯 screen divide en **regiones** (la ventana sobrevive) y tmux en **paneles** (muere su pseudo-terminal). Ambos permiten desacoplar sesiones, comparten ventanas y tienen modo copia."
+        }
+      ],
+      "notes": "La pregunta clave no es la marca sino el comportamiento: ¿la división destruye la ventana asociada?"
+    },
+    {
+      "id": "103.5-slide-17",
+      "slideNumber": 17,
+      "title": "Ejercicios Guiados del Manual (Parte 1: jobs y nohup)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados del Manual (Parte 1: jobs y nohup)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 1: lanza `sleep 500` en segundo plano y comprueba el trabajo con su PID. — `sleep 500 &` y después `jobs -l` (el `&` libera el prompt y `-l` añade el PID junto al Job ID).",
+            "Caso 2: `dd if=/dev/sda of=/backup/disk.img` ocupa el primer plano y necesitas la consola sin detener la copia. — Pulsa `Ctrl+Z` y ejecuta `bg` (Ctrl+Z suspende con SIGTSTP y `bg` lo reanuda en segundo plano).",
+            "Caso 3: ejecuta `./actualizar.sh` de forma que sobreviva al cierre de la sesión SSH. — `nohup ./actualizar.sh &`; la salida queda en `nohup.out` (compruébala con `tail -f`)."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "`&` lanza en segundo plano; `Ctrl+Z` seguido de `bg` libera la terminal; y `nohup` ignora SIGHUP escribiendo la salida en `nohup.out`."
+        }
+      ],
+      "notes": "Comprueba con `ps aux | grep sleep` que el proceso sigue vivo tras cerrar la terminal si se lanzó con nohup."
+    },
+    {
+      "id": "103.5-slide-18",
+      "slideNumber": 18,
+      "title": "Ejercicios Guiados del Manual (Parte 2: señales y top)",
+      "layout": "two-column",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ejercicios Guiados del Manual (Parte 2: señales y top)"
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "Caso 4: terminación inmediata e incondicional del PID 4512. — `kill -9 4512` (o `kill -SIGKILL 4512`): la ejecuta el kernel y el proceso no puede ignorarla.",
+            "Caso 5: dentro de `top`, ordenar por RAM y matar un proceso por PID. — `M` ordena por %MEM y `k` pide el PID y la señal a enviar.",
+            "Caso 6: averigua los PIDs de `apache2` con dos comandos distintos. — `pgrep apache2` (o `pgrep -l apache2`) y `pidof apache2`."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Solución y Explicación del Ejercicio",
+          "content": "`kill -9` es el último recurso; en `top` la `M` ordena por memoria, la `P` por CPU y la `k` envía la señal que indiques."
+        }
+      ],
+      "notes": "`kill` envía SIGTERM (15) por defecto: para forzar hay que pedir explícitamente la señal 9."
+    },
+    {
+      "id": "103.5-slide-19",
+      "slideNumber": 19,
       "title": "Retos de Exploración Oficiales (Procesos Zombis y Load Average)",
       "layout": "two-column",
       "blocks": [
@@ -1020,8 +1326,8 @@
       "notes": "La interpretación de si la carga sube o baja comparando los 3 valores de uptime es una pregunta recurrente en la certificación."
     },
     {
-      "id": "103.5-slide-17",
-      "slideNumber": 17,
+      "id": "103.5-slide-20",
+      "slideNumber": 20,
       "title": "Pregunta de Examen LPIC-1: Señal por Defecto de kill",
       "layout": "checkpoint",
       "blocks": [
@@ -1059,76 +1365,6 @@
         }
       ],
       "notes": "Pregunta fija y directa de examen. Nadie debe confundir la señal 15 con la 9."
-    },
-    {
-      "id": "103.5-slide-18",
-      "slideNumber": 18,
-      "title": "Tarjetas Nemotécnicas: Procesos y Señales 103.5",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Tarjetas Nemotécnicas: Procesos y Señales 103.5"
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Concepto",
-            "Significado / Uso"
-          ],
-          "rows": [
-            [
-              "¿Qué número y nombre de señal envía 'kill' por defecto?",
-              "Señal 15: SIGTERM (terminación limpia)."
-            ],
-            [
-              "¿Qué número de señal fuerza la muerte inmediata sin poder ser ignorada?",
-              "Señal 9: SIGKILL."
-            ],
-            [
-              "¿Qué dos señales NUNCA pueden ser interceptadas ni ignoradas por un proceso?",
-              "SIGKILL (9) y SIGSTOP (19)."
-            ],
-            [
-              "¿Qué atajo de teclado suspende un proceso en primer plano?",
-              "Ctrl + Z (envía la señal SIGTSTP)."
-            ],
-            [
-              "¿Qué comando reanuda un proceso suspendido en segundo plano?",
-              "bg."
-            ],
-            [
-              "¿Cómo matar el trabajo número 1 de tu shell local?",
-              "kill %1 (anteponiendo obligatoriamente el signo '%')."
-            ],
-            [
-              "¿Qué tecla de 'top' ordena la lista por consumo de memoria RAM?",
-              "La tecla 'M' (mayúscula)."
-            ],
-            [
-              "¿Qué atajo de teclado desacopla una sesión en GNU Screen?",
-              "Ctrl + A seguido de la letra d (se reanuda con screen -r)."
-            ]
-          ],
-          "caption": "Tarjetas de memorización"
-        }
-      ],
-      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 103.5."
-    },
-    {
-      "id": "103.5-slide-19",
-      "slideNumber": 19,
-      "title": "Resumen y Claves de Examen: Subtema 103.5",
-      "layout": "summary",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Resumen y Claves de Examen: Subtema 103.5"
-        }
-      ],
-      "notes": "Concluimos el subtema 103.5. Los alumnos dominan ahora la supervisión y control de procesos en Linux."
     }
   ]
 }

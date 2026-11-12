@@ -26,7 +26,14 @@
     "duplicación de flujos con tee (-a)",
     "construcción de argumentos con xargs (-n, -L, -I)",
     "manejo de espacios seguros (find -print0 | xargs -0)",
-    "/dev/null"
+    "/dev/null",
+    "descriptor de archivo >2",
+    "3<> (lectura y escritura)",
+    ">& (fusión de stdout y stderr)",
+    "1>&2 (stdout a stderr)",
+    "2>> (append de stderr)",
+    "find -exec",
+    "tar --null"
   ],
   "commands": [
     "cat",
@@ -43,7 +50,10 @@
     "bc",
     "head",
     "tail",
-    "tr"
+    "tr",
+    "tar",
+    "ssh",
+    "sed"
   ],
   "placeholder": false,
   "slides": [
@@ -149,13 +159,17 @@
           }
         },
         {
+          "type": "paragraph",
+          "text": "Además de 0, 1 y 2, un proceso puede abrir descriptores superiores (3, 4…). El operador `3<>` abre el mismo descriptor en lectura y escritura: `cmd 3<>/tmp/error.txt`."
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave Mnemotécnica de Examen: 0 = stdin (entrada/teclado); 1 = stdout (salida normal/pantalla); 2 = stderr (mensajes de error)."
         }
       ],
-      "notes": "Explica que cada proceso en Linux tiene su propia carpeta en /proc/$$/fd/ con enlaces simbólicos 0, 1 y 2."
+      "notes": "Añadido: un proceso puede usar descriptores por encima de 2 y `3<>` abre el mismo número para entrada y salida. Recordar los enlaces de /proc/$$/fd/."
     },
     {
       "id": "103.4-slide-3",
@@ -230,13 +244,13 @@
     {
       "id": "103.4-slide-4",
       "slideNumber": 4,
-      "title": "Redirección de Errores y Fusión de Flujos: 2>, 2>&1 y &>",
+      "title": "Redirección de Errores y Fusión de Flujos: 2>, 2>&1, &> y 1>&2",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Redirección de Errores y Fusión de Flujos: 2>, 2>&1 y &>"
+          "text": "Redirección de Errores y Fusión de Flujos: 2>, 2>&1, &> y 1>&2"
         },
         {
           "type": "paragraph",
@@ -285,6 +299,16 @@
               "&> archivo",
               "Atajo Bash moderno",
               "Sintaxis rápida de Bash equivalente a '> archivo 2>&1'. Incompatible con shells POSIX estrictas (/bin/sh en Debian/Ubuntu)."
+            ],
+            [
+              "cmd >& archivo",
+              "Variante equivalente a &>",
+              "🎯 Redirige stdout y stderr al mismo destino. El ampersand va pegado: con '> &' Bash interpreta '&' como ejecución en segundo plano y no redirige."
+            ],
+            [
+              "1>&2",
+              "stdout hacia stderr",
+              "🎯 El destino se indica con '&' y el número del descriptor: `1>&2` envía la salida normal al canal de errores."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -300,7 +324,7 @@
           "content": "🎯 Regla Sagrada de Fusión: En '> archivo 2>&1', el orden se lee estrictamente de izquierda a derecha. Primero '>' apunta el canal 1 al archivo; luego '2>&1' copia ese destino hacia el canal 2. Si inviertes el orden ('2>&1 > arch'), ¡los errores saldrán por la pantalla!"
         }
       ],
-      "notes": "Explica que '&1' lleva el ampersand para que Bash sepa que se refiere al descriptor de archivo 1 y no a crear un archivo en disco llamado '1'."
+      "notes": "Añadidos el par inverso `1>&2` y la variante `>&`. Insistir en que el ampersand va pegado: con espacio, Bash manda el proceso a segundo plano y no redirige."
     },
     {
       "id": "103.4-slide-5",
@@ -360,6 +384,11 @@
               ">> (concatenar)",
               "No afectado por noclobber",
               "La concatenación '>>' nunca destruye datos, por lo que noclobber la permite siempre."
+            ],
+            [
+              "/dev/null con noclobber",
+              "Archivo especial inmune",
+              "🎯 noclobber solo protege archivos regulares: `cmd > /dev/null` sigue funcionando aunque `set -C` esté activo."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -375,7 +404,7 @@
           "content": "🎯 Mnemotecnia de Flags en set: '-o' (con signo menos) ACTIVA una opción; '+o' (con signo más) DESACTIVA la opción."
         }
       ],
-      "notes": "Explica la aparente contradicción de Bash: el signo menos activa y el signo más desactiva."
+      "notes": "noclobber protege archivos regulares, pero `/dev/null` es un archivo especial y admite redirecciones con la opción activa."
     },
     {
       "id": "103.4-slide-6",
@@ -424,7 +453,7 @@
             [
               "<< DELIM (Here Document)",
               "Bloque multilínea en scripts",
-              "🎯 Clave de Examen: Introduce texto línea a línea hasta encontrar la palabra exacta de cierre (habitualmente EOF o FIN)."
+              "🎯 Clave de Examen: Introduce texto línea a línea hasta encontrar la palabra exacta de cierre (habitualmente EOF o FIN). No debe haber ningún espacio entre `<<` y el término final."
             ],
             [
               "<< 'DELIM' (Con comillas)",
@@ -434,7 +463,7 @@
             [
               "<<< 'cadena' (Here String)",
               "Entrada directa de una frase en memoria",
-              "Pasa un texto o cálculo a stdin sin necesidad de crear una tubería con echo (ej: 'bc <<< 10*5')."
+              "Pasa un texto o cálculo a stdin sin necesidad de crear una tubería con echo (ej: 'bc <<< 10*5'). Las cadenas con espacios deben ir entre comillas; sin ellas solo se usa la primera palabra."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -450,7 +479,7 @@
           "content": "🎯 Diferencia Clave: 'wc -l archivo' imprime '28 archivo' (como argumento); mientras que 'wc -l < archivo' imprime solo '28' porque el archivo se convirtió en su entrada estándar (stdin)."
         }
       ],
-      "notes": "Enseña por qué 'cat <<EOF > /etc/app.conf' es el estándar número uno en scripts de despliegue DevOps y cloud-init."
+      "notes": "Dos matices del manual: sin espacios entre `<<` y el delimitador, y comillas obligatorias en Here String cuando la cadena lleva espacios."
     },
     {
       "id": "103.4-slide-7",
@@ -655,6 +684,11 @@
               "Ejecución en Subshell",
               "Aislamiento de variables",
               "El comando interno se ejecuta en un proceso hijo independiente; las variables creadas dentro se destruyen al terminar."
+            ],
+            [
+              "Asignación a variable",
+              "Capturar la salida",
+              "🎯 `TODAY=$(date +%Y-%m-%d)` guarda la salida en `TODAY`, que luego se usa como `$TODAY`. Con backticks se escribe igual, con comillas inversas en lugar de `$(...)`."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -670,7 +704,7 @@
           "content": "🎯 Clave de Examen: Aunque '$(cmd)' y '`cmd`' hacen exactamente lo mismo, LPI recomienda oficialmente '$(cmd)' porque permite anidar operaciones sin necesidad de escapar caracteres con contrabarras."
         }
       ],
-      "notes": "Muestra el uso típico: 'cp nginx.conf nginx.conf.$(date +%F)' para hacer copias de seguridad de configuración al instante."
+      "notes": "La sustitución sirve como argumento y para asignar a una variable: `TODAY=$(date +%Y-%m-%d)` y después `$TODAY`. Los backticks hacen lo mismo."
     },
     {
       "id": "103.4-slide-10",
@@ -735,6 +769,11 @@
               "xargs -p",
               "Confirmación interactiva",
               "Pregunta antes de cada ejecución '¿ejecutar comando? [y/N]' para evitar desastres al borrar archivos."
+            ],
+            [
+              "find -exec",
+              "Alternativa a xargs",
+              "🎯 `find . -name '*.tmp' -exec rm {} \\;` ejecuta el comando por cada resultado. Con `find`, usar `xargs -n 1` o `-L 1` suele ser innecesario."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -750,7 +789,7 @@
           "content": "🎯 ¿Por qué es estrictamente necesario xargs? Órdenes como 'rm', 'cp', 'kill' o 'touch' NO leen de stdin. Si ejecutas 'cat lista.txt | rm', 'rm' se queda esperando o falla. 'xargs' coge el texto de stdin y lo convierte en argumentos: 'rm arch1 arch2 arch3'."
         }
       ],
-      "notes": "Compara 'xargs -n 1' (lento pero granular) con 'xargs' sin flag (máxima velocidad en una sola llamada)."
+      "notes": "`find -exec` evita xargs cuando solo hay que ejecutar un comando por resultado; `xargs -I` coloca el argumento en el centro de la orden."
     },
     {
       "id": "103.4-slide-11",
@@ -810,6 +849,11 @@
               "Sinergia Indestructible",
               "Estándar de Producción",
               "🎯 'find ... -print0 | xargs -0 ...' es el estándar corporativo obligatorio para scripts en producción y preguntas LPIC-1."
+            ],
+            [
+              "tar --null",
+              "Equivalente en tar",
+              "🎯 `find /etc -type f -print0 | tar -cJ -f /srv/backup/etc.tar.xz --null -T -`: `--null` lee la lista de rutas separadas por byte nulo."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -825,7 +869,7 @@
           "content": "🎯 Regla Mnemotécnica de Examen: ¡El cero siempre va con el cero! 'find -print0' siempre debe emparejarse con 'xargs -0'. El byte nulo (\\0) es el único carácter que jamás puede formar parte del nombre de un fichero."
         }
       ],
-      "notes": "Enfatiza el peligro en scripts de borrado: 'find /tmp -name \"*.bak\" | xargs rm' puede borrar archivos que no debe si hay espacios."
+      "notes": "La pareja `-print0`/`-0` tiene su equivalente en tar: `--null` con `-T -` lee rutas separadas por byte nulo."
     },
     {
       "id": "103.4-slide-12",
@@ -874,6 +918,12 @@
               "<span style='background:#FEF2F2; color:#991B1B; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11.5px;'>stderr (2)</span>",
               "Silencia y destruye todos los mensajes de error (agujero negro).",
               "<code>grep -r 'pass' /etc 2&gt;/dev/null</code>"
+            ],
+            [
+              "<code style='color:#DC2626; font-weight:800; font-size:14px;'>2&gt;&gt;</code>",
+              "<span style='background:#FEF2F2; color:#991B1B; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11.5px;'>stderr (2)</span>",
+              "Añade (append) los errores al final del archivo sin borrar lo anterior; crea el archivo si no existe.",
+              "<code>cmd 2&gt;&gt; errores.log</code>"
             ],
             [
               "<code style='color:#16A34A; font-weight:800; font-size:14px;'>&gt; arch 2&gt;&amp;1</code>",
@@ -933,7 +983,7 @@
           "content": "🎯 Mnemotecnia de Descriptores: 0 = stdin (<, <<), 1 = stdout (>, >>, |), 2 = stderr (2>, 2>>). Si combinas 1 y 2 se usa el ampersand (&> o 2>&1)."
         }
       ],
-      "notes": "Esta tabla es la síntesis de todos los operadores que aparecen en preguntas de examen 101."
+      "notes": "Añadido `2>>`: append de errores, que también funciona con noclobber. El resto es la síntesis de operadores de examen 101."
     },
     {
       "id": "103.4-slide-13",
@@ -966,91 +1016,194 @@
     {
       "id": "103.4-slide-14",
       "slideNumber": 14,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Descriptores y Errores)",
+      "title": "Ejercicios guiados del manual: canales y redirecciones (pp. 291-294)",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Descriptores y Errores)"
+          "text": "Ejercicios guiados del manual: canales y redirecciones (pp. 291-294)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Cuatro ejercicios de la primera lección. Resuelve antes de comparar con la columna de soluciones."
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "Dispositivo a imagen",
+              "description": "Envía el contenido del dispositivo de bloque `/dev/sdc` al archivo `sdc.img` con `cat` y una redirección."
+            },
+            {
+              "number": 2,
+              "title": "`date 1> now.txt`",
+              "description": "¿Qué canal estándar redirige el `1>`?"
+            },
+            {
+              "number": 3,
+              "title": "`noclobber` activo",
+              "description": "Bash rechaza sobrescribir un archivo existente. ¿Cómo desactivas la opción en la sesión actual?"
+            },
+            {
+              "number": 4,
+              "title": "`cat <<.>/dev/stdout`",
+              "description": "¿Cuándo termina la entrada y dónde se ve el texto escrito?"
+            }
+          ]
+        }
+      ],
+      "secondaryBlocks": [
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Soluciones"
         },
         {
           "type": "list",
-          "ordered": true,
+          "ordered": false,
           "items": [
-            "Caso 1 (Oficial Págs. 291-294): Ejecuta una búsqueda de todos los archivos llamados 'config' en el sistema completo ('/') guardando la salida exitosa en 'encontrados.txt' y descartando por completo todos los mensajes de 'Permission denied'. — Comando: `find / -name config > encontrados.txt 2> /dev/null` (La redirección '>' desvía stdout al archivo deseado y '2> /dev/null' silencia los errores arrojándolos al agujero negro.)",
-            "Caso 2 (Oficial Págs. 291-294): ¿Cuál es el comando exacto para compilar un programa con 'make' guardando tanto la salida estándar como los posibles errores en un mismo archivo de log llamado 'build.log'? — Comando: `make > build.log 2>&1 (o make &> build.log)` (Redirige la salida normal a build.log y fusiona el canal 2 (stderr) con el canal 1 (stdout).)",
-            "Caso 3 (Oficial Págs. 291-294): Tienes activada la opción 'set -o noclobber' (o 'set -C') y necesitas sobreescribir el archivo existente 'salida.txt'. ¿Qué operador de redirección debes utilizar? — Comando: `echo 'datos' >| salida.txt` (El operador '>|' (clobber) elude temporalmente la protección de noclobber forzando la sobreescritura.)"
+            "`cat /dev/sdc > sdc.img`: `>` redirige stdout.",
+            "stdout, el descriptor 1.",
+            "`set +o noclobber` o su alias `set +C`.",
+            "Termina con una línea que solo contiene `.`; el texto se redirige a stdout (pantalla)."
           ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "2> /dev/null limpia salidas ruidosas; > arch 2>&1 captura auditorías completas; y >| desbloquea sobreescrituras controladas."
         }
       ],
-      "notes": "Enseña cómo verificar que encontrados.txt solo contiene rutas y ningún mensaje de error."
+      "notes": "Los ejercicios guiados de las pp. 291-294 son estos cuatro: dispositivo a imagen, canal de `1>`, desactivar noclobber y delimitador punto. La respuesta de noclobber admite las dos formas, larga y corta."
     },
     {
       "id": "103.4-slide-15",
       "slideNumber": 15,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: tee y xargs)",
+      "title": "Ejercicios exploratorios del manual: errores, /dev/null y /proc (pp. 292-293)",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: tee y xargs)"
+          "text": "Ejercicios exploratorios del manual: errores, /dev/null y /proc (pp. 292-293)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Cinco retos de exploración de la primera lección: el manual plantea la pregunta y la respuesta está al otro lado."
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "`cat /proc/cpu_info 2>1`",
+              "description": "La ruta no existe: ¿a dónde va el mensaje de error?"
+            },
+            {
+              "number": 2,
+              "title": "`/dev/null` con `noclobber`",
+              "description": "¿Puedes descartar contenido en `/dev/null` con la protección activa?"
+            },
+            {
+              "number": 3,
+              "title": "`sha1sum` desde `echo`",
+              "description": "Envía `$USER` al stdin de `sha1sum` con `echo`, sin salto de línea."
+            },
+            {
+              "number": 4,
+              "title": "`/proc/PID/fd/`",
+              "description": "Si `nginx` tiene el PID 1234, ¿cómo ves los archivos de registro que tiene abiertos?"
+            },
+            {
+              "number": 5,
+              "title": "Cálculo con `bc`",
+              "description": "Envía `scale = 6; 1 / 3` a la entrada estándar de `bc` con una cadena Here."
+            }
+          ]
+        }
+      ],
+      "secondaryBlocks": [
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Soluciones"
         },
         {
           "type": "list",
-          "ordered": true,
+          "ordered": false,
           "items": [
-            "Caso 4 (Oficial Págs. 301-304): Ejecuta una comprobación del espacio en disco con 'df -h' mostrando el resultado en pantalla y al mismo tiempo añadiéndolo al final del archivo '/var/log/disco.log'. — Comando: `df -h | tee -a /var/log/disco.log` (El comando 'tee' bifurca la salida hacia la terminal y hacia el fichero, y '-a' añade sin sobreescribir.)",
-            "Caso 5 (Oficial Págs. 301-304): Utiliza 'find' y 'xargs' para localizar todos los archivos con extensión '.tmp' en '/tmp' y eliminarlos con 'rm' de forma segura ante posibles nombres con espacios. — Comando: `find /tmp -type f -name '*.tmp' -print0 | xargs -0 rm -f` (-print0 separa los resultados con bytes nulos y xargs -0 los procesa interpretando los espacios como texto plano.)"
+            "A un archivo llamado `1` en el directorio actual: `2>1` no lleva ampersand.",
+            "Sí: `/dev/null` es un archivo especial no afectado por `noclobber`.",
+            "`echo -n \"$USER\" | sha1sum`; `-n` evita el salto de línea final.",
+            "`ls -l /proc/1234/fd`: muestra los enlaces simbólicos a cada archivo abierto.",
+            "`bc <<< \"scale=6; 1/3\"`; el parámetro `scale` fija los decimales."
           ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "tee -a asegura persistencia sin perder visibilidad en vivo; find -print0 con xargs -0 garantiza robustez frente a espacios en blanco."
         }
       ],
-      "notes": "Recuerda que tee sin -a borraría el log anterior."
+      "notes": "Estos cinco exploratorios aparecen en las pp. 292-293. La respuesta literal del manual para `2>1` es 'un archivo llamado 1 en el directorio actual', no stdout."
     },
     {
       "id": "103.4-slide-16",
       "slideNumber": 16,
-      "title": "Retos de Exploración Oficiales (Here Document y Flujos Complejos)",
+      "title": "Ejercicios del manual: tuberías, xargs, tee, tar y ssh (pp. 296-303)",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Retos de Exploración Oficiales (Here Document y Flujos Complejos)"
+          "text": "Ejercicios del manual: tuberías, xargs, tee, tar y ssh (pp. 296-303)"
         },
         {
-          "type": "callout",
-          "calloutType": "warning",
-          "title": "Escenario del Desafío",
-          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. Un script de instalación debe generar un archivo de configuración '/etc/app.conf' con 3 directivas sin abrir un editor de texto interactivo. ¿Qué estructura con 'cat' y 'Here Document' debe emplear?\n2. ¿Cómo pasarías una lista de 100 usuarios en un archivo 'usuarios.txt' para crear sus carpetas en '/home' invocando el comando 'mkdir' de 1 en 1 usando xargs?\n3. ¿Qué operador conecta la salida de errores (stderr) directamente a una tubería sin usar archivos intermedios en una shell Bash moderna?"
+          "type": "paragraph",
+          "text": "Cinco ejercicios de la segunda lección: encadenar procesos, procesar listas y mover datos entre equipos."
         },
         {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Pista",
-          "content": "Recuerda: cat <<EOF > /etc/app.conf; xargs -n 1; y el operador |&."
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Desafío",
-          "content": "1. Se ejecuta:\ncat <<EOF > /etc/app.conf\nPORT=8080\nDEBUG=false\nTIMEOUT=30\nEOF\n2. Se ejecuta: cat usuarios.txt | xargs -n 1 -I {} mkdir /home/{}\n3. Se utiliza el operador: '|&' (o '2>&1 |')."
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "Tubería y cadena Here",
+              "description": "Guarda `date +%Y-%m-%d` en `TODAY`, pásala a `sed s/-/./g` con `echo $TODAY |` y repite con `<<<`."
+            },
+            {
+              "number": 2,
+              "title": "`xargs` sobre una lista",
+              "description": "Ejecuta `convert <img> -resize 25% small/<img>` para cada imagen listada en `filelist.txt`."
+            },
+            {
+              "number": 3,
+              "title": "Copiar y verificar con `tee`",
+              "description": "Combina `dd < /dev/sda1 > sda1.img` y `sha1sum < sda1.img > sda1.sha1` en una sola tubería."
+            },
+            {
+              "number": 4,
+              "title": "`tar` desde la salida de `find`",
+              "description": "Archiva `find /etc -type f` en `/srv/backup/etc.tar.xz` con `-T -` y añade las opciones para rutas con espacios."
+            },
+            {
+              "number": 5,
+              "title": "Enviar por `ssh`",
+              "description": "Canaliza `etc.tar.gz` hasta `/srv/backup/etc.tar.gz` en `user@storage`."
+            }
+          ]
         }
       ],
-      "notes": "Here Document es la técnica más limpia para generar archivos de configuración dentro de scripts de despliegue."
+      "secondaryBlocks": [
+        {
+          "type": "heading",
+          "level": 3,
+          "text": "Soluciones"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "`TODAY=$(date +%Y-%m-%d)`; `echo $TODAY | sed s/-/./g`; alternativa: `sed s/-/./g <<< $(date +%Y-%m-%d)`.",
+            "`xargs -I IMG convert IMG -resize 25% small/IMG < filelist.txt`: `-I` ya ejecuta el comando por cada elemento.",
+            "`dd < /dev/sda1 | tee sda1.img | sha1sum > sda1.sha1`.",
+            "`find /etc -type f -print0 | tar -cJ -f /srv/backup/etc.tar.xz --null -T -`: `-print0` y `--null` evitan el análisis por espacios.",
+            "`cat etc.tar.gz | ssh user@storage \"cat > /srv/backup/etc.tar.gz\"`."
+          ]
+        }
+      ],
+      "notes": "El ejercicio de xargs se corrige sin `-n 1`: `-I` ya procesa un elemento por ejecución, como en el manual. `tar` necesita `-print0` en find y `--null` en tar para rutas con espacios."
     },
     {
       "id": "103.4-slide-17",

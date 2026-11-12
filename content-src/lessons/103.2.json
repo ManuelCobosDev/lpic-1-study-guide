@@ -285,6 +285,10 @@
           "text": "Extracción y Fusión de Columnas: cut y paste"
         },
         {
+          "type": "paragraph",
+          "text": "Estructura de `/etc/passwd`, con campos separados por `:` → 1 usuario · 2 `x` (la contraseña vive en `/etc/shadow`) · 3 UID · 4 GID · 5 nombre completo · 6 home · 7 shell. Por eso `cut -d: -f1` devuelve el usuario y `-f1,7` el usuario y su shell."
+        },
+        {
           "type": "code",
           "language": "bash",
           "code": "cut -d<delim> -f<campos> | paste -d<delim> [-s]",
@@ -342,6 +346,12 @@
           "caption": "Opciones y parámetros del comando"
         },
         {
+          "type": "code",
+          "language": "bash",
+          "title": "Truco de examen: `ls -l` alinea con espacios múltiples; `tr -s ' '` los colapsa y `cut` ya puede cortar el campo 9",
+          "code": "ls -l /etc | tr -s ' ' | cut -d\" \" -f9      # solo el nombre del archivo\nls -l /etc | tr -s ' ' | cut -d\" \" -f9,3    # nombre y propietario"
+        },
+        {
           "type": "html",
           "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:10px; font-size:13.5px;\">\n  <!-- cut: Corte Vertical -->\n  <div style=\"background:#EFF6FF; border:2px solid #3B82F6; border-radius:12px; padding:16px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">CORTE VERTICAL (TIJERAS)</span>\n      <code style=\"font-size:15px; font-weight:800; color:#1E40AF;\">cut -d: -f1,7</code>\n    </div>\n    <div style=\"font-size:16px; font-weight:800; color:#1E40AF; margin-bottom:4px;\">Extrae columnas específicas</div>\n    <div style=\"color:#1E3A8A; line-height:1.45;\">\n      Piensa en una <strong>guillotina que baja en vertical</strong> y descarta las columnas sobrantes.<br>\n      • <code>-d:</code> define que las columnas están separadas por <code>:</code>.<br>\n      • <code>-f1,7</code> se queda solo con el nombre de usuario y su shell.\n    </div>\n  </div>\n\n  <!-- paste: Unión Horizontal -->\n  <div style=\"background:#F0FDF4; border:2px solid #22C55E; border-radius:12px; padding:16px;\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">UNIÓN HORIZONTAL (PEGAMENTO)</span>\n      <code style=\"font-size:15px; font-weight:800; color:#15803D;\">paste -d, a.txt b.txt</code>\n    </div>\n    <div style=\"font-size:16px; font-weight:800; color:#15803D; margin-bottom:4px;\">Pega archivos en paralelo</div>\n    <div style=\"color:#14532D; line-height:1.45;\">\n      Piensa en <strong>cinta adhesiva</strong> que coloca dos hojas lado a lado:<br>\n      • La línea 1 de <code>a.txt</code> se junta con la línea 1 de <code>b.txt</code>.<br>\n      • Muy útil para crear archivos CSV uniendo nombres e IPs.\n    </div>\n  </div>\n</div>\n"
         },
@@ -352,7 +362,7 @@
           "content": "🎯 Clave de Examen: 'cut' hace un CORTE VERTICAL (extrae columnas); 'paste' hace una UNIÓN HORIZONTAL (pega columnas lado a lado con delimitador)."
         }
       ],
-      "notes": "Enseña el caso clásico de /etc/passwd: el campo 1 es el username y el campo 7 es la shell por defecto. Si el delimitador tiene espacios, usa cut -d' ' -f2."
+      "notes": "Estructura de /etc/passwd (usuario, x, UID, GID, nombre, home, shell) y el truco de examen de colapsar espacios con tr -s antes de cortar: campo 9 = nombre, campo 3 = propietario."
     },
     {
       "id": "103.2-slide-6",
@@ -452,6 +462,10 @@
           "text": "Deduplicación con uniq: Recuento y Repetidos"
         },
         {
+          "type": "paragraph",
+          "text": "`sort -u` deduplica el flujo completo, no solo las líneas adyacentes: es la versión global de `uniq`. Se usa para contar usuarios o grupos porque varias cuentas pueden compartir UID: `cut -d: -f3 /etc/passwd | sort -u | wc -l`."
+        },
+        {
           "type": "code",
           "language": "bash",
           "code": "sort <file> | uniq [-c|-d|-u]",
@@ -504,6 +518,12 @@
           "caption": "Opciones y parámetros del comando"
         },
         {
+          "type": "code",
+          "language": "bash",
+          "title": "Deduplicación global con `sort -u` frente a la adyacencia de `uniq`",
+          "code": "cut -d: -f3 /etc/passwd | wc -l            # líneas = cuentas\ncut -d: -f3 /etc/passwd | sort -u | wc -l   # UIDs distintos\ncut -d: -f4 /etc/passwd | sort -u | wc -l   # GIDs distintos"
+        },
+        {
           "type": "html",
           "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:14px 20px; margin-top:8px;\">\n  <div style=\"font-size:15px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🔍 ¿Qué hacen las opciones de filtrado de <code>uniq</code>?\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; font-size:13px;\">\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:8px; padding:12px;\">\n      <strong style=\"color:#1E40AF; font-size:14.5px;\">uniq -c (Count)</strong><br>\n      <span style=\"color:#1E3A8A; line-height:1.4;\">Cuenta cuántas veces se repite cada línea. Clave para saber cuántas peticiones hizo cada IP en un log.</span>\n    </div>\n\n    <div style=\"background:#FEF2F2; border:1.5px solid #FCA5A5; border-radius:8px; padding:12px;\">\n      <strong style=\"color:#991B1B; font-size:14.5px;\">uniq -d (Duplicated)</strong><br>\n      <span style=\"color:#7F1D1D; line-height:1.4;\">Imprime <strong>solo los repetidos</strong>. Útil para detectar anomalías, como si dos cuentas comparten UID.</span>\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:8px; padding:12px;\">\n      <strong style=\"color:#15803D; font-size:14.5px;\">uniq -u (Unique)</strong><br>\n      <span style=\"color:#14532D; line-height:1.4;\">Imprime <strong>solo los que aparecen 1 vez</strong>. Descarta cualquier elemento con copias.</span>\n    </div>\n  </div>\n</div>\n"
         },
@@ -514,7 +534,7 @@
           "content": "🎯 LA TRAMPA NÚMERO 1 DE LPIC-1: 'uniq' SOLO detecta duplicados si están en líneas CONSECUTIVAS. Por eso, en el 99% de las preguntas de examen, la respuesta correcta es la tubería 'sort | uniq'."
         }
       ],
-      "notes": "Haz que todos los alumnos repitan: 'uniq siempre va detrás de sort'. Si no ordenas, uniq es completamente ciego a duplicados distantes."
+      "notes": "uniq solo ve vecinos; sort -u deduplica globalmente. Al contar cuentas con cut -d: -f3 puede haber UIDs compartidos: hay que pasar por sort -u."
     },
     {
       "id": "103.2-slide-8",
@@ -641,9 +661,25 @@
               "sed '/patrón/d'",
               "Borrar líneas",
               "Elimina de la salida todas las líneas que coincidan con la expresión regular."
+            ],
+            [
+              "sed -i.backup 's/Jones/James/' names.csv",
+              "In-place con copia de seguridad",
+              "🎯 Edita el archivo en disco pero antes guarda una copia con el sufijo indicado (names.csv.backup). Sin sufijo no hay copia: el original se sobrescribe."
+            ],
+            [
+              "sed -n -e '1p' -e '10p' -e '$p'",
+              "Varias expresiones y última línea",
+              "🎯 '-e' encadena órdenes: '1p' (primera), '10p' (décima) y '$p' (última). Con '$=' se obtiene solo el número de la última línea."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "title": "Órdenes encadenadas con `-e` y edición segura con `-i.backup`",
+          "code": "sed -n -e '1p' -e '10p' -e '$p' /etc/passwd   # primera, décima y última línea\nsed -n '$=' /etc/passwd                      # número total de líneas\nsed -i.backup 's/Jones/James/' names.csv     # edita y deja names.csv.backup"
         },
         {
           "type": "html",
@@ -656,7 +692,7 @@
           "content": "🎯 Clave de Examen: Si olvidas la 'g' final en 's/foo/bar/', sed solo sustituirá la primera coincidencia de cada línea; para cambiar todas las apariciones es obligatorio 's/foo/bar/g'."
         }
       ],
-      "notes": "Muestra la diferencia entre la salida en pantalla y sed -i (que escribe a disco). Advierte del peligro de usar sed -i sin copia de seguridad previa."
+      "notes": "sed -i.backup guarda una copia antes de editar; sin sufijo el original se sobrescribe. Con -e se encadenan '1p', '10p' y '$p'; '$=' imprime el número de la última línea."
     },
     {
       "id": "103.2-slide-10",
@@ -686,6 +722,11 @@
               "prompt": "$ ",
               "command": "sha256sum debian.iso > HASHES.txt; sha256sum -c HASHES.txt",
               "output": ""
+            },
+            {
+              "prompt": "$ ",
+              "command": "echo \"new entry\" >> ftu.txt; sha256sum -c sha256.txt",
+              "output": "ftu.txt: FAILED\nsha256sum: WARNING: 1 computed checksum did NOT match"
             }
           ]
         },
@@ -731,7 +772,7 @@
           "content": "🎯 Clave de Examen: Para verificar automáticamente que una descarga coincide con su suma oficial, se usa siempre la opción '-c' (ej: sha256sum -c SHA256SUMS)."
         }
       ],
-      "notes": "Explica el 'efecto avalancha': si cambias un solo espacio en una ISO de 4 GB, la huella SHA-256 resultante cambia al 100%."
+      "notes": "Explica el efecto avalancha. Con una sola línea añadida, sha256sum -c responde 'ftu.txt: FAILED' y 'WARNING: 1 computed checksum did NOT match'."
     },
     {
       "id": "103.2-slide-11",
@@ -759,6 +800,10 @@
               "output": ""
             }
           ]
+        },
+        {
+          "type": "paragraph",
+          "text": "La primera columna de `od` es el desplazamiento (offset) de bytes de esa línea, escrito en octal: la dirección del primer byte mostrado. `od -An` la elimina y `od -x` convierte los valores a hexadecimal."
         },
         {
           "type": "table",
@@ -792,6 +837,11 @@
               "split -d",
               "Sufijos numéricos",
               "🎯 Utiliza números (00, 01, 02) en vez de letras alfabéticas (aa, ab, ac)."
+            ],
+            [
+              "od -x",
+              "Volcado hexadecimal",
+              "🎯 Muestra cada byte en hexadecimal en lugar de octal; los ocho grupos que siguen al desplazamiento son los valores hex de la línea."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -807,7 +857,7 @@
           "content": "🎯 Clave de Examen: 'od -c' detecta saltos de línea Windows (\\r\\n) que impiden ejecutar scripts en Linux; 'split -b' divide por tamaño y se recompone con 'cat'."
         }
       ],
-      "notes": "Enseña el caso clásico de un script editado en Windows que falla con 'command not found': con 'od -c script.sh' se ve el '\\r\\n'."
+      "notes": "Enseña el caso clásico de un script editado en Windows. La primera columna de od es el offset de bytes en octal; od -x lo pasa a hexadecimal y od -An suprime la columna."
     },
     {
       "id": "103.2-slide-12",
@@ -840,34 +890,6 @@
     {
       "id": "103.2-slide-13",
       "slideNumber": 13,
-      "title": "Trampas Clásicas de Examen en Filtros de Texto",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Trampas Clásicas de Examen en Filtros de Texto"
-        },
-        {
-          "type": "paragraph",
-          "text": "Los 4 errores que hacen perder puntos en las preguntas de procesamiento de texto"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: repeat(2, 1fr); gap:16px; margin-top:14px; font-size:14px;\">\n  <!-- Trampa 1 -->\n  <div style=\"background:#FFFFFF; border:2px solid #EF4444; border-radius:12px; padding:14px 18px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">TRAMPA 1</span>\n      <strong style=\"color:#991B1B; font-size:16px;\">Usar uniq sin sort previo</strong>\n    </div>\n    <div style=\"background:#FEF2F2; color:#991B1B; padding:8px 12px; border-radius:6px; font-family:monospace; margin-bottom:8px; font-size:14.5px;\">\n      ❌ cut -d: -f7 /etc/passwd | uniq -c\n    </div>\n    <div style=\"background:#F0FDF4; color:#14532D; padding:8px 12px; border-radius:6px; font-family:monospace; margin-bottom:8px; font-size:14.5px;\">\n      ✅ cut -d: -f7 /etc/passwd | sort | uniq -c\n    </div>\n    <div style=\"color:var(--text-muted); font-size:13px; line-height:1.4;\">\n      💡 <strong>¿Por qué?:</strong> <code>uniq</code> solo compara líneas consecutivas. Si la misma shell aparece en la línea 1 y en la línea 10, no la agrupa si no usas <code>sort</code> antes.\n    </div>\n  </div>\n\n  <!-- Trampa 2 -->\n  <div style=\"background:#FFFFFF; border:2px solid #EF4444; border-radius:12px; padding:14px 18px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">TRAMPA 2</span>\n      <strong style=\"color:#991B1B; font-size:16px;\">Pasar un archivo directo a tr</strong>\n    </div>\n    <div style=\"background:#FEF2F2; color:#991B1B; padding:8px 12px; border-radius:6px; font-family:monospace; margin-bottom:8px; font-size:14.5px;\">\n      ❌ tr 'a-z' 'A-Z' archivo.txt\n    </div>\n    <div style=\"background:#F0FDF4; color:#14532D; padding:8px 12px; border-radius:6px; font-family:monospace; margin-bottom:8px; font-size:14.5px;\">\n      ✅ tr 'a-z' 'A-Z' &lt; archivo.txt &nbsp;|&nbsp; cat archivo | tr ...\n    </div>\n    <div style=\"color:var(--text-muted); font-size:13px; line-height:1.4;\">\n      💡 <strong>¿Por qué?:</strong> <code>tr</code> no sabe abrir ficheros por nombre; solo lee datos que le lleguen por la entrada estándar (stdin).\n    </div>\n  </div>\n\n  <!-- Trampa 3 -->\n  <div style=\"background:#FFFFFF; border:2px solid #EF4444; border-radius:12px; padding:14px 18px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">TRAMPA 3</span>\n      <strong style=\"color:#991B1B; font-size:16px;\">Olvidar la 'g' final en sed</strong>\n    </div>\n    <div style=\"background:#FEF2F2; color:#991B1B; padding:8px 12px; border-radius:6px; font-family:monospace; margin-bottom:8px; font-size:14.5px;\">\n      ❌ sed 's/http/https/' archivo\n    </div>\n    <div style=\"background:#F0FDF4; color:#14532D; padding:8px 12px; border-radius:6px; font-family:monospace; margin-bottom:8px; font-size:14.5px;\">\n      ✅ sed 's/http/https/g' archivo (Global)\n    </div>\n    <div style=\"color:var(--text-muted); font-size:13px; line-height:1.4;\">\n      💡 <strong>¿Por qué?:</strong> Sin el modificador <code>g</code>, <code>sed</code> solo cambiará la 1ª coincidencia que encuentre en cada línea, dejando las siguientes intactas.\n    </div>\n  </div>\n\n  <!-- Trampa 4 -->\n  <div style=\"background:#FFFFFF; border:2px solid #EF4444; border-radius:12px; padding:14px 18px;\">\n    <div style=\"display:flex; align-items:center; gap:8px; margin-bottom:6px;\">\n      <span style=\"background:#DC2626; color:#FFF; font-weight:800; font-size:12px; padding:2px 8px; border-radius:4px;\">TRAMPA 4</span>\n      <strong style=\"color:#991B1B; font-size:16px;\">Confundir cut -f con cut -c</strong>\n    </div>\n    <div style=\"background:#FEF2F2; color:#991B1B; padding:8px 12px; border-radius:6px; font-family:monospace; margin-bottom:8px; font-size:14.5px;\">\n      ❌ cut -d: -c 1,7 /etc/passwd\n    </div>\n    <div style=\"background:#F0FDF4; color:#14532D; padding:8px 12px; border-radius:6px; font-family:monospace; margin-bottom:8px; font-size:14.5px;\">\n      ✅ cut -d: -f 1,7 /etc/passwd (Fields/Columnas)\n    </div>\n    <div style=\"color:var(--text-muted); font-size:13px; line-height:1.4;\">\n      💡 <strong>¿Por qué?:</strong> <code>-f</code> (fields) trabaja con columnas delimitadas por caracteres; <code>-c</code> (characters) corta por posición fija de letras.\n    </div>\n  </div>\n</div>\n"
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Mnemotecnia Rápida: uniq siempre detrás de sort; tr solo por stdin; sed necesita /g para todo; y cut -f para delimitadores."
-        }
-      ],
-      "notes": "Estos 4 puntos son los que marcan la diferencia entre aprobar o suspender la sección de filtros."
-    },
-    {
-      "id": "103.2-slide-14",
-      "slideNumber": 14,
       "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: cut, wc y sort)",
       "layout": "two-column",
       "blocks": [
@@ -895,8 +917,8 @@
       "notes": "Muestra a los alumnos cómo el orden de los comandos en la tubería altera el resultado (ordenar antes de cortar vs cortar antes de ordenar)."
     },
     {
-      "id": "103.2-slide-15",
-      "slideNumber": 15,
+      "id": "103.2-slide-14",
+      "slideNumber": 14,
       "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: sed, tr y sha256sum)",
       "layout": "two-column",
       "blocks": [
@@ -923,8 +945,8 @@
       "notes": "Recuerda que sha256sum -c busca los archivos en el mismo directorio donde se ejecuta el comando."
     },
     {
-      "id": "103.2-slide-16",
-      "slideNumber": 16,
+      "id": "103.2-slide-15",
+      "slideNumber": 15,
       "title": "Retos de Exploración Oficiales (Pipelines de Auditoría y Logs)",
       "layout": "two-column",
       "blocks": [
@@ -955,8 +977,8 @@
       "notes": "El pipeline del Reto 1 es la secuencia de análisis de logs más utilizada en el mundo real por administradores y analistas de ciberseguridad."
     },
     {
-      "id": "103.2-slide-17",
-      "slideNumber": 17,
+      "id": "103.2-slide-16",
+      "slideNumber": 16,
       "title": "Pregunta de Examen LPIC-1: Extracción de Campos con cut",
       "layout": "checkpoint",
       "blocks": [
@@ -996,8 +1018,8 @@
       "notes": "Pregunta directa y fija de certificación."
     },
     {
-      "id": "103.2-slide-18",
-      "slideNumber": 18,
+      "id": "103.2-slide-17",
+      "slideNumber": 17,
       "title": "Tarjetas Nemotécnicas: Filtros de Texto 103.2",
       "layout": "content",
       "blocks": [
@@ -1052,8 +1074,8 @@
       "notes": "Repasa estas 8 tarjetas para fijar los filtros de texto de examen."
     },
     {
-      "id": "103.2-slide-19",
-      "slideNumber": 19,
+      "id": "103.2-slide-18",
+      "slideNumber": 18,
       "title": "Resumen y Claves de Examen: Subtema 103.2",
       "layout": "summary",
       "blocks": [
