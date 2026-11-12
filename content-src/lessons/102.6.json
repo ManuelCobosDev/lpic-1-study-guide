@@ -12,26 +12,36 @@
   ],
   "keyTerms": [
     "hipervisor",
+    "hipervisor Tipo 1 (bare-metal)",
+    "hipervisor Tipo 2 (hosted)",
     "KVM",
     "QEMU",
+    "libvirt",
     "Xen",
     "VirtualBox",
     "Guest Extensions / Guest Additions",
-    "Invitado Híbrido (VirtIO)",
+    "VirtIO (invitado híbrido)",
+    "virtualización completa",
+    "paravirtualización",
     "Migración en vivo (Live Migration)",
-    "Contenedor de aplicaciones vs Contenedor de sistema",
+    "plantilla de VM (template)",
+    "clonación de VM",
     "cloud-init",
-    "/etc/machine-id"
+    "/etc/machine-id",
+    "cloud-config"
   ],
   "commands": [
     "dbus-uuidgen",
+    "dbus-uuidgen --ensure=/etc/machine-id",
     "systemd-machine-id-setup",
     "systemd-detect-virt",
     "virsh",
-    "qemu-img",
     "virt-install",
+    "virt-manager",
+    "qemu-img",
     "lsblk",
     "ssh-keygen",
+    "ssh-copy-id",
     "grep"
   ],
   "placeholder": false,
@@ -57,25 +67,26 @@
     {
       "id": "102.6-slide-2",
       "slideNumber": 2,
-      "title": "Arquitectura de Hipervisores: Tipo 1 (Bare-Metal) frente a Tipo 2 (Hosted)",
+      "title": "Hipervisores Tipo 1 frente a Tipo 2",
       "layout": "diagram",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Arquitectura de Hipervisores: Tipo 1 (Bare-Metal) frente a Tipo 2 (Hosted)"
+          "text": "Hipervisores Tipo 1 frente a Tipo 2"
         },
         {
           "type": "paragraph",
-          "text": "El factor determinante de rendimiento es cuántas capas existen entre la máquina virtual y el silicio:"
+          "text": "El factor determinante de rendimiento es cuántas capas hay entre la máquina virtual y el silicio."
         },
         {
           "type": "list",
           "ordered": false,
           "items": [
-            "**Hipervisor Tipo 1 (Bare-Metal / Nativo)** — Se ejecuta directamente sobre el hardware físico del servidor sin capa intermedia de SO. Ofrece máximo rendimiento y mínima latencia. Ejemplos de examen: Xen, VMware ESXi y KVM. *Matiz oficial LPI:* KVM actúa con propiedades de Tipo 1 y 2: se carga como módulo del kernel Linux (`kvm.ko`) pero otorga a las máquinas acceso nativo a las extensiones de hardware de la CPU.",
-            "**Hipervisor Tipo 2 (Hosted / Alojado)** — Se ejecuta como una aplicación ordinaria sobre un sistema operativo anfitrión (Host OS). Ejemplos de examen: VirtualBox, VMware Workstation y QEMU en modo emulación completa pura.",
-            "**Migración en Vivo (Live Migration)** — 🎯 Clave de Examen: Capacidad del hipervisor para transferir una máquina virtual en plena ejecución de un servidor físico a otro a través de la red local sin interrumpir los servicios ni cortar las conexiones de red activas."
+            "**Tipo 1 (bare-metal)** — no depende de un SO subyacente: el equipo arranca directamente en el hipervisor. Ejemplos del manual: Xen y VMware ESXi.",
+            "**Tipo 2 (hosted)** — requiere un sistema operativo anfitrión para ejecutarse. Ejemplo del manual: VirtualBox.",
+            "**KVM: Tipo 1 y Tipo 2** — es un módulo del kernel, así que necesita un Linux genérico en ejecución (`kvm.ko`); integrado en ese kernel actúa como hipervisor nativo.",
+            "**Migración** — mover una VM de un hipervisor a otro; en vivo (*live migration*) o con el invitado apagado."
           ]
         },
         {
@@ -85,11 +96,11 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 PREGUNTA CLAVE DE EXAMEN: KVM es un hipervisor de Tipo 1 (bare-metal) porque convierte al propio kernel de Linux en el hipervisor nativo."
+          "title": "Clave de examen",
+          "content": "🎯 PREGUNTA CLAVE: KVM es hipervisor de Tipo 1 **y** de Tipo 2 — necesita un Linux normal para cargar su módulo, pero ahí funciona como hipervisor nativo. Xen = Tipo 1; VirtualBox = Tipo 2."
         }
       ],
-      "notes": "Explica la diferencia entre anfitrión (host: la máquina física) e invitado (guest: la máquina virtual)."
+      "notes": "Anfitrión (host) = máquina física; invitado (guest) = máquina virtual. Insiste en el matiz de KVM (Tipo 1 y Tipo 2) y en que la migración puede ser en vivo o con el invitado apagado."
     },
     {
       "id": "102.6-slide-3",
@@ -160,23 +171,23 @@
     {
       "id": "102.6-slide-5",
       "slideNumber": 5,
-      "title": "Comprobación de Extensiones de Hardware en /proc/cpuinfo",
+      "title": "Comprobar vmx/svm y preparar el host KVM",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Comprobación de Extensiones de Hardware en /proc/cpuinfo"
+          "text": "Comprobar vmx/svm y preparar el host KVM"
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo verificar antes de instalar KVM si el procesador físico soporta virtualización asistida?"
+          "text": "Antes de instalar el hipervisor, comprueba si el procesador ya tiene las extensiones de virtualización habilitadas:"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "grep -E --color '(vmx|svm)' /proc/cpuinfo | lscpu",
-          "title": "Detectar si el procesador físico soporta virtualización asistida por hardware y si está habilitada en la BIOS/UEFI antes de desplegar KVM."
+          "title": "Comando del manual: `--color` resalta la coincidencia y `-E` permite el patrón `vmx|svm`.",
+          "code": "grep --color -E \"vmx|svm\" /proc/cpuinfo"
         },
         {
           "type": "table",
@@ -189,25 +200,55 @@
             [
               "vmx",
               "Flag Intel VT-x",
-              "🎯 Virtual Machine eXtensions. Indica soporte nativo de KVM en procesadores Intel (Core, Xeon)."
+              "🎯 CPU Intel con virtualización habilitada. Se busca siempre en `/proc/cpuinfo`."
             ],
             [
               "svm",
-              "Flag AMD AMD-V",
-              "🎯 Secure Virtual Machine. Indica soporte nativo de KVM en procesadores AMD (Ryzen, EPYC)."
+              "Flag AMD SVM / AMD-V",
+              "🎯 CPU AMD con virtualización habilitada."
             ],
             [
-              "lscpu",
-              "Resumen de arquitectura",
-              "Muestra el campo 'Virtualization: VT-x' o 'AMD-V' de forma legible."
+              "--color",
+              "Resaltar coincidencia",
+              "Marca en color la cadena encontrada."
+            ],
+            [
+              "-E",
+              "Expresión regular extendida",
+              "Permite el `|` del patrón `vmx|svm`."
             ],
             [
               "lsmod | grep kvm",
               "Verificar módulos",
-              "Confirma que los módulos 'kvm' y 'kvm_intel' o 'kvm_amd' están activos en memoria."
+              "Confirma que `kvm` y `kvm_intel` o `kvm_amd` están cargados."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Lectura del comando"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "Consulta la documentación de tu distribución",
+              "description": "Los paquetes de KVM varían según la distribución."
+            },
+            {
+              "number": 2,
+              "title": "Instala los paquetes del hipervisor KVM",
+              "description": "Son los necesarios para ejecutar máquinas virtuales con KVM."
+            },
+            {
+              "number": 3,
+              "title": "En escritorio gráfico, añade `virt-manager`",
+              "description": "Interfaz gráfica para instalar y gestionar máquinas virtuales en una instalación de KVM."
+            },
+            {
+              "number": 4,
+              "title": "Descarga una ISO y crea la VM",
+              "description": "Siguiendo la documentación de la distribución; también desde consola con `virt-install`."
+            }
+          ]
         },
         {
           "type": "html",
@@ -216,39 +257,123 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 PREGUNTA NÚMERO 1 DE EXAMEN LPIC-1: ¿Qué flag en /proc/cpuinfo indica virtualización en procesadores Intel? -> 'vmx'. ¿Y en procesadores AMD? -> 'svm'."
+          "title": "Clave de examen",
+          "content": "🎯 Intel = `vmx` (VT-x); AMD = `svm` (AMD SVM). Si la búsqueda no devuelve resultados, hay que habilitar la virtualización en la BIOS o firmware UEFI."
+        },
+        {
+          "type": "quiz-inline",
+          "id": "quiz-102-6-5",
+          "question": "¿Cuál de estos flags en /proc/cpuinfo indica que un procesador Intel dispone de extensiones de virtualización por hardware?",
+          "options": [
+            {
+              "key": "a",
+              "text": "svm"
+            },
+            {
+              "key": "b",
+              "text": "vmx"
+            },
+            {
+              "key": "c",
+              "text": "kvm"
+            },
+            {
+              "key": "d",
+              "text": "virt"
+            }
+          ],
+          "correct": [
+            "b"
+          ],
+          "explanation": "En procesadores Intel la virtualización por hardware (Intel VT-x) se identifica con el flag 'vmx' (Virtual Machine eXtensions). 'svm' corresponde a AMD; 'kvm' y 'virt' no son flags de CPU."
         }
       ],
-      "notes": "Esta pregunta aparece en prácticamente todos los exámenes LPIC-1. La regla mnemotécnica es obligatoria: Intel = vmx, AMD = svm."
+      "notes": "Esta pregunta cae en prácticamente todos los exámenes. Mnemotecnia obligatoria: Intel = vmx, AMD = svm. Sin resultados, se habilita en BIOS/UEFI. `virt-manager` es la vía gráfica; `virt-install`, la de consola."
     },
     {
       "id": "102.6-slide-6",
       "slideNumber": 6,
-      "title": "Almacenamiento y Dominios en libvirt: XML y Formatos de Disco",
+      "title": "libvirt: XML, red default y discos RAW vs QCOW2",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Almacenamiento y Dominios en libvirt: XML y Formatos de Disco"
+          "text": "libvirt: XML, red default y discos RAW vs QCOW2"
         },
         {
           "type": "paragraph",
-          "text": "Configuración declarativa de máquinas virtuales (/etc/libvirt/qemu/*.xml) y formatos RAW frente a QCOW2:"
+          "text": "libvirt guarda la configuración de cada VM y de cada red en XML autogenerado: editarlo a mano puede sobrescribirse."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Elemento",
+            "Ruta o comando",
+            "Clave"
+          ],
+          "rows": [
+            [
+              "Configuración de la VM",
+              "`/etc/libvirt/qemu/<vm>.xml`",
+              "Ej. `rhel8.0.xml`: memoria, vCPU, disco, red, gráficos."
+            ],
+            [
+              "Definición de redes",
+              "`/etc/libvirt/qemu/networks/default.xml`",
+              "Red `default`: NAT, bridge `virbr0` y DHCP `192.168.122.2-254`."
+            ],
+            [
+              "Editar la VM",
+              "`virsh edit rhel8.0`",
+              "🎯 Evita corromper un archivo autogenerado."
+            ],
+            [
+              "Editar la red",
+              "`virsh net-edit default`",
+              "🎯 Misma advertencia: usa la API de libvirt."
+            ]
+          ],
+          "caption": "Archivos de libvirt"
         },
         {
           "type": "html",
           "sanitizedHtml": "\n<div style=\"display:flex; flex-direction:column; gap:8px; margin:2px 0;\">\n  <!-- SITUACIÓN REAL EN PRODUCCIÓN -->\n  <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-left:5px solid #2563EB; border-radius:8px; padding:6px 12px; font-size:11.5px; color:#1E40AF; display:flex; flex-direction:column; gap:3px;\">\n    <div style=\"display:flex; align-items:center; gap:8px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;\">🏢 CASO REAL EN PRODUCCIÓN</span>\n      <span style=\"font-weight:700; color:#1E40AF; font-size:12px;\">Planificación de almacenamiento en clúster y snapshots de seguridad</span>\n    </div>\n    <div style=\"line-height:1.35; color:#1E3A8A; font-size:11px;\">\n      <strong>• Situación:</strong> Tienes 1 TB de disco y necesitas crear 20 máquinas virtuales de 50 GB cada una. Si usas RAW, te quedas sin espacio al instante aunque las VMs estén recién instaladas.<br>\n      <strong>• ¿Por qué y con qué fin realista se usa?</strong> Creas discos con <code>qemu-img create -f qcow2 ...</code> para aprovisionamiento fino (*thin provisioning*): cada disco solo ocupa 2 GB reales al crearse y permite tomar *snapshots* instantáneos antes de mantenimientos críticos.\n    </div>\n  </div>\n\n  <!-- Terminal Realista con Salida Real de qemu-img -->\n  <div style=\"background:#0F172A; color:#F8FAFC; border-radius:10px; padding:10px 14px; font-family:monospace; font-size:12px; line-height:1.4; box-shadow:0 3px 8px rgba(0,0,0,0.15);\">\n    <div style=\"display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:4px; margin-bottom:6px; color:#94A3B8; font-size:11px;\">\n      <span style=\"font-weight:700; color:#38BDF8;\">🖥️ Terminal: Creación y análisis de disco virtual QCOW2</span>\n      <span>bash</span>\n    </div>\n    <div><span style=\"color:#4ADE80;\">root@kvm:~#</span> <span style=\"color:#FDE047; font-weight:700;\">qemu-img create -f qcow2 /var/lib/libvirt/images/web01.qcow2 50G</span></div>\n    <div style=\"color:#A7F3D0;\">Formatting '/var/lib/libvirt/images/web01.qcow2', fmt=qcow2 cluster_size=65536 extended_l2=off compression_type=zlib size=53687091200 lazy_refcounts=off refcount_bits=16</div>\n    <div style=\"margin-top:4px;\"><span style=\"color:#4ADE80;\">root@kvm:~#</span> <span style=\"color:#FDE047; font-weight:700;\">qemu-img info /var/lib/libvirt/images/web01.qcow2</span></div>\n    <div><span style=\"color:#94A3B8;\">image:</span> <span style=\"color:#F8FAFC;\">/var/lib/libvirt/images/web01.qcow2</span></div>\n    <div><span style=\"color:#94A3B8;\">file format:</span> <span style=\"color:#38BDF8; font-weight:700;\">qcow2</span> &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; <span style=\"color:#94A3B8;\">virtual size:</span> <span style=\"color:#FCD34D; font-weight:700;\">50 GiB</span> &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; <span style=\"color:#94A3B8;\">disk size:</span> <span style=\"color:#4ADE80; font-weight:800;\">196 KiB</span></div>\n  </div>\n\n  <!-- COMPARATIVA RADICAL: RAW vs QCOW2 -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:10px;\">\n    <!-- Formato RAW -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #93C5FD; border-radius:8px; padding:8px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n        <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">FORMATO RAW</span>\n        <code style=\"font-size:12px; font-weight:800; color:#1E40AF;\">disco.raw / disco.img</code>\n      </div>\n      <strong style=\"color:#1E40AF; font-size:12.5px;\">Imagen en Bruto (Sin Compresión)</strong>\n      <div style=\"font-size:11px; color:#1E3A8A; margin-top:2px; line-height:1.35;\">\n        • <strong>Ventaja:</strong> Máximo rendimiento de lectura/escritura (E/S directa).<br>\n        • <strong>Inconveniente:</strong> Si pides 50 GB, ocupa 50 GB reales en el disco host de inmediato.<br>\n        • ⚠️ No soporta compresión nativa ni snapshots internos.\n      </div>\n    </div>\n\n    <!-- Formato QCOW2 -->\n    <div style=\"background:#FAF5FF; border:1.5px solid #D8B4FE; border-radius:8px; padding:8px 12px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;\">\n        <span style=\"background:#9333EA; color:#FFF; font-weight:800; font-size:9.5px; padding:1px 6px; border-radius:4px;\">FORMATO QCOW2 🎯</span>\n        <code style=\"font-size:12px; font-weight:800; color:#6B21A8;\">QEMU Copy-On-Write v2</code>\n      </div>\n      <strong style=\"color:#6B21A8; font-size:12.5px;\">Asignación Dinámica y Snapshots</strong>\n      <div style=\"font-size:11px; color:#581C87; margin-top:2px; line-height:1.35;\">\n        • 🎯 <strong>Crecimiento dinámico:</strong> Ocupa solo los megabytes que el SO invitado escribe.<br>\n        • <strong>Snapshots nativos:</strong> Congela el estado del disco antes de aplicar parches.<br>\n        • Permite compresión zlib y cifrado integrado.\n      </div>\n    </div>\n  </div>\n\n  <!-- DIRECTORIO XML DE DEFINICIÓN -->\n  <div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:10px; padding:6px 12px; font-size:11.5px; display:flex; justify-content:space-between; align-items:center;\">\n    <span>📁 <strong>Directorio de Configuración libvirt:</strong> <code>/etc/libvirt/qemu/&lt;nombre-vm&gt;.xml</code> (almacena vCPUs, RAM, rutas de disco y tarjetas de red).</span>\n    <span style=\"background:#334155; color:#FFF; font-size:9.5px; font-weight:800; padding:2px 6px; border-radius:4px;\">CLAVE LPIC-1</span>\n  </div>\n</div>\n"
         },
         {
+          "type": "table",
+          "headers": [
+            "Formato",
+            "Qué hace",
+            "Datos del manual"
+          ],
+          "rows": [
+            [
+              "QCOW2 (COW)",
+              "Thin provisioning: límite superior definido y el archivo crece solo con lo escrito",
+              "Aparenta `23.3G` y ocupa `5.5G`; se crea con `qemu-img create -f qcow2`."
+            ],
+            [
+              "RAW (full)",
+              "Todo el espacio preasignado de golpe",
+              "Una imagen de `10 GB` consume `10 GB` reales; gana en rendimiento de escritura."
+            ],
+            [
+              "`lsblk`",
+              "Ejecutado en el invitado, lista los dispositivos de bloque",
+              "El invitado ve un disco de `23.3 GB`."
+            ]
+          ],
+          "caption": "Almacenamiento del dominio"
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 CLAVE DE EXAMEN LPIC-1: El formato QCOW2 soporta Copy-On-Write (crecimiento dinámico) y snapshots; el formato RAW ofrece máximo rendimiento secuencial pero reserva todo el espacio de golpe."
+          "title": "Clave de examen",
+          "content": "🎯 QCOW2 = copy-on-write (crecimiento dinámico y snapshots); RAW = espacio completo reservado y máximo rendimiento. El XML de libvirt es autogenerado: se edita con `virsh edit` o `virsh net-edit`, nunca a mano."
         }
       ],
-      "notes": "Muestra a los alumnos la estructura XML de un dominio en libvirt para que reconozcan las etiquetas <domain>, <memory> y <disk>."
+      "notes": "Que retengan las dos rutas y el aviso de archivo autogenerado. El XML de ejemplo no se memoriza: se reconoce <domain>, <memory>, <disk> y <graphics>."
     },
     {
       "id": "102.6-slide-7",
@@ -323,59 +448,68 @@
     {
       "id": "102.6-slide-8",
       "slideNumber": 8,
-      "title": "Identificador Único del Sistema: /etc/machine-id",
+      "title": "Plantillas, clonación y /etc/machine-id",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Identificador Único del Sistema: /etc/machine-id"
+          "text": "Plantillas, clonación y /etc/machine-id"
         },
         {
           "type": "paragraph",
-          "text": "¿Qué ocurre cuando clonas una máquina virtual y por qué el examen exige regenerar su identidad?"
+          "text": "Una VM es, en gran medida, solo archivos: por eso se puede usar como plantilla. Pero el clon arrastra la identidad."
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "**Plantilla** — VM con el SO base y la autenticación ya configurados: ahorra paquetes base y configuración regional.",
+            "**Al copiarla a un nuevo invitado** — se cambia el nombre, se genera una nueva MAC y se ajusta lo que pida su uso previsto.",
+            "**D-Bus machine ID** — se genera al instalar; dos VM con el mismo ID hacen que el hipervisor no distinga a qué invitado dirigir los recursos."
+          ]
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "systemd-machine-id-setup | dbus-uuidgen --ensure",
-          "title": "Garantizar la identidad unívoca de cada instancia Linux: cómo evitar conflictos de red y colisiones de logs al clonar máquinas virtuales."
+          "title": "Procedimiento del manual si dos VM comparten la ID: borrar y volver a generarla en /etc/machine-id.",
+          "code": "sudo rm -f /etc/machine-id\nsudo dbus-uuidgen --ensure=/etc/machine-id"
         },
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
+            "Opción / Ruta",
             "Nombre",
             "Descripción"
           ],
           "rows": [
             [
+              "/var/lib/dbus/machine-id",
+              "Archivo real de la ID",
+              "Enlazado simbólicamente a `/etc/machine-id`; si no es enlace, hay que borrarlo."
+            ],
+            [
               "/etc/machine-id",
-              "UUID único de 32 hex",
-              "🎯 Archivo de texto plano con 32 caracteres hexadecimales que identifica unívocamente a cada instalación o instancia."
+              "Ruta enlazada",
+              "🎯 Archivo que se borra en el primer paso del procedimiento."
             ],
             [
               "dbus-uuidgen --get",
-              "Consultar ID de D-Bus",
-              "🎯 Pregunta Oficial LPI: Muestra en pantalla el identificador actual de máquina D-Bus sin alterar ningún archivo."
+              "Consultar",
+              "🎯 Muestra la ID actual sin modificarla: sirve para comparar clones."
             ],
             [
-              "dbus-uuidgen --ensure[=/ruta]",
-              "Garantizar ID de D-Bus",
-              "🎯 Verifica que exista un UUID válido en /etc/machine-id (o /var/lib/dbus/machine-id); si no existe o está vacío, lo genera."
+              "dbus-uuidgen --ensure",
+              "Solo validar",
+              "🎯 Sin ruta no escribe: si no hay mensajes de error, la ID existe."
             ],
             [
-              "truncate -s 0 /etc/machine-id",
-              "Vaciar en la plantilla",
-              "🎯 Deja el archivo a 0 bytes antes de apagar la plantilla dorada para clonación en masa."
-            ],
-            [
-              "systemd-machine-id-setup",
-              "Regenerar con systemd",
-              "Lee el UUID del hipervisor o genera una cadena aleatoria criptográfica y la graba en /etc/machine-id al arrancar."
+              "dbus-uuidgen --ensure=/etc/machine-id",
+              "Generar y escribir",
+              "🎯 Con ruta escribe una ID nueva; segundo paso del procedimiento."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Identidad de la máquina"
         },
         {
           "type": "html",
@@ -384,26 +518,36 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 CLAVE CRÍTICA DE EXAMEN LPIC-1: Al crear una plantilla (Golden Image) de VM, se debe vaciar /etc/machine-id. Si se clona sin vaciarlo, todas las instancias compartirán el mismo ID y DHCP les asignará la misma IP."
+          "title": "Clave de examen",
+          "content": "🎯 Al clonar una plantilla: `sudo rm -f /etc/machine-id` y `sudo dbus-uuidgen --ensure=/etc/machine-id`. `--get` solo muestra la ID y `--ensure` sin ruta solo valida. Se desaconseja cambiar la ID en un sistema en ejecución."
         }
       ],
-      "notes": "Muestra a los alumnos cómo vaciar el archivo con 'truncate -s 0 /etc/machine-id' antes de apagar la máquina modelo."
+      "notes": "Recalca que sin ruta `--ensure` no escribe nada y que el cambio de ID en caliente puede desestabilizar el sistema. La web citaba `truncate -s 0` y `systemd-machine-id-setup`: válidos como práctica, pero el par de comandos que pide el manual es `rm -f` + `--ensure=/etc/machine-id`."
     },
     {
       "id": "102.6-slide-9",
       "slideNumber": 9,
-      "title": "Aprovisionamiento en la Nube con cloud-init",
+      "title": "cloud-init: aprovisionar con user-data",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Aprovisionamiento en la Nube con cloud-init"
+          "text": "cloud-init: aprovisionar con user-data"
         },
         {
           "type": "paragraph",
-          "text": "Configuración automatizada de instancias cloud (AWS, Azure, OpenStack) mediante archivos user-data en formato YAML:"
+          "text": "En el primer arranque, cloud-init lee un YAML con sintaxis cloud-config (user-data) y aplica la configuración; es independiente del proveedor."
+        },
+        {
+          "type": "code",
+          "language": "yaml",
+          "title": "Ejemplo del manual: zona horaria, hostname, actualización con apt y paquetes a instalar.",
+          "code": "#cloud-config\ntimezone: Africa/Dar_es_Salaam\nhostname: test-system\n# Update the system when it first boots up\napt_update: true\napt_upgrade: true\n# Install the Nginx web server\npackages:\n - nginx"
+        },
+        {
+          "type": "paragraph",
+          "text": "No es solo para VM: también puede preconfigurar contenedores (por ejemplo, contenedores LXD) antes del despliegue."
         },
         {
           "type": "html",
@@ -412,68 +556,73 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 CLAVE DE EXAMEN LPIC-1: El archivo de aprovisionamiento de cloud-init DEBE comenzar obligatoriamente con la línea '#cloud-config' en formato YAML para ser interpretado."
+          "title": "Clave de examen",
+          "content": "🎯 La primera línea debe ser exactamente `#cloud-config`, sin espacio entre `#` y `cloud-config`. Con un espacio, cloud-init no lo interpreta. La sintaxis YAML de cloud-init se llama cloud-config."
         }
       ],
-      "notes": "Explica que cloud-init es el estándar universal adoptado por todos los proveedores de nube pública y privada (IaaS)."
+      "notes": "Insiste en la cabecera sin espacio y en las directivas del ejemplo (`timezone`, `hostname`, `apt_update`, `apt_upgrade`, `packages`). cloud-init también aprovisiona contenedores LXD antes de desplegarlos."
     },
     {
       "id": "102.6-slide-10",
       "slideNumber": 10,
-      "title": "Acceso Seguro con Claves SSH e Inyección en Instancias",
+      "title": "Acceso seguro con claves SSH",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Acceso Seguro con Claves SSH e Inyección en Instancias"
+          "text": "Acceso seguro con claves SSH"
         },
         {
           "type": "paragraph",
-          "text": "Autenticación criptográfica asimétrica para servidores virtuales y remotos:"
+          "text": "El método más frecuente para entrar en un invitado en la nube es OpenSSH con claves precompartidas: generas el par en local y copias solo la parte pública."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "ssh-keygen -t rsa -b 4096 | ssh-copy-id usuario@servidor",
-          "title": "Criptografía asimétrica para servidores virtuales y en la nube: generación de pares de claves, despliegue y permisos estrictos."
+          "title": "Generar el par y copiar la clave pública al servidor remoto.",
+          "code": "ssh-keygen -t rsa -b 4096\nssh-copy-id -i ~/.ssh/id_rsa.pub usuario@servidor"
         },
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
+            "Opción / Archivo",
             "Nombre",
             "Descripción"
           ],
           "rows": [
             [
               "ssh-keygen",
-              "Generador de claves",
-              "Crea el par criptográfico: clave privada secreta y clave pública."
+              "Generar el par",
+              "Clave privada en `~/.ssh/` local y clave pública en el archivo `.pub`."
             ],
             [
-              "id_rsa (Clave Privada)",
-              "Secreta local (0600)",
-              "⚠️ NUNCA debe salir de tu máquina local. Permisos obligatorios: 0600 (-rw-------)."
+              "id_rsa",
+              "Clave privada (0600)",
+              "⚠️ Nunca sale del equipo local."
             ],
             [
-              "id_rsa.pub (Clave Pública)",
-              "Pública (0644)",
-              "Se distribuye libremente a los servidores donde quieras acceder."
+              "id_rsa.pub",
+              "Clave pública (0644)",
+              "Se copia al servidor remoto: es lo único que viaja."
             ],
             [
-              "ssh-copy-id usuario@host",
-              "Despliegue automático",
-              "🎯 Clave de Examen: Copia tu clave pública e inyecta su contenido en ~/.ssh/authorized_keys remoto."
+              "ssh-copy-id -i",
+              "Copiar la pública",
+              "`-i` indica el archivo; se omite si solo hay una `.pub` en `~/.ssh/`."
             ],
             [
               "~/.ssh/authorized_keys",
-              "Claves autorizadas (0600)",
-              "🎯 Fichero en el servidor donde se registran las claves autorizadas. Permisos obligatorios: 0600."
+              "Claves autorizadas",
+              "Destino en el servidor remoto; ssh-copy-id establece los permisos apropiados (0600)."
+            ],
+            [
+              "Par generado por el proveedor",
+              "Clave precompartida",
+              "Algunos proveedores crean el par al aprovisionar: descarga la clave privada."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Claves SSH"
         },
         {
           "type": "html",
@@ -482,11 +631,11 @@
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 CLAVE DE PERMISOS DE EXAMEN LPIC-1: El directorio ~/.ssh DEBE tener permisos 0700 (drwx------) y authorized_keys DEBE tener 0600 (-rw-------). Si tienen permisos abiertos, SSH RECHAZA la conexión por seguridad."
+          "title": "Clave de examen",
+          "content": "🎯 Permisos: privada `0600` y pública `0644`; en el servidor, `~/.ssh` con `0700` y `authorized_keys` con `0600`. Con permisos abiertos, SSH rechaza la conexión."
         }
       ],
-      "notes": "Recalca que la clave privada nunca se envía al servidor remoto; lo que se copia con ssh-copy-id es la clave pública .pub."
+      "notes": "Nunca se envía la clave privada: ssh-copy-id copia la `.pub`. Recalca el matiz de `-i` y que algunos proveedores entregan el par ya creado."
     },
     {
       "id": "102.6-slide-11",
@@ -575,274 +724,72 @@
     {
       "id": "102.6-slide-14",
       "slideNumber": 14,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Flags y VirtIO)",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: Flags y VirtIO)"
-        },
-        {
-          "type": "list",
-          "ordered": true,
-          "items": [
-            "Caso 1 (Oficial Pág 182): ¿Qué comando permite comprobar si un servidor con procesador AMD dispone de extensiones de virtualización por hardware habilitadas? — Comando: `grep -E --color 'svm' /proc/cpuinfo (o lscpu | grep Virtualization)` (En procesadores AMD, la tecnología de virtualización por hardware se denomina AMD-V y el kernel la identifica con el flag 'svm' en el archivo /proc/cpuinfo.)",
-            "Caso 2 (Oficial Pág 182): Un administrador nota lentitud en las operaciones de red y disco de una VM Linux sobre KVM. ¿Qué tipo de controladores debe instalar o configurar para obtener rendimiento nativo? — Comando: `Controladores paravirtualizados VirtIO (virtio-net, virtio-blk)` (VirtIO configura un huésped híbrido que elimina la sobrecarga de emulación completa de hardware comunicando el kernel invitado directamente con el hipervisor KVM.)",
-            "Caso 3 (Oficial Pág 178/181): Dos máquinas virtuales clonadas con D-Bus sufren comportamientos erráticos al comunicarse por el bus del sistema. ¿Qué comando se utiliza para determinar si cada una tiene diferente ID de máquina D-Bus y cuál lo regenera? — Comando: `dbus-uuidgen --get (para consultar); y sudo dbus-uuidgen --ensure (o systemd-machine-id-setup)` (El comando 'dbus-uuidgen --get' imprime el UUID actual de D-Bus sin alterarlo. Si dos clones comparten el mismo ID, colisionan en el bus de mensajes del sistema; '--ensure=/etc/machine-id' o 'systemd-machine-id-setup' asignan una nueva identidad unívoca.)"
-          ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "El flag 'svm' valida el hardware en AMD; VirtIO optimiza el bus de E/S; y systemd-machine-id-setup resuelve la identidad única."
-        }
-      ],
-      "notes": "Explica la diferencia entre KVM emulando un disco IDE antiguo frente a usar virtio-blk."
-    },
-    {
-      "id": "102.6-slide-15",
-      "slideNumber": 15,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: cloud-init y SSH)",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: cloud-init y SSH)"
-        },
-        {
-          "type": "list",
-          "ordered": true,
-          "items": [
-            "Caso 4 (Oficial Pág 182): ¿Cuál es la primera línea exacta y obligatoria que debe contener un archivo de datos de usuario (user-data) para que cloud-init lo procese correctamente? — Comando: `#cloud-config` (cloud-init utiliza esta cabecera obligatoria como firma para saber que el documento contiene directivas en formato YAML.)",
-            "Caso 5 (Oficial Pág 182): ¿Qué comando copia la clave pública SSH local de un administrador a un servidor remoto llamado '192.168.1.50' con el usuario 'debian'? — Comando: `ssh-copy-id debian@192.168.1.50` (ssh-copy-id se conecta por SSH e inserta el contenido de ~/.ssh/id_rsa.pub en el archivo remoto ~/.ssh/authorized_keys fijando los permisos adecuados.)"
-          ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "#cloud-config es la cabecera estándar de aprovisionamiento; ssh-copy-id es el mecanismo seguro para desplegar accesos sin contraseña."
-        }
-      ],
-      "notes": "Recuerda que ssh-copy-id solicita la contraseña del usuario remoto por única vez durante el despliegue de la clave."
-    },
-    {
-      "id": "102.6-slide-16",
-      "slideNumber": 16,
-      "title": "Retos de Exploración Oficiales (Clonación, D-Bus y cloud-config)",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Retos de Exploración Oficiales (Clonación, D-Bus y cloud-config)"
-        },
-        {
-          "type": "callout",
-          "calloutType": "warning",
-          "title": "Escenario del Desafío",
-          "content": "Resuelve estos 3 retos de examen planteados en el manual oficial LPIC-1:\n1. Un administrador clona 10 máquinas virtuales desde una plantilla KVM. Todas obtienen la misma dirección IP por DHCP y fallan en el registro de D-Bus. ¿Qué archivo olvidó borrar o truncar en la imagen dorada?\n2. En un archivo #cloud-config, ¿bajo qué directiva se define la lista de comandos que deben ejecutarse automáticamente al finalizar la inicialización del sistema?\n3. ¿Qué permisos numéricos en notación octal deben tener el directorio ~/.ssh y el archivo ~/.ssh/authorized_keys para que el servicio SSH permita el acceso?"
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Pista",
-          "content": "Recuerda: machine-id; directiva runcmd; y permisos 0700 y 0600."
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Desafío",
-          "content": "1. Olvidó vaciar el archivo /etc/machine-id (y /var/lib/dbus/machine-id). Al compartir el mismo machine-id, el cliente DHCP envía el mismo identificador de cliente (DUID/IAID) y el router les asigna la misma IP.\n2. Se definen bajo la directiva 'runcmd' como una lista de cadenas de comando.\n3. El directorio ~/.ssh debe tener permisos 700 (drwx------) y el archivo authorized_keys permisos 600 (-rw-------)."
-        }
-      ],
-      "notes": "La comprensión del problema de clonación con machine-id demuestra experiencia real en administración de sistemas."
-    },
-    {
-      "id": "102.6-slide-17",
-      "slideNumber": 17,
-      "title": "Pregunta de Examen LPIC-1: Extensiones de Virtualización en la CPU",
-      "layout": "checkpoint",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Pregunta de Examen LPIC-1: Extensiones de Virtualización en la CPU"
-        },
-        {
-          "type": "quiz-inline",
-          "id": "quiz-102-6-17",
-          "question": "¿Cuál de los siguientes flags en /proc/cpuinfo indica que un procesador de arquitectura Intel dispone de extensiones de virtualización por hardware?",
-          "options": [
-            {
-              "key": "a",
-              "text": "svm"
-            },
-            {
-              "key": "b",
-              "text": "vmx"
-            },
-            {
-              "key": "c",
-              "text": "kvm"
-            },
-            {
-              "key": "d",
-              "text": "virt"
-            }
-          ],
-          "correct": [
-            "b"
-          ],
-          "explanation": "En procesadores Intel, las extensiones de virtualización por hardware (Intel VT-x) se identifican con el flag 'vmx' (Virtual Machine eXtensions). El flag 'svm' corresponde a procesadores AMD (Secure Virtual Machine), mientras que 'kvm' y 'virt' no son flags de CPU válidos."
-        }
-      ],
-      "notes": "Pregunta fundamental y directa de examen. Intel = vmx, AMD = svm."
-    },
-    {
-      "id": "102.6-slide-18",
-      "slideNumber": 18,
-      "title": "Tarjetas Nemotécnicas: Virtualización y Cloud 102.6",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Tarjetas Nemotécnicas: Virtualización y Cloud 102.6"
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Concepto",
-            "Significado / Uso"
-          ],
-          "rows": [
-            [
-              "¿Qué flag de CPU indica soporte de virtualización en Intel?",
-              "vmx (en /proc/cpuinfo)."
-            ],
-            [
-              "¿Qué flag de CPU indica soporte de virtualización en AMD?",
-              "svm (Secure Virtual Machine en /proc/cpuinfo)."
-            ],
-            [
-              "¿Qué tipo de hipervisor es KVM en Linux?",
-              "Hipervisor Tipo 1 (Bare-Metal / Nativo) integrado en el propio kernel."
-            ],
-            [
-              "¿Qué controladores paravirtualizados ofrecen máximo rendimiento en KVM?",
-              "Los controladores VirtIO (para disco, red y memoria)."
-            ],
-            [
-              "¿Qué archivo contiene el UUID único de 32 caracteres de la máquina?",
-              "/etc/machine-id (se regenera con systemd-machine-id-setup)."
-            ],
-            [
-              "¿Cuál es la primera línea obligatoria de un script de cloud-init?",
-              "#cloud-config."
-            ],
-            [
-              "¿Qué comando copia una clave pública SSH a un servidor remoto?",
-              "ssh-copy-id usuario@servidor."
-            ],
-            [
-              "¿Qué permisos obligatorios debe tener ~/.ssh/authorized_keys?",
-              "Permisos 0600 (y el directorio ~/.ssh permisos 0700)."
-            ],
-            [
-              "¿Qué comando muestra el ID de máquina actual de D-Bus sin modificarlo?",
-              "dbus-uuidgen --get."
-            ],
-            [
-              "¿Qué opción de dbus-uuidgen regenera el ID si no existe?",
-              "sudo dbus-uuidgen --ensure (o --ensure=/etc/machine-id)."
-            ],
-            [
-              "¿Qué es un 'Invitado Híbrido' (Hybrid Guest)?",
-              "Una máquina virtual completa que utiliza controladores paravirtualizados (VirtIO) para alcanzar rendimiento de E/S casi nativo."
-            ],
-            [
-              "¿Cómo se distribuyen habitualmente las Guest Additions de VirtualBox?",
-              "A través de una imagen ISO de CD-ROM virtual que se monta e instala en el sistema operativo huésped."
-            ],
-            [
-              "¿Qué diferencia a un contenedor de aplicaciones de uno de sistema?",
-              "El de aplicaciones (Docker/Podman) empaqueta un solo proceso; el de sistema (LXC/LXD) ejecuta un sistema operativo completo."
-            ]
-          ],
-          "caption": "Tarjetas de memorización"
-        }
-      ],
-      "notes": "Repasa estas 8 tarjetas para asegurar el pleno de aciertos en el objetivo 102.6."
-    },
-    {
-      "id": "102.6-slide-19",
-      "slideNumber": 19,
-      "title": "Resumen y Claves de Examen: Subtema 102.6",
+      "title": "Resumen y claves de examen 102.6",
       "layout": "summary",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Resumen y Claves de Examen: Subtema 102.6"
+          "text": "Resumen y claves de examen 102.6"
         },
         {
           "type": "paragraph",
-          "text": "Puntos clave de Linux como sistema virtualizado y en la nube para LPIC-1:"
+          "text": "Puntos que hay que llevarse del subtema 102.6:"
         },
         {
           "type": "table",
           "headers": [
-            "Concepto / Herramienta",
-            "Propósito y Clave de Examen LPI"
+            "Concepto",
+            "Clave de examen"
           ],
           "rows": [
             [
-              "Hipervisores Tipo 1 vs Tipo 2",
-              "Tipo 1 (Bare-Metal: Xen, ESXi, KVM en kernel). Tipo 2 (Hosted: VirtualBox, VMware Workstation). Live Migration mueve VMs en caliente."
+              "Tipos de hipervisor",
+              "Tipo 1: Xen, VMware ESXi. Tipo 2: VirtualBox. KVM es Tipo 1 **y** Tipo 2."
             ],
             [
-              "Flags CPU (/proc/cpuinfo)",
-              "Intel: vmx. AMD: svm. Vitales para soporte de hardware nativo de virtualización."
+              "Tipos de invitado",
+              "Totalmente virtualizado (VT-x/AMD-V), paravirtualizado (kernel modificado y controladores invitados) e híbrido (completa + controladores paravirtualizados VirtIO)."
             ],
             [
-              "Invitado Híbrido y VirtIO",
-              "VirtIO proporciona drivers paravirtualizados (virtio-blk, virtio-net) para lograr rendimiento de E/S cercano al nativo."
+              "Servidor de misión crítica",
+              "Se espera paravirtualización, como Xen: el invitado aprovecha mejor el hardware con controladores diseñados para el hipervisor."
             ],
             [
-              "Guest Extensions / Additions",
-              "Controladores del hipervisor distribuidos típicamente mediante ISO de CD-ROM montada en el huésped."
+              "Flags de CPU",
+              "Intel = `vmx`; AMD = `svm`, en `/proc/cpuinfo`. Sin resultados → habilitar en BIOS/UEFI."
             ],
             [
-              "Formatos de Disco en VM",
-              "RAW (fijo, máximo rendimiento de E/S) vs QCOW2 (crecimiento dinámico, snapshots CoW y compresión)."
+              "libvirt",
+              "XML de VMs en `/etc/libvirt/qemu`, redes en `networks/default.xml`. Red `default` = NAT + `virbr0` + DHCP `192.168.122.2-254`."
             ],
             [
-              "Clonación y /etc/machine-id",
-              "Vaciar con 'truncate -s 0'. Consultar con 'dbus-uuidgen --get'. Regenerar con 'systemd-machine-id-setup' o 'dbus-uuidgen --ensure'."
+              "Despliegue",
+              "`virt-manager` (gráfico), `virt-install` y `virsh` (consola). `virsh destroy` no borra la VM."
             ],
             [
-              "cloud-init (#cloud-config)",
-              "Estándar YAML para aprovisionamiento inicial automático de instancias en la nube (hostnames, usuarios, SSH keys)."
+              "Discos",
+              "QCOW2 = COW (`23.3G` aparentes, `5.5G` reales); RAW = espacio preasignado."
             ],
             [
-              "Contenedores App vs Sistema",
-              "Aplicaciones (Docker/Podman: un proceso). Sistema (LXC/LXD: SO multi-proceso completo compartiendo kernel)."
+              "Clonación",
+              "`sudo rm -f /etc/machine-id` y `sudo dbus-uuidgen --ensure=/etc/machine-id`; `--get` solo muestra la ID."
+            ],
+            [
+              "cloud-init",
+              "YAML con cabecera `#cloud-config` sin espacio; también preconfigura contenedores LXD."
             ]
           ],
-          "caption": "Matriz maestra de Linux como sistema virtualizado LPIC-1"
+          "caption": "Matriz maestra de 102.6"
         },
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Checklist Definitivo LPIC-1 102.6",
-          "content": "1. Intel=vmx, AMD=svm en /proc/cpuinfo. 2. dbus-uuidgen --get para ver machine-id sin tocarlo. 3. VirtIO convierte al huésped en invitado híbrido de alto rendimiento. 4. cloud-init requiere cabecera exacta '#cloud-config'."
+          "title": "Checklist definitivo LPIC-1 102.6",
+          "content": "1. Intel = `vmx`, AMD = `svm`. 2. KVM = Tipo 1 y Tipo 2. 3. `virsh destroy` = apagado forzado, NO borra la VM. 4. Regenerar el machine-id al clonar. 5. `#cloud-config` sin espacio tras `#`."
         }
       ],
-      "notes": "Concluimos el subtema 102.6 y con él finalizamos completamente la refactorización del Tema 102."
+      "notes": "Cierre del tema 102. Repasa el checklist y los tres tipos de invitado, que es lo que más se falla."
     }
   ]
 }

@@ -138,9 +138,28 @@
               "-C, --audit",
               "Auditar paquetes rotos",
               "Busca paquetes a medio instalar o con dependencias y configuraciones rotas en el sistema."
+            ],
+            [
+              "--force",
+              "Forzar la operación",
+              "🎯 Ignora la comprobación de dependencias; deja el paquete o el sistema en estado roto: no usar salvo total certeza."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "paragraph",
+          "text": "`dpkg` NO resuelve dependencias: si falta una, deja el paquete desempaquetado pero sin configurar."
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "# ",
+              "command": "dpkg -i openshot-qt_2.4.3+dfsg1-1_all.deb",
+              "output": "dpkg: error processing package openshot-qt (--install):\n dependency problems - leaving unconfigured\nErrors were encountered while processing:\n openshot-qt"
+            }
+          ]
         },
         {
           "type": "html",
@@ -153,7 +172,7 @@
           "content": "🎯 Regla de Examen: 'dpkg -r' conserva configuración en /etc/ (estado rc); 'dpkg -P' destruye ejecutables y configuración (estado un)."
         }
       ],
-      "notes": "Recalca a los alumnos que -i requiere el nombre del archivo terminado en .deb (ej: tree_1.8.deb), mientras que -r y -P requieren el nombre lógico del paquete (ej: tree)."
+      "notes": "Recalca a los alumnos que -i requiere el nombre del archivo terminado en .deb (ej: tree_1.8.deb), mientras que -r y -P requieren el nombre lógico del paquete (ej: tree). Añadido: --force omite la comprobación de dependencias y puede dejar el sistema roto; usarlo solo con total certeza."
     },
     {
       "id": "102.4-slide-4",
@@ -261,8 +280,26 @@
         {
           "type": "code",
           "language": "bash",
-          "code": "",
-          "title": "/etc/apt/sources.list y /etc/apt/sources.list.d/*.list"
+          "title": "/etc/apt/sources.list.d/buster-backports.list (sintaxis T-U-D-C)",
+          "code": "# T-U-D-C: Tipo · URL · Distribución · Componentes\ndeb http://deb.debian.org/debian buster-backports main contrib non-free\ndeb-src http://deb.debian.org/debian buster-backports main contrib non-free"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Distribución",
+            "Componentes"
+          ],
+          "rows": [
+            [
+              "Debian",
+              "main (solo DFSG), contrib (depende de main), non-free, security (parches de seguridad), backports (versiones recientes de main)"
+            ],
+            [
+              "Ubuntu",
+              "main (oficial libre), restricted (oficial cerrado), universe (comunidad), multiverse (no libre o con patentes)"
+            ]
+          ],
+          "caption": "Componentes de repositorio"
         },
         {
           "type": "html",
@@ -275,7 +312,7 @@
           "content": "🎯 Clave de Examen: Para descargar el código fuente con 'apt-get source', debe existir obligatoriamente al menos una línea que comience por 'deb-src' en sources.list."
         }
       ],
-      "notes": "Diferencia claramente los componentes de Debian (main, contrib, non-free, non-free-firmware) de los de Ubuntu (main, restricted, universe, multiverse)."
+      "notes": "Distingue los componentes de Debian (main, contrib, non-free, security, backports) de los de Ubuntu (main, restricted, universe, multiverse). La sintaxis T-U-D-C es Tipo, URL, Distribución y Componentes."
     },
     {
       "id": "102.4-slide-7",
@@ -329,10 +366,18 @@
             [
               "clean / autoclean",
               "Limpiar caché .deb",
-              "🎯 clean borra el 100% de .deb en /var/cache/apt/archives/; autoclean solo paquetes viejos ya no descargables."
+              "🎯 clean vacía /var/cache/apt/archives/ y /var/cache/apt/archives/partial/; autoclean solo borra paquetes viejos ya no descargables."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "Caché local: `/var/cache/apt/archives/` guarda los `.deb` completos y `/var/cache/apt/archives/partial/` los descargados a medias; `apt-get clean` vacía ambos.",
+            "Paquete local: `apt-get install` también puede instalar un paquete Debian ya descargado, resolviendo sus dependencias; `dpkg -i` no las resuelve."
+          ]
         },
         {
           "type": "html",
@@ -582,63 +627,45 @@
     {
       "id": "102.4-slide-14",
       "slideNumber": 14,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: dpkg y Pertenencias)",
+      "title": "Ejercicios guiados del manual (5 casos reales)",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 1: dpkg y Pertenencias)"
+          "text": "Ejercicios guiados del manual (5 casos reales)"
         },
         {
           "type": "list",
-          "ordered": true,
+          "ordered": false,
           "items": [
-            "Caso 1 (Oficial Pág 122): ¿Cuál es el comando exacto para instalar un archivo de paquete binario llamado 'package.deb' usando dpkg? — Comando: `sudo dpkg -i package.deb` (La opción -i (--install) desempaqueta el archivo .deb, verifica pre-dependencias e instala los archivos en sus rutas de destino.)",
-            "Caso 2 (Oficial Pág 122): ¿Qué comando determina qué paquete del sistema instaló el archivo de configuración '/etc/host.conf'? — Comando: `dpkg-query -S /etc/host.conf (o dpkg -S /etc/host.conf)` (El parámetro -S (--search) busca en la base de datos de paquetes instalados (/var/lib/dpkg/info/*.list) el dueño de la ruta indicada (en Debian suele devolver 'base-files: /etc/host.conf').)",
-            "Caso 3 (Oficial Pág 122): Si un administrador ejecuta 'dpkg -r paqueteA' y falla porque 'paqueteB' depende de él, ¿cómo debe proceder? — Comando: `sudo apt-get remove paqueteA (o desinstalar ambos: sudo dpkg -r paqueteB paqueteA)` (dpkg se niega a desinstalar para no dejar dependencias rotas. apt-get remove advertirá al administrador y ofrecerá eliminar simultáneamente paqueteB para mantener la coherencia del sistema.)"
+            "Caso 1 — Instalar el archivo `package.deb` con `dpkg`: `dpkg -i package.deb`.",
+            "Caso 2 — ¿Qué paquete instalado contiene `7zr.1.gz`? `dpkg-query -S 7zr.1.gz`.",
+            "Caso 3 — ¿Se puede quitar `unzip` con `dpkg -r unzip` si `file-roller` depende de él? No: `dpkg` rechaza romper la dependencia. La forma correcta es eliminar ambos: `dpkg -r unzip file-roller`."
           ]
         },
         {
           "type": "callout",
           "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "dpkg garantiza la integridad local rechazando acciones que rompan dependencias, obligando al administrador a usar APT o resolver los conflictos manualmente."
+          "title": "Regla de examen",
+          "content": "`dpkg-query -S` solo busca en paquetes instalados; `apt-file search` consulta también los que no lo están."
         }
       ],
-      "notes": "Haz énfasis en el Caso 2: dpkg-query -S es una de las preguntas más recurrentes en el examen de certificación."
+      "notes": "Los cinco ejercicios guiados del manual (pp. 128-130), con las respuestas de la sección de soluciones (pp. 130-135). Caso 3: la respuesta literal es `dpkg -r unzip file-roller`.",
+      "secondaryBlocks": [
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "Caso 4 — ¿Qué paquete contiene el archivo `/usr/bin/unrar`? `apt-file search /usr/bin/unrar`.",
+            "Caso 5 — ¿Qué comando muestra la información del paquete `gimp`? `apt-cache show gimp`."
+          ]
+        }
+      ]
     },
     {
       "id": "102.4-slide-15",
       "slideNumber": 15,
-      "title": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: apt-file y apt-cache)",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Ejercicios Guiados Oficiales del Manual LPIC-1 (Parte 2: apt-file y apt-cache)"
-        },
-        {
-          "type": "list",
-          "ordered": true,
-          "items": [
-            "Caso 4 (Oficial Pág 122): Necesitas compilar un programa en C y el compilador da error porque falta la cabecera 'stdio.h'. El archivo no está en tu disco. ¿Qué comando te dice qué paquete instalar? — Comando: `apt-file search stdio.h (tras haber ejecutado sudo apt-file update)` (apt-file search consulta la base de datos de archivos de todos los paquetes de los repositorios sin requerir que estén instalados (devolverá 'libc6-dev: /usr/include/stdio.h').)",
-            "Caso 5 (Oficial Pág 122): ¿Qué comando de la familia APT permite ver la descripción completa, dependencias requeridas y tamaño de descarga del paquete 'vim' sin necesidad de instalarlo? — Comando: `apt-cache show vim` (apt-cache show lee la caché local de paquetes y muestra toda la ficha técnica de metadatos proporcionada por el mantenedor en el repositorio.)"
-          ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "apt-file y apt-cache son herramientas complementarias de consulta remota que operan sobre índices descargados sin modificar el sistema de archivos."
-        }
-      ],
-      "notes": "Recuerda que apt-cache show no requiere sudo, lo que permite a cualquier usuario consultar el catálogo de software."
-    },
-    {
-      "id": "102.4-slide-16",
-      "slideNumber": 16,
       "title": "Retos de Exploración Oficiales (sources.list, forzado y dependencias)",
       "layout": "two-column",
       "blocks": [
@@ -669,8 +696,8 @@
       "notes": "El uso de apt-get install -f para reparar instalaciones fallidas con dpkg es una competencia clave del administrador Linux."
     },
     {
-      "id": "102.4-slide-17",
-      "slideNumber": 17,
+      "id": "102.4-slide-16",
+      "slideNumber": 16,
       "title": "Pregunta de Examen LPIC-1: Búsqueda de Archivos No Instalados",
       "layout": "checkpoint",
       "blocks": [
@@ -710,80 +737,8 @@
       "notes": "Pregunta clásica y directa de examen. Si el archivo no está instalado, la única opción válida es apt-file search."
     },
     {
-      "id": "102.4-slide-18",
-      "slideNumber": 18,
-      "title": "Tarjetas Nemotécnicas: Paquetes Debian 102.4",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Tarjetas Nemotécnicas: Paquetes Debian 102.4"
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Concepto",
-            "Significado / Uso"
-          ],
-          "rows": [
-            [
-              "¿Qué diferencia hay entre 'dpkg -r' y 'dpkg -P'?",
-              "-r (remove) conserva los ficheros de configuración; -P (purge) elimina los ejecutables y purga los ficheros de configuración."
-            ],
-            [
-              "¿Qué comando busca qué paquete instalado contiene un archivo determinado?",
-              "dpkg -S /ruta/archivo o dpkg-query -S /ruta/archivo."
-            ],
-            [
-              "¿Qué comando busca qué paquete contiene un archivo que AÚN NO está instalado?",
-              "apt-file search /ruta/archivo (tras ejecutar apt-file update)."
-            ],
-            [
-              "¿Qué comando repara dependencias rotas tras un error con dpkg?",
-              "apt-get install -f (o apt-get install --fix-broken)."
-            ],
-            [
-              "¿Qué diferencia existe entre 'apt-get upgrade' y 'apt-get dist-upgrade'?",
-              "upgrade nunca elimina paquetes preexistentes; dist-upgrade puede desinstalar paquetes para resolver dependencias complejas."
-            ],
-            [
-              "¿Dónde almacena APT los archivos .deb descargados en disco?",
-              "En el directorio /var/cache/apt/archives/ (se vacía con apt-get clean)."
-            ],
-            [
-              "¿En qué archivo de texto se registra el estado de todos los paquetes instalados por dpkg?",
-              "En /var/lib/dpkg/status."
-            ],
-            [
-              "¿Qué comando relanza el asistente interactivo de configuración de un paquete?",
-              "dpkg-reconfigure <nombre_paquete>."
-            ],
-            [
-              "¿Qué comando de dpkg vuelca las selecciones actuales de paquetes?",
-              "dpkg --get-selections (se restaura con dpkg --set-selections)."
-            ],
-            [
-              "¿Qué significan las siglas DFSG en el ecosistema Debian?",
-              "Debian Free Software Guidelines (Directrices de Software Libre de Debian), criterio de evaluación del componente 'main'."
-            ],
-            [
-              "¿Qué herramienta interactiva ncurses se utiliza para gestionar paquetes Debian?",
-              "aptitude."
-            ],
-            [
-              "¿Dónde se suelen alojar los repositorios adicionales como backports?",
-              "En archivos modulares dentro de /etc/apt/sources.list.d/ (ej: buster-backports.list)."
-            ]
-          ],
-          "caption": "Tarjetas de memorización"
-        }
-      ],
-      "notes": "Repasa estas 8 tarjetas para asegurar el 100% de aciertos en las preguntas de Debian en el examen."
-    },
-    {
-      "id": "102.4-slide-19",
-      "slideNumber": 19,
+      "id": "102.4-slide-17",
+      "slideNumber": 17,
       "title": "Resumen y Claves de Examen: Subtema 102.4",
       "layout": "summary",
       "blocks": [
@@ -834,6 +789,10 @@
             [
               "apt-cache vs apt-file",
               "apt-cache busca en metadatos del repo. apt-file busca archivos dentro de paquetes aún no instalados."
+            ],
+            [
+              "apt, apt-get y apt-cache",
+              "`apt` es más amigable, pero puede no estar instalado: usa `apt-get` y `apt-cache`."
             ],
             [
               "aptitude",

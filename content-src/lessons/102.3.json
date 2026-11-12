@@ -15,10 +15,12 @@
     "librería estática",
     "soname",
     "/etc/ld.so.conf",
+    "/etc/ld.so.conf.d",
     "/etc/ld.so.cache",
     "LD_LIBRARY_PATH",
     "enlazador dinámico (ld.so)",
     "NEEDED",
+    "SONAME",
     "ELF",
     "readelf"
   ],
@@ -27,7 +29,9 @@
     "ldconfig",
     "objdump",
     "readelf",
-    "file"
+    "file",
+    "export",
+    "unset"
   ],
   "placeholder": false,
   "slides": [
@@ -366,149 +370,138 @@
     {
       "id": "102.3-slide-13",
       "slideNumber": 13,
-      "title": "Ejercicios Guiados Oficiales (Parte 1: sonames y ldconfig)",
-      "layout": "two-column",
+      "title": "Ejercicios guiados: sonames, ruta no estándar y dependencias",
+      "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales (Parte 1: sonames y ldconfig)"
+          "text": "Ejercicios guiados: sonames, ruta no estándar y dependencias"
+        },
+        {
+          "type": "paragraph",
+          "text": "Los ejercicios del manual piden tres cosas concretas: descomponer un soname, registrar un directorio nuevo y listar las dependencias de un binario."
         },
         {
           "type": "list",
           "ordered": true,
           "items": [
-            "Caso 1: En disco existe el archivo 'libpng16.so.16.37.0'. ¿Cuál es su soname y cuál su linker name? — Comando: `soname: libpng16.so.16 ; Linker name: libpng16.so` (El soname conserva la versión mayor (16) para compatibilidad de ejecutables compilados; el linker name no lleva números para gcc.)",
-            "Caso 2: Has instalado una base de datos en /opt/bd/lib. ¿Qué dos pasos son obligatorios para que el sistema encuentre sus librerías? — Comando: `1. Crear /etc/ld.so.conf.d/bd.conf con la línea '/opt/bd/lib' ; 2. Ejecutar 'sudo ldconfig'` (ldconfig debe leer el nuevo archivo de configuración y actualizar la caché binaria /etc/ld.so.cache.)"
+            "**Caso 1 — partes de un soname.** Separa nombre, sufijo `so` y número de versión en `libc.so.6` y en `ld-linux-x86-64.so.2` (respuestas en la tabla).",
+            "**Caso 2 — directorio `/opt/lib/mylib`.** Escribe su ruta absoluta en un archivo `/etc/ld.so.conf.d/mylib.conf` y ejecuta `sudo ldconfig` para que el cambio sea efectivo.",
+            "**Caso 3 — dependencias de `kill`.** `ldd /bin/kill` lista sus bibliotecas compartidas; `objdump -p /bin/kill | grep NEEDED` muestra las mismas etiquetas sin ejecutar el binario."
           ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "Sin ejecutar ldconfig, el enlazador dinámico jamás consultará la nueva ruta en /opt."
         },
         {
           "type": "table",
           "headers": [
-            "Biblioteca (Archivo / Enlace)",
-            "Nombre Base",
+            "Biblioteca",
+            "Nombre",
             "Sufijo",
-            "Versión (Mayor / soname)"
+            "Versión (soname)"
           ],
           "rows": [
             [
               "linux-vdso.so.1",
               "linux-vdso",
-              ".so",
-              "1 (Virtual DSO del kernel)"
+              "so",
+              "1"
             ],
             [
               "libprocps.so.6",
               "libprocps",
-              ".so",
+              "so",
               "6"
             ],
             [
               "libdl.so.2",
               "libdl",
-              ".so",
-              "2 (Dynamic Linking Library)"
+              "so",
+              "2"
             ],
             [
               "libc.so.6",
               "libc",
-              ".so",
-              "6 (GNU C Library central)"
+              "so",
+              "6"
             ],
             [
               "libsystemd.so.0",
               "libsystemd",
-              ".so",
+              "so",
               "0"
             ],
             [
               "ld-linux-x86-64.so.2",
               "ld-linux-x86-64",
-              ".so",
-              "2 (Enlazador dinámico)"
+              "so",
+              "2"
             ]
           ],
-          "caption": "Ejercicio Guiado 1 LPI: Descomposición oficial de componentes de nombres de bibliotecas compartidas"
+          "caption": "Ejercicio guiado 1 del manual: nombre, sufijo y número de versión"
+        },
+        {
+          "type": "callout",
+          "calloutType": "tip",
+          "title": "Por qué falla el Caso 2",
+          "content": "Escribir la ruta en `.conf` no basta: hay que ejecutar `sudo ldconfig`, que es quien lee los archivos, crea los enlaces y regenera `/etc/ld.so.cache`. Necesita `root` o `sudo` porque el archivo de caché pertenece a root."
         }
       ],
-      "notes": "Enfatiza el paso 2: en el 80% de los errores reales de administración, la gente se olvida de ejecutar ldconfig."
+      "notes": "Insistir en que sin ldconfig el enlazador dinámico no ve la ruta nueva. La tabla es la respuesta literal del ejercicio 1 del manual; los casos 3 y 4 del borrador anterior se resumen aquí porque ldd y objdump ya tienen slide propia."
     },
     {
       "id": "102.3-slide-14",
       "slideNumber": 14,
-      "title": "Ejercicios Guiados Oficiales (Parte 2: ldd y objdump)",
-      "layout": "two-column",
+      "title": "Resumen y claves de examen: 102.3",
+      "layout": "summary",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicios Guiados Oficiales (Parte 2: ldd y objdump)"
+          "text": "Resumen y claves de examen: 102.3"
         },
         {
-          "type": "list",
-          "ordered": true,
-          "items": [
-            "Caso 3: ¿Qué comando te muestra todas las librerías compartidas de las que depende el comando /bin/kill? — Comando: `ldd /bin/kill` (ldd invoca al enlazador dinámico simulando la carga e imprime la lista de librerías y rutas resueltas.)",
-            "Caso 4: Averiguar qué librerías necesita un binario inspeccionando exclusivamente sus cabeceras ELF sin ejecutarlo. — Comando: `objdump -p /bin/kill | grep NEEDED  (o readelf -d /bin/kill)` (objdump -p extrae directamente las etiquetas NEEDED almacenadas en la sección dinámica del binario ELF.)"
-          ]
+          "type": "paragraph",
+          "text": "Seis ideas cubren el objetivo: formato de la biblioteca, soname, ubicaciones, configuración, diagnóstico y variable temporal."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Concepto",
+            "Qué hay que recordar"
+          ],
+          "rows": [
+            [
+              "Estáticas (`.a`) y compartidas (`.so`)",
+              "La estática copia el código al enlazar y no deja dependencia en ejecución (binario más pesado). La compartida se referencia y se carga una sola vez en memoria para varios programas."
+            ],
+            [
+              "soname",
+              "`lib<nombre>.so.<versión mayor>`: `libpthread.so.0`, `libc.so.6`. Ese nombre general es un enlace simbólico al archivo real con la versión exacta (`libc.so.6 -> libc-2.24.so`)."
+            ],
+            [
+              "Ubicaciones y ejemplos",
+              "`/lib`, `/lib32`, `/lib64`, `/usr/lib`, `/usr/local/lib`. Ejemplos del manual: `glibc` (`libc.so.6`), `libreadline`, `libcrypt` y `libcurl`."
+            ],
+            [
+              "`/etc/ld.so.conf` y `.d/*.conf` + `ldconfig`",
+              "Los `.conf` llevan rutas absolutas y el principal suele contener solo `include /etc/ld.so.conf.d/*.conf`. `ldconfig` crea los enlaces de soname y regenera `/etc/ld.so.cache` (requiere `sudo`); `-p` imprime la caché y `-v` detalla directorios y enlaces."
+            ],
+            [
+              "Diagnóstico",
+              "`ldd /ruta` muestra las bibliotecas y su ruta (`-u` añade las no usadas); `objdump -p` y `readelf -d` leen `NEEDED` y `SONAME` sin ejecutar el binario."
+            ],
+            [
+              "`LD_LIBRARY_PATH`",
+              "Directorios separados por `:`; `export` la pasa a los procesos hijos, `unset` la elimina y es permanente en `/etc/bash.bashrc` o `~/.bashrc`."
+            ]
+          ],
+          "caption": "Matriz maestra de librerías compartidas LPIC-1"
         },
         {
           "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Ejercicio",
-          "content": "ldd es la herramienta estándar rápida; objdump -p es la herramienta forense segura para binarios sospechosos."
-        }
-      ],
-      "notes": "Muestra que ldd puede llegar a ejecutar código del binario en ciertas condiciones; objdump es puramente estático."
-    },
-    {
-      "id": "102.3-slide-15",
-      "slideNumber": 15,
-      "title": "Retos de Exploración del Manual Oficial",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Retos de Exploración del Manual Oficial"
-        },
-        {
-          "type": "callout",
-          "calloutType": "warning",
-          "title": "Escenario del Desafío",
-          "content": "Resuelve estos 4 retos de examen planteados en el manual oficial LPIC-1 (Página 115):\n1. Un programa devuelve 'error while loading shared libraries: libcrypto.so.1.1: cannot open shared object file: No such file or directory'. ¿Qué 3 comprobaciones debes realizar?\n2. ¿Por qué la variable LD_LIBRARY_PATH no funciona al ejecutar comandos como 'sudo' o 'passwd'?\n3. ¿Cómo comprobarías si la librería libncurses está registrada actualmente en la caché del sistema sin abrir ningún archivo?\n4. Si actualizas glibc a una versión menor más moderna, ¿es necesario recompilar todos los programas del sistema?"
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Pista",
-          "content": "Recuerda: find/locate de la librería; permisos SUID en binarios; comando ldconfig -p; y compatibilidad de versiones menores en sonames."
-        },
-        {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Solución y Explicación del Desafío",
-          "content": "1. Comprobar: a) Si la librería está instalada en disco (find / -name libcrypto.so.1.1); b) Si su ruta está en /etc/ld.so.conf.d/; c) Si se ejecutó ldconfig para actualizar la caché.\n2. Porque sudo y passwd tienen el bit SUID activo: por seguridad, el cargador ld.so ignora LD_LIBRARY_PATH para evitar que un atacante inyecte una librería falsa y obtenga root.\n3. Con el comando: ldconfig -p | grep libncurses.\n4. NO, porque las actualizaciones de versión menor respetan la compatibilidad binaria hacia atrás (mismo soname libc.so.6)."
-        }
-      ],
-      "notes": "Preguntas directas de examen. La restricción de SUID en LD_LIBRARY_PATH es un clásico de seguridad."
-    },
-    {
-      "id": "102.3-slide-16",
-      "slideNumber": 16,
-      "title": "Pregunta de Examen LPIC-1: ldconfig y Caché",
-      "layout": "checkpoint",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Pregunta de Examen LPIC-1: ldconfig y Caché"
+          "calloutType": "exam",
+          "title": "Checklist definitivo LPIC-1 102.3",
+          "content": "1. Añadir la ruta en `/etc/ld.so.conf.d/` y ejecutar `sudo ldconfig`. 2. `ldd -u` para las dependencias vinculadas pero no usadas. 3. `objdump -p` (`--private-headers`) para `NEEDED` y `SONAME` sin ejecutar código. 4. La caché solo se actualiza con `ldconfig`: editar `.conf` no basta."
         },
         {
           "type": "quiz-inline",
@@ -536,20 +529,6 @@
             "a"
           ],
           "explanation": "ldconfig -p (--print-cache) imprime el contenido de /etc/ld.so.cache formateado en texto. cat no sirve porque el archivo es binario; ldd no tiene opción --cache; y -c en ldconfig se usa para especificar un archivo de configuración alternativo."
-        }
-      ],
-      "notes": "Pregunta clásica. Recuerda: ldconfig -p (Print cache)."
-    },
-    {
-      "id": "102.3-slide-17",
-      "slideNumber": 17,
-      "title": "Pregunta de Examen LPIC-1: Variables de Entorno de Librerías",
-      "layout": "checkpoint",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Pregunta de Examen LPIC-1: Variables de Entorno de Librerías"
         },
         {
           "type": "quiz-inline",
@@ -579,141 +558,7 @@
           "explanation": "LD_LIBRARY_PATH es la variable de entorno estándar reconocida por ld.so en Linux. LIBPATH se utiliza en AIX, mientras que las otras son nombres inventados."
         }
       ],
-      "notes": "Pregunta fija de examen. Memorizar el nombre exacto: LD_LIBRARY_PATH."
-    },
-    {
-      "id": "102.3-slide-18",
-      "slideNumber": 18,
-      "title": "Tarjetas de Memorización: Librerías Compartidas (102.3)",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Tarjetas de Memorización: Librerías Compartidas (102.3)"
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Concepto",
-            "Significado / Uso"
-          ],
-          "rows": [
-            [
-              "¿Qué extensión tienen las librerías estáticas y cuál las compartidas?",
-              "Estáticas: .a (archive). Compartidas / dinámicas: .so (shared object)."
-            ],
-            [
-              "¿Qué archivo binario consulta ld.so para localizar rápidamente las librerías?",
-              "/etc/ld.so.cache (generado por ldconfig)."
-            ],
-            [
-              "¿En qué archivo o directorio se añaden rutas permanentes de librerías?",
-              "En /etc/ld.so.conf y en archivos .conf dentro de /etc/ld.so.conf.d/."
-            ],
-            [
-              "¿Qué comando actualiza /etc/ld.so.cache tras modificar /etc/ld.so.conf?",
-              "sudo ldconfig"
-            ],
-            [
-              "¿Qué hace el comando 'ldconfig -p'?",
-              "Imprime en pantalla la lista de librerías indexadas en /etc/ld.so.cache."
-            ],
-            [
-              "¿Qué comando analiza las librerías compartidas requeridas por un ejecutable?",
-              "ldd /ruta/al/binario"
-            ],
-            [
-              "¿Qué variable define rutas de librerías temporales para la sesión actual?",
-              "LD_LIBRARY_PATH"
-            ],
-            [
-              "¿Por qué LD_LIBRARY_PATH es ignorada en ejecutables SUID?",
-              "Por seguridad, para impedir que un usuario inyecte código malicioso y obtenga privilegios de root."
-            ],
-            [
-              "¿Qué opción de ldd detecta librerías enlazadas pero no usadas?",
-              "ldd -u (o ldd --unused)."
-            ],
-            [
-              "¿Cuál es la forma larga de la opción -p en objdump?",
-              "objdump --private-headers (vuelca cabeceras privadas ELF como NEEDED y SONAME)."
-            ],
-            [
-              "¿En qué archivos se puede persistir la variable LD_LIBRARY_PATH?",
-              "~/.bashrc (usuario) o /etc/bash.bashrc (global de sistema)."
-            ],
-            [
-              "¿Cuál es la versión del soname en libc.so.6?",
-              "Versión mayor 6 (indica compatibilidad binaria ABI con ejecutables compilados)."
-            ]
-          ],
-          "caption": "Tarjetas de memorización"
-        }
-      ],
-      "notes": "Repasa estas 8 tarjetas para asegurar el pleno dominio de los conceptos de librerías."
-    },
-    {
-      "id": "102.3-slide-19",
-      "slideNumber": 19,
-      "title": "Resumen y Claves de Examen: Subtema 102.3",
-      "layout": "summary",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Resumen y Claves de Examen: Subtema 102.3"
-        },
-        {
-          "type": "paragraph",
-          "text": "Puntos clave de gestión de librerías compartidas en Linux para LPIC-1:"
-        },
-        {
-          "type": "table",
-          "headers": [
-            "Herramienta / Archivo",
-            "Propósito y Comportamiento Oficial LPI"
-          ],
-          "rows": [
-            [
-              "ldd <binario>",
-              "Simula ejecución con ld.so y lista dependencias resueltas en disco. Opción -u / --unused lista dependencias no usadas."
-            ],
-            [
-              "objdump -p / --private-headers",
-              "Inspección estática 100% segura sin ejecutar código. Filtra NEEDED (librerías que requiere) y SONAME (DNI de librería)."
-            ],
-            [
-              "readelf -d <binario>",
-              "Comando hermano en LPIC-1 para leer la sección dinámica ELF (filtra NEEDED y SONAME)."
-            ],
-            [
-              "/etc/ld.so.conf y .d/*.conf",
-              "Configuración permanente de rutas no estándar de librerías (ej: /opt/app/lib)."
-            ],
-            [
-              "ldconfig",
-              "Lee ld.so.conf, crea enlaces simbólicos de soname y regenera la caché binaria ultrarrápida /etc/ld.so.cache. Opción -p muestra la caché actual."
-            ],
-            [
-              "LD_LIBRARY_PATH",
-              "Variable de entorno prioritaria para pruebas. Ignorada por seguridad en binarios con bit SUID/SGID. Persistible en ~/.bashrc o /etc/bash.bashrc."
-            ],
-            [
-              "Convención de soname",
-              "lib<nombre>.so.<version_mayor> (garantiza compatibilidad de binarios frente a cambios menores de librería)."
-            ]
-          ],
-          "caption": "Matriz maestra de librerías compartidas LPIC-1"
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Checklist Definitivo LPIC-1 102.3",
-          "content": "1. Añadir ruta en /etc/ld.so.conf.d/ y ejecutar 'sudo ldconfig' obligatoriamente. 2. 'ldd -u' para dependencias no usadas. 3. 'objdump -p' (o --private-headers) para NEEDED/SONAME seguro sin correr código. 4. LD_LIBRARY_PATH no funciona con programas SUID."
-        }
-      ],
-      "notes": "Finalizamos el subtema 102.3. Un subtema corto pero con preguntas muy directas que no se deben fallar."
+      "notes": "Resumen regenerado con hechos del manual: ubicaciones (incluidas /lib32 y /lib64), ejemplos de bibliotecas, opciones -p/-v de ldconfig, formato de LD_LIBRARY_PATH con ':' y export/unset. Los dos quiz del borrador anterior se conservan aquí como quiz-inline."
     }
   ]
 }
