@@ -89,8 +89,6 @@
       "notes": "X11 nació en el MIT (Proyecto Athena, 1984). Es modular y separa completamente la visualización del cálculo."
     },
     {
-      "id": "106.1-slide-3",
-      "slideNumber": 3,
       "title": "La Variable de Entorno $DISPLAY",
       "layout": "content",
       "blocks": [
@@ -104,13 +102,43 @@
           "text": "¿Cómo sabe un programa gráfico en qué pantalla, máquina o sesión debe abrirse?"
         },
         {
+          "type": "code",
+          "language": "bash",
+          "title": "Asignar DISPLAY a un comando concreto",
+          "code": "$ echo $DISPLAY\n:0\n$ DISPLAY=:0.1 firefox &"
+        },
+        {
+          "type": "paragraph",
+          "text": "También se elige la pantalla sin tocar la variable: muchas aplicaciones aceptan `--screen` y `--display`, documentadas en `gtk-options(7)`."
+        },
+        {
           "type": "table",
-          "headers": ["Formato de DISPLAY", "Tipo de Conexión", "Significado Técnico"],
+          "headers": [
+            "Formato de DISPLAY",
+            "Tipo de Conexión",
+            "Significado Técnico"
+          ],
           "rows": [
-            [":0 o :0.0", "Local (Socket UNIX)", "Servidor X local en la máquina actual (archivo de socket /tmp/.X11-unix/X0)."],
-            ["localhost:10.0", "Túnel SSH seguro", "Reenvío X11 creado por 'ssh -X' o 'ssh -Y' en el puerto TCP 6010."],
-            ["servidor.remoto:0", "Red TCP directa", "Pantalla 0 del host remoto escuchando en el puerto TCP 6000."],
-            ["lab01:0.2", "Multi-monitor", "Tercera pantalla (pantalla 2) asociada a la tarjeta/display 0 del host lab01."]
+            [
+              ":0 o :0.0",
+              "Local (Socket UNIX)",
+              "Servidor X local en la máquina actual (archivo de socket /tmp/.X11-unix/X0)."
+            ],
+            [
+              "localhost:10.0",
+              "Túnel SSH seguro",
+              "Reenvío X11 creado por 'ssh -X' o 'ssh -Y' en el puerto TCP 6010."
+            ],
+            [
+              "servidor.remoto:0",
+              "Red TCP directa",
+              "Pantalla 0 del host remoto escuchando en el puerto TCP 6000."
+            ],
+            [
+              "lab01:0.2",
+              "Multi-monitor",
+              "Tercera pantalla (pantalla 2) asociada a la tarjeta/display 0 del host lab01."
+            ]
           ],
           "caption": "Sintaxis canónica [hostname]:displaynumber[.screennumber]"
         },
@@ -121,7 +149,9 @@
           "content": "🎯 Formato Canónico LPI: '[hostname]:displaynumber[.screennumber]'. Si hostname se omite (ej. ':0' o ':0.0'), la conexión se realiza por socket local UNIX."
         }
       ],
-      "notes": "Detalla la anatomía de la variable DISPLAY: hostname, display number y screen number opcional."
+      "notes": "Anatomía de DISPLAY (hostname, display number y screen number opcional) más el ejemplo del manual: DISPLAY=:0.1 firefox &.",
+      "id": "106.1-slide-3",
+      "slideNumber": 3
     },
     {
       "id": "106.1-slide-4",
@@ -184,8 +214,6 @@
       "notes": "Muestra la resolución dpi, profundidad en bits (24 planes) y extensiones como XINERAMA, RANDR o GLX."
     },
     {
-      "id": "106.1-slide-5",
-      "slideNumber": 5,
       "title": "Estructura Clásica del Archivo /etc/X11/xorg.conf",
       "layout": "diagram",
       "blocks": [
@@ -203,17 +231,21 @@
           "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🧩 Las 7 Secciones Fundamentales de xorg.conf</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Section ... EndSection</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:11px;\">\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#0F172A; display:block; margin-bottom:2px;\">1. Device</strong>\n      <div style=\"color:#475569; line-height:1.35;\">Tarjeta gráfica física, driver del kernel (i915, nvidia, amdgpu) y BusID PCI.</div>\n    </div>\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#0F172A; display:block; margin-bottom:2px;\">2. Monitor</strong>\n      <div style=\"color:#475569; line-height:1.35;\">Propiedades de la pantalla, frecuencias de sincronización horizontal y vertical.</div>\n    </div>\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#1E40AF; display:block; margin-bottom:2px;\">3. Screen</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35;\"><strong>Unión lógica:</strong> asocia un Device con un Monitor, definiendo resolución y profundidad.</div>\n    </div>\n    <div style=\"background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#0F172A; display:block; margin-bottom:2px;\">4. InputDevice</strong>\n      <div style=\"color:#475569; line-height:1.35;\">Hardware de entrada específico (teclado, ratón PS/2 o USB concreto).</div>\n    </div>\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#1E40AF; display:block; margin-bottom:2px;\">5. ServerLayout</strong>\n      <div style=\"color:#1E3A8A; line-height:1.35;\"><strong>Coordinador maestro:</strong> agrupa qué Screen y qué InputDevices forman la sesión.</div>\n    </div>\n    <div style=\"background:#FEF3C7; border:1px solid #FCD34D; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#92400E; display:block; margin-bottom:2px;\">6. ServerFlags</strong>\n      <div style=\"color:#78350F; line-height:1.35;\">Opciones globales del servidor (ej. <code>DontVTSwitch</code> en kioscos para bloquear Ctrl+Alt+F1..F6).</div>\n    </div>\n  </div>\n</div>\n"
         },
         {
+          "type": "paragraph",
+          "text": "En distribuciones modernas Xorg se autoconfigura en tiempo de ejecución: `/etc/X11/xorg.conf` puede no existir y las secciones ausentes las suple el servidor en ejecución con valores por defecto. La séptima sección del esquema es `InputClass`, que agrupa clases de dispositivos (teclados, ratones) en lugar de un componente concreto."
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: La sección 'Screen' vincula un dispositivo de vídeo ('Device') con un monitor ('Monitor'). La sección 'ServerLayout' agrupa pantallas y dispositivos de entrada. En 'ServerFlags' la opción 'DontVTSwitch' bloquea el cambio a TTY."
         }
       ],
-      "notes": "Cada bloque inicia con 'Section \"Nombre\"' y finaliza obligatoriamente con 'EndSection'."
+      "notes": "Cada bloque inicia con 'Section \"Nombre\"' y finaliza obligatoriamente con 'EndSection'. Xorg moderno se autoconfigura: xorg.conf es opcional.",
+      "id": "106.1-slide-5",
+      "slideNumber": 5
     },
     {
-      "id": "106.1-slide-6",
-      "slideNumber": 6,
       "title": "Configuración Modular Moderna: /etc/X11/xorg.conf.d/",
       "layout": "content",
       "blocks": [
@@ -233,17 +265,21 @@
           "title": "Ejemplo de configuración modular por componentes"
         },
         {
+          "type": "paragraph",
+          "text": "Orden de lectura: los archivos de `/etc/X11/xorg.conf.d/` se analizan **antes** que `/etc/X11/xorg.conf` si existe; los de `/usr/share/X11/xorg.conf.d/` son los que aporta la distribución."
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: Para configurar un dispositivo nuevo (como un ratón de 10 botones o un kiosco) sin romper el sistema, se crea un archivo '.conf' en '/etc/X11/xorg.conf.d/' con una sección 'InputClass' o 'ServerFlags'."
         }
       ],
-      "notes": "Los archivos en /etc/X11/xorg.conf.d/ tienen prioridad sobre los predeterminados de la distribución en /usr/share/X11/xorg.conf.d/."
+      "notes": "Los archivos en /etc/X11/xorg.conf.d/ tienen prioridad y se leen antes que /etc/X11/xorg.conf; los de /usr/share/X11/xorg.conf.d/ son de la distribución.",
+      "id": "106.1-slide-6",
+      "slideNumber": 6
     },
     {
-      "id": "106.1-slide-7",
-      "slideNumber": 7,
       "title": "Generación Automática con Xorg -configure y Archivos de Log",
       "layout": "content",
       "blocks": [
@@ -277,7 +313,12 @@
             [
               "Xorg -configure (o X -configure)",
               "Autogenerador de plantilla",
-              "Sondea el hardware gráfico y genera un archivo de prueba /root/xorg.conf.new para validar."
+              "Sondea el hardware gráfico y genera `xorg.conf.new` en el directorio de trabajo actual (p. ej. `/root/xorg.conf.new`); después se mueve a `/etc/X11/xorg.conf`."
+            ],
+            [
+              "sudo Xorg :1 -configure",
+              "Generación con sesión X activa",
+              "Si ya hay una sesión X en ejecución, hay que indicar otro display (:1) para crear la plantilla."
             ],
             [
               "/var/log/Xorg.0.log",
@@ -296,14 +337,14 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave LPIC-1: 'Xorg -configure' crea una plantilla '/root/xorg.conf.new'. Los errores del servidor X se guardan en '/var/log/Xorg.0.log' y los de sesión de usuario en '~/.xsession-errors'."
+          "content": "🎯 Clave LPIC-1: 'Xorg -configure' crea la plantilla 'xorg.conf.new' en el directorio de trabajo actual; con una sesión X activa se usa 'sudo Xorg :1 -configure'. Errores del servidor en '/var/log/Xorg.0.log' y de sesión en '~/.xsession-errors'."
         }
       ],
-      "notes": "El comando X es un enlace simbólico a Xorg."
+      "notes": "El comando X es un enlace simbólico a Xorg. La plantilla nace como xorg.conf.new en el directorio actual y se mueve a /etc/X11/xorg.conf.",
+      "id": "106.1-slide-7",
+      "slideNumber": 7
     },
     {
-      "id": "106.1-slide-8",
-      "slideNumber": 8,
       "title": "Configuración del Teclado: setxkbmap, localectl y XKB",
       "layout": "content",
       "blocks": [
@@ -327,7 +368,7 @@
             [
               "setxkbmap -layout es",
               "Distribución en vivo",
-              "Aplica inmediatamente la disposición de teclado en la sesión gráfica activa (cambio en RAM)."
+              "Aplica la disposición en la sesión X activa; solo dura mientras esa sesión esté en uso."
             ],
             [
               "setxkbmap -model chromebook -layout 'gr(polytonic)'",
@@ -340,6 +381,11 @@
               "Escribe en /etc/X11/xorg.conf.d/00-keyboard.conf SIN alterar la consola virtual VC Keymap."
             ],
             [
+              "/etc/X11/xorg.conf.d/00-keyboard.conf",
+              "Persistencia real (XkbLayout)",
+              "Archivo que crea localectl; en su sección `InputClass` usa `XkbLayout` (disposición) y `XkbModel` (tipo de teclado)."
+            ],
+            [
               "localectl status",
               "Estado del Locale y teclado",
               "Muestra System Locale, VC Keymap de consola y X11 Layout/Model configurados."
@@ -347,7 +393,7 @@
             [
               "/usr/share/X11/xkb",
               "Ruta de definiciones XKB",
-              "Directorio del sistema donde se ubican las descripciones, tipos, geometrías y símbolos de XKB."
+              "Descripciones, tipos, geometrías y símbolos de XKB; la tabla de modelos está en `xkeyboard-config(7)`."
             ]
           ],
           "caption": "Comandos, flags y rutas de configuración de teclado X11"
@@ -359,7 +405,9 @@
           "content": "🎯 Clave de Examen: 'setxkbmap' cambia el teclado temporalmente en la sesión activa. 'localectl' modifica la configuración persistente. El modificador '--no-convert' impide que localectl altere el mapa de la consola virtual (VC Keymap)."
         }
       ],
-      "notes": "localectl forma parte de systemd y gestiona tanto la consola de texto como X11."
+      "notes": "localectl forma parte de systemd y gestiona tanto la consola de texto como X11. Persistencia en 00-keyboard.conf con XkbLayout y XkbModel.",
+      "id": "106.1-slide-8",
+      "slideNumber": 8
     },
     {
       "id": "106.1-slide-9",
@@ -497,8 +545,6 @@
       "notes": "Si borras ~/.Xauthority o se corrompen las cookies, las aplicaciones gráficas fallarán con 'Authorization required, but no authorization protocol specified'."
     },
     {
-      "id": "106.1-slide-11",
-      "slideNumber": 11,
       "title": "La Transición Gráfica: X11 frente a Wayland",
       "layout": "diagram",
       "blocks": [
@@ -516,13 +562,19 @@
           "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚖️ Comparativa Arquitectónica: Xorg clásico frente a Wayland moderno</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Evolución Linux</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:11.5px;\">\n    <!-- Xorg Clásico -->\n    <div style=\"background:#F8FAFC; border:1.5px solid #CBD5E1; border-radius:8px; padding:10px 12px;\">\n      <strong style=\"color:#0F172A; font-size:12px; display:block; margin-bottom:4px;\">1. Sistema X Window (X11 / Xorg)</strong>\n      <div style=\"color:#475569; line-height:1.4;\">\n        • <strong>Variable:</strong> <code>DISPLAY=:0</code><br>\n        • <strong>Modelo:</strong> Intermediario central (X Server) entre cliente y hardware.<br>\n        • <strong>Ventana:</strong> Gestionada por un Window Manager independiente.<br>\n        • <strong>Seguridad:</strong> Débil por diseño (cualquier cliente puede espiar a otros).\n      </div>\n    </div>\n\n    <!-- Wayland Moderno -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #86EFAC; border-radius:8px; padding:10px 12px;\">\n      <strong style=\"color:#166534; font-size:12px; display:block; margin-bottom:4px;\">2. Arquitectura Wayland</strong>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • <strong>Variable:</strong> <code>WAYLAND_DISPLAY=wayland-0</code><br>\n        • <strong>Modelo:</strong> Compositor unificado (Mutter, KWin, Sway).<br>\n        • <strong>Seguridad:</strong> Aislamiento estricto: las apps no pueden capturar ventanas ajenas.<br>\n        • <strong>Compatibilidad:</strong> Ejecuta apps X11 mediante <strong>XWayland</strong>.\n      </div>\n    </div>\n  </div>\n</div>\n"
         },
         {
+          "type": "paragraph",
+          "text": "Sin servidor intermedio: el cliente renderiza con su propio código o un toolkit (**Gtk+** o **Qt**) y habla con el kernel mediante el protocolo Wayland; el **Wayland compositor** gestiona la entrada de dispositivos, las ventanas y la composición. `WAYLAND_DISPLAY` (p. ej. `wayland-0`) no está disponible en sistemas que ejecutan X."
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: X11 usa la variable $DISPLAY. Wayland usa la variable $WAYLAND_DISPLAY (ej. 'wayland-0'). Para ejecutar aplicaciones antiguas de X11 en Wayland se utiliza 'XWayland'."
         }
       ],
-      "notes": "Wayland elimina la sobrecarga del servidor X tradicional haciendo que el Compositor se comunique directamente con el kernel (KMS/evdev)."
+      "notes": "Wayland elimina la sobrecarga del servidor X: el compositor se comunica directamente con el kernel (KMS/evdev). XWayland da compatibilidad con apps X11.",
+      "id": "106.1-slide-11",
+      "slideNumber": 11
     },
     {
       "id": "106.1-slide-12",
@@ -587,36 +639,6 @@
     {
       "id": "106.1-slide-14",
       "slideNumber": 14,
-      "title": "Retos de Exploración: Bloqueo de Kiosco y Sintaxis de $DISPLAY",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Retos de Exploración: Bloqueo de Kiosco y Sintaxis de $DISPLAY"
-        },
-        {
-          "type": "paragraph",
-          "text": "Dos preguntas de exploración práctica tomadas de las páginas 146 y 149 del manual:"
-        },
-        {
-          "type": "code",
-          "language": "text",
-          "code": "# 1. Terminales de kiosco / punto de venta en:\n# /etc/X11/xorg.conf.d/10-kiosk.conf\nSection \"ServerFlags\"\n    Option \"DontVTSwitch\" \"True\"\nEndSection\n# Impide que usuarios salten a consolas TTY con Ctrl+Alt+F1-F6.\n\n# 2. Desglose del valor DISPLAY='lab01:0.2':\n# lab01  -> Nombre del host donde corre el X Server\n# :0     -> Display número 0 (primer servidor X del host)\n# .2     -> Pantalla número 2 (tercera pantalla física / monitor)",
-          "title": "Configuración de Kiosco y análisis de $DISPLAY"
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Claves Técnicas:\n1. 'lab01:0.2' -> Tercera pantalla del display 0 en lab01.\n2. 'Option \"DontVTSwitch\" \"True\"' en Section \"ServerFlags\" (/etc/X11/xorg.conf.d/10-kiosk.conf) impide cambiar a consolas virtuales con Ctrl+Alt+F1-F6."
-        }
-      ],
-      "notes": "Ejercicios de exploración fundamentales para entender la seguridad de terminales de punto de venta y kioscos."
-    },
-    {
-      "id": "106.1-slide-15",
-      "slideNumber": 15,
       "title": "Pregunta de Examen 1: Formato de la Variable $DISPLAY",
       "layout": "checkpoint",
       "blocks": [
@@ -648,8 +670,8 @@
       "notes": "Pregunta clásica de selección múltiple sobre la variable DISPLAY."
     },
     {
-      "id": "106.1-slide-16",
-      "slideNumber": 16,
+      "id": "106.1-slide-15",
+      "slideNumber": 15,
       "title": "Pregunta de Examen 2: Control de Acceso y Seguridad Gráfica",
       "layout": "checkpoint",
       "blocks": [
@@ -681,76 +703,8 @@
       "notes": "Pregunta frecuente de certificación sobre el protocolo de autorización X."
     },
     {
-      "id": "106.1-slide-17",
-      "slideNumber": 17,
-      "title": "Pregunta de Examen 3: Secciones de Configuración en xorg.conf",
-      "layout": "checkpoint",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Pregunta 3: Asociación de Secciones en xorg.conf"
-        },
-        {
-          "type": "paragraph",
-          "text": "¿Qué sección del archivo xorg.conf tiene como responsabilidad vincular una tarjeta gráfica física (Device) con una pantalla (Monitor)?"
-        },
-        {
-          "type": "list",
-          "items": [
-            "A) Section \"ServerLayout\"",
-            "B) Section \"InputDevice\"",
-            "C) Section \"Screen\" (Correcta: 'Screen' asocia un Device con un Monitor, fijando resolución y profundidad)",
-            "D) Section \"ServerFlags\""
-          ]
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave: Section Screen vincula Device (GPU) y Monitor. ServerLayout reúne Screens e InputDevices."
-        }
-      ],
-      "notes": "Pregunta sobre la estructura modular de secciones de Xorg."
-    },
-    {
-      "id": "106.1-slide-18",
-      "slideNumber": 18,
-      "title": "Baraja de Memorización: 8 Conceptos Clave de X11",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "8 Tarjetas Mnemotécnicas Indispensables de X11"
-        },
-        {
-          "type": "table",
-          "headers": ["Concepto", "Comando / Archivo / Sintaxis", "Regla de Certificación LPIC-1"],
-          "rows": [
-            ["Servidor X local", "Xorg (o X)", "Corre en la máquina del usuario; controla teclado, ratón y dibuja ventanas."],
-            ["Extensiones Xorg", "xdpyinfo", "Comando CLI para inspeccionar dimensiones, profundidad y extensiones activas."],
-            ["Sección Screen", "xorg.conf", "Vincula lógicamente una tarjeta gráfica ('Device') con un monitor ('Monitor')."],
-            ["Modular xorg.conf.d", "/etc/X11/xorg.conf.d/", "Directorio moderno para añadir clases de hardware sin tocar xorg.conf."],
-            ["Teclado X11 y consola", "localectl --no-convert", "Cambia el mapa de teclado X11 persistente sin alterar la consola virtual."],
-            ["Definiciones XKB", "/usr/share/X11/xkb", "Ubicación del sistema de mapas, geometrías y símbolos del teclado X11."],
-            ["Peligro xhost +", "xhost + / xhost -", "'xhost +' desactiva todo control de acceso permitiendo espiar la pantalla."],
-            ["Cookies seguras", "xauth y ~/.Xauthority", "Almacena MIT-MAGIC-COOKIE-1 (permisos 600) para reenvío gráfico seguro."]
-          ],
-          "caption": "Resumen mnemotécnico para repaso ágil de la baraja 106.1"
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🧠 Pasa cada tarjeta mentalmente antes de voltearla para comprobar tu retención activa."
-        }
-      ],
-      "notes": "8 tarjetas con los conceptos más preguntados de 106.1."
-    },
-    {
-      "id": "106.1-slide-19",
-      "slideNumber": 19,
+      "id": "106.1-slide-16",
+      "slideNumber": 16,
       "title": "Resumen de Unidad 106.1: Sistema X Window (X11)",
       "layout": "summary",
       "blocks": [
