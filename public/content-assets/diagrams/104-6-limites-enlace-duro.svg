@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="limites-title limites-desc">
+  <title id="limites-title">Límites del enlace duro: particiones distintas y directorios (LPIC-1 104.6)</title>
+  <desc id="limites-desc">Cada sistema de archivos mantiene su propia tabla de inodos, de modo que el inodo 1500 de /dev/sda1 no tiene relación con el inodo 1500 de /dev/sdb1: un enlace duro no puede cruzar esa frontera y la orden ln /var/log/syslog /mnt/backup/log falla con Invalid cross-device link. El kernel tampoco permite enlaces duros a directorios, porque crearía ciclos en el árbol que romperían find, du y el propio kernel, y devuelve hard link not allowed for directory. La solución en ambos casos es el enlace simbólico ln -s, que solo almacena la ruta de destino como texto y por eso cruza particiones y apunta a carpetas.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #475569; }
+      .zone { fill: #F8FAFC; stroke: #CBD5E1; stroke-width: 2; stroke-dasharray: 8 6; }
+      .zone-label { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #475569; letter-spacing: 0.08em; }
+      .node-ino { fill: #EFF4FF; stroke: #2550EB; stroke-width: 2; }
+      .node-attempt { fill: #F1F5F9; stroke: #475569; stroke-width: 2; }
+      .node-error { fill: #FFF1F2; stroke: #E11D48; stroke-width: 2; }
+      .band { fill: #ECFDF5; stroke: #059669; stroke-width: 2; }
+      .mono { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 16px; font-weight: 700; fill: #1E36AF; }
+      .mono-cmd { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 15px; font-weight: 700; fill: #0F172A; }
+      .sub { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #475569; }
+      .sub-error { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #881337; }
+      .error-title { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 15px; font-weight: 700; fill: #BE123C; }
+      .band-text { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; font-weight: 500; fill: #065F46; }
+      .edge-rose { fill: none; stroke: #E11D48; stroke-width: 2; stroke-dasharray: 6 4; }
+      .edge-blue { fill: none; stroke: #1D40D8; stroke-width: 2.5; }
+      .label-bg { fill: #FFFFFF; stroke: #CBD5E1; stroke-width: 1; }
+      .label-rose { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #BE123C; text-anchor: middle; }
+      .label-blue { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #1E36AF; text-anchor: middle; }
+      .gutter { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #64748B; letter-spacing: 0.06em; text-anchor: middle; }
+    </style>
+
+    <marker id="limites-arrow-rose" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#E11D48"/>
+    </marker>
+    <marker id="limites-arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#1D40D8"/>
+    </marker>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">104.6 · LÍMITES DEL ENLACE DURO</text>
+    <text class="title" x="40" y="78">Dos barreras que el enlace duro no cruza</text>
+    <text class="subtitle" x="40" y="102">Partición y directorio: dos barreras infranqueables</text>
+  </g>
+
+  <g id="diagram-relations">
+    <path id="limites-rel-duro" class="edge-rose"
+          data-from="node-fs-a" data-to="node-fs-b" data-relation="blocked-cross-device"
+          d="M 390 200 H 570" marker-end="url(#limites-arrow-rose)"/>
+
+    <path id="limites-rel-simbolico" class="edge-blue"
+          data-from="node-fs-a" data-to="node-fs-b" data-relation="allowed-with-path-text"
+          d="M 390 232 H 570" marker-end="url(#limites-arrow-blue)"/>
+
+    <path id="limites-rel-fallo-particion" class="edge-rose"
+          data-from="node-intento-particion" data-to="node-error-particion" data-relation="returns-error"
+          d="M 460 356 H 500" marker-end="url(#limites-arrow-rose)"/>
+
+    <path id="limites-rel-fallo-directorio" class="edge-rose"
+          data-from="node-intento-directorio" data-to="node-error-directorio" data-relation="returns-error"
+          d="M 460 432 H 500" marker-end="url(#limites-arrow-rose)"/>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-fs-a">
+      <rect class="zone" x="40" y="120" width="350" height="180" rx="12"/>
+      <text class="zone-label" x="60" y="144">SISTEMA DE ARCHIVOS /dev/sda1</text>
+      <g id="node-inodo-a">
+        <rect class="node-ino" x="60" y="164" width="310" height="112" rx="10"/>
+        <text class="mono" x="84" y="192">inodo 1500</text>
+        <text class="sub" x="84" y="216">fichero syslog</text>
+        <text class="sub" x="84" y="238">punteros a sus bloques</text>
+      </g>
+    </g>
+
+    <g id="node-fs-b">
+      <rect class="zone" x="570" y="120" width="350" height="180" rx="12"/>
+      <text class="zone-label" x="590" y="144">SISTEMA DE ARCHIVOS /dev/sdb1</text>
+      <g id="node-inodo-b">
+        <rect class="node-ino" x="590" y="164" width="310" height="112" rx="10"/>
+        <text class="mono" x="614" y="192">inodo 1500</text>
+        <text class="sub" x="614" y="216">mismo número, otra tabla</text>
+        <text class="sub" x="614" y="238">sin relación con el anterior</text>
+      </g>
+    </g>
+
+    <g id="node-intento-particion">
+      <rect class="node-attempt" x="40" y="326" width="420" height="60" rx="9"/>
+      <text class="mono-cmd" x="64" y="361">ln /var/log/syslog /mnt/backup/log</text>
+    </g>
+
+    <g id="node-error-particion">
+      <rect class="node-error" x="500" y="326" width="420" height="60" rx="9"/>
+      <text class="error-title" x="524" y="352">Invalid cross-device link</text>
+      <text class="sub-error" x="524" y="372">el enlace duro no cruza particiones</text>
+    </g>
+
+    <g id="node-intento-directorio">
+      <rect class="node-attempt" x="40" y="400" width="420" height="60" rx="9"/>
+      <text class="mono-cmd" x="64" y="435">ln /var/log /home/log</text>
+    </g>
+
+    <g id="node-error-directorio">
+      <rect class="node-error" x="500" y="400" width="420" height="60" rx="9"/>
+      <text class="error-title" x="524" y="426">hard link not allowed for directory</text>
+      <text class="sub-error" x="524" y="446">crearía ciclos en el árbol</text>
+    </g>
+
+    <g id="node-solucion">
+      <rect class="band" x="40" y="472" width="880" height="40" rx="9"/>
+      <text class="band-text" x="64" y="497">La solución universal es ln -s: guarda la ruta como texto y sí cruza discos y carpetas.</text>
+    </g>
+  </g>
+
+  <g id="diagram-labels">
+    <text class="gutter" x="480" y="156">ENLACE DURO</text>
+    <rect class="label-bg" x="395" y="164" width="170" height="24" rx="6"/>
+    <text class="label-rose" x="480" y="181">cross-device link</text>
+    <text class="gutter" x="480" y="222">ENLACE SIMBÓLICO</text>
+    <rect class="label-bg" x="395" y="240" width="170" height="24" rx="6"/>
+    <text class="label-blue" x="480" y="257">ln -s: guarda la ruta</text>
+  </g>
+</svg>
