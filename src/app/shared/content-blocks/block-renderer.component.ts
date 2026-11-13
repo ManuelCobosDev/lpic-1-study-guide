@@ -12,6 +12,7 @@ import { DiagramViewComponent } from '../diagram/diagram-view.component';
 import { QuizInlineBlockComponent } from './quiz-inline-block.component';
 import { SlideHtmlBlockComponent } from './slide-html-block.component';
 import { HtmlBlockComponent } from './html-block.component';
+import { ImageBlockComponent } from './image-block.component';
 import { ListBlockComponent } from './list-block.component';
 import { DiagramSpec } from '../../core/models/diagram.model';
 
@@ -31,6 +32,7 @@ import { DiagramSpec } from '../../core/models/diagram.model';
     QuizInlineBlockComponent,
     SlideHtmlBlockComponent,
     HtmlBlockComponent,
+    ImageBlockComponent,
     ListBlockComponent
   ],
   template: `
@@ -95,6 +97,10 @@ import { DiagramSpec } from '../../core/models/diagram.model';
           [title]="b.title"
         />
       }
+      @case ('image') {
+        @let b = asImage(block());
+        <app-image-block [src]="b.src" [alt]="b.alt" [caption]="b.caption ?? ''" />
+      }
       @case ('html') {
         @let b = asHtml(block());
         <app-html-block [html]="b.sanitizedHtml" />
@@ -127,6 +133,7 @@ export class BlockRendererComponent {
   asQuizInline(b: Block) { return b as Extract<Block, { type: 'quiz-inline' }>; }
   asSlideHtml(b: Block) { return b as Extract<Block, { type: 'slide-html' }>; }
   asHtml(b: Block) { return b as Extract<Block, { type: 'html' }>; }
+  asImage(b: Block) { return b as Extract<Block, { type: 'image' }>; }
   asList(b: Block) { return b as Extract<Block, { type: 'list' }>; }
 
   getCalloutType(type: string): CalloutType {
