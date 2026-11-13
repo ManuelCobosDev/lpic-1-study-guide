@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="ldpath-title ldpath-desc">
+  <title id="ldpath-title">LD_LIBRARY_PATH: cuándo la aplica ld.so y cuándo la ignora (LPIC-1 102.3)</title>
+  <desc id="ldpath-desc">LD_LIBRARY_PATH es una variable de entorno de la sesión que antepone directorios de librerías a la búsqueda del enlazador dinámico. ld.so la aplica y busca en /opt/app_beta/lib antes que en /etc/ld.so.cache, salvo que el ejecutable tenga activo el bit SUID o SGID, como passwd o sudo, caso en el que la ignora por completo para evitar escaladas de privilegios con librerías troyanas. Al terminar la prueba, unset LD_LIBRARY_PATH devuelve la sesión a su estado original.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #475569; }
+      .node-iface { fill: #FFFBEB; stroke: #D97706; stroke-width: 2; }
+      .node-kernel { fill: #ECFDF5; stroke: #059669; stroke-width: 2; }
+      .node-warn { fill: #FFF1F2; stroke: #E11D48; stroke-width: 2; }
+      .band-file { fill: #F1F5F9; stroke: #475569; stroke-width: 2; }
+      .name-mono { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 18px; font-weight: 700; fill: #0F172A; }
+      .name-ok { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 17px; font-weight: 700; fill: #065F46; }
+      .name-warn { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 17px; font-weight: 700; fill: #881337; }
+      .sub { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; font-weight: 400; fill: #475569; }
+      .sub-ok { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; font-weight: 400; fill: #065F46; }
+      .sub-warn { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; font-weight: 400; fill: #881337; }
+      .band-text { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #0F172A; }
+      .band-mono { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 14px; font-weight: 500; fill: #0F172A; }
+      .edge-blue { fill: none; stroke: #1D40D8; stroke-width: 2.5; }
+      .edge-rose { fill: none; stroke: #E11D48; stroke-width: 2; stroke-dasharray: 6 4; }
+    </style>
+
+    <marker id="ldpath-arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#1D40D8"/>
+    </marker>
+    <marker id="ldpath-arrow-rose" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#E11D48"/>
+    </marker>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">LD_LIBRARY_PATH · VARIABLE TEMPORAL</text>
+    <text class="title" x="40" y="78">La variable que se antepone a la caché</text>
+    <text class="subtitle" x="40" y="102">Para pruebas y equipos sin permisos de root</text>
+  </g>
+
+  <g id="diagram-relations">
+    <path id="ldpath-rel-var-loader" class="edge-blue"
+          data-from="node-variable" data-to="node-loader" data-relation="consulta-variable"
+          d="M 300 250 H 380" marker-end="url(#ldpath-arrow-blue)"/>
+
+    <path id="ldpath-rel-loader-aplica" class="edge-blue"
+          data-from="node-loader" data-to="node-aplica" data-relation="aplica-variable"
+          d="M 600 225 H 630 V 186 H 660" marker-end="url(#ldpath-arrow-blue)"/>
+
+    <path id="ldpath-rel-loader-ignora" class="edge-rose"
+          data-from="node-loader" data-to="node-ignora" data-relation="ignora-suid"
+          d="M 600 275 H 630 V 326 H 660" marker-end="url(#ldpath-arrow-rose)"/>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-variable">
+      <rect class="node-iface" x="40" y="200" width="260" height="100" rx="10"/>
+      <text class="name-mono" x="64" y="238">LD_LIBRARY_PATH</text>
+      <text class="sub" x="64" y="264">variable de entorno</text>
+      <text class="sub" x="64" y="286">de la sesión actual</text>
+    </g>
+
+    <g id="node-loader">
+      <rect class="node-kernel" x="380" y="200" width="220" height="100" rx="10"/>
+      <text class="name-mono" x="404" y="234">ld.so</text>
+      <text class="sub" x="404" y="260">enlazador dinámico:</text>
+      <text class="sub" x="404" y="282">resuelve cada .so</text>
+    </g>
+
+    <g id="node-aplica">
+      <rect class="node-kernel" x="660" y="140" width="260" height="92" rx="10"/>
+      <text class="name-ok" x="684" y="172">Aplica</text>
+      <text class="sub-ok" x="684" y="196">busca en /opt/app_beta/lib</text>
+      <text class="sub-ok" x="684" y="218">antes que en la caché</text>
+    </g>
+
+    <g id="node-ignora">
+      <rect class="node-warn" x="660" y="280" width="260" height="92" rx="10"/>
+      <text class="name-warn" x="684" y="312">Ignora</text>
+      <text class="sub-warn" x="684" y="336">si el binario es SUID o SGID:</text>
+      <text class="sub-warn" x="684" y="358">passwd, sudo</text>
+    </g>
+
+    <g id="node-banda-sesion">
+      <rect class="band-file" x="40" y="400" width="880" height="104" rx="10"/>
+      <text class="band-text" x="64" y="430">unset LD_LIBRARY_PATH devuelve la sesión a su estado original.</text>
+      <text class="band-mono" x="64" y="458">One-shot: LD_LIBRARY_PATH=/opt/app_beta/lib ./mi_programa</text>
+      <text class="band-text" x="64" y="486">Persistente: export en ~/.bashrc (usuario) o /etc/bash.bashrc (global).</text>
+    </g>
+  </g>
+</svg>

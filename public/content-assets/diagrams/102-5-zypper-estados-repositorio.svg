@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="zst-title zst-desc">
+  <title id="zst-title">Ciclo de vida de un repositorio en zypper: ar, mr -d, mr -e y rr (LPIC-1 102.5)</title>
+  <desc id="zst-desc">Máquina de estados con los cuatro operadores de repositorio de zypper. Un repositorio que no está definido entra en el sistema con zypper ar URL alias y queda habilitado, con Enabled: Yes; zypper mr -d alias lo deshabilita sin borrar su archivo, con Enabled: No, y zypper mr -e alias lo vuelve a habilitar; zypper rr alias elimina la definición y el repositorio vuelve a no existir. mr no borra nunca el repositorio, solo conmuta su estado, y el alias es la segunda columna de zypper repos.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #475569; }
+      .state-initial { fill: #F8FAFC; stroke: #475569; stroke-width: 3; }
+      .state-on { fill: #ECFDF5; stroke: #059669; stroke-width: 2; }
+      .state-off { fill: #F1F5F9; stroke: #64748B; stroke-width: 2; stroke-dasharray: 6 4; }
+      .state-head { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .mono-state { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 16px; font-weight: 700; fill: #0F172A; }
+      .sub { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #334155; }
+      .trans-label { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; font-weight: 700; fill: #1E36AF; text-anchor: middle; }
+      .note { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; font-weight: 400; fill: #475569; }
+      .edge-blue { fill: none; stroke: #1D40D8; stroke-width: 2.5; }
+      .edge-slate { fill: none; stroke: #475569; stroke-width: 2; }
+    </style>
+
+    <marker id="zst-arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#1D40D8"/>
+    </marker>
+    <marker id="zst-arrow-slate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">ZYPPER · CICLO DE VIDA DE UN REPOSITORIO</text>
+    <text class="title" x="40" y="78">Del alta al borrado del repositorio</text>
+    <text class="subtitle" x="40" y="102">Cuatro operadores cambian su estado</text>
+  </g>
+
+  <g id="diagram-relations">
+    <path id="zst-rel-ar" class="edge-blue"
+          data-from="node-sin-definir" data-to="node-habilitado" data-relation="addrepo"
+          d="M 270 240 H 365" marker-end="url(#zst-arrow-blue)"/>
+    <path id="zst-rel-disable" class="edge-slate"
+          data-from="node-habilitado" data-to="node-deshabilitado" data-relation="modifyrepo-disable"
+          d="M 595 240 H 690" marker-end="url(#zst-arrow-slate)"/>
+    <path id="zst-rel-enable" class="edge-slate"
+          data-from="node-deshabilitado" data-to="node-habilitado" data-relation="modifyrepo-enable"
+          d="M 690 300 H 595" marker-end="url(#zst-arrow-slate)"/>
+    <path id="zst-rel-remove" class="edge-slate"
+          data-from="node-deshabilitado" data-to="node-sin-definir" data-relation="removerepo"
+          d="M 805 320 V 400 H 155 V 320" marker-end="url(#zst-arrow-slate)"/>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-sin-definir">
+      <rect class="state-initial" x="40" y="200" width="230" height="120" rx="10"/>
+      <text class="state-head" x="64" y="230">SIN DEFINIR</text>
+      <text class="mono-state" x="64" y="262">sin archivo .repo</text>
+      <text class="sub" x="64" y="288">no aparece en lr</text>
+    </g>
+
+    <g id="node-habilitado">
+      <rect class="state-on" x="365" y="180" width="230" height="160" rx="10"/>
+      <text class="state-head" x="389" y="212">HABILITADO</text>
+      <text class="mono-state" x="389" y="244">Enabled: Yes</text>
+      <text class="sub" x="389" y="270">zypper ref lo refresca</text>
+      <text class="sub" x="389" y="292">zypper up lo actualiza</text>
+    </g>
+
+    <g id="node-deshabilitado">
+      <rect class="state-off" x="690" y="200" width="230" height="120" rx="10"/>
+      <text class="state-head" x="714" y="230">DESHABILITADO</text>
+      <text class="mono-state" x="714" y="262">Enabled: No</text>
+      <text class="sub" x="714" y="288">se ignora al instalar</text>
+    </g>
+  </g>
+
+  <g id="diagram-labels">
+    <text class="trans-label" x="317" y="228">ar</text>
+    <text class="trans-label" x="642" y="228">mr -d</text>
+    <text class="trans-label" x="642" y="288">mr -e</text>
+    <text class="trans-label" x="480" y="392">rr</text>
+    <text class="note" x="40" y="452">mr no borra el repositorio: solo cambia su estado.</text>
+    <text class="note" x="40" y="480">El alias es la segunda columna de zypper repos.</text>
+  </g>
+</svg>
