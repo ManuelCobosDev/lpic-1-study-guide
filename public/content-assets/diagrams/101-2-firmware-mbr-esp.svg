@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="firmware-anat-title firmware-anat-desc">
+  <title id="firmware-anat-title">Anatomía del MBR y de la partición ESP: dónde busca el arranque cada firmware (LPIC-1 101.2)</title>
+  <desc id="firmware-anat-desc">El MBR ocupa el primer sector físico de 512 bytes y se divide en tres partes: 446 bytes de área de arranque, formada por 440 bytes de bootstrap, 4 bytes de firma de disco y 2 bytes reservados; 64 bytes de tabla de particiones con cuatro entradas de 16 bytes; y 2 bytes de firma 0x55AA que validan el sector como arrancable. En UEFI no hay sectores crudos: el firmware lee una partición ESP con FAT32 y ejecuta un binario .efi, por ejemplo /boot/efi/EFI/debian/grubx64.efi, y el orden de arranque se administra con efibootmgr.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #475569; }
+      .panel { fill: #FFFFFF; stroke: #E2E8F0; stroke-width: 2; }
+      .panel-head { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 17px; font-weight: 700; fill: #0F172A; }
+      .seg-code { fill: #475569; stroke: #334155; stroke-width: 1.5; }
+      .seg-table { fill: #2550EB; stroke: #1E36AF; stroke-width: 1.5; }
+      .seg-magic { fill: #E11D48; stroke: #BE123C; stroke-width: 1.5; }
+      .seg-label { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #FFFFFF; text-anchor: middle; }
+      .legend { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #334155; }
+      .path-box { fill: #F1F5F9; stroke: #475569; stroke-width: 1.5; }
+      .path-text { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 16px; font-weight: 700; fill: #0F172A; }
+      .verdict { fill: #F8FAFC; stroke: #475569; stroke-width: 2; }
+      .verdict-label { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.06em; }
+      .verdict-text { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 500; fill: #0F172A; }
+    </style>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">FIRMWARE DE ARRANQUE · BIOS/MBR Y UEFI/ESP</text>
+    <text class="title" x="40" y="78">Dónde vive el cargador en cada firmware</text>
+    <text class="subtitle" x="40" y="102">MBR: sectores crudos. ESP: una partición FAT32.</text>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-panel-mbr">
+      <rect class="panel" x="40" y="124" width="416" height="316" rx="10"/>
+      <text class="panel-head" x="64" y="156">MBR · primer sector (512 B)</text>
+
+      <rect class="seg-code" x="64" y="174" width="320.5" height="52"/>
+      <rect class="seg-table" x="384.5" y="174" width="46" height="52"/>
+      <rect class="seg-magic" x="430.5" y="174" width="1.5" height="52"/>
+      <text class="seg-label" x="224" y="205">arranque 446 B</text>
+
+      <rect class="seg-code" x="64" y="252" width="10" height="10" rx="2"/>
+      <text class="legend" x="84" y="262">446 B: área de arranque</text>
+      <text class="legend" x="84" y="284">(440 B bootstrap + 4 B firma de disco + 2 B reservados)</text>
+
+      <rect class="seg-table" x="64" y="306" width="10" height="10" rx="2"/>
+      <text class="legend" x="84" y="316">64 B: 4 particiones primarias de 16 B</text>
+
+      <rect class="seg-magic" x="64" y="340" width="10" height="10" rx="2"/>
+      <text class="legend" x="84" y="350">2 B: firma 0x55AA que valida el sector arrancable</text>
+
+      <text class="legend" x="64" y="410">El sector completo suma 512 B.</text>
+    </g>
+
+    <g id="node-panel-esp">
+      <rect class="panel" x="504" y="124" width="416" height="316" rx="10"/>
+      <text class="panel-head" x="528" y="156">ESP · EFI System Partition</text>
+
+      <rect class="path-box" x="528" y="172" width="368" height="40" rx="6"/>
+      <text class="path-text" x="544" y="198">/boot/efi/EFI/debian/grubx64.efi</text>
+
+      <rect class="seg-code" x="528" y="252" width="10" height="10" rx="2"/>
+      <text class="legend" x="548" y="262">FAT32: es una partición normal, no oculta</text>
+
+      <rect class="seg-code" x="528" y="288" width="10" height="10" rx="2"/>
+      <text class="legend" x="548" y="298">Cada sistema operativo trae su propio .efi</text>
+
+      <rect class="seg-code" x="528" y="324" width="10" height="10" rx="2"/>
+      <text class="legend" x="548" y="334">efibootmgr: ver y cambiar el orden de arranque</text>
+
+      <rect class="seg-code" x="528" y="360" width="10" height="10" rx="2"/>
+      <text class="legend" x="548" y="370">Partición dedicada: no se comparte con la raíz</text>
+
+      <text class="legend" x="528" y="410">El firmware lee la FAT, no el MBR.</text>
+    </g>
+  </g>
+
+  <g id="diagram-labels">
+    <g id="node-veredicto">
+      <rect class="verdict" x="40" y="458" width="880" height="52" rx="10"/>
+      <text class="verdict-label" x="64" y="490">VEREDICTO</text>
+      <text class="verdict-text" x="180" y="490">BIOS lee sectores crudos; UEFI ejecuta un .efi de la ESP.</text>
+    </g>
+  </g>
+</svg>

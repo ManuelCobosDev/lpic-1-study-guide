@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="rr-title rr-desc">
+  <title id="rr-title">Diferencia entre systemctl restart y systemctl reload sobre el PID del servicio (LPIC-1 101.3)</title>
+  <desc id="rr-desc">systemctl restart detiene el proceso y crea uno nuevo: nginx pasa de un PID a otro distinto y durante ese instante las conexiones activas se cortan. systemctl reload no mata el proceso, le pide que relea su archivo de configuración y conserva el mismo PID y las conexiones de los clientes, sin caída del servicio. La orden status informa de Loaded y de Active (running) con el PID principal, e is-active devuelve el texto active y el código de salida cero, lo que resulta útil en scripts.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #475569; }
+      .kicker { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #881337; letter-spacing: 0.08em; }
+      .kicker-green { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #065F46; letter-spacing: 0.08em; }
+      .node-a { fill: #FFF1F2; stroke: #E11D48; stroke-width: 2; }
+      .node-b { fill: #ECFDF5; stroke: #059669; stroke-width: 2; }
+      .mono-svc { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 20px; font-weight: 700; fill: #0F172A; }
+      .sub-14 { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #475569; }
+      .sub-14-warn { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 500; fill: #881337; }
+      .sub-14-ok { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 500; fill: #065F46; }
+      .edge-warn { fill: none; stroke: #E11D48; stroke-width: 2; }
+      .edge-ok { fill: none; stroke: #059669; stroke-width: 2; }
+      .edge-label-warn { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 600; fill: #881337; text-anchor: middle; }
+      .edge-label-ok { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 600; fill: #065F46; text-anchor: middle; }
+      .band { fill: #F1F5F9; stroke: #475569; stroke-width: 2; }
+      .band-line { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #334155; }
+    </style>
+
+    <marker id="rr-arrow-warn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#E11D48"/>
+    </marker>
+    <marker id="rr-arrow-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#059669"/>
+    </marker>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">SYSTEMCTL · CICLO DE VIDA</text>
+    <text class="title" x="40" y="78">restart mata; reload relee</text>
+    <text class="subtitle" x="40" y="102">Dos órdenes parecidas con efectos distintos sobre el PID</text>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-restart-before">
+      <rect class="node-a" x="180" y="146" width="240" height="68" rx="10"/>
+      <text class="mono-svc" x="204" y="178">nginx</text>
+      <text class="sub-14" x="204" y="200">PID 654</text>
+    </g>
+    <g id="node-restart-after">
+      <rect class="node-a" x="560" y="146" width="240" height="68" rx="10"/>
+      <text class="mono-svc" x="584" y="178">nginx</text>
+      <text class="sub-14-warn" x="584" y="200">PID 900 · proceso nuevo</text>
+    </g>
+
+    <g id="node-reload-before">
+      <rect class="node-b" x="180" y="300" width="240" height="68" rx="10"/>
+      <text class="mono-svc" x="204" y="332">nginx</text>
+      <text class="sub-14" x="204" y="354">PID 654</text>
+    </g>
+    <g id="node-reload-after">
+      <rect class="node-b" x="560" y="300" width="240" height="68" rx="10"/>
+      <text class="mono-svc" x="584" y="332">nginx</text>
+      <text class="sub-14-ok" x="584" y="354">PID 654 · el mismo</text>
+    </g>
+
+    <g id="node-status">
+      <rect class="band" x="40" y="424" width="880" height="82" rx="10"/>
+      <text class="band-line" x="64" y="454">status muestra Loaded: loaded y Active: active (running)</text>
+      <text class="band-line" x="64" y="480">is-active ssh devuelve 'active' y el código de salida 0</text>
+    </g>
+  </g>
+
+  <g id="diagram-relations">
+    <path id="rr-rel-restart" class="edge-warn" data-from="node-restart-before" data-to="node-restart-after" data-relation="stop-and-start"
+          d="M 420 180 H 560" marker-end="url(#rr-arrow-warn)"/>
+    <path id="rr-rel-reload" class="edge-ok" data-from="node-reload-before" data-to="node-reload-after" data-relation="reload-config"
+          d="M 420 334 H 560" marker-end="url(#rr-arrow-ok)"/>
+  </g>
+
+  <g id="diagram-labels">
+    <text class="kicker" x="40" y="166">RESTART</text>
+    <text class="edge-label-warn" x="490" y="166">stop + start</text>
+    <text class="sub-14-warn" x="180" y="248">Corta las conexiones activas: un instante sin servicio.</text>
+
+    <text class="kicker-green" x="40" y="320">RELOAD</text>
+    <text class="edge-label-ok" x="490" y="320">relee el fichero</text>
+    <text class="sub-14-ok" x="180" y="402">Mantiene conectados a los clientes: no hay caída.</text>
+  </g>
+</svg>
