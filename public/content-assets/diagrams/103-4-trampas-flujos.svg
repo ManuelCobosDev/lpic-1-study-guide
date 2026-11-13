@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="tfl-title tfl-desc">
+  <title id="tfl-title">Cuatro trampas clásicas de flujos y redirecciones en el examen LPIC-1 (103.4)</title>
+  <desc id="tfl-desc">Rejilla de cuatro tarjetas con el error y la forma correcta. En la primera, ls /root /tmp | grep root no filtra el error porque la tubería solo transporta stdout; hay que usar |&amp; o 2&gt;&amp;1 |. En la segunda, cmd 2&gt;1 crea un archivo llamado 1 y cmd 2&gt;&amp;1 &gt; archivo.log deja los errores en pantalla; la forma correcta es cmd &gt; archivo.log 2&gt;&amp;1. En la tercera, sort lista.txt &gt; lista.txt destruye el archivo porque la shell lo trunca antes de ejecutar sort; hay que pasar por un fichero temporal y mv. En la cuarta, find | xargs rm parte los nombres con espacios; la regla es find -print0 | xargs -0.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #475569; }
+      .card { fill: #F8FAFC; stroke: #475569; stroke-width: 2; }
+      .card-title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 700; fill: #0F172A; }
+      .lbl-bad { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 11px; font-weight: 700; fill: #BE123C; letter-spacing: 0.06em; }
+      .lbl-good { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 11px; font-weight: 700; fill: #065F46; letter-spacing: 0.06em; }
+      .cmd-bad { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; font-weight: 500; fill: #881337; }
+      .cmd-good { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; font-weight: 500; fill: #065F46; }
+      .why { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; font-weight: 400; fill: #475569; }
+    </style>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">103.4 · TRAMPAS DE EXAMEN</text>
+    <text class="title" x="40" y="78">Cuatro errores que cuestan puntos</text>
+    <text class="subtitle" x="40" y="102">El error típico, la forma correcta y el motivo técnico</text>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-trampa-tuberia">
+      <rect class="card" x="40" y="126" width="430" height="176" rx="12"/>
+      <text class="card-title" x="64" y="150">1. Tubería y errores</text>
+      <text class="lbl-bad" x="64" y="176">MAL</text>
+      <text class="cmd-bad" x="104" y="176">ls /root /tmp | grep root</text>
+      <text class="lbl-good" x="64" y="230">BIEN</text>
+      <text class="cmd-good" x="104" y="230">ls /root /tmp |&amp; grep root</text>
+      <text class="why" x="64" y="272">La tubería solo transporta stdout (1);</text>
+      <text class="why" x="64" y="292">stderr (2) salta a la pantalla.</text>
+    </g>
+
+    <g id="node-trampa-fusion">
+      <rect class="card" x="490" y="126" width="430" height="176" rx="12"/>
+      <text class="card-title" x="514" y="150">2. La trampa de 2&gt;1</text>
+      <text class="lbl-bad" x="514" y="176">MAL</text>
+      <text class="cmd-bad" x="554" y="176">cmd 2&gt;1</text>
+      <text class="cmd-bad" x="554" y="196">cmd 2&gt;&amp;1 &gt; archivo.log</text>
+      <text class="lbl-good" x="514" y="230">BIEN</text>
+      <text class="cmd-good" x="554" y="230">cmd &gt; archivo.log 2&gt;&amp;1</text>
+      <text class="why" x="514" y="272">Sin el &amp;, el 1 es un archivo en disco;</text>
+      <text class="why" x="514" y="292">la fusión va tras redirigir stdout.</text>
+    </g>
+
+    <g id="node-trampa-mismo-fichero">
+      <rect class="card" x="40" y="312" width="430" height="176" rx="12"/>
+      <text class="card-title" x="64" y="336">3. Redirigir sobre sí mismo</text>
+      <text class="lbl-bad" x="64" y="362">MAL</text>
+      <text class="cmd-bad" x="104" y="362">sort lista.txt &gt; lista.txt</text>
+      <text class="lbl-good" x="64" y="416">BIEN</text>
+      <text class="cmd-good" x="104" y="416">sort lista.txt &gt; tmp.txt</text>
+      <text class="cmd-good" x="104" y="436">&amp;&amp; mv tmp.txt lista.txt</text>
+      <text class="why" x="64" y="458">La shell trunca a 0 bytes antes de</text>
+      <text class="why" x="64" y="478">ejecutar sort: lee un archivo vacío.</text>
+    </g>
+
+    <g id="node-trampa-espacios">
+      <rect class="card" x="490" y="312" width="430" height="176" rx="12"/>
+      <text class="card-title" x="514" y="336">4. Espacios con xargs</text>
+      <text class="lbl-bad" x="514" y="362">MAL</text>
+      <text class="cmd-bad" x="554" y="362">find . -name '*.txt' | xargs rm</text>
+      <text class="lbl-good" x="514" y="416">BIEN</text>
+      <text class="cmd-good" x="554" y="416">find . -name '*.txt' -print0</text>
+      <text class="cmd-good" x="554" y="436">| xargs -0 rm</text>
+      <text class="why" x="514" y="458">«Mi Tesis.txt» se parte en dos archivos.</text>
+      <text class="why" x="514" y="478">El cero va siempre con el cero.</text>
+    </g>
+  </g>
+</svg>

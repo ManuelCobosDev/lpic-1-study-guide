@@ -94,10 +94,10 @@
           "type": "list",
           "ordered": false,
           "items": [
-            "**Descriptor 0 (stdin - Standard Input)** — 🎯 Entrada estándar: canal de lectura (teclado). En el sistema de archivos mapea a `/dev/stdin`.",
-            "**Descriptor 1 (stdout - Standard Output)** — 🎯 Salida estándar: canal de emisión normal (pantalla). En el sistema de archivos mapea a `/dev/stdout`.",
-            "**Descriptor 2 (stderr - Standard Error)** — 🎯 Error estándar: canal independiente para fallos y diagnósticos. En el sistema de archivos mapea a `/dev/stderr`.",
-            "**Enlaces en /proc/<PID>/fd/** — El kernel Linux crea enlaces simbólicos en `/proc/<PID>/fd/` (o `/proc/$$/fd/` para la shell activa) hacia cada descriptor abierto por el proceso."
+            "**Descriptor 0 (stdin - Standard Input)** — Entrada estándar: canal de lectura (teclado). En el sistema de archivos mapea a `/dev/stdin`.",
+            "**Descriptor 1 (stdout - Standard Output)** — Salida estándar: canal de emisión normal (pantalla). En el sistema de archivos mapea a `/dev/stdout`.",
+            "**Descriptor 2 (stderr - Standard Error)** — Error estándar: canal independiente para fallos y diagnósticos. En el sistema de archivos mapea a `/dev/stderr`.",
+            "**Enlaces en /proc/&lt;PID&gt;/fd/** — El kernel Linux crea enlaces simbólicos en `/proc/&lt;PID&gt;/fd/` (o `/proc/$$/fd/` para la shell activa) hacia cada descriptor abierto por el proceso."
           ]
         },
         {
@@ -105,7 +105,7 @@
           "kind": "streams",
           "title": "Flujos Estándar y Descriptores de Archivo (0, 1, 2)",
           "caption": "Mapeo de los tres descriptores estándar de un proceso Linux",
-          "alt": "Diagrama de los canales estándar de un proceso Linux: stdin descriptor 0 para entrada, stdout descriptor 1 para salida estándar y stderr descriptor 2 para errores.",
+          "alt": "Diagrama de los tres canales estándar de un proceso Linux: stdin es el descriptor 0 y aporta la entrada, stdout es el descriptor 1 y emite la salida normal, y stderr es el descriptor 2 y recoge los errores. Cada canal lleva su número y su operador de redirección: < para el 0, > para el 1 y 2> para el 2.",
           "spec": {
             "nodes": [
               {
@@ -166,7 +166,7 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave Mnemotécnica de Examen: 0 = stdin (entrada/teclado); 1 = stdout (salida normal/pantalla); 2 = stderr (mensajes de error)."
+          "content": "Clave Mnemotécnica de Examen: 0 = stdin (entrada/teclado); 1 = stdout (salida normal/pantalla); 2 = stderr (mensajes de error)."
         }
       ],
       "notes": "Añadido: un proceso puede usar descriptores por encima de 2 y `3<>` abre el mismo número para entrada y salida. Recordar los enlaces de /proc/$$/fd/."
@@ -184,13 +184,43 @@
         },
         {
           "type": "paragraph",
-          "text": "Desviar la salida normal de un comando hacia un archivo o silenciarla por completo:"
+          "text": "La salida estándar (`stdout`, descriptor `1`) se desvía a un archivo con `>` o con `>>`. El operador `>` trunca el fichero a cero bytes antes de escribir, así que si ya existía pierde todo su contenido; el operador `>>` abre el archivo en modo añadir y coloca la salida nueva al final de la última línea. Si no se escribe ningún número delante del operador, Bash asume el descriptor `1`: las formas explícitas son `1>` y `1>>`."
         },
         {
-          "type": "code",
-          "language": "bash",
-          "code": "cmd > archivo | cmd >> archivo | cmd > /dev/null",
-          "title": "Sobreescribir o concatenar el flujo de salida estándar (stdout / 1) en archivos"
+          "type": "image",
+          "src": "/content-assets/diagrams/103-4-redireccion-stdout.svg",
+          "alt": "Dos paneles enfrentados: el operador > crea el archivo si no existe, borra el 100% de los datos previos y escribe la salida nueva al inicio, con el resultado de que solo queda lo nuevo; el operador >> crea el archivo si no existe, conserva todos los datos previos y añade la salida al final, dejando lo viejo y lo nuevo en orden. Dos tarjetas inferiores recuerdan que sin número delante del operador Bash asume el descriptor 1 (stdout) y que /dev/null descarta los datos al instante.",
+          "caption": "En el examen, > destruye el contenido anterior y >> lo conserva: es la diferencia que separa una copia de seguridad de una pérdida de datos."
+        },
+        {
+          "type": "paragraph",
+          "text": "La ruta `/dev/null` es un archivo especial que descarta todo lo que se le escribe: la salida desaparece de forma silenciosa e inmediata y no ocupa espacio en disco. Es la forma canónica de silenciar un comando sin dejar rastro."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Operador",
+            "Nombre",
+            "Qué hace"
+          ],
+          "rows": [
+            [
+              "> archivo (o 1>)",
+              "Sobrescribir (overwrite)",
+              "Sobrescribe el archivo por completo: si ya existía, lo trunca y borra todo su contenido antes de escribir."
+            ],
+            [
+              ">> archivo (o 1>>)",
+              "Concatenar (append)",
+              "Añade datos al final del fichero existente sin borrar lo anterior."
+            ],
+            [
+              "> /dev/null",
+              "Silenciar / descartar",
+              "El agujero negro: descarta los datos de forma silenciosa e inmediata."
+            ]
+          ],
+          "caption": "Los tres destinos de la salida estándar en el objetivo 103.4"
         },
         {
           "type": "terminal",
@@ -203,40 +233,10 @@
           ]
         },
         {
-          "type": "table",
-          "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
-          ],
-          "rows": [
-            [
-              "> archivo (o 1>)",
-              "Sobreescribir (overwrite)",
-              "🎯 Sobreescribe el archivo por completo. Si ya existía, trunca y borra todo su contenido."
-            ],
-            [
-              ">> archivo (o 1>>)",
-              "Concatenar (append)",
-              "🎯 Añade datos al final del fichero existente sin borrar lo anterior."
-            ],
-            [
-              "> /dev/null",
-              "Silenciar / Descartar",
-              "🎯 El agujero negro: descarta los datos de forma silenciosa e inmediata."
-            ]
-          ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:12px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    ⚖️ Comparativa Visual: Sobreescritura (<code>&gt;</code>) frente a Concatenación (<code>&gt;&gt;</code>):\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:14px; font-size:12.5px;\">\n    <div style=\"background:#FEF2F2; border:1px solid #FCA5A5; border-radius:8px; padding:10px 14px;\">\n      <strong style=\"color:#991B1B; font-size:13.5px;\">Operador &gt; (Truncar / Sobreescribir)</strong><br>\n      1. Si el archivo no existe, lo crea.<br>\n      2. Si el archivo ya existía, <strong>elimina el 100% de los datos previos</strong>.<br>\n      3. Escribe únicamente la nueva salida al inicio.\n    </div>\n\n    <div style=\"background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:10px 14px;\">\n      <strong style=\"color:#15803D; font-size:13.5px;\">Operador &gt;&gt; (Añadir / Append)</strong><br>\n      1. Si el archivo no existe, lo crea.<br>\n      2. Si el archivo ya existía, <strong>conserva todos los datos previos</strong>.<br>\n      3. Añade la nueva salida al final de la última línea.\n    </div>\n  </div>\n</div>\n"
-        },
-        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: '>' sobrescribe el archivo borrando lo anterior; '>>' añade al final conservando los datos previos."
+          "content": "`>` sobrescribe el archivo borrando lo anterior; `>>` añade al final conservando los datos previos. Y recuerda el descriptor implícito: `cmd > archivo` es exactamente `cmd 1> archivo`."
         }
       ],
       "notes": "Muestra que si no se indica número antes del '>', Bash asume implícitamente el descriptor 1 (stdout)."
@@ -254,13 +254,58 @@
         },
         {
           "type": "paragraph",
-          "text": "Aislar los mensajes de error (descriptor 2) o unificarlos con la salida estándar en un único registro:"
+          "text": "El descriptor `2` transporta los mensajes de error (`stderr`). El operador `2>` lo desvía a un archivo y deja la salida normal en pantalla; `2> /dev/null` los silencia. Para reunir los dos canales en un único registro se usa `> archivo 2>&1`, que primero apunta el canal 1 al archivo y después copia ese destino al canal 2."
         },
         {
-          "type": "code",
-          "language": "bash",
-          "code": "cmd 2> errores.log | cmd > salida.log 2>&1 | cmd &> todo.log",
-          "title": "Separar fallos de diagnósticos o fusionar ambos canales para auditoría de scripts y cron"
+          "type": "paragraph",
+          "text": "`&>` y `>&` son atajos equivalentes de Bash, pero no son POSIX: en `/bin/sh` (dash en Debian y Ubuntu) `&>` produce un error de sintaxis, mientras que `> archivo 2>&1` funciona en cualquier Unix. El par inverso `1>&2` envía la salida normal al canal de errores, muy útil para que las funciones de un script impriman sus fallos por `stderr`."
+        },
+        {
+          "type": "image",
+          "src": "/content-assets/diagrams/103-4-orden-fusion-descriptores.svg",
+          "alt": "Dos paneles con el mismo comando en distinto orden. En el orden válido, cmd > log.txt 2>&1 ejecuta primero > apuntando el canal 1 al archivo y después 2>&1 copiando ese destino al canal 2, con lo que éxitos y errores quedan unidos en el log; en el orden invertido, cmd 2>&1 > log.txt copia antes el destino actual del canal 1, que todavía es la pantalla, y solo el canal 1 va al archivo, así que los errores se escapan. Dos notas al pie recuerdan que el ampersand va pegado al número.",
+          "caption": "Dos paneles con el mismo comando: solo el orden > log.txt 2>&1 termina uniendo éxitos y errores en el archivo."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Operador",
+            "Nombre",
+            "Qué hace"
+          ],
+          "rows": [
+            [
+              "2> archivo",
+              "Solo errores (stderr / 2)",
+              "Desvía únicamente los mensajes de fallo a un archivo; la salida exitosa sigue mostrándose en pantalla."
+            ],
+            [
+              "2> /dev/null",
+              "Silenciar errores",
+              "Oculta avisos de fallo como «Permiso denegado»: por ejemplo `find / -name hosts 2>/dev/null`."
+            ],
+            [
+              "> archivo 2>&1",
+              "Fusión estándar POSIX universal",
+              "Redirige stdout (1) al archivo y luego envía stderr (2) al mismo destino. Válido en cualquier Unix."
+            ],
+            [
+              "&> archivo",
+              "Atajo Bash moderno",
+              "Sintaxis rápida de Bash equivalente a `> archivo 2>&1`. Incompatible con shells POSIX estrictas (`/bin/sh` en Debian/Ubuntu)."
+            ],
+            [
+              ">& archivo",
+              "Variante equivalente a &>",
+              "Redirige stdout y stderr al mismo destino. El ampersand va pegado al operador: con un espacio (`> &`) Bash aborta con un error de sintaxis y no redirige."
+            ],
+            [
+              "1>&2",
+              "stdout hacia stderr",
+              "El destino se indica con `&` y el número del descriptor: `1>&2` envía la salida normal al canal de errores."
+            ]
+          ],
+          "caption": "Los seis operadores de error y fusión del objetivo 103.4"
         },
         {
           "type": "terminal",
@@ -273,58 +318,13 @@
           ]
         },
         {
-          "type": "table",
-          "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
-          ],
-          "rows": [
-            [
-              "2> archivo",
-              "Solo errores (stderr / 2)",
-              "🎯 Desvía únicamente los mensajes de fallo a un archivo; la salida exitosa sigue mostrándose en pantalla."
-            ],
-            [
-              "2> /dev/null",
-              "Silenciar errores (Agujero negro)",
-              "🎯 Clave de Examen: Oculta avisos de fallo como 'Permiso denegado' (ej: 'find / -name hosts 2>/dev/null')."
-            ],
-            [
-              "> archivo 2>&1",
-              "Fusión estándar POSIX universal",
-              "🎯 Clave Absoluta de Examen: Redirige stdout (1) al archivo y luego envía stderr (2) al mismo destino. Válido en cualquier Unix."
-            ],
-            [
-              "&> archivo",
-              "Atajo Bash moderno",
-              "Sintaxis rápida de Bash equivalente a '> archivo 2>&1'. Incompatible con shells POSIX estrictas (/bin/sh en Debian/Ubuntu)."
-            ],
-            [
-              "cmd >& archivo",
-              "Variante equivalente a &>",
-              "🎯 Redirige stdout y stderr al mismo destino. El ampersand va pegado: con '> &' Bash interpreta '&' como ejecución en segundo plano y no redirige."
-            ],
-            [
-              "1>&2",
-              "stdout hacia stderr",
-              "🎯 El destino se indica con '&' y el número del descriptor: `1>&2` envía la salida normal al canal de errores."
-            ]
-          ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🎯 Desglose Visual: ¿Por qué existe y cómo funciona la «Fusión POSIX» <code>&gt; log 2&gt;&amp;1</code>?</span>\n    <span style=\"font-size:11px; background:#EEF2FF; color:#4338CA; padding:2px 8px; border-radius:12px; font-weight:700;\">Estándar Universal Unix</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12px; margin-bottom:8px;\">\n    <!-- Correcto -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#15803D; font-size:13px;\">✅ ORDEN VÁLIDO: <code>&gt; log.txt 2&gt;&amp;1</code></strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;\">FUSIÓN TOTAL</span>\n      </div>\n      <div style=\"line-height:1.4; color:#14532D;\">\n        <strong>1. <code>&gt; log.txt</code></strong> conecta el Canal 1 (stdout) hacia el archivo.<br>\n        <strong>2. <code>2&gt;&amp;1</code></strong> le dice al Canal 2: <em>«ve a donde apunta el 1 (el log)»</em>.<br>\n        <span style=\"color:#166534; font-weight:800;\">Resultado: Éxitos y errores quedan unidos cronológicamente.</span>\n      </div>\n    </div>\n\n    <!-- Incorrecto -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#991B1B; font-size:13px;\">❌ ERROR TÍPICO: <code>2&gt;&amp;1 &gt; log.txt</code></strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;\">ORDEN INVERTIDO</span>\n      </div>\n      <div style=\"line-height:1.4; color:#7F1D1D;\">\n        <strong>1. <code>2&gt;&amp;1</code></strong> copia el destino actual del Canal 1 (¡que aún es la pantalla!).<br>\n        <strong>2. <code>&gt; log.txt</code></strong> redirige solo el Canal 1 al archivo.<br>\n        <span style=\"color:#991B1B; font-weight:800;\">Resultado: ¡Los errores se escapan y se siguen mostrando en pantalla!</span>\n      </div>\n    </div>\n  </div>\n\n  <div style=\"background:#EFF6FF; border-left:4px solid #2563EB; border-radius:6px; padding:6px 12px; font-size:12px; color:#1E3A8A; line-height:1.4;\">\n    💡 <strong>¿Qué significa «POSIX» y por qué no usar siempre <code>&amp;&gt;</code>?</strong> En Bash moderno puedes escribir <code>&amp;&gt; archivo</code>, pero es una extensión privada de Bash. El estándar <strong>POSIX</strong> es la norma internacional que cumplen todas las shells Unix desde hace 40 años. En scripts para <code>/bin/sh</code> (como en Debian/Ubuntu que usan <code>dash</code>), <code>&amp;&gt;</code> dará error sintáctico. <code>&gt; arch 2&gt;&amp;1</code> funcionará siempre en cualquier máquina del mundo.\n  </div>\n</div>\n"
-        },
-        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Regla Sagrada de Fusión: En '> archivo 2>&1', el orden se lee estrictamente de izquierda a derecha. Primero '>' apunta el canal 1 al archivo; luego '2>&1' copia ese destino hacia el canal 2. Si inviertes el orden ('2>&1 > arch'), ¡los errores saldrán por la pantalla!"
+          "content": "Regla sagrada de fusión: en `> archivo 2>&1` el orden se lee estrictamente de izquierda a derecha. Primero `>` apunta el canal 1 al archivo; luego `2>&1` copia ese destino hacia el canal 2. Si inviertes el orden (`2>&1 > archivo`), los errores salen por la pantalla."
         }
       ],
-      "notes": "Añadidos el par inverso `1>&2` y la variante `>&`. Insistir en que el ampersand va pegado: con espacio, Bash manda el proceso a segundo plano y no redirige."
+      "notes": "Añadidos el par inverso `1>&2` y la variante `>&`. Insistir en que el ampersand va pegado: con espacio, Bash da un error de sintaxis y no redirige."
     },
     {
       "id": "103.4-slide-5",
@@ -339,69 +339,71 @@
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo evitar que un administrador borre por accidente un archivo crítico con un simple '>'?"
+          "text": "`set -o noclobber` (alias `set -C`) activa una protección de la shell: mientras está vigente, el operador `>` se niega a truncar un archivo regular que ya existe y devuelve `cannot overwrite existing file`. La protección se desactiva con `set +o noclobber` (alias `set +C`), y para forzar una sobreescritura puntual sin apagarla se usa el operador `>|`."
+        },
+        {
+          "type": "image",
+          "src": "/content-assets/diagrams/103-4-noclobber-decision.svg",
+          "alt": "Diagrama de decisión: el intento echo 'dato' > f.txt llega a la pregunta de si existe f.txt con noclobber activo (set -C). Si existe, la rama rosa aborta la operación con el mensaje cannot overwrite existing file; si no existe, la rama verde crea el archivo y lo deja solo con lo nuevo. La banda inferior lista las tres excepciones: >| fuerza la sobreescritura sin apagar la protección, >> nunca destruye datos y por eso siempre se permite, y /dev/null es un archivo especial que admite la redirección con set -C activo.",
+          "caption": "Las tres salidas del examen: set -C bloquea, >| fuerza y /dev/null sigue funcionando porque no es un archivo regular."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "set -o noclobber | set -C | set +o noclobber | set +C | cmd >| archivo",
-          "title": "Activar la protección de shell que impide sobreescribir archivos existentes con el operador >"
-        },
-        {
-          "type": "terminal",
-          "lines": [
-            {
-              "prompt": "$ ",
-              "command": "set -C; echo 'test' > kernel.txt; echo 'forzado' >| kernel.txt; set +C",
-              "output": "bash: kernel.txt: cannot overwrite existing file\nforzado"
-            }
-          ]
+          "title": "Activar, desactivar y forzar con noclobber",
+          "code": "set -o noclobber    # activa la protección (forma larga)\nset -C              # alias corto: activa\nset +o noclobber    # desactiva la protección (forma larga)\nset +C              # alias corto: desactiva\ncmd >| archivo      # fuerza la sobreescritura"
         },
         {
           "type": "table",
           "headers": [
             "Opción / Bandera",
             "Nombre",
-            "Descripción"
+            "Qué hace"
           ],
           "rows": [
             [
               "set -o noclobber / set -C",
               "Activar protección",
-              "🎯 Activa la protección contra sobreescritura accidental con '>'. 'set -C' es su alias corto oficial."
+              "Activa la protección contra la sobreescritura accidental con `>`. `set -C` es su alias corto oficial."
             ],
             [
               ">| archivo",
               "Sobreescritura forzada",
-              "🎯 Clave de Examen: Operador 'clobber' que fuerza sobreescribir ignorando la protección."
+              "Operador clobber que fuerza la sobreescritura ignorando la protección."
             ],
             [
               "set +o noclobber / set +C",
               "Desactivar protección",
-              "🎯 Desactiva la protección permitiendo de nuevo '>' normal. 'set +C' es su alias corto oficial."
+              "Desactiva la protección y permite de nuevo el `>` normal. `set +C` es su alias corto oficial."
             ],
             [
               ">> (concatenar)",
               "No afectado por noclobber",
-              "La concatenación '>>' nunca destruye datos, por lo que noclobber la permite siempre."
+              "La concatenación nunca destruye datos, por lo que noclobber la permite siempre."
             ],
             [
               "/dev/null con noclobber",
               "Archivo especial inmune",
-              "🎯 noclobber solo protege archivos regulares: `cmd > /dev/null` sigue funcionando aunque `set -C` esté activo."
+              "noclobber solo protege archivos regulares: `cmd > /dev/null` sigue funcionando aunque `set -C` esté activo."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Comandos y excepciones de la protección noclobber"
         },
         {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:12px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🛡️ Mecanismo de Seguridad: ¿Cómo Funciona <code>set -o noclobber</code>?\n  </div>\n\n  <div style=\"display:flex; justify-content:space-between; align-items:center; font-size:12.5px; text-align:center;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; border-radius:8px; padding:8px 12px; flex:1;\">\n      <code>echo 'dato' &gt; f.txt</code><br>\n      <span style=\"color:#64748B; font-size:11px;\">Intento de sobreescritura</span>\n    </div>\n\n    <span style=\"font-size:18px; color:#2563EB; margin:0 8px;\">→</span>\n\n    <div style=\"background:#FEF3C7; border:1px solid #FCD34D; border-radius:8px; padding:8px 12px; flex:1.4;\">\n      <strong>¿Existe f.txt?</strong><br>\n      <span style=\"color:#B45309;\">Con <code>noclobber</code> activo</span>\n    </div>\n\n    <span style=\"font-size:18px; color:#2563EB; margin:0 8px;\">→</span>\n\n    <div style=\"background:#FEF2F2; border:1px solid #FCA5A5; border-radius:8px; padding:8px 12px; flex:1.4;\">\n      <strong style=\"color:#991B1B;\">⛔ ABORTA OPERACIÓN:</strong><br>\n      <code style=\"font-size:11px; color:#B91C1C;\">cannot overwrite existing file</code>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; padding:6px 12px; background:#F0FDF4; border-left:4px solid #10B981; border-radius:4px; font-size:12px; color:#166534;\">\n    🔓 <strong>EXCEPCIÓN DE EXAMEN:</strong> Para forzar la sobreescritura sin apagar la protección, se usa el operador pipe-redirección <code>&gt;|</code>: <code>echo 'forzado' &gt;| f.txt</code>.\n  </div>\n</div>\n"
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$ ",
+              "command": "set -C; echo 'test' > kernel.txt; echo 'forzado' >| kernel.txt; set +C; cat kernel.txt",
+              "output": "bash: kernel.txt: cannot overwrite existing file\nforzado"
+            }
+          ]
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Mnemotecnia de Flags en set: '-o' (con signo menos) ACTIVA una opción; '+o' (con signo más) DESACTIVA la opción."
+          "content": "Mnemotecnia de flags en `set`: `-o` (con signo menos) ACTIVA una opción; `+o` (con signo más) DESACTIVA la opción. Y recuerda la excepción que más se pregunta: `>|` sobrescribe de todos modos sin necesidad de apagar la protección."
         }
       ],
       "notes": "noclobber protege archivos regulares, pero `/dev/null` es un archivo especial y admite redirecciones con la opción activa."
@@ -419,13 +421,52 @@
         },
         {
           "type": "paragraph",
-          "text": "Alimentar la entrada estándar (stdin / 0) desde archivos de texto, bloques embebidos o cadenas:"
+          "text": "El descriptor `0` (`stdin`) puede alimentarse desde un archivo en lugar del teclado: `cmd < archivo` inyecta su contenido en el proceso, que nunca ve la ruta y solo recibe datos. Por eso la flecha apunta hacia el comando: el archivo se convierte en su teclado automático."
         },
         {
-          "type": "code",
-          "language": "bash",
-          "code": "cmd < archivo | cmd <<DELIM ... DELIM | cmd <<< 'cadena'",
-          "title": "Hacer que un comando lea datos sin esperar al teclado físico ni recibir nombres como argumentos"
+          "type": "paragraph",
+          "text": "En scripts, `<< DELIM` construye un here document, un bloque multilínea que termina con la palabra exacta de cierre (habitualmente `EOF` o `FIN`) y sin ningún espacio entre `<<` y el delimitador. Si el delimitador va entrecomillado (`<< 'EOF'`), Bash no expande variables como `$USER` ni subcomandos. `<<< 'cadena'` (here string) inyecta una sola frase o cálculo en memoria, sin abrir procesos ni crear tuberías; si la cadena lleva espacios debe ir entre comillas."
+        },
+        {
+          "type": "image",
+          "src": "/content-assets/diagrams/103-4-stdin-tres-fuentes.svg",
+          "alt": "Tres tarjetas de origen (el archivo con cmd < datos.txt, el here document con cat <<EOF > cfg y el here string con bc <<< '10 * 5') convergen mediante flechas en un nodo central que representa el stdin, descriptor 0. Desde ese nodo una cuarta flecha alimenta el proceso mysql -u root bdd, que lee de su entrada estándar y no recibe la ruta como argumento. La banda inferior recuerda que no hay espacio entre << y el delimitador, que << 'EOF' no expande variables y que wc -l archivo imprime «28 archivo» mientras wc -l < archivo imprime solo «28».",
+          "caption": "Tres fuentes de entrada —archivo, here document y here string— convergen en el descriptor 0, que alimenta al proceso."
+        },
+        {
+          "type": "paragraph",
+          "text": "Ejemplo tangible del manual: al restaurar una base de datos con `mysql -u root bdd < copia.sql`, el cliente `mysql` no sabe leer rutas como argumento —espera que un humano le teclee las instrucciones SQL— y el archivo alimenta su `stdin` a gran velocidad."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Operador",
+            "Nombre",
+            "Qué hace"
+          ],
+          "rows": [
+            [
+              "< archivo",
+              "Entrada desde archivo",
+              "Inyecta el contenido de un archivo directamente en stdin (0). El comando no sabe de qué archivo provienen los datos."
+            ],
+            [
+              "<< DELIM (Here Document)",
+              "Bloque multilínea en scripts",
+              "Introduce texto línea a línea hasta encontrar la palabra exacta de cierre (habitualmente EOF o FIN). No debe haber ningún espacio entre `<<` y el término final."
+            ],
+            [
+              "<< 'DELIM' (con comillas)",
+              "Here doc sin expansión de variables",
+              "Al entrecomillar 'EOF' se impide que Bash evalúe variables como `$USER` o subcomandos dentro del bloque de texto."
+            ],
+            [
+              "<<< 'cadena' (Here String)",
+              "Entrada directa de una frase en memoria",
+              "Pasa un texto o cálculo a stdin sin necesidad de crear una tubería con echo (por ejemplo `bc <<< 10*5`). Las cadenas con espacios deben ir entre comillas; sin ellas solo se usa la primera palabra."
+            ]
+          ],
+          "caption": "Los tres operadores de entrada del objetivo 103.4"
         },
         {
           "type": "terminal",
@@ -438,45 +479,10 @@
           ]
         },
         {
-          "type": "table",
-          "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
-          ],
-          "rows": [
-            [
-              "< archivo",
-              "Entrada desde archivo (El Teclado)",
-              "🎯 Inyecta el contenido de un archivo directamente en stdin (0). El comando no sabe de qué archivo provienen los datos."
-            ],
-            [
-              "<< DELIM (Here Document)",
-              "Bloque multilínea en scripts",
-              "🎯 Clave de Examen: Introduce texto línea a línea hasta encontrar la palabra exacta de cierre (habitualmente EOF o FIN). No debe haber ningún espacio entre `<<` y el término final."
-            ],
-            [
-              "<< 'DELIM' (Con comillas)",
-              "Here Doc sin expansión de variables",
-              "Al entrecomillar 'EOF', impide que Bash evalúe variables como $USER o subcomandos dentro del bloque de texto."
-            ],
-            [
-              "<<< 'cadena' (Here String)",
-              "Entrada directa de una frase en memoria",
-              "Pasa un texto o cálculo a stdin sin necesidad de crear una tubería con echo (ej: 'bc <<< 10*5'). Las cadenas con espacios deben ir entre comillas; sin ellas solo se usa la primera palabra."
-            ]
-          ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🔄 ¿Por qué la flecha <code>&lt;</code> apunta hacia la izquierda? (HACIA el comando)</span>\n    <span style=\"font-size:11px; background:#FEF3C7; color:#B45309; padding:2px 8px; border-radius:12px; font-weight:700;\">Concepto Mental Clave</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:12px; margin-bottom:8px;\">\n    <!-- 1. < archivo -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">1. ARCHIVO ➔ STDIN</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#1E40AF; font-size:14.5px; margin:4px 0;\">cmd &lt; datos.txt</div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">\n        La flecha apunta al comando: el archivo se convierte en el <strong>teclado automático</strong> del proceso.\n      </div>\n    </div>\n\n    <!-- 2. << EOF -->\n    <div style=\"background:#FEFCE8; border:1.5px solid #EAB308; border-radius:8px; padding:10px;\">\n      <span style=\"background:#CA8A04; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">2. HERE DOCUMENT</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#854D0E; font-size:14.5px; margin:4px 0;\">cat &lt;&lt;EOF &gt; cfg</div>\n      <div style=\"color:#713F12; line-height:1.35;\">\n        Fábrica de configuración en scripts: redacta 20 líneas limpias sin necesidad de llamar a <code>echo</code> 20 veces.\n      </div>\n    </div>\n\n    <!-- 3. <<< -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">3. HERE STRING</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#14532D; font-size:14.5px; margin:4px 0;\">bc &lt;&lt;&lt; \"10 * 5\"</div>\n      <div style=\"color:#14532D; line-height:1.35;\">\n        Inyecta una única frase o cálculo en memoria directamente a stdin sin abrir procesos ni crear tuberías.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"background:#F8FAFC; border-left:4px solid #0EA5E9; border-radius:6px; padding:6px 12px; font-size:12px; color:#0369A1; line-height:1.4;\">\n    💡 <strong>Ejemplo Tangible:</strong> Al restaurar una base de datos con <code>mysql -u root bdd &lt; copia.sql</code>, el comando <code>mysql</code> no sabe leer argumentos de ruta; espera que un humano le teclee instrucciones SQL. Con <code>&lt; copia.sql</code>, el archivo alimenta a <code>mysql</code> por stdin a velocidad de vértigo.\n  </div>\n</div>\n"
-        },
-        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Diferencia Clave: 'wc -l archivo' imprime '28 archivo' (como argumento); mientras que 'wc -l < archivo' imprime solo '28' porque el archivo se convirtió en su entrada estándar (stdin)."
+          "content": "`wc -l archivo` imprime «28 archivo», porque el nombre llega como argumento; `wc -l < archivo` imprime solo «28», porque el archivo se ha convertido en su entrada estándar. Esa es la diferencia entre pasar un dato y redirigir un canal."
         }
       ],
       "notes": "Dos matices del manual: sin espacios entre `<<` y el delimitador, y comillas obligatorias en Here String cuando la cadena lleva espacios."
@@ -494,13 +500,54 @@
         },
         {
           "type": "paragraph",
-          "text": "Conectar la salida estándar de un programa directamente a la entrada del siguiente sin tocar el disco:"
+          "text": "La tubería `|` conecta el `stdout` (descriptor 1) del comando izquierdo con el `stdin` (descriptor 0) del derecho mediante un búfer circular en memoria RAM de 64 KB: no hay ficheros temporales ni E/S en disco. Los procesos no se esperan unos a otros, el segundo va procesando líneas mientras el primero las emite. Es la filosofía Unix en estado puro: programas pequeños y especializados que se unen por tuberías."
+        },
+        {
+          "type": "paragraph",
+          "text": "La tubería es sorda al canal de errores: `|` solo transporta el descriptor 1, así que un `stderr` (descriptor 2) salta directamente a la pantalla y no pasa por el filtro siguiente. Para que el filtro también reciba los errores hay que unirlos antes con `2>&1 |` o usar el atajo de Bash `|&`."
+        },
+        {
+          "type": "image",
+          "src": "/content-assets/diagrams/103-4-tuberia-streaming.svg",
+          "alt": "Tres procesos encadenados por flechas: ps aux genera líneas en su stdout, awk las recibe por stdin y filtra los campos $1, $4 y $11, y head -n 4 recorta cuatro líneas hacia la pantalla. Una flecha roja discontinua baja desde el generador hasta una banda que recuerda que la tubería solo transporta stdout: en ls /carpeta_que_no_existe | grep algo el error salta a la pantalla y grep no lo filtra, salvo que se use |& o 2>&1 |. Al pie se indican el búfer circular en RAM de 64 KB y el streaming concurrente sin ficheros temporales.",
+          "caption": "Tres procesos encadenados por el pipe: ps aux genera, awk filtra y head recorta; la flecha roja muestra el stderr que se escapa."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "comando1 | comando2 | comando3",
-          "title": "Procesar datos en streaming mediante memoria RAM sin crear molestos archivos temporales en disco"
+          "title": "Encadenar procesos en streaming",
+          "code": "comando1 | comando2 | comando3\ncomando1 2>&1 | comando2    # el filtro también recibe los errores\ncomando1 |& comando2        # atajo de Bash equivalente al anterior"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Operador",
+            "Nombre",
+            "Qué hace"
+          ],
+          "rows": [
+            [
+              "| (operador tubería)",
+              "Conexión stdout (1) → stdin (0)",
+              "Conecta directamente la salida del comando izquierdo a la entrada del derecho mediante un búfer circular en RAM (64 KB). Cero I/O en disco."
+            ],
+            [
+              "Streaming concurrente",
+              "Ejecución paralela en tiempo real",
+              "Los comandos no esperan a que el anterior termine: el segundo va procesando líneas según el primero las emite."
+            ],
+            [
+              "Exclusión de stderr",
+              "Los errores no viajan por el pipe",
+              "La tubería `|` solo transporta stdout (1). Los errores (stderr / 2) saltan directos a la pantalla."
+            ],
+            [
+              "|& (pipe de error Bash)",
+              "Tubería con errores incluidos",
+              "Atajo moderno de Bash equivalente a `2>&1 |`: envía tanto la salida exitosa como los errores al siguiente filtro."
+            ]
+          ],
+          "caption": "Operadores y comportamiento de las tuberías"
         },
         {
           "type": "terminal",
@@ -513,45 +560,10 @@
           ]
         },
         {
-          "type": "table",
-          "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
-          ],
-          "rows": [
-            [
-              "Operador tubería (|)",
-              "Conexión stdout (1) ➔ stdin (0)",
-              "🎯 Conecta directamente la salida del comando izquierdo a la entrada del derecho mediante un búfer circular en RAM (64 KB). Cero I/O en disco."
-            ],
-            [
-              "Streaming Concurrente",
-              "Ejecución paralela en tiempo real",
-              "Los comandos no esperan a que el anterior termine: el segundo va procesando líneas según el primero las va emitiendo."
-            ],
-            [
-              "⚠️ Exclusión de stderr",
-              "Los errores NO viajan por el pipe",
-              "🎯 Clave Absoluta de Examen: La tubería '|' solo transporta stdout (1). Los errores (stderr / 2) saltan directos a la pantalla."
-            ],
-            [
-              "|& (Pipe de error Bash)",
-              "Tubería con errores incluidos",
-              "🎯 Atajo moderno de Bash equivalente a '2>&1 |': envía tanto la salida exitosa como los errores al siguiente filtro."
-            ]
-          ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px;\">\n    🏭 La Cinta Transportadora en Memoria RAM (Sin Ficheros Temporales):\n  </div>\n\n  <div style=\"display:flex; justify-content:space-between; align-items:center; font-size:12px; text-align:center;\">\n    <!-- Paso 1 -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px; flex:1;\">\n      <strong style=\"color:#1E40AF; font-size:13px;\">1. GENERADOR</strong><br>\n      <code>ps aux</code><br>\n      <span style=\"color:#2563EB; font-weight:700; font-size:11px;\">stdout (Canal 1)</span>\n    </div>\n\n    <span style=\"font-size:18px; color:#2563EB; font-weight:900; margin:0 6px;\">|</span>\n\n    <!-- Paso 2 -->\n    <div style=\"background:#FEFCE8; border:1.5px solid #EAB308; border-radius:8px; padding:10px; flex:1.2;\">\n      <strong style=\"color:#854D0E; font-size:13px;\">2. TRANSFORMADOR</strong><br>\n      <code>awk '{print $1, $4}'</code><br>\n      <span style=\"color:#CA8A04; font-weight:700; font-size:11px;\">Lee stdin ➔ Emite stdout</span>\n    </div>\n\n    <span style=\"font-size:18px; color:#2563EB; font-weight:900; margin:0 6px;\">|</span>\n\n    <!-- Paso 3 -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px; flex:1;\">\n      <strong style=\"color:#14532D; font-size:13px;\">3. RECORTADOR</strong><br>\n      <code>head -n 4</code><br>\n      <span style=\"color:#16A34A; font-weight:700; font-size:11px;\">stdin ➔ Pantalla final</span>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; padding:6px 12px; background:#FEF2F2; border-left:4px solid #EF4444; border-radius:4px; font-size:12px; color:#991B1B; line-height:1.4;\">\n    ⚠️ <strong>REGLA DE ORO DE EXAMEN:</strong> Una tubería ordinaria <code>|</code> <strong>NUNCA</strong> transporta los mensajes de error (stderr / 2). Si el primer comando falla, el texto del fallo salta directamente a la pantalla del usuario. Para obligar a la tubería a transportar errores se utiliza <code>|&amp;</code> o <code>2&gt;&amp;1 |</code>.\n  </div>\n</div>\n"
-        },
-        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Si ejecutas 'ls /carpeta_que_no_existe | grep algo', el mensaje de error saldrá en tu pantalla sin ser filtrado por grep. La tubería '|' es sorda al canal 2 (stderr)."
+          "content": "Si ejecutas `ls /carpeta_que_no_existe | grep algo`, el mensaje de error sale en tu pantalla sin ser filtrado por grep: la tubería `|` es sorda al canal 2 (stderr). Para incluirlo, `|&` o `2>&1 |`."
         }
       ],
       "notes": "Explica la filosofía Unix: pequeños programas especializados que hacen una sola cosa bien, unidos mediante tuberías."
@@ -569,13 +581,45 @@
         },
         {
           "type": "paragraph",
-          "text": "Duplicar el flujo de datos: seguir enviándolo a la pantalla (o a otra tubería) mientras se guarda en disco:"
+          "text": "`tee` duplica el flujo: lee de su `stdin` y escribe a la vez en la pantalla (su `stdout`, que puede seguir dentro de la tubería) y en uno o varios archivos. No detiene el flujo, así que `cat archivo | tee copia.txt | grep error | wc -l` sigue funcionando igual, y `dd < /dev/sda1 | tee sda1.img | sha1sum > sda1.sha1` clona y calcula el hash en una sola pasada."
+        },
+        {
+          "type": "image",
+          "src": "/content-assets/diagrams/103-4-tee-bifurcacion.svg",
+          "alt": "El flujo de entrada dd < /dev/sda1 llega al nodo tee, que lo duplica sin detenerlo: una rama azul sube hacia la pantalla, donde el flujo sigue hacia el siguiente comando de la tubería, y otra rama gris baja hacia un archivo en disco, donde -a añade al final en lugar de truncar. La banda inferior explica la trampa de root: sudo echo 1 > /proc/sys/... falla porque sudo solo eleva el echo y la redirección la ejecuta la shell sin privilegios, mientras que sudo tee sí escribe como root.",
+          "caption": "tee es la forma limpia de escribir en /etc con sudo: la redirección la hace la shell, no el comando elevado."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "cmd | tee [-a] <archivo> [archivo2...]",
-          "title": "Ver el progreso en tiempo real y registrarlo de forma persistente en uno o más ficheros"
+          "title": "Las tres formas de tee y su uso encadenado",
+          "code": "cmd | tee archivo              # sobrescribe el archivo y muestra el resultado\ncmd | tee -a archivo           # añade al final sin borrar lo anterior\ncmd | tee archivo1 archivo2    # escribe en varios archivos a la vez\ncmd | sudo tee -a /etc/cfg     # escribe como root en una ruta protegida\ncat archivo | tee copia.txt | grep error | wc -l\ndd < /dev/sda1 | tee sda1.img | sha1sum > sda1.sha1"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Qué hace"
+          ],
+          "rows": [
+            [
+              "cmd | tee archivo",
+              "Sobrescribir y mostrar",
+              "Trunca el archivo y escribe los datos nuevos, mostrando al mismo tiempo el resultado en la pantalla."
+            ],
+            [
+              "cmd | tee -a archivo",
+              "Modo append (-a)",
+              "Añade datos al final del fichero existente sin borrar registros previos (ideal para logs)."
+            ],
+            [
+              "cmd | sudo tee [-a] archivo",
+              "Escritura protegida de root",
+              "Permite a un usuario con sudo escribir en ficheros protegidos como /etc/ donde `>` fallaría con «Permission denied»."
+            ]
+          ],
+          "caption": "Las tres variantes de tee que pregunta el examen"
         },
         {
           "type": "terminal",
@@ -588,40 +632,10 @@
           ]
         },
         {
-          "type": "table",
-          "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
-          ],
-          "rows": [
-            [
-              "cmd | tee archivo",
-              "Sobreescribir y mostrar",
-              "🎯 Trunca el archivo y escribe los datos nuevos, mostrando al mismo tiempo el resultado en la pantalla."
-            ],
-            [
-              "cmd | tee -a archivo",
-              "Modo Append (-a)",
-              "🎯 Clave de Examen: Añade datos al final del fichero existente sin borrar registros previos (ideal para logs)."
-            ],
-            [
-              "cmd | sudo tee [-a] archivo",
-              "Escritura protegida de root",
-              "🎯 Clave de Examen: Permite a un usuario con sudo escribir en ficheros protegidos como /etc/ donde '>' fallaría con Permission Denied."
-            ]
-          ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🚰 Las 3 Formas Fundamentales de Usar <code>tee</code> en la Práctica:</span>\n    <span style=\"font-size:11px; background:#F0FDF4; color:#15803D; padding:2px 8px; border-radius:12px; font-weight:700;\">Duplicador de Flujo</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1.25fr; gap:10px; font-size:12px; margin-bottom:8px;\">\n    <!-- 1. tee estándar -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px;\">\n      <span style=\"background:#2563EB; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">1. SOBREESCRITURA</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#1E40AF; font-size:13.5px; margin:4px 0;\">cmd | tee log.txt</div>\n      <div style=\"color:#1E3A8A; line-height:1.35;\">\n        Crea un archivo nuevo o borra el anterior. Útil para informes frescos que se regeneran de cero.\n      </div>\n    </div>\n\n    <!-- 2. tee -a -->\n    <div style=\"background:#FEFCE8; border:1.5px solid #EAB308; border-radius:8px; padding:10px;\">\n      <span style=\"background:#CA8A04; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">2. MODO APPEND (-a)</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#854D0E; font-size:13.5px; margin:4px 0;\">cmd | tee -a log.txt</div>\n      <div style=\"color:#713F12; line-height:1.35;\">\n        Añade líneas al final sin borrar el historial. Imprescindible para scripts de instalación o auditoría.\n      </div>\n    </div>\n\n    <!-- 3. sudo tee -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <span style=\"background:#16A34A; color:#FFF; font-weight:800; font-size:10px; padding:2px 6px; border-radius:4px;\">3. EL SALVAVIDAS ROOT</span>\n      <div style=\"font-family:monospace; font-weight:800; color:#14532D; font-size:13.5px; margin:4px 0;\">cmd | sudo tee -a /etc/cfg</div>\n      <div style=\"color:#14532D; line-height:1.35;\">\n        Supera el fallo de permisos de <code>sudo echo &gt; /etc/</code> porque es <code>tee</code> quien escribe como root.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"background:#F8FAFC; border-left:4px solid #2563EB; border-radius:6px; padding:6px 12px; font-size:12px; color:#1E3A8A; line-height:1.4;\">\n    💡 <strong>Doble utilidad en tuberías encadenadas:</strong> <code>tee</code> no detiene el flujo de datos. Puedes escribir <code>cat archivo | tee copia.txt | grep error | wc -l</code>; o clonar y calcular hash en una sola pasada: <code>dd &lt; /dev/sda1 | tee sda1.img | sha1sum &gt; sda1.sha1</code>.\n  </div>\n</div>\n"
-        },
-        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 ¿Por qué se llama 'tee'? Porque actúa exactamente como una pieza en 'T' de fontanería: el flujo que entra por la base se divide en dos salidas (hacia la pantalla y hacia el archivo en disco)."
+          "content": "¿Por qué se llama `tee`? Porque actúa exactamente como una pieza en T de fontanería: el flujo que entra por la base se divide en dos salidas, la pantalla y el archivo en disco. Sin `tee`, ver y guardar el mismo flujo exige dos pasadas."
         }
       ],
       "notes": "Explica la trampa 'sudo echo 1 > /proc/sys/...': sudo solo aplica a echo, la redirección '>' la hace la shell ordinaria y da error. Solo 'sudo tee' lo resuelve limpiamente."
@@ -639,13 +653,59 @@
         },
         {
           "type": "paragraph",
-          "text": "Ejecutar una orden en una subshell e incrustar su salida directamente como argumento de otro comando:"
+          "text": "La sustitución de comandos ejecuta una orden en una subshell e incrusta su salida como texto dentro de otra orden. Primero corre el subcomando en un proceso hijo independiente, después su salida sustituye literalmente a la expresión y por último se ejecuta la orden exterior con ese resultado como argumento. Las variables creadas dentro de la subshell se destruyen al terminar."
+        },
+        {
+          "type": "image",
+          "src": "/content-assets/diagrams/103-4-sustitucion-comandos.svg",
+          "alt": "Tres pasos numerados sobre un eje vertical: la shell lanza el subcomando en una subshell como proceso hijo aparte, la salida sustituye al texto de la sustitución y se ejecuta la orden exterior con el resultado como argumento. El panel derecho compara la orden escrita tar -czf bkp-$(date +%F).tar.gz con la orden ejecutada tar -czf bkp-2026-11-13.tar.gz y muestra el anidamiento limpio echo $(basename $(pwd)) sin barras invertidas. Al pie se recuerda que las variables de la subshell se destruyen al terminar el proceso hijo.",
+          "caption": "La sustitución convierte una salida en argumento: primero se ejecuta lo de dentro y solo después la orden exterior."
+        },
+        {
+          "type": "paragraph",
+          "text": "Se usa cada vez que una orden necesita un dato que solo se conoce ejecutando otra: consultar la versión del kernel con `ls /lib/modules/$(uname -r)/`, empaquetar con la fecha del día en el nombre o matar el proceso que escucha un puerto con `kill $(lsof -t -i:80)`. Para guardar el resultado en una variable: `TODAY=$(date +%Y-%m-%d)` y después `$TODAY`."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "comando $(subcomando) | comando `subcomando`",
-          "title": "Inyectar dinámicamente fechas, rutas, PIDs o parámetros calculados dentro de una orden de terminal"
+          "title": "Sintaxis moderna frente a backticks",
+          "code": "comando $(subcomando)                      # estándar POSIX moderno\ncomando `subcomando`                       # sintaxis histórica Bourne\necho $(basename $(pwd))                    # anidado limpio\n`basename \\`pwd\\``                        # anidado con escapes\ntar -czf bkp-$(uname -r)-$(date +%F).tar.gz\nTODAY=$(date +%Y-%m-%d)                    # captura en variable"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Qué hace"
+          ],
+          "rows": [
+            [
+              "$(comando)",
+              "Sintaxis estándar moderna POSIX",
+              "Recomendada por LPI y por los administradores: legible, limpia y permite anidar comandos indefinidamente sin errores."
+            ],
+            [
+              "`comando` (backticks)",
+              "Sintaxis histórica de Unix antiguo",
+              "Heredada de la shell Bourne original. Se confunde fácilmente con las comillas simples (') y es muy difícil de anidar."
+            ],
+            [
+              "Anidamiento limpio",
+              "Subcomandos dentro de subcomandos",
+              "Con $(...) se anida directamente; con backticks hay que escapar cada nivel con barras invertidas."
+            ],
+            [
+              "Ejecución en subshell",
+              "Aislamiento de variables",
+              "El comando interno se ejecuta en un proceso hijo independiente; las variables creadas dentro se destruyen al terminar."
+            ],
+            [
+              "Asignación a variable",
+              "Capturar la salida",
+              "TODAY=$(date +%Y-%m-%d) guarda la salida en la variable TODAY, que luego se usa como $TODAY. Con backticks se escribe igual, con comillas inversas en lugar de $(...)."
+            ]
+          ],
+          "caption": "Sintaxis, anidamiento y captura en variable"
         },
         {
           "type": "terminal",
@@ -658,50 +718,10 @@
           ]
         },
         {
-          "type": "table",
-          "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
-          ],
-          "rows": [
-            [
-              "$(comando)",
-              "Sintaxis estándar moderna POSIX",
-              "🎯 Recomendada por LPI y administradores: legible, limpia y permite anidar comandos infinitamente sin errores."
-            ],
-            [
-              "`comando` (Backticks)",
-              "Sintaxis histórica de Unix antiguo",
-              "Heredada de la shell Bourne original. Se confunde fácilmente con comillas simples (') y es muy difícil de anidar."
-            ],
-            [
-              "Anidamiento limpio",
-              "Subcomandos dentro de subcomandos",
-              "🎯 Con $(...) se anida directo: 'echo $(basename $(pwd))'. Con backticks requiere engorrosos escapes: '`basename \\`pwd\\``'."
-            ],
-            [
-              "Ejecución en Subshell",
-              "Aislamiento de variables",
-              "El comando interno se ejecuta en un proceso hijo independiente; las variables creadas dentro se destruyen al terminar."
-            ],
-            [
-              "Asignación a variable",
-              "Capturar la salida",
-              "🎯 `TODAY=$(date +%Y-%m-%d)` guarda la salida en `TODAY`, que luego se usa como `$TODAY`. Con backticks se escribe igual, con comillas inversas en lugar de `$(...)`."
-            ]
-          ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>⚖️ Comparativa Visual: $(cmd) Moderno frente a `cmd` Histórico</span>\n    <span style=\"font-size:11px; background:#EEF2FF; color:#4338CA; padding:2px 8px; border-radius:12px; font-weight:700;\">Elección Técnica LPIC-1</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12px; margin-bottom:8px;\">\n    <!-- Moderno -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#15803D; font-size:13px;\">✅ $(comando) — ESTÁNDAR POSIX</strong>\n        <span style=\"background:#16A34A; color:#FFF; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;\">RECOMENDADO</span>\n      </div>\n      <div style=\"color:#14532D; line-height:1.4;\">\n        • <strong>Anidamiento sin dolor:</strong> <code>tar -czf bkp-$(uname -r)-$(date +%F).tar.gz</code><br>\n        • Se distingue a simple vista de comillas simples <code>'</code> y dobles <code>\"</code>.<br>\n        • Compatible con Bash, Zsh, Dash y todas las shells POSIX.\n      </div>\n    </div>\n\n    <!-- Antiguo -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px;\">\n      <div style=\"display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;\">\n        <strong style=\"color:#991B1B; font-size:13px;\">⚠️ `comando` — LEGADO UNIX</strong>\n        <span style=\"background:#DC2626; color:#FFF; font-size:10px; font-weight:800; padding:1px 6px; border-radius:4px;\">HISTÓRICO</span>\n      </div>\n      <div style=\"color:#7F1D1D; line-height:1.4;\">\n        • <strong>Anidamiento complejo:</strong> exige escapar con barras: <code>`dirname \\`pwd\\``</code><br>\n        • Provoca errores tipográficos al confundirse con comillas simples <code>'cmd'</code>.<br>\n        • Sigue entrando en preguntas de examen para verificar conocimientos clásicos.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"background:#F8FAFC; border-left:4px solid #2563EB; border-radius:6px; padding:6px 12px; font-size:12px; color:#1E3A8A; line-height:1.4;\">\n    💡 <strong>¿Cuándo se usa en el trabajo real?</strong> Se utiliza cada vez que una orden necesita un dato que solo se sabe ejecutando otra orden: consultar la versión del kernel (<code>ls /lib/modules/$(uname -r)/</code>), empaquetar por fecha o matar un proceso por socket (<code>kill $(lsof -t -i:80)</code>).\n  </div>\n</div>\n"
-        },
-        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Aunque '$(cmd)' y '`cmd`' hacen exactamente lo mismo, LPI recomienda oficialmente '$(cmd)' porque permite anidar operaciones sin necesidad de escapar caracteres con contrabarras."
+          "content": "Aunque `$(cmd)` y los backticks hacen exactamente lo mismo, LPI recomienda oficialmente `$(cmd)` porque permite anidar operaciones sin necesidad de escapar caracteres con barras invertidas, y se distingue a simple vista de las comillas simples."
         }
       ],
       "notes": "La sustitución sirve como argumento y para asignar a una variable: `TODAY=$(date +%Y-%m-%d)` y después `$TODAY`. Los backticks hacen lo mismo."
@@ -719,13 +739,64 @@
         },
         {
           "type": "paragraph",
-          "text": "Convertir la salida de una tubería en argumentos de comando para órdenes que no admiten entrada estándar:"
+          "text": "Muchas órdenes (`rm`, `cp`, `kill`, `touch`) no leen de `stdin`: esperan sus rutas como argumentos en la línea de órdenes. Por eso `cat lista.txt | rm` no hace nada o falla. `xargs` lee los elementos de su entrada estándar, los concatena al final del comando indicado y construye la orden real —`rm arch1.tmp arch2.tmp arch3.tmp`— antes de ejecutarla."
+        },
+        {
+          "type": "paragraph",
+          "text": "`-n N` limita los argumentos por lote (`-n 1` ejecuta el comando una vez por elemento), `-L N` limita por líneas no vacías, `-I {}` marca el lugar exacto donde colocar cada argumento y `-p` pide confirmación antes de cada ejecución. Cuando solo hay que ejecutar un comando por resultado, `find -exec` cubre el mismo papel sin pasar por `xargs`."
+        },
+        {
+          "type": "image",
+          "src": "/content-assets/diagrams/103-4-xargs-puente.svg",
+          "alt": "El texto que llega por stdout, con una línea por elemento (/tmp/a.tmp, /tmp/b.tmp y /tmp/c.tmp), entra en el nodo xargs, que traduce cada línea a un argumento y entrega la lista al comando. La tarjeta roja muestra el error cat lista.txt | rm, que se queda esperando porque rm no lee de stdin; la tarjeta verde muestra cat lista.txt | xargs rm, que construye la orden real con los argumentos. Al pie se resumen -n 1 y -I {}.",
+          "caption": "Sin xargs el flujo de texto no llega a rm: xargs es el traductor obligatorio entre stdin y argv."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "cmd_origen | xargs [-n <N>] [-I {}] <cmd_destino>",
-          "title": "Hacer de puente entre programas que emiten texto por tubería y programas que exigen parámetros en su llamada"
+          "title": "Sintaxis y variantes de xargs",
+          "code": "cmd_origen | xargs <cmd_destino>\ncmd_origen | xargs -n 2 <cmd_destino>      # dos argumentos por ejecución\ncmd_origen | xargs -L 1 <cmd_destino>      # una línea por ejecución\ncmd_origen | xargs -I {} <cmd_destino> {} /destino\ncmd_origen | xargs -p <cmd_destino>        # pide confirmación [y/N]"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Qué hace"
+          ],
+          "rows": [
+            [
+              "xargs &lt;comando&gt;",
+              "Conversión masiva a argumentos",
+              "Lee elementos de stdin y los concatena como una única lista gigante al final del comando (`rm f1 f2 f3...`)."
+            ],
+            [
+              "xargs -n &lt;N&gt;",
+              "Límite de argumentos por lote",
+              "Ejecuta el comando en grupos de N elementos (por ejemplo `-n 1` ejecuta el comando una vez por cada elemento)."
+            ],
+            [
+              "xargs -L &lt;N&gt;",
+              "Límite por líneas no vacías",
+              "Alternativa a `-n`: procesa como máximo N líneas de entrada por invocación (`xargs -L 1`)."
+            ],
+            [
+              "xargs -I {}",
+              "Marcador de posición {}",
+              "Reemplaza `{}` por cada argumento donde tú elijas (esencial para `cp {} /backup/` o `mv`)."
+            ],
+            [
+              "xargs -p",
+              "Confirmación interactiva",
+              "Pregunta antes de cada ejecución «¿ejecutar comando? [y/N]» para evitar desastres al borrar archivos."
+            ],
+            [
+              "find -exec",
+              "Alternativa a xargs",
+              "`find . -name '*.tmp' -exec rm {} \\;` ejecuta el comando por cada resultado. Con find, usar `xargs -n 1` o `-L 1` suele ser innecesario."
+            ]
+          ],
+          "caption": "Opciones de xargs y su alternativa con find"
         },
         {
           "type": "terminal",
@@ -738,55 +809,10 @@
           ]
         },
         {
-          "type": "table",
-          "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
-          ],
-          "rows": [
-            [
-              "xargs <comando>",
-              "Conversión masiva a argumentos",
-              "🎯 Lee elementos de stdin y los concatena como una única lista gigante al final del comando ('rm f1 f2 f3...')."
-            ],
-            [
-              "xargs -n <N>",
-              "Límite de argumentos por lote",
-              "🎯 Clave de Examen: Ejecuta el comando en grupos de N elementos (ej: '-n 1' ejecuta el comando una vez por cada elemento)."
-            ],
-            [
-              "xargs -L <N>",
-              "Límite por líneas no vacías",
-              "🎯 Clave de Examen: Alternativa a -n: procesa como máximo N líneas de entrada por invocación ('xargs -L 1')."
-            ],
-            [
-              "xargs -I {}",
-              "Marcador de posición {}",
-              "🎯 Clave de Examen: Reemplaza '{}' por cada argumento donde tú elijas (esencial para 'cp {} /backup/' o 'mv')."
-            ],
-            [
-              "xargs -p",
-              "Confirmación interactiva",
-              "Pregunta antes de cada ejecución '¿ejecutar comando? [y/N]' para evitar desastres al borrar archivos."
-            ],
-            [
-              "find -exec",
-              "Alternativa a xargs",
-              "🎯 `find . -name '*.tmp' -exec rm {} \\;` ejecuta el comando por cada resultado. Con `find`, usar `xargs -n 1` o `-L 1` suele ser innecesario."
-            ]
-          ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🌉 ¿Cómo funciona el «Puente Traductor» de <code>xargs</code>?</span>\n    <span style=\"font-size:11px; background:#FEF3C7; color:#B45309; padding:2px 8px; border-radius:12px; font-weight:700;\">De Flujo a Argumentos</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12px; margin-bottom:8px;\">\n    <!-- Sin xargs -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#991B1B; font-size:13px;\">❌ TUBERÍA DIRECTA (Falla por completo)</strong>\n      <div style=\"font-family:monospace; margin:4px 0; color:#B91C1C;\">cat borrar.txt | rm</div>\n      <div style=\"color:#7F1D1D; line-height:1.35;\">\n        <code>rm</code> <strong>no lee texto de stdin</strong>. El comando no hace nada o muestra un error de sintaxis porque espera que los archivos se le pasen como argumentos.\n      </div>\n    </div>\n\n    <!-- Con xargs -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#15803D; font-size:13px;\">✅ CON xargs (Éxito rotundo)</strong>\n      <div style=\"font-family:monospace; margin:4px 0; color:#15803D;\">cat borrar.txt | xargs rm</div>\n      <div style=\"color:#14532D; line-height:1.35;\">\n        <code>xargs</code> lee las líneas de stdin y construye la orden real en la terminal:<br>\n        <code>rm arch1.tmp arch2.tmp arch3.tmp</code>\n      </div>\n    </div>\n  </div>\n\n  <!-- Las 3 Opciones Clave -->\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; font-size:11.5px;\">\n    <div style=\"background:#EFF6FF; border:1px solid #93C5FD; padding:6px 8px; border-radius:6px;\">\n      <strong style=\"color:#1E40AF;\">xargs cmd</strong><br>Pasa todo de golpe: <code>cmd a b c d</code>\n    </div>\n    <div style=\"background:#FEFCE8; border:1px solid #FDE047; padding:6px 8px; border-radius:6px;\">\n      <strong style=\"color:#A16207;\">xargs -n 1 cmd</strong><br>Lanza 1 por 1: <code>cmd a</code>, luego <code>cmd b</code>\n    </div>\n    <div style=\"background:#F5F3FF; border:1px solid #DDD6FE; padding:6px 8px; border-radius:6px;\">\n      <strong style=\"color:#6D28D9;\">xargs -I {} cmd {} /dest</strong><br>Coloca el archivo donde esté <code>{}</code>\n    </div>\n  </div>\n</div>\n"
-        },
-        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 ¿Por qué es estrictamente necesario xargs? Órdenes como 'rm', 'cp', 'kill' o 'touch' NO leen de stdin. Si ejecutas 'cat lista.txt | rm', 'rm' se queda esperando o falla. 'xargs' coge el texto de stdin y lo convierte en argumentos: 'rm arch1 arch2 arch3'."
+          "content": "¿Por qué es estrictamente necesario `xargs`? Órdenes como `rm`, `cp`, `kill` o `touch` no leen de stdin: si ejecutas `cat lista.txt | rm`, `rm` se queda esperando o falla. `xargs` toma el texto de stdin y lo convierte en argumentos, `rm arch1 arch2 arch3`."
         }
       ],
       "notes": "`find -exec` evita xargs cuando solo hay que ejecutar un comando por resultado; `xargs -I` coloca el argumento en el centro de la orden."
@@ -804,13 +830,55 @@
         },
         {
           "type": "paragraph",
-          "text": "Evitar la fragmentación y borrado accidental de archivos con espacios mediante el byte nulo (\\0):"
+          "text": "Si un nombre de archivo contiene espacios, un `xargs` ordinario lo fragmenta: «Factura Mayo 2026.pdf» se convierte en tres argumentos distintos. En ext4, XFS o Btrfs un nombre puede llevar espacios, acentos o saltos de línea, pero nunca el byte nulo ASCII 0. La solución no es entrecomillar a mano, sino cambiar el separador: `find -print0` emite cada resultado seguido del byte nulo ASCII 0 en lugar de un salto de línea, y `xargs -0` (o `--null`) separa los argumentos únicamente al encontrar ese byte."
+        },
+        {
+          "type": "image",
+          "src": "/content-assets/diagrams/103-4-print0-xargs-0.svg",
+          "alt": "Dos paneles enfrentados: sin -0 el nombre Factura Mayo 2026.pdf se parte en tres trozos (Factura, Mayo y 2026.pdf) y xargs cree que son tres archivos distintos, así que el comando falla o borra lo que no debe; con find -print0 y xargs -0 el nombre viaja como un único argumento atómico aunque lleve espacios, acentos o saltos de línea. La banda inferior recuerda el equivalente en tar (--null con -T -) y que el byte nulo ASCII 0 es el único prohibido dentro de un nombre de archivo.",
+          "caption": "Sin -0 el nombre se parte en tres argumentos; con find -print0 y xargs -0 viaja entero hasta el comando."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "find <ruta> -print0 | xargs -0 <comando>",
-          "title": "Garantizar que nombres con espacios o comillas se procesen como un solo bloque atómico indestructible"
+          "title": "Separación por byte nulo",
+          "code": "find <ruta> -print0 | xargs -0 <comando>\nfind . -name '*.pdf' -print0 | xargs -0 ls -lh\nfind /etc -type f -print0 | tar -cJ -f /srv/backup/etc.tar.xz --null -T -"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Opción / Bandera",
+            "Nombre",
+            "Qué hace"
+          ],
+          "rows": [
+            [
+              "El peligro de los espacios",
+              "Fragmentación mortal",
+              "Si un archivo se llama 'Factura Mayo.pdf', un xargs ordinario intentará procesar 'Factura' y 'Mayo.pdf' por separado."
+            ],
+            [
+              "find -print0",
+              "Delimitador byte nulo (\\0)",
+              "Imprime cada resultado seguido del byte nulo ASCII 0 (\\0) en lugar de un salto de línea (\\n)."
+            ],
+            [
+              "xargs -0 (o --null)",
+              "Lectura por byte nulo (\\0)",
+              "Le indica a xargs que separe los argumentos únicamente al encontrar un byte nulo (\\0)."
+            ],
+            [
+              "Sinergia indestructible",
+              "Estándar de producción",
+              "`find ... -print0 | xargs -0 ...` es el estándar corporativo obligatorio para scripts en producción y para las preguntas LPIC-1."
+            ],
+            [
+              "tar --null",
+              "Equivalente en tar",
+              "`find /etc -type f -print0 | tar -cJ -f /srv/backup/etc.tar.xz --null -T -`: `--null` lee la lista de rutas separadas por byte nulo."
+            ]
+          ],
+          "caption": "Delimitadores y su equivalente en tar"
         },
         {
           "type": "terminal",
@@ -823,50 +891,10 @@
           ]
         },
         {
-          "type": "table",
-          "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
-          ],
-          "rows": [
-            [
-              "El peligro de los espacios",
-              "Fragmentación mortal",
-              "⚠️ Si un archivo se llama 'Factura Mayo.pdf', un xargs ordinario intentará procesar 'Factura' y 'Mayo.pdf' por separado."
-            ],
-            [
-              "find -print0",
-              "Delimitador byte nulo (\\0)",
-              "🎯 Clave de Examen: Imprime cada resultado seguido del byte nulo ASCII 0 (\\0) en lugar de un salto de línea (\\n)."
-            ],
-            [
-              "xargs -0 (o --null)",
-              "Lectura por byte nulo (\\0)",
-              "🎯 Clave de Examen: Le indica a xargs que separe los argumentos ÚNICAMENTE al encontrar un byte nulo (\\0)."
-            ],
-            [
-              "Sinergia Indestructible",
-              "Estándar de Producción",
-              "🎯 'find ... -print0 | xargs -0 ...' es el estándar corporativo obligatorio para scripts en producción y preguntas LPIC-1."
-            ],
-            [
-              "tar --null",
-              "Equivalente en tar",
-              "🎯 `find /etc -type f -print0 | tar -cJ -f /srv/backup/etc.tar.xz --null -T -`: `--null` lee la lista de rutas separadas por byte nulo."
-            ]
-          ],
-          "caption": "Opciones y parámetros del comando"
-        },
-        {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:6px;\">\n  <div style=\"font-size:14.5px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; align-items:center; justify-content:space-between;\">\n    <span>🛡️ ¿Por qué el Byte Nulo <code>\\0</code> es Indestructible frente a los Espacios?</span>\n    <span style=\"font-size:11px; background:#FEE2E2; color:#991B1B; padding:2px 8px; border-radius:12px; font-weight:700;\">Seguridad Forense</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12px; margin-bottom:8px;\">\n    <!-- Desastre sin -0 -->\n    <div style=\"background:#FEF2F2; border:1.5px solid #EF4444; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#991B1B; font-size:13px;\">❌ SIN -0 (Separador: Espacios / Saltos de línea)</strong>\n      <div style=\"margin:4px 0; font-family:monospace; font-size:11.5px; color:#B91C1C;\">\n        Fichero: <code>Factura Mayo 2026.pdf</code><br>\n        ➔ Trozo 1: <code>[Factura]</code><br>\n        ➔ Trozo 2: <code>[Mayo]</code><br>\n        ➔ Trozo 3: <code>[2026.pdf]</code>\n      </div>\n      <div style=\"color:#7F1D1D; font-weight:700;\">¡xargs cree que son 3 archivos distintos y falla!</div>\n    </div>\n\n    <!-- Éxito con -0 -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px;\">\n      <strong style=\"color:#15803D; font-size:13px;\">✅ CON -print0 | xargs -0 (Separador: Byte Nulo \\0)</strong>\n      <div style=\"margin:4px 0; font-family:monospace; font-size:11.5px; color:#15803D;\">\n        Fichero: <code>Factura Mayo 2026.pdf\\0</code><br>\n        ➔ Argumento Único: <code>[Factura Mayo 2026.pdf]</code>\n      </div>\n      <div style=\"color:#14532D; font-weight:700;\">¡El nombre se respeta de forma atómica y 100% segura!</div>\n    </div>\n  </div>\n\n  <div style=\"background:#EFF6FF; border-left:4px solid #2563EB; border-radius:6px; padding:6px 12px; font-size:12px; color:#1E3A8A; line-height:1.4;\">\n    💡 <strong>¿Por qué el carácter nulo <code>\\0</code>?</strong> En los sistemas de archivos de Linux (ext4, XFS, Btrfs), un archivo puede contener espacios, acentos, saltos de línea e interrogaciones en su nombre. El <strong>ÚNICO</strong> byte que el kernel de Linux tiene terminantemente prohibido usar en un nombre de archivo es el byte nulo (<code>ASCII 0</code>). Por eso es el delimitador perfecto.\n  </div>\n</div>\n"
-        },
-        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Regla Mnemotécnica de Examen: ¡El cero siempre va con el cero! 'find -print0' siempre debe emparejarse con 'xargs -0'. El byte nulo (\\0) es el único carácter que jamás puede formar parte del nombre de un fichero."
+          "content": "Regla mnemotécnica de examen: el cero siempre va con el cero. `find -print0` debe emparejarse siempre con `xargs -0`; el byte nulo (\\0) es el único carácter que jamás puede formar parte del nombre de un fichero, por eso es el delimitador perfecto."
         }
       ],
       "notes": "La pareja `-print0`/`-0` tiene su equivalente en tar: `--null` con `-T -` lee rutas separadas por byte nulo."
@@ -890,97 +918,97 @@
           "type": "table",
           "headers": [
             "Operador",
-            "Descriptor Afectado",
-            "Función y Comportamiento",
-            "Ejemplo Práctico Real"
+            "Descriptor afectado",
+            "Función y comportamiento",
+            "Ejemplo práctico"
           ],
           "rows": [
             [
-              "<code style='color:#2563EB; font-weight:800; font-size:14px;'>&gt;</code>",
-              "<span style='background:#EFF6FF; color:#1E40AF; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11.5px;'>stdout (1)</span>",
-              "Trunca y sobreescribe el archivo con la salida exitosa normal.",
-              "<code>ls -lh &gt; listado.txt</code>"
+              "`&gt;`",
+              "stdout (1)",
+              "Trunca y sobrescribe el archivo con la salida exitosa normal.",
+              "`ls -lh &gt; listado.txt`"
             ],
             [
-              "<code style='color:#2563EB; font-weight:800; font-size:14px;'>&gt;&gt;</code>",
-              "<span style='background:#EFF6FF; color:#1E40AF; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11.5px;'>stdout (1)</span>",
+              "`&gt;&gt;`",
+              "stdout (1)",
               "Añade datos al final (append) sin borrar el contenido histórico.",
-              "<code>echo 'OK' &gt;&gt; auditoria.log</code>"
+              "`echo 'OK' &gt;&gt; auditoria.log`"
             ],
             [
-              "<code style='color:#DC2626; font-weight:800; font-size:14px;'>2&gt;</code>",
-              "<span style='background:#FEF2F2; color:#991B1B; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11.5px;'>stderr (2)</span>",
+              "`2&gt;`",
+              "stderr (2)",
               "Desvía únicamente los mensajes de error a un archivo.",
-              "<code>find / -name x 2&gt; errores.log</code>"
+              "`find / -name x 2&gt; errores.log`"
             ],
             [
-              "<code style='color:#DC2626; font-weight:800; font-size:14px;'>2&gt; /dev/null</code>",
-              "<span style='background:#FEF2F2; color:#991B1B; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11.5px;'>stderr (2)</span>",
+              "`2&gt; /dev/null`",
+              "stderr (2)",
               "Silencia y destruye todos los mensajes de error (agujero negro).",
-              "<code>grep -r 'pass' /etc 2&gt;/dev/null</code>"
+              "`grep -r 'pass' /etc 2&gt;/dev/null`"
             ],
             [
-              "<code style='color:#DC2626; font-weight:800; font-size:14px;'>2&gt;&gt;</code>",
-              "<span style='background:#FEF2F2; color:#991B1B; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11.5px;'>stderr (2)</span>",
+              "`2&gt;&gt;`",
+              "stderr (2)",
               "Añade (append) los errores al final del archivo sin borrar lo anterior; crea el archivo si no existe.",
-              "<code>cmd 2&gt;&gt; errores.log</code>"
+              "`cmd 2&gt;&gt; errores.log`"
             ],
             [
-              "<code style='color:#16A34A; font-weight:800; font-size:14px;'>&gt; arch 2&gt;&amp;1</code>",
-              "<span style='background:#F0FDF4; color:#15803D; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11.5px;'>1 y 2 (POSIX)</span>",
-              "🎯 <strong>Fusión POSIX universal:</strong> éxitos y errores en el mismo log.",
-              "<code>make &gt; build.log 2&gt;&amp;1</code>"
+              "`&gt; arch 2&gt;&amp;1`",
+              "1 y 2 (POSIX)",
+              "Fusión POSIX universal: éxitos y errores en el mismo log.",
+              "`make &gt; build.log 2&gt;&amp;1`"
             ],
             [
-              "<code style='color:#16A34A; font-weight:800; font-size:14px;'>&amp;&gt;</code>",
-              "<span style='background:#F0FDF4; color:#15803D; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11.5px;'>1 y 2 (Bash)</span>",
-              "Atajo de Bash equivalente a <code>&gt; arch 2&gt;&amp;1</code>.",
-              "<code>backup.sh &amp;&gt; backup.log</code>"
+              "`&amp;&gt;`",
+              "1 y 2 (Bash)",
+              "Atajo de Bash equivalente a `&gt; arch 2&gt;&amp;1`.",
+              "`backup.sh &amp;&gt; backup.log`"
             ],
             [
-              "<code style='color:#854D0E; font-weight:800; font-size:14px;'>&lt;</code>",
-              "<span style='background:#FEFCE8; color:#854D0E; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11.5px;'>stdin (0)</span>",
+              "`&lt;`",
+              "stdin (0)",
               "Inyecta el contenido de un archivo como entrada estándar.",
-              "<code>mysql bdd &lt; dump.sql</code>"
+              "`mysql bdd &lt; dump.sql`"
             ],
             [
-              "<code style='color:#854D0E; font-weight:800; font-size:14px;'>&lt;&lt; EOF</code>",
-              "<span style='background:#FEFCE8; color:#854D0E; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11.5px;'>stdin (0)</span>",
+              "`&lt;&lt; EOF`",
+              "stdin (0)",
               "Here Document: pasa un bloque multilínea dentro de un script.",
-              "<code>cat &lt;&lt;EOF &gt; app.conf</code>"
+              "`cat &lt;&lt;EOF &gt; app.conf`"
             ],
             [
-              "<code style='color:#854D0E; font-weight:800; font-size:14px;'>&lt;&lt;&lt;</code>",
-              "<span style='background:#FEFCE8; color:#854D0E; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11.5px;'>stdin (0)</span>",
+              "`&lt;&lt;&lt;`",
+              "stdin (0)",
               "Here String: pasa una cadena de texto o cálculo en memoria.",
-              "<code>bc &lt;&lt;&lt; '10 * 5'</code>"
+              "`bc &lt;&lt;&lt; '10 * 5'`"
             ],
             [
-              "<code style='color:#475569; font-weight:800; font-size:14px;'>&gt;|</code>",
-              "<span style='background:#F1F5F9; color:#334155; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11.5px;'>stdout (1)</span>",
-              "Fuerza sobreescritura ignorando la protección <code>noclobber</code>.",
-              "<code>echo 'forzar' &gt;| protegido.txt</code>"
+              "`&gt;|`",
+              "stdout (1)",
+              "Fuerza la sobreescritura ignorando la protección `noclobber`.",
+              "`echo 'forzar' &gt;| protegido.txt`"
             ],
             [
-              "<code style='color:#7C3AED; font-weight:800; font-size:14px;'>|</code>",
-              "<span style='background:#F5F3FF; color:#6D28D9; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11.5px;'>1 ➔ 0 (Pipe)</span>",
+              "`|`",
+              "1 → 0 (pipe)",
               "Conecta la salida normal a la entrada del siguiente comando en RAM.",
-              "<code>ps aux | grep nginx</code>"
+              "`ps aux | grep nginx`"
             ],
             [
-              "<code style='color:#7C3AED; font-weight:800; font-size:14px;'>|&amp;</code>",
-              "<span style='background:#F5F3FF; color:#6D28D9; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11.5px;'>1 y 2 ➔ 0</span>",
+              "`|&amp;`",
+              "1 y 2 → 0",
               "Tubería con errores: pasa éxitos y fallos al siguiente filtro.",
-              "<code>make |&amp; less</code>"
+              "`make |&amp; less`"
             ]
           ],
-          "caption": "Tabla Maestra de Operadores de Redirección"
+          "caption": "Los trece operadores del objetivo 103.4, su descriptor afectado y un ejemplo real."
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Mnemotecnia de Descriptores: 0 = stdin (<, <<), 1 = stdout (>, >>, |), 2 = stderr (2>, 2>>). Si combinas 1 y 2 se usa el ampersand (&> o 2>&1)."
+          "content": "Mnemotecnia de descriptores: 0 = stdin (<, <<), 1 = stdout (>, >>, |), 2 = stderr (2>, 2>>). Si combinas 1 y 2 se usa el ampersand (&> o 2>&1)."
         }
       ],
       "notes": "Añadido `2>>`: append de errores, que también funciona con noclobber. El resto es la síntesis de operadores de examen 101."
@@ -998,17 +1026,19 @@
         },
         {
           "type": "paragraph",
-          "text": "Los 4 errores conceptuales más frecuentes en preguntas de certificación LPIC-1:"
+          "text": "Cuatro errores conceptuales que aparecen una y otra vez en las preguntas de certificación: creer que la tubería filtra los errores (solo transporta `stdout`, por lo que hay que usar `|&` o `2>&1 |`), olvidar el ampersand en `2>&1` —`2>1` crea un archivo llamado `1`—, redirigir un comando sobre el mismo archivo que está leyendo (la shell lo trunca a 0 bytes antes de ejecutarlo y hay que pasar por un temporal con `mv`) y olvidar la pareja `-print0 | xargs -0` con nombres que llevan espacios."
         },
         {
-          "type": "html",
-          "sanitizedHtml": "\n<div style=\"display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:14px; font-size:13px;\">\n  <!-- Trampa 1: Pipe no captura errores -->\n  <div style=\"background:#FFF1F2; border:2px solid #FCA5A5; border-radius:12px; padding:16px 18px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:15px; margin-bottom:6px;\">1. Tubería ordinaria frente a Errores</div>\n    <div style=\"color:#7F1D1D; line-height:1.45;\">\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa:</span> <code>ls /root /tmp | grep root</code> creyendo que filtrará el error.<br>\n      <span style=\"color:#16A34A; font-weight:800;\">✅ Realidad:</span> <code>ls /root /tmp |& grep root</code> o <code>2>&1 |</code>.<br>\n      <span style=\"color:#475569; font-size:12px; display:inline-block; margin-top:4px;\">💡 <strong>¿Por qué?</strong> La tubería <code>|</code> solo transporta stdout (1); los errores (2) salen directos a la pantalla sin pasar por grep.</span>\n    </div>\n  </div>\n\n  <!-- Trampa 2: Orden de Fusión y Omisión de Ampersand -->\n  <div style=\"background:#FFF1F2; border:2px solid #FCA5A5; border-radius:12px; padding:16px 18px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:15px; margin-bottom:6px;\">2. Fusión Errónea y la Trampa de 2&gt;1</div>\n    <div style=\"color:#7F1D1D; line-height:1.45;\">\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa 1:</span> <code>cmd 2>1</code> (¡crea un archivo físico llamado '1'!)<br>\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa 2:</span> <code>cmd 2>&1 > archivo.log</code> (los errores van a pantalla)<br>\n      <span style=\"color:#16A34A; font-weight:800;\">✅ Realidad:</span> <code>cmd > archivo.log 2>&1</code><br>\n      <span style=\"color:#475569; font-size:12px; display:inline-block; margin-top:4px;\">💡 <strong>¿Por qué?</strong> Sin el <code>&amp;</code>, el '1' es un archivo de texto en disco. Además, la fusión debe hacerse tras redirigir stdout.</span>\n    </div>\n  </div>\n\n  <!-- Trampa 3: Sobreescritura destructiva sobre sí mismo -->\n  <div style=\"background:#FFF1F2; border:2px solid #FCA5A5; border-radius:12px; padding:16px 18px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:15px; margin-bottom:6px;\">3. Redirigir sobre el Mismo Fichero</div>\n    <div style=\"color:#7F1D1D; line-height:1.45;\">\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa:</span> <code>sort lista.txt > lista.txt</code> (¡Destrucción total!)<br>\n      <span style=\"color:#16A34A; font-weight:800;\">✅ Realidad:</span> <code>sort lista.txt > tmp.txt && mv tmp.txt lista.txt</code><br>\n      <span style=\"color:#475569; font-size:12px; display:inline-block; margin-top:4px;\">💡 <strong>¿Por qué?</strong> La Shell trunca el fichero a 0 bytes ANTES de ejecutar sort. Al leerlo, el archivo ya está vacío.</span>\n    </div>\n  </div>\n\n  <!-- Trampa 4: Espacios en xargs -->\n  <div style=\"background:#FFF1F2; border:2px solid #FCA5A5; border-radius:12px; padding:16px 18px;\">\n    <div style=\"font-weight:800; color:#991B1B; font-size:15px; margin-bottom:6px;\">4. Espacios con find y xargs</div>\n    <div style=\"color:#7F1D1D; line-height:1.45;\">\n      <span style=\"color:#DC2626; font-weight:800;\">❌ Trampa:</span> <code>find . -name '*.txt' | xargs rm</code><br>\n      <span style=\"color:#16A34A; font-weight:800;\">✅ Realidad:</span> <code>find . -name '*.txt' -print0 | xargs -0 rm</code><br>\n      <span style=\"color:#475569; font-size:12px; display:inline-block; margin-top:4px;\">💡 <strong>¿Por qué?</strong> 'Mi Tesis.txt' se divide en dos ficheros ('Mi' y 'Tesis.txt'). La regla es: <strong>el cero con el cero</strong>.</span>\n    </div>\n  </div>\n</div>\n"
+          "type": "image",
+          "src": "/content-assets/diagrams/103-4-trampas-flujos.svg",
+          "alt": "Rejilla de cuatro tarjetas con el comando equivocado en rojo y el correcto en verde. La primera opone ls /root /tmp | grep root a ls /root /tmp |& grep root (la tubería solo transporta stdout) y la segunda opone cmd 2>1 y cmd 2>&1 > archivo.log a cmd > archivo.log 2>&1. La tercera corrige sort lista.txt > lista.txt con sort lista.txt > tmp.txt && mv tmp.txt lista.txt, y la cuarta empareja find -print0 con xargs -0 para que «Mi Tesis.txt» no se parta.",
+          "caption": "Cuatro tarjetas con el comando erróneo en rojo, el correcto en verde y el motivo técnico en la línea inferior."
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 1. El pipe '|' ignora errores. 2. La fusión siempre es '> arch 2>&1'. 3. Nunca redirijas '>' sobre el mismo archivo que lees. 4. Con xargs y find: -print0 | xargs -0."
+          "content": "1) El pipe `|` ignora los errores. 2) La fusión siempre es `> archivo 2>&1`. 3) Nunca redirijas `>` sobre el mismo archivo que estás leyendo. 4) Con `find` y `xargs`: `-print0 | xargs -0`."
         }
       ],
       "notes": "Estas 4 trampas representan más del 80% de los fallos de alumnos en el examen oficial 101."
@@ -1038,17 +1068,17 @@
             },
             {
               "number": 2,
-              "title": "`date 1> now.txt`",
+              "title": "date 1> now.txt",
               "description": "¿Qué canal estándar redirige el `1>`?"
             },
             {
               "number": 3,
-              "title": "`noclobber` activo",
+              "title": "noclobber activo",
               "description": "Bash rechaza sobrescribir un archivo existente. ¿Cómo desactivas la opción en la sesión actual?"
             },
             {
               "number": 4,
-              "title": "`cat <<.>/dev/stdout`",
+              "title": "cat <<.>/dev/stdout",
               "description": "¿Cuándo termina la entrada y dónde se ve el texto escrito?"
             }
           ]
@@ -1093,27 +1123,27 @@
           "items": [
             {
               "number": 1,
-              "title": "`cat /proc/cpu_info 2>1`",
+              "title": "cat /proc/cpu_info 2>1",
               "description": "La ruta no existe: ¿a dónde va el mensaje de error?"
             },
             {
               "number": 2,
-              "title": "`/dev/null` con `noclobber`",
+              "title": "/dev/null con noclobber",
               "description": "¿Puedes descartar contenido en `/dev/null` con la protección activa?"
             },
             {
               "number": 3,
-              "title": "`sha1sum` desde `echo`",
+              "title": "sha1sum desde echo",
               "description": "Envía `$USER` al stdin de `sha1sum` con `echo`, sin salto de línea."
             },
             {
               "number": 4,
-              "title": "`/proc/PID/fd/`",
+              "title": "/proc/PID/fd/",
               "description": "Si `nginx` tiene el PID 1234, ¿cómo ves los archivos de registro que tiene abiertos?"
             },
             {
               "number": 5,
-              "title": "Cálculo con `bc`",
+              "title": "Cálculo con bc",
               "description": "Envía `scale = 6; 1 / 3` a la entrada estándar de `bc` con una cadena Here."
             }
           ]
@@ -1164,22 +1194,22 @@
             },
             {
               "number": 2,
-              "title": "`xargs` sobre una lista",
-              "description": "Ejecuta `convert <img> -resize 25% small/<img>` para cada imagen listada en `filelist.txt`."
+              "title": "xargs sobre una lista",
+              "description": "Ejecuta `convert &lt;img&gt; -resize 25% small/&lt;img&gt;` para cada imagen listada en `filelist.txt`."
             },
             {
               "number": 3,
-              "title": "Copiar y verificar con `tee`",
+              "title": "Copiar y verificar con tee",
               "description": "Combina `dd < /dev/sda1 > sda1.img` y `sha1sum < sda1.img > sda1.sha1` en una sola tubería."
             },
             {
               "number": 4,
-              "title": "`tar` desde la salida de `find`",
+              "title": "tar desde la salida de find",
               "description": "Archiva `find /etc -type f` en `/srv/backup/etc.tar.xz` con `-T -` y añade las opciones para rutas con espacios."
             },
             {
               "number": 5,
-              "title": "Enviar por `ssh`",
+              "title": "Enviar por ssh",
               "description": "Canaliza `etc.tar.gz` hasta `/srv/backup/etc.tar.gz` en `user@storage`."
             }
           ]
@@ -1317,13 +1347,13 @@
           "type": "list",
           "ordered": false,
           "items": [
-            "**Canales Estándar y Nodos:** `0` (stdin, `/dev/stdin`), `1` (stdout, `/dev/stdout`), `2` (stderr, `/dev/stderr`). Enlaces simbólicos en `/proc/<PID>/fd/`.",
+            "**Canales Estándar y Nodos:** `0` (stdin, `/dev/stdin`), `1` (stdout, `/dev/stdout`), `2` (stderr, `/dev/stderr`). Enlaces simbólicos en `/proc/&lt;PID&gt;/fd/`.",
             "**Redirección de Salida:** `>` trunca y sobreescribe; `>>` añade al final; `2>` captura solo errores; `2> /dev/null` silencia mensajes de fallo.",
-            "**Fusión de Flujos:** `> log 2>&1` (estándar POSIX universal, primero stdout y luego stderr a &1) y `&> log` (atajo Bash). ⚠️ Peligro: `2>1` sin ampersand crea un archivo literal llamado '1'.",
+            "**Fusión de Flujos:** `> log 2>&1` (estándar POSIX universal, primero stdout y luego stderr a &1) y `&> log` (atajo Bash). **Peligro:** `2>1` sin ampersand crea un archivo literal llamado '1'.",
             "**Protección de Sobreescritura:** `set -o noclobber` o `set -C` impide machacar archivos existentes con `>`; `set +o noclobber` o `set +C` lo desactiva; `>|` fuerza la sobreescritura.",
             "**Redirección de Entrada:** `< archivo` inyecta datos como teclado; `<< EOF` genera bloques multilínea (Here Document); `<<< 'cadena'` pasa textos en memoria (Here String).",
             "**Tuberías y Duplicación:** `|` conecta stdout a stdin en memoria RAM (sorda a errores); `|&` canaliza también stderr; `tee -a archivo` bifurca el flujo hacia pantalla y disco a la vez.",
-            "**Lotes con xargs:** Transforma líneas de stdin en argumentos: `-n <N>` (límite de argumentos), `-L <N>` (límite por líneas), `-I {}` (marcador de posición) y la dupla segura `find -print0 | xargs -0` para nombres con espacios."
+            "**Lotes con xargs:** Transforma líneas de stdin en argumentos: `-n &lt;N&gt;` (límite de argumentos), `-L &lt;N&gt;` (límite por líneas), `-I {}` (marcador de posición) y la dupla segura `find -print0 | xargs -0` para nombres con espacios."
           ]
         },
         {
