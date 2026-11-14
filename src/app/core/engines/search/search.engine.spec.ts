@@ -43,8 +43,7 @@ describe('SearchEngine (Gate 6)', () => {
         title: 'Uso de flujos, tuberías y redirecciones',
         headings: ['Flujos estándar', 'Tuberías y pipes'],
         text: 'Los pipes conectan la salida estándar de un proceso con la entrada de otro comando.',
-        code: ['cat file | grep error | tee log.txt'],
-        notes: 'Enfatizar la diferencia entre tee y la redirección normal.'
+        code: ['cat file | grep error | tee log.txt']
       },
       {
         subtopicId: '103.4',

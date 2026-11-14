@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="clon-title clon-desc">
+  <title id="clon-title">Clonación de plantillas y regeneración de /etc/machine-id (LPIC-1 102.6)</title>
+  <desc id="clon-desc">Secuencia numerada de cinco pasos. La plantilla dorada parte de un sistema operativo base con la autenticación ya configurada. Antes de clonar se vacía /etc/machine-id con truncate -s 0, que deja el archivo de 0 bytes para que systemd lo regenere, y se apaga la máquina. Cada clon recibe un nombre nuevo y una MAC nueva. En su primer arranque, systemd-machine-id-setup genera un UUID nuevo a partir del UUID que KVM asignó a la máquina, de modo que el cliente DHCP calcula un DUID distinto y cada invitado obtiene su propia IP y sus propios logs.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #475569; }
+      .node-file { fill: #F1F5F9; stroke: #475569; stroke-width: 2; }
+      .node-cmd { fill: #EFF4FF; stroke: #2550EB; stroke-width: 2; }
+      .node-warn { fill: #FFF1F2; stroke: #E11D48; stroke-width: 2; }
+      .node-ok { fill: #ECFDF5; stroke: #059669; stroke-width: 2; }
+      .step-title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 17px; font-weight: 700; fill: #0F172A; }
+      .step-mono { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 15px; font-weight: 700; fill: #0F172A; }
+      .step-mono-warn { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 15px; font-weight: 700; fill: #881337; }
+      .step-sub { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #475569; }
+      .step-sub-warn { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #881337; }
+      .note { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #475569; }
+      .badge { fill: #1D40D8; stroke: #FFFFFF; stroke-width: 2; }
+      .badge-num { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 700; fill: #FFFFFF; text-anchor: middle; }
+      .edge-blue { fill: none; stroke: #1D40D8; stroke-width: 2.5; }
+    </style>
+
+    <marker id="clon-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#1D40D8"/>
+    </marker>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">CLONACIÓN · IDENTIDAD DE LA MÁQUINA</text>
+    <text class="title" x="40" y="78">Clonar no es copiar la identidad</text>
+    <text class="subtitle" x="40" y="102">Sin vaciar /etc/machine-id, los clones</text>
+    <text class="subtitle" x="40" y="122">comparten IP y mezclan los logs.</text>
+  </g>
+
+  <g id="diagram-relations">
+    <path id="clon-rel-1-2" class="edge-blue" data-from="node-plantilla" data-to="node-vaciar" data-relation="prepares-template"
+          d="M 352 190 V 208" marker-end="url(#clon-arrow)"/>
+    <path id="clon-rel-2-3" class="edge-blue" data-from="node-vaciar" data-to="node-clonar" data-relation="clones-after"
+          d="M 352 262 V 280" marker-end="url(#clon-arrow)"/>
+    <path id="clon-rel-3-4" class="edge-blue" data-from="node-clonar" data-to="node-primer-arranque" data-relation="boots-clone"
+          d="M 352 334 V 352" marker-end="url(#clon-arrow)"/>
+    <path id="clon-rel-4-5" class="edge-blue" data-from="node-primer-arranque" data-to="node-id-nueva" data-relation="generates-uuid"
+          d="M 352 406 V 424" marker-end="url(#clon-arrow)"/>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-plantilla">
+      <rect class="node-file" x="72" y="136" width="560" height="54" rx="9"/>
+      <text class="step-title" x="92" y="160">Plantilla dorada</text>
+      <text class="step-sub" x="92" y="180">SO base y autenticación ya configurados</text>
+    </g>
+
+    <g id="node-vaciar">
+      <rect class="node-warn" x="72" y="208" width="560" height="54" rx="9"/>
+      <text class="step-mono-warn" x="92" y="232">truncate -s 0 /etc/machine-id</text>
+      <text class="step-sub-warn" x="92" y="252">deja el archivo de 0 bytes y apaga con poweroff</text>
+    </g>
+
+    <g id="node-clonar">
+      <rect class="node-file" x="72" y="280" width="560" height="54" rx="9"/>
+      <text class="step-title" x="92" y="304">Clonar N invitados</text>
+      <text class="step-sub" x="92" y="324">cada copia con nombre nuevo y MAC nueva</text>
+    </g>
+
+    <g id="node-primer-arranque">
+      <rect class="node-cmd" x="72" y="352" width="560" height="54" rx="9"/>
+      <text class="step-mono" x="92" y="376">systemd-machine-id-setup</text>
+      <text class="step-sub" x="92" y="396">en el primer arranque del clon</text>
+    </g>
+
+    <g id="node-id-nueva">
+      <rect class="node-ok" x="72" y="424" width="560" height="54" rx="9"/>
+      <text class="step-title" x="92" y="448">ID única de 32 hexadecimales</text>
+      <text class="step-sub" x="92" y="468">DUID distinto: IP y logs propios</text>
+    </g>
+  </g>
+
+  <g id="diagram-labels">
+    <circle class="badge" cx="44" cy="163" r="15"/>
+    <text class="badge-num" x="44" y="168">1</text>
+    <text class="note" x="660" y="168">ahorra paquetes base y locale</text>
+
+    <circle class="badge" cx="44" cy="235" r="15"/>
+    <text class="badge-num" x="44" y="240">2</text>
+    <text class="note" x="660" y="240">0 bytes: systemd lo regenera</text>
+
+    <circle class="badge" cx="44" cy="307" r="15"/>
+    <text class="badge-num" x="44" y="312">3</text>
+    <text class="note" x="660" y="312">nombre nuevo y MAC nueva</text>
+
+    <circle class="badge" cx="44" cy="379" r="15"/>
+    <text class="badge-num" x="44" y="384">4</text>
+    <text class="note" x="660" y="384">UUID nuevo desde el de KVM</text>
+
+    <circle class="badge" cx="44" cy="451" r="15"/>
+    <text class="badge-num" x="44" y="456">5</text>
+    <text class="note" x="660" y="456">sin colisión de IP ni de logs</text>
+  </g>
+</svg>

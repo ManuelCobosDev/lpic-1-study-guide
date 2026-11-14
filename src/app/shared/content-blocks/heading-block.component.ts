@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { parseInlineMarkdown } from '../../core/engines/markdown/markdown.engine';
 
 @Component({
@@ -37,11 +38,12 @@ import { parseInlineMarkdown } from '../../core/engines/markdown/markdown.engine
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeadingBlockComponent {
+  private readonly sanitizer = inject(DomSanitizer);
   readonly level = input<1 | 2 | 3 | 4 | 5 | 6>(2);
   readonly text = input.required<string>();
   readonly highlightQuery = input<string>('');
 
-  readonly parsedHtml = computed(() => {
+  readonly parsedHtml = computed<SafeHtml>(() => {
     let html = parseInlineMarkdown(this.text());
     const q = this.highlightQuery()?.trim();
     if (q) {
@@ -52,7 +54,7 @@ export class HeadingBlockComponent {
         '<mark class="bg-[var(--warning-soft)] text-[var(--warning-text)] px-0.5 rounded font-semibold">$1</mark>'
       );
     }
-    return html;
+    return this.sanitizer.bypassSecurityTrustHtml(html);
   });
 }
 

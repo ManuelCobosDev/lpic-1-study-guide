@@ -74,7 +74,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Una dirección **IPv4** consta exactamente de **32 bits binarios** agrupados en **4 octetos** (bloques de 8 bits), separados tradicionalmente por puntos. En formato decimal punteado (*dotted-decimal notation*), cada octeto representa un valor entero entre **0 y 255** (2^8 = 256 valores posibles)."
+          "text": "Una dirección **IPv4** consta de **32 bits** agrupados en **4 octetos** de 8 bits separados por puntos. En formato decimal punteado (*dotted-decimal notation*) cada octeto vale entre **0 y 255**."
         },
         {
           "type": "table",
@@ -111,10 +111,19 @@
           "caption": "Desglose decimal y binario de una dirección IPv4 típica"
         },
         {
+          "type": "heading",
+          "level": 2,
+          "text": "Conversión entre decimal y binario"
+        },
+        {
+          "type": "paragraph",
+          "text": "**Decimal → binario**: divisiones sucesivas por 2, leyendo los restos en orden inverso: `105` = `01101001`. **Binario → decimal**: suma de las potencias de 2 de los bits a 1: `10110000` = 128 + 32 + 16 = `176`."
+        },
+        {
           "type": "callout",
           "calloutType": "info",
           "title": "Espacio Global de Direcciones",
-          "content": "Con 32 bits, el espacio teórico máximo de IPv4 es de 2^32 = 4.294.967.296 direcciones. Debido a su inminente agotamiento, se desarrollaron soluciones de transición como las subredes CIDR, el protocolo NAT y finalmente la migración definitiva a IPv6 (128 bits)."
+          "content": "Con 32 bits el espacio teórico es 2^32 = 4.294.967.296 direcciones; su agotamiento impulsó CIDR, NAT e IPv6 (128 bits)."
         }
       ]
     },
@@ -230,7 +239,8 @@
             "`127.0.0.0/8` (Loopback): Comunicación interna entre procesos del host local (`127.0.0.1` es localhost).",
             "`169.254.0.0/16` (Link-Local / APIPA): Autoconfiguración automática de enlace si falla DHCP; no enrutable.",
             "`0.0.0.0/0`: Representa la red predeterminada (default route) o cualquier dirección no vinculada.",
-            "`255.255.255.255`: Dirección de difusión limitada (broadcast local a nivel de capa 2)."
+            "`255.255.255.255`: Dirección de difusión limitada (broadcast local a nivel de capa 2).",
+            "**Reutilización**: dentro de una red cada IP privada es única, pero el mismo bloque puede repetirse en cualquier otra red privada."
           ]
         },
         {
@@ -314,10 +324,14 @@
           "caption": "Correspondencia de máscaras en el cuarto octeto"
         },
         {
+          "type": "paragraph",
+          "text": "**La máscara no depende de la clase**: cada clase tiene una máscara por defecto (A /8, B /16, C /24), pero puede aplicarse cualquier máscara a cualquier dirección: `10.0.0.0/24` es válido."
+        },
+        {
           "type": "callout",
           "calloutType": "warning",
           "title": "Fórmula Fundamental de Hosts Útiles",
-          "content": "Para cualquier subred con 'h' bits de host: Hosts Útiles = 2^h - 2. Siempre se reservan 2 direcciones: la primera con todos los bits de host a 0 (Dirección de Red) y la última con todos los bits de host a 1 (Dirección de Broadcast)."
+          "content": "Para cualquier subred con 'h' bits de host: Hosts Útiles = 2^h - 2. Se reservan 2 direcciones: la de red (bits de host a 0) y la de broadcast (bits de host a 1)."
         }
       ]
     },
@@ -459,6 +473,45 @@
     {
       "id": "109.1-slide-8",
       "slideNumber": 8,
+      "title": "Destino de un Servicio: IP:puerto y Corchetes en IPv6",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "La dirección IP identifica el host, pero no el servicio. Para dirigirse a una aplicación concreta se combina **IP + puerto**: el puerto de destino se escribe tras dos puntos (`:`) en IPv4."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Familia",
+            "Representación IP:puerto",
+            "Ejemplo (HTTPS)"
+          ],
+          "rows": [
+            [
+              "IPv4",
+              "`dirección:puerto`",
+              "`200.216.10.15:443`"
+            ],
+            [
+              "IPv6",
+              "`[dirección]:puerto`",
+              "`[2001:0db8:85a3:08d3:1319:8a2e:0370:7344]:443`"
+            ]
+          ],
+          "caption": "El puerto de destino según la familia de direcciones"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Por qué IPv6 Exige Corchetes",
+          "content": "En IPv6 la dirección ya contiene dos puntos, así que el puerto debe protegerse con `[]` (corchetes). Sin ellos, la notación `IP:puerto` sería ambigua."
+        }
+      ]
+    },
+    {
+      "id": "109.1-slide-9",
+      "slideNumber": 9,
       "title": "Los 20 Puertos y Servicios Obligatorios en LPIC-1",
       "layout": "content",
       "blocks": [
@@ -573,9 +626,9 @@
             ],
             [
               "514",
-              "Syslog",
-              "UDP",
-              "Recepción centralizada de registros y logs del sistema a través de la red"
+              "RSH (Remote Shell)",
+              "TCP",
+              "Shell remoto sin cifrar; en `/etc/services` el mismo número aparece como `syslog 514/udp`"
             ],
             [
               "636",
@@ -602,13 +655,13 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Trampa Típica de Examen",
-          "content": "¿Qué protocolo utiliza Syslog por defecto en red? **UDP en el puerto 514**. ¿Y NTP? **UDP en el puerto 123**. ¿Qué diferencia hay entre FTP 20 y 21? El **21** es canal de control y el **20** es canal de datos."
+          "content": "¿Qué servicio ocupa el puerto **514**? El manual LPI responde **RSH (Remote Shell)**, por TCP; Syslog se envía habitualmente a **UDP 514**. ¿NTP? UDP 123. ¿FTP? 21 control y 20 datos."
         }
       ]
     },
     {
-      "id": "109.1-slide-9",
-      "slideNumber": 9,
+      "id": "109.1-slide-10",
+      "slideNumber": 10,
       "title": "Protocolos de Transporte: TCP frente a UDP",
       "layout": "comparison",
       "blocks": [
@@ -655,8 +708,8 @@
       ]
     },
     {
-      "id": "109.1-slide-10",
-      "slideNumber": 10,
+      "id": "109.1-slide-11",
+      "slideNumber": 11,
       "title": "Protocolo ICMP: Mensajes de Control y Diagnóstico",
       "layout": "content",
       "blocks": [
@@ -704,14 +757,14 @@
       ]
     },
     {
-      "id": "109.1-slide-11",
-      "slideNumber": 11,
+      "id": "109.1-slide-12",
+      "slideNumber": 12,
       "title": "Introducción a IPv6: Arquitectura de 128 Bits",
       "layout": "content",
       "blocks": [
         {
           "type": "paragraph",
-          "text": "**IPv6** amplía el direccionamiento de 32 a **128 bits** (16 bytes), ofreciendo un espacio astronómico de **3,4 × 10^38 direcciones** (unos 6,67 × 10^23 direcciones por metro cuadrado de superficie terrestre)."
+          "text": "**IPv6** amplía el direccionamiento de 32 a **128 bits** (16 bytes), ofreciendo un espacio de **3,4 × 10^38 direcciones**."
         },
         {
           "type": "steps",
@@ -742,8 +795,8 @@
       ]
     },
     {
-      "id": "109.1-slide-12",
-      "slideNumber": 12,
+      "id": "109.1-slide-13",
+      "slideNumber": 13,
       "title": "Reglas Oficiales de Compresión de Direcciones IPv6",
       "layout": "content",
       "blocks": [
@@ -806,8 +859,8 @@
       ]
     },
     {
-      "id": "109.1-slide-13",
-      "slideNumber": 13,
+      "id": "109.1-slide-14",
+      "slideNumber": 14,
       "title": "Tipos y Prefijos Fundamentales de Direcciones IPv6",
       "layout": "content",
       "blocks": [
@@ -864,7 +917,7 @@
               "ff00::/8",
               "ff00:: a ffff::",
               "Multicast",
-              "Clase D (224.0.0.0/4)",
+              "Clase D (224.0.0.0/4); `224.0.0.1` = todos los nodos locales",
               "Envío a grupos (ff02::1 = todos los nodos; ff02::2 = todos los routers)"
             ]
           ],
@@ -879,8 +932,8 @@
       ]
     },
     {
-      "id": "109.1-slide-14",
-      "slideNumber": 14,
+      "id": "109.1-slide-15",
+      "slideNumber": 15,
       "title": "Mecanismos Clave: SLAAC, EUI-64, Hop Limit y NDP",
       "layout": "content",
       "blocks": [
@@ -919,8 +972,8 @@
       ]
     },
     {
-      "id": "109.1-slide-15",
-      "slideNumber": 15,
+      "id": "109.1-slide-16",
+      "slideNumber": 16,
       "title": "Matriz Comparativa Integral: IPv4 frente a IPv6",
       "layout": "comparison",
       "blocks": [
@@ -963,8 +1016,8 @@
       ]
     },
     {
-      "id": "109.1-slide-16",
-      "slideNumber": 16,
+      "id": "109.1-slide-17",
+      "slideNumber": 17,
       "title": "Trampas Críticas de Examen: 109.1 Protocolos",
       "layout": "two-column",
       "blocks": [
@@ -1007,8 +1060,8 @@
       ]
     },
     {
-      "id": "109.1-slide-17",
-      "slideNumber": 17,
+      "id": "109.1-slide-18",
+      "slideNumber": 18,
       "title": "Ejercicios Guiados Oficiales (Manual LPI)",
       "layout": "two-column",
       "blocks": [
@@ -1046,7 +1099,7 @@
           "type": "callout",
           "calloutType": "info",
           "title": "Ejercicio 4: Total de Puertos Disponibles",
-          "content": "• **Pregunta**: ¿Cuántos puertos diferentes hay disponibles en un sistema?\n• **Solución oficial**: **65.536 puertos** (del 0 al 65535, definidos por un campo de 16 bits)."
+          "content": "• **Pregunta**: ¿Cuántos puertos diferentes hay disponibles en un sistema?\n• **Solución oficial**: **65535 puertos posibles** (campo de 16 bits, 0 a 65535)."
         },
         {
           "type": "callout",
@@ -1057,8 +1110,8 @@
       ]
     },
     {
-      "id": "109.1-slide-18",
-      "slideNumber": 18,
+      "id": "109.1-slide-19",
+      "slideNumber": 19,
       "title": "Ejercicios de Exploración Oficiales (Manual LPI)",
       "layout": "two-column",
       "blocks": [
@@ -1113,5 +1166,5 @@
       ]
     }
   ],
-  "totalSlides": 18
+  "totalSlides": 19
 }

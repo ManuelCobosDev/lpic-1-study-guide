@@ -26,7 +26,6 @@ export class PreferencesService {
   readonly theme = computed(() => this.preferences().theme);
   readonly defaultStudyView = computed(() => this.preferences().defaultStudyView);
   readonly newCardsPerDay = computed(() => this.preferences().newCardsPerDay);
-  readonly showInstructorNotes = computed(() => this.preferences().showInstructorNotes);
   readonly includeExampleContent = computed(() => this.preferences().includeExampleContent);
   readonly textSize = computed(() => this.preferences().textSize);
   readonly density = computed(() => this.preferences().density);
@@ -60,10 +59,6 @@ export class PreferencesService {
   setTextDensity(density: TextDensity): void {
     this.store.update(p => ({ ...p, density }));
     this.applyDomPreferences();
-  }
-
-  setShowInstructorNotes(show: boolean): void {
-    this.store.update(p => ({ ...p, showInstructorNotes: show }));
   }
 
   setIncludeExampleContent(include: boolean): void {

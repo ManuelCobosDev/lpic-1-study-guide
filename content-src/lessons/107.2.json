@@ -18,15 +18,26 @@
     "/etc/cron.deny",
     "/etc/crontab",
     "/etc/cron.d/",
+    "/etc/cron.d/hourly",
+    "/etc/cron.d/daily",
+    "/etc/cron.d/weekly",
+    "/etc/cron.d/monthly",
     "/var/spool/cron/",
+    "@midnight",
+    "@yearly",
     "anacron",
     "at",
     "at -c",
+    "atd",
     "atq / atrm",
     "batch",
+    "HOME",
     "MAILTO",
+    "OnCalendar",
+    "Persistent=true",
     "run-parts",
     "systemd-run",
+    "systemd.timer(5)",
     "timers.target"
   ],
   "commands": [
@@ -36,6 +47,7 @@
     "atrm",
     "batch",
     "crontab",
+    "journalctl",
     "mail",
     "run-parts",
     "systemctl",
@@ -59,8 +71,7 @@
           "type": "paragraph",
           "text": "Subtema 107.2 · Peso LPI: 4 · Examen LPIC-1 102-500"
         }
-      ],
-      "notes": "Bienvenido al Subtema 107.2. Cubre la automatización de mantenimiento con cron, la ejecución no continua con anacron, trabajos diferidos únicos con at/batch y los modernos timers de systemd."
+      ]
     },
     {
       "id": "107.2-slide-2",
@@ -87,8 +98,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: cron = recurrente en servidores 24/7; anacron = recurrente en equipos que se apagan; at / batch = ejecución única diferida; systemd timers = alternativa moderna integrada en journald."
         }
-      ],
-      "notes": "Cron y at dependen de demonios en segundo plano: cron (o crond) y atd."
+      ]
     },
     {
       "id": "107.2-slide-3",
@@ -115,8 +125,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: En /etc/crontab el SEXTO campo es el USUARIO que ejecuta la orden (ej. root). El séptimo campo es el comando completo."
         }
-      ],
-      "notes": "En Debian /etc/crontab define variables de entorno SHELL=/bin/sh, PATH=/usr/local/sbin:... y MAILTO=root."
+      ]
     },
     {
       "id": "107.2-slide-4",
@@ -131,16 +140,76 @@
         },
         {
           "type": "paragraph",
-          "text": "Sintaxis para rangos, listas, intervalos de paso y alias predefinidos de crontab."
+          "text": "Los cinco campos de tiempo admiten operadores; para el mes y el día de la semana valen también las tres primeras letras del nombre (<code>jan</code>, <code>mon</code>)."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Operador / Atajo",
+            "Significado",
+            "Ejemplo"
+          ],
+          "rows": [
+            [
+              "<code>*</code>",
+              "Cualquier valor en ese campo",
+              "<code>* * * * *</code>"
+            ],
+            [
+              "<code>,</code>",
+              "Lista de valores posibles",
+              "<code>0,15,30,45 08 * * 2</code>"
+            ],
+            [
+              "<code>-</code>",
+              "Rango de valores",
+              "<code>30 13 * * 1-5</code>"
+            ],
+            [
+              "<code>/</code>",
+              "Valores escalonados (paso)",
+              "<code>*/20 * * * *</code>"
+            ],
+            [
+              "<code>@reboot</code>",
+              "Una sola vez después de reiniciar",
+              "<code>@reboot /opt/init.sh</code>"
+            ],
+            [
+              "<code>@hourly</code>",
+              "Una vez por hora al inicio de la hora",
+              "<code>0 * * * *</code>"
+            ],
+            [
+              "<code>@daily</code> / <code>@midnight</code>",
+              "Una vez al día a medianoche",
+              "<code>0 0 * * *</code>"
+            ],
+            [
+              "<code>@weekly</code>",
+              "Domingo a medianoche",
+              "<code>0 0 * * 0</code>"
+            ],
+            [
+              "<code>@monthly</code>",
+              "Día 1 del mes a medianoche",
+              "<code>0 0 1 * *</code>"
+            ],
+            [
+              "<code>@yearly</code> / <code>@annually</code>",
+              "1 de enero a medianoche",
+              "<code>0 0 1 1 *</code>"
+            ]
+          ],
+          "caption": "Operadores de los campos de tiempo y atajos especiales de crontab"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: '*/15 * * * *' ejecuta cada 15 minutos. El atajo '@reboot' ejecuta la tarea una sola vez al arrancar el demonio cron."
+          "content": "🎯 Clave de Examen: los atajos <code>@</code> sustituyen a las cinco primeras columnas, nunca al comando. Ojo: <code>@weekly</code> en cron es DOMINGO a medianoche, mientras que <code>weekly</code> en OnCalendar es LUNES."
         }
-      ],
-      "notes": "Los alias @daily, @hourly, etc., sustituyen por completo a las 5 primeras columnas temporales."
+      ]
     },
     {
       "id": "107.2-slide-5",
@@ -170,38 +239,36 @@
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
-            "Nombre",
+            "Opción",
             "Descripción"
           ],
           "rows": [
             [
-              "-e",
-              "",
-              "Edita el archivo crontab del usuario actual con el editor configurado en $VISUAL o $EDITOR."
+              "<code>-e</code>",
+              "Edita el crontab propio o lo crea si no existe, con el editor de <code>$VISUAL</code> o <code>$EDITOR</code>."
             ],
             [
-              "-l",
-              "",
-              "Muestra por la salida estándar el contenido actual del archivo crontab."
+              "<code>-l</code>",
+              "Muestra el crontab actual por la salida estándar."
             ],
             [
-              "-r",
-              "",
-              "ELIMINA (remove) por completo el archivo crontab del usuario."
+              "<code>-r</code>",
+              "ELIMINA (remove) por completo el crontab del usuario."
             ],
             [
-              "-i",
-              "",
-              "Pide confirmación interactiva antes de eliminar el crontab con la opción -r."
+              "<code>-i</code>",
+              "Pide confirmación interactiva antes de borrar con <code>-r</code>."
             ],
             [
-              "-u USUARIO",
-              "",
-              "Especifica el nombre del usuario cuyo crontab se quiere ver, editar o borrar (solo root)."
+              "<code>-u USUARIO</code>",
+              "Opera sobre el crontab de otro usuario; requiere ser root."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Opciones del comando crontab"
+        },
+        {
+          "type": "paragraph",
+          "text": "El binario <code>/usr/bin/crontab</code> tiene el bit <strong>SGID</strong> activo (<code>-rwxr-sr-x 1 root crontab</code>): se ejecuta con los privilegios del grupo <code>crontab</code>, y por eso un usuario común puede editar su propio crontab aunque <code>/var/spool/cron/</code> pertenezca a root."
         },
         {
           "type": "callout",
@@ -209,12 +276,71 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: ¡CUIDADO CON 'crontab -r'! Borra TODO tu archivo crontab sin pedir confirmación. En el crontab de usuario hay 6 campos (NO lleva nombre de usuario)."
         }
-      ],
-      "notes": "crontab tiene el bit SUID activo o SGID crontab para escribir con seguridad en /var/spool/cron/crontabs/."
+      ]
     },
     {
       "id": "107.2-slide-6",
       "slideNumber": 6,
+      "title": "Variables de Entorno en crontab y Salida por Correo",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Variables de Entorno en crontab y Salida por Correo"
+        },
+        {
+          "type": "paragraph",
+          "text": "Antes de las tareas puede definirse un pequeño conjunto de variables que fija cómo se ejecuta cada trabajo."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Variable",
+            "Valor por defecto",
+            "Qué controla"
+          ],
+          "rows": [
+            [
+              "<code>HOME</code>",
+              "Directorio del usuario",
+              "Directorio desde el que cron invoca los comandos (permite rutas relativas)."
+            ],
+            [
+              "<code>MAILTO</code>",
+              "Propietario del crontab",
+              "Destinatario de la salida estándar y de error; admite varios valores separados por comas y <code>MAILTO=\"\"</code> desactiva el correo."
+            ],
+            [
+              "<code>PATH</code>",
+              "El definido en el sistema",
+              "Rutas donde cron busca los comandos."
+            ],
+            [
+              "<code>SHELL</code>",
+              "<code>/bin/sh</code>",
+              "Shell con el que se ejecutan los comandos."
+            ]
+          ],
+          "caption": "Variables de entorno admitidas en un crontab"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "title": "Variables y redirección en un crontab",
+          "code": "MAILTO=\"emma\"                    # la salida y los errores van a emma\nMAILTO=\"\"                        # no se envía ningún correo\nHOME=/home/frank                 # cron invoca desde /home/frank\n\n0 10 * * * /home/frank/foo.sh >> /home/frank/output.log\n# La salida va al archivo; el error sigue llegando por correo."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: toda la salida de un trabajo cron se envía por correo al propietario del crontab salvo que se redirija a un archivo o que <code>MAILTO</code> esté vacío. Para deshabilitar un trabajo basta comentar su línea con <code>#</code>."
+        }
+      ]
+    },
+    {
+      "id": "107.2-slide-7",
+      "slideNumber": 7,
       "title": "Estructura Modular de Cron: /etc/cron.* y run-parts",
       "layout": "diagram",
       "blocks": [
@@ -232,17 +358,20 @@
           "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"display:grid; grid-template-columns: 1.2fr 1fr; gap:14px; font-size:11.5px;\">\n    <!-- Directorios Periódicos -->\n    <div style=\"background:#F0FDF4; border:1.5px solid #22C55E; border-radius:8px; padding:10px 12px;\">\n      <div style=\"color:#15803D; font-weight:bold; font-size:12.5px; margin-bottom:6px;\">\n        📁 Directorios de Scripts Periódicos (run-parts)\n      </div>\n      <div style=\"color:#14532D; line-height:1.4; font-size:11px;\">\n        • <code>/etc/cron.hourly/</code> : Se ejecutan cada hora.<br>\n        • <code>/etc/cron.daily/</code> : Se ejecutan una vez al día (06:25).<br>\n        • <code>/etc/cron.weekly/</code> : Se ejecutan una vez a la semana.<br>\n        • <code>/etc/cron.monthly/</code> : Se ejecutan el primer día de mes.<br>\n        <div style=\"margin-top:6px; background:#DCFCE7; padding:4px 6px; border-radius:4px; font-weight:600;\">\n          ⚠️ Requisitos: Permisos de ejecución (<code>chmod +x</code>) y NOMBRE SIN PUNTO NI EXTENSIÓN en Debian (ej. 'logrotate', NO 'logrotate.sh').\n        </div>\n      </div>\n    </div>\n\n    <!-- Directorio /etc/cron.d/ -->\n    <div style=\"background:#EFF6FF; border:1.5px solid #3B82F6; border-radius:8px; padding:10px 12px;\">\n      <div style=\"color:#1D4ED8; font-weight:bold; font-size:12.5px; margin-bottom:6px;\">\n        📄 Directorio Modular /etc/cron.d/\n      </div>\n      <div style=\"color:#1E3A8A; line-height:1.4; font-size:11px;\">\n        • Permite a los paquetes instalar tareas con su propia periodicidad personalizada sin editar el /etc/crontab central.<br>\n        • <strong>Formato idéntico a /etc/crontab:</strong> 7 columnas (incluye el nombre del usuario antes del comando).<br>\n        • Ejemplos habituales: <code>/etc/cron.d/certbot</code>, <code>/etc/cron.d/sysstat</code>.\n      </div>\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#FFFBEB; border:1px solid #FCD34D; border-radius:6px; padding:6px 10px; font-size:11px; color:#92400E;\">\n    💡 <strong>Comprobación manual con run-parts:</strong> Puedes probar la ejecución de todos los scripts diarios ejecutando: <code>run-parts --report /etc/cron.daily</code>.\n  </div>\n</div>\n"
         },
         {
+          "type": "paragraph",
+          "text": "⚠️ Algunas distribuciones usan <code>/etc/cron.d/hourly</code>, <code>/etc/cron.d/daily</code>, <code>/etc/cron.d/weekly</code> y <code>/etc/cron.d/monthly</code> en lugar de <code>/etc/cron.hourly</code>, <code>/etc/cron.daily</code>, <code>/etc/cron.weekly</code> y <code>/etc/cron.monthly</code>: comprueba siempre el directorio correcto antes de dejar un script."
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: /etc/cron.d/ admite archivos de formato /etc/crontab completo (7 campos). Los directorios /etc/cron.{hourly,daily,weekly,monthly} contienen scripts ejecutables sin extensión."
         }
-      ],
-      "notes": "run-parts ejecuta todos los scripts ejecutables encontrados en un directorio por orden alfabético."
+      ]
     },
     {
-      "id": "107.2-slide-7",
-      "slideNumber": 7,
+      "id": "107.2-slide-8",
+      "slideNumber": 8,
       "title": "anacron: Automatización para Equipos no Conectados 24/7",
       "layout": "diagram",
       "blocks": [
@@ -265,12 +394,11 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: anacron NO trabaja con horas ni minutos fijos del reloj; trabaja con INTERVALOS EN DÍAS y un RETARDO en minutos tras el arranque."
         }
-      ],
-      "notes": "anacron guarda marcas de tiempo en /var/spool/anacron/ para saber cuándo se ejecutó cada trabajo por última vez."
+      ]
     },
     {
-      "id": "107.2-slide-8",
-      "slideNumber": 8,
+      "id": "107.2-slide-9",
+      "slideNumber": 9,
       "title": "Control de Acceso a Cron: /etc/cron.allow y /etc/cron.deny",
       "layout": "content",
       "blocks": [
@@ -328,8 +456,8 @@
       ]
     },
     {
-      "id": "107.2-slide-9",
-      "slideNumber": 9,
+      "id": "107.2-slide-10",
+      "slideNumber": 10,
       "title": "Comando at: Programación de Trabajos Únicos Diferidos",
       "layout": "content",
       "blocks": [
@@ -340,100 +468,140 @@
         },
         {
           "type": "paragraph",
-          "text": "Ejecución puntual en el futuro con un lenguaje natural extraordinariamente flexible."
+          "text": "Ejecución puntual en el futuro con un lenguaje natural muy flexible; el demonio <code>atd</code> debe estar en ejecución."
         },
         {
           "type": "terminal",
           "lines": [
             {
               "prompt": "$ ",
-              "command": "",
-              "output": "job 14 at Fri Oct 31 16:00:00 2026"
+              "command": "at now +5 minutes",
+              "output": "warning: commands will be executed using /bin/sh\nat> date\nat> Ctrl+D\njob 14 at Fri Oct 31 16:00:00 2026"
             }
           ]
         },
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
-            "Nombre",
+            "Opción",
             "Descripción"
           ],
           "rows": [
             [
-              "-f ARCHIVO",
-              "",
-              "Lee los comandos desde un archivo de script en lugar de la entrada interactiva de consola."
+              "<code>-f ARCHIVO</code>",
+              "Lee los comandos del trabajo desde un archivo en lugar de la entrada estándar."
             ],
             [
-              "-c ID_TRABAJO",
-              "",
-              "Imprime a la salida estándar (stdout) los comandos y el entorno completo del script programado."
+              "<code>-c ID</code>",
+              "Imprime por la salida estándar los comandos y el entorno del trabajo indicado."
             ],
             [
-              "-v",
-              "",
-              "Muestra la fecha y hora calculada para la ejecución antes de leer las instrucciones de la tarea."
+              "<code>-v</code>",
+              "Muestra la hora calculada para la ejecución antes de leer los comandos."
             ],
             [
-              "-m",
-              "",
-              "Envía un correo al usuario cuando la tarea finalice, incluso si no produjo ninguna salida."
+              "<code>-m</code>",
+              "Envía un correo al terminar, aunque el trabajo no produzca salida."
             ],
             [
-              "-q COLA",
-              "",
-              "Asigna el trabajo a una cola específica (de 'a' a 'z'; las colas más altas tienen menor prioridad)."
+              "<code>-q COLA</code>",
+              "Asigna el trabajo a una cola de una letra (<code>a</code>-<code>z</code> y <code>A</code>-<code>Z</code>); por defecto <code>a</code> para at y <code>b</code> para batch. Las mayúsculas se tratan como batch y las letras más altas tienen menor prioridad."
             ],
             [
-              "-l",
-              "",
-              "Alias de atq: lista los trabajos en cola programados por el usuario."
+              "<code>-l</code>",
+              "Alias de <code>atq</code>: lista los trabajos pendientes del usuario."
             ],
             [
-              "-d",
-              "",
-              "Alias de atrm: borra uno o más trabajos especificados por su identificador."
+              "<code>-d</code>",
+              "Alias de <code>atrm</code>: borra trabajos por su identificador."
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Opciones del comando at"
+        },
+        {
+          "type": "paragraph",
+          "text": "Control de acceso: si existe <code>/etc/at.allow</code>, solo los usuarios no root listados en él pueden usar <code>at</code>; si no existe pero sí <code>/etc/at.deny</code>, los listados quedan excluidos (un <code>at.deny</code> vacío permite a todos)."
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 'at' lee las órdenes de la entrada estándar y finaliza con 'Ctrl+D' (EOF). Utiliza '/bin/sh' para ejecutar las tareas, preservando las variables de entorno de la sesión actual."
+          "content": "🎯 Clave de Examen: 'at' lee las órdenes de la entrada estándar y finaliza con 'Ctrl+D' (EOF); ejecuta con '/bin/sh'. <code>/usr/bin/at</code> tiene los bits SUID y SGID (<code>-rwsr-sr-x 1 daemon daemon</code>) para que cualquier usuario pueda programar trabajos."
         }
-      ],
-      "notes": "Si se especifica una hora que ya pasó en el día de hoy (ej. las 08:00 cuando son las 14:00), at programa la tarea para el día siguiente."
+      ]
     },
     {
-      "id": "107.2-slide-10",
-      "slideNumber": 10,
-      "title": "Especificaciones de Tiempo en at: Lenguaje y Palabras Clave",
+      "id": "107.2-slide-11",
+      "slideNumber": 11,
+      "title": "Especificaciones de Tiempo en at: Válidas e Inválidas",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Especificaciones de Tiempo en at: Lenguaje y Palabras Clave"
+          "text": "Especificaciones de Tiempo en at: Válidas e Inválidas"
         },
         {
           "type": "paragraph",
-          "text": "¿Qué expresiones temporales son válidas según las especificaciones evaluadas por LPI?"
+          "text": "Formatos aceptados: <code>HH:MM</code> (con <code>AM</code>/<code>PM</code> opcional), fechas en varios formatos y palabras clave; se puede añadir <code>today</code> o <code>tomorrow</code>."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Expresión",
+            "¿Válida?",
+            "Por qué"
+          ],
+          "rows": [
+            [
+              "<code>at 07:15 AM Jan 01</code>",
+              "✅ Sí",
+              "Hora <code>HH:MM</code> con <code>AM</code> más fecha <code>mes día</code>."
+            ],
+            [
+              "<code>at now +5 minutes</code>",
+              "✅ Sí",
+              "Desplazamiento relativo con <code>+</code>."
+            ],
+            [
+              "<code>at teatime</code>",
+              "✅ Sí",
+              "Palabra clave equivalente a las 16:00."
+            ],
+            [
+              "<code>at 21:50 01.01.20</code>",
+              "✅ Sí",
+              "Hora seguida de fecha <code>DD.MM.YY</code>."
+            ],
+            [
+              "<code>at midday</code>",
+              "❌ No",
+              "No es palabra reservada; la válida es <code>noon</code>."
+            ],
+            [
+              "<code>at 08:30 AM next week</code>",
+              "❌ No",
+              "Se usa un incremento: <code>now + 1 week</code> o <code>next Mon</code>."
+            ],
+            [
+              "<code>at 01-01-2020 07:30 PM</code>",
+              "❌ No",
+              "La hora debe preceder a la fecha."
+            ]
+          ],
+          "caption": "Ejercicio de examen: sintaxis de tiempo en at"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Palabras clave reservadas: 'now', 'noon' (12:00), 'midnight' (00:00), 'teatime' (16:00), 'today', 'tomorrow'. Los incrementos se expresan con '+' (ej. 'now + 30 minutes')."
+          "content": "🎯 Clave de Examen: palabras clave <code>midnight</code> (00:00), <code>noon</code> (12:00) y <code>teatime</code> (16:00). Si la hora indicada ya pasó hoy, at programa el trabajo para el día siguiente."
         }
-      ],
-      "notes": "El archivo de ayuda /usr/share/doc/at/timespec documenta la gramática completa aceptada por el analizador léxico de at."
+      ]
     },
     {
-      "id": "107.2-slide-11",
-      "slideNumber": 11,
+      "id": "107.2-slide-12",
+      "slideNumber": 12,
       "title": "Supervisión y Control de at: atq, atrm y el comando batch",
       "layout": "content",
       "blocks": [
@@ -488,12 +656,11 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: 'atq' como usuario normal solo muestra sus propias tareas; ejecutado como 'root' lista las tareas pendientes de TODOS los usuarios. 'batch' lanza trabajos solo si load average < 0.8."
         }
-      ],
-      "notes": "Control de acceso idéntico a cron: /etc/at.allow y /etc/at.deny."
+      ]
     },
     {
-      "id": "107.2-slide-12",
-      "slideNumber": 12,
+      "id": "107.2-slide-13",
+      "slideNumber": 13,
       "title": "Alternativa Moderna: systemd-run y Unidades .timer",
       "layout": "content",
       "blocks": [
@@ -558,12 +725,57 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: 'systemd-run --on-calendar=...' programa tareas de calendario (cron); '--on-active=...' retardos relativos (at). En unidades fijas foobar.timer, la sección [Install] debe incluir 'WantedBy=timers.target' para activarse en el arranque."
         }
-      ],
-      "notes": "systemctl list-timers --all enumera todos los temporizadores del sistema. La activación persistente depende de timers.target."
+      ]
     },
     {
-      "id": "107.2-slide-13",
-      "slideNumber": 13,
+      "id": "107.2-slide-14",
+      "slideNumber": 14,
+      "title": "Unidad .timer Persistente: Ejemplo foobar.timer",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Unidad .timer Persistente: Ejemplo foobar.timer"
+        },
+        {
+          "type": "paragraph",
+          "text": "Un temporizador es una unidad <code>.timer</code>; por defecto activa el servicio con el mismo nombre (<code>foobar.timer</code> → <code>foobar.service</code>)."
+        },
+        {
+          "type": "code",
+          "language": "ini",
+          "title": "/etc/systemd/system/foobar.timer",
+          "code": "[Unit]\nDescription=Run the foobar service\n[Timer]\nOnCalendar=Mon *-*-1..7 05:30:00\nPersistent=true\n[Install]\nWantedBy=timers.target"
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "# ",
+              "command": "systemctl enable foobar.timer"
+            },
+            {
+              "prompt": "# ",
+              "command": "systemctl start foobar.timer"
+            },
+            {
+              "prompt": "# ",
+              "command": "systemctl list-timers --all"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: <code>Persistent=true</code> ejecuta el trabajo perdido si el equipo estaba apagado a la hora fijada, y <code>WantedBy=timers.target</code> (sección <code>[Install]</code>) lo activa en cada arranque. Tras cambiar <code>OnCalendar</code> hay que ejecutar <code>systemctl daemon-reload</code>."
+        }
+      ]
+    },
+    {
+      "id": "107.2-slide-15",
+      "slideNumber": 15,
       "title": "Expresiones Temporales OnCalendar en systemd",
       "layout": "content",
       "blocks": [
@@ -574,20 +786,53 @@
         },
         {
           "type": "paragraph",
-          "text": "Formato normalizado de calendario: Día_Semana Año-Mes-Día Hora:Minuto:Segundo."
+          "text": "Formato normalizado: <code>Día_Semana Año-Mes-Día Hora:Minuto:Segundo</code>; el día de la semana es opcional."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Atajo",
+            "Forma larga"
+          ],
+          "rows": [
+            [
+              "hourly",
+              "<code>*-*-* *:00:00</code>"
+            ],
+            [
+              "daily",
+              "<code>*-*-* 00:00:00</code>"
+            ],
+            [
+              "weekly",
+              "<code>Mon *-*-* 00:00:00</code>"
+            ],
+            [
+              "monthly",
+              "<code>*-*-01 00:00:00</code>"
+            ],
+            [
+              "yearly",
+              "<code>*-01-01 00:00:00</code>"
+            ]
+          ],
+          "caption": "Atajos de OnCalendar y su forma larga"
+        },
+        {
+          "type": "paragraph",
+          "text": "El rango contiguo se escribe con <code>..</code> (por ejemplo <code>09..12</code> o <code>*-*-1..7</code>), no con guiones; <code>*</code>, <code>,</code> y <code>/</code> significan lo mismo que en cron. La lista completa está en <code>systemd.timer(5)</code> y se valida con <code>systemd-analyze calendar</code>."
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: En OnCalendar, los comodines se escriben con asterisco (*) o guiones dobles. 'hourly' = '*-*-* *:00:00'; 'daily' = '*-*-* 00:00:00'; 'weekly' = 'Mon *-*-* 00:00:00'."
+          "content": "🎯 Clave de Examen: el rango en OnCalendar es <code>..</code> (<code>Mon *-*-1..7 05:30:00</code> = primer lunes del mes a las 05:30). Ojo: <code>weekly</code> es LUNES a medianoche, mientras que <code>@weekly</code> de cron es domingo."
         }
-      ],
-      "notes": "Se puede verificar la sintaxis de una expresión de calendario con el comando 'systemd-analyze calendar EXPRESION'."
+      ]
     },
     {
-      "id": "107.2-slide-14",
-      "slideNumber": 14,
+      "id": "107.2-slide-16",
+      "slideNumber": 16,
       "title": "Matriz Comparativa: cron vs anacron vs at vs systemd timers",
       "layout": "content",
       "blocks": [
@@ -657,8 +902,8 @@
       ]
     },
     {
-      "id": "107.2-slide-15",
-      "slideNumber": 15,
+      "id": "107.2-slide-17",
+      "slideNumber": 17,
       "title": "Ejercicio Guiado LPI: Descifrado de Especificaciones de Tiempo",
       "layout": "two-column",
       "blocks": [
@@ -686,37 +931,8 @@
       ]
     },
     {
-      "id": "107.2-slide-16",
-      "slideNumber": 16,
-      "title": "Ejercicio Guiado LPI: Sintaxis Válida vs Inválida en at",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Ejercicio Guiado LPI: Sintaxis Válida vs Inválida en at"
-        },
-        {
-          "type": "paragraph",
-          "text": "¿Cuáles de las siguientes órdenes de at son válidas para el analizador sintáctico de Linux?"
-        },
-        {
-          "type": "code",
-          "language": "text",
-          "code": "# Expresiones de at evaluadas por LPI:\nat 08:30 AM next week    # INVÁLIDA: usar '+1 week' o 'next Mon'\nat midday                # INVÁLIDA: palabra reservada es 'noon'\nat 01-01-2020 07:30 PM   # INVÁLIDA: la hora debe preceder a la fecha\nat 21:50 01.01.20        # VÁLIDA: hora y fecha separadas por punto\nat now +4 days           # VÁLIDA: desplazamiento relativo\nat tomorrow 08:30 AM     # INVÁLIDA: 'tomorrow' debe ir tras la hora",
-          "title": "Solución del ejercicio"
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Pista: at acepta 'midnight', 'noon' y 'teatime', pero NO acepta palabras inventadas como 'midday'. 'next week' requiere un incremento numérico como 'now + 1 week'."
-        }
-      ]
-    },
-    {
-      "id": "107.2-slide-17",
-      "slideNumber": 17,
+      "id": "107.2-slide-18",
+      "slideNumber": 18,
       "title": "Reto Práctico LPI: Despliegue de Mantenimiento Desatendido",
       "layout": "two-column",
       "blocks": [
@@ -744,8 +960,8 @@
       ]
     },
     {
-      "id": "107.2-slide-18",
-      "slideNumber": 18,
+      "id": "107.2-slide-19",
+      "slideNumber": 19,
       "title": "Checklist de Examen: Trampas Frecuentes en el Subtema 107.2",
       "layout": "checkpoint",
       "blocks": [
@@ -767,8 +983,8 @@
       ]
     },
     {
-      "id": "107.2-slide-19",
-      "slideNumber": 19,
+      "id": "107.2-slide-20",
+      "slideNumber": 20,
       "title": "Resumen del Subtema 107.2 y Preparación para el Laboratorio",
       "layout": "summary",
       "blocks": [

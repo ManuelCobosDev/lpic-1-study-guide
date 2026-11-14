@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="upstart-title upstart-desc">
+  <title id="upstart-title">Ciclo de vida de un trabajo de Upstart: evento, job en /etc/init y ejecución en paralelo (LPIC-1 101.3)</title>
+  <desc id="upstart-desc">Upstart sustituyó la lista secuencial de SysVinit por eventos. Cuando el núcleo o el hardware anuncian un evento como startup, filesystem o net-device-up, Upstart busca los trabajos declarados en /etc/init con extensión .conf. Un trabajo como networking.conf se arranca con la orden start on y se detiene con stop on runlevel, y su directiva respawn vuelve a lanzar el proceso si muere. Todos los trabajos cuyos eventos ya ocurrieron arrancan a la vez, aprovechando los núcleos de la CPU. Los trabajos viven en /etc/init/*.conf y no en /etc/init.d, que es el directorio de scripts de SysVinit.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #475569; }
+      .node-event { fill: #FFFBEB; stroke: #D97706; stroke-width: 2; }
+      .node-job { fill: #F1F5F9; stroke: #475569; stroke-width: 2; }
+      .node-exec { fill: #EFF4FF; stroke: #2550EB; stroke-width: 2; }
+      .kicker-a { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #B45309; letter-spacing: 0.06em; }
+      .kicker { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #334155; letter-spacing: 0.06em; }
+      .kicker-c { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #1E36AF; letter-spacing: 0.06em; }
+      .mono-ev { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 15px; font-weight: 500; fill: #0F172A; }
+      .mono-conf { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; font-weight: 500; fill: #0F172A; }
+      .row { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #334155; }
+      .edge { fill: none; stroke: #1D40D8; stroke-width: 2.5; }
+      .band { fill: #FFF1F2; stroke: #E11D48; stroke-width: 2; }
+      .band-title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; font-weight: 700; fill: #881337; }
+      .band-line { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; font-weight: 500; fill: #881337; }
+      .note { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #475569; }
+    </style>
+
+    <marker id="upstart-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#1D40D8"/>
+    </marker>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">UPSTART · GUIADO POR EVENTOS</text>
+    <text class="title" x="40" y="78">Un trabajo reacciona, no espera turno</text>
+    <text class="subtitle" x="40" y="102">Evento → job en /etc/init/ → ejecución en paralelo</text>
+  </g>
+
+  <g id="diagram-relations">
+    <path id="upstart-rel-event-job" class="edge" data-from="node-events" data-to="node-job" data-relation="triggers"
+          d="M 300 235 H 350" marker-end="url(#upstart-arrow)"/>
+    <path id="upstart-rel-job-exec" class="edge" data-from="node-job" data-to="node-exec" data-relation="starts-parallel"
+          d="M 650 235 H 700" marker-end="url(#upstart-arrow)"/>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-events">
+      <rect class="node-event" x="40" y="170" width="260" height="130" rx="10"/>
+      <text class="kicker-a" x="64" y="196">1 · EVENTOS</text>
+      <text class="mono-ev" x="64" y="224">startup</text>
+      <text class="mono-ev" x="64" y="250">filesystem</text>
+      <text class="mono-ev" x="64" y="276">net-device-up</text>
+    </g>
+
+    <g id="node-job">
+      <rect class="node-job" x="350" y="150" width="300" height="180" rx="10"/>
+      <text class="kicker" x="374" y="176">2 · JOB EN /etc/init/</text>
+      <text class="mono-conf" x="374" y="204">start on filesystem and</text>
+      <text class="mono-conf" x="374" y="228">net-device-up</text>
+      <text class="mono-conf" x="374" y="252">stop on runlevel [016]</text>
+      <text class="mono-conf" x="374" y="276">respawn</text>
+      <text class="mono-conf" x="374" y="300">exec /sbin/dhclient -d eth0</text>
+    </g>
+
+    <g id="node-exec">
+      <rect class="node-exec" x="700" y="170" width="220" height="130" rx="10"/>
+      <text class="kicker-c" x="724" y="196">3 · EJECUCIÓN</text>
+      <text class="row" x="724" y="224">arranque en paralelo</text>
+      <text class="row" x="724" y="250">respawn lo relanza</text>
+      <text class="row" x="724" y="276">si el proceso muere</text>
+    </g>
+
+    <g id="node-trap">
+      <rect class="band" x="40" y="356" width="880" height="90" rx="10"/>
+      <text class="band-title" x="64" y="386">La trampa: /etc/init/ no es /etc/init.d/</text>
+      <text class="band-line" x="64" y="412">/etc/init/*.conf → trabajos de Upstart</text>
+      <text class="band-line" x="64" y="434">/etc/init.d/ → scripts de shell de SysVinit</text>
+    </g>
+  </g>
+
+  <g id="diagram-labels">
+    <text class="note" x="40" y="478">initctl list muestra el estado de cada trabajo: start/running.</text>
+    <text class="note" x="40" y="500">Ubuntu abandonó Upstart en 2015 y pasó a systemd.</text>
+  </g>
+</svg>

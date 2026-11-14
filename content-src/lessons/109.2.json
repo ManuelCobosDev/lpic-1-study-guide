@@ -13,6 +13,8 @@
   ],
   "keyTerms": [
     "Nombres Predecibles de Interfaces",
+    "InfiniBand",
+    "Serial line IP (slip)",
     "/etc/network/interfaces",
     "ifup / ifdown",
     "/etc/hostname",
@@ -22,12 +24,14 @@
     "/etc/nsswitch.conf",
     "NetworkManager",
     "nmcli",
+    "UUID de conexión",
     "systemd-networkd",
     "wpa_supplicant",
     "wpa_passphrase",
     "Portal (Conectividad)",
     "[Match]",
-    "[Network]"
+    "[Network]",
+    "DHCP="
   ],
   "commands": [
     "hostnamectl",
@@ -36,7 +40,11 @@
     "nmcli",
     "nmtui",
     "wpa_passphrase",
-    "ip"
+    "ip",
+    "lspci",
+    "fgrep",
+    "networkctl",
+    "systemctl"
   ],
   "placeholder": false,
   "slides": [
@@ -71,66 +79,66 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Antiguamente el kernel asignaba nombres secuenciales impredecibles (`eth0`, `eth1`, `wlan0`) según el orden en que se detectaba el hardware. Modernamente, **systemd/udev** implementa **nombres de red predecibles y persistentes** basados en la topología física y el firmware."
+          "text": "Antiguamente el kernel asignaba nombres secuenciales impredecibles (`eth0`, `eth1`, `wlan0`) según el orden en que detectaba el hardware, lo que podía intercambiarlos tras un reinicio. Hoy **systemd/udev** aplica **nombres predecibles y persistentes** basados en la topología física y el firmware."
         },
         {
           "type": "table",
           "headers": [
             "Prefijo",
             "Tipo de Adaptador",
-            "Ejemplo de Esquema",
-            "Significado del Nombre"
+            "Ejemplos",
+            "Significado"
           ],
           "rows": [
             [
               "en",
               "Ethernet cableada",
-              "eno1",
-              "Onboard: dispositivo integrado en la placa base (índice 1)"
+              "eno1 · ens1 · enp3s5 · enx78e7d1ea46da",
+              "Integrada (onboard), ranura PCIe, bus PCI o dirección MAC"
             ],
             [
-              "en",
-              "Ethernet cableada",
-              "ens1",
-              "Slot: ranura PCI hotplug número 1"
+              "ib",
+              "InfiniBand",
+              "ib0",
+              "Interconexión de alta velocidad (clústeres)"
             ],
             [
-              "en",
-              "Ethernet cableada",
-              "enp2s0",
-              "Bus PCI: bus geográfico 2, slot 0"
+              "sl",
+              "Serial line IP (slip)",
+              "sl0",
+              "Enlace sobre línea serie"
             ],
             [
               "wl",
               "WLAN / Wi-Fi",
-              "wlo1 / wlp3s0",
+              "wlo1 · wlp3s0",
               "Adaptador inalámbrico integrado o en bus PCI"
             ],
             [
               "ww",
-              "WWAN (Móvil)",
+              "WWAN (móvil)",
               "wwp0s20u4",
-              "Bódem de banda ancha móvil / módem USB"
-            ],
-            [
-              "lo",
-              "Loopback",
-              "lo",
-              "Interfaz lógica de bucle interno"
+              "Banda ancha móvil / módem USB"
             ]
           ],
-          "caption": "Convenciones de nomenclatura de interfaces en systemd"
+          "caption": "Prefijos de dos caracteres de la nomenclatura systemd"
+        },
+        {
+          "type": "callout",
+          "calloutType": "info",
+          "title": "Cuidado: `lo` no es un prefijo",
+          "content": "`lo` es la **interfaz loopback** (bucle interno) y queda fuera del esquema de prefijos. La numeración clásica (`eth0`, `wlan0`) solo se usa como último recurso. Las cinco reglas de prioridad se ven en la siguiente slide."
         },
         {
           "type": "terminal",
           "lines": [
             {
-              "prompt": "$",
+              "prompt": "$ ",
               "command": "ip link show",
               "output": "1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN\n2: eno1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP\n3: wlo1: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN"
             },
             {
-              "prompt": "$",
+              "prompt": "$ ",
               "command": "nmcli device",
               "output": "DEVICE  TYPE      STATE        CONNECTION\neno1    ethernet  connected    Wired connection 1\nwlo1    wifi      unavailable  --"
             }
@@ -141,12 +149,64 @@
     {
       "id": "109.2-slide-3",
       "slideNumber": 3,
+      "title": "Cinco Reglas de Prioridad para Nombrar Interfaces",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Cuando varias reglas pueden aplicarse a la misma tarjeta, systemd elige el nombre de **mayor prioridad**. Este orden decreciente es pregunta directa de examen."
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "number": 1,
+              "title": "Índice del firmware (onboard)",
+              "description": "Dispositivos integrados en la placa base; el índice lo asigna la BIOS o el firmware → `eno1`."
+            },
+            {
+              "number": 2,
+              "title": "Índice de ranura PCI Express",
+              "description": "La BIOS o el firmware indican el número de ranura → `ens1`."
+            },
+            {
+              "number": 3,
+              "title": "Dirección en el bus",
+              "description": "Posición física en el bus PCI, con bus y ranura → `enp3s5`."
+            },
+            {
+              "number": 4,
+              "title": "Dirección MAC",
+              "description": "Se usa la MAC del adaptador cuando no hay datos de firmware útiles → `enx78e7d1ea46da`."
+            },
+            {
+              "number": 5,
+              "title": "Convención heredada",
+              "description": "Último recurso: numeración clásica del kernel → `eth0`, `wlan0`."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "El nombre `enp3s5` codifica esa posición: bus 03, ranura 05. El comando `lspci | fgrep Ethernet` muestra la misma tarjeta como `03:05.0`, lo que confirma la correspondencia entre nombre y hardware."
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Trampa de examen",
+          "content": "La prioridad **no** es alfabética: firmware integrado > ranura PCIe > bus > MAC > convención heredada. Por eso `enp3s5` (bus) gana a `enx78e7d1ea46da` (MAC)."
+        }
+      ]
+    },
+    {
+      "id": "109.2-slide-4",
+      "slideNumber": 4,
       "title": "Configuración Tradicional en Debian: /etc/network/interfaces",
       "layout": "content",
       "blocks": [
         {
           "type": "paragraph",
-          "text": "En distribuciones Debian y derivadas tradicionales, el archivo `/etc/network/interfaces` define la configuración estática o dinámica leída por los comandos `ifup` e `ifdown`."
+          "text": "En Debian y derivadas, `/etc/network/interfaces` contiene las definiciones que leen `ifup` e `ifdown`. **Todas** las interfaces gestionadas por ellos deben estar listadas en este archivo."
         },
         {
           "type": "code",
@@ -157,16 +217,24 @@
         {
           "type": "list",
           "items": [
-            "`auto <interfaz>`: Marca la interfaz para ser activada automáticamente durante el arranque mediante `ifup -a`.",
-            "`allow-hotplug <interfaz>`: Activa la interfaz cuando el kernel o subsistema udev detecta la conexión del hardware.",
-            "`iface <interfaz> inet <dhcp|static>`: Define la familia de protocolos (`inet` para IPv4, `inet6` para IPv6) y el método de asignación."
+            "`auto <interfaz>`: marca la interfaz para activarse al arranque con `ifup -a`; se activan en el orden en que aparecen.",
+            "`allow-hotplug <interfaz>`: activa la interfaz cuando udev detecta la conexión del hardware.",
+            "`iface <interfaz> inet <dhcp|static|loopback>`: define la familia (`inet` para IPv4, `inet6` para IPv6) y el método de asignación.",
+            "`static` **no necesita** `auto`: la interfaz se activa siempre que se detecta el hardware, con `address <IP/máscara>` y `gateway <IP>`.",
+            "Varias entradas `iface` para la misma interfaz: al activarla se aplican todas sus direcciones y opciones (útil para IPv4 + IPv6 o varias IP)."
           ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "Warning: métodos no estandarizados",
+          "content": "Los métodos de `ifup`/`ifdown` **no están estandarizados** entre distribuciones. CentOS mantiene la configuración en archivos individuales dentro de `/etc/sysconfig/network-scripts/`, con un formato ligeramente distinto."
         }
       ]
     },
     {
-      "id": "109.2-slide-4",
-      "slideNumber": 4,
+      "id": "109.2-slide-5",
+      "slideNumber": 5,
       "title": "Activación y Desactivación: ifup e ifdown",
       "layout": "content",
       "blocks": [
@@ -224,8 +292,8 @@
       ]
     },
     {
-      "id": "109.2-slide-5",
-      "slideNumber": 5,
+      "id": "109.2-slide-6",
+      "slideNumber": 6,
       "title": "Configuración Tradicional en RHEL/CentOS: ifcfg-*",
       "layout": "content",
       "blocks": [
@@ -278,8 +346,8 @@
       ]
     },
     {
-      "id": "109.2-slide-6",
-      "slideNumber": 6,
+      "id": "109.2-slide-7",
+      "slideNumber": 7,
       "title": "Nombre de Host: /etc/hostname y hostnamectl",
       "layout": "two-column",
       "blocks": [
@@ -290,14 +358,15 @@
         },
         {
           "type": "paragraph",
-          "text": "El archivo `/etc/hostname` contiene una única línea con el nombre de host estático del equipo. La herramienta central en sistemas systemd es `hostnamectl`, que gestiona **tres tipos de nombres**:"
+          "text": "`/etc/hostname` guarda en una única línea el nombre de host estático (las líneas que empiezan por `#` se ignoran). La herramienta central en sistemas systemd es `hostnamectl`, que gestiona **tres tipos de nombres**:"
         },
         {
           "type": "list",
           "items": [
-            "**Estático (`--static`)**: Guardado en `/etc/hostname`. Es persistente entre reinicios y se establece al arrancar.",
-            "**Transitorio (`--transient`)**: Mantenido por el kernel en RAM; asignado dinámicamente por DHCP o mDNS.",
-            "**Bonito / Pretty (`--pretty`)**: Texto descriptivo libre en formato UTF-8 (admite espacios y acentos) para interfaces gráficas, almacenado en `/etc/machine-info`."
+            "**Estático (`--static`)**: se almacena en `/etc/hostname` y persiste entre reinicios; se usa para inicializar el nombre al arrancar.",
+            "**Transitorio (`--transient`)**: lo mantiene el kernel en RAM; se usa cuando no hay estático o este es `localhost` por defecto.",
+            "**Bonito / Pretty (`--pretty`)**: texto descriptivo libre en UTF-8 (admite espacios y acentos) para interfaces gráficas, en `/etc/machine-info`.",
+            "Sin `--static` ni `--pretty`, `hostnamectl set-hostname` establece **los tres** tipos a la vez."
           ]
         }
       ],
@@ -311,21 +380,30 @@
           "type": "terminal",
           "lines": [
             {
-              "prompt": "#",
+              "prompt": "# ",
               "command": "hostnamectl status",
-              "output": "   Static hostname: debian-srv\n   Pretty hostname: Servidor Principal de Producción\n         Icon name: computer-server\n           Chassis: server\n  Operating System: Debian GNU/Linux 12 (bookworm)"
+              "output": "   Static hostname: debian-srv\n   Pretty hostname: Servidor Principal de Producción\n Transient hostname: debian-srv\n         Icon name: computer-server\n           Chassis: server\n  Operating System: Debian GNU/Linux 12 (bookworm)"
             },
             {
-              "prompt": "#",
+              "prompt": "# ",
               "command": "hostnamectl --static set-hostname firewall",
               "output": ""
             },
             {
-              "prompt": "#",
+              "prompt": "# ",
               "command": "hostnamectl --pretty set-hostname \"Firewall Perimetral\"",
+              "output": ""
+            },
+            {
+              "prompt": "# ",
+              "command": "hostnamectl --transient set-hostname generic-host",
               "output": ""
             }
           ]
+        },
+        {
+          "type": "paragraph",
+          "text": "`status` es la acción por defecto y puede omitirse; añade además `Machine ID`, `Boot ID`, `Kernel` y `Architecture`."
         },
         {
           "type": "callout",
@@ -336,14 +414,14 @@
       ]
     },
     {
-      "id": "109.2-slide-7",
-      "slideNumber": 7,
+      "id": "109.2-slide-8",
+      "slideNumber": 8,
       "title": "Resolución Estática Local: Archivo /etc/hosts",
       "layout": "content",
       "blocks": [
         {
           "type": "paragraph",
-          "text": "El archivo `/etc/hosts` proporciona un mecanismo de **resolución de nombres estático e inmediato**, independiente de cualquier servidor DNS externo. Permite mapear direcciones IP a nombres canónicos y alias."
+          "text": "El archivo `/etc/hosts` proporciona una **resolución de nombres estática e inmediata**, independiente de cualquier servidor DNS externo. Asocia direcciones IP con nombres canónicos y alias."
         },
         {
           "type": "code",
@@ -354,22 +432,24 @@
         {
           "type": "list",
           "items": [
-            "**Sintaxis**: La dirección IP siempre va en la primera columna, seguida por el FQDN o nombre canónico y opcionalmente varios alias separados por espacios o tabuladores.",
-            "**Asignación múltiple**: Como ilustra la línea `10.8.0.1 firewall router`, un único equipo e IP puede responder a múltiples nombres en la red interna.",
-            "**Velocidad y aislamiento**: No genera consultas a la red. Es ideal para entornos aislados, arranque temprano del sistema y equipos de misión crítica."
+            "**Sintaxis**: la IP va en la primera columna, luego el nombre canónico (FQDN) y, opcionalmente, alias separados por espacios o tabulaciones.",
+            "**Alias múltiples**: una misma IP puede responder a varios nombres: `10.8.0.1 firewall router`.",
+            "**Reglas de formato**: los nombres solo admiten caracteres alfanuméricos, guiones y puntos; deben comenzar por una letra y terminar en carácter alfanumérico.",
+            "**Comentarios**: todo el texto desde `#` hasta el final de la línea se ignora.",
+            "**Velocidad y aislamiento**: no genera consultas de red; útil en arranque temprano y entornos aislados."
           ]
         }
       ]
     },
     {
-      "id": "109.2-slide-8",
-      "slideNumber": 8,
+      "id": "109.2-slide-9",
+      "slideNumber": 9,
       "title": "Configuración del Cliente DNS: /etc/resolv.conf",
       "layout": "content",
       "blocks": [
         {
           "type": "paragraph",
-          "text": "El archivo `/etc/resolv.conf` configura el *resolver* (biblioteca cliente de resolución DNS de la glibc) del sistema operativo Linux."
+          "text": "El archivo `/etc/resolv.conf` configura el *resolver*: el conjunto de rutinas de la glibc que consultan el servicio DNS del sistema."
         },
         {
           "type": "table",
@@ -382,22 +462,17 @@
             [
               "nameserver",
               "nameserver 1.1.1.1",
-              "Dirección IP del servidor DNS recurrente. Se pueden definir hasta 3; glibc los consulta en orden estricto de arriba a abajo"
+              "Dirección IP del servidor DNS. Solo se requiere uno, pero se admiten hasta tres como reserva; se consultan en orden. Si no hay ninguna entrada, se usa el servidor de nombres de la máquina local"
             ],
             [
               "search",
               "search lab.local empresa.com",
-              "Lista de dominios de búsqueda automática para completar nombres no cualificados (ej. si buscas 'srv', prueba 'srv.lab.local')"
+              "Lista de dominios que se prueban al proporcionar un nombre corto (ej. `srv` → `srv.lab.local`)"
             ],
             [
               "domain",
               "domain lab.local",
-              "Define el dominio local predeterminado (mutuamente excluyente con search)"
-            ],
-            [
-              "options",
-              "options timeout:2 attempts:3",
-              "Parámetros de ajuste fino para tiempo de espera y reintentos"
+              "Establece el dominio local predeterminado para nombres cortos (alternativa a `search`)"
             ]
           ],
           "caption": "Directivas esenciales de /etc/resolv.conf"
@@ -411,8 +486,8 @@
       ]
     },
     {
-      "id": "109.2-slide-9",
-      "slideNumber": 9,
+      "id": "109.2-slide-10",
+      "slideNumber": 10,
       "title": "Orden de Resolución: /etc/nsswitch.conf",
       "layout": "content",
       "blocks": [
@@ -450,14 +525,14 @@
       ]
     },
     {
-      "id": "109.2-slide-10",
-      "slideNumber": 10,
+      "id": "109.2-slide-11",
+      "slideNumber": 11,
       "title": "Arquitectura de NetworkManager y Utilidad nmcli",
       "layout": "content",
       "blocks": [
         {
           "type": "paragraph",
-          "text": "**NetworkManager** es el demonio estándar para la gestión dinámica y persistente de redes en distribuciones Linux modernas (escritorios, portátiles y servidores RHEL/Debian)."
+          "text": "**NetworkManager** es el demonio estándar para la gestión dinámica y persistente de redes en distribuciones Linux modernas (escritorios, portátiles y servidores RHEL/Debian). Por defecto controla solo las interfaces **no mencionadas** en `/etc/network/interfaces`, para no interferir con otros métodos de configuración."
         },
         {
           "type": "table",
@@ -493,14 +568,14 @@
         {
           "type": "callout",
           "calloutType": "info",
-          "title": "Dispositivo vs Conexión",
-          "content": "Un mismo dispositivo físico (como la tarjeta Wi-Fi `wlo1`) puede tener múltiples perfiles de conexión asociados ('Wifi-Casa', 'Wifi-Oficina'). Solo uno de esos perfiles puede estar activo simultáneamente en el dispositivo."
+          "title": "Dispositivo vs Conexión (y el UUID)",
+          "content": "Un mismo dispositivo físico (como la tarjeta Wi-Fi `wlo1`) puede tener múltiples perfiles asociados ('Wifi-Casa', 'Wifi-Oficina'), pero solo uno activo a la vez. El **UUID** de una conexión cambia cada vez que se abre: en los comandos, usa el **nombre** para mantener la coherencia."
         }
       ]
     },
     {
-      "id": "109.2-slide-11",
-      "slideNumber": 11,
+      "id": "109.2-slide-12",
+      "slideNumber": 12,
       "title": "Diagnóstico de Red con nmcli: Estados y Conectividad",
       "layout": "content",
       "blocks": [
@@ -557,8 +632,8 @@
       ]
     },
     {
-      "id": "109.2-slide-12",
-      "slideNumber": 12,
+      "id": "109.2-slide-13",
+      "slideNumber": 13,
       "title": "Gestión Inalámbrica con nmcli: Redes Wi-Fi",
       "layout": "content",
       "blocks": [
@@ -592,17 +667,17 @@
             [
               "Listar redes detectadas",
               "`nmcli device wifi list`",
-              "Muestra SSID, BSSID, canal, señal (%) y seguridad del último escaneo periódico"
+              "Muestra SSID, BSSID, canal, señal (%) y seguridad del **último escaneo**; no fuerza uno nuevo"
             ],
             [
               "Forzar reescaneo inmediato",
               "`nmcli device wifi rescan`",
-              "Obliga a NetworkManager a volver a escanear todos los puntos de acceso disponibles"
+              "**Requiere root**; pide a NetworkManager que vuelva a escanear ahora todos los puntos de acceso"
             ],
             [
               "Conectarse con contraseña",
               "`nmcli device wifi connect MyWifi password MyPassword`",
-              "Asocia al SSID indicado, negocia la clave WPA y crea un perfil guardado automático"
+              "Asocia al SSID y guarda el perfil; admite `password`, `hidden yes` e `ifname`"
             ]
           ],
           "caption": "Comandos esenciales de administración Wi-Fi con nmcli"
@@ -611,13 +686,13 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Objetos de Examen Oficial",
-          "content": "Tanto `nmcli radio wifi on` (para encender el adaptador desactivado) como `nmcli device wifi rescan` (para forzar el escaneo inmediato de puntos de acceso) son preguntas directas del manual oficial."
+          "content": "`nmcli radio wifi on` (encender el adaptador) y `nmcli device wifi rescan` (reescaneo inmediato, **como root**) son preguntas directas del manual. Recuerda que `nmcli device wifi list` solo muestra los puntos de acceso del último escaneo."
         }
       ]
     },
     {
-      "id": "109.2-slide-13",
-      "slideNumber": 13,
+      "id": "109.2-slide-14",
+      "slideNumber": 14,
       "title": "Crear, Modificar y Eliminar Perfiles con nmcli",
       "layout": "content",
       "blocks": [
@@ -667,6 +742,13 @@
           "caption": "Gestión completa del ciclo de vida de conexiones en NetworkManager"
         },
         {
+          "type": "list",
+          "items": [
+            "`nmcli connection up|down <nombre>` actúa sobre un **perfil guardado** (acepta nombre o UUID).",
+            "`nmcli device connect|disconnect <interfaz>` actúa sobre un **dispositivo físico** por su nombre de interfaz (ej. `wlo2`)."
+          ]
+        },
+        {
           "type": "callout",
           "calloutType": "tip",
           "title": "Abreviaturas Aceptadas",
@@ -675,8 +757,8 @@
       ]
     },
     {
-      "id": "109.2-slide-14",
-      "slideNumber": 14,
+      "id": "109.2-slide-15",
+      "slideNumber": 15,
       "title": "Configuración Ligera con systemd-networkd",
       "layout": "content",
       "blocks": [
@@ -711,15 +793,24 @@
           "caption": "Jerarquía de directorios de systemd-networkd"
         },
         {
+          "type": "list",
+          "items": [
+            "`.netdev`: crea **dispositivos de red virtuales** (bridge, tun).",
+            "`.link`: establece configuraciones de **bajo nivel** de la interfaz.",
+            "`.network`: el sufijo **más importante**; define direcciones y rutas. La interfaz se selecciona en `[Match]`.",
+            "Los archivos se procesan en **orden lexicográfico**: por eso conviene empezar los nombres con números (`10-`, `20-`)."
+          ]
+        },
+        {
           "type": "terminal",
           "lines": [
             {
-              "prompt": "#",
+              "prompt": "# ",
               "command": "systemctl enable --now systemd-networkd",
               "output": "Created symlink /etc/systemd/system/multi-user.target.wants/systemd-networkd.service..."
             },
             {
-              "prompt": "$",
+              "prompt": "$ ",
               "command": "networkctl status",
               "output": "●        State: routable\n  Online state: online\n       Address: 192.168.1.150 on eno1\n       Gateway: 192.168.1.1 on eno1\n           DNS: 8.8.8.8"
             }
@@ -728,26 +819,26 @@
       ]
     },
     {
-      "id": "109.2-slide-15",
-      "slideNumber": 15,
+      "id": "109.2-slide-16",
+      "slideNumber": 16,
       "title": "Ficheros .network en systemd-networkd y wpa_supplicant",
       "layout": "content",
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Los perfiles de systemd-networkd utilizan extensión `.network` y formato INI estructurado en secciones. Se evalúan en orden alfanumérico (ej. `10-estatica.network`)."
+          "text": "Los perfiles de systemd-networkd usan la extensión `.network` con formato INI. Se evalúan en **orden lexicográfico** (`10-estatica.network` antes que `20-ethernet.network`)."
         },
         {
           "type": "code",
           "language": "text",
           "title": "Archivo /etc/systemd/network/20-ethernet.network",
-          "code": "[Match]\n# Coincidencia por comodín glob para TODAS las interfaces ethernet:\nName=en*\n\n[Network]\nDHCP=yes"
+          "code": "[Match]\n# Comodín glob: todas las interfaces ethernet\nName=en*\n\n[Network]\n# yes = IPv4 + IPv6 · ipv4 = solo IPv4 · ipv6 = solo IPv6\nDHCP=yes"
         },
         {
           "type": "list",
           "items": [
-            "**Sección `[Match]`**: Condición para emparejar la interfaz. Admite nombres exactos (`Name=eno1`), direcciones MAC (`MACAddress=...`) y **comodines shell de tipo glob (`Name=en*`)** para aplicar la directiva a todas las tarjetas cableadas.",
-            "**Sección `[Network]`**: Define la configuración lógica: `DHCP=yes`, `Address=192.168.1.150/24`, `Gateway=192.168.1.1` y `DNS=8.8.8.8`."
+            "**Sección `[Match]`**: selecciona la interfaz. Admite nombre exacto (`Name=eno1`), **comodines glob** (`Name=en*`) y `MACAddress=...`.",
+            "**Sección `[Network]`**: define la configuración: `DHCP=yes|ipv4|ipv6`, `Address=192.168.1.150/24`, `Gateway=192.168.1.1` y `DNS=8.8.8.8`."
           ]
         },
         {
@@ -761,7 +852,7 @@
             [
               "Fichero de autenticación",
               "`/etc/wpa_supplicant/wpa_supplicant-wlo1.conf`",
-              "Configuración WPA/WPA2 asociada a la interfaz `wlo1`"
+              "Credenciales WPA/WPA2 de la interfaz `wlo1`; el nombre del archivo debe incluir la interfaz"
             ],
             [
               "Servicio plantilla systemd",
@@ -771,7 +862,7 @@
             [
               "Utilidad wpa_passphrase",
               "`wpa_passphrase MyWifi MyPassword`",
-              "Genera bloques de configuración con PSK cifrada en 256 bits a partir del SSID y la contraseña en texto plano"
+              "Genera la PSK cifrada; la contraseña va **justo después del SSID**, si se omite se lee de la entrada estándar"
             ]
           ],
           "caption": "Integración de conectividad inalámbrica con wpa_supplicant"
@@ -779,8 +870,8 @@
       ]
     },
     {
-      "id": "109.2-slide-16",
-      "slideNumber": 16,
+      "id": "109.2-slide-17",
+      "slideNumber": 17,
       "title": "Matriz Comparativa: Métodos de Configuración Persistente",
       "layout": "comparison",
       "blocks": [
@@ -818,8 +909,8 @@
       ]
     },
     {
-      "id": "109.2-slide-17",
-      "slideNumber": 17,
+      "id": "109.2-slide-18",
+      "slideNumber": 18,
       "title": "Trampas Críticas de Examen: 109.2 Red Persistente",
       "layout": "two-column",
       "blocks": [
@@ -862,8 +953,8 @@
       ]
     },
     {
-      "id": "109.2-slide-18",
-      "slideNumber": 18,
+      "id": "109.2-slide-19",
+      "slideNumber": 19,
       "title": "Ejercicios Guiados y de Exploración Oficiales (Manual LPI)",
       "layout": "two-column",
       "blocks": [
@@ -906,5 +997,5 @@
       ]
     }
   ],
-  "totalSlides": 18
+  "totalSlides": 19
 }

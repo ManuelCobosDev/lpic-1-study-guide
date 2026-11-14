@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="tbs-title tbs-desc">
+  <title id="tbs-title">Cadena de tubería entre tres procesos y escape de stderr (LPIC-1 103.4)</title>
+  <desc id="tbs-desc">Tres procesos encadenados: ps aux genera líneas por su stdout, awk las recibe por stdin y filtra los campos $1, $4 y $11, y head -n 4 recorta cuatro líneas hacia la pantalla. La tubería conecta el descriptor 1 del proceso izquierdo con el descriptor 0 del derecho mediante un búfer circular en RAM de 64 KB, sin ficheros temporales en disco. La banda inferior muestra que stderr nunca viaja por la tubería: los errores saltan directamente a la pantalla salvo que se use |&amp; o 2&gt;&amp;1 |.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #475569; }
+      .stage { fill: #EFF4FF; stroke: #2550EB; stroke-width: 2; }
+      .band-stop { fill: #FFF1F2; stroke: #E11D48; stroke-width: 2; }
+      .cmd { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 17px; font-weight: 700; fill: #0F172A; }
+      .arg { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; font-weight: 500; fill: #1E36AF; }
+      .sub { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 400; fill: #475569; }
+      .stop-title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 700; fill: #881337; }
+      .stop-text { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #881337; }
+      .note { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; font-weight: 400; fill: #475569; }
+      .edge { fill: none; stroke: #1D40D8; stroke-width: 2.5; }
+      .edge-stop { fill: none; stroke: #E11D48; stroke-width: 2; stroke-dasharray: 6 4; }
+    </style>
+    <marker id="tbs-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#1D40D8"/>
+    </marker>
+    <marker id="tbs-arrow-rose" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#E11D48"/>
+    </marker>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">103.4 · TUBERÍAS O PIPES</text>
+    <text class="title" x="40" y="78">La tubería es memoria, no disco</text>
+    <text class="subtitle" x="40" y="102">Conecta stdout (1) con stdin (0) sin tocar el disco</text>
+  </g>
+
+  <g id="diagram-relations">
+    <path id="tbs-rel-generador-filtro" class="edge"
+          data-from="node-generador" data-to="node-filtro" data-relation="stdout-a-stdin"
+          d="M 290 205 H 320" marker-end="url(#tbs-arrow)"/>
+    <path id="tbs-rel-filtro-recortador" class="edge"
+          data-from="node-filtro" data-to="node-recortador" data-relation="stdout-a-stdin"
+          d="M 570 205 H 600" marker-end="url(#tbs-arrow)"/>
+    <path id="tbs-rel-generador-stderr" class="edge-stop"
+          data-from="node-generador" data-to="node-stderr" data-relation="error-bypassa-tuberia"
+          d="M 155 260 V 290" marker-end="url(#tbs-arrow-rose)"/>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-generador">
+      <rect class="stage" x="40" y="150" width="250" height="110" rx="10"/>
+      <text class="cmd" x="64" y="182">ps aux</text>
+      <text class="sub" x="64" y="206">generador de líneas</text>
+      <text class="sub" x="64" y="230">escribe en stdout (1)</text>
+    </g>
+
+    <g id="node-filtro">
+      <rect class="stage" x="320" y="150" width="250" height="110" rx="10"/>
+      <text class="cmd" x="344" y="182">awk</text>
+      <text class="arg" x="344" y="206">'{print $1, $4, $11}'</text>
+      <text class="sub" x="344" y="230">lee stdin y filtra campos</text>
+    </g>
+
+    <g id="node-recortador">
+      <rect class="stage" x="600" y="150" width="250" height="110" rx="10"/>
+      <text class="cmd" x="624" y="182">head -n 4</text>
+      <text class="sub" x="624" y="206">recorta a cuatro líneas</text>
+      <text class="sub" x="624" y="230">y las escribe en pantalla</text>
+    </g>
+
+    <g id="node-stderr">
+      <rect class="band-stop" x="40" y="290" width="880" height="120" rx="10"/>
+      <text class="stop-title" x="64" y="322">La tubería solo transporta stdout (1)</text>
+      <text class="stop-text" x="64" y="352">ls /carpeta_que_no_existe | grep algo: el error salta a la pantalla y grep no lo filtra.</text>
+      <text class="stop-text" x="64" y="378">Para que viaje también el canal 2: |&amp; o 2&gt;&amp;1 |.</text>
+    </g>
+  </g>
+
+  <g id="diagram-labels">
+    <text class="note" x="40" y="442">Búfer circular en RAM de 64 KB:</text>
+    <text class="note" x="40" y="466">cero I/O en disco, sin ficheros temporales.</text>
+    <text class="note" x="40" y="490">Streaming: nadie espera a que el anterior acabe.</text>
+  </g>
+</svg>

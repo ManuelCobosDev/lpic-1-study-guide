@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="cvida-title cvida-desc">
+  <title id="cvida-title">Ciclo de vida de un proceso: fork(), exec() y wait() con los estados R, S, D y Z (LPIC-1 103.5)</title>
+  <desc id="cvida-desc">La shell bash ejecuta fork() y se clona en un proceso hijo con un PID nuevo; el hijo llama a exec() y sustituye su memoria por el binario que va a ejecutar, por ejemplo /bin/grep; cuando el hijo termina, el padre recoge su código de salida con wait(). En paralelo se muestran los cuatro estados fundamentales que aparecen en la columna STAT de ps: R en ejecución o en cola, S en espera interrumpible, D en espera crítica de disco que no responde a señales y Z zombi ya terminado que espera el wait() del padre sin consumir CPU ni memoria.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #475569; }
+      .node-cmd { fill: #EFF4FF; stroke: #2550EB; stroke-width: 2; }
+      .node-file { fill: #F1F5F9; stroke: #475569; stroke-width: 2; }
+      .node-iface { fill: #FFFBEB; stroke: #D97706; stroke-width: 2; }
+      .node-state { fill: #FFFFFF; stroke: #475569; stroke-width: 2; }
+      .node-state-d { fill: #FFF1F2; stroke: #E11D48; stroke-width: 2; }
+      .node-note { fill: #F8FAFC; stroke: #CBD5E1; stroke-width: 1.5; stroke-dasharray: 8 6; }
+      .mono-node { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 19px; font-weight: 700; fill: #0F172A; }
+      .sub-node { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; font-weight: 400; fill: #475569; }
+      .state-head { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 16px; font-weight: 700; fill: #0F172A; }
+      .state-head-d { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 16px; font-weight: 700; fill: #881337; }
+      .state-sub { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; font-weight: 400; fill: #334155; }
+      .state-sub-d { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; font-weight: 400; fill: #881337; }
+      .note { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; font-weight: 400; fill: #475569; }
+      .edge { fill: none; stroke: #1D40D8; stroke-width: 2.5; }
+      .plate { fill: #FFFFFF; stroke: #CBD5E1; stroke-width: 1; }
+      .plate-mono { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; font-weight: 700; fill: #1E36AF; text-anchor: middle; }
+      .divider { stroke: #E2E8F0; stroke-width: 1.5; }
+    </style>
+
+    <marker id="cvida-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#1D40D8"/>
+    </marker>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">CICLO DE VIDA · KERNEL DE LINUX</text>
+    <text class="title" x="40" y="78">Nacer clonado, mutar y ser recogido</text>
+    <text class="subtitle" x="40" y="102">fork() duplica, exec() muta y wait() recoge.</text>
+  </g>
+
+  <g id="diagram-relations">
+    <path id="cvida-rel-fork" class="edge" data-from="node-padre" data-to="node-hijo" data-relation="clona-con-fork" d="M 212 176 H 280" marker-end="url(#cvida-arrow)"/>
+    <path id="cvida-rel-exec" class="edge" data-from="node-hijo" data-to="node-binario" data-relation="sustituye-con-exec" d="M 452 176 H 520" marker-end="url(#cvida-arrow)"/>
+    <path id="cvida-rel-wait" class="edge" data-from="node-binario" data-to="node-wait" data-relation="termina-y-wait" d="M 692 176 H 760" marker-end="url(#cvida-arrow)"/>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-padre">
+      <rect class="node-cmd" x="40" y="128" width="172" height="96" rx="10"/>
+      <text class="mono-node" x="62" y="160">bash</text>
+      <text class="sub-node" x="62" y="184">proceso padre</text>
+      <text class="sub-node" x="62" y="206">PID 1200</text>
+    </g>
+
+    <g id="node-hijo">
+      <rect class="node-cmd" x="280" y="128" width="172" height="96" rx="10"/>
+      <text class="mono-node" x="302" y="160">hijo</text>
+      <text class="sub-node" x="302" y="184">copia exacta</text>
+      <text class="sub-node" x="302" y="206">nuevo PID 1201</text>
+    </g>
+
+    <g id="node-binario">
+      <rect class="node-file" x="520" y="128" width="172" height="96" rx="10"/>
+      <text class="mono-node" x="542" y="160">/bin/grep</text>
+      <text class="sub-node" x="542" y="184">exec() sustituye</text>
+      <text class="sub-node" x="542" y="206">la memoria clonada</text>
+    </g>
+
+    <g id="node-wait">
+      <rect class="node-iface" x="760" y="128" width="172" height="96" rx="10"/>
+      <text class="mono-node" x="782" y="160">wait()</text>
+      <text class="sub-node" x="782" y="184">el padre recoge</text>
+      <text class="sub-node" x="782" y="206">el estado del hijo</text>
+    </g>
+
+    <g id="node-estado-r">
+      <rect class="node-state" x="40" y="252" width="204" height="132" rx="10"/>
+      <text class="state-head" x="60" y="282">R · Running</text>
+      <line class="divider" x1="60" y1="294" x2="224" y2="294"/>
+      <text class="state-sub" x="60" y="320">En la CPU o en cola</text>
+      <text class="state-sub" x="60" y="342">listo para ejecutar.</text>
+      <text class="state-sub" x="60" y="364">Consume CPU ahora.</text>
+    </g>
+
+    <g id="node-estado-s">
+      <rect class="node-state" x="268" y="252" width="204" height="132" rx="10"/>
+      <text class="state-head" x="288" y="282">S · Sleeping</text>
+      <line class="divider" x1="288" y1="294" x2="452" y2="294"/>
+      <text class="state-sub" x="288" y="320">Espera de red o de</text>
+      <text class="state-sub" x="288" y="342">teclado; una señal</text>
+      <text class="state-sub" x="288" y="364">la despierta.</text>
+    </g>
+
+    <g id="node-estado-d">
+      <rect class="node-state-d" x="496" y="252" width="204" height="132" rx="10"/>
+      <text class="state-head-d" x="516" y="282">D · Disk wait</text>
+      <line class="divider" x1="516" y1="294" x2="680" y2="294"/>
+      <text class="state-sub-d" x="516" y="320">Espera crítica de I/O</text>
+      <text class="state-sub-d" x="516" y="342">de disco: no responde</text>
+      <text class="state-sub-d" x="516" y="364">ni a kill -9.</text>
+    </g>
+
+    <g id="node-estado-z">
+      <rect class="node-state" x="724" y="252" width="204" height="132" rx="10"/>
+      <text class="state-head" x="744" y="282">Z · Zombie</text>
+      <line class="divider" x1="744" y1="294" x2="908" y2="294"/>
+      <text class="state-sub" x="744" y="320">Ya terminó y aún</text>
+      <text class="state-sub" x="744" y="342">espera el wait()</text>
+      <text class="state-sub" x="744" y="364">del padre: 0 CPU, 0 RAM.</text>
+    </g>
+
+    <g id="node-nota">
+      <rect class="node-note" x="40" y="408" width="880" height="88" rx="10"/>
+      <text class="note" x="62" y="440">Si el padre muere, es PID 1 quien recoge al hijo.</text>
+      <text class="note" x="62" y="466">El zombi aparece como &lt;defunct&gt; en la columna STAT de ps.</text>
+    </g>
+  </g>
+
+  <g id="diagram-labels">
+    <rect class="plate" x="214" y="136" width="64" height="24" rx="6"/>
+    <text class="plate-mono" x="246" y="153">fork()</text>
+    <rect class="plate" x="454" y="136" width="64" height="24" rx="6"/>
+    <text class="plate-mono" x="486" y="153">exec()</text>
+    <rect class="plate" x="694" y="136" width="64" height="24" rx="6"/>
+    <text class="plate-mono" x="726" y="153">wait()</text>
+  </g>
+</svg>

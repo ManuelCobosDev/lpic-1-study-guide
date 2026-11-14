@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  OnInit,
   computed,
   inject,
   input,
@@ -13,7 +12,6 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Question } from '../../../../core/models/question.model';
 import { FlashcardItem, LeitnerRating } from '../../../../core/models/flashcard.model';
-import { LessonExercise } from '../../../../core/models/practice.model';
 import { PracticeService } from '../../../../core/services/practice.service';
 import { WikiRefService } from '../../../../core/services/wiki-ref.service';
 import { ButtonComponent } from '../../../../shared/ui/button/button.component';
@@ -377,152 +375,6 @@ import { ButtonComponent } from '../../../../shared/ui/button/button.component';
           </div>
         }
       </section>
-
-      <!-- ========================================== -->
-      <!-- BLOQUE C: ACORDEÓN DE EJERCICIOS DEL MANUAL-->
-      <!-- ========================================== -->
-      <section
-        class="manual-exercises-accordion p-6 sm:p-8 rounded-3xl border border-[var(--border)] bg-[var(--surface)] shadow-xs space-y-6"
-        data-testid="manual-exercises"
-        aria-labelledby="manual-exercises-title"
-      >
-        <div class="flex items-center justify-between gap-4 flex-wrap pb-4 border-b border-[var(--border)]">
-          <div class="flex items-center gap-3">
-            <span class="w-10 h-10 rounded-2xl bg-[var(--primary-soft)] text-[var(--primary-text)] flex items-center justify-center text-xl shadow-xs shrink-0" aria-hidden="true">
-              📖
-            </span>
-            <div>
-              <h3 id="manual-exercises-title" class="text-base sm:text-lg font-extrabold text-[var(--text)] tracking-tight">
-                Ejercicios Oficiales del Manual
-              </h3>
-              <p class="text-xs text-[var(--text-muted)]">
-                Ejercicios guiados y de exploración del temario oficial con respuestas contrastadas y toma de notas.
-              </p>
-            </div>
-          </div>
-
-          <div class="text-xs font-mono text-[var(--text-muted)]">
-            {{ completedExercisesCount() }} / {{ exercises().length }} completados
-          </div>
-        </div>
-
-        @if (exercises().length === 0) {
-          <div class="p-8 text-center text-xs text-[var(--text-muted)] bg-[var(--surface-muted)] rounded-2xl border border-[var(--border)]">
-            No hay ejercicios registrados para este subtema.
-          </div>
-        } @else {
-          <div class="exercises-accordion-list space-y-4">
-            @for (ex of exercises(); track ex.id; let idx = $index) {
-              <div
-                class="exercise-item-card rounded-2xl border transition-all"
-                [class.border-[var(--primary)]]="openExerciseId() === ex.id"
-                [class.border-[var(--border)]]="openExerciseId() !== ex.id"
-                [class.bg-[var(--surface-muted)]]="openExerciseId() === ex.id"
-                [class.bg-[var(--surface)]]="openExerciseId() !== ex.id"
-              >
-                <!-- Cabecera del Acordeón -->
-                <button
-                  type="button"
-                  class="exercise-header w-full p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer select-none text-left bg-transparent border-none"
-                  (click)="toggleExerciseAccordion(ex.id)"
-                  [attr.aria-expanded]="openExerciseId() === ex.id"
-                >
-                  <div class="flex items-center gap-3 min-w-0">
-                    <span
-                      class="px-2.5 py-0.5 rounded-md font-mono text-xs font-bold uppercase shrink-0"
-                      [class.bg-blue-500/15]="ex.kind === 'guiado'"
-                      [class.text-blue-600]="ex.kind === 'guiado'"
-                      [class.dark:text-blue-400]="ex.kind === 'guiado'"
-                      [class.bg-purple-500/15]="ex.kind === 'exploratorio'"
-                      [class.text-purple-600]="ex.kind === 'exploratorio'"
-                      [class.dark:text-purple-400]="ex.kind === 'exploratorio'"
-                    >
-                      {{ ex.kind === 'guiado' ? 'Guiado' : 'Exploración' }}
-                    </span>
-                    <span class="text-xs sm:text-sm font-bold text-[var(--text)] truncate">
-                      {{ ex.title || ('Ejercicio ' + (idx + 1)) }}
-                    </span>
-                  </div>
-
-                  <div class="flex items-center gap-3 shrink-0">
-                    @if (isExerciseDone(ex.id)) {
-                      <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                        <span>✓</span>
-                        <span class="hidden sm:inline">Hecho</span>
-                      </span>
-                    }
-                    <span class="text-xs font-mono text-[var(--text-muted)]">
-                      {{ openExerciseId() === ex.id ? '▲' : '▼' }}
-                    </span>
-                  </div>
-                </button>
-
-                <!-- Contenido Expandido del Ejercicio -->
-                @if (openExerciseId() === ex.id) {
-                  <div class="exercise-body p-4 sm:p-5 pt-0 space-y-4 border-t border-[var(--border)]">
-                    <!-- Enunciado -->
-                    <div class="statement-box pt-3 text-xs sm:text-sm text-[var(--text)] leading-relaxed whitespace-pre-line">
-                      {{ ex.statement }}
-                    </div>
-
-                    <!-- Cuadro de Notas / Solución Personal -->
-                    <div class="notes-field space-y-1.5">
-                      <label [for]="'note-' + ex.id" class="text-xs font-mono font-semibold text-[var(--text-muted)]">
-                        Tu solución / apuntes personales (guardado local automático):
-                      </label>
-                      <textarea
-                        [id]="'note-' + ex.id"
-                        rows="3"
-                        class="w-full p-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] text-xs sm:text-sm font-mono leading-relaxed focus:ring-2 focus:ring-[var(--primary)] outline-none"
-                        placeholder="Escribe aquí tus comandos o respuesta para comprobarla..."
-                        [value]="getExerciseNote(ex.id)"
-                        (input)="onExerciseNoteInput(ex.id, $event)"
-                      ></textarea>
-                    </div>
-
-                    <!-- Controles de Respuesta Oficial y Marcado Hecho -->
-                    <div class="flex items-center justify-between gap-3 flex-wrap pt-2">
-                      <button
-                        type="button"
-                        class="px-3.5 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] text-xs font-semibold hover:border-[var(--primary)] hover:text-[var(--primary-text)] transition-colors cursor-pointer"
-                        (click)="toggleShowAnswer(ex.id)"
-                      >
-                        <span>{{ isAnswerVisible(ex.id) ? 'Ocultar respuesta oficial' : 'Ver respuesta oficial' }}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer select-none"
-                        [class.bg-emerald-600]="isExerciseDone(ex.id)"
-                        [class.text-white]="isExerciseDone(ex.id)"
-                        [class.border-emerald-600]="isExerciseDone(ex.id)"
-                        [class.bg-[var(--surface)]]="!isExerciseDone(ex.id)"
-                        [class.border-[var(--border)]]="!isExerciseDone(ex.id)"
-                        [class.text-[var(--text)]]="!isExerciseDone(ex.id)"
-                        (click)="toggleExerciseDone(ex.id)"
-                      >
-                        <span>{{ isExerciseDone(ex.id) ? '✓ Completado' : 'Marcar como hecho' }}</span>
-                      </button>
-                    </div>
-
-                    <!-- Respuesta Oficial Revelable -->
-                    @if (isAnswerVisible(ex.id)) {
-                      <div class="official-answer-panel p-4 rounded-xl border border-blue-500/30 bg-blue-500/10 space-y-2">
-                        <span class="text-xs font-mono font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider block">
-                          Respuesta oficial del manual:
-                        </span>
-                        <div class="text-xs sm:text-sm text-[var(--text)] leading-relaxed whitespace-pre-line font-mono">
-                          {{ ex.answer }}
-                        </div>
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        }
-      </section>
     </div>
   `,
   styles: [`
@@ -533,14 +385,13 @@ import { ButtonComponent } from '../../../../shared/ui/button/button.component';
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PracticeTabComponent implements OnInit {
+export class PracticeTabComponent {
   private readonly practiceService = inject(PracticeService);
   private readonly wikiRefService = inject(WikiRefService);
 
   readonly subtopicId = input.required<string>();
   readonly questions = input<Question[]>([]);
   readonly flashcards = input<FlashcardItem[]>([]);
-  readonly exercises = input<LessonExercise[]>([]);
   readonly jumpToSlide = output<number>();
   readonly rateCard = output<{ cardId: string; rating: LeitnerRating }>();
 
@@ -573,23 +424,6 @@ export class PracticeTabComponent implements OnInit {
   readonly currentFlashcard = computed(() => this.flashcardItems()[this.currentFlashcardIndex()] ?? null);
   readonly isCardFlipped = signal<boolean>(false);
   readonly flashcardsFinished = signal<boolean>(false);
-
-  // ===============================
-  // ESTADO BLOQUE C: EJERCICIOS
-  // ===============================
-  readonly openExerciseId = signal<string | null>(null);
-  readonly visibleAnswers = signal<Record<string, boolean>>({});
-
-  readonly completedExercisesCount = computed(() => {
-    const exs = this.exercises();
-    return exs.filter((e) => this.isExerciseDone(e.id)).length;
-  });
-
-  ngOnInit(): void {
-    if (this.exercises().length > 0) {
-      this.openExerciseId.set(this.exercises()[0]?.id ?? null);
-    }
-  }
 
   // --- MÉTODOS BLOQUE A: TEST RÁPIDO ---
   isOptionSelected(optionId: string): boolean {
@@ -701,39 +535,6 @@ export class PracticeTabComponent implements OnInit {
     this.currentFlashcardIndex.set(0);
     this.isCardFlipped.set(false);
     this.flashcardsFinished.set(false);
-  }
-
-  // --- MÉTODOS BLOQUE C: EJERCICIOS ---
-  toggleExerciseAccordion(exId: string): void {
-    this.openExerciseId.update((current) => (current === exId ? null : exId));
-  }
-
-  isAnswerVisible(exId: string): boolean {
-    return !!this.visibleAnswers()[exId];
-  }
-
-  toggleShowAnswer(exId: string): void {
-    this.visibleAnswers.update((map) => ({
-      ...map,
-      [exId]: !map[exId]
-    }));
-  }
-
-  getExerciseNote(exId: string): string {
-    return this.practiceService.getExerciseNote(exId);
-  }
-
-  onExerciseNoteInput(exId: string, event: Event): void {
-    const val = (event.target as HTMLTextAreaElement).value;
-    this.practiceService.saveExerciseNote(exId, val);
-  }
-
-  isExerciseDone(exId: string): boolean {
-    return this.practiceService.isExerciseCompleted(exId);
-  }
-
-  toggleExerciseDone(exId: string): void {
-    this.practiceService.toggleExerciseCompleted(exId);
   }
 
   // --- WIKIPEDIA POPOVER HOVER ---

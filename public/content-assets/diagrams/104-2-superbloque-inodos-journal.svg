@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="fs-anat-title fs-anat-desc">
+  <title id="fs-anat-title">Anatomía de un sistema de archivos: superbloque, tabla de inodos, journal y bloques de datos (LPIC-1 104.2)</title>
+  <desc id="fs-anat-desc">Un sistema de archivos ext2, ext3, ext4 o XFS guarda su integridad en tres estructuras de metadatos. El superbloque registra la geometría global: total de bloques, inodos libres, tamaño de bloque, UUID y estado clean o with errors, con copias de respaldo repartidas en los grupos de bloques; se lee con dumpe2fs -h y se ajusta con tune2fs. La tabla de inodos dedica un inodo a cada archivo o directorio con sus metadatos, permisos, timestamps y punteros a los bloques de datos; su cantidad es fija al crear el sistema ext4, mientras que XFS asigna inodos de forma dinámica, y se cuenta con df -i. El journal anota cada transacción antes del commit a los bloques finales, de modo que tras un corte eléctrico la consistencia se recupera en segundos; ext3, ext4 y XFS lo incorporan, ext2 no lo tiene y tune2fs -j se lo añade. Los bloques de datos contienen el contenido real de los ficheros, al que el inodo apunta.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #475569; }
+      .band-sb { fill: #F1F5F9; stroke: #475569; stroke-width: 2; }
+      .band-ino { fill: #EFF4FF; stroke: #2550EB; stroke-width: 2; }
+      .band-jrn { fill: #ECFDF5; stroke: #059669; stroke-width: 2; }
+      .band-data { fill: #F8FAFC; stroke: #CBD5E1; stroke-width: 2; }
+      .name { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 18px; font-weight: 700; }
+      .role { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; font-weight: 500; fill: #475569; }
+      .term { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 14px; font-weight: 500; fill: #475569; }
+      .fact { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; font-weight: 400; fill: #334155; }
+      .cmd { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 15px; font-weight: 700; }
+      .note { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 500; fill: #475569; }
+    </style>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">EXT2 · EXT3 · EXT4 · XFS</text>
+    <text class="title" x="40" y="78">Anatomía del sistema de archivos</text>
+    <text class="subtitle" x="40" y="102">Qu� guarda cada estructura y con qu� comando se audita</text>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-superbloque">
+      <rect class="band-sb" x="48" y="116" width="864" height="84" rx="10"/>
+      <text class="name" x="72" y="146" fill="#334155">superbloque</text>
+      <text class="role" x="72" y="168">geometría global</text>
+      <text class="term" x="72" y="188">superblock</text>
+      <text class="fact" x="396" y="144">Total de bloques, inodos libres, tamaño de bloque, UUID</text>
+      <text class="fact" x="396" y="166">y estado clean / with errors; copias de respaldo en los grupos.</text>
+      <text class="cmd" x="396" y="186" fill="#334155">dumpe2fs -h lee la cabecera · tune2fs ajusta</text>
+    </g>
+
+    <g id="node-inodos">
+      <rect class="band-ino" x="48" y="210" width="864" height="84" rx="10"/>
+      <text class="name" x="72" y="240" fill="#1E36AF">tabla de inodos</text>
+      <text class="role" x="72" y="262">identidad de cada fichero</text>
+      <text class="term" x="72" y="282">inode table</text>
+      <text class="fact" x="396" y="238">Un inodo por archivo o directorio: metadatos, permisos, timestamps</text>
+      <text class="fact" x="396" y="260">y punteros a sus bloques. Cantidad fija al crear ext4.</text>
+      <text class="cmd" x="396" y="280" fill="#1E36AF">df -i cuenta inodos libres y usados · en XFS son dinámicos</text>
+    </g>
+
+    <g id="node-journal">
+      <rect class="band-jrn" x="48" y="304" width="864" height="84" rx="10"/>
+      <text class="name" x="72" y="334" fill="#065F46">journal</text>
+      <text class="role" x="72" y="356">registro de transacciones</text>
+      <text class="term" x="72" y="376">diario</text>
+      <text class="fact" x="396" y="332">Anota cada cambio pendiente antes del commit a los bloques finales;</text>
+      <text class="fact" x="396" y="354">tras un apagón se recupera en segundos sin escanear el disco.</text>
+      <text class="cmd" x="396" y="374" fill="#065F46">ext3 / ext4 / XFS con journal · tune2fs -j lo activa en ext2</text>
+    </g>
+
+    <g id="node-datos">
+      <rect class="band-data" x="48" y="398" width="864" height="84" rx="10"/>
+      <text class="name" x="72" y="428" fill="#334155">bloques de datos</text>
+      <text class="role" x="72" y="450">contenido de los ficheros</text>
+      <text class="term" x="72" y="470">data blocks</text>
+      <text class="fact" x="396" y="426">El inodo solo apunta: aquí vive el contenido real, no los metadatos.</text>
+      <text class="fact" x="396" y="448">El journal registra el cambio; este es el destino final del commit.</text>
+      <text class="cmd" x="396" y="468" fill="#475569">el commit del journal aterriza aquí</text>
+    </g>
+  </g>
+
+  <g id="diagram-labels">
+    <text class="note" x="48" y="512">El inodo es la identidad; el journal, la red de seguridad.</text>
+  </g>
+</svg>

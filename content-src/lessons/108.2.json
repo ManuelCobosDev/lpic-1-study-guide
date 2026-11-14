@@ -30,7 +30,13 @@
     "logrotate",
     "Priority",
     "rsyslog",
-    "syslog-ng"
+    "syslog-ng",
+    "$template",
+    "Storage=",
+    "SystemMaxUse=",
+    "SystemKeepFree=",
+    "create",
+    "sharedscripts"
   ],
   "commands": [
     "dmesg",
@@ -43,6 +49,7 @@
     "logrotate",
     "rsyslogd",
     "systemd-cat",
+    "utmpdump",
     "zcat",
     "zgrep",
     "zless"
@@ -64,8 +71,7 @@
           "type": "paragraph",
           "text": "Subtema 108.2 · Peso LPI: 4 · Examen LPIC-1 102-500"
         }
-      ],
-      "notes": "Bienvenido al Subtema 108.2. Cubre los subsistemas de registro de Linux: rsyslog/syslog-ng tradicional en texto plano, systemd-journald binario e indexado, archivos de auditoría de usuarios, inyección con logger y rotación con logrotate."
+      ]
     },
     {
       "id": "108.2-slide-2",
@@ -92,8 +98,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: systemd-journald captura eventos en memoria RAM en formato binario estructurado y reenvía una copia al socket tradicional de syslog, permitiendo a rsyslog o syslog-ng escribir en /var/log/."
         }
-      ],
-      "notes": "syslog-ng fue el pionero en filtrado por contenido y soporte TCP; rsyslog añadió alto rendimiento multihilo y entrega fiable con RELP."
+      ]
     },
     {
       "id": "108.2-slide-3",
@@ -108,7 +113,7 @@
         },
         {
           "type": "paragraph",
-          "text": "No todos los registros son texto plano: Linux utiliza bases de datos binarias para sesiones y memoria circular para el kernel."
+          "text": "No todos los registros son texto plano: Linux usa bases de datos binarias para las sesiones y un búfer circular para el kernel."
         },
         {
           "type": "table",
@@ -128,13 +133,13 @@
             [
               "/var/log/wtmp",
               "Binario histórico",
-              "<code>last</code>",
-              "Historial histórico acumulado de todos los inicios y cierres de sesión y reinicios del sistema."
+              "<code>last</code>, <code>who /var/log/wtmp</code>",
+              "Historial acumulado de todos los inicios y cierres de sesión y reinicios del sistema."
             ],
             [
               "/var/log/btmp",
               "Binario de seguridad",
-              "<code>lastb</code>",
+              "<code>lastb</code>, <code>utmpdump</code>, <code>last -f /var/log/btmp</code>",
               "Registro de intentos de inicio de sesión fallidos o contraseñas erróneas (requiere root)."
             ],
             [
@@ -159,13 +164,24 @@
           "caption": "Archivos binarios de auditoría de usuarios y herramientas asociadas"
         },
         {
+          "type": "heading",
+          "level": 3,
+          "text": "El log principal cambia de nombre según la distribución"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Debian/Ubuntu: `/var/log/syslog` recoge casi todo con la regla `*.*;auth,authpriv.none`.",
+            "openSUSE: `/var/log/messages`, alimentado por una regla más selectiva (`*.=info;*.=notice;*.=warn;…`)."
+          ]
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: /var/log/wtmp y btmp NO son texto plano; hacer 'cat' mostrará basura en pantalla. Debes usar 'last' para wtmp y 'lastb' para btmp. El buffer circular del kernel se consulta con 'dmesg' (o /var/log/dmesg)."
+          "content": "🎯 Clave de Examen: `/var/log/wtmp` y `btmp` NO son texto plano; `cat` solo muestra basura. Para wtmp usa `last` (o `who /var/log/wtmp`); para btmp, `lastb`, `utmpdump` o `last -f /var/log/btmp`. El búfer circular del kernel se lee con `dmesg` (o `/var/log/dmesg`)."
         }
-      ],
-      "notes": "El Kernel Ring Buffer es un búfer circular de tamaño fijo en memoria RAM; los mensajes más antiguos se sobreescriben si se llena."
+      ]
     },
     {
       "id": "108.2-slide-4",
@@ -192,8 +208,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: Cada regla de rsyslog consta de dos partes separadas por espacios o tabulaciones: el SELECTOR (facility.priority) y la ACCIÓN (fichero, usuario o servidor remoto)."
         }
-      ],
-      "notes": "Los archivos modulares adicionales se ubican en /etc/rsyslog.d/*.conf."
+      ]
     },
     {
       "id": "108.2-slide-5",
@@ -208,7 +223,7 @@
         },
         {
           "type": "paragraph",
-          "text": "¿Qué categorías oficiales de origen contempla el estándar RFC 5424?"
+          "text": "¿Qué categorías oficiales de origen contempla el estándar RFC 5424 y qué código numérico lleva cada una?"
         },
         {
           "type": "table",
@@ -244,9 +259,29 @@
               "Seguridad, inicios de sesión y autenticación (authpriv para mensajes confidenciales)."
             ],
             [
+              "syslog",
+              "5",
+              "Mensajes internos generados por el propio demonio de registro."
+            ],
+            [
+              "lpr / news / uucp",
+              "6 / 7 / 8",
+              "Impresión, noticias Usenet y transferencia de ficheros UUCP."
+            ],
+            [
               "cron",
               "9",
               "Programador de tareas periódicas y temporizadores (cron, anacron, atd)."
+            ],
+            [
+              "ftp / ntp",
+              "11 / 12",
+              "Servicio de transferencia FTP y sincronización horaria (NTP)."
+            ],
+            [
+              "security / console",
+              "13 / 14",
+              "Auditoría de seguridad y mensajes dirigidos a la consola del sistema."
             ],
             [
               "local0 a local7",
@@ -254,16 +289,15 @@
               "Ocho instalaciones reservadas para uso personalizado de administradores y scripts."
             ]
           ],
-          "caption": "Facilities estándar evaluadas en la certificación LPIC-1"
+          "caption": "Facilities 0-14 y 16-23 del estándar syslog: nombre y código numérico"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Las instalaciones 'local0' a 'local7' están reservadas para uso personalizado de administradores y scripts. 'auth' y 'authpriv' gestionan seguridad y accesos."
+          "content": "🎯 Clave de Examen: el código numérico es el que aparece en los logs y en los filtros por campo (`SYSLOG_FACILITY=`). `auth` es 4 y `authpriv` 10; `local0` a `local7` ocupan 16-23."
         }
-      ],
-      "notes": "kern emite mensajes del kernel; mail el subsistema de correo; cron las tareas programadas."
+      ]
     },
     {
       "id": "108.2-slide-6",
@@ -290,8 +324,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave Mnemotécnica: 'EM-AL-CRI-ER-WA-NO-IN-DE' -> emerg (0), alert (1), crit (2), err (3), warning (4), notice (5), info (6), debug (7). Mínimo número = Máxima gravedad."
         }
-      ],
-      "notes": "none no tiene número: significa ignorar por completo esa facility (ej. mail.none)."
+      ]
     },
     {
       "id": "108.2-slide-7",
@@ -306,7 +339,7 @@
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo filtrar exactamente los niveles deseados y utilizar filtros avanzados basados en propiedades?"
+          "text": "¿Cómo filtrar exactamente los niveles deseados y encadenar varios selectores en una misma regla?"
         },
         {
           "type": "table",
@@ -350,13 +383,18 @@
           "caption": "Selectores tradicionales y filtros basados en propiedades de rsyslog"
         },
         {
+          "type": "code",
+          "language": "text",
+          "title": "El punto y coma separa selectores; la coma concatena facilities",
+          "code": "# ; divide selectores para una misma acción\n*.info;mail.none;authpriv.none    /var/log/messages\n\n# , concatena facilities dentro de un mismo selector\nauth,authpriv.*                   /var/log/auth.log"
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 'kern.crit' captura crit, alert y emerg. 'kern.=crit' captura ÚNICAMENTE crit. 'mail.none' excluye el correo por completo. Los filtros por propiedad usan sintaxis ':propiedad, operación, \"valor\"'."
+          "content": "🎯 Clave de Examen: `kern.crit` captura crit, alert y emerg; `kern.=crit` captura ÚNICAMENTE crit; `mail.none` excluye el correo por completo. El `;` separa selectores y la `,` concatena facilities (`auth,authpriv.none`)."
         }
-      ],
-      "notes": "El punto y coma ';' une selectores independientes para una misma acción: *.info;mail.none;authpriv.none /var/log/messages."
+      ]
     },
     {
       "id": "108.2-slide-8",
@@ -371,7 +409,7 @@
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo enviar bitácoras a disco, a terminales activas o configurar un servidor syslog central receptor?"
+          "text": "Además de escribir en ficheros, rsyslog reenvía a hosts remotos, usa plantillas con nombres dinámicos y puede avisar a las terminales de los usuarios."
         },
         {
           "type": "table",
@@ -415,10 +453,16 @@
           "caption": "Acciones de cliente y directivas de servidor receptor central en rsyslog"
         },
         {
+          "type": "code",
+          "language": "text",
+          "title": "Plantillas, corte del procesamiento y aviso a terminales",
+          "code": "# Plantilla: propiedades entre % para nombres de archivo dinámicos\n$template RemoteLogs,\"/var/log/remotehosts/%HOSTNAME%/%$NOW%.%syslogseverity-text%.log\"\nif $FROMHOST-IP=='192.168.1.4' then ?RemoteLogs\n& stop\n\n# Avisar a las terminales de root y carol\n*.emerg  :omusrmsg:root,carol"
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: '@ip' = cliente UDP; '@@ip' = cliente TCP. Para configurar un servidor central receptor se requiere '$ModLoad imudp' con '$UDPServerRun 514' o '$ModLoad imtcp' con '$InputTCPServerRun 514'."
+          "content": "🎯 Clave de Examen: `@ip` = cliente UDP; `@@ip` = cliente TCP. Para recibir hay que cargar el módulo (`$ModLoad imudp`/`imtcp`) y abrir el puerto 514. `$template` define destinos dinámicos, `& stop` evita duplicar el mensaje y `:omusrmsg:` escribe en terminales."
         }
       ]
     },
@@ -447,8 +491,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: Para que los diarios de systemd sobrevivan a un reboot se establece 'Storage=persistent' o se crea '/var/log/journal'. Las directivas ForwardToSyslog y ForwardToConsole controlan el reenvío a sockets y terminales."
         }
-      ],
-      "notes": "Si Storage=volatile, los logs se guardan en /run/log/journal/ (tmpfs en memoria RAM) y se borran al reiniciar."
+      ]
     },
     {
       "id": "108.2-slide-10",
@@ -517,8 +560,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: 'journalctl -b' (o -b 0) muestra el arranque actual. 'journalctl -b -1' muestra el arranque inmediatamente anterior. 'journalctl --list-boots' enumera los arranques guardados."
         }
-      ],
-      "notes": "journalctl abre por defecto la salida en un paginador interactivo estilo less. Con --no-pager se desactiva."
+      ]
     },
     {
       "id": "108.2-slide-11",
@@ -533,7 +575,7 @@
         },
         {
           "type": "paragraph",
-          "text": "Aislar con precisión quirúrgica el problema entre millones de líneas de log."
+          "text": "Aislar el problema entre millones de líneas: por unidad, por prioridad, por fecha o por los campos estructurados del journal."
         },
         {
           "type": "terminal",
@@ -582,13 +624,18 @@
           "caption": "Opciones de filtrado de journalctl"
         },
         {
+          "type": "code",
+          "language": "bash",
+          "title": "Filtros por campo: AND por defecto, OR con +",
+          "code": "# AND: deben cumplirse ambos campos\njournalctl PRIORITY=3 SYSLOG_FACILITY=1\n\n# OR: cualquiera de los dos valores (separador +)\njournalctl PRIORITY=3 + PRIORITY=4\n\n# _TRANSPORT acota el origen: kernel, syslog, stdout, audit, driver, journal\njournalctl _TRANSPORT=audit"
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: '-u' filtra por unidad de systemd; '-p' filtra por prioridad (texto o número 0-7); '-k' muestra eventos del kernel (igual a dmesg); '--since' y '--until' filtran por ventana temporal."
+          "content": "🎯 Clave de Examen: `-u` filtra por unidad; `-p` por prioridad (texto o número 0-7); `-k` equivale a `dmesg`; `--since`/`--until` acotan la ventana temporal. Los campos (`PRIORITY=`, `SYSLOG_FACILITY=`, `_PID=`, `_TRANSPORT=`) se combinan con AND, y con `+` como OR lógico."
         }
-      ],
-      "notes": "Los filtros se pueden combinar libremente: journalctl -u nginx -p err --since yesterday."
+      ]
     },
     {
       "id": "108.2-slide-12",
@@ -603,7 +650,7 @@
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo inspeccionar diarios desde un disco montado en rescate y comprobar su integridad criptográfica?"
+          "text": "¿Cómo inspeccionar diarios desde un disco montado en rescate y comprobar su consistencia interna?"
         },
         {
           "type": "table",
@@ -630,8 +677,8 @@
             ],
             [
               "--verify",
-              "Integridad Criptográfica",
-              "Verifica que las entradas del diario no hayan sufrido corrupción ni manipulación (Forward Secure Sealing - FSS)."
+              "Integridad del diario",
+              "Comprueba la consistencia interna del archivo del diario mostrando una barra de progreso y los posibles problemas."
             ],
             [
               "--sync / --flush",
@@ -655,13 +702,77 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: En rescate offline usa 'journalctl -D /ruta' o 'journalctl --root=/sysroot'. Para verificar la autenticidad y firmas del diario usa 'journalctl --verify'."
+          "content": "🎯 Clave de Examen: en rescate offline usa `journalctl -D /ruta` o `journalctl --root=/sysroot`; `journalctl --verify` comprueba la consistencia interna del diario."
         }
       ]
     },
     {
       "id": "108.2-slide-13",
       "slideNumber": 13,
+      "title": "journald.conf: Cuotas, Almacenamiento y Retención",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "journald.conf: Cuotas, Almacenamiento y Retención"
+        },
+        {
+          "type": "paragraph",
+          "text": "El diario no crece sin control: `/etc/systemd/journald.conf` decide dónde se guarda y cuánto espacio puede ocupar."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Directiva",
+            "Valor por Defecto",
+            "Efecto"
+          ],
+          "rows": [
+            [
+              "<code>Storage=</code>",
+              "<code>auto</code>",
+              "<code>volatile</code> (solo RAM), <code>persistent</code> (disco), <code>auto</code> o <code>none</code> (descarta, pero permite reenviar)."
+            ],
+            [
+              "<code>SystemMaxUse=</code>",
+              "10 % del sistema de archivos (máx. 4 GiB)",
+              "Tope del diario persistente en /var/log/journal."
+            ],
+            [
+              "<code>SystemKeepFree=</code>",
+              "15 % del sistema de archivos (máx. 4 GiB)",
+              "Espacio que debe quedar libre para el resto del sistema."
+            ],
+            [
+              "<code>SystemMaxFileSize=</code>",
+              "1/8 de <code>SystemMaxUse=</code>",
+              "Tamaño máximo de cada archivo de diario."
+            ],
+            [
+              "<code>SystemMaxFiles=</code>",
+              "100",
+              "Número máximo de archivos de diario que se conservan."
+            ],
+            [
+              "<code>RuntimeMaxUse=</code> / <code>RuntimeKeepFree=</code>",
+              "10 % / 15 % (máx. 4 GiB)",
+              "Equivalentes para el diario en memoria de /run/log/journal."
+            ]
+          ],
+          "caption": "Cuotas del diario: familia System (disco) y Runtime (memoria)"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: si `*MaxUse` y `*KeepFree` chocan, journald satisface ambos aplicando el valor menor, y ningún límite supera 4 GiB. Tras editar `journald.conf` hay que reiniciar el servicio: `systemctl restart systemd-journald`."
+        }
+      ]
+    },
+    {
+      "id": "108.2-slide-14",
+      "slideNumber": 14,
       "title": "Mantenimiento del Diario: Control de Cuota y Limpieza (vacuum)",
       "layout": "content",
       "blocks": [
@@ -726,12 +837,11 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: 'journalctl --disk-usage' consulta el espacio consumido. Para purgar logs antiguos: 'journalctl --vacuum-size=500M' o 'journalctl --vacuum-time=2weeks'."
         }
-      ],
-      "notes": "En /etc/systemd/journald.conf las directivas SystemMaxUse y SystemKeepFree limitan el tamaño automático."
+      ]
     },
     {
-      "id": "108.2-slide-14",
-      "slideNumber": 14,
+      "id": "108.2-slide-15",
+      "slideNumber": 15,
       "title": "Inyección Manual de Eventos: logger y systemd-cat",
       "layout": "content",
       "blocks": [
@@ -796,12 +906,11 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: 'logger -p facility.priority -t ETIQUETA \"Mensaje\"' inyecta en syslog. 'systemd-cat' ejecuta un comando y redirige su stdout/stderr al journal."
         }
-      ],
-      "notes": "logger es la utilidad estándar POSIX para escribir en /dev/log desde la consola."
+      ]
     },
     {
-      "id": "108.2-slide-15",
-      "slideNumber": 15,
+      "id": "108.2-slide-16",
+      "slideNumber": 16,
       "title": "Rotación de Archivos con logrotate: /etc/logrotate.conf",
       "layout": "diagram",
       "blocks": [
@@ -824,12 +933,11 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: logrotate se ejecuta típicamente a través de cron (/etc/cron.daily/logrotate). Sus ajustes generales residen en /etc/logrotate.conf y los específicos en /etc/logrotate.d/."
         }
-      ],
-      "notes": "logrotate no es un demonio permanente; es un comando por lotes invocado una vez al día."
+      ]
     },
     {
-      "id": "108.2-slide-16",
-      "slideNumber": 16,
+      "id": "108.2-slide-17",
+      "slideNumber": 17,
       "title": "Directivas Fundamentales de Configuración de logrotate",
       "layout": "content",
       "blocks": [
@@ -840,7 +948,7 @@
         },
         {
           "type": "paragraph",
-          "text": "Sintaxis de bloques de servicio en /etc/logrotate.d/."
+          "text": "Sintaxis de los bloques de servicio en `/etc/logrotate.d/`, del ciclo de rotación a los scripts."
         },
         {
           "type": "table",
@@ -861,8 +969,13 @@
               "<code>rotate 4</code> (mantiene 4 semanas de histórico)"
             ],
             [
+              "create",
+              "Crea un archivo nuevo vacío después de rotar el antiguo",
+              "<code>create</code> (nuevo archivo vacío)"
+            ],
+            [
               "compress / delaycompress",
-              "Comprime copias antiguas posponiendo la más reciente",
+              "Comprime las copias antiguas posponiendo la más reciente",
               "<code>compress</code> usa gzip; <code>delaycompress</code> no comprime el .1"
             ],
             [
@@ -876,9 +989,14 @@
               "Evita rotar ficheros sin datos nuevos"
             ],
             [
+              "sharedscripts",
+              "Ejecuta prerotate/postrotate una sola vez por patrón",
+              "Con comodines como /var/log/mail/*"
+            ],
+            [
               "postrotate ... endscript",
               "Comandos ejecutados tras rotar el archivo",
-              "Reinicia o recarga el demonio (ej. kill -HUP)"
+              "Recarga el demonio con kill -HUP o systemctl reload"
             ]
           ],
           "caption": "Directivas clave de logrotate evaluadas en LPIC-1"
@@ -887,14 +1005,13 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 'postrotate ... endscript' ejecuta órdenes tras rotar el log (ej. recargar el servicio con kill -HUP o systemctl reload). 'sharedscripts' evita ejecutar postrotate múltiples veces si hay comodines."
+          "content": "🎯 Clave de Examen: `postrotate ... endscript` ejecuta órdenes tras rotar el log (ej. `kill -HUP` o `systemctl reload`); `sharedscripts` evita ejecutar el script una vez por cada archivo de un comodín; `create` vuelve a crear el archivo vacío tras la rotación."
         }
-      ],
-      "notes": "logrotate -f fuerza la rotación inmediata ignorando la fecha de última rotación en /var/lib/logrotate/status."
+      ]
     },
     {
-      "id": "108.2-slide-17",
-      "slideNumber": 17,
+      "id": "108.2-slide-18",
+      "slideNumber": 18,
       "title": "Ejercicio Guiado LPI: Análisis de Reglas y Consultas de Diario",
       "layout": "two-column",
       "blocks": [
@@ -922,8 +1039,8 @@
       ]
     },
     {
-      "id": "108.2-slide-18",
-      "slideNumber": 18,
+      "id": "108.2-slide-19",
+      "slideNumber": 19,
       "title": "Reto Práctico LPI: Despliegue de Auditoría y Rotación de Logs",
       "layout": "two-column",
       "blocks": [
@@ -951,42 +1068,36 @@
       ]
     },
     {
-      "id": "108.2-slide-19",
-      "slideNumber": 19,
-      "title": "Checklist de Examen: Trampas Críticas en el Subtema 108.2",
+      "id": "108.2-slide-20",
+      "slideNumber": 20,
+      "title": "Checklist de Examen y Resumen del Subtema 108.2",
       "layout": "checkpoint",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Checklist de Examen: Trampas Críticas en el Subtema 108.2"
+          "text": "Checklist de Examen y Resumen del Subtema 108.2"
         },
         {
           "type": "paragraph",
-          "text": "Puntos clave donde más alumnos tropiezan en las preguntas de bitácoras."
+          "text": "Repaso final: las trampas que más caen y el mapa mental del tema antes del laboratorio."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Menor número = mayor gravedad: `emerg` (0) … `debug` (7); `=` restringe a una sola prioridad.",
+            "`@` = UDP y `@@` = TCP hacia el servidor central, puerto 514 por convenio.",
+            "`wtmp` → `last`; `btmp` → `lastb`; `utmp` → `who`: son binarios, nunca `cat`.",
+            "Rescate offline con `journalctl -D /ruta` o `--root=/sysroot`; integridad con `--verify`.",
+            "Cuotas del diario: `SystemMaxUse` (10 %) y `SystemKeepFree` (15 %); reinicia `systemd-journald` tras editar.",
+            "`logrotate` corre por cron: `rotate 4`, `compress`, `create` y `sharedscripts`."
+          ]
         },
         {
           "type": "callout",
           "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Regla de Oro: En syslog, menor número = mayor gravedad. @ = UDP, @@ = TCP. /var/log/wtmp se lee con 'last'; /var/log/btmp con 'lastb'. Para rescate offline usa 'journalctl -D /ruta' o '--root=/sysroot'. Para verificar firmas: 'journalctl --verify'."
-        }
-      ]
-    },
-    {
-      "id": "108.2-slide-20",
-      "slideNumber": 20,
-      "title": "Resumen del Subtema 108.2 y Preparación para el Laboratorio",
-      "layout": "summary",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Resumen del Subtema 108.2 y Preparación para el Laboratorio"
-        },
-        {
-          "type": "paragraph",
-          "text": "Bitácoras dominadas, comandos clave y enlace a la práctica en máquina virtual."
+          "title": "Resumen del Subtema",
+          "content": "🎯 Resumen: rsyslog filtra con `facility.priority` y escribe en `/var/log`; systemd-journald guarda en binario y se consulta con `journalctl`; `logrotate` archiva y comprime para que el disco no se llene."
         }
       ]
     }

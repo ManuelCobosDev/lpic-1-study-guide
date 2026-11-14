@@ -6,7 +6,7 @@
   "version": "5.0",
   "language": "es",
   "estimatedMinutes": 45,
-  "description": "Dominar la automatización en Bash: sintaxis estándar sh, shebang, parámetros posicionales ($0..${10}, $#, $@), código de retorno ($?), estructuras condicionales (if, case), bucles (for, while, until), sustitución de comandos, reemplazo de procesos con exec, ejecución con source, formateo con printf y evaluación de condiciones con test.",
+  "description": "Dominar la automatización en Bash: sintaxis estándar sh, shebang, parámetros posicionales ($0..${10}, $#, $@, $!, $$), código de retorno ($?), estructuras condicionales (if, case), bucles (for, while, until), sustitución de comandos, reemplazo de procesos con exec, ejecución con source, formateo con printf, evaluación de condiciones con test y automatización con mapfile, set -ef y rsync.",
   "objectives": [
     "Usar la sintaxis estándar sh (bucles, tests).",
     "Usar la sustitución de comandos y evaluación de códigos de retorno ($?).",
@@ -26,7 +26,15 @@
     "printf",
     "nocasematch",
     "IFS",
-    "Arrays en Bash"
+    "Arrays en Bash",
+    "declare -a",
+    "$! y $$",
+    "${#VAR}",
+    "REPLY",
+    "mapfile",
+    "set -ef",
+    "rsync",
+    "Terminadores ;; ;& ;;&"
   ],
   "commands": [
     "case",
@@ -36,7 +44,12 @@
     "exec",
     "source",
     "printf",
-    "shift"
+    "shift",
+    "declare",
+    "expr",
+    "mapfile",
+    "rsync",
+    "set"
   ],
   "placeholder": false,
   "slides": [
@@ -61,8 +74,7 @@
           "title": "Objetivo de Certificación LPI",
           "content": "Aprende a estructurar scripts ejecutables en Bash, procesar argumentos de línea de órdenes, evaluar condiciones de ficheros y variables con test, sustituir procesos con exec, construir bucles y automatizar tareas administrativas."
         }
-      ],
-      "notes": "Bienvenido al Subtema 105.2. Aquí aprenderás a estructurar scripts ejecutables, procesar argumentos, evaluar condiciones con test, construir bucles y automatizar tareas administrativas."
+      ]
     },
     {
       "id": "105.2-slide-2",
@@ -89,23 +101,22 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: Para ejecutar directamente './script.sh' son obligatorios dos factores: la línea shebang ('#!/bin/bash') al principio y permisos de ejecución ('chmod +x script.sh')."
         }
-      ],
-      "notes": "Explica la diferencia entre ejecutar con './script.sh' (requiere permisos +x y lee shebang) y 'bash script.sh' (el ejecutable es bash, solo requiere permiso de lectura)."
+      ]
     },
     {
       "id": "105.2-slide-3",
       "slideNumber": 3,
-      "title": "Ubicación de Scripts y la Variable $PATH",
+      "title": "Ejecución, $PATH y riesgo SUID",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ubicación de Scripts y la Variable $PATH"
+          "text": "Ejecución, $PATH y riesgo SUID"
         },
         {
           "type": "paragraph",
-          "text": "¿Por qué necesitamos escribir './' para ejecutar scripts locales y dónde deben instalarse?"
+          "text": "¿Por qué hay que escribir './' para ejecutar scripts locales, dónde se instalan y qué riesgo abre el bit SUID?"
         },
         {
           "type": "terminal",
@@ -128,17 +139,22 @@
             [
               "./script.sh",
               "Ruta relativa local",
-              "Ejecuta el script indicando explícitamente la ruta en el directorio actual. Obligatorio porque '.' no está en $PATH por seguridad."
+              "Ejecuta el script indicando explícitamente su ruta. Obligatorio porque '.' no está en $PATH por seguridad."
             ],
             [
               "~/bin",
               "Carpeta personal",
-              "Directorio personal de binarios añadido automáticamente al PATH del usuario al iniciar sesión según ~/.profile."
+              "Directorio habitual para scripts propios; se invoca sin ruta sólo si está incluido en $PATH."
             ],
             [
               "/usr/local/bin",
               "Directorio del sistema",
-              "Ruta estándar FHS para scripts personalizados y utilidades de administración compartidas por todos los usuarios."
+              "Ruta estándar FHS para scripts y utilidades de administración compartidos por todos los usuarios."
+            ],
+            [
+              "bash script.sh",
+              "Intérprete + ruta",
+              "Basta permiso de lectura: bash lee el archivo y lo ejecuta en un sub-shell."
             ]
           ],
           "caption": "Ubicación e invocación de scripts ejecutables en Linux"
@@ -147,15 +163,14 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Por seguridad, Linux NUNCA incluye el directorio actual (.) en la variable $PATH de root. Por eso es obligatorio anteponer './' para ejecutar un script local."
+          "content": "🎯 Clave de Examen: '.' no está en el $PATH de root, por eso './' es obligatorio. Además, un script con SUID activo permite a usuarios normales ejecutarlo con privilegios de root: ningún usuario que no sea root debe tener permiso de escritura en el archivo."
         }
-      ],
-      "notes": "Detalla las ubicaciones estándar: ~/bin para scripts personales del usuario y /usr/local/bin para scripts del sistema compartidos."
+      ]
     },
     {
       "id": "105.2-slide-4",
       "slideNumber": 4,
-      "title": "Parámetros Posicionales, Arrays y la Variable IFS",
+      "title": "Parámetros Posicionales, Arrays e IFS",
       "layout": "content",
       "blocks": [
         {
@@ -171,29 +186,76 @@
             "Significado y Expansión"
           ],
           "rows": [
-            ["$0", "Nombre del ejecutable", "Ruta o nombre con el que se llamó al script (clave para symlinks como do.sh/undo.sh)."],
-            ["$1 ... $9", "Argumentos directos", "Parámetros posicionales directos del primero al noveno pasados en la orden."],
-            ["${10} ... ${N}", "Argumentos >= 10", "Llaves obligatorias a partir del décimo argumento (evita interpretar $1 seguido de 0)."],
-            ["$#", "Total de argumentos", "Número entero de argumentos pasados al script o función."],
-            ["$* / \"$*\"", "Todos en una cadena", "Expande todos los argumentos unidos por el primer carácter de IFS (\"$1 $2...\")."],
-            ["$@ / \"$@\"", "Todos como palabras separadas", "Expande cada argumento como una entidad independiente entre comillas (\"$1\" \"$2\"...)."],
-            ["shift [N]", "Desplazamiento", "Descarta el primer argumento y desplaza los demás a la izquierda ($2 pasa a ser $1)."]
+            [
+              "$0",
+              "Nombre del ejecutable",
+              "Ruta o nombre con el que se llamó al script (clave para symlinks como do.sh/undo.sh)."
+            ],
+            [
+              "$1 ... $9",
+              "Argumentos directos",
+              "Parámetros posicionales directos del primero al noveno pasados en la orden."
+            ],
+            [
+              "${10} ... ${N}",
+              "Argumentos >= 10",
+              "Llaves obligatorias a partir del décimo argumento (evita interpretar $1 seguido de 0)."
+            ],
+            [
+              "$#",
+              "Total de argumentos",
+              "Número entero de argumentos pasados al script o función."
+            ],
+            [
+              "$* / \"$*\"",
+              "Todos en una cadena",
+              "Expande todos los argumentos unidos por el primer carácter de IFS (\"$1 $2...\")."
+            ],
+            [
+              "$@ / \"$@\"",
+              "Todos como palabras separadas",
+              "Expande cada argumento como una entidad independiente entre comillas (\"$1\" \"$2\"...)."
+            ],
+            [
+              "$!",
+              "PID del último programa",
+              "PID del último programa ejecutado en segundo plano."
+            ],
+            [
+              "$$",
+              "PID del shell actual",
+              "PID del propio intérprete que está ejecutando el script."
+            ],
+            [
+              "${#VAR}",
+              "Longitud",
+              "Número de caracteres de la variable (requiere llaves, p. ej. ${#OS})."
+            ],
+            [
+              "declare -a NOMBRE",
+              "Declaración de matriz",
+              "Las matrices se declaran con declare -a o implícitamente con paréntesis."
+            ],
+            [
+              "shift [N]",
+              "Desplazamiento",
+              "Descarta el primer argumento y desplaza los demás a la izquierda ($2 pasa a ser $1)."
+            ]
           ],
           "caption": "Parámetros posicionales y variables automáticas de Bash"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "# 1. Creación y manipulación de Arrays en Bash:\nLISTA=(servidor1 servidor2 servidor3)\necho \"Primer elemento: ${LISTA[0]}\"\necho \"Todos los elementos: ${LISTA[@]}\"\necho \"Total de elementos: ${#LISTA[@]}\"\n\n# Inicializar un array a partir de todos los argumentos del script:\nPARAMS=( \"$@\" )\n\n# 2. Control defensivo de la variable IFS (Input Field Separator):\nOLDIFS=\"$IFS\"          # Guardar delimitador original\nIFS=$'\\n'              # Cambiar delimitador a salto de línea para iterar ficheros\n# ... procesar líneas ...\nIFS=\"$OLDIFS\"          # Restaurar delimitador por defecto"
+          "code": "# 1. Matrices en Bash: declare -a o asignación con paréntesis:\ndeclare -a SIZES=(1024 2048)\nLISTA=(servidor1 servidor2 servidor3)\necho \"Primer elemento: ${LISTA[0]}\"\necho \"Todos los elementos: ${LISTA[@]}\"\necho \"Total de elementos: ${#LISTA[@]}\"\necho \"Longitud de la variable HOST: ${#HOST}\"\n\n# Inicializar una matriz a partir de todos los argumentos del script:\nPARAMS=( \"$@\" )\n\n# 2. Control defensivo de la variable IFS (Input Field Separator):\nOLDIFS=\"$IFS\"          # Guardar delimitador original\nIFS=$'\\n'              # Cambiar delimitador a salto de línea para iterar ficheros\n# ... procesar líneas ...\nIFS=\"$OLDIFS\"          # Restaurar delimitador por defecto"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Trampa Clásica de Examen: Para acceder al argumento número 10 o superior se DEBEN usar llaves: '${10}'. Si pones '$10', Bash lo evalúa como '$1' seguido del texto '0'."
+          "content": "🎯 Trampa Clásica de Examen: para el argumento 10 o superior se DEBEN usar llaves ('${10}'). '$10' se evalúa como '$1' seguido del texto '0'."
         }
-      ],
-      "notes": "Explica la diferencia entre $* y $@ entre comillas dobles, fundamental en las preguntas LPI."
+      ]
     },
     {
       "id": "105.2-slide-5",
@@ -220,8 +282,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave LPI: '&&' ejecuta el segundo comando SOLO SI el primero devolvió 0 (éxito). '||' ejecuta el segundo SOLO SI el primero devolvió distinto de 0 (fallo)."
         }
-      ],
-      "notes": "El punto y coma ';' es incondicional: ejecuta ambos comandos secuencialmente sin importar el código de retorno."
+      ]
     },
     {
       "id": "105.2-slide-6",
@@ -236,7 +297,7 @@
         },
         {
           "type": "paragraph",
-          "text": "El comando 'test' (o corchete '[') devuelve código 0 (verdadero) o 1 (falso) para comprobar atributos del sistema de archivos:"
+          "text": "El comando 'test' (o el corchete '[') devuelve 0 si la condición se cumple y 1 si no. Entrecomilla siempre la variable ('\"$VAR\"'): si está vacía y va sin comillas, test puede fallar por falta de argumento."
         },
         {
           "type": "table",
@@ -246,18 +307,96 @@
             "Condición Evaluada (Verdadera si...)"
           ],
           "rows": [
-            ["-e f", "Existencia", "El archivo o ruta 'f' existe en el sistema."],
-            ["-f f", "Archivo regular", "Existe y es un fichero regular (no directorio ni dispositivo)."],
-            ["-d f", "Directorio", "Existe y es un directorio."],
-            ["-s f", "Tamaño", "Existe y su tamaño es mayor a 0 bytes (no está vacío)."],
-            ["-L / -h f", "Enlace simbólico", "Existe y es un symlink (enlace blando)."],
-            ["-r / -w / -x f", "Permisos", "El usuario tiene permiso de lectura (-r), escritura (-w) o ejecución (-x)."],
-            ["-u / -g / -k f", "Bits especiales", "Tiene activo el bit SUID (-u), SGID (-g) o Sticky bit (-k)."],
-            ["-O / -G f", "Propiedad", "El archivo pertenece al usuario efectivo (-O) o al grupo efectivo (-G)."],
-            ["-N f", "Modificación", "El archivo fue modificado desde la última vez que fue leído."],
-            ["f1 -nt f2", "Temporal (Newer)", "El archivo f1 es más reciente que f2 (newer than)."],
-            ["f1 -ot f2", "Temporal (Older)", "El archivo f1 es más antiguo que f2 (older than)."],
-            ["f1 -ef f2", "Mismo archivo", "f1 y f2 apuntan al mismo dispositivo e inodo (son enlaces duros)."]
+            [
+              "-e f",
+              "Existencia",
+              "La ruta 'f' existe en el sistema de archivos."
+            ],
+            [
+              "-a f",
+              "Existencia",
+              "La ruta 'f' existe (variante de -e presente en el manual)."
+            ],
+            [
+              "-f f",
+              "Archivo regular",
+              "Existe y es un fichero regular (no directorio ni dispositivo)."
+            ],
+            [
+              "-d f",
+              "Directorio",
+              "Existe y es un directorio."
+            ],
+            [
+              "-b f",
+              "Dispositivo de bloque",
+              "Es un archivo de bloque especial (discos, particiones)."
+            ],
+            [
+              "-c f",
+              "Dispositivo de caracteres",
+              "Es un archivo de caracteres especiales (terminales, /dev/null)."
+            ],
+            [
+              "-p f",
+              "Pipe",
+              "Es un archivo pipe (tubería con nombre)."
+            ],
+            [
+              "-S f",
+              "Socket",
+              "Es un archivo socket."
+            ],
+            [
+              "-s f",
+              "Tamaño",
+              "Existe y su tamaño es mayor a 0 bytes (no está vacío)."
+            ],
+            [
+              "-L / -h f",
+              "Enlace simbólico",
+              "Existe y es un symlink (enlace blando); -L y -h son equivalentes."
+            ],
+            [
+              "-t f",
+              "Terminal",
+              "El descriptor 'f' está abierto en una terminal."
+            ],
+            [
+              "-r / -w / -x f",
+              "Permisos",
+              "El usuario tiene permiso de lectura (-r), escritura (-w) o ejecución (-x)."
+            ],
+            [
+              "-u / -g / -k f",
+              "Bits especiales",
+              "Tiene activo el bit SUID (-u), SGID (-g) o Sticky bit (-k)."
+            ],
+            [
+              "-O / -G f",
+              "Propiedad",
+              "El archivo pertenece al usuario efectivo (-O) o al grupo efectivo (-G)."
+            ],
+            [
+              "-N f",
+              "Modificación",
+              "El archivo fue modificado desde la última vez que fue leído."
+            ],
+            [
+              "f1 -nt f2",
+              "Temporal (Newer)",
+              "El archivo f1 es más reciente que f2 (newer than)."
+            ],
+            [
+              "f1 -ot f2",
+              "Temporal (Older)",
+              "El archivo f1 es más antiguo que f2 (older than)."
+            ],
+            [
+              "f1 -ef f2",
+              "Mismo archivo",
+              "f1 y f2 apuntan al mismo dispositivo e inodo (enlaces duros)."
+            ]
           ],
           "caption": "Operadores de comprobación de archivos en test / [ ... ] evaluados en LPIC-1"
         },
@@ -267,8 +406,7 @@
           "title": "Regla Sintáctica de Oro",
           "content": "🎯 '[' es un comando ejecutable (/usr/bin/[). Es OBLIGATORIO dejar un espacio tras '[' y antes de ']'. Escribir '[-f $file]' provoca error de comando no encontrado."
         }
-      ],
-      "notes": "Detalla las opciones de archivo del comando test que más se preguntan en el examen."
+      ]
     },
     {
       "id": "105.2-slide-7",
@@ -282,6 +420,10 @@
           "text": "Comparación de Cadenas vs Números en test / [ ... ]"
         },
         {
+          "type": "paragraph",
+          "text": "Además de igualdad y longitud, test compara orden alfabético con '<' y '>' y combina expresiones con los modificadores '!', '-a' y '-o'."
+        },
+        {
           "type": "table",
           "headers": [
             "Operador",
@@ -289,16 +431,81 @@
             "Operación / Significado"
           ],
           "rows": [
-            ["-z cadena", "Texto", "Verdadero si la longitud de la cadena es cero (vacía)."],
-            ["-n cadena", "Texto", "Verdadero si la longitud de la cadena es mayor a cero (no vacía)."],
-            ["s1 = s2 (o ==)", "Texto", "Verdadero si ambas cadenas son exactamente idénticas."],
-            ["s1 != s2", "Texto", "Verdadero si las cadenas son distintas lexicográficamente."],
-            ["n1 -eq n2", "Enteros", "Igualdad numérica (Equal)."],
-            ["n1 -ne n2", "Enteros", "Desigualdad numérica (Not Equal)."],
-            ["n1 -lt n2", "Enteros", "Menor estrictamente que (Less Than)."],
-            ["n1 -le n2", "Enteros", "Menor o igual que (Less or Equal)."],
-            ["n1 -gt n2", "Enteros", "Mayor estrictamente que (Greater Than)."],
-            ["n1 -ge n2", "Enteros", "Mayor o igual que (Greater or Equal)."]
+            [
+              "-z cadena",
+              "Texto",
+              "Verdadero si la longitud de la cadena es cero (vacía)."
+            ],
+            [
+              "-n cadena",
+              "Texto",
+              "Verdadero si la longitud de la cadena es mayor a cero (no vacía)."
+            ],
+            [
+              "s1 = s2 (o ==)",
+              "Texto",
+              "Verdadero si ambas cadenas son exactamente idénticas."
+            ],
+            [
+              "s1 != s2",
+              "Texto",
+              "Verdadero si las cadenas son distintas lexicográficamente."
+            ],
+            [
+              "s1 < s2",
+              "Texto",
+              "Verdadero si s1 va antes en orden alfabético (escapa '\\<' dentro de [ ... ] para no provocar redirección)."
+            ],
+            [
+              "s1 > s2",
+              "Texto",
+              "Verdadero si s1 va después en orden alfabético (escapa '\\>' dentro de [ ... ])."
+            ],
+            [
+              "! expr",
+              "Modificador",
+              "Niega la expresión: verdadero si expr es falsa."
+            ],
+            [
+              "expr1 -a expr2",
+              "Modificador",
+              "AND lógico: verdadero si ambas expresiones son verdaderas."
+            ],
+            [
+              "expr1 -o expr2",
+              "Modificador",
+              "OR lógico: verdadero si al menos una expresión es verdadera."
+            ],
+            [
+              "n1 -eq n2",
+              "Enteros",
+              "Igualdad numérica (Equal)."
+            ],
+            [
+              "n1 -ne n2",
+              "Enteros",
+              "Desigualdad numérica (Not Equal)."
+            ],
+            [
+              "n1 -lt n2",
+              "Enteros",
+              "Menor estrictamente que (Less Than)."
+            ],
+            [
+              "n1 -le n2",
+              "Enteros",
+              "Menor o igual que (Less or Equal)."
+            ],
+            [
+              "n1 -gt n2",
+              "Enteros",
+              "Mayor estrictamente que (Greater Than)."
+            ],
+            [
+              "n1 -ge n2",
+              "Enteros",
+              "Mayor o igual que (Greater or Equal)."
+            ]
           ],
           "caption": "Comparación de cadenas vs enteros en test y [ ... ]"
         },
@@ -306,10 +513,9 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "🚨 TRAMPA MORTAL DE EXAMEN",
-          "content": "'test 1 > 2' o '[ 1 > 2 ]' devuelve CÓDIGO 0 (VERDADERO) porque el '>' es interpretado por el shell como redirección de salida y crea un archivo '2' en el disco. Para números se debe usar '-gt'."
+          "content": "'test 1 > 2' o '[ 1 > 2 ]' devuelve CÓDIGO 0 (VERDADERO) porque el '>' se interpreta como comparación de texto o como redirección de salida (crea un archivo '2'). Para números se debe usar '-gt'."
         }
-      ],
-      "notes": "Destaca la diferencia entre '=' (texto) y '-eq' (números), y los operadores de longitud -z y -n."
+      ]
     },
     {
       "id": "105.2-slide-8",
@@ -336,8 +542,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: Cada bloque 'if' DEBE cerrarse con 'fi' (if escrito al revés). La cláusula 'then' puede ir en la misma línea usando punto y coma: 'if [ ... ]; then'."
         }
-      ],
-      "notes": "Muestra el flujo de toma de decisiones y el uso de elif y else."
+      ]
     },
     {
       "id": "105.2-slide-9",
@@ -352,7 +557,7 @@
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo estructurar menús y ramas múltiples de forma limpia sin anidar decenas de 'if'?"
+          "text": "¿Cómo estructurar menús y ramas múltiples sin anidar decenas de 'if'?"
         },
         {
           "type": "code",
@@ -369,8 +574,13 @@
           "rows": [
             [
               ";;",
-              "Doble punto y coma",
-              "Termina la cláusula actual y sale del bloque case (equivalente al break de C). Obligatorio tras cada caso."
+              "Terminador habitual",
+              "Cierra la rama actual y sale del bloque case (equivalente al break de C)."
+            ],
+            [
+              ";& / ;;&",
+              "Otros terminadores",
+              "También cierran cada lista de patrones y comandos: ';;' no es el único válido."
             ],
             [
               "*",
@@ -385,19 +595,22 @@
             [
               "shopt -s nocasematch",
               "Sensibilidad a mayúsculas",
-              "Opción de Bash para que los patrones en case coincidan sin distinguir mayúsculas de minúsculas (-u para desmarcar)."
+              "Opción de Bash para que los patrones de case ignoren mayúsculas/minúsculas (-u la desactiva)."
             ]
           ],
           "caption": "Sintaxis y operadores clave de la estructura case ... esac"
         },
         {
+          "type": "paragraph",
+          "text": "Alcance: las opciones que shopt cambia dentro de un script (sub-shell) no afectan a las opciones de la sesión padre."
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Cada rama de opciones en un 'case' DEBE terminar obligatoriamente con DOBLE PUNTO Y COMA ';;'. El bloque entero se cierra con 'esac'."
+          "content": "🎯 Clave de Examen: cada rama de 'case' debe terminar con ';;', ';&' o ';;&' (';;' es el habitual, no el único). La construcción se cierra con 'esac'."
         }
-      ],
-      "notes": "Los patrones en case admiten comodines como '|' para OR o '*' para comodín por defecto."
+      ]
     },
     {
       "id": "105.2-slide-10",
@@ -424,8 +637,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave LPIC-1: 'while' se repite MIENTRAS la condición sea verdadera ($? = 0). 'until' se repite HASTA QUE la condición sea verdadera (se ejecuta mientras sea falsa)."
         }
-      ],
-      "notes": "Explica la sintaxis de bucle con do y done, el uso de seq y la aritmética $(( ))."
+      ]
     },
     {
       "id": "105.2-slide-11",
@@ -445,7 +657,7 @@
         {
           "type": "code",
           "language": "bash",
-          "code": "# 1. Lectura interactiva con prompt y modo silencioso (para passwords):\nread -p \"Servidor de destino: \" HOST\nread -s -p \"Contraseña del usuario: \" PASSWORD; echo \"\"\n\n# 2. Captura de salida con sustitución de comandos:\nWHO=$(whoami)\necho \"Script ejecutado por: $WHO\"\n\n# 3. Envío condicional de alertas por correo en cronjobs desatendidos:\nif [ \"$?\" -ne 0 ]; then\n    mail -s \"Error en tarea programada\" root <<< \"El script de respaldo falló en $HOST\"\nfi"
+          "code": "# 1. Lectura interactiva: prompt, modo silencioso y varias variables:\nread -p \"Servidor de destino: \" HOST\nread -s -p \"Contraseña del usuario: \" PASSWORD; echo \"\"\nread -p \"Nombre y apellidos: \" NOMBRE APELLIDO\nread                            # sin nombre de variable → se guarda en REPLY\n\n# 2. Captura de salida con sustitución de comandos:\nWHO=$(whoami)\necho \"Script ejecutado por: $WHO\"\n\n# 3. Envío condicional de alertas por correo en cronjobs desatendidos:\nif [ \"$?\" -ne 0 ]; then\n    mail -s \"Error en tarea programada\" root <<< \"El script de respaldo falló en $HOST\"\nfi"
         },
         {
           "type": "table",
@@ -455,6 +667,16 @@
             "Propósito en Scripts"
           ],
           "rows": [
+            [
+              "read (sin nombre)",
+              "Variable REPLY",
+              "Si no se indica variable, la entrada se guarda en REPLY."
+            ],
+            [
+              "read VAR1 VAR2",
+              "Lectura múltiple",
+              "Asigna un término por variable; los términos sobrantes se acumulan en la última."
+            ],
             [
               "read -s",
               "Modo silencioso (Silent)",
@@ -482,10 +704,9 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: La opción '-s' de 'read' silencia la entrada en el terminal (ideal para passwords). Para capturar salidas, prefiere '$(cmd)' frente a acentos graves '`cmd`'."
+          "content": "🎯 Clave de Examen: sin nombre de variable, read usa REPLY. '-s' silencia la entrada (passwords) y '-p' muestra el mensaje. Para capturar salidas, prefiere '$(cmd)' frente a los acentos graves."
         }
-      ],
-      "notes": "Muestra también cómo usar mail para enviar avisos condicionales en scripts desatendidos de mantenimiento."
+      ]
     },
     {
       "id": "105.2-slide-12",
@@ -500,7 +721,7 @@
         },
         {
           "type": "paragraph",
-          "text": "Tres utilidades fundamentales requeridas explícitamente por los objetivos oficiales de LPIC-1 (105.2):"
+          "text": "Tres utilidades requeridas explícitamente por los objetivos oficiales de LPIC-1 (105.2):"
         },
         {
           "type": "table",
@@ -528,7 +749,7 @@
             [
               "printf 'formato' args...",
               "Salida formateada",
-              "Alternativa estándar POSIX robusta y portable frente a echo. Permite especificadores (%s texto, %d enteros, \\n salto de línea, \\t tabulador)."
+              "Alternativa POSIX portable a echo. No añade nueva línea al final: incluye '\\n' en el patrón si lo necesitas. Especificadores '%s' y '%d'; el formato completo se documenta en 'man 3 printf'."
             ]
           ],
           "caption": "Mecanismos de invocación de scripts y formateo de salida"
@@ -536,7 +757,7 @@
         {
           "type": "code",
           "language": "bash",
-          "code": "# 1. Reemplazo de proceso con exec (útil en wrappers y contenedores):\necho \"Paso 1: Iniciando pre-chequeos\"\nexec /usr/sbin/nginx -g 'daemon off;'   # Sustituye a Bash por Nginx (mismo PID)\necho \"Este mensaje NUNCA se imprimirá\" # Inalcanzable\n\n# Redirección permanente con exec dentro de un script:\nexec > /var/log/mi_script.log 2>&1      # Redirige todo stdout/stderr al archivo\n\n# 2. Formateo limpio y portable con printf:\nprintf \"Usuario: %-10s | UID: %05d\\n\" \"$USER\" \"$UID\""
+          "code": "# 1. Reemplazo de proceso con exec (útil en wrappers y contenedores):\necho \"Paso 1: Iniciando pre-chequeos\"\nexec /usr/sbin/nginx -g 'daemon off;'   # Sustituye a Bash por Nginx (mismo PID)\necho \"Este mensaje NUNCA se imprimirá\" # Inalcanzable\n\n# Redirección permanente con exec dentro de un script:\nexec > /var/log/mi_script.log 2>&1      # Redirige todo stdout/stderr al archivo\n\n# 2. Formateo limpio y portable con printf (el \\n va explícito en el patrón):\nprintf \"Usuario: %-10s | UID: %05d\\n\" \"$USER\" \"$UID\""
         },
         {
           "type": "callout",
@@ -544,14 +765,13 @@
           "title": "🎯 Pregunta Frecuente de Certificación",
           "content": "'exec' sustituye el proceso del shell actual por el comando indicado, propagando directamente su código de salida. Si ejecutas 'exec date' en una terminal interactiva, tras imprimir la fecha la ventana se cerrará de inmediato."
         }
-      ],
-      "notes": "exec, source y printf son utilidades explícitas del examen LPIC-1 105.2."
+      ]
     },
     {
       "id": "105.2-slide-13",
       "slideNumber": 13,
       "title": "Ejercicio Guiado 1: Depuración de Bucle while Infinito",
-      "layout": "two-column",
+      "layout": "content",
       "blocks": [
         {
           "type": "heading",
@@ -560,28 +780,27 @@
         },
         {
           "type": "paragraph",
-          "text": "El siguiente script oficial del manual LPI debe imprimir del 0 al 9, pero se queda colgado imprimiendo ceros de forma indefinida:"
+          "text": "El script del manual debe imprimir del 0 al 9, pero se queda colgado imprimiendo ceros de forma indefinida:"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "# Script original defectuoso (falta incrementar COUNTER):\nCOUNTER=0\nwhile [ $COUNTER -lt 10 ]; do\n    echo $COUNTER\ndone\n\n# Corrección oficial con aritmética $(( )):\nCOUNTER=0\nwhile [ $COUNTER -lt 10 ]; do\n    echo $COUNTER\n    COUNTER=$(( COUNTER + 1 ))\ndone",
-          "title": "Código original vs solución con $(( ))"
+          "title": "Código original vs solución con $(( )) y expr",
+          "code": "# Script original defectuoso (falta incrementar COUNTER):\nCOUNTER=0\nwhile [ $COUNTER -lt 10 ]; do\n    echo $COUNTER\ndone\n\n# Corrección oficial con aritmética $(( )):\nCOUNTER=0\nwhile [ $COUNTER -lt 10 ]; do\n    echo $COUNTER\n    COUNTER=$(( COUNTER + 1 ))\ndone\n\n# Alternativas del manual: expr y potencia con doble asterisco:\nSUM=`expr $VAL1 + $VAL2`\nSUM=$(( $VAL1 + $VAL2 ))\nPOT=$(( 1024**2 ))"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Regla LPI: En Bash, la aritmética se realiza con la sintaxis '$(( expresión ))' o mediante el comando interno 'let'. Sin incremento, un while nunca cumplirá su condición de parada."
+          "content": "🎯 Regla LPI: la aritmética entera se hace con '$(( expresión ))' o con 'expr'; '**' es la potencia. Sin incremento, un while nunca cumplirá su condición de parada."
         }
-      ],
-      "notes": "Ejercicio tomado directamente de la pág. 129 del manual oficial LPI 102."
+      ]
     },
     {
       "id": "105.2-slide-14",
       "slideNumber": 14,
       "title": "Ejercicio Guiado 2: Comparación Temporal y Localización (LANG)",
-      "layout": "two-column",
+      "layout": "content",
       "blocks": [
         {
           "type": "heading",
@@ -590,52 +809,80 @@
         },
         {
           "type": "paragraph",
-          "text": "Analiza dos escenarios del manual oficial: comparación de versiones de archivo y consistencia de ordenación:"
+          "text": "Dos escenarios del manual: comparar fechas de modificación de archivos y ordenar de forma consistente entre sistemas:"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "# 1. Comprobar si un fichero es más reciente (-nt = newer than):\nif [ \"$FROM\" -nt \"$TO\" ]; then\n    echo \"$FROM es más reciente que $TO; iniciando sincronización...\"\n    cp \"$FROM\" \"$TO\"\nfi\n\n# 2. Inconsistencias de ordenación por localización regional (LANG):\n# En una máquina con LANG=es_ES.UTF-8:\n# 'carol', 'Dave', 'emma', 'Frank', 'Grace', 'henry'\n# En otra con LANG=C (orden ASCII byte a byte estricto):\n# 'Dave', 'Frank', 'Grace', 'carol', 'emma', 'henry'\n\n# Regla de oro en scripts: forzar ordenación portable:\nexport LANG=C",
-          "title": "Comparación con -nt y normalización con LANG=C"
+          "title": "Comparación con -nt y normalización con LANG=C",
+          "code": "# 1. Comprobar si un fichero es más reciente (-nt = newer than):\nif [ \"$FROM\" -nt \"$TO\" ]; then\n    echo \"$FROM es más reciente que $TO; iniciando sincronización...\"\n    cp \"$FROM\" \"$TO\"\nfi\n\n# 2. Orden alfabético consistente antes de clasificar:\nLANG=C"
+        },
+        {
+          "type": "paragraph",
+          "text": "LANG=C también mantiene los mensajes del sistema en el idioma original: úsalo sólo dentro del ámbito del script."
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave LPI: El operador '-nt' (Newer Than) evalúa marcas de tiempo. La ordenación de texto cambia según la región del sistema; para ordenaciones consistentes usa 'LANG=C'."
+          "content": "🎯 Clave LPI: '-nt' (Newer Than) devuelve 0 si el primer archivo es más reciente según su fecha de modificación. La ordenación cambia según la configuración regional; para resultados consistentes usa 'LANG=C'."
         }
-      ],
-      "notes": "Basado en los ejercicios guiados oficiales de las páginas 129 y 130 del manual LPI."
+      ]
     },
     {
       "id": "105.2-slide-15",
       "slideNumber": 15,
-      "title": "Retos de Exploración: Nombre de Invocación y la Redirección 'test 1 > 2'",
-      "layout": "two-column",
+      "title": "Caso Práctico: Sincronización con mapfile, set -ef y rsync",
+      "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Retos de Exploración: Symlinks en $0 y la Trampa 'test 1 > 2'"
+          "text": "Caso Práctico: Sincronización con mapfile, set -ef y rsync"
         },
         {
           "type": "paragraph",
-          "text": "Dos enigmas de comportamiento de shell que suelen costar puntos en el examen de certificación LPIC-1:"
+          "text": "Esquema del script del manual: valida las rutas, carga en una matriz la lista de ~/.sync.list y sincroniza entrada por entrada con otro dispositivo montado."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "# 1. Distinguir la acción mediante el nombre del symlink ($0):\nln -s do.sh undo.sh\nif [ \"$(basename \"$0\")\" = \"undo.sh\" ]; then\n    echo \"Revertir cambios...\"\nelse\n    echo \"Aplicar cambios...\"\nfi\n\n# 2. La trampa mortal de la redirección:\ntest 1 > 2\n# El shell redirige '>' al archivo '2' y ejecuta 'test 1' (código 0 verdadero).",
-          "title": "Identificación por symlink y trampa de redirección"
+          "title": "Sincronización selectiva con rsync",
+          "code": "#!/bin/bash\nset -ef                              # -e: aborta si algo falla; -f: sin globbing\nFILE=~/.sync.list\nFROM=$1\nTO=$2\nif [ ! -d \"$FROM\" -o ! -d \"$TO\" ]; then\n    echo \"Uso: $0 FROM TO\"; exit 1\nfi\nmapfile -t LIST < $FILE              # -t: sin el newline final de cada línea\nfor (( IDX = 0; IDX < ${#LIST[*]}; IDX++ )); do\n    echo -e \"$FROM/${LIST[$IDX]} \\u2192 $TO/${LIST[$IDX]}\"\n    rsync -qa --delete \"$FROM/${LIST[$IDX]}\" \"$TO\"\ndone"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Elemento",
+            "Efecto"
+          ],
+          "rows": [
+            [
+              "set -ef",
+              "-e sale inmediatamente si un comando devuelve estado distinto de cero; -f deshabilita el globbing de nombres de archivo."
+            ],
+            [
+              "mapfile -t LIST < $FILE",
+              "Crea la matriz LIST con una línea por elemento, eliminando el newline de cada línea."
+            ],
+            [
+              "rsync -qa",
+              "q inhibe los mensajes; a activa el modo archivo y conserva todas las propiedades."
+            ],
+            [
+              "rsync --delete",
+              "Elimina en el destino los elementos que ya no existen en el origen."
+            ]
+          ],
+          "caption": "Utilidades del script de sincronización"
         },
         {
           "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Claves Críticas:\n1. $0 almacena el nombre con el que se llamó al script (clave para symlinks do.sh / undo.sh).\n2. 'test 1 > 2' crea un archivo '2' por redirección y evalúa a verdadero."
+          "calloutType": "warning",
+          "title": "Cuidado con --delete",
+          "content": "'rsync --delete' borra en el destino lo que ya no está en el origen. Es útil y peligroso: revísalo antes de programarlo y ejecútalo como root o como el propietario de los datos."
         }
-      ],
-      "notes": "Preguntas directas de exploración de las páginas 109 y 127 del manual oficial."
+      ]
     },
     {
       "id": "105.2-slide-16",
@@ -667,8 +914,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave: A partir del argumento 10, las llaves son OBLIGATORIAS: ${10}, ${11}, etc. Escribir '$10' expande '$1' y le concatena un '0'."
         }
-      ],
-      "notes": "Pregunta típica de examen de selección múltiple."
+      ]
     },
     {
       "id": "105.2-slide-17",
@@ -700,8 +946,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave: '-z' evalúa longitud cero (vacía). '-n' evalúa longitud no nula (>0). Comparación numérica usa '-eq', '-lt', etc."
         }
-      ],
-      "notes": "Pregunta fundamental sobre la sintaxis de corchetes en Bash."
+      ]
     },
     {
       "id": "105.2-slide-18",
@@ -733,47 +978,11 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave: 'cmd1 && cmd2' ejecuta cmd2 únicamente si cmd1 devuelve código 0 (éxito). '||' ejecuta solo si devuelve distinto de 0."
         }
-      ],
-      "notes": "Pregunta tomada del ejercicio de la lección 105.2."
+      ]
     },
     {
       "id": "105.2-slide-19",
       "slideNumber": 19,
-      "title": "Baraja de Memorización: 8 Conceptos Clave de Scripting",
-      "layout": "content",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "8 Tarjetas Mnemotécnicas Indispensables"
-        },
-        {
-          "type": "table",
-          "headers": ["Concepto", "Sintaxis / Comando", "Regla de Certificación LPIC-1"],
-          "rows": [
-            ["Shebang", "#!/bin/bash", "Indica al kernel qué binario debe interpretar el archivo. Requiere permiso +x."],
-            ["Arg >= 10", "${10}", "A partir de 2 dígitos las llaves son obligatorias; sin llaves evalúa $1 seguido de 0."],
-            ["Comando exec", "exec cmd", "Sustituye el proceso actual del shell por el comando invocado sin crear proceso hijo."],
-            ["Comando source", "source f (o . f)", "Ejecuta el script en el shell actual; los cambios en variables y funciones persisten."],
-            ["Trampa 'test 1 > 2'", "test 1 > 2", "Devuelve 0 (éxito) y crea un archivo '2' en disco porque '>' se interpreta como redirección."],
-            ["Comparación archivos", "f1 -nt f2 / -ef", "-nt evalúa más reciente (newer than); -ef evalúa si comparten el mismo inodo."],
-            ["Estructura case", ";; y esac", "Cada rama debe cerrarse con doble punto y coma ';;'. La estructura finaliza con 'esac'."],
-            ["Delimitador IFS", "OLDIFS=\"$IFS\"", "Input Field Separator; respaldar antes de alterar con IFS=$'\\n' para procesar líneas."]
-          ],
-          "caption": "Resumen mnemotécnico para repaso ágil de la baraja 105.2"
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🧠 Pasa cada tarjeta mentalmente antes de voltearla para comprobar tu retención activa."
-        }
-      ],
-      "notes": "8 tarjetas con los conceptos más preguntados de 105.2."
-    },
-    {
-      "id": "105.2-slide-20",
-      "slideNumber": 20,
       "title": "Resumen de Unidad 105.2: Automatización y Scripts Bash",
       "layout": "summary",
       "blocks": [
@@ -785,21 +994,21 @@
         {
           "type": "list",
           "items": [
-            "Invocación y entorno: Shebang ('#!/bin/bash') + 'chmod +x' para './script.sh'. 'bash script' no requiere +x. 'exec' sustituye el proceso y 'source' / '.' ejecuta en el contexto actual.",
-            "Parámetros: $0..${10}, $#, $* y $@. 'shift' para desplazar. Arrays con 'ARRAY=(\"$@\")' e 'IFS' para delimitación de campos.",
-            "Evaluación de condiciones: 'test' y '[ ... ]' requieren espacios alrededor de los corchetes. Operadores de fichero (-f, -d, -s, -L, -u, -g, -nt, -ot, -ef), cadenas (-z, -n, =, !=) y enteros (-eq..-ge).",
-            "Control de flujo: 'if ... then ... elif ... else ... fi', 'case ... in ... ;; ... esac' con 'nocasematch', bucles 'for f in ... do ... done' (con 'seq') y 'while / until' con aritmética '$(( ))'.",
-            "Entrada y utilidades: 'read -s' para contraseñas, '$(cmd)' para sustitución estándar, 'printf' para formateo portable y 'mail -s' para avisos al superusuario."
+            "Invocación: shebang ('#!/bin/bash') + 'chmod +x' para './script.sh'; 'bash script.sh' sólo requiere lectura. 'exec' sustituye el proceso; 'source' / '.' ejecuta en el shell actual.",
+            "Parámetros: $0..${10}, $#, $*, $@, $! y $$; 'shift' desplaza. Matrices con 'declare -a' o 'ARRAY=(...)' y longitudes con '${#VAR}' y '${#ARRAY[@]}'.",
+            "Comprobaciones: 'test' y '[ ... ]' con espacios y variables entre comillas; ficheros (-e, -f, -d, -s, -L, -b, -c, -p, -S, -t, -nt, -ot, -ef), cadenas (-z, -n, =, !=, <, >), enteros (-eq..-ge) y modificadores ('!', '-a', '-o').",
+            "Control de flujo: 'if ... then ... elif ... else ... fi'; 'case ... in ... esac' con terminadores ';;', ';&' o ';;&' y 'nocasematch' (sólo afecta a la sesión actual); bucles 'for', 'while' y 'until' con aritmética '$(( ))'.",
+            "Entrada y utilidades: 'read -p' / '-s' (sin nombre → REPLY), '$(cmd)' frente a backticks, 'printf' (no añade '\\n'; formato en 'man 3 printf') y 'mail -s' para avisos al superusuario.",
+            "Automatización real: 'set -ef', 'mapfile -t LIST < $FILE' y 'rsync -qa --delete' (con cuidado: borra en destino lo que ya no está en origen)."
           ]
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Resumen Maestro: Un script combina shebang + chmod +x + parámetros posicionales ($0..${10}) + pruebas con [ ... ] + control de flujo con if/case/while."
+          "content": "🎯 Resumen Maestro: shebang + chmod +x, parámetros con llaves desde ${10}, pruebas entrecomilladas y control de flujo if/case/while; 'set -ef' y 'mapfile -t' completan un script de sincronización real."
         }
-      ],
-      "notes": "Cierre de la unidad 105.2 con enlaces a la práctica de laboratorio interactiva."
+      ]
     }
   ]
 }

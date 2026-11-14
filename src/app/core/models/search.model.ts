@@ -64,7 +64,6 @@ export interface SearchIndexSource {
     headings: string[];
     text: string;
     code: string[];
-    notes?: string;
   }[];
   commands: {
     name: string;
