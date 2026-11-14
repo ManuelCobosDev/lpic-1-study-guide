@@ -7,7 +7,6 @@ export interface UserPreferences {
   theme: ThemeMode;
   defaultStudyView: DefaultStudyView;
   newCardsPerDay: number;
-  showInstructorNotes: boolean;
   includeExampleContent: boolean;
   textSize: TextSize;
   density: TextDensity;
@@ -19,7 +18,6 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   theme: 'system',
   defaultStudyView: 'slides',
   newCardsPerDay: 10,
-  showInstructorNotes: true,
   includeExampleContent: true,
   textSize: 'md',
   density: 'normal',

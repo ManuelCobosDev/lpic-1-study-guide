@@ -80,8 +80,7 @@
           "title": "Objetivo oficial de certificación",
           "content": "Dominar la arquitectura CUPS (cupsd, IPP en puerto TCP 631, archivos PPD), los ficheros de configuración en /etc/cups/, la administración de impresoras con lpadmin y lpoptions, el control de colas (cupsenable/disable vs cupsaccept/reject), el envío con lp y lpr, la inspección con lpstat y lpq, la cancelación con cancel y lprm, y la reubicación con lpmove."
         }
-      ],
-      "notes": "Bienvenido al subtema 108.4. CUPS es el estándar de facto en Linux para gestionar impresoras locales y de red, manteniendo compatibilidad con System V y BSD."
+      ]
     },
     {
       "id": "108.4-slide-2",
@@ -129,8 +128,7 @@
           "title": "Clave de Examen",
           "content": "El demonio principal del planificador es **`cupsd`** (`/usr/sbin/cupsd`). En sistemas systemd se administra mediante la unidad de servicio **`cups.service`** (`systemctl status cups.service`)."
         }
-      ],
-      "notes": "CUPS utiliza RIP (Raster Image Processor) internamente para transformar PDFs o PostScript en mapas de bits listos para el cabezal o tóner."
+      ]
     },
     {
       "id": "108.4-slide-3",
@@ -196,8 +194,7 @@
           ],
           "caption": "Directivas de autenticación en cupsd.conf"
         }
-      ],
-      "notes": "Para desactivar la interfaz web: detener CUPS, cambiar `WebInterface Yes` por `No` en cupsd.conf y reiniciar el servicio. Las clases no se crean por defecto: las define el administrador."
+      ]
     },
     {
       "id": "108.4-slide-4",
@@ -262,8 +259,7 @@
           "title": "¡REGLA DE ORO DE EXAMEN!: /etc/cups/printers.conf",
           "content": "NUNCA edites `/etc/cups/printers.conf` mientras `cupsd` esté en ejecución: el demonio reescribe el fichero desde la memoria RAM y la edición se pierde. Antes hay que ejecutar `systemctl stop cups`."
         }
-      ],
-      "notes": "`access_log` registra accesos web y administración; `page_log` registra los trabajos enviados. Confundirlos es un error habitual: el manual los separa explícitamente."
+      ]
     },
     {
       "id": "108.4-slide-5",
@@ -347,8 +343,7 @@
             }
           ]
         }
-      ],
-      "notes": "`-d <nombre>` de lpadmin fija la impresora predeterminada de todo el sistema; se compara con `lpoptions -d` más adelante. `cupsreject` y `lpadmin` exigen privilegios elevados."
+      ]
     },
     {
       "id": "108.4-slide-6",
@@ -402,8 +397,7 @@
           "title": "Políticas de Error: printer-error-policy",
           "content": "Mediante `lpadmin -p <nombre> -o printer-error-policy=<valor>`:\n• **`abort-job`**: Cancela inmediatamente el trabajo que provocó el error y pasa al siguiente.\n• **`retry-job`**: Reintenta el trabajo fallido tras un intervalo de tiempo.\n• **`retry-current-job`**: Reintenta de inmediato el trabajo actual.\n• **`stop-printer`**: Detiene la cola de impresión completa ante cualquier fallo."
         }
-      ],
-      "notes": "Las políticas de error son fundamentales en entornos de producción desatendidos para evitar colas bloqueadas indefinidamente."
+      ]
     },
     {
       "id": "108.4-slide-7",
@@ -457,8 +451,7 @@
           "title": "Diferencia Crítica de Examen: lpoptions -d vs lpadmin -d",
           "content": "• **`lpadmin -d <impresora>`**: Requiere `sudo` (root), afecta a **TODO EL SISTEMA** y se almacena en `/etc/cups/printers.conf`.\n• **`lpoptions -d <impresora>`**: No requiere privilegios elevados, afecta **SOLO AL USUARIO ACTUAL** y se guarda en su fichero personal `~/.cups/lpoptions`."
         }
-      ],
-      "notes": "Si un usuario tiene definida una impresora en ~/.cups/lpoptions, esta prevalece sobre la predeterminada del sistema para ese usuario."
+      ]
     },
     {
       "id": "108.4-slide-8",
@@ -552,8 +545,7 @@
           "title": "Ejercicio guiado 2 del manual",
           "content": "¿Qué comando determina qué impresoras están disponibles para imprimir? Respuesta oficial: **`lpstat -p`**, combinable con `-d` para ver además la predeterminada: **`lpstat -p -d`**."
         }
-      ],
-      "notes": "Combinar banderas (`lpstat -p -d`, `lpstat -t`) es práctica estándar de troubleshooting. `-v` se usa antes de eliminar una impresora."
+      ]
     },
     {
       "id": "108.4-slide-9",
@@ -612,8 +604,7 @@
           "title": "Escenario Típico de Examen",
           "content": "Una impresora se queda sin papel. Los usuarios deben poder seguir enviando trabajos para que se impriman cuando se cargue el papel. ¿Qué comando debe ejecutarse?\nRespuesta: **`cupsdisable <impresora>`** (detiene la impresión física pero el spool sigue aceptando con cupsaccept). Al recargar papel: **`cupsenable <impresora>`**."
         }
-      ],
-      "notes": "cupsdisable acepta opciones como --hold (retiene trabajos) y -c (cancela el trabajo en curso). cupsenable acepta --release."
+      ]
     },
     {
       "id": "108.4-slide-10",
@@ -677,8 +668,7 @@
           "title": "Trampas Críticas de Sintaxis",
           "content": "• En `lpr`, especificar la impresora se hace con **`-P` MAYÚSCULA**. La opción `-p` minúscula invoca el formateador de texto `pr`.\n• En `lp`, las copias se indican con **`-n <num>`**, mientras que en `lpr` se indican con **`-#<num>`**."
         }
-      ],
-      "notes": "Ambos comandos leen de stdin si no se especifica nombre de archivo (ej: cat archivo.txt | lp -d PDF)."
+      ]
     },
     {
       "id": "108.4-slide-11",
@@ -758,8 +748,7 @@
           "title": "Aviso del manual sobre fit-to-page",
           "content": "`fit-to-page` escala el documento para ajustarlo al papel, pero puede escalar incorrectamente si el archivo no proporciona información sobre el tamaño de página: partes del contenido se salen o se reducen demasiado."
         }
-      ],
-      "notes": "Estas opciones modifican el PPD al vuelo solo para ese trabajo, sin alterar la configuración permanente de la cola."
+      ]
     },
     {
       "id": "108.4-slide-12",
@@ -798,8 +787,7 @@
           "title": "Ejercicio Guiado 4 Oficial LPI",
           "content": "Tienes un trabajo de impresión destinado a una impresora sin papel suficiente. ¿Qué comando utilizarías para mover el trabajo con ID 2 en la impresora FRONT-DESK hacia ACCOUNTING-LASERJET?\nRespuesta oficial: **`sudo lpmove FRONT-DESK-2 ACCOUNTING-LASERJET`**."
         }
-      ],
-      "notes": "lpmove evita tener que pedir a los usuarios que vuelvan a enviar sus documentos cuando una impresora queda fuera de servicio."
+      ]
     },
     {
       "id": "108.4-slide-13",
@@ -858,8 +846,7 @@
           "title": "Ejercicio Guiado 3 Oficial LPI",
           "content": "Utilizando el comando `cancel`, ¿cómo eliminarías un trabajo con ID 15 que está atascado en la cola de la impresora llamada `office-mgr`?\nRespuesta oficial: **`cancel office-mgr-15`**."
         }
-      ],
-      "notes": "Los usuarios ordinarios solo pueden cancelar sus propios trabajos; el superusuario root puede cancelar los trabajos de cualquier usuario."
+      ]
     },
     {
       "id": "108.4-slide-14",
@@ -932,8 +919,7 @@
           "title": "Cuidado: lpc no forma parte de CUPS",
           "content": "`lpc` pertenece a la suite clásica LPD/BSD y no existe en CUPS moderno: en el examen aparece solo como referencia histórica de la familia BSD. Para estado y administración reales se usan `lpstat` y `lpadmin`."
         }
-      ],
-      "notes": "CUPS mantiene la compatibilidad de sintaxis con System V y BSD, pero no los comandos de administración de LPD. Dominar esta tabla resuelve las preguntas de equivalencia."
+      ]
     },
     {
       "id": "108.4-slide-15",
@@ -984,8 +970,7 @@
           "title": "lpinfo está obsoleto",
           "content": "`lpinfo --make-and-model \"HP Envy 4510\" -m` consulta los ficheros PPD instalados, pero el comando está obsoleto: las versiones modernas de CUPS han dejado de lado los controladores en favor de IPP y los formatos estándar."
         }
-      ],
-      "notes": "El flujo interno no cambia tras instalar: la aplicación genera el documento, `cupsd` lo deposita en `/var/spool/cups/`, se aplican los filtros con el PPD y el backend (`socket://`, `ipp://`, `usb://`, `cups-pdf:/`) lo entrega al dispositivo."
+      ]
     }
   ],
   "totalSlides": 15

@@ -64,8 +64,7 @@ export function generatePlaceholderLesson(subtopic: Subtopic, topic: Topic): Les
           title: 'Contenido en preparación',
           content: 'Esta lección contiene material provisional generado automáticamente. Estará disponible próximamente.'
         }
-      ],
-      notes: `Nota de inicio para el subtema ${subtopic.id}.`
+      ]
     },
     {
       id: `${subtopic.id}-slide-2`,
@@ -1094,6 +1093,22 @@ function generateSitemap(subtopics: Subtopic[], publicDir: string): void {
   fs.writeFileSync(sitemapXmlPath, lines.join('\n'), 'utf-8');
 }
 
+export const MOJIBAKE_REGEX = /[\u00C3\u00C2][\u0080-\u00BF]|\u00E2[\u0080-\u009F][\u0080-\u00BF]|\u00F0\u009F[\u0080-\u00BF]{2}/g;
+
+export function readUtf8Clean(filePath: string): string {
+  const content = fs.readFileSync(filePath, 'utf-8');
+  if (content.charCodeAt(0) === 0xFEFF) {
+    console.error(`FAIL: El archivo contiene BOM UTF-8 (\\uFEFF): ${filePath}`);
+    process.exit(1);
+  }
+  const matches = content.match(MOJIBAKE_REGEX);
+  if (matches && matches.length > 0) {
+    console.error(`FAIL: Se detectaron caracteres corruptos (mojibake) en ${filePath}: ${matches.slice(0, 5).join(', ')}`);
+    process.exit(1);
+  }
+  return content;
+}
+
 export function buildContent(options: BuildContentOptions = {}): CurriculumManifest {
   const rootDir = process.cwd();
   const contentSrcDir = options.contentSrcDir ?? path.resolve(rootDir, 'content-src');
@@ -1105,7 +1120,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     process.exit(1);
   }
 
-  const rawCurriculum = yaml.load(fs.readFileSync(curriculumPath, 'utf-8'));
+  const rawCurriculum = yaml.load(readUtf8Clean(curriculumPath));
   const curriculumResult = CurriculumSourceSchema.safeParse(rawCurriculum);
 
   if (!curriculumResult.success) {
@@ -1144,7 +1159,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
   let commands: Command[] = [];
   const commandsPath = path.join(contentSrcDir, 'commands.yaml');
   if (fs.existsSync(commandsPath)) {
-    const raw = yaml.load(fs.readFileSync(commandsPath, 'utf-8'));
+    const raw = yaml.load(readUtf8Clean(commandsPath));
     const parsed = CommandsListSchema.safeParse(raw);
     if (!parsed.success) {
       console.error(`FAIL: Error de validación Zod en ${commandsPath}:`, parsed.error.format());
@@ -1169,7 +1184,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
   let glossary: GlossaryTerm[] = [];
   const glossaryPath = path.join(contentSrcDir, 'glossary.yaml');
   if (fs.existsSync(glossaryPath)) {
-    const raw = yaml.load(fs.readFileSync(glossaryPath, 'utf-8'));
+    const raw = yaml.load(readUtf8Clean(glossaryPath));
     const parsed = GlossaryListSchema.safeParse(raw);
     if (!parsed.success) {
       console.error(`FAIL: Error de validación Zod en ${glossaryPath}:`, parsed.error.format());
@@ -1220,7 +1235,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     const jsonLessonPath = path.join(lessonsDir, `${subtopic.id}.json`);
 
     if (fs.existsSync(jsonLessonPath)) {
-      const rawLesson = JSON.parse(fs.readFileSync(jsonLessonPath, 'utf-8'));
+      const rawLesson = JSON.parse(readUtf8Clean(jsonLessonPath));
       const parsedLesson = LessonSchema.safeParse(rawLesson);
       if (!parsedLesson.success) {
         console.error(`FAIL: Error de validación Zod en la lección ${jsonLessonPath}:`, parsedLesson.error.format());
@@ -1342,7 +1357,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     const exerciseYamlPath = path.join(exercisesDir, `${subtopic.id}.yaml`);
     if (fs.existsSync(exerciseYamlPath)) {
       try {
-        const rawEx = yaml.load(fs.readFileSync(exerciseYamlPath, 'utf-8'));
+        const rawEx = yaml.load(readUtf8Clean(exerciseYamlPath));
         if (Array.isArray(rawEx)) {
           exercises = rawEx as LessonExercise[];
         }
@@ -1395,6 +1410,12 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
         if (block.type === 'diagram' && block.spec['nodes'] && Array.isArray(block.spec['nodes']) && block.spec['nodes'].length > 12) {
           console.warn(`WARN [${subtopic.id}]: El diagrama en "${slide.title}" supera los 12 nodos.`);
         }
+        if (block.type === 'image') {
+          const assetPath = path.join(process.cwd(), 'public', block.src.replace(/^\//, ''));
+          if (fs.existsSync(assetPath) && assetPath.endsWith('.svg')) {
+            readUtf8Clean(assetPath);
+          }
+        }
       }
     }
 
@@ -1422,7 +1443,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     const jsonLabPath = path.join(labsDir, `${subtopic.id}.json`);
 
     if (fs.existsSync(yamlLabPath)) {
-      const rawLab = yaml.load(fs.readFileSync(yamlLabPath, 'utf-8'));
+      const rawLab = yaml.load(readUtf8Clean(yamlLabPath));
       const parsedLab = LabSchema.safeParse(rawLab);
       if (!parsedLab.success) {
         console.error(`FAIL: Error de validación Zod en el laboratorio ${yamlLabPath}:`, parsedLab.error.format());
@@ -1435,7 +1456,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
         totalLabsReal++;
       }
     } else if (fs.existsSync(jsonLabPath)) {
-      const rawLab = JSON.parse(fs.readFileSync(jsonLabPath, 'utf-8'));
+      const rawLab = JSON.parse(readUtf8Clean(jsonLabPath));
       const parsedLab = LabSchema.safeParse(rawLab);
       if (!parsedLab.success) {
         console.error(`FAIL: Error de validación Zod en el laboratorio ${jsonLabPath}:`, parsedLab.error.format());
@@ -1470,7 +1491,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     let lab: Lab;
 
     if (fs.existsSync(yamlGlobalPath)) {
-      const raw = yaml.load(fs.readFileSync(yamlGlobalPath, 'utf-8'));
+      const raw = yaml.load(readUtf8Clean(yamlGlobalPath));
       const parsed = LabSchema.safeParse(raw);
       if (!parsed.success) {
         console.error(`FAIL: Error de validación Zod en el laboratorio global ${yamlGlobalPath}:`, parsed.error.format());
@@ -1478,7 +1499,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
       }
       lab = parsed.data;
     } else if (fs.existsSync(jsonGlobalPath)) {
-      const raw = JSON.parse(fs.readFileSync(jsonGlobalPath, 'utf-8'));
+      const raw = JSON.parse(readUtf8Clean(jsonGlobalPath));
       const parsed = LabSchema.safeParse(raw);
       if (!parsed.success) {
         console.error(`FAIL: Error de validación Zod en el laboratorio global ${jsonGlobalPath}:`, parsed.error.format());
@@ -1513,7 +1534,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     const jsonQuestionsPath = path.join(questionsDir, `${topic.id}.json`);
 
     if (fs.existsSync(yamlQuestionsPath)) {
-      const raw = yaml.load(fs.readFileSync(yamlQuestionsPath, 'utf-8'));
+      const raw = yaml.load(readUtf8Clean(yamlQuestionsPath));
       const parsed = TopicQuestionsSchema.safeParse(raw);
       if (!parsed.success) {
         console.error(`FAIL: Error de validación Zod en las preguntas de ${yamlQuestionsPath}:`, parsed.error.format());
@@ -1523,7 +1544,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
       totalQuestionsReal += questions.filter(q => !q.placeholder).length;
       totalQuestionsPlaceholder += questions.filter(q => q.placeholder).length;
     } else if (fs.existsSync(jsonQuestionsPath)) {
-      const raw = JSON.parse(fs.readFileSync(jsonQuestionsPath, 'utf-8'));
+      const raw = JSON.parse(readUtf8Clean(jsonQuestionsPath));
       const parsed = TopicQuestionsSchema.safeParse(raw);
       if (!parsed.success) {
         console.error(`FAIL: Error de validación Zod en las preguntas de ${jsonQuestionsPath}:`, parsed.error.format());
@@ -1573,7 +1594,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
   let errata: Errata[] = [];
   const errataPath = path.join(contentSrcDir, 'errata.yaml');
   if (fs.existsSync(errataPath)) {
-    const raw = yaml.load(fs.readFileSync(errataPath, 'utf-8'));
+    const raw = yaml.load(readUtf8Clean(errataPath));
     const parsed = ErrataListSchema.safeParse(raw);
     if (!parsed.success) {
       console.error(`FAIL: Error de validación Zod en ${errataPath}:`, parsed.error.format());

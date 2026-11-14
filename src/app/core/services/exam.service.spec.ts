@@ -162,7 +162,6 @@ describe('ExamService (Servicio de Gestión de Exámenes y Persistencia)', () =>
     preferences: signal({
       theme: 'system',
       defaultStudyView: 'slides',
-      showInstructorNotes: true,
       dailyCardLimit: 20,
       includeExampleContent: false,
       enableExamTimer: true,

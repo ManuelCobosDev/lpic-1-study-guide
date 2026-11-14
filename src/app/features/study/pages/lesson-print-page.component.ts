@@ -57,17 +57,6 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
           </select>
         </div>
 
-        <!-- Toggle notas -->
-        <label class="flex items-center gap-1.5 text-xs text-[var(--text)] cursor-pointer select-none">
-          <input
-            type="checkbox"
-            class="rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]"
-            [checked]="incluirNotas()"
-            (change)="onNotasToggle($event)"
-          />
-          <span>Incluir notas</span>
-        </label>
-
         <!-- Botón primario de impresión -->
         <app-button
           variant="primary"
@@ -164,16 +153,6 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
                   <app-block-renderer [block]="block" />
                 }
               </div>
-
-              <!-- Nota del instructor si está habilitada -->
-              @if (incluirNotas() && slide.notes) {
-                <div class="instructor-note mt-6 p-4 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)] text-xs text-[var(--text-muted)] avoid-break">
-                  <div class="font-mono font-bold text-[var(--text)] uppercase tracking-wider mb-1">
-                    📌 Nota didáctica del instructor:
-                  </div>
-                  <p class="m-0 leading-relaxed">{{ slide.notes }}</p>
-                </div>
-              }
             </article>
           }
         </div>
@@ -212,10 +191,6 @@ import { ButtonComponent } from '../../../shared/ui/button/button.component';
         color: var(--color-slate-900) !important;
         text-shadow: none !important;
       }
-      .instructor-note {
-        background: var(--color-slate-50) !important;
-        border-color: var(--color-slate-300) !important;
-      }
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -226,7 +201,6 @@ export class LessonPrintPageComponent implements OnInit {
 
   readonly subtopicId = signal<string>('');
   readonly formato = signal<'documento' | 'diapositivas'>('documento');
-  readonly incluirNotas = signal<boolean>(true);
   readonly autoPrint = signal<boolean>(false);
 
   readonly lesson = signal<Lesson | null>(null);
@@ -246,9 +220,6 @@ export class LessonPrintPageComponent implements OnInit {
 
     if (qParams['formato'] === 'diapositivas') {
       this.formato.set('diapositivas');
-    }
-    if (qParams['notas'] === '0') {
-      this.incluirNotas.set(false);
     }
     if (qParams['autoPrint'] === '1' || qParams['print'] === '1') {
       this.autoPrint.set(true);
@@ -288,11 +259,6 @@ export class LessonPrintPageComponent implements OnInit {
     if (val === 'documento' || val === 'diapositivas') {
       this.formato.set(val);
     }
-  }
-
-  onNotasToggle(event: Event): void {
-    const checked = (event.target as HTMLInputElement).checked;
-    this.incluirNotas.set(checked);
   }
 
   printDocument(): void {

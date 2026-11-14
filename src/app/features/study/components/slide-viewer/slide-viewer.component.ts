@@ -234,19 +234,6 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
             <span class="text-sm" aria-hidden="true">🗂️</span>
           </button>
 
-          <button
-            type="button"
-            class="icon-tool-btn p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-muted)] transition-colors cursor-pointer"
-            [class.text-[var(--primary-text)]]="showNotes()"
-            [class.bg-[var(--primary-soft)]]="showNotes()"
-            [attr.aria-expanded]="showNotes()"
-            (click)="toggleNotes()"
-            title="Notas del instructor (N)"
-            aria-label="Alternar notas del instructor"
-          >
-            <span class="text-sm" aria-hidden="true">📝</span>
-          </button>
-
           <!-- Zoom de texto -->
           <button
             type="button"
@@ -347,32 +334,6 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
         </aside>
       }
 
-      <!-- Panel de Notas del Instructor -->
-      @if (showNotes()) {
-        <div
-          class="notes-panel absolute bottom-14 inset-x-0 z-30 max-h-48 p-4 bg-slate-900/95 text-slate-200 border-t border-slate-800 overflow-y-auto shadow-2xl backdrop-blur-md"
-          role="region"
-          aria-label="Notas del instructor"
-        >
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-              <span>📌</span> Notas del instructor · Diapositiva {{ currentIndex() + 1 }}
-            </span>
-            <button
-              type="button"
-              class="text-xs text-slate-400 hover:text-white cursor-pointer"
-              (click)="showNotes.set(false)"
-              aria-label="Cerrar notas"
-            >
-              Cerrar ✕
-            </button>
-          </div>
-          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed m-0 font-sans">
-            {{ currentSlide()?.notes ?? 'No hay notas del instructor para esta diapositiva.' }}
-          </p>
-        </div>
-      }
-
       <!-- Modal de Ayuda de Atajos de Teclado -->
       @if (showHelp()) {
         <div class="help-dialog-overlay absolute inset-0 z-50 flex items-center justify-center p-4">
@@ -438,10 +399,6 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
                 <app-kbd>T</app-kbd>
               </div>
               <div class="flex items-center justify-between py-1 border-b border-[var(--border)]">
-                <span class="text-[var(--text-muted)]">Notas del instructor</span>
-                <app-kbd>N</app-kbd>
-              </div>
-              <div class="flex items-center justify-between py-1 border-b border-[var(--border)]">
                 <span class="text-[var(--text-muted)]">Saltar a diapositiva</span>
                 <div class="flex items-center gap-1">
                   <app-kbd>1</app-kbd>
@@ -505,7 +462,6 @@ export class SlideViewerComponent implements OnInit, OnDestroy {
 
   readonly isFullscreen = signal<boolean>(false);
   readonly showThumbnails = signal<boolean>(false);
-  readonly showNotes = signal<boolean>(false);
   readonly showHelp = signal<boolean>(false);
   readonly showControls = signal<boolean>(true);
   readonly textZoom = signal<number>(100);
@@ -685,10 +641,6 @@ export class SlideViewerComponent implements OnInit, OnDestroy {
     this.showThumbnails.update((v) => !v);
   }
 
-  toggleNotes(): void {
-    this.showNotes.update((v) => !v);
-  }
-
   toggleHelp(): void {
     this.showHelp.update((v) => !v);
   }
@@ -736,7 +688,7 @@ export class SlideViewerComponent implements OnInit, OnDestroy {
       clearTimeout(this.autoHideTimeout);
     }
     this.autoHideTimeout = setTimeout(() => {
-      if (this.isFullscreen() && !this.showThumbnails() && !this.showNotes() && !this.showHelp()) {
+      if (this.isFullscreen() && !this.showThumbnails() && !this.showHelp()) {
         this.showControls.set(false);
       }
     }, 2500);
@@ -796,8 +748,6 @@ export class SlideViewerComponent implements OnInit, OnDestroy {
       case 'Escape':
         if (this.showHelp()) {
           this.showHelp.set(false);
-        } else if (this.showNotes()) {
-          this.showNotes.set(false);
         } else if (this.showThumbnails()) {
           this.showThumbnails.set(false);
         } else if (this.isFullscreen()) {
@@ -808,11 +758,6 @@ export class SlideViewerComponent implements OnInit, OnDestroy {
       case 'T':
         event.preventDefault();
         this.toggleThumbnails();
-        break;
-      case 'n':
-      case 'N':
-        event.preventDefault();
-        this.toggleNotes();
         break;
       case '?':
         event.preventDefault();

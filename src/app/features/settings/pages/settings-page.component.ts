@@ -76,7 +76,6 @@ export class SettingsPageComponent implements OnInit {
   readonly currentTextSize = computed(() => this.preferencesService.textSize());
   readonly currentStudyView = computed(() => this.preferencesService.defaultStudyView());
   readonly currentNewCards = computed(() => this.preferencesService.newCardsPerDay());
-  readonly showInstructorNotes = computed(() => this.preferencesService.showInstructorNotes());
   readonly includeExampleContent = computed(() => this.preferencesService.includeExampleContent());
   readonly lastExportDate = computed(() => this.preferencesService.preferences().lastExportAt ?? null);
 
@@ -116,11 +115,6 @@ export class SettingsPageComponent implements OnInit {
     if (!isNaN(val) && val > 0) {
       this.preferencesService.updatePreferences({ newCardsPerDay: val });
     }
-  }
-
-  onToggleInstructorNotes(event: Event): void {
-    const checked = (event.target as HTMLInputElement).checked;
-    this.preferencesService.setShowInstructorNotes(checked);
   }
 
   onToggleExampleContent(event: Event): void {
