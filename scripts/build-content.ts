@@ -23,8 +23,7 @@ import {
   Errata,
   Slide,
   Subtopic,
-  Topic,
-  LessonExercise
+  Topic
 } from '../src/app/core/models/index';
 import {
   AutolinkEntry,
@@ -1216,7 +1215,7 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
     }
   }
 
-  const exercisesDir = path.join(contentSrcDir, 'exercises');
+
 
   // Carga previa de lecciones
   const lessonsDir = path.join(contentSrcDir, 'lessons');
@@ -1352,44 +1351,11 @@ export function buildContent(options: BuildContentOptions = {}): CurriculumManif
       ? extractedKeyAreas
       : (lesson.keyAreas && lesson.keyAreas.length > 0 ? lesson.keyAreas : lesson.objectives);
 
-    // Determinar Ejercicios
-    let exercises = lesson.exercises;
-    const exerciseYamlPath = path.join(exercisesDir, `${subtopic.id}.yaml`);
-    if (fs.existsSync(exerciseYamlPath)) {
-      try {
-        const rawEx = yaml.load(readUtf8Clean(exerciseYamlPath));
-        if (Array.isArray(rawEx)) {
-          exercises = rawEx as LessonExercise[];
-        }
-      } catch (err) {
-        console.warn(`WARN [${subtopic.id}]: Error al leer ${exerciseYamlPath}:`, err);
-      }
-    }
-
-    if (!exercises || exercises.length === 0) {
-      exercises = [
-        {
-          id: `${subtopic.id}-ex-guiado`,
-          kind: 'guiado',
-          title: `Ejercicio Guiado: ${subtopic.title}`,
-          statement: `Compruebe la configuración del sistema relativa al subtema ${subtopic.id} y verifique la sintaxis de los comandos principales.`,
-          answer: `Consulte la documentación oficial y compruebe las variables y comandos asociados al objetivo ${subtopic.id}.`
-        },
-        {
-          id: `${subtopic.id}-ex-exploratorio`,
-          kind: 'exploratorio',
-          title: `Ejercicio de Exploración: ${subtopic.title}`,
-          statement: `Explore las opciones avanzadas y escenarios de uso habituales para ${subtopic.id} en una terminal interactiva.`,
-          answer: `Ejecute 'man <comando>' y explore los parámetros documentados para el objetivo ${subtopic.id}.`
-        }
-      ];
-    }
-
     const processedLesson: Lesson = {
       ...lesson,
       slides: autolinkedSlides,
       keyAreas,
-      exercises
+      exercises: []
     };
 
     if (processedLesson.placeholder) {

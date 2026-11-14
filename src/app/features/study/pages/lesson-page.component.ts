@@ -325,7 +325,17 @@ import { ContainerComponent } from '../../../shared/ui/container/container.compo
                   <ul class="space-y-2" aria-label="Lista de comandos clave">
                     @for (cmd of l.commands; track cmd) {
                       <li class="flex items-center justify-between p-2 rounded-lg bg-[var(--surface-muted)] border border-[var(--border)] text-xs">
-                        <code class="font-mono font-bold text-[var(--primary-text)]">{{ cmd }}</code>
+                        <a
+                          [routerLink]="['/comandos']"
+                          [queryParams]="{ q: cmd }"
+                          [attr.data-cmd]="cmd"
+                          [attr.data-term-ref]="'cmd:' + cmd"
+                          class="term-link wiki-ref wiki-cmd-link font-mono font-bold text-[var(--primary-text)] border-b border-dotted border-[var(--primary-text)] hover:opacity-80 inline-flex items-center gap-1.5 cursor-pointer"
+                          title="Comando: {{ cmd }}"
+                        >
+                          <span aria-hidden="true">💻</span>
+                          <span>{{ cmd }}</span>
+                        </a>
                         <span class="text-[var(--text-muted)] font-mono text-[11px]">Objetivo LPIC-1</span>
                       </li>
                     }
@@ -346,9 +356,17 @@ import { ContainerComponent } from '../../../shared/ui/container/container.compo
                 @if (l.keyTerms && l.keyTerms.length > 0) {
                   <div class="flex flex-wrap gap-2" aria-label="Lista de términos clave">
                     @for (term of l.keyTerms; track term) {
-                      <span class="px-2.5 py-1 rounded-lg bg-[var(--surface-muted)] border border-[var(--border)] text-xs font-mono text-[var(--text)]">
-                        {{ term }}
-                      </span>
+                      <a
+                        [routerLink]="['/glosario']"
+                        [queryParams]="{ q: term }"
+                        [attr.data-term]="term"
+                        [attr.data-term-ref]="'term:' + term"
+                        class="term-link wiki-ref wiki-term-link px-2.5 py-1 rounded-lg bg-[var(--surface-muted)] border border-dotted border-[var(--info-text)] text-xs font-mono text-[var(--info-text)] hover:opacity-80 transition-opacity inline-flex items-center gap-1 cursor-pointer"
+                        title="Término: {{ term }}"
+                      >
+                        <span aria-hidden="true">📖</span>
+                        <span>{{ term }}</span>
+                      </a>
                     }
                   </div>
                 } @else {
@@ -365,7 +383,6 @@ import { ContainerComponent } from '../../../shared/ui/container/container.compo
                 [subtopicId]="l.id"
                 [questions]="subtopicQuestions()"
                 [flashcards]="subtopicFlashcards()"
-                [exercises]="l.exercises ?? []"
                 (jumpToSlide)="onJumpToSlideFromPractice($event)"
                 (rateCard)="onRateFlashcard($event)"
               />

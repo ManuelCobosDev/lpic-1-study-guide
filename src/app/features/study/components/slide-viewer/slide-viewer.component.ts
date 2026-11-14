@@ -150,7 +150,7 @@ import { WikiRefService } from '../../../../core/services/wiki-ref.service';
                       <span>Has terminado las diapositivas</span>
                     </div>
                     <div class="text-xs text-[var(--text-muted)]">
-                      Continúa afianzando conocimientos con el test rápido, mini-flashcards y ejercicios oficiales del manual.
+                      Continúa afianzando conocimientos con el test rápido y las mini-flashcards de repaso.
                     </div>
                   </div>
                   <button
