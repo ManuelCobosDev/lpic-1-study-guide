@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { StepItem } from '../../core/models/block.model';
 import { parseInlineMarkdown } from '../../core/engines/markdown/markdown.engine';
 
@@ -33,10 +34,11 @@ import { parseInlineMarkdown } from '../../core/engines/markdown/markdown.engine
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StepsBlockComponent {
+  private readonly sanitizer = inject(DomSanitizer);
   readonly items = input.required<StepItem[]>();
 
-  parseDescription(desc: string): string {
-    return parseInlineMarkdown(desc);
+  parseDescription(desc: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(parseInlineMarkdown(desc));
   }
 }
 

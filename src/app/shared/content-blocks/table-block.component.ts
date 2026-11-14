@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { parseInlineMarkdown } from '../../core/engines/markdown/markdown.engine';
 
 @Component({
@@ -41,12 +42,13 @@ import { parseInlineMarkdown } from '../../core/engines/markdown/markdown.engine
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TableBlockComponent {
+  private readonly sanitizer = inject(DomSanitizer);
   readonly headers = input.required<string[]>();
   readonly rows = input.required<string[][]>();
   readonly caption = input<string | undefined>();
 
-  parseCell(text: string): string {
-    return parseInlineMarkdown(text);
+  parseCell(text: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(parseInlineMarkdown(text));
   }
 }
 
