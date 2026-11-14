@@ -1,3 +1,8 @@
+# ==============================================================================
+# LPIC-1 Study Guide · Cloudflare Headers & Cache Policy
+# ==============================================================================
+
+# 1. Cabeceras globales de seguridad para todas las rutas
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN
@@ -5,3 +10,28 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self';
 
+# 2. Rutas SPA y HTML: revalidación inmediata (0s navegador, no cachear index obsoleto)
+/
+  Cache-Control: public, max-age=0, must-revalidate
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# 3. Artefactos con hash (JS, CSS, fuentes, medios): inmutables por 1 año
+/media/*
+  Cache-Control: public, max-age=31536000, immutable
+/*.js
+  Cache-Control: public, max-age=31536000, immutable
+/*.css
+  Cache-Control: public, max-age=31536000, immutable
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+/*.svg
+  Cache-Control: public, max-age=31536000, immutable
+
+# 4. Datos de estudio JSON y metadatos: 1h en navegador, 24h en Cloudflare Edge Cache
+/content/*
+  Cache-Control: public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800
+/sitemap.xml
+  Cache-Control: public, max-age=3600, s-maxage=86400
+/robots.txt
+  Cache-Control: public, max-age=3600, s-maxage=86400
