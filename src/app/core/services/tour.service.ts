@@ -321,7 +321,7 @@ export class TourService {
       const fill = document.createElement('div');
       fill.className = 'lpic1-tour-progress-fill';
       track.appendChild(fill);
-      popover.wrapper.prepend(track);
+      popover.wrapper.insertBefore(track, popover.footer);
     }
 
     const fillEl = track.querySelector<HTMLElement>('.lpic1-tour-progress-fill');
