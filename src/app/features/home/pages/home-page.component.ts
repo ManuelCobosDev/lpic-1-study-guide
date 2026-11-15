@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } 
 import { RouterLink } from '@angular/router';
 import { ContentService } from '../../../core/services/content.service';
 import { ProgressService } from '../../../core/services/progress.service';
+import { TourService } from '../../../core/services/tour.service';
 import { selectExamProgress, selectNextRecommendedSubtopic } from '../../../core/selectors/progress.selectors';
 import {
   BadgeComponent,
@@ -35,6 +36,7 @@ import { HomeFaqComponent } from '../components/home-faq.component';
 export class HomePageComponent implements OnInit {
   private readonly contentService = inject(ContentService);
   private readonly progressService = inject(ProgressService);
+  private readonly tourService = inject(TourService);
 
   readonly manifest = this.contentService.manifest;
   readonly progress = this.progressService.progress;
@@ -148,5 +150,9 @@ export class HomePageComponent implements OnInit {
       ...prev,
       [id]: !current
     }));
+  }
+
+  startTour(): void {
+    void this.tourService.startTour();
   }
 }

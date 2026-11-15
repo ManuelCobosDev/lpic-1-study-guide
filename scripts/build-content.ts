@@ -1052,7 +1052,6 @@ function generateSitemap(subtopics: Subtopic[], publicDir: string): void {
     { path: '/mapa-mental', priority: '0.7', changefreq: 'monthly' },
     { path: '/buscar', priority: '0.6', changefreq: 'monthly' },
     { path: '/progreso', priority: '0.6', changefreq: 'monthly' },
-    { path: '/erratas', priority: '0.5', changefreq: 'weekly' },
     { path: '/acerca-de', priority: '0.5', changefreq: 'monthly' },
     { path: '/legal', priority: '0.4', changefreq: 'monthly' }
   ];

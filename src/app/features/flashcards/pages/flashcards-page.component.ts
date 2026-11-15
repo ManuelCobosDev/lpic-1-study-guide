@@ -17,6 +17,7 @@ import { ProgressBarComponent } from '../../../shared/ui/progress-bar/progress-b
 import { SkeletonComponent } from '../../../shared/ui/skeleton/skeleton.component';
 import { FlashcardCardComponent } from '../components/flashcard-card/flashcard-card.component';
 import { FlashcardsService } from '../../../core/services/flashcards.service';
+import { PreferencesService } from '../../../core/services/preferences.service';
 import {
   DeckType,
   FlashcardItem,
@@ -67,6 +68,9 @@ export interface TopicDeckItem {
 export class FlashcardsPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   readonly flashcardsService = inject(FlashcardsService);
+  private readonly preferencesService = inject(PreferencesService);
+
+  readonly dailyLimit = computed(() => this.preferencesService.newCardsPerDay() || BATCH_SIZE);
 
   readonly leitnerBoxes: readonly LeitnerBox[] = [1, 2, 3, 4, 5];
 
@@ -393,7 +397,7 @@ export class FlashcardsPageComponent implements OnInit {
     try {
       const [stats, session] = await Promise.all([
         this.flashcardsService.getDeckStats(deck),
-        this.flashcardsService.getSessionCards(deck)
+        this.flashcardsService.getSessionCards(deck, this.dailyLimit())
       ]);
 
       this.deckStats.set(stats);
@@ -440,12 +444,14 @@ export class FlashcardsPageComponent implements OnInit {
       return;
     }
 
-    // Si hay más de BATCH_SIZE (10), barajar aleatoriamente y recortar a 10
-    if (candidates.length > BATCH_SIZE) {
+    const limit = this.dailyLimit();
+
+    // Si hay más del límite diario configurado, barajar aleatoriamente y recortar
+    if (candidates.length > limit) {
       const shuffled = this.shuffleArray(candidates);
-      this.sessionCards.set(shuffled.slice(0, BATCH_SIZE));
+      this.sessionCards.set(shuffled.slice(0, limit));
     } else {
-      // Si hay <= 10: conservamos sin perder ninguna
+      // Si hay <= límite: conservamos sin perder ninguna
       if (!preserveOrderIfSmall && candidates.length > 1) {
         this.sessionCards.set(this.shuffleArray(candidates));
       } else {

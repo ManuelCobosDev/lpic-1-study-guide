@@ -5,6 +5,7 @@ import { ExamService } from './exam.service';
 import { StorageService } from './storage.service';
 import { ContentService } from './content.service';
 import { PreferencesService } from './preferences.service';
+import { PersistedStore } from '../state/persisted-store';
 import { Question } from '../models/question.model';
 import { CurriculumManifest } from '../models/curriculum.model';
 
@@ -259,13 +260,26 @@ describe('ExamService (Servicio de Gestión de Exámenes y Persistencia)', () =>
     expect(service.hasActiveSession()).toBe(false);
     expect(service.history()).toHaveLength(1);
     expect(service.getAttemptById(result!.id)).toBeDefined();
+    expect(mockStorageService.removeItem).toHaveBeenCalledWith('exam_active_session');
+    expect(mockStorageData['exam_active_session']).toBeUndefined();
+
+    PersistedStore.reloadAll();
+    expect(service.hasActiveSession()).toBe(false);
+    expect(service.activeSession()).toBeNull();
   });
 
   it('debe descartar la sesión activa al llamar abandonCurrentExam', async () => {
     await service.startExam({ mode: 'exam', questionLimit: 2 });
     expect(service.hasActiveSession()).toBe(true);
+    expect(mockStorageData['exam_active_session']).toBeDefined();
 
     service.abandonCurrentExam();
+    expect(service.hasActiveSession()).toBe(false);
+    expect(service.activeSession()).toBeNull();
+    expect(mockStorageService.removeItem).toHaveBeenCalledWith('exam_active_session');
+    expect(mockStorageData['exam_active_session']).toBeUndefined();
+
+    PersistedStore.reloadAll();
     expect(service.hasActiveSession()).toBe(false);
     expect(service.activeSession()).toBeNull();
   });

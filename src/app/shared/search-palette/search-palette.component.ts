@@ -408,8 +408,6 @@ export class SearchPaletteComponent {
         return '📖';
       case 'lab':
         return '🧪';
-      case 'errata':
-        return '⚠️';
       case 'page':
         return '🌐';
     }

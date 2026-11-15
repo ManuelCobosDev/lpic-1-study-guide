@@ -44,24 +44,7 @@ import { ContainerComponent } from '../../../shared/ui/container/container.compo
     <div class="lesson-page min-h-screen py-6">
       <app-container>
         <div class="lesson-page-container space-y-6">
-          <!-- 1. Barra de Migas de Pan (Breadcrumbs) -->
-      <nav aria-label="Migas de pan" class="breadcrumbs text-xs font-mono text-[var(--text-muted)] flex items-center gap-1.5 flex-wrap">
-        <a routerLink="/" class="hover:text-[var(--text)] transition-colors">Inicio</a>
-        <span aria-hidden="true">›</span>
-        <a routerLink="/temario" class="hover:text-[var(--text)] transition-colors">Temario</a>
-        <span aria-hidden="true">›</span>
-        <a [routerLink]="['/temario', lesson()?.examId || '101']" class="hover:text-[var(--text)] transition-colors">
-          Examen {{ lesson()?.examId || '101' }}
-        </a>
-        <span aria-hidden="true">›</span>
-        <a [routerLink]="['/temario', lesson()?.examId || '101', lesson()?.topicId || '103']" class="hover:text-[var(--text)] transition-colors">
-          Tema {{ lesson()?.topicId || '103' }}
-        </a>
-        <span aria-hidden="true">›</span>
-        <span class="text-[var(--primary-text)] font-bold" aria-current="page">{{ subtopicId() }}</span>
-      </nav>
-
-      @if (loading()) {
+          @if (loading()) {
         <div class="p-16 text-center text-sm text-[var(--text-muted)] animate-pulse">
           Cargando contenido oficial del subtema {{ subtopicId() }}...
         </div>

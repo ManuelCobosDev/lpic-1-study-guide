@@ -23,7 +23,6 @@ const KNOWN_LABELS: Record<string, string> = {
   'mapa-mental': 'Mapa mental',
   buscar: 'Búsqueda',
   progreso: 'Progreso',
-  erratas: 'Fe de erratas',
   ajustes: 'Ajustes',
   'acerca-de': 'Acerca de',
   'guia-estilos': 'Guía de estilos',

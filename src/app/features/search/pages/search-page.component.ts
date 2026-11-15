@@ -79,7 +79,6 @@ export class SearchPageComponent {
       command: 0,
       term: 0,
       lab: 0,
-      errata: 0,
       page: 0
     };
 
@@ -187,7 +186,6 @@ export class SearchPageComponent {
         return 'warning';
       case 'lab':
         return 'danger';
-      case 'errata':
       default:
         return 'neutral';
     }
@@ -205,8 +203,6 @@ export class SearchPageComponent {
         return 'Glosario';
       case 'lab':
         return 'Laboratorio';
-      case 'errata':
-        return 'Fe de erratas';
       default:
         return 'Recurso';
     }
@@ -224,8 +220,6 @@ export class SearchPageComponent {
         return '📖';
       case 'lab':
         return '🧪';
-      case 'errata':
-        return '⚠️';
       default:
         return '📄';
     }

@@ -38,6 +38,16 @@
       {{ question().prompt }}
     </h3>
 
+    @if (question().codeBlock; as codeBlock) {
+      <div class="question-code-block" data-testid="question-code-block">
+        <app-code-block
+          [code]="codeBlock"
+          [filename]="question().codeBlockTitle ?? 'Salida de terminal / configuración'"
+          [showCopy]="false"
+        />
+      </div>
+    }
+
     @if (question().type === 'multiple') {
       <div class="multiple-instruction" role="note">
         <svg
@@ -64,7 +74,7 @@
       <div
         class="options-container"
         role="radiogroup"
-        [attr.aria-label]="'Opciones para la pregunta ' + questionNumber"
+        [attr.aria-label]="'Opciones para la pregunta ' + questionNumber()"
       >
         @for (opt of question().options; track opt.id) {
           <label
@@ -83,7 +93,7 @@
               class="option-input"
             />
             <span class="option-identifier">{{ opt.id.toUpperCase() }}</span>
-            <span class="option-label">{{ opt.text }}</span>
+            <span class="option-label" [class.option-label-multiline]="opt.text.includes('\n')">{{ opt.text }}</span>
           </label>
         }
       </div>
@@ -94,7 +104,7 @@
       <div
         class="options-container"
         role="group"
-        [attr.aria-label]="'Opciones múltiples para la pregunta ' + questionNumber"
+        [attr.aria-label]="'Opciones múltiples para la pregunta ' + questionNumber()"
       >
         @for (opt of question().options; track opt.id) {
           <label
@@ -112,7 +122,7 @@
               class="option-input"
             />
             <span class="option-identifier">{{ opt.id.toUpperCase() }}</span>
-            <span class="option-label">{{ opt.text }}</span>
+            <span class="option-label" [class.option-label-multiline]="opt.text.includes('\n')">{{ opt.text }}</span>
           </label>
         }
       </div>

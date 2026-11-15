@@ -91,7 +91,6 @@ export class SearchService {
         const manifest = await this.contentService.getManifest();
         const commands = await this.contentService.getCommands().catch(() => []);
         const terms = await this.contentService.getGlossary().catch(() => []);
-        const errata = await this.contentService.getErrata().catch(() => []);
 
         const source: SearchIndexSource = {
           subtopics: [],
@@ -107,11 +106,6 @@ export class SearchService {
             term: t.term,
             definition: t.definition,
             subtopicId: t.subtopicIds?.[0]
-          })),
-          errata: errata.map((e) => ({
-            id: e.id,
-            title: `Fe de erratas: ${e.page}`,
-            description: `${e.description} - Corrección: ${e.correction}`
           })),
           pages: [
             {

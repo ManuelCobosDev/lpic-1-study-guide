@@ -187,15 +187,6 @@ export const routes: Routes = [
     data: { title: 'Progreso', breadcrumb: 'Progreso' }
   },
   {
-    path: 'erratas',
-    loadComponent: () =>
-      import('./features/errata/pages/errata-page.component').then(
-        (m) => m.ErrataPageComponent
-      ),
-    title: 'Fe de Erratas',
-    data: { title: 'Erratas', breadcrumb: 'Erratas' }
-  },
-  {
     path: 'ajustes',
     loadComponent: () =>
       import('./features/settings/pages/settings-page.component').then(

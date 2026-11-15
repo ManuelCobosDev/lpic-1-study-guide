@@ -193,5 +193,14 @@ describe('LessonPageComponent', () => {
     expect(component.currentSlideNumber()).toBe(2);
     expect(mockProgressService.recordSlideViewed).toHaveBeenCalledWith('103.4', 2);
   });
+
+  it('no debe renderizar una barra de migas de pan duplicada (la provee AppShell)', async () => {
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('nav[aria-label="Migas de pan"]')).toBeNull();
+    expect(el.querySelector('.breadcrumbs')).toBeNull();
+  });
 });
 

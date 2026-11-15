@@ -12,6 +12,8 @@ export interface Question {
   subtopicId: string;
   type: QuestionType;
   prompt: string;
+  codeBlock?: string;
+  codeBlockTitle?: string;
   options?: QuestionOption[];
   correct: string[]; // ids de opciones correctas (para single o multiple)
   acceptedAnswers?: string[]; // respuestas en texto normalizadas (para fill)
