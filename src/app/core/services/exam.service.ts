@@ -274,26 +274,28 @@ export class ExamService {
       topicScores: scoreResult.topicScores
     };
 
-    // Guardar en el historial de intentos
+    // Guardar en el historial de intentos evitando duplicados por ID
     this.historyStore.update((h) => ({
       ...h,
-      attempts: [completedAttempt, ...h.attempts]
+      attempts: [completedAttempt, ...h.attempts.filter((a) => a.id !== completedAttempt.id)]
     }));
     this.historyStore.flush();
 
-    // Limpiar sesión activa
-    this.sessionStore.set(null);
-    this.sessionStore.flush();
+    // Limpiar sesión activa en memoria y almacenamiento
+    this.sessionStore.clear();
 
     return completedAttempt;
   }
 
   /**
-   * Descarta la sesión activa sin guardarla en el historial de exámenes completados.
+   * Descarta la sesión activa y borra el intento de memoria y almacenamiento sin conservar rastro.
    */
   abandonCurrentExam(): void {
-    this.sessionStore.set(null);
-    this.sessionStore.flush();
+    const activeId = this.activeSession()?.id;
+    this.sessionStore.clear();
+    if (activeId && this.history().some((a) => a.id === activeId)) {
+      this.deleteAttempt(activeId);
+    }
   }
 
   /**

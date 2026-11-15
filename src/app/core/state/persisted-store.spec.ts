@@ -135,5 +135,50 @@ describe('PersistedStore (Persistencia, debounce y migración)', () => {
 
     expect(store.get()).toEqual({ name: 'Arch', score: 100 });
   });
+
+  it('debe eliminar la clave al llamar a set(null) y flush() cuando initialValue es null', () => {
+    const store = new PersistedStore<{ id: string } | null>(storage, {
+      key: 'nullable-session',
+      schemaVersion: 1,
+      initialValue: null,
+      debounceMs: 300
+    });
+
+    store.set({ id: 'attempt-1' });
+    store.flush();
+    expect(storage.getItem('nullable-session')).not.toBeNull();
+
+    store.set(null);
+    store.flush();
+    expect(storage.getItem('nullable-session')).toBeNull();
+
+    store.reload();
+    expect(store.get()).toBeNull();
+  });
+
+  it('clear() debe limpiar estado en memoria, cancelar debounce y eliminar la clave del almacenamiento', () => {
+    const store = new PersistedStore<{ id: string } | null>(storage, {
+      key: 'clear-session',
+      schemaVersion: 1,
+      initialValue: null,
+      debounceMs: 300
+    });
+
+    store.set({ id: 'attempt-2' });
+    store.flush();
+    expect(storage.getItem('clear-session')).not.toBeNull();
+
+    store.set({ id: 'attempt-3' });
+    store.clear();
+
+    expect(store.get()).toBeNull();
+    expect(storage.getItem('clear-session')).toBeNull();
+
+    vi.advanceTimersByTime(500);
+    expect(storage.getItem('clear-session')).toBeNull();
+
+    store.reload();
+    expect(store.get()).toBeNull();
+  });
 });
 

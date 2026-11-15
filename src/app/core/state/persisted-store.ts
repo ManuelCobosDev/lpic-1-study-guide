@@ -26,7 +26,8 @@ export class PersistedStore<T> {
   private readonly schemaVersion: number;
   private readonly debounceMs: number;
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  private pendingValue: T | null = null;
+  private hasPendingValue = false;
+  private pendingValue: T;
 
   readonly data: Signal<T>;
 
@@ -38,6 +39,7 @@ export class PersistedStore<T> {
     this.debounceMs = options.debounceMs ?? 300;
 
     const initial = this.loadInitial(options);
+    this.pendingValue = initial;
     this.state = signal<T>(initial);
     this.data = this.state.asReadonly();
 
@@ -81,11 +83,30 @@ export class PersistedStore<T> {
   }
 
   flush(): void {
-    if (this.debounceTimer !== null && this.pendingValue !== null) {
+    if (this.debounceTimer !== null) {
       clearTimeout(this.debounceTimer);
       this.debounceTimer = null;
-      this.persist(this.pendingValue);
-      this.pendingValue = null;
+    }
+    if (this.hasPendingValue) {
+      const valueToPersist = this.pendingValue;
+      this.hasPendingValue = false;
+      this.persist(valueToPersist);
+    }
+  }
+
+  /** Restablece el almacén al valor inicial y elimina su clave persistida. */
+  clear(): void {
+    if (this.debounceTimer !== null) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
+    this.hasPendingValue = false;
+    this.pendingValue = this.options.initialValue;
+    this.state.set(this.options.initialValue);
+    try {
+      this.storage.removeItem(this.key);
+    } catch {
+      // StorageService ya conmuta a fallback en memoria si falla
     }
   }
 
@@ -94,8 +115,9 @@ export class PersistedStore<T> {
       clearTimeout(this.debounceTimer);
       this.debounceTimer = null;
     }
-    this.pendingValue = null;
+    this.hasPendingValue = false;
     const reloaded = this.loadInitial(this.options);
+    this.pendingValue = reloaded;
     this.state.set(reloaded);
   }
 
@@ -139,6 +161,7 @@ export class PersistedStore<T> {
 
   private scheduleSave(value: T): void {
     this.pendingValue = value;
+    this.hasPendingValue = true;
     if (this.debounceTimer !== null) {
       clearTimeout(this.debounceTimer);
     }
@@ -149,6 +172,16 @@ export class PersistedStore<T> {
   }
 
   private persist(value: T): void {
+    // Cuando el estado vacío es null, eliminar la clave evita sesiones persistidas residuales al recargar
+    if (value === null && this.options.initialValue === null) {
+      try {
+        this.storage.removeItem(this.key);
+      } catch {
+        // StorageService ya conmuta a fallback en memoria si falla
+      }
+      return;
+    }
+
     const record: PersistedRecord<T> = {
       schemaVersion: this.schemaVersion,
       data: value,
