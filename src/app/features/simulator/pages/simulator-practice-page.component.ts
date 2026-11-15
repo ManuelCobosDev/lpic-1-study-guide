@@ -6,7 +6,7 @@ import {
   inject,
   signal
 } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ContentService } from '../../../core/services/content.service';
 import { PreferencesService } from '../../../core/services/preferences.service';
@@ -22,7 +22,6 @@ import { QuestionCardComponent } from '../components/question-card/question-card
   selector: 'app-simulator-practice-page',
   standalone: true,
   imports: [
-    RouterLink,
     FormsModule,
     ContainerComponent,
     ButtonComponent,
