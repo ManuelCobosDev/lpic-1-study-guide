@@ -17,6 +17,7 @@ import { isAnswerCorrect } from '../../../core/engines/scoring/scoring.engine';
 import { ContainerComponent } from '../../../shared/ui/container/container.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { BadgeComponent } from '../../../shared/ui/badge/badge.component';
+import { CodeBlockComponent } from '../../../shared/ui/code-block/code-block.component';
 
 export type ReviewFilter = 'all' | 'failed' | 'flagged';
 
@@ -28,7 +29,8 @@ export type ReviewFilter = 'all' | 'failed' | 'flagged';
     DatePipe,
     ContainerComponent,
     ButtonComponent,
-    BadgeComponent
+    BadgeComponent,
+    CodeBlockComponent
   ],
   templateUrl: './simulator-results-page.component.html',
   styleUrls: ['./simulator-results-page.component.css'],

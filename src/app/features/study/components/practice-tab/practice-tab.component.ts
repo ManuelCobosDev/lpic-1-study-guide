@@ -15,6 +15,7 @@ import { FlashcardItem, LeitnerRating } from '../../../../core/models/flashcard.
 import { PracticeService } from '../../../../core/services/practice.service';
 import { WikiRefService } from '../../../../core/services/wiki-ref.service';
 import { ButtonComponent } from '../../../../shared/ui/button/button.component';
+import { CodeBlockComponent } from '../../../../shared/ui/code-block/code-block.component';
 
 @Component({
   selector: 'app-practice-tab',
@@ -23,7 +24,8 @@ import { ButtonComponent } from '../../../../shared/ui/button/button.component';
     CommonModule,
     FormsModule,
     RouterLink,
-    ButtonComponent
+    ButtonComponent,
+    CodeBlockComponent
   ],
   template: `
     <div
@@ -107,6 +109,16 @@ import { ButtonComponent } from '../../../../shared/ui/button/button.component';
               {{ q.prompt }}
             </div>
 
+            @if (q.codeBlock; as codeBlock) {
+              <div class="q-code-block" data-testid="practice-code-block">
+                <app-code-block
+                  [code]="codeBlock"
+                  [filename]="q.codeBlockTitle ?? 'Salida de terminal / configuración'"
+                  [showCopy]="false"
+                />
+              </div>
+            }
+
             <!-- Opciones según tipo -->
             @if (q.type === 'single' || q.type === 'multiple') {
               <div class="options-list space-y-2.5" role="group" aria-label="Opciones de respuesta">
@@ -136,7 +148,7 @@ import { ButtonComponent } from '../../../../shared/ui/button/button.component';
                     >
                       {{ opt.id.toUpperCase() }}
                     </span>
-                    <span class="flex-1 leading-snug">{{ opt.text }}</span>
+                    <span class="flex-1 leading-snug" [class.opt-text-multiline]="opt.text.includes('\n')">{{ opt.text }}</span>
                   </button>
                 }
               </div>
@@ -381,6 +393,17 @@ import { ButtonComponent } from '../../../../shared/ui/button/button.component';
     :host {
       display: block;
       width: 100%;
+    }
+
+    .q-code-block > app-code-block {
+      margin: 0;
+    }
+
+    .opt-text-multiline {
+      white-space: pre-wrap;
+      font-family: var(--font-mono);
+      font-size: var(--font-size-xs);
+      line-height: 1.45;
     }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush

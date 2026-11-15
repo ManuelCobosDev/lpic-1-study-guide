@@ -11,6 +11,8 @@ export const QuestionSchema = z.object({
   subtopicId: z.string().min(1),
   type: z.enum(['single', 'multiple', 'fill']),
   prompt: z.string().min(1),
+  codeBlock: z.string().min(1).optional(),
+  codeBlockTitle: z.string().min(1).optional(),
   options: z.array(QuestionOptionSchema).optional(),
   correct: z.array(z.string().min(1)),
   acceptedAnswers: z.array(z.string().min(1)).optional(),

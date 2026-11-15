@@ -165,4 +165,43 @@ describe('QuestionCardComponent', () => {
       expect(component.getOptionFeedbackClass(targetOption)).toBe('feedback-correct');
     }
   });
+
+  it('debe renderizar app-code-block cuando la pregunta incluye codeBlock y codeBlockTitle', () => {
+    const mockQuestionWithCodeBlock: Question = {
+      ...mockSingleQuestion,
+      id: 'q-109-100',
+      topicId: '109',
+      subtopicId: '109.2',
+      prompt: 'Dada la siguiente tabla de enrutamiento, ¿cómo se trataría un paquete saliente?',
+      codeBlock: 'Destination     Gateway         Genmask\n192.168.2.0     192.168.1.1     255.255.255.0',
+      codeBlockTitle: 'Tabla de enrutamiento (route -n)'
+    };
+
+    componentRef.setInput('question', mockQuestionWithCodeBlock);
+    fixture.detectChanges();
+
+    const codeBlockEl = fixture.nativeElement.querySelector('[data-testid="question-code-block"]');
+    expect(codeBlockEl).toBeTruthy();
+    expect(codeBlockEl.textContent).toContain('Tabla de enrutamiento (route -n)');
+    expect(codeBlockEl.textContent).toContain('192.168.1.1');
+  });
+
+  it('debe aplicar la clase multiline cuando una opción contiene saltos de línea', () => {
+    const mockMultilineQuestion: Question = {
+      ...mockSingleQuestion,
+      id: 'q-103-83',
+      options: [
+        { id: 'a', text: 'cat <!EOT\ntest\nEOT' },
+        { id: 'e', text: 'cat <<EOT\ntest\nEOT' }
+      ],
+      correct: ['e']
+    };
+
+    componentRef.setInput('question', mockMultilineQuestion);
+    fixture.detectChanges();
+
+    const multilineLabels = fixture.nativeElement.querySelectorAll('.option-label.option-label-multiline');
+    expect(multilineLabels.length).toBe(2);
+    expect(multilineLabels[1].textContent).toContain('cat <<EOT');
+  });
 });

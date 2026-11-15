@@ -8,11 +8,12 @@ import {
 import { Question, QuestionOption } from '../../../../core/models/question.model';
 import { QuestionAnswer } from '../../../../core/models/attempt.model';
 import { ButtonComponent } from '../../../../shared/ui/button/button.component';
+import { CodeBlockComponent } from '../../../../shared/ui/code-block/code-block.component';
 
 @Component({
   selector: 'app-question-card',
   standalone: true,
-  imports: [ButtonComponent],
+  imports: [ButtonComponent, CodeBlockComponent],
   templateUrl: './question-card.component.html',
   styleUrls: ['./question-card.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
