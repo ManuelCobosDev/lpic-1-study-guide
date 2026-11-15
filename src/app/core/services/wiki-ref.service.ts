@@ -1,34 +1,167 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, OnDestroy, inject, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { ContentService } from './content.service';
-import { WikiLocation, WikiRefData } from '../models/wiki-ref.model';
+import { WikiAnchorRect, WikiLocation, WikiRefData } from '../models/wiki-ref.model';
 import { Command } from '../models/command.model';
 import { GlossaryTerm } from '../models/glossary.model';
 
 @Injectable({
   providedIn: 'root'
 })
-export class WikiRefService {
+export class WikiRefService implements OnDestroy {
   private readonly contentService = inject(ContentService);
+  private readonly document = inject(DOCUMENT);
 
   readonly activePopover = signal<WikiRefData | null>(null);
 
   private commandsCache: Map<string, Command> | null = null;
   private glossaryCache: Map<string, GlossaryTerm> | null = null;
+  private ensureCachesPromise: Promise<void> | null = null;
 
+  private currentAnchor: HTMLElement | null = null;
   private hoverTimer: ReturnType<typeof setTimeout> | null = null;
   private leaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private cleanupListeners: (() => void) | null = null;
+
+  constructor() {
+    this.initGlobalListeners();
+  }
+
+  ngOnDestroy(): void {
+    if (this.cleanupListeners) {
+      this.cleanupListeners();
+      this.cleanupListeners = null;
+    }
+    this.closePopover();
+  }
+
+  /**
+   * Delegación global de eventos sobre conceptos, comandos y glosario en el documento.
+   * Cubre tanto la vista continua como diapositivas, tablas, pasos y paneles de referencia.
+   */
+  private initGlobalListeners(): void {
+    if (typeof window === 'undefined' || !this.document) return;
+
+    const selector = 'a.term-link, a.wiki-ref, [data-term-ref], [data-cmd], [data-term]';
+
+    const onMouseOver = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest(selector) as HTMLElement | null;
+      if (!anchor) return;
+
+      const related = event.relatedTarget as Node | null;
+      if (related && anchor.contains(related)) return;
+
+      this.onTargetEnter(anchor);
+    };
+
+    const onMouseOut = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest(selector) as HTMLElement | null;
+      if (!anchor) return;
+
+      const related = event.relatedTarget as Node | null;
+      if (related && anchor.contains(related)) return;
+      if (related && (related as HTMLElement).closest?.('.term-link-card, .wiki-popover-overlay')) return;
+
+      this.onTargetLeave();
+    };
+
+    const onFocusIn = (event: FocusEvent) => {
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest(selector) as HTMLElement | null;
+      if (anchor) {
+        this.openImmediately(anchor);
+      }
+    };
+
+    const onFocusOut = (event: FocusEvent) => {
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest(selector) as HTMLElement | null;
+      if (anchor) {
+        this.onTargetLeave();
+      }
+    };
+
+    const onClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest(selector) as HTMLElement | null;
+      if (anchor) {
+        // Evitar navegación accidental o recarga; abrir/mantener inmediatamente el popup
+        event.preventDefault();
+        this.openImmediately(anchor);
+      }
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && this.activePopover()) {
+        this.closePopover();
+      }
+    };
+
+    const onScrollOrResize = () => {
+      if (this.activePopover() && this.currentAnchor) {
+        const rect = this.currentAnchor.getBoundingClientRect();
+        // Si el anchor sale de la pantalla visible, cerrar
+        if (rect.bottom < 0 || rect.top > window.innerHeight) {
+          this.closePopover();
+        } else {
+          this.updateAnchorPosition(this.currentAnchor);
+        }
+      }
+    };
+
+    this.document.addEventListener('mouseover', onMouseOver, true);
+    this.document.addEventListener('mouseout', onMouseOut, true);
+    this.document.addEventListener('focusin', onFocusIn, true);
+    this.document.addEventListener('focusout', onFocusOut, true);
+    this.document.addEventListener('click', onClick, true);
+    window.addEventListener('keydown', onKeyDown, true);
+    window.addEventListener('scroll', onScrollOrResize, { passive: true, capture: true });
+    window.addEventListener('resize', onScrollOrResize, { passive: true });
+
+    this.cleanupListeners = () => {
+      this.document.removeEventListener('mouseover', onMouseOver, true);
+      this.document.removeEventListener('mouseout', onMouseOut, true);
+      this.document.removeEventListener('focusin', onFocusIn, true);
+      this.document.removeEventListener('focusout', onFocusOut, true);
+      this.document.removeEventListener('click', onClick, true);
+      window.removeEventListener('keydown', onKeyDown, true);
+      window.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
+    };
+  }
 
   onTargetEnter(anchor: HTMLElement): void {
     if (this.leaveTimer) {
       clearTimeout(this.leaveTimer);
       this.leaveTimer = null;
     }
+
+    // Si ya estamos esperando abrir este mismo anchor o ya está abierto, no reiniciar el timer
+    if (this.currentAnchor === anchor) {
+      if (this.hoverTimer) {
+        return;
+      }
+      if (this.activePopover()) {
+        return;
+      }
+    }
+
+    this.currentAnchor = anchor;
+
     if (this.hoverTimer) {
       clearTimeout(this.hoverTimer);
     }
+
+    // Si ya hay un popover abierto de otro término, el cambio debe ser ágil (120ms)
+    const delay = this.activePopover() ? 120 : 200;
+
     this.hoverTimer = setTimeout(() => {
+      this.hoverTimer = null;
       this.resolveForAnchor(anchor);
-    }, 250);
+    }, delay);
   }
 
   onTargetLeave(): void {
@@ -39,9 +172,11 @@ export class WikiRefService {
     if (this.leaveTimer) {
       clearTimeout(this.leaveTimer);
     }
+    // Margen de gracia generoso (250ms) para que el cursor cruce al popover sin que se cierre
     this.leaveTimer = setTimeout(() => {
+      this.leaveTimer = null;
       this.closePopover();
-    }, 150);
+    }, 250);
   }
 
   keepOpen(): void {
@@ -54,15 +189,47 @@ export class WikiRefService {
   openImmediately(anchor: HTMLElement): void {
     if (this.hoverTimer) clearTimeout(this.hoverTimer);
     if (this.leaveTimer) clearTimeout(this.leaveTimer);
+    this.hoverTimer = null;
+    this.leaveTimer = null;
+    this.currentAnchor = anchor;
     this.resolveForAnchor(anchor);
+  }
+
+  private updateAnchorPosition(anchor: HTMLElement): void {
+    const current = this.activePopover();
+    if (!current) return;
+    const rect = anchor.getBoundingClientRect();
+    this.activePopover.set({
+      ...current,
+      x: rect.left,
+      y: rect.bottom,
+      anchorRect: {
+        top: rect.top,
+        bottom: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+        height: rect.height
+      }
+    });
   }
 
   private resolveForAnchor(anchor: HTMLElement): void {
     const rect = anchor.getBoundingClientRect();
+    const anchorRect: WikiAnchorRect = {
+      top: rect.top,
+      bottom: rect.bottom,
+      left: rect.left,
+      right: rect.right,
+      width: rect.width,
+      height: rect.height
+    };
+
     const cmd = anchor.getAttribute('data-cmd');
     const term = anchor.getAttribute('data-term');
     const termRef = anchor.getAttribute('data-term-ref');
     const href = anchor.getAttribute('href') || '';
+    const title = anchor.getAttribute('title') || '';
 
     let type: 'command' | 'term' = 'command';
     let id = '';
@@ -91,12 +258,62 @@ export class WikiRefService {
       if (m && m[1]) id = decodeURIComponent(m[1]);
     }
 
+    // Extracción de respaldo desde el atributo title ("Comando: grep", "Término: usb")
+    if (!id && title) {
+      const matchCmd = title.match(/Comando:\s*([^\s]+)/i);
+      if (matchCmd && matchCmd[1]) {
+        type = 'command';
+        id = matchCmd[1];
+      } else {
+        const matchTerm = title.match(/T[ée]rmino:\s*([^\s]+)/i);
+        if (matchTerm && matchTerm[1]) {
+          type = 'term';
+          id = matchTerm[1];
+        }
+      }
+    }
+
+    // Extracción de respaldo desde el contenido textual del enlace
+    if (!id) {
+      const text = anchor.textContent?.trim().replace(/^[💻📖]\s*/, '') || '';
+      if (text) {
+        if (anchor.classList.contains('wiki-cmd-link')) {
+          type = 'command';
+          id = text;
+        } else if (anchor.classList.contains('wiki-term-link')) {
+          type = 'term';
+          id = text;
+        }
+      }
+    }
+
     if (id) {
-      this.resolveRef(type, id, rect.left, rect.bottom + window.scrollY);
+      // Coordenadas relativas estrictamente al VIEWPORT (rect.left, rect.bottom), sin window.scrollY
+      this.resolveRef(type, id.trim(), rect.left, rect.bottom, anchorRect);
     }
   }
 
-  async resolveRef(type: 'command' | 'term', id: string, x: number, y: number): Promise<void> {
+  async resolveRef(
+    type: 'command' | 'term',
+    id: string,
+    x: number,
+    y: number,
+    anchorRect?: WikiAnchorRect
+  ): Promise<void> {
+    // Normalizar si algún llamador antiguo sumó window.scrollY
+    if (typeof window !== 'undefined' && window.scrollY > 0 && y > window.innerHeight && y >= window.scrollY) {
+      y = y - window.scrollY;
+    }
+
+    const effectiveRect: WikiAnchorRect = anchorRect ?? {
+      top: y - 24,
+      bottom: y,
+      left: x,
+      right: x + 60,
+      width: 60,
+      height: 24
+    };
+
     await this.ensureCaches();
 
     if (type === 'command') {
@@ -117,7 +334,8 @@ export class WikiRefService {
           locations,
           sinExplicacion: cmd.sinExplicacion,
           x,
-          y
+          y,
+          anchorRect: effectiveRect
         });
       } else {
         // Fallback
@@ -134,7 +352,8 @@ export class WikiRefService {
           queryParams: { q: id },
           sinExplicacion: 'Comando complementario de Linux.',
           x,
-          y
+          y,
+          anchorRect: effectiveRect
         });
       }
     } else {
@@ -154,7 +373,8 @@ export class WikiRefService {
           locations,
           sinExplicacion: term.sinExplicacion,
           x,
-          y
+          y,
+          anchorRect: effectiveRect
         });
       } else {
         // Fallback
@@ -170,7 +390,8 @@ export class WikiRefService {
           queryParams: { q: id },
           sinExplicacion: 'Concepto evaluado en el temario general.',
           x,
-          y
+          y,
+          anchorRect: effectiveRect
         });
       }
     }
@@ -203,34 +424,44 @@ export class WikiRefService {
   closePopover(): void {
     if (this.hoverTimer) clearTimeout(this.hoverTimer);
     if (this.leaveTimer) clearTimeout(this.leaveTimer);
+    this.hoverTimer = null;
+    this.leaveTimer = null;
+    this.currentAnchor = null;
     this.activePopover.set(null);
   }
 
   private async ensureCaches(): Promise<void> {
-    if (!this.commandsCache) {
-      this.commandsCache = new Map();
-      try {
-        const cmds = await this.contentService.getCommands();
-        cmds.forEach((c) => {
-          this.commandsCache!.set(c.id.toLowerCase(), c);
-          this.commandsCache!.set(c.name.toLowerCase(), c);
-        });
-      } catch {
-        // Se llenará con fallbacks
-      }
-    }
+    if (this.commandsCache && this.glossaryCache) return;
+    if (this.ensureCachesPromise) return this.ensureCachesPromise;
 
-    if (!this.glossaryCache) {
-      this.glossaryCache = new Map();
-      try {
-        const terms = await this.contentService.getGlossary();
-        terms.forEach((t) => {
-          this.glossaryCache!.set(t.id.toLowerCase(), t);
-          this.glossaryCache!.set(t.term.toLowerCase(), t);
-        });
-      } catch {
-        // Se llenará con fallbacks
+    this.ensureCachesPromise = (async () => {
+      if (!this.commandsCache) {
+        this.commandsCache = new Map();
+        try {
+          const cmds = await this.contentService.getCommands();
+          cmds.forEach((c) => {
+            this.commandsCache!.set(c.id.toLowerCase(), c);
+            this.commandsCache!.set(c.name.toLowerCase(), c);
+          });
+        } catch {
+          // Se llenará con fallbacks
+        }
       }
-    }
+
+      if (!this.glossaryCache) {
+        this.glossaryCache = new Map();
+        try {
+          const terms = await this.contentService.getGlossary();
+          terms.forEach((t) => {
+            this.glossaryCache!.set(t.id.toLowerCase(), t);
+            this.glossaryCache!.set(t.term.toLowerCase(), t);
+          });
+        } catch {
+          // Se llenará con fallbacks
+        }
+      }
+    })();
+
+    return this.ensureCachesPromise;
   }
 }

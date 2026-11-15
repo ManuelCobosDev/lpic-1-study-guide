@@ -32,8 +32,7 @@ describe('LessonPrintPageComponent', () => {
             type: 'paragraph',
             text: 'Texto explicativo sobre pipes.'
           }
-        ],
-        notes: 'Nota didáctica'
+        ]
       }
     ]
   };
@@ -53,7 +52,7 @@ describe('LessonPrintPageComponent', () => {
           useValue: {
             snapshot: {
               params: { subtema: '103.4' },
-              queryParams: { formato: 'documento', notas: '1' }
+              queryParams: { formato: 'documento' }
             }
           }
         }
@@ -89,12 +88,6 @@ describe('LessonPrintPageComponent', () => {
     const event = { target: { value: 'diapositivas' } } as unknown as Event;
     component.onFormatoChange(event);
     expect(component.formato()).toBe('diapositivas');
-  });
-
-  it('debe alternar la inclusión de notas', () => {
-    const event = { target: { checked: false } } as unknown as Event;
-    component.onNotasToggle(event);
-    expect(component.incluirNotas()).toBe(false);
   });
 });
 

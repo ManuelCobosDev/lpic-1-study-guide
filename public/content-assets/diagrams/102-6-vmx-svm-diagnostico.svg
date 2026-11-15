@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="vmx-svm-title vmx-svm-desc">
+  <title id="vmx-svm-title">Comprobación de las extensiones vmx y svm antes de instalar KVM (LPIC-1 102.6)</title>
+  <desc id="vmx-svm-desc">Flujo de diagnóstico del host. El comando grep --color -E "vmx|svm" /proc/cpuinfo busca los flags de virtualización del procesador. Si la salida contiene vmx en una CPU Intel o svm en una AMD, la extensión está activa (Intel VT-x o AMD-V) y se puede confirmar con lsmod | grep kvm, que muestra kvm_intel o kvm_amd. Si no aparece ningún flag, la virtualización está desactivada en la BIOS o el firmware UEFI y hay que habilitar Intel VT-x o AMD SVM antes de instalar los paquetes KVM.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #475569; }
+      .node-cmd { fill: #EFF4FF; stroke: #2550EB; stroke-width: 2; }
+      .node-ok { fill: #ECFDF5; stroke: #059669; stroke-width: 2; }
+      .node-warn { fill: #FFF1F2; stroke: #E11D48; stroke-width: 2; }
+      .mono-title { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 17px; font-weight: 700; fill: #0F172A; }
+      .mono-line { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 15px; font-weight: 500; fill: #1E36AF; }
+      .mono-line-ok { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; font-weight: 600; fill: #065F46; }
+      .mono-line-warn { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; font-weight: 600; fill: #881337; }
+      .q-title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 17px; font-weight: 700; fill: #0F172A; }
+      .q-sub { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 14px; font-weight: 500; fill: #475569; }
+      .ok-title { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 17px; font-weight: 700; fill: #065F46; }
+      .ok-line { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #334155; }
+      .warn-title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 700; fill: #881337; }
+      .warn-line { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #881337; }
+      .zone { fill: #F8FAFC; stroke: #CBD5E1; stroke-width: 1.5; stroke-dasharray: 8 6; }
+      .zone-head { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #64748B; letter-spacing: 0.08em; }
+      .zone-line { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #334155; }
+      .edge-blue { fill: none; stroke: #1D40D8; stroke-width: 2.5; }
+      .plaque { fill: #FFFFFF; stroke: #CBD5E1; stroke-width: 1; }
+      .plaque-text { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #1E36AF; text-anchor: middle; }
+    </style>
+
+    <marker id="vmx-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#1D40D8"/>
+    </marker>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">HOST KVM · COMPROBACIÓN PREVIA</text>
+    <text class="title" x="40" y="78">¿Están las extensiones activas?</text>
+    <text class="subtitle" x="40" y="102">Intel vmx · AMD svm · se leen en /proc/cpuinfo</text>
+  </g>
+
+  <g id="diagram-relations">
+    <path id="vmx-rel-grep-decision" class="edge-blue" data-from="node-grep" data-to="node-decision" data-relation="returns-flags"
+          d="M 340 205 H 390" marker-end="url(#vmx-arrow)"/>
+    <path id="vmx-rel-decision-ok" class="edge-blue" data-from="node-decision" data-to="node-ok" data-relation="yes-flags-present"
+          d="M 640 180 H 665 V 165 H 690" marker-end="url(#vmx-arrow)"/>
+    <path id="vmx-rel-decision-warn" class="edge-blue" data-from="node-decision" data-to="node-warn" data-relation="no-flags"
+          d="M 640 230 H 665 V 350 H 690" marker-end="url(#vmx-arrow)"/>
+  </g>
+
+  <g id="diagram-groups">
+    <g id="zone-host">
+      <rect class="zone" x="40" y="346" width="340" height="124" rx="10"/>
+      <text class="zone-head" x="62" y="370">SI YA ESTÁ ACTIVA</text>
+      <text class="zone-line" x="62" y="396">Instala los paquetes KVM de tu</text>
+      <text class="zone-line" x="62" y="418">distribución y, en escritorio,</text>
+      <text class="zone-line" x="62" y="440">añade virt-manager; la VM se</text>
+      <text class="zone-line" x="62" y="462">crea con virt-install o la ISO.</text>
+    </g>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-grep">
+      <rect class="node-cmd" x="40" y="150" width="300" height="110" rx="10"/>
+      <text class="mono-title" x="62" y="190">grep --color -E</text>
+      <text class="mono-line" x="62" y="220">"vmx|svm"</text>
+      <text class="mono-line" x="62" y="246">/proc/cpuinfo</text>
+    </g>
+
+    <g id="node-decision">
+      <rect class="node-cmd" x="390" y="150" width="250" height="110" rx="10"/>
+      <text class="q-title" x="412" y="190">¿Devuelve</text>
+      <text class="q-title" x="412" y="214">vmx o svm?</text>
+      <text class="q-sub" x="412" y="242">en /proc/cpuinfo</text>
+    </g>
+
+    <g id="node-ok">
+      <rect class="node-ok" x="690" y="90" width="230" height="150" rx="10"/>
+      <text class="ok-title" x="712" y="124">Sí: vmx o svm</text>
+      <text class="ok-line" x="712" y="150">Intel VT-x o AMD-V</text>
+      <text class="mono-line-ok" x="712" y="176">lsmod | grep kvm</text>
+      <text class="mono-line-ok" x="712" y="200">kvm_intel o kvm_amd</text>
+      <text class="ok-line" x="712" y="224">módulo kvm cargado</text>
+    </g>
+
+    <g id="node-warn">
+      <rect class="node-warn" x="690" y="310" width="230" height="140" rx="10"/>
+      <text class="warn-title" x="712" y="342">No aparecen</text>
+      <text class="warn-line" x="712" y="368">Virtualización desactivada</text>
+      <text class="warn-line" x="712" y="390">en la BIOS o el firmware:</text>
+      <text class="mono-line-warn" x="712" y="416">Intel VT-x / AMD SVM</text>
+      <text class="warn-line" x="712" y="438">antes de instalar KVM</text>
+    </g>
+  </g>
+
+  <g id="diagram-labels">
+    <rect class="plaque" x="646" y="140" width="40" height="24" rx="6"/>
+    <text class="plaque-text" x="666" y="157">sí</text>
+    <rect class="plaque" x="676" y="272" width="40" height="24" rx="6"/>
+    <text class="plaque-text" x="696" y="289">no</text>
+  </g>
+</svg>

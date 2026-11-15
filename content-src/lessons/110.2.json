@@ -85,14 +85,32 @@
         },
         {
           "type": "paragraph",
-          "text": "En los primeros sistemas UNIX, las contraseñas cifradas se almacenaban en `/etc/passwd`. Al requerir permisos de lectura pública para resolver UIDs a nombres, cualquier usuario podía extraer los hashes para ataques offline de diccionario o fuerza bruta. El conjunto de utilidades shadow resolvió este riesgo crítico separando las funciones en dos archivos:"
+          "text": "`/etc/passwd` debe ser legible por todos los usuarios para resolver UIDs a nombres, así que el hash nunca se guarda ahí. El conjunto de utilidades shadow separa las funciones en dos archivos:"
         },
         {
           "type": "table",
-          "headers": ["Archivo", "Campos", "Permisos estándar", "Propietario : Grupo", "Contenido y Seguridad"],
+          "headers": [
+            "Archivo",
+            "Campos",
+            "Permisos estándar",
+            "Propietario : Grupo",
+            "Contenido y Seguridad"
+          ],
           "rows": [
-            ["/etc/passwd", "7 campos", "0644 (-rw-r--r--)", "root : root", "Metadatos de usuario (login, UID, GID, GECOS, HOME, Shell). El campo 2 contiene una 'x' fija que indica que el hash reside en shadow."],
-            ["/etc/shadow", "9 campos", "0640 (-rw-r-----) o 0600", "root : shadow (o root)", "Almacena los hashes cifrados de contraseñas y parámetros de caducidad. Inaccesible para usuarios sin privilegios."]
+            [
+              "/etc/passwd",
+              "7 campos",
+              "0644 (-rw-r--r--)",
+              "root : root",
+              "Metadatos de usuario (login, UID, GID, GECOS, HOME, Shell). El campo 2 contiene una 'x' fija que indica que el hash reside en shadow."
+            ],
+            [
+              "/etc/shadow",
+              "9 campos",
+              "0640 (-rw-r-----) o 0600",
+              "root : shadow (o root)",
+              "Almacena los hashes cifrados de contraseñas y parámetros de caducidad. Inaccesible para usuarios sin privilegios."
+            ]
           ]
         },
         {
@@ -120,12 +138,42 @@
         },
         {
           "type": "table",
-          "headers": ["Método", "Alcance", "Mecanismo técnico", "Comando / Archivo involucrado"],
+          "headers": [
+            "Método",
+            "Alcance",
+            "Mecanismo técnico",
+            "Comando / Archivo involucrado"
+          ],
           "rows": [
-            ["Archivo /etc/nologin", "Global (todos los usuarios no-root)", "Si el archivo existe, ningún usuario común puede iniciar sesión. Su contenido se imprime en pantalla como mensaje explicativo. ¡El usuario root siempre puede acceder!", "touch /etc/nologin\necho 'Mantenimiento en curso' > /etc/nologin"],
-            ["Shell restrictiva", "Individual por usuario", "Se sustituye la shell válida por una shell nula en /etc/passwd: '/sbin/nologin' (imprime mensaje informativo y sale) o '/bin/false' (retorna código 1 y sale silenciosamente).", "usermod -s /sbin/nologin usuario\nusermod -s /bin/false usuario"],
-            ["Bloqueo de hash", "Individual por credencial", "Antepone un signo '!' al hash cifrado en /etc/shadow, invalidando cualquier coincidencia de contraseña.", "passwd -l usuario\nusermod -L usuario\nchage -E 0 usuario"]
+            [
+              "Archivo /etc/nologin",
+              "Global (todos los usuarios no-root)",
+              "Si el archivo existe, ningún usuario común puede iniciar sesión. Su contenido se imprime en pantalla como mensaje explicativo. ¡El usuario root siempre puede acceder!",
+              "touch /etc/nologin\necho 'Mantenimiento en curso' > /etc/nologin"
+            ],
+            [
+              "Shell restrictiva",
+              "Individual por usuario",
+              "Se sustituye la shell válida por una shell nula en /etc/passwd: '/sbin/nologin' (imprime mensaje informativo y sale) o '/bin/false' (retorna código 1 y sale silenciosamente).",
+              "usermod -s /sbin/nologin usuario\nusermod -s /bin/false usuario"
+            ],
+            [
+              "Bloqueo de hash",
+              "Individual por credencial",
+              "Antepone un signo '!' al hash cifrado en /etc/shadow, invalidando cualquier coincidencia de contraseña.",
+              "passwd -l usuario\nusermod -L usuario\nchage -E 0 usuario"
+            ]
           ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Para revertir el bloqueo o invalidar la cuenta por fecha, `passwd` y `chage` modifican la misma entrada de `/etc/shadow`:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "title": "Desbloqueo y caducidad de la cuenta",
+          "code": "# Desbloqueo y caducidad (modifican /etc/shadow)\npasswd -u emma             # desbloquea la cuenta (elimina el '!')\nchage -l emma              # lista los ajustes de caducidad\nchage -E -1 emma           # fija la caducidad en 'nunca'\nchage -E 2020-03-26 emma   # fecha pasada: la cuenta no puede entrar"
         },
         {
           "type": "callout",
@@ -195,18 +243,72 @@
         },
         {
           "type": "table",
-          "headers": ["Directiva de xinetd", "Propósito", "Valores representativos"],
+          "headers": [
+            "Directiva de xinetd",
+            "Propósito",
+            "Valores representativos"
+          ],
           "rows": [
-            ["service <nombre>", "Define el bloque del servicio.", "service daytime, service tftp"],
-            ["disable", "Activa (no) o desactiva (yes) el servicio.", "disable = no"],
-            ["socket_type", "Tipo de socket de transporte.", "stream (TCP) o dgram (UDP)"],
-            ["protocol", "Protocolo de red.", "tcp o udp"],
-            ["wait", "Control de concurrencia: 'yes' (monohilo, el demonio procesa y sale) o 'no' (multihilo, xinetd sigue escuchando).", "wait = no"],
-            ["user", "Usuario del sistema con cuyos privilegios se ejecutará el binario.", "user = nobody, user = root"],
-            ["server", "Ruta absoluta al binario ejecutable que atiende la conexión.", "server = /usr/sbin/in.tftpd"],
-            ["server_args", "Parámetros y banderas pasados al binario al iniciarse.", "server_args = -s /srv/tftp"],
-            ["only_from", "Lista de direcciones IP o redes autorizadas a conectar.", "only_from = 192.168.1.0/24 127.0.0.1"],
-            ["no_access", "Lista de direcciones IP o redes explícitamente bloqueadas.", "no_access = 10.0.0.0/8"]
+            [
+              "service <nombre>",
+              "Define el bloque del servicio.",
+              "service daytime, service tftp"
+            ],
+            [
+              "disable",
+              "Activa (no) o desactiva (yes) el servicio.",
+              "disable = no"
+            ],
+            [
+              "socket_type",
+              "Tipo de socket de transporte.",
+              "stream (TCP) o dgram (UDP)"
+            ],
+            [
+              "protocol",
+              "Protocolo de red.",
+              "tcp o udp"
+            ],
+            [
+              "wait",
+              "Control de concurrencia: 'yes' (monohilo, el demonio procesa y sale) o 'no' (multihilo, xinetd sigue escuchando).",
+              "wait = no"
+            ],
+            [
+              "user",
+              "Usuario del sistema con cuyos privilegios se ejecutará el binario.",
+              "user = nobody, user = root"
+            ],
+            [
+              "server",
+              "Ruta absoluta al binario ejecutable que atiende la conexión.",
+              "server = /usr/sbin/in.tftpd"
+            ],
+            [
+              "server_args",
+              "Parámetros y banderas pasados al binario al iniciarse.",
+              "server_args = -s /srv/tftp"
+            ],
+            [
+              "flags",
+              "Banderas de comportamiento del servicio, como la familia de direcciones (IPv4, IPv6).",
+              "flags = IPv4"
+            ],
+            [
+              "interface",
+              "Interfaz de red en la que xinetd debe escuchar. 'bind' es su sinónimo.",
+              "interface = 192.168.178.1 (bind = ...)"
+            ],
+            [
+              "only_from",
+              "Lista de direcciones IP o redes autorizadas a conectar.",
+              "only_from = 192.168.1.0/24 127.0.0.1"
+            ],
+            [
+              "no_access",
+              "Lista de direcciones IP o redes explícitamente bloqueadas.",
+              "no_access = 10.0.0.0/8"
+            ]
           ]
         },
         {
@@ -214,6 +316,12 @@
           "language": "text",
           "title": "Ejemplo real de /etc/xinetd.d/daytime",
           "code": "service daytime\n{\n    disable         = no\n    type            = INTERNAL\n    id              = daytime-stream\n    socket_type     = stream\n    protocol        = tcp\n    user            = root\n    wait            = no\n    only_from       = 192.168.1.0/24\n}"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Nombres de archivo válidos en /etc/xinetd.d/",
+          "content": "El nombre de cada archivo de servicio se elige libremente, salvo que contenga un punto (`.`) o termine en tilde (`~`): por eso `daytime` es válido, pero `daytime.conf` o `daytime~` no lo son."
         }
       ]
     },
@@ -234,12 +342,32 @@
         },
         {
           "type": "table",
-          "headers": ["Directiva .socket", "Significado técnico", "Ejemplo práctico"],
+          "headers": [
+            "Directiva .socket",
+            "Significado técnico",
+            "Ejemplo práctico"
+          ],
           "rows": [
-            ["ListenStream=", "Escucha conexiones basadas en flujos orientados a conexión (TCP) o sockets UNIX stream.", "ListenStream=2222\nListenStream=/run/cups/cups.sock"],
-            ["ListenDatagram=", "Escucha paquetes de datagramas UDP.", "ListenDatagram=0.0.0.0:123"],
-            ["Accept=yes", "Crea una nueva instancia del servicio por cada conexión entrante (ej. 'cups@<id>.service'). Equivale a 'wait = no' en xinetd.", "Accept=yes"],
-            ["Accept=no", "Inicia una única instancia compartida del servicio que gestiona todas las conexiones recibidas.", "Accept=no"]
+            [
+              "ListenStream=",
+              "Escucha conexiones basadas en flujos orientados a conexión (TCP) o sockets UNIX stream.",
+              "ListenStream=2222\nListenStream=/run/cups/cups.sock"
+            ],
+            [
+              "ListenDatagram=",
+              "Escucha paquetes de datagramas UDP.",
+              "ListenDatagram=0.0.0.0:123"
+            ],
+            [
+              "Accept=yes",
+              "Crea una nueva instancia del servicio por cada conexión entrante (ej. 'cups@<id>.service'). Equivale a 'wait = no' en xinetd.",
+              "Accept=yes"
+            ],
+            [
+              "Accept=no",
+              "Inicia una única instancia compartida del servicio que gestiona todas las conexiones recibidas.",
+              "Accept=no"
+            ]
           ]
         },
         {
@@ -271,13 +399,48 @@
         },
         {
           "type": "table",
-          "headers": ["Sistema de Init", "Comando para detener", "Comando para deshabilitar del arranque", "Comando para bloquear"],
+          "headers": [
+            "Sistema de Init",
+            "Comando para detener",
+            "Comando para deshabilitar del arranque",
+            "Comando para bloquear"
+          ],
           "rows": [
-            ["SysVinit (/etc/inittab)", "Comentar entrada o cambiar 'respawn' a 'off' en /etc/inittab", "init q (o telinit q) para releer /etc/inittab", "Comentar línea del demonio en /etc/inittab"],
-            ["SysVinit (Debian)", "/etc/init.d/servicio stop", "update-rc.d servicio disable (o remove)", "Eliminar enlaces S* en /etc/rc*.d/"],
-            ["SysVinit (Red Hat)", "service servicio stop", "chkconfig servicio off", "chkconfig --del servicio"],
-            ["systemd (Moderno)", "systemctl stop servicio", "systemctl disable servicio\n(o systemctl disable --now servicio)", "systemctl mask servicio (enlaza a /dev/null impidiendo cualquier inicio)"]
+            [
+              "SysVinit (/etc/inittab)",
+              "Comentar entrada o cambiar 'respawn' a 'off' en /etc/inittab",
+              "init q (o telinit q) para releer /etc/inittab",
+              "Comentar línea del demonio en /etc/inittab"
+            ],
+            [
+              "SysVinit (Debian)",
+              "/etc/init.d/servicio stop",
+              "update-rc.d servicio disable (o remove)",
+              "Eliminar enlaces S* en /etc/rc*.d/"
+            ],
+            [
+              "SysVinit (Red Hat)",
+              "service servicio stop",
+              "chkconfig servicio off",
+              "chkconfig --del servicio"
+            ],
+            [
+              "systemd (Moderno)",
+              "systemctl stop servicio",
+              "systemctl disable servicio\n(o systemctl disable --now servicio)",
+              "systemctl mask servicio (enlaza a /dev/null impidiendo cualquier inicio)"
+            ]
           ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Antes de desactivar nada, conviene listar qué servicios están activos en cada sistema de init:"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "title": "Descubrir servicios en ejecución",
+          "code": "# SysVinit\nservice --status-all\n\n# systemd\nsystemctl list-units --state active --type service"
         },
         {
           "type": "callout",
@@ -304,12 +467,32 @@
         },
         {
           "type": "table",
-          "headers": ["Herramienta", "Comando de auditoría", "Detalle técnico"],
+          "headers": [
+            "Herramienta",
+            "Comando de auditoría",
+            "Detalle técnico"
+          ],
           "rows": [
-            ["ss (Socket Statistics)", "ss -tulpn", "Reemplazo moderno de netstat. Consulta directamente la API Netlink del kernel, siendo órdenes de magnitud más rápido en hosts cargados."],
-            ["netstat (Net-tools)", "netstat -tulpn", "Utilidad tradicional que parsea los ficheros /proc/net/. Mismas opciones: -t (TCP), -u (UDP), -l (listen), -p (PID), -n (numérico)."],
-            ["lsof", "lsof -iTCP -sTCP:LISTEN", "Audita descriptores de archivos de red filtrando solo sockets TCP en estado LISTEN."],
-            ["nc (netcat)", "nc -zv 192.168.1.50 20-25", "Comprueba conectividad remota hacia puertos específicos ('-z' modo escaneo sin enviar datos, '-v' verbose)."]
+            [
+              "ss (Socket Statistics)",
+              "ss -tulpn",
+              "Reemplazo moderno de netstat. Consulta directamente la API Netlink del kernel, siendo órdenes de magnitud más rápido en hosts cargados."
+            ],
+            [
+              "netstat (Net-tools)",
+              "netstat -tulpn",
+              "Utilidad tradicional que parsea los ficheros /proc/net/. Mismas opciones: -t (TCP), -u (UDP), -l (listen), -p (PID), -n (numérico)."
+            ],
+            [
+              "lsof",
+              "lsof -iTCP -sTCP:LISTEN",
+              "Audita descriptores de archivos de red filtrando solo sockets TCP en estado LISTEN."
+            ],
+            [
+              "nc (netcat)",
+              "nc -zv 192.168.1.50 20-25",
+              "Comprueba conectividad remota hacia puertos específicos ('-z' modo escaneo sin enviar datos, '-v' verbose)."
+            ]
           ]
         },
         {
@@ -362,6 +545,14 @@
               "command": "ldd /usr/sbin/sshd | grep libwrap",
               "output": "libwrap.so.0 => /lib/x86_64-linux-gnu/libwrap.so.0 (0x00007fc465134000)"
             }
+          ]
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "Los cambios en `/etc/hosts.allow` y `/etc/hosts.deny` tienen **efecto inmediato**: no es necesario reiniciar ningún servicio.",
+            "Hoy muchos programas ya no obedecen a TCP Wrappers; en distribuciones recientes basadas en Red Hat (p. ej. Fedora 29) el soporte **se eliminó por completo**."
           ]
         },
         {
@@ -432,14 +623,42 @@
         },
         {
           "type": "table",
-          "headers": ["Comodín / Operador", "Comportamiento", "Ejemplo práctico"],
+          "headers": [
+            "Comodín / Operador",
+            "Comportamiento",
+            "Ejemplo práctico"
+          ],
           "rows": [
-            ["ALL", "Coincide con todos los demonios o todos los clientes.", "ALL : ALL"],
-            ["LOCAL", "Coincide con cualquier host cuyo nombre no contenga un punto (mismo dominio local).", "sshd : LOCAL"],
-            ["UNKNOWN", "Coincide si la dirección IP no resuelve por DNS inverso o si el usuario es desconocido.", "in.telnetd : UNKNOWN"],
-            ["KNOWN", "Coincide si tanto el nombre como la dirección resuelven correctamente.", "ALL : KNOWN"],
-            ["PARANOID", "Coincide si la resolución DNS directa de un nombre no coincide con la resolución inversa de su IP (alerta de suplantación/spoofing).", "ALL : PARANOID : DENY"],
-            ["EXCEPT", "Operador de excepción para excluir elementos de una lista.", "sshd : 192.168.1. EXCEPT 192.168.1.50"]
+            [
+              "ALL",
+              "Coincide con todos los demonios o todos los clientes.",
+              "ALL : ALL"
+            ],
+            [
+              "LOCAL",
+              "Coincide con cualquier host cuyo nombre no contenga un punto (mismo dominio local).",
+              "sshd : LOCAL"
+            ],
+            [
+              "UNKNOWN",
+              "Coincide si la dirección IP no resuelve por DNS inverso o si el usuario es desconocido.",
+              "in.telnetd : UNKNOWN"
+            ],
+            [
+              "KNOWN",
+              "Coincide si tanto el nombre como la dirección resuelven correctamente.",
+              "ALL : KNOWN"
+            ],
+            [
+              "PARANOID",
+              "Coincide si la resolución DNS directa de un nombre no coincide con la resolución inversa de su IP (alerta de suplantación/spoofing).",
+              "ALL : PARANOID : DENY"
+            ],
+            [
+              "EXCEPT",
+              "Operador de excepción para excluir elementos de una lista.",
+              "sshd : 192.168.1. EXCEPT 192.168.1.50"
+            ]
           ]
         },
         {
@@ -467,13 +686,43 @@
         },
         {
           "type": "table",
-          "headers": ["Mecanismo", "Capa del modelo", "Punto fuerte", "Limitación"],
+          "headers": [
+            "Mecanismo",
+            "Capa del modelo",
+            "Punto fuerte",
+            "Limitación"
+          ],
           "rows": [
-            ["Netfilter / iptables / nftables", "Red / Kernel (Capa 3 y 4)", "Máximo rendimiento, descarta paquetes antes de llegar al userspace.", "No inspecciona nombres de usuario ni banners de aplicación."],
-            ["TCP Wrappers (libwrap)", "Aplicación / Host", "Fácil de configurar en dos archivos de texto, soporte de comodines DNS y syslog.", "Solo protege aplicaciones enlazadas con libwrap.so."],
-            ["xinetd (only_from / no_access)", "Superdemonio (userspace)", "Control de acceso por IP integrado para servicios bajo demanda.", "Solo aplica a servicios gestionados por xinetd."],
-            ["/etc/nologin", "Autenticación PAM / Login", "Bloqueo universal instantáneo sin alterar contraseñas de cuentas.", "No bloquea al superusuario root ni ataques de red directos."],
-            ["Shell /sbin/nologin", "Gestión de cuentas (passwd)", "Bloquea inicio interactivo individual imprimiendo mensaje.", "El usuario aún puede ejecutar tareas de cron o comandos sin shell si se configuran."]
+            [
+              "Netfilter / iptables / nftables",
+              "Red / Kernel (Capa 3 y 4)",
+              "Máximo rendimiento, descarta paquetes antes de llegar al userspace.",
+              "No inspecciona nombres de usuario ni banners de aplicación."
+            ],
+            [
+              "TCP Wrappers (libwrap)",
+              "Aplicación / Host",
+              "Fácil de configurar en dos archivos de texto, soporte de comodines DNS y syslog.",
+              "Solo protege aplicaciones enlazadas con libwrap.so."
+            ],
+            [
+              "xinetd (only_from / no_access)",
+              "Superdemonio (userspace)",
+              "Control de acceso por IP integrado para servicios bajo demanda.",
+              "Solo aplica a servicios gestionados por xinetd."
+            ],
+            [
+              "/etc/nologin",
+              "Autenticación PAM / Login",
+              "Bloqueo universal instantáneo sin alterar contraseñas de cuentas.",
+              "No bloquea al superusuario root ni ataques de red directos."
+            ],
+            [
+              "Shell /sbin/nologin",
+              "Gestión de cuentas (passwd)",
+              "Bloquea inicio interactivo individual imprimiendo mensaje.",
+              "El usuario aún puede ejecutar tareas de cron o comandos sin shell si se configuran."
+            ]
           ]
         }
       ]
@@ -598,13 +847,12 @@
           "type": "list",
           "ordered": false,
           "items": [
-            "**/etc/passwd vs /etc/shadow**: passwd tiene 7 campos y permisos 0644; shadow tiene 9 campos y permisos 0640/0600. El campo de contraseña en passwd contiene 'x'.",
-            "**Control de login**: bloqueo global con `/etc/nologin` (permite solo a root) y por usuario con shells nulas `/sbin/nologin` o `/bin/false`.",
-            "**xinetd**: configuración modular en `/etc/xinetd.conf` y `/etc/xinetd.d/*` con `disable = no`. Mapeo de nombres en `/etc/services`.",
-            "**systemd.socket**: activación bajo demanda con directivas `ListenStream=` y `Accept=yes|no` vinculada a unidad `.service` homónima.",
-            "**Desactivación limpia**: `systemctl disable --now <srv>` en systemd; `update-rc.d` (Debian) y `chkconfig` (Red Hat) en SysV.",
-            "**ss y netstat**: auditoría con `-tulpn`, inspección de sockets con `lsof -i` y escaneo con `nc -zv`.",
-            "**TCP Wrappers**: `ldd` comprueba `libwrap.so`. Orden: 1º `hosts.allow` -> 2º `hosts.deny` -> 3º Permitir por defecto. Comodines `ALL`, `LOCAL`, `PARANOID` y `EXCEPT`."
+            "**/etc/passwd vs /etc/shadow**: 7 campos y 0644 frente a 9 campos y 0640/0600; en passwd el campo 2 contiene la 'x'.",
+            "**Control de login**: `/etc/nologin` deja entrar solo a root; `/sbin/nologin` y `/bin/false` bloquean por usuario. `passwd -l`/`-u` bloquean y desbloquean; `chage -l` y `chage -E -1` gestionan la caducidad.",
+            "**xinetd**: `disable = no` activa el servicio; directivas clave `socket_type`, `wait`, `server`, `flags` e `interface` (`bind`). Los nombres en `/etc/xinetd.d/` no llevan punto ni tilde.",
+            "**systemd.socket**: activación bajo demanda con `ListenStream=` y `Accept=yes|no`, vinculada a una unidad `.service` homónima.",
+            "**Desactivación y auditoría**: `systemctl disable --now`; `update-rc.d` (Debian) y `chkconfig` (Red Hat); `ss -tulpn`, `netstat -tulpn`, `lsof -i` y `nc -zv`.",
+            "**TCP Wrappers**: `ldd` comprueba `libwrap.so`. Orden: `hosts.allow` → `hosts.deny` → permitir por defecto. Comodines `ALL`, `LOCAL`, `PARANOID`, `EXCEPT`; cambios inmediatos y soporte eliminado en Red Hat reciente."
           ]
         },
         {

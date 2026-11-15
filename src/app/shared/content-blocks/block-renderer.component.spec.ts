@@ -154,6 +154,27 @@ describe('BlockRendererComponent', () => {
     expect(el.textContent).toContain('Capa 1 BIOS');
   });
 
+  it('renderiza bloque image con texto alternativo y pie de figura', () => {
+    const imageBlock: Block = {
+      type: 'image',
+      src: '/content-assets/diagrams/102-2-grub-mkconfig-pipeline.svg',
+      alt: 'Diagrama del pipeline de grub-mkconfig',
+      caption: 'grub-mkconfig escribe el archivo final'
+    };
+
+    fixture.componentRef.setInput('block', imageBlock);
+    fixture.detectChanges();
+
+    const img = fixture.nativeElement.querySelector('app-image-block img');
+    expect(img).toBeTruthy();
+    expect(img.getAttribute('alt')).toBe('Diagrama del pipeline de grub-mkconfig');
+    expect(img.getAttribute('src')).toContain('102-2-grub-mkconfig-pipeline.svg');
+
+    const caption = fixture.nativeElement.querySelector('app-image-block figcaption');
+    expect(caption).toBeTruthy();
+    expect(caption.textContent).toContain('archivo final');
+  });
+
   it('renderiza bloque list con formato markdown enriquecido y enlaces wiki (A1-006)', () => {
     const listBlock: Block = {
       type: 'list',

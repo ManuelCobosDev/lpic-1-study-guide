@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="em-title em-desc">
+  <title id="em-title">Qué crea systemctl enable y qué bloquea systemctl mask (LPIC-1 101.3)</title>
+  <desc id="em-desc">systemctl enable crea en /etc/systemd/system un enlace dentro del directorio wants del target correspondiente, por ejemplo multi-user.target.wants, que apunta a la unidad de fábrica de /lib/systemd/system y la arranca con el sistema. systemctl mask crea en /etc/systemd/system un enlace de la propia unidad, por ejemplo apache2.service, que apunta a /dev/null, de modo que la unidad no se puede iniciar ni a mano ni como dependencia de otro servicio. systemctl disable solo borra el enlace de arranque automático, pero deja la unidad disponible para arrancarla manualmente.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #475569; }
+      .node-admin { fill: #EFF4FF; stroke: #2550EB; stroke-width: 2; }
+      .node-wants { fill: #F1F5F9; stroke: #475569; stroke-width: 2; }
+      .node-mask { fill: #FFF1F2; stroke: #E11D48; stroke-width: 2; }
+      .node-factory { fill: #ECFDF5; stroke: #059669; stroke-width: 2; }
+      .mono { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 18px; font-weight: 700; fill: #0F172A; }
+      .mono-sm { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 17px; font-weight: 700; fill: #0F172A; }
+      .mono-xs { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 14px; font-weight: 600; fill: #0F172A; }
+      .sub-13 { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 400; fill: #475569; }
+      .sub-warn { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 600; fill: #881337; }
+      .warn-title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 700; fill: #881337; }
+      .edge { fill: none; stroke: #1D40D8; stroke-width: 2.5; }
+      .edge-warn { fill: none; stroke: #E11D48; stroke-width: 2; stroke-dasharray: 6 4; }
+      .band { fill: #F1F5F9; stroke: #475569; stroke-width: 2; }
+      .band-line { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #334155; }
+    </style>
+
+    <marker id="em-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#1D40D8"/>
+    </marker>
+    <marker id="em-arrow-warn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#E11D48"/>
+    </marker>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">SYSTEMCTL · ARRANQUE AUTOMÁTICO</text>
+    <text class="title" x="40" y="78">enable enlaza; mask bloquea</text>
+    <text class="subtitle" x="40" y="102">Un enlace en .wants/ arranca; /dev/null inutiliza</text>
+  </g>
+
+  <g id="diagram-relations">
+    <path id="em-rel-admin-wants" class="edge" data-from="node-admin" data-to="node-wants" data-relation="creates-symlink"
+          d="M 480 186 V 208 H 295 V 230" marker-end="url(#em-arrow)"/>
+    <path id="em-rel-admin-mask" class="edge-warn" data-from="node-admin" data-to="node-mask" data-relation="mask-symlink"
+          d="M 480 186 V 208 H 695 V 230" marker-end="url(#em-arrow-warn)"/>
+    <path id="em-rel-wants-factory" class="edge" data-from="node-wants" data-to="node-factory" data-relation="points-to"
+          d="M 295 306 V 350" marker-end="url(#em-arrow)"/>
+    <path id="em-rel-mask-devnull" class="edge-warn" data-from="node-mask" data-to="node-devnull" data-relation="points-to"
+          d="M 695 306 V 350" marker-end="url(#em-arrow-warn)"/>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-admin">
+      <rect class="node-admin" x="330" y="136" width="300" height="50" rx="10"/>
+      <text class="mono" x="354" y="168">/etc/systemd/system/</text>
+    </g>
+
+    <g id="node-wants">
+      <rect class="node-wants" x="120" y="230" width="350" height="76" rx="10"/>
+      <text class="mono-sm" x="144" y="258">multi-user.target.wants/</text>
+      <text class="sub-13" x="144" y="280">mariadb.service · enable</text>
+    </g>
+
+    <g id="node-mask">
+      <rect class="node-mask" x="520" y="230" width="350" height="76" rx="10"/>
+      <text class="warn-title" x="544" y="258">apache2.service</text>
+      <text class="sub-warn" x="544" y="280">enlace a /dev/null · mask</text>
+    </g>
+
+    <g id="node-factory">
+      <rect class="node-factory" x="120" y="350" width="350" height="70" rx="10"/>
+      <text class="mono-xs" x="144" y="378">/lib/systemd/system/mariadb.service</text>
+      <text class="sub-13" x="144" y="400">unidad de fábrica que arranca al inicio</text>
+    </g>
+
+    <g id="node-devnull">
+      <rect class="node-mask" x="520" y="350" width="350" height="70" rx="10"/>
+      <text class="mono-sm" x="544" y="378">/dev/null</text>
+      <text class="sub-warn" x="544" y="400">nunca arranca: ni a mano ni por dependencia</text>
+    </g>
+  </g>
+
+  <g id="diagram-labels">
+    <text class="band-line" x="40" y="466">disable quita el enlace, pero no detiene el servicio en marcha.</text>
+    <text class="band-line" x="40" y="492">mask es el bloqueo total: ni a mano ni por dependencias.</text>
+  </g>
+</svg>

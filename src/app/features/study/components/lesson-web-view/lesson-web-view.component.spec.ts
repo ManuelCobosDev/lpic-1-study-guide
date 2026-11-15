@@ -17,8 +17,7 @@ describe('LessonWebViewComponent', () => {
           type: 'paragraph',
           text: 'Los pipes conectan stdout de un comando con stdin de otro.'
         }
-      ],
-      notes: 'Hacer énfasis en el operador | frente a redirecciones.'
+      ]
     },
     {
       id: 'slide-2',
@@ -69,12 +68,6 @@ describe('LessonWebViewComponent', () => {
 
     jumpButtons[1].click();
     expect(emitSpy).toHaveBeenCalledWith(2);
-  });
-
-  it('debe mostrar la nota didáctica del instructor solo si está definida en la diapositiva', () => {
-    const notesCards = fixture.nativeElement.querySelectorAll('.instructor-note-card');
-    expect(notesCards.length).toBe(1);
-    expect(notesCards[0].textContent).toContain('Hacer énfasis en el operador |');
   });
 
   it('debe renderizar el índice lateral con las diapositivas', () => {

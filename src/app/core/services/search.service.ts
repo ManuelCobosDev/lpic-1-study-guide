@@ -175,8 +175,7 @@ export class SearchService {
                 title: slide.title,
                 headings,
                 text: texts.join(' '),
-                code: codes,
-                notes: slide.notes
+                code: codes
               });
             }
           }

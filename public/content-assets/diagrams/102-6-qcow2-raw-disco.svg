@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="disk-title disk-desc">
+  <title id="disk-title">Disco QCOW2 con thin provisioning frente a RAW con asignación completa (LPIC-1 102.6)</title>
+  <desc id="disk-desc">Anatomía de dos imágenes de disco. La imagen QCOW2 declara un tamaño virtual de 50 GiB pero solo ocupa en el host los bloques que el invitado ha escrito, 196 KiB recién creada; qemu-img info separa el tamaño virtual del tamaño real y el invitado ve el disco completo con lsblk. La imagen RAW, en cambio, reserva los 50 GB completos en el momento de crearse, por eso una imagen de 10 GB consume 10 GB reales; gana en rendimiento de escritura pero no tiene snapshots internos ni compresión nativa.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 15px; font-weight: 500; fill: #475569; }
+      .section-qcow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 18px; font-weight: 700; fill: #065F46; }
+      .section-raw { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 18px; font-weight: 700; fill: #334155; }
+      .side-note { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #475569; }
+      .bar-virtual { fill: #FFFFFF; stroke: #475569; stroke-width: 2; stroke-dasharray: 7 5; }
+      .bar-used { fill: #ECFDF5; stroke: #059669; stroke-width: 2; }
+      .bar-raw { fill: #F1F5F9; stroke: #475569; stroke-width: 2; }
+      .bar-used-text { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; font-weight: 700; fill: #065F46; text-anchor: middle; }
+      .bar-label { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; font-weight: 500; fill: #334155; }
+      .bar-label-raw { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; font-weight: 600; fill: #0F172A; }
+      .info-mono { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 14px; font-weight: 600; fill: #1E36AF; }
+      .info-sans { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #475569; }
+      .band { fill: #F8FAFC; stroke: #CBD5E1; stroke-width: 1.5; }
+      .band-head { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #64748B; letter-spacing: 0.08em; }
+      .band-line { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #334155; }
+    </style>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">LIBVIRT · RAW FRENTE A QCOW2</text>
+    <text class="title" x="40" y="78">El disco que crece al escribir</text>
+    <text class="subtitle" x="40" y="102">qemu-img create -f qcow2 web01.qcow2 50G</text>
+  </g>
+
+  <g id="diagram-background-format">
+    <text class="section-qcow" x="40" y="144">QCOW2 · copy-on-write</text>
+    <text class="side-note" x="920" y="144" text-anchor="end">crecimiento dinámico</text>
+    <text class="section-raw" x="40" y="282">RAW · asignación completa</text>
+    <text class="side-note" x="920" y="282" text-anchor="end">sin snapshots internos</text>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-bar-qcow">
+      <rect class="bar-virtual" x="40" y="162" width="620" height="70" rx="10"/>
+      <rect class="bar-used" x="40" y="162" width="110" height="70" rx="10"/>
+      <text class="bar-used-text" x="95" y="203">196 KiB</text>
+      <text class="bar-label" x="170" y="203">usados de 50 GiB virtuales</text>
+    </g>
+
+    <g id="node-bar-raw">
+      <rect class="bar-raw" x="40" y="300" width="620" height="70" rx="10"/>
+      <text class="bar-label-raw" x="62" y="340">50 GB reservados al instante</text>
+    </g>
+
+    <g id="node-datos-qcow">
+      <rect class="band" x="40" y="386" width="880" height="106" rx="10"/>
+      <text class="band-head" x="62" y="410">QCOW2 · LO QUE APORTA</text>
+      <text class="band-line" x="62" y="434">Snapshots nativos antes de parchear</text>
+      <text class="band-line" x="62" y="454">Compresión zlib y cifrado integrado</text>
+      <text class="band-line" x="62" y="474">Thin provisioning: crece al escribir</text>
+    </g>
+  </g>
+
+  <g id="diagram-labels">
+    <text class="info-mono" x="690" y="190">virtual size: 50 GiB</text>
+    <text class="info-mono" x="690" y="214">disk size: 196 KiB</text>
+    <text class="info-sans" x="690" y="238">el host solo guarda lo escrito</text>
+
+    <text class="info-mono" x="690" y="328">10 GB de imagen = 10 GB</text>
+    <text class="info-mono" x="690" y="352">50 GB = 50 GB reales</text>
+    <text class="info-sans" x="690" y="376">máximo rendimiento de E/S</text>
+
+    <text class="info-sans" x="520" y="410">EN EL INVITADO</text>
+    <text class="info-mono" x="520" y="434">lsblk: disco de 23.3 GB</text>
+    <text class="info-mono" x="520" y="454">qemu-img info: 23.3G / 5.5G</text>
+    <text class="info-sans" x="520" y="474">virtual y real no coinciden</text>
+  </g>
+</svg>

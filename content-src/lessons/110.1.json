@@ -27,10 +27,14 @@
     "su vs su -",
     "/etc/sudoers",
     "visudo",
-    "NOPASSWD"
+    "NOPASSWD",
+    "timestamp_timeout",
+    "Runas_Alias",
+    "wheel"
   ],
   "commands": [
     "find",
+    "chmod",
     "passwd",
     "chage",
     "usermod",
@@ -90,13 +94,43 @@
         },
         {
           "type": "table",
-          "headers": ["Permiso Especial", "Octal", "Posición simbólica", "Efecto en archivos ejecutables", "Efecto en directorios"],
+          "headers": [
+            "Permiso Especial",
+            "Octal",
+            "Posición simbólica",
+            "Efecto en archivos ejecutables",
+            "Efecto en directorios"
+          ],
           "rows": [
-            ["SUID (Set User ID)", "4000", "Columna de usuario: rws------", "El proceso se ejecuta con los privilegios del propietario del archivo (ej. /usr/bin/passwd de root).", "Sin efecto práctico en sistemas Linux modernos."],
-            ["SGID (Set Group ID)", "2000", "Columna de grupo: rwxr-s---", "El proceso se ejecuta con los privilegios del grupo propietario del archivo.", "Los archivos creados dentro heredan automáticamente el grupo del directorio padre."],
-            ["Sticky Bit", "1000", "Columna de otros: rwxrwxrwt", "Sin efecto en archivos normales (antiguamente mantenía el texto en memoria swap).", "Solo el propietario de un archivo o root puede borrarlo o renombrarlo (ej. /tmp)."]
+            [
+              "SUID (Set User ID)",
+              "4000",
+              "Columna de usuario: rws------",
+              "El proceso se ejecuta con los privilegios del propietario del archivo (ej. /usr/bin/passwd de root).",
+              "Sin efecto práctico en sistemas Linux modernos."
+            ],
+            [
+              "SGID (Set Group ID)",
+              "2000",
+              "Columna de grupo: rwxr-s---",
+              "El proceso se ejecuta con los privilegios del grupo propietario del archivo.",
+              "Los archivos creados dentro heredan automáticamente el grupo del directorio padre."
+            ],
+            [
+              "Sticky Bit",
+              "1000",
+              "Columna de otros: rwxrwxrwt",
+              "Sin efecto en archivos normales (antiguamente mantenía el texto en memoria swap).",
+              "Solo el propietario de un archivo o root puede borrarlo o renombrarlo (ej. /tmp)."
+            ]
           ],
           "caption": "Resumen de permisos especiales en sistemas Linux"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "title": "Activar y desactivar el sticky bit con chmod",
+          "code": "chmod +t ~/temporal      # activar el sticky bit\nchmod 1755 ~/temporal    # activar en modo numérico\nchmod -t ~/temporal      # desactivar\nchmod 0755 ~/temporal    # desactivar en modo numérico"
         },
         {
           "type": "callout",
@@ -109,7 +143,7 @@
     {
       "id": "110.1-slide-3",
       "slideNumber": 3,
-      "title": "Rastreo de Binarios SUID y SGID con find",
+      "title": "Rastreo con find -perm: SUID, SGID y sticky",
       "layout": "content",
       "blocks": [
         {
@@ -123,12 +157,37 @@
         },
         {
           "type": "table",
-          "headers": ["Sintaxis de find", "Criterio de búsqueda", "Comportamiento del filtro"],
+          "headers": [
+            "Sintaxis de find",
+            "Criterio de búsqueda",
+            "Comportamiento del filtro"
+          ],
           "rows": [
-            ["find / -perm 4000", "Modo exacto", "Coincide ÚNICAMENTE si los permisos del archivo son exactamente 4000 (sin r, w ni x en otros). Rara vez útil."],
-            ["find / -perm -4000", "Todos los bits requeridos", "Coincide si el bit 4000 (SUID) está activo, independientemente del resto de permisos (ej. 4755 coincide). Es el modo estándar de auditoría."],
-            ["find / -perm /4000 (o +4000)", "Al menos uno de los bits", "Coincide si al menos uno de los bits indicados está presente. En GNU find la sintaxis moderna es '/4000' ('+4000' está deprecada)."],
-            ["find / -perm /6000", "SUID o SGID", "Localiza archivos que tengan activo el bit SUID (4000) O el bit SGID (2000)."]
+            [
+              "find / -perm 4000",
+              "Modo exacto",
+              "Coincide ÚNICAMENTE si los permisos del archivo son exactamente 4000 (sin r, w ni x en otros). Rara vez útil."
+            ],
+            [
+              "find / -perm -4000",
+              "Todos los bits requeridos",
+              "Coincide si el bit 4000 (SUID) está activo, independientemente del resto de permisos (ej. 4755 coincide). Es el modo estándar de auditoría."
+            ],
+            [
+              "find / -perm /4000 (o +4000)",
+              "Al menos uno de los bits",
+              "Coincide si al menos uno de los bits indicados está presente. En GNU find la sintaxis moderna es '/4000' ('+4000' está deprecada)."
+            ],
+            [
+              "find / -perm /6000",
+              "SUID o SGID",
+              "Localiza archivos que tengan activo el bit SUID (4000) O el bit SGID (2000)."
+            ],
+            [
+              "find ~ -perm -1000",
+              "Sticky bit activo",
+              "Localiza directorios con el sticky bit activo, como /tmp (con '/1000' basta con que el bit esté presente junto a otros)."
+            ]
           ]
         },
         {
@@ -166,17 +225,67 @@
         },
         {
           "type": "table",
-          "headers": ["Campo", "Nombre del parámetro", "Descripción técnica", "Ejemplo"],
+          "headers": [
+            "Campo",
+            "Nombre del parámetro",
+            "Descripción técnica",
+            "Ejemplo"
+          ],
           "rows": [
-            ["1", "Login name", "Nombre de usuario del sistema.", "carol"],
-            ["2", "Encrypted password", "Hash de la contraseña cifrada. Comienza con el identificador del algoritmo ($6$ = SHA-512, $1$ = MD5, $5$ = SHA-256). '!' o '*' denotan cuenta bloqueada.", "$6$qT8...f"],
-            ["3", "Last password change", "Días transcurridos desde el 1 de enero de 1970 (Época UNIX) hasta el último cambio.", "19850"],
-            ["4", "Minimum password age", "Días mínimos que deben transcurrir antes de permitir otro cambio de clave (0 = sin espera).", "0"],
-            ["5", "Maximum password age", "Días máximos de validez de la contraseña antes de obligar a renovarla (ej. 90).", "90"],
-            ["6", "Warning period", "Días de aviso previo al usuario antes de que la contraseña expire.", "7"],
-            ["7", "Inactivity period", "Días de margen tras la expiración antes de bloquear la cuenta por inactividad.", "14"],
-            ["8", "Expiration date", "Fecha absoluta de expiración de la cuenta expresada en días desde la época UNIX.", "20000"],
-            ["9", "Reserved", "Campo reservado para uso futuro. Permanece vacío.", ""]
+            [
+              "1",
+              "Login name",
+              "Nombre de usuario del sistema.",
+              "carol"
+            ],
+            [
+              "2",
+              "Encrypted password",
+              "Hash de la contraseña cifrada. Comienza con el identificador del algoritmo ($6$ = SHA-512, $1$ = MD5, $5$ = SHA-256). '!' o '*' denotan cuenta bloqueada.",
+              "$6$qT8...f"
+            ],
+            [
+              "3",
+              "Last password change",
+              "Días transcurridos desde el 1 de enero de 1970 (Época UNIX) hasta el último cambio.",
+              "19850"
+            ],
+            [
+              "4",
+              "Minimum password age",
+              "Días mínimos que deben transcurrir antes de permitir otro cambio de clave (0 = sin espera).",
+              "0"
+            ],
+            [
+              "5",
+              "Maximum password age",
+              "Días máximos de validez de la contraseña antes de obligar a renovarla (ej. 90).",
+              "90"
+            ],
+            [
+              "6",
+              "Warning period",
+              "Días de aviso previo al usuario antes de que la contraseña expire.",
+              "7"
+            ],
+            [
+              "7",
+              "Inactivity period",
+              "Días de margen tras la expiración antes de bloquear la cuenta por inactividad.",
+              "14"
+            ],
+            [
+              "8",
+              "Expiration date",
+              "Fecha absoluta de expiración de la cuenta expresada en días desde la época UNIX.",
+              "20000"
+            ],
+            [
+              "9",
+              "Reserved",
+              "Campo reservado para uso futuro. Permanece vacío.",
+              ""
+            ]
           ]
         },
         {
@@ -204,15 +313,55 @@
         },
         {
           "type": "table",
-          "headers": ["Opción corta", "Opción larga", "Efecto sobre /etc/shadow", "Uso frecuente en LPIC-1"],
+          "headers": [
+            "Opción corta",
+            "Opción larga",
+            "Efecto sobre /etc/shadow",
+            "Uso frecuente en LPIC-1"
+          ],
           "rows": [
-            ["-l <user>", "--list", "Muestra la información de caducidad formateada en fechas legibles.", "chage -l carol"],
-            ["-m <días>", "--mindays", "Fija los días mínimos entre cambios de contraseña (campo 4).", "chage -m 2 carol"],
-            ["-M <días>", "--maxdays", "Fija los días máximos de validez de la clave (campo 5).", "chage -M 60 carol"],
-            ["-W <días>", "--warndays", "Fija los días de advertencia antes de la expiración (campo 6).", "chage -W 7 carol"],
-            ["-I <días>", "--inactive", "Días de inactividad antes de deshabilitar la cuenta expirada (campo 7).", "chage -I 30 carol"],
-            ["-E <fecha>", "--expiredate", "Fecha absoluta de expiración de la cuenta (YYYY-MM-DD o días). Valor '-1' elimina la caducidad.", "chage -E 2026-12-31 carol\nchage -E -1 carol"],
-            ["-d <fecha>", "--lastday", "Establece el día del último cambio. Si se pasa '0', obliga a cambiar la clave en el próximo login.", "chage -d 0 carol"]
+            [
+              "-l <user>",
+              "--list",
+              "Muestra la información de caducidad formateada en fechas legibles.",
+              "chage -l carol"
+            ],
+            [
+              "-m <días>",
+              "--mindays",
+              "Fija los días mínimos entre cambios de contraseña (campo 4). '0' permite cambiar en cualquier momento.",
+              "chage -m 2 carol"
+            ],
+            [
+              "-M <días>",
+              "--maxdays",
+              "Fija los días máximos de validez de la clave (campo 5). '99999' desactiva la caducidad.",
+              "chage -M 60 carol"
+            ],
+            [
+              "-W <días>",
+              "--warndays",
+              "Fija los días de advertencia antes de la expiración (campo 6).",
+              "chage -W 7 carol"
+            ],
+            [
+              "-I <días>",
+              "--inactive",
+              "Días de inactividad antes de deshabilitar la cuenta expirada (campo 7). '0' no bloquea la cuenta.",
+              "chage -I 30 carol"
+            ],
+            [
+              "-E <fecha>",
+              "--expiredate",
+              "Fecha absoluta de expiración de la cuenta (YYYY-MM-DD o días desde la época).",
+              "chage -E 2026-12-31 carol"
+            ],
+            [
+              "-d <fecha>",
+              "--lastday",
+              "Establece el día del último cambio. Si se pasa '0', obliga a cambiar la clave en el próximo login.",
+              "chage -d 0 carol"
+            ]
           ]
         },
         {
@@ -244,17 +393,67 @@
         },
         {
           "type": "table",
-          "headers": ["Comando y flag", "Propósito", "Mecanismo técnico en /etc/shadow"],
+          "headers": [
+            "Comando y flag",
+            "Propósito",
+            "Mecanismo técnico en /etc/shadow"
+          ],
           "rows": [
-            ["passwd -S <user>", "Consultar estado de la contraseña", "Devuelve el usuario y estado: 'P' (usable/password set), 'L' (locked) o 'NP' (no password)."],
-            ["passwd -l <user>", "Bloquear la cuenta (lock)", "Inserta el carácter '!' al principio del hash cifrado en /etc/shadow. El hash deja de coincidir con cualquier entrada."],
-            ["passwd -u <user>", "Desbloquear la cuenta (unlock)", "Retira el carácter '!' del principio del hash, restaurando el acceso normal."],
-            ["passwd -d <user>", "Eliminar contraseña (delete)", "Borra el hash. La cuenta queda sin contraseña (acceso sin credenciales si PAM lo permite)."],
-            ["passwd -e <user>", "Expirar contraseña inmediatamente", "Establece el campo de último cambio a 0 (idéntico a 'chage -d 0'). Fuerza el cambio en el login."],
-            ["usermod -L <user>", "Bloquear cuenta con usermod", "Equivalente a 'passwd -l', antepone '!' al hash en /etc/shadow."],
-            ["usermod -U <user>", "Desbloquear cuenta con usermod", "Equivalente a 'passwd -u', retira el prefijo '!' del hash."],
-            ["usermod -e YYYY-MM-DD", "Expirar cuenta en fecha", "Fija la fecha de expiración absoluta de la cuenta (campo 8 de /etc/shadow)."]
+            [
+              "passwd -S <user>",
+              "Consultar estado de la contraseña",
+              "Devuelve el usuario y estado: 'P' (usable/password set), 'L' (locked) o 'NP' (no password)."
+            ],
+            [
+              "passwd -l <user>",
+              "Bloquear la cuenta (lock)",
+              "Inserta el carácter '!' al principio del hash cifrado en /etc/shadow. El hash deja de coincidir con cualquier entrada."
+            ],
+            [
+              "passwd -u <user>",
+              "Desbloquear la cuenta (unlock)",
+              "Retira el carácter '!' del principio del hash, restaurando el acceso normal."
+            ],
+            [
+              "passwd -d <user>",
+              "Eliminar contraseña (delete)",
+              "Borra el hash. La cuenta queda sin contraseña (acceso sin credenciales si PAM lo permite)."
+            ],
+            [
+              "passwd -e <user>",
+              "Expirar contraseña inmediatamente",
+              "Establece el campo de último cambio a 0 (idéntico a 'chage -d 0'). Fuerza el cambio en el login."
+            ],
+            [
+              "usermod -L <user>",
+              "Bloquear cuenta con usermod",
+              "Equivalente a 'passwd -l', antepone '!' al hash en /etc/shadow."
+            ],
+            [
+              "usermod -U <user>",
+              "Desbloquear cuenta con usermod",
+              "Equivalente a 'passwd -u', retira el prefijo '!' del hash."
+            ],
+            [
+              "usermod -e YYYY-MM-DD",
+              "Expirar cuenta en fecha",
+              "Fija la fecha de expiración absoluta de la cuenta (campo 8 de /etc/shadow)."
+            ]
           ]
+        },
+        {
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "passwd -S carol",
+              "output": "carol P 12/07/2019 0 99999 7 -1"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Los siete campos son: usuario, estado (P válida, L bloqueada, NP sin contraseña), fecha del último cambio, edad mínima, edad máxima (99999 desactiva la caducidad), aviso e inactividad (-1 sin límite)."
         },
         {
           "type": "callout",
@@ -281,15 +480,47 @@
         },
         {
           "type": "table",
-          "headers": ["Opción netstat / ss", "Significado", "Justificación en auditoría"],
+          "headers": [
+            "Opción netstat / ss",
+            "Significado",
+            "Justificación en auditoría"
+          ],
           "rows": [
-            ["-t (--tcp)", "Sockets TCP", "Filtra únicamente el protocolo de transporte orientado a conexión."],
-            ["-u (--udp)", "Sockets UDP", "Filtra conexiones de datagramas no orientadas a conexión (DNS, DHCP, SNMP)."],
-            ["-l (--listening)", "En escucha", "Muestra solo sockets esperando conexiones entrantes (excluye conexiones ya establecidas)."],
-            ["-a (--all)", "Todos los sockets", "Muestra tanto sockets en escucha como conexiones activas establecidas."],
-            ["-n (--numeric)", "Numérico", "Evita resoluciones inversas DNS y de nombres de servicio. Acelera drásticamente la salida."],
-            ["-p (--program)", "PID y Programa", "Muestra el identificador de proceso (PID) y el nombre del ejecutable que posee el socket (requiere root)."],
-            ["-e (--extend)", "Extendido", "Incluye el usuario propietario del socket y el número de inodo de la conexión."]
+            [
+              "-t (--tcp)",
+              "Sockets TCP",
+              "Filtra únicamente el protocolo de transporte orientado a conexión."
+            ],
+            [
+              "-u (--udp)",
+              "Sockets UDP",
+              "Filtra conexiones de datagramas no orientadas a conexión (DNS, DHCP, SNMP)."
+            ],
+            [
+              "-l (--listening)",
+              "En escucha",
+              "Muestra solo sockets esperando conexiones entrantes (excluye conexiones ya establecidas)."
+            ],
+            [
+              "-a (--all)",
+              "Todos los sockets",
+              "Muestra tanto sockets en escucha como conexiones activas establecidas."
+            ],
+            [
+              "-n (--numeric)",
+              "Numérico",
+              "Evita resoluciones inversas DNS y de nombres de servicio. Acelera drásticamente la salida."
+            ],
+            [
+              "-p (--program)",
+              "PID y Programa",
+              "Muestra el identificador de proceso (PID) y el nombre del ejecutable que posee el socket (requiere root)."
+            ],
+            [
+              "-e (--extend)",
+              "Extendido",
+              "Incluye el usuario propietario del socket y el número de inodo de la conexión."
+            ]
           ]
         },
         {
@@ -317,14 +548,43 @@
         },
         {
           "type": "table",
-          "headers": ["Sintaxis de lsof", "Resultado"],
+          "headers": [
+            "Sintaxis de lsof",
+            "Resultado"
+          ],
           "rows": [
-            ["lsof -i", "Lista todos los sockets de red abiertos en el sistema (IPv4 e IPv6)."],
-            ["lsof -i tcp:22", "Muestra procesos que escuchan o están conectados al puerto 22 TCP."],
-            ["lsof -i :80", "Muestra procesos vinculados al puerto 80 (tanto TCP como UDP)."],
-            ["lsof -i4", "Filtra exclusivamente sockets y conexiones IPv4."],
-            ["lsof -i6", "Filtra exclusivamente sockets y conexiones IPv6."],
-            ["lsof -i -sTCP:LISTEN", "Filtra solo los sockets TCP que se encuentran en estado de escucha (LISTEN)."]
+            [
+              "lsof -i",
+              "Lista todos los sockets de red abiertos en el sistema (IPv4 e IPv6)."
+            ],
+            [
+              "lsof -i tcp:22",
+              "Muestra procesos que escuchan o están conectados al puerto 22 TCP."
+            ],
+            [
+              "lsof -i :80",
+              "Muestra procesos vinculados al puerto 80 (tanto TCP como UDP)."
+            ],
+            [
+              "lsof -i4",
+              "Filtra exclusivamente sockets y conexiones IPv4."
+            ],
+            [
+              "lsof -i6",
+              "Filtra exclusivamente sockets y conexiones IPv6."
+            ],
+            [
+              "lsof -i -sTCP:LISTEN",
+              "Filtra solo los sockets TCP que se encuentran en estado de escucha (LISTEN)."
+            ],
+            [
+              "lsof -i@192.168.1.7",
+              "Filtra las conexiones del host indicado con la notación '@ip-address'."
+            ],
+            [
+              "lsof -i@192.168.1.7:22,80",
+              "Host y varios puertos: las comas separan puertos y el guión indica rangos."
+            ]
           ]
         },
         {
@@ -362,13 +622,37 @@
         },
         {
           "type": "table",
-          "headers": ["Opción fuser", "Descripción", "Ejemplo práctico"],
+          "headers": [
+            "Opción fuser",
+            "Descripción",
+            "Ejemplo práctico"
+          ],
           "rows": [
-            ["-v (--verbose)", "Salida detallada mostrando USER, PID, ACCESS y COMMAND.", "fuser -v 80/tcp"],
-            ["-n (--namespace)", "Especifica el espacio de nombres (file, tcp, udp).", "fuser -vn tcp 22"],
-            ["-k (--kill)", "Envía una señal de terminación (SIGKILL por defecto) a todos los procesos identificados.", "fuser -k 8080/tcp"],
-            ["-SIGNAL", "Envía una señal específica en lugar de SIGKILL (ej. -HUP o -TERM).", "fuser -k -TERM 80/tcp"],
-            ["-m (--mount)", "Identifica todos los procesos que acceden a un sistema de archivos montado.", "fuser -vm /mnt/usb"]
+            [
+              "-v (--verbose)",
+              "Salida detallada mostrando USER, PID, ACCESS y COMMAND.",
+              "fuser -v 80/tcp"
+            ],
+            [
+              "-n (--namespace)",
+              "Especifica el espacio de nombres (file, tcp, udp).",
+              "fuser -vn tcp 22"
+            ],
+            [
+              "-k (--kill)",
+              "Envía una señal de terminación (SIGKILL por defecto) a todos los procesos identificados.",
+              "fuser -k 8080/tcp"
+            ],
+            [
+              "-SIGNAL",
+              "Envía una señal específica en lugar de SIGKILL (ej. -HUP o -TERM).",
+              "fuser -k -TERM 80/tcp"
+            ],
+            [
+              "-m (--mount)",
+              "Identifica todos los procesos que acceden a un sistema de archivos montado.",
+              "fuser -vm /mnt/usb"
+            ]
           ]
         },
         {
@@ -397,7 +681,7 @@
     {
       "id": "110.1-slide-10",
       "slideNumber": 10,
-      "title": "Escaneo de Puertos y Servicios con nmap",
+      "title": "Escaneo de Puertos y Hosts con nmap",
       "layout": "content",
       "blocks": [
         {
@@ -407,19 +691,71 @@
         },
         {
           "type": "paragraph",
-          "text": "nmap es el estándar para el escaneo de puertos de red. Permite verificar la perspectiva externa de seguridad descubriendo puertos abiertos y servicios expuestos:"
+          "text": "nmap es el estándar para el escaneo de puertos de red. Permite verificar la perspectiva externa de seguridad descubriendo hosts, puertos abiertos y servicios expuestos:"
         },
         {
           "type": "table",
-          "headers": ["Bandera de nmap", "Tipo de escaneo / Función", "Detalle técnico"],
+          "headers": [
+            "Sintaxis de nmap",
+            "Tipo de escaneo / Función",
+            "Detalle técnico"
+          ],
           "rows": [
-            ["-F (Fast)", "Escaneo rápido", "Escanea los 100 puertos más populares en lugar de los 1.000 habituales."],
-            ["-p <puertos>", "Puertos específicos", "Define la lista o rango: '-p 22,80,443' o '-p 1-1024'."],
-            ["-p-", "Todos los puertos", "Escanea el rango completo de 65.535 puertos TCP (1-65535)."],
-            ["-sT (TCP Connect)", "Escaneo de conexión completa", "Completa el apretón de manos SYN/SYN-ACK/ACK. No requiere privilegios de root pero es detectable."],
-            ["-sS (SYN Stealth)", "Escaneo semi-abierto (stealth)", "Envía paquetes SYN; responde con RST al recibir SYN-ACK. No completa la conexión. Requiere root."],
-            ["-sU (UDP Scan)", "Escaneo UDP", "Envía paquetes UDP vacíos; detecta puertos abiertos por falta de respuesta ICMP Port Unreachable."],
-            ["-v / -vv", "Verbose", "Aumenta la verbosidad de la salida mostrando resultados en tiempo real."]
+            [
+              "localhost 192.168.1.7",
+              "Varios hosts",
+              "Los hosts se separan con espacios en la misma orden."
+            ],
+            [
+              "192.168.1.3-20",
+              "Rango de hosts",
+              "El guión define el intervalo de direcciones que se escanea."
+            ],
+            [
+              "192.168.1.0/24",
+              "Subred",
+              "También admite el comodín 'nmap 192.168.1.*'."
+            ],
+            [
+              "192.168.1.0/24 --exclude 192.168.1.7",
+              "Excluir hosts",
+              "Omite del escaneo las direcciones indicadas con '--exclude'."
+            ],
+            [
+              "-F (Fast)",
+              "Escaneo rápido",
+              "Escanea los 100 puertos más populares en lugar de los 1.000 habituales."
+            ],
+            [
+              "-p <puertos>",
+              "Puertos específicos",
+              "Define la lista o rango: '-p 22,80,443' o '-p 1-1024'. También acepta el nombre del servicio ('-p ssh')."
+            ],
+            [
+              "-p-",
+              "Todos los puertos",
+              "Escanea el rango completo de 65.535 puertos TCP (1-65535)."
+            ],
+            [
+              "-sT (TCP Connect)",
+              "Escaneo de conexión completa",
+              "Completa el apretón de manos SYN/SYN-ACK/ACK. No requiere privilegios de root pero es detectable."
+            ],
+            [
+              "-sS (SYN Stealth)",
+              "Escaneo semi-abierto (stealth)",
+              "Envía paquetes SYN; responde con RST al recibir SYN-ACK. No completa la conexión. Requiere root."
+            ],
+            [
+              "-sU (UDP Scan)",
+              "Escaneo UDP",
+              "Envía paquetes UDP vacíos; detecta puertos abiertos por falta de respuesta ICMP Port Unreachable."
+            ],
+            [
+              "-v / -vv",
+              "Verbose",
+              "Aumenta la verbosidad de la salida mostrando resultados en tiempo real."
+            ]
           ]
         },
         {
@@ -451,12 +787,32 @@
         },
         {
           "type": "table",
-          "headers": ["Componente de la regla", "Opciones válidas", "Ejemplo práctico"],
+          "headers": [
+            "Componente de la regla",
+            "Opciones válidas",
+            "Ejemplo práctico"
+          ],
           "rows": [
-            ["Dominio", "Usuario concreto, grupo con prefijo '@', o '*' para todos los usuarios.", "carol, @developers, *"],
-            ["Tipo de límite", "'soft' (límite flexible de trabajo), 'hard' (límite estricto infranqueable) o '-' (ambos a la vez).", "soft, hard, -"],
-            ["Ítem de recurso", "nofile (archivos abiertos), nproc (procesos concurrentes), maxlogins (sesiones), fsize, core, cpu, as.", "nofile, nproc, maxlogins"],
-            ["Valor", "Número entero o la palabra clave 'unlimited'.", "1024, 200, 4, unlimited"]
+            [
+              "Dominio",
+              "Usuario concreto, grupo con prefijo '@', o '*' para todos los usuarios.",
+              "carol, @developers, *"
+            ],
+            [
+              "Tipo de límite",
+              "'soft' (límite flexible de trabajo), 'hard' (límite estricto infranqueable) o '-' (ambos a la vez).",
+              "soft, hard, -"
+            ],
+            [
+              "Ítem de recurso",
+              "nofile (archivos abiertos), nproc (procesos concurrentes), maxlogins (sesiones), fsize, core, cpu, as.",
+              "nofile, nproc, maxlogins"
+            ],
+            [
+              "Valor",
+              "Número entero o la palabra clave 'unlimited'.",
+              "1024, 200, 4, unlimited"
+            ]
           ]
         },
         {
@@ -490,17 +846,57 @@
         },
         {
           "type": "table",
-          "headers": ["Bandera", "Recurso que gestiona", "Ejemplo de comando"],
+          "headers": [
+            "Bandera",
+            "Recurso que gestiona",
+            "Ejemplo de comando"
+          ],
           "rows": [
-            ["-a", "Lista todos los límites actuales de la sesión (soft por defecto).", "ulimit -a"],
-            ["-H / -S", "Modificadores para operar sobre límites duros (-H) o blandos (-S).", "ulimit -Ha\nulimit -Sa"],
-            ["-c", "Tamaño máximo de archivos de volcado de memoria (core dump) en bloques.", "ulimit -c 0 (desactiva dumps)"],
-            ["-f", "Tamaño máximo de archivos creados por la shell en bloques de 512 bytes.", "ulimit -f 100000"],
-            ["-n", "Número máximo de descriptores de archivos abiertos concurrentemente.", "ulimit -n 2048"],
-            ["-u", "Número máximo de procesos de usuario (evita fork bombs).", "ulimit -u 150"],
-            ["-t", "Tiempo máximo de CPU acumulado por un proceso (en segundos).", "ulimit -t 60"],
-            ["-v", "Memoria virtual total disponible para el proceso (en KB).", "ulimit -v 2097152"],
-            ["-m", "Memoria física máxima residente (RSS) asignable (en KB).", "ulimit -m 1048576"]
+            [
+              "-a",
+              "Lista todos los límites actuales de la sesión (soft por defecto).",
+              "ulimit -a"
+            ],
+            [
+              "-H / -S",
+              "Modificadores para operar sobre límites duros (-H) o blandos (-S).",
+              "ulimit -Ha\nulimit -Sa"
+            ],
+            [
+              "-c",
+              "Tamaño máximo de archivos de volcado de memoria (core dump) en bloques.",
+              "ulimit -c 0 (desactiva dumps)"
+            ],
+            [
+              "-f",
+              "Tamaño máximo de archivos creados por la shell en bloques de 512 bytes.",
+              "ulimit -f 100000"
+            ],
+            [
+              "-n",
+              "Número máximo de descriptores de archivos abiertos concurrentemente.",
+              "ulimit -n 2048"
+            ],
+            [
+              "-u",
+              "Número máximo de procesos de usuario (evita fork bombs).",
+              "ulimit -u 150"
+            ],
+            [
+              "-t",
+              "Tiempo máximo de CPU acumulado por un proceso (en segundos).",
+              "ulimit -t 60"
+            ],
+            [
+              "-v",
+              "Memoria virtual total disponible para el proceso (en KB).",
+              "ulimit -v 2097152"
+            ],
+            [
+              "-m",
+              "Memoria física máxima residente (RSS) asignable (en KB).",
+              "ulimit -m 1048576"
+            ]
           ]
         },
         {
@@ -537,13 +933,43 @@
         },
         {
           "type": "table",
-          "headers": ["Comando", "Archivo origen", "Información que proporciona", "Opciones clave"],
+          "headers": [
+            "Comando",
+            "Archivo origen",
+            "Información que proporciona",
+            "Opciones clave"
+          ],
           "rows": [
-            ["who", "/var/run/utmp", "Usuarios conectados actualmente, terminales (tty/pts) y hora de conexión.", "-b (fecha del último arranque),\n-r (runlevel actual),\n-a (todos los datos),\n-u (inactividad y PID)"],
-            ["w", "/var/run/utmp", "Muestra quién está conectado Y qué proceso ejecuta (WHAT). Cabecera con uptime y load average de 1, 5 y 15 minutos.", "-h (sin cabecera),\n-s (formato corto)"],
-            ["last", "/var/log/wtmp", "Historial completo de inicios de sesión pasados, reinicios y desconexiones.", "-n <núm> (últimas N líneas),\n-F (fechas completas)"],
-            ["lastb", "/var/log/btmp", "Historial de intentos fallidos de autenticación (requiere permisos de root).", "-n <núm> (filtrar líneas)"],
-            ["lastlog", "/var/log/lastlog", "Reporta la fecha y terminal del último inicio de sesión de CADA usuario del sistema.", "-u <user> (usuario concreto)"]
+            [
+              "who",
+              "/var/run/utmp",
+              "Usuarios conectados actualmente, terminales (tty/pts) y hora de conexión.",
+              "-b (fecha del último arranque),\n-r (runlevel actual),\n-a (todos los datos),\n-u (inactividad y PID)"
+            ],
+            [
+              "w",
+              "/var/run/utmp",
+              "Muestra quién está conectado Y qué proceso ejecuta (WHAT). Cabecera con uptime y load average de 1, 5 y 15 minutos.",
+              "-h (sin cabecera),\n-s (formato corto)"
+            ],
+            [
+              "last",
+              "/var/log/wtmp",
+              "Historial completo de inicios de sesión pasados, reinicios y desconexiones.",
+              "-n <núm> (últimas N líneas),\n-F (fechas completas)"
+            ],
+            [
+              "lastb",
+              "/var/log/btmp",
+              "Historial de intentos fallidos de autenticación (requiere permisos de root).",
+              "-n <núm> (filtrar líneas)"
+            ],
+            [
+              "lastlog",
+              "/var/log/lastlog",
+              "Reporta la fecha y terminal del último inicio de sesión de CADA usuario del sistema.",
+              "-u <user> (usuario concreto)"
+            ]
           ]
         },
         {
@@ -575,12 +1001,32 @@
         },
         {
           "type": "table",
-          "headers": ["Característica", "Comando su (Switch User)", "Comando sudo (SuperUser Do)"],
+          "headers": [
+            "Característica",
+            "Comando su (Switch User)",
+            "Comando sudo (SuperUser Do)"
+          ],
           "rows": [
-            ["Contraseña solicitada", "Pide la contraseña del usuario OBJETIVO (de root).", "Pide la contraseña del PROPIO usuario que ejecuta la orden."],
-            ["Granularidad", "Acceso total a la cuenta objetivo sin restricciones de comandos.", "Control granular por comando, argumentos y usuarios definidos en /etc/sudoers."],
-            ["Auditoría y logs", "No registra qué comandos concretos ejecuta el usuario tras el cambio de shell.", "Registra cada comando ejecutado en syslog (/var/log/auth.log o /var/log/secure)."],
-            ["Riesgo de seguridad", "Exige compartir la contraseña de root entre varios administradores.", "Permite revocar permisos individuales sin cambiar la clave de root."]
+            [
+              "Contraseña solicitada",
+              "Pide la contraseña del usuario OBJETIVO (de root).",
+              "Pide la contraseña del PROPIO usuario que ejecuta la orden."
+            ],
+            [
+              "Granularidad",
+              "Acceso total a la cuenta objetivo sin restricciones de comandos.",
+              "Control granular por comando, argumentos y usuarios definidos en /etc/sudoers."
+            ],
+            [
+              "Auditoría y logs",
+              "No registra qué comandos concretos ejecuta el usuario tras el cambio de shell.",
+              "Registra cada comando ejecutado en syslog (/var/log/auth.log o /var/log/secure)."
+            ],
+            [
+              "Riesgo de seguridad",
+              "Exige compartir la contraseña de root entre varios administradores.",
+              "Permite revocar permisos individuales sin cambiar la clave de root."
+            ]
           ]
         },
         {
@@ -608,45 +1054,78 @@
         },
         {
           "type": "table",
-          "headers": ["Elemento sintáctico", "Estructura general", "Significado técnico"],
+          "headers": [
+            "Elemento sintáctico",
+            "Estructura general",
+            "Significado técnico"
+          ],
           "rows": [
-            ["Regla de usuario", "carol ALL=(ALL:ALL) ALL", "La usuaria 'carol' en cualquier host (ALL), puede actuar como cualquier usuario y grupo (ALL:ALL) y ejecutar cualquier comando (ALL)."],
-            ["Regla de grupo", "%admin ALL=(ALL) ALL", "El prefijo '%' indica grupo. Todos los miembros de 'admin' tienen permisos sudo completos."],
-            ["Etiqueta NOPASSWD", "carol ALL=(root) NOPASSWD: /bin/systemctl restart nginx", "Permite a carol reiniciar nginx como root sin ingresar su contraseña."],
-            ["Directiva modular", "#includedir /etc/sudoers.d", "Incluye todos los ficheros de /etc/sudoers.d. ¡El carácter '#' NO es un comentario aquí!"]
+            [
+              "Regla de usuario",
+              "carol ALL=(ALL:ALL) ALL",
+              "La usuaria 'carol' en cualquier host (ALL), puede actuar como cualquier usuario y grupo (ALL:ALL) y ejecutar cualquier comando (ALL)."
+            ],
+            [
+              "Regla de grupo",
+              "%sudo ALL=(ALL:ALL) ALL",
+              "El prefijo '%' indica grupo. En Debian/Ubuntu el grupo administrativo es 'sudo'; en Red Hat su contrapartida es 'wheel'."
+            ],
+            [
+              "Etiqueta NOPASSWD",
+              "carol ALL=(root) NOPASSWD: /bin/systemctl restart nginx",
+              "Permite a carol reiniciar nginx como root sin ingresar su contraseña."
+            ],
+            [
+              "Directiva modular",
+              "#includedir /etc/sudoers.d",
+              "Incluye todos los ficheros de /etc/sudoers.d. ¡El carácter '#' NO es un comentario aquí!"
+            ]
           ]
         },
         {
           "type": "code",
-          "language": "text",
-          "title": "Definición de alias en /etc/sudoers",
-          "code": "# Alias de usuarios, hosts y comandos\nUser_Alias  OPS = carol, dave\nHost_Alias  SERVERS = web01, db01\nCmnd_Alias  NETWORKING = /sbin/ifconfig, /sbin/ip, /sbin/route\n\n# Asignación de la regla combinada\nOPS SERVERS = NETWORKING"
+          "language": "bash",
+          "title": "Editar y validar sudoers",
+          "code": "visudo          # abrir /etc/sudoers con el editor seguro\nvisudo -c       # comprobar la sintaxis sin editar"
         }
       ]
     },
     {
       "id": "110.1-slide-16",
       "slideNumber": 16,
-      "title": "Flashcards de Memorización — Seguridad 110.1",
+      "title": "Alias y Defaults en /etc/sudoers",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Tarjetas mnemotécnicas esenciales para el examen 102"
+          "text": "Alias, ajustes Defaults y grupos administrativos"
+        },
+        {
+          "type": "paragraph",
+          "text": "Además de las reglas directas, /etc/sudoers admite alias para no repetir listas y ajustes Defaults que cambian el comportamiento de sudo:"
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "title": "Los cuatro alias y un ajuste Defaults",
+          "code": "# Alias: usuarios, hosts, comandos y usuarios de destino\nUser_Alias   OPS     = carol, dave\nHost_Alias   SERVERS = web01, db01\nCmnd_Alias   NETWORK = /sbin/ip, /sbin/route\nRunas_Alias  DBA     = #1001, #1002\n\n# Caché de credenciales de sudo (15 minutos por defecto)\nDefaults     timestamp_timeout=1\n\n# Regla que combina los alias\nOPS SERVERS = NETWORK"
         },
         {
           "type": "list",
           "ordered": false,
           "items": [
-            "**¿Qué octal activa el Sticky bit?** -> `1000`. En `ls -l` aparece como `t` (con 'x') o `T` (sin 'x').",
-            "**¿Qué comando busca binarios con SUID activo?** -> `find / -perm -4000 -type f 2>/dev/null`.",
-            "**¿Qué campo de /etc/shadow es el aviso de expiración?** -> El **campo 6** (Warning days).",
-            "**¿Cómo forzar cambio de contraseña en el siguiente inicio?** -> `chage -d 0 <usuario>` o `passwd -e <usuario>`.",
-            "**¿Qué comando bloquea una contraseña anteponiendo '!'?** -> `passwd -l <user>` o `usermod -L <user>`.",
-            "**¿Diferencia entre soft y hard limit en ulimit?** -> El usuario sube el *soft limit* hasta el *hard limit*. Solo `root` eleva el *hard limit*.",
-            "**¿Contabilidad y privilegios con visudo?** -> `last` lee `/var/log/wtmp`, `lastb` lee `/var/log/btmp`. `visudo` valida sintaxis y evita colisiones."
+            "**Host_Alias** — nombres de host, direcciones IP, redes y netgroups (prefijo '+').",
+            "**User_Alias** — usuarios, grupos con '%' y netgroups con '+'; '!' excluye usuarios concretos.",
+            "**Cmnd_Alias** — comandos y directorios separados por comas (los subdirectorios se ignoran).",
+            "**Runas_Alias** — cuarto tipo de alias; especifica los usuarios por su UID."
           ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Caché de credenciales y grupo administrativo",
+          "content": "sudo guarda una marca de tiempo por usuario y por terminal: por defecto no vuelve a pedir la contraseña durante 15 minutos, y ese valor se cambia con 'Defaults timestamp_timeout=N'. En Debian el grupo es '%sudo'; en Red Hat su contrapartida es '%wheel'."
         }
       ]
     },
@@ -710,18 +1189,6 @@
           "calloutType": "exam",
           "title": "Trampas clásicas del examen LPIC-1 (102-500)",
           "content": "1. **find -perm 4000 frente a -perm -4000**: Pregunta capciosa sobre encontrar binarios SUID; la opción correcta casi siempre incluye el guión '-4000' para requerir que el bit esté activo sin importar los demás.\n2. **su frente a su -**: Preguntan qué comando carga el entorno completo de root. Respuesta: 'su -' (o 'su -l').\n3. **lastb vs last**: last lee /var/log/wtmp (éxitos); lastb lee /var/log/btmp (fallos).\n4. **limits.conf**: El carácter '-' en el tipo significa 'soft Y hard' a la vez.\n5. **chage -d 0**: Fuerza el cambio inmediato en el siguiente login, poniendo el campo 3 de shadow a 0."
-        },
-        {
-          "type": "list",
-          "ordered": false,
-          "items": [
-            "**find**: `-perm -4000` (SUID), `-perm -2000` (SGID), `-perm -1000` (Sticky).",
-            "**shadow**: 9 campos. Algoritmo `$6$` indica hash seguro SHA-512.",
-            "**chage y passwd**: envejecimiento (`-M`, `-W`, `-E`, `-d 0`) y bloqueo de contraseñas (`-l`, `-u`, `-S`).",
-            "**netstat y ss**: auditoría de sockets en escucha con `-tulpn`.",
-            "**lsof y fuser**: inspección detallada (`lsof -i :puerto`) y terminación directa (`fuser -k -n tcp puerto`).",
-            "**ulimit y sudoers**: control de recursos (`-H`, `-S`, `-n`, `-u`) y delegación administrativa segura (`visudo`)."
-          ]
         }
       ]
     }

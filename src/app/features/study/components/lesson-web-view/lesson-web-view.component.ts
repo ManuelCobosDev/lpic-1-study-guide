@@ -17,8 +17,8 @@ import { BlockRendererComponent } from '../../../../shared/content-blocks/block-
   imports: [CommonModule, BlockRendererComponent],
   template: `
     <div class="lesson-web-view relative flex flex-col lg:flex-row gap-8 items-start my-6">
-      <!-- Columna Principal: Documento de Lectura Continuo (760 px de ancho) -->
-      <article class="web-reading-column flex-1 max-w-[760px] w-full mx-auto space-y-12 select-text font-sans">
+      <!-- Columna Principal: Documento de Lectura Continuo fluido -->
+      <article class="web-reading-column flex-1 min-w-0 w-full space-y-12 select-text font-sans">
         @for (slide of slides(); track slide.slideNumber; let idx = $index) {
           <section
             [id]="'section-' + slide.slideNumber"
@@ -58,25 +58,13 @@ import { BlockRendererComponent } from '../../../../shared/content-blocks/block-
                 <app-block-renderer [block]="block" />
               }
             </div>
-
-            <!-- Notas del instructor en acordeón o aviso si existen -->
-            @if (slide.notes) {
-              <div class="instructor-note-card mt-8 p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 text-[var(--text)]">
-                <div class="flex items-center gap-2 mb-2 text-xs font-bold text-amber-600 dark:text-amber-400 font-mono uppercase tracking-wider">
-                  <span>📌</span> Nota didáctica del instructor
-                </div>
-                <p class="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed m-0 font-sans">
-                  {{ slide.notes }}
-                </p>
-              </div>
-            }
           </section>
         }
       </article>
 
-      <!-- Columna Lateral Derecha Sticky (240 px): Índice "En esta página" con Scrollspy -->
+      <!-- Columna Lateral Derecha Sticky (256-288 px): Índice "En esta página" con Scrollspy -->
       <aside
-        class="web-toc-sidebar hidden lg:block sticky top-24 w-60 shrink-0 p-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xs"
+        class="web-toc-sidebar hidden lg:block sticky top-24 w-64 xl:w-72 shrink-0 p-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xs"
         aria-label="Índice de secciones del documento"
       >
         <div class="flex items-center gap-2 mb-3 pb-2 border-b border-[var(--border)]">

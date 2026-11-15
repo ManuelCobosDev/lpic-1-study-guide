@@ -227,7 +227,7 @@ export class SearchEngine {
         url: `/estudiar/${slide.subtopicId}?slide=${slide.slideNumber}`,
         breadcrumb: `Tema ${slide.topicId} › ${slide.subtopicId} › Diapositiva ${slide.slideNumber}`,
         headings: slide.headings.join(' '),
-        body: slide.text + (slide.notes ? ` (Notas: ${slide.notes})` : ''),
+        body: slide.text,
         codeSnippets: slide.code.join(' ')
       };
       docs.push(doc);

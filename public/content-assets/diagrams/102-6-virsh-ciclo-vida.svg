@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="virsh-estados-title virsh-estados-desc">
+  <title id="virsh-estados-title">Ciclo de vida de un dominio libvirt con virsh start, shutdown, destroy y undefine (LPIC-1 102.6)</title>
+  <desc id="virsh-estados-desc">Máquina de estados de una máquina virtual gestionada por libvirt. El estado shut off es el inicial y se arranca con virsh start, que la lleva a running. Desde running se vuelve a shut off de dos formas: virsh shutdown envía un evento ACPI ordenado y virsh destroy corta la energía de golpe sin borrar el disco. Solo virsh undefine elimina la definición del dominio; el estado sin definición conserva los archivos de disco en el host.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #475569; }
+      .state-off { fill: #F1F5F9; stroke: #475569; stroke-width: 3; }
+      .state-run { fill: #ECFDF5; stroke: #059669; stroke-width: 2; }
+      .state-gone { fill: #FFF1F2; stroke: #E11D48; stroke-width: 2; }
+      .state-title { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 20px; font-weight: 700; fill: #0F172A; }
+      .state-title-gone { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 20px; font-weight: 700; fill: #881337; }
+      .state-sub { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 400; fill: #475569; }
+      .state-sub-gone { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 400; fill: #881337; }
+      .state-hint { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 600; fill: #334155; }
+      .edge-blue { fill: none; stroke: #1D40D8; stroke-width: 2.5; }
+      .edge-rose { fill: none; stroke: #E11D48; stroke-width: 2; stroke-dasharray: 6 4; }
+      .plaque { fill: #FFFFFF; stroke: #CBD5E1; stroke-width: 1; }
+      .plaque-text { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; font-weight: 700; fill: #1E36AF; text-anchor: middle; }
+      .plaque-text-rose { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; font-weight: 700; fill: #BE123C; text-anchor: middle; }
+      .note { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 400; fill: #475569; }
+    </style>
+
+    <marker id="virsh-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#1D40D8"/>
+    </marker>
+    <marker id="virsh-arrow-rose" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#E11D48"/>
+    </marker>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">CICLO DE VIDA DE UN DOMINIO LIBVIRT</text>
+    <text class="title" x="40" y="78">Apagar no es borrar</text>
+    <text class="subtitle" x="40" y="102">virsh list --all muestra running y shut off.</text>
+  </g>
+
+  <g id="diagram-relations">
+    <path id="virsh-rel-start" class="edge-blue" data-from="node-shutoff" data-to="node-running" data-relation="starts-domain"
+          d="M 370 320 H 320 V 140 H 370" marker-end="url(#virsh-arrow)"/>
+    <path id="virsh-rel-shutdown" class="edge-blue" data-from="node-running" data-to="node-shutoff" data-relation="ordered-acpi-shutdown"
+          d="M 460 190 V 300" marker-end="url(#virsh-arrow)"/>
+    <path id="virsh-rel-destroy" class="edge-rose" data-from="node-running" data-to="node-shutoff" data-relation="forced-power-off"
+          d="M 540 190 V 300" marker-end="url(#virsh-arrow-rose)"/>
+    <path id="virsh-rel-undefine" class="edge-rose" data-from="node-shutoff" data-to="node-gone" data-relation="removes-definition"
+          d="M 500 400 V 448 H 800 V 400" marker-end="url(#virsh-arrow-rose)"/>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-running">
+      <rect class="state-run" x="370" y="90" width="230" height="100" rx="10"/>
+      <text class="state-title" x="392" y="124">running</text>
+      <text class="state-sub" x="392" y="150">en ejecución</text>
+      <text class="state-hint" x="392" y="172">Id numérico en virsh list</text>
+    </g>
+
+    <g id="node-shutoff">
+      <rect class="state-off" x="370" y="300" width="230" height="100" rx="10"/>
+      <text class="state-title" x="392" y="334">shut off</text>
+      <text class="state-sub" x="392" y="360">apagada</text>
+      <text class="state-hint" x="392" y="382">Id - con virsh list --all</text>
+    </g>
+
+    <g id="node-gone">
+      <rect class="state-gone" x="680" y="300" width="240" height="100" rx="10"/>
+      <text class="state-title-gone" x="702" y="334">sin definición</text>
+      <text class="state-sub-gone" x="702" y="360">undefine borra el XML</text>
+      <text class="state-sub-gone" x="702" y="382">el disco sigue en el host</text>
+    </g>
+  </g>
+
+  <g id="diagram-labels">
+    <rect class="plaque" x="180" y="218" width="110" height="26" rx="6"/>
+    <text class="plaque-text" x="235" y="236">virsh start</text>
+
+    <rect class="plaque" x="336" y="234" width="114" height="26" rx="6"/>
+    <text class="plaque-text" x="393" y="252">shutdown ACPI</text>
+
+    <rect class="plaque" x="550" y="234" width="124" height="26" rx="6"/>
+    <text class="plaque-text-rose" x="612" y="252">destroy forzado</text>
+
+    <rect class="plaque" x="610" y="460" width="140" height="26" rx="6"/>
+    <text class="plaque-text-rose" x="680" y="478">virsh undefine</text>
+
+    <text class="note" x="40" y="506">destroy corta la corriente, no borra el disco.</text>
+  </g>
+</svg>

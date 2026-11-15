@@ -25,6 +25,7 @@ import { LessonWebViewComponent } from '../components/lesson-web-view/lesson-web
 import { PracticeTabComponent } from '../components/practice-tab/practice-tab.component';
 import { ButtonComponent } from '../../../shared/ui/button/button.component';
 import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
+import { ContainerComponent } from '../../../shared/ui/container/container.component';
 
 @Component({
   selector: 'app-lesson-page',
@@ -36,11 +37,14 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
     LessonWebViewComponent,
     PracticeTabComponent,
     ButtonComponent,
-    TabsComponent
+    TabsComponent,
+    ContainerComponent
   ],
   template: `
-    <div class="lesson-page-container min-h-screen py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6">
-      <!-- 1. Barra de Migas de Pan (Breadcrumbs) -->
+    <div class="lesson-page min-h-screen py-6">
+      <app-container>
+        <div class="lesson-page-container space-y-6">
+          <!-- 1. Barra de Migas de Pan (Breadcrumbs) -->
       <nav aria-label="Migas de pan" class="breadcrumbs text-xs font-mono text-[var(--text-muted)] flex items-center gap-1.5 flex-wrap">
         <a routerLink="/" class="hover:text-[var(--text)] transition-colors">Inicio</a>
         <span aria-hidden="true">›</span>
@@ -72,7 +76,7 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
       } @else if (lesson(); as l) {
         <!-- 2. Cabecera Principal con Selector de Vistas y Botón de Completado -->
         <header class="lesson-header flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-[var(--border)]">
-          <div class="space-y-2 max-w-2xl">
+          <div class="space-y-2 flex-1 min-w-0 max-w-5xl">
             <div class="flex items-center gap-2.5 flex-wrap">
               <span class="px-2.5 py-0.5 rounded-md bg-[var(--primary-soft)] text-[var(--primary-text)] font-mono text-xs font-bold">
                 Subtema {{ l.id }}
@@ -251,7 +255,7 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
           <!-- Pestaña 1: Laboratorio Práctico -->
           @if (activeTab() === 'lab') {
             <div id="tabpanel-lab" role="tabpanel" aria-labelledby="tab-lab" class="tab-panel-lab p-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              <div class="space-y-2 max-w-2xl">
+              <div class="space-y-2 flex-1 min-w-0">
                 <div class="flex items-center gap-2">
                   <span class="text-lg" aria-hidden="true">🧪</span>
                   <h3 class="text-base font-bold text-[var(--text)]">
@@ -321,7 +325,17 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
                   <ul class="space-y-2" aria-label="Lista de comandos clave">
                     @for (cmd of l.commands; track cmd) {
                       <li class="flex items-center justify-between p-2 rounded-lg bg-[var(--surface-muted)] border border-[var(--border)] text-xs">
-                        <code class="font-mono font-bold text-[var(--primary-text)]">{{ cmd }}</code>
+                        <a
+                          [routerLink]="['/comandos']"
+                          [queryParams]="{ q: cmd }"
+                          [attr.data-cmd]="cmd"
+                          [attr.data-term-ref]="'cmd:' + cmd"
+                          class="term-link wiki-ref wiki-cmd-link font-mono font-bold text-[var(--primary-text)] border-b border-dotted border-[var(--primary-text)] hover:opacity-80 inline-flex items-center gap-1.5 cursor-pointer"
+                          title="Comando: {{ cmd }}"
+                        >
+                          <span aria-hidden="true">💻</span>
+                          <span>{{ cmd }}</span>
+                        </a>
                         <span class="text-[var(--text-muted)] font-mono text-[11px]">Objetivo LPIC-1</span>
                       </li>
                     }
@@ -342,9 +356,17 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
                 @if (l.keyTerms && l.keyTerms.length > 0) {
                   <div class="flex flex-wrap gap-2" aria-label="Lista de términos clave">
                     @for (term of l.keyTerms; track term) {
-                      <span class="px-2.5 py-1 rounded-lg bg-[var(--surface-muted)] border border-[var(--border)] text-xs font-mono text-[var(--text)]">
-                        {{ term }}
-                      </span>
+                      <a
+                        [routerLink]="['/glosario']"
+                        [queryParams]="{ q: term }"
+                        [attr.data-term]="term"
+                        [attr.data-term-ref]="'term:' + term"
+                        class="term-link wiki-ref wiki-term-link px-2.5 py-1 rounded-lg bg-[var(--surface-muted)] border border-dotted border-[var(--info-text)] text-xs font-mono text-[var(--info-text)] hover:opacity-80 transition-opacity inline-flex items-center gap-1 cursor-pointer"
+                        title="Término: {{ term }}"
+                      >
+                        <span aria-hidden="true">📖</span>
+                        <span>{{ term }}</span>
+                      </a>
                     }
                   </div>
                 } @else {
@@ -361,7 +383,6 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
                 [subtopicId]="l.id"
                 [questions]="subtopicQuestions()"
                 [flashcards]="subtopicFlashcards()"
-                [exercises]="l.exercises ?? []"
                 (jumpToSlide)="onJumpToSlideFromPractice($event)"
                 (rateCard)="onRateFlashcard($event)"
               />
@@ -396,6 +417,8 @@ import { TabsComponent, TabItem } from '../../../shared/ui/tabs/tabs.component';
           }
         </nav>
       }
+        </div>
+      </app-container>
     </div>
   `,
   styles: [`

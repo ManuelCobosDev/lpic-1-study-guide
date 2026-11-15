@@ -6,6 +6,15 @@ export interface WikiLocation {
   queryParams?: Record<string, string | number>;
 }
 
+export interface WikiAnchorRect {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+  width: number;
+  height: number;
+}
+
 export interface WikiRefData {
   type: 'command' | 'term';
   id: string;
@@ -21,5 +30,6 @@ export interface WikiRefData {
   sinExplicacion?: string;
   x: number;
   y: number;
+  anchorRect?: WikiAnchorRect;
 }
 

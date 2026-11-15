@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="umask-title umask-desc">
+  <title id="umask-title">Cálculo de la umask sobre las bases 666 y 777 (LPIC-1 104.5)</title>
+  <desc id="umask-desc">Dos filas aplican la misma máscara 022. En la fila de archivos, la base 666 se queda en 644 porque la umask apaga la escritura del grupo y de otros. En la fila de directorios, la base 777 se queda en 755 por la misma razón. La operación es permiso igual a base AND NOT umask, de modo que la máscara solo puede quitar bits. Una banda de alerta recuerda que ningún valor de umask hace ejecutable un archivo nuevo, porque la base 666 no contiene la x: para obtener 755 hay que crear el archivo y aplicar chmod +x.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #475569; }
+      .card-base { fill: #F1F5F9; stroke: #475569; stroke-width: 2; }
+      .card-mask { fill: #FFF1F2; stroke: #E11D48; stroke-width: 2; }
+      .card-result { fill: #ECFDF5; stroke: #059669; stroke-width: 2; }
+      .card-head { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.06em; }
+      .big-base { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 30px; font-weight: 700; fill: #0F172A; }
+      .big-mask { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 30px; font-weight: 700; fill: #881337; }
+      .big-result { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 30px; font-weight: 700; fill: #065F46; }
+      .small-code { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 15px; font-weight: 500; fill: #475569; }
+      .small-mask { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 500; fill: #881337; }
+      .edge { fill: none; stroke: #1D40D8; stroke-width: 2.5; }
+      .formula-band { fill: #EFF4FF; stroke: #2550EB; stroke-width: 2; }
+      .formula { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 18px; font-weight: 700; fill: #1E36AF; text-anchor: middle; }
+      .band-warn { fill: #FFF1F2; stroke: #E11D48; stroke-width: 2; }
+      .warn-title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 17px; font-weight: 700; fill: #881337; }
+      .warn-body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; font-weight: 400; fill: #881337; }
+    </style>
+    <marker id="um-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#1D40D8"/>
+    </marker>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">umask · PERMISOS AL CREAR</text>
+    <text class="title" x="40" y="78">La base manda, la máscara recorta</text>
+    <text class="subtitle" x="40" y="102">El programa pide 666 o 777; la umask apaga bits</text>
+    <text class="subtitle" x="40" y="122">umask -S lo muestra al revés: lo que sí queda</text>
+  </g>
+
+  <g id="diagram-relations">
+    <path id="um-rel-file-base-mask" class="edge" data-from="node-base-file" data-to="node-mask-file" data-relation="applies-umask" d="M 300 195 H 360" marker-end="url(#um-arrow)"/>
+    <path id="um-rel-file-mask-result" class="edge" data-from="node-mask-file" data-to="node-result-file" data-relation="produces-mode" d="M 600 195 H 660" marker-end="url(#um-arrow)"/>
+    <path id="um-rel-dir-base-mask" class="edge" data-from="node-base-dir" data-to="node-mask-dir" data-relation="applies-umask" d="M 300 303 H 360" marker-end="url(#um-arrow)"/>
+    <path id="um-rel-dir-mask-result" class="edge" data-from="node-mask-dir" data-to="node-result-dir" data-relation="produces-mode" d="M 600 303 H 660" marker-end="url(#um-arrow)"/>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-base-file">
+      <rect class="card-base" x="40" y="150" width="260" height="90" rx="10"/>
+      <text class="card-head" x="64" y="174">ARCHIVO NUEVO</text>
+      <text class="big-base" x="64" y="206">666</text>
+      <text class="small-code" x="64" y="228">rw-rw-rw-</text>
+    </g>
+
+    <g id="node-mask-file">
+      <rect class="card-mask" x="360" y="150" width="240" height="90" rx="10"/>
+      <text class="card-head" x="384" y="174">UMASK</text>
+      <text class="big-mask" x="384" y="206">- 022</text>
+      <text class="small-mask" x="384" y="228">quita w a grupo y otros</text>
+    </g>
+
+    <g id="node-result-file">
+      <rect class="card-result" x="660" y="150" width="260" height="90" rx="10"/>
+      <text class="card-head" x="684" y="174">RESULTADO</text>
+      <text class="big-result" x="684" y="206">644</text>
+      <text class="small-code" x="684" y="228">rw-r--r--</text>
+    </g>
+
+    <g id="node-base-dir">
+      <rect class="card-base" x="40" y="258" width="260" height="90" rx="10"/>
+      <text class="card-head" x="64" y="282">DIRECTORIO NUEVO</text>
+      <text class="big-base" x="64" y="314">777</text>
+      <text class="small-code" x="64" y="336">rwxrwxrwx</text>
+    </g>
+
+    <g id="node-mask-dir">
+      <rect class="card-mask" x="360" y="258" width="240" height="90" rx="10"/>
+      <text class="card-head" x="384" y="282">UMASK</text>
+      <text class="big-mask" x="384" y="314">- 022</text>
+      <text class="small-mask" x="384" y="336">quita w a grupo y otros</text>
+    </g>
+
+    <g id="node-result-dir">
+      <rect class="card-result" x="660" y="258" width="260" height="90" rx="10"/>
+      <text class="card-head" x="684" y="282">RESULTADO</text>
+      <text class="big-result" x="684" y="314">755</text>
+      <text class="small-code" x="684" y="336">rwxr-xr-x</text>
+    </g>
+
+    <g id="node-formula">
+      <rect class="formula-band" x="40" y="364" width="880" height="48" rx="8"/>
+      <text class="formula" x="480" y="394">Permiso = base AND NOT(umask)</text>
+    </g>
+
+    <g id="node-aviso">
+      <rect class="band-warn" x="40" y="426" width="880" height="82" rx="10"/>
+      <text class="warn-title" x="64" y="456">Ninguna umask hace ejecutable un archivo nuevo</text>
+      <text class="warn-body" x="64" y="484">La base 666 no contiene x: para 755 hay que crearlo y aplicar chmod +x.</text>
+    </g>
+  </g>
+</svg>

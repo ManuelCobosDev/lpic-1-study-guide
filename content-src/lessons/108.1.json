@@ -57,8 +57,7 @@
           "type": "paragraph",
           "text": "Subtema 108.1 · Peso LPI: 3 · Examen LPIC-1 102-500"
         }
-      ],
-      "notes": "Bienvenido al Tema 108 (Servicios esenciales del sistema). El subtema 108.1 cubre el mantenimiento del tiempo: reloj de software vs hardware, hwclock, timedatectl, NTP, pool.ntp.org, ntpd/ntpq y chronyd/chronyc."
+      ]
     },
     {
       "id": "108.1-slide-2",
@@ -85,23 +84,22 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: El kernel Linux SIEMPRE mantiene su reloj de software en UTC. En Linux, la recomendación estándar es que el reloj de hardware (RTC) también almacene la hora en UTC."
         }
-      ],
-      "notes": "Windows suele asumir que el RTC está en hora local, lo que causa desajustes de horas en arranques duales."
+      ]
     },
     {
       "id": "108.1-slide-3",
       "slideNumber": 3,
-      "title": "El Comando date: Consulta, Formato, Fijación y Depuración",
+      "title": "date: consulta, formatos ISO/RFC y el año 2038",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "El Comando date: Consulta, Formato, Fijación y Depuración"
+          "text": "El comando date: consulta, formato y año 2038"
         },
         {
           "type": "paragraph",
-          "text": "La herramienta central para leer y alterar la hora del kernel en espacio de usuario."
+          "text": "Lee y altera la hora del kernel; sus formatos predefinidos emiten fechas normalizadas listas para scripts y registros."
         },
         {
           "type": "terminal",
@@ -113,13 +111,18 @@
             },
             {
               "prompt": "$ ",
+              "command": "date -Iseconds",
+              "output": "2026-10-30T08:15:00+01:00"
+            },
+            {
+              "prompt": "$ ",
               "command": "date -u",
               "output": "Fri Oct 30 07:15:00 UTC 2026"
             },
             {
               "prompt": "$ ",
               "command": "date --debug --date '2026-02-15 10:30'",
-              "output": "date: parsed date part: (Y-M-D) 2026-02-15\ndate: parsed time part: 10:30:00\nSun Feb 15 10:30:00 CET 2026"
+              "output": "date: parsed date part: (Y-M-D) 2026-02-15"
             }
           ]
         },
@@ -127,41 +130,45 @@
           "type": "table",
           "headers": [
             "Opción / Formato",
-            "Nombre",
-            "Descripción"
+            "Estándar",
+            "Salida típica"
           ],
           "rows": [
             [
+              "-I, --iso-8601[=FMT]",
+              "ISO 8601",
+              "date -Idate → 2026-10-30 (también hours, minutes, seconds, ns)"
+            ],
+            [
+              "-R, --rfc-email",
+              "RFC 5322",
+              "Fri, 30 Oct 2026 08:15:00 +0100"
+            ],
+            [
+              "--rfc-3339=FMT",
+              "RFC 3339",
+              "2026-10-30 08:15:00+01:00 (date, seconds o ns)"
+            ],
+            [
               "-u, --utc",
-              "Hora UTC",
-              "Muestra o establece la hora en Tiempo Universal Coordinado (ignora zona horaria local)."
+              "Tiempo Universal",
+              "Fri Oct 30 07:15:00 UTC 2026"
             ],
             [
               "-s, --set CADENA",
               "Fijar hora",
-              "Ajusta manualmente la fecha y hora del kernel (ej. date -s '2026-10-30 08:00:00')."
-            ],
-            [
-              "+%Y %m %d %T %s",
-              "Secuencias",
-              "%Y (año 4 dígitos), %m (mes 01-12), %d (día 01-31), %T (HH:MM:SS), %s (segundos Epoch)."
-            ],
-            [
-              "--debug",
-              "Depurar sintaxis",
-              "Diagnostica el análisis sintáctico de fechas para detectar desbordamientos o formatos incorrectos."
+              "date -s '2026-10-30 08:00:00'"
             ]
           ],
-          "caption": "Opciones clave del comando date evaluadas en LPIC-1"
+          "caption": "Formatos predefinidos de date y opción de fijación"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Para cambiar solo la hora manteniendo el resto intacto: 'date +%T -s \"08:00:00\"'. Para depurar fechas ambiguas (ej. formato mes/día vs día/mes): 'date --debug --date \"cadena\"'."
+          "content": "🎯 Clave de Examen: date +%s devuelve el tiempo Unix, segundos desde Epoch (1 de enero de 1970). Los 32 bits se agotan el 19 de enero de 2038, cuando Linux System Time necesitará 64 bits. Cambiar el valor del epoch no es la solución: afectaría al software heredado."
         }
-      ],
-      "notes": "Cambiar la hora con date -s requiere privilegios de root (o CAP_SYS_TIME)."
+      ]
     },
     {
       "id": "108.1-slide-4",
@@ -240,8 +247,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: 'hwclock -w' (--systohc) guarda la hora del sistema en el RTC. 'hwclock -s' (--hctosys) carga la hora del RTC en el sistema. Los factores de calibración de deriva se guardan en /etc/adjtime."
         }
-      ],
-      "notes": "Requiere privilegios de root para modificar el RTC. hwclock guarda la calibración de deriva en /etc/adjtime."
+      ]
     },
     {
       "id": "108.1-slide-5",
@@ -268,23 +274,22 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: /usr/share/zoneinfo/ contiene los ficheros binarios de zonas horarias con reglas DST. En sistemas sin timedatectl, se usa 'ln -sf /usr/share/zoneinfo/... /etc/localtime' y se actualiza /etc/timezone."
         }
-      ],
-      "notes": "DST (Daylight Saving Time) ajusta automáticamente el desfase UTC en primavera y otoño según las reglas de cada país."
+      ]
     },
     {
       "id": "108.1-slide-6",
       "slideNumber": 6,
-      "title": "Comando timedatectl: Control Unificado en systemd",
+      "title": "timedatectl: estado, hora, zona y NTP",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Comando timedatectl: Control Unificado en systemd"
+          "text": "timedatectl: estado, hora, zona horaria y NTP"
         },
         {
           "type": "paragraph",
-          "text": "Gestión moderna del reloj de software, RTC, zona horaria y sincronización NTP."
+          "text": "Control unificado de systemd sobre el reloj del sistema, el RTC, la zona horaria y la sincronización de red."
         },
         {
           "type": "terminal",
@@ -293,91 +298,155 @@
               "prompt": "$ ",
               "command": "timedatectl status",
               "output": "               Local time: Fri 2026-10-30 08:16:10 CET\n           Universal time: Fri 2026-10-30 07:16:10 UTC\n                 RTC time: Fri 2026-10-30 07:16:10\n                Time zone: Europe/Madrid (CET, +0100)\nSystem clock synchronized: yes\n              NTP service: active\n          RTC in local TZ: no"
+            },
+            {
+              "prompt": "$ ",
+              "command": "timedatectl list-timezones | grep -i cairo",
+              "output": "Africa/Cairo"
+            },
+            {
+              "prompt": "$ ",
+              "command": "sudo timedatectl set-timezone Africa/Cairo",
+              "output": "(sin salida: el nombre es exacto y la zona cambia)"
             }
           ]
         },
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
+            "Opción",
+            "Qué hace y qué reloj toca"
           ],
           "rows": [
             [
               "status",
-              "",
-              "Muestra Local time, Universal time, RTC time, Time zone y estado de sincronización NTP."
+              "Muestra Local time, Universal time, RTC time, Time zone y el estado de sincronización NTP (ambos relojes)"
             ],
             [
               "set-time 'YYYY-MM-DD HH:MM:SS'",
-              "",
-              "Ajusta la hora del sistema y actualiza el RTC al mismo tiempo (requiere NTP desactivado)."
+              "Ajusta la hora del sistema y actualiza el RTC; requiere NTP desactivado"
             ],
             [
               "set-timezone ZONA",
-              "",
-              "Cambia permanentemente la zona horaria del sistema (actualiza /etc/localtime)."
+              "Cambia la zona horaria de forma permanente (actualiza /etc/localtime)"
+            ],
+            [
+              "list-timezones",
+              "Lista todas las zonas disponibles; se filtra con grep -i"
             ],
             [
               "set-ntp true|false",
-              "",
-              "Activa o desactiva la sincronización horaria automática por protocolo NTP."
+              "Activa o desactiva la sincronización automática por NTP"
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Opciones de timedatectl y reloj afectado"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 'timedatectl set-ntp true' activa la sincronización automática de red (mediante systemd-timesyncd o chrony/ntp). Para cambiar la hora con set-time, set-ntp debe estar en false."
+          "content": "🎯 Clave de Examen: sin un servidor NTP accesible, el manual recomienda timedatectl en lugar de date o hwclock. set-timezone exige el nombre exacto: Africa/Cairo sí; cairo o africa/cairo no. set-ntp true|false activa o desactiva la sincronización."
         }
-      ],
-      "notes": "timedatectl reemplaza tanto a date como a hwclock en la administración moderna de systemd."
+      ]
     },
     {
       "id": "108.1-slide-7",
       "slideNumber": 7,
-      "title": "El Protocolo NTP y SNTP: Jerarquía y Niveles de Estrato (Strata)",
+      "title": "NTP y SNTP: estratos y umbrales de ajuste",
       "layout": "diagram",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "El Protocolo NTP y SNTP: Jerarquía y Niveles de Estrato (Strata)"
+          "text": "El protocolo NTP y SNTP: jerarquía de estratos y umbrales"
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo viaja la precisión atómica a través de Internet y en qué se diferencia SNTP?"
+          "text": "¿Cómo viaja la precisión atómica y cuándo NTP salta la hora en lugar de ajustarla poco a poco?"
         },
         {
           "type": "html",
           "sanitizedHtml": "\n<div style=\"background:#FFFFFF; border:2px solid var(--border-strong); border-radius:12px; padding:12px 18px; margin-top:8px;\">\n  <div style=\"font-size:13px; font-weight:800; color:var(--text); margin-bottom:8px; display:flex; justify-content:space-between;\">\n    <span>📡 Jerarquía de Estratos NTP (Network Time Protocol · UDP 123)</span>\n    <span style=\"font-size:10.5px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:10px; font-weight:700;\">Stratum 0 a 16</span>\n  </div>\n\n  <div style=\"display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; font-size:11px;\">\n    <!-- Stratum 0 -->\n    <div style=\"background:#FEF2F2; border:1px solid #FECDD3; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#B91C1C;\">Stratum 0 (Físico)</strong><br>\n      • Relojes atómicos de cesio, rubidio y satélites GPS.<br>\n      • ❌ <strong>Sin conexión IP</strong>.<br>\n      • Conectados por puerto serie/PPS a un equipo.\n    </div>\n\n    <!-- Stratum 1 -->\n    <div style=\"background:#FFFBEB; border:1px solid #FDE68A; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#B45309;\">Stratum 1 (Primario)</strong><br>\n      • Servidores directamente conectados a Stratum 0.<br>\n      • Servidores de referencia nacionales (NIST, ROA).<br>\n      • Máxima precisión en red.\n    </div>\n\n    <!-- Stratum 2 -->\n    <div style=\"background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#15803D;\">Stratum 2 (Secundario)</strong><br>\n      • Servidores que sincronizan vía red con servidores Stratum 1.<br>\n      • Distribuyen la hora a empresas y proveedores de ISP.\n    </div>\n\n    <!-- Stratum 3+ / 16 -->\n    <div style=\"background:#F0F9FF; border:1px solid #BAE6FD; border-radius:6px; padding:8px;\">\n      <strong style=\"color:#0284C7;\">Stratum 3+ y 16</strong><br>\n      • Clientes corporativos y servidores locales.<br>\n      • ⚠️ <strong>Stratum 16:</strong> Indica que el reloj NO está sincronizado (inválido).\n    </div>\n  </div>\n\n  <div style=\"margin-top:10px; background:#F8FAFC; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:11px; color:#475569;\">\n    ⚡ <strong>Diferencia técnica NTP vs SNTP (RFC 4330):</strong><br>\n    • <strong>NTP completo:</strong> Algoritmos estadísticos avanzados, filtrado de fluctuación (jitter), estimación de deriva (drift) y disciplinado continuo del reloj.<br>\n    • <strong>SNTP (Simple NTP):</strong> Versión ligera sin filtrado complejo para clientes simples como <code>systemd-timesyncd</code>.\n  </div>\n</div>\n"
         },
         {
+          "type": "table",
+          "headers": [
+            "Desfase (offset)",
+            "Acción de NTP",
+            "Término"
+          ],
+          "rows": [
+            [
+              "Menos de 128 ms",
+              "Ajuste gradual hasta igualar la hora",
+              "Slew"
+            ],
+            [
+              "Más de 128 ms",
+              "Un único cambio significativo de hora",
+              "Step"
+            ],
+            [
+              "Más de 17 minutos",
+              "No introduce ningún cambio en la hora",
+              "Insane time"
+            ]
+          ],
+          "caption": "Umbrales de ajuste de NTP"
+        },
+        {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Estrato 0 = Reloj Atómico/GPS físico (no IP). Estrato 1 = Servidor conectado directamente al Stratum 0. Cada salto de red incrementa el estrato en 1. Estrato 16 = No sincronizado."
+          "content": "🎯 Clave de Examen: con más de 128 ms de desfase NTP da un salto (step); por debajo desliza (slew). Si el desfase supera 17 minutos la hora es 'insane' y el demonio no la cambia: hay que intervenir a mano con ntpdate."
         }
-      ],
-      "notes": "NTP utiliza el puerto UDP 123. Corrige la hora suavemente (slew) para no provocar saltos hacia atrás en bases de datos."
+      ]
     },
     {
       "id": "108.1-slide-8",
       "slideNumber": 8,
-      "title": "El Proyecto pool.ntp.org: Servidores Públicos en Clúster",
+      "title": "pool.ntp.org: directivas pool y server",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "El Proyecto pool.ntp.org: Servidores Públicos en Clúster"
+          "text": "El proyecto pool.ntp.org: directivas pool y server"
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo evitan los desarrolladores de Linux saturar los servidores atómicos oficiales?"
+          "text": "Pools DNS de servidores públicos que reparten la carga entre ellos; se declaran en /etc/ntp.conf o en /etc/chrony/chrony.conf."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Directiva",
+            "Qué hace",
+            "Ejemplo"
+          ],
+          "rows": [
+            [
+              "server",
+              "Declara una fuente NTP concreta (IP o nombre)",
+              "server 0.centos.pool.ntp.org iburst"
+            ],
+            [
+              "pool",
+              "Usa varias direcciones del mismo pool resueltas por DNS",
+              "pool 2.debian.pool.ntp.org iburst"
+            ],
+            [
+              "iburst",
+              "Acelera la sincronización inicial con varios paquetes seguidos",
+              "server 0.es.pool.ntp.org iburst"
+            ],
+            [
+              "Zona regional",
+              "Menos latencia que el pool genérico",
+              "0.es.pool.ntp.org, 2.debian.pool.ntp.org"
+            ]
+          ],
+          "caption": "Directivas de pool.ntp.org en ntpd y chrony"
         },
         {
           "type": "callout",
@@ -385,8 +454,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: pool.ntp.org utiliza balanceo DNS Round Robin. Se configura con directivas 'server' o 'pool' en /etc/ntp.conf o /etc/chrony/chrony.conf."
         }
-      ],
-      "notes": "Se recomienda usar zonas regionales como 0.es.pool.ntp.org o 2.debian.pool.ntp.org para minimizar latencias."
+      ]
     },
     {
       "id": "108.1-slide-9",
@@ -413,23 +481,22 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: 'driftfile /var/lib/ntp/ntp.drift' guarda la deriva de frecuencia del oscilador de la CPU. La directiva 'restrict' protege contra accesos no autorizados."
         }
-      ],
-      "notes": "ntpd corre como servicio de fondo continuo y abre el puerto UDP 123."
+      ]
     },
     {
       "id": "108.1-slide-10",
       "slideNumber": 10,
-      "title": "Supervisión de ntpd: ntpq y la Utilidad ntpdate",
+      "title": "ntpq: columnas, símbolos y hora insane",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Supervisión de ntpd: ntpq y la Utilidad ntpdate"
+          "text": "ntpq -p: columnas, símbolos y la hora insane"
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo interpretar los símbolos y métricas de estado de los pares NTP?"
+          "text": "Interpreta el estado de los pares NTP y resuelve el caso en que el demonio se niega a cambiar la hora."
         },
         {
           "type": "terminal",
@@ -444,47 +511,44 @@
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
+            "Elemento",
+            "Significado"
           ],
           "rows": [
             [
-              "ntpq -p",
-              "",
-              "Imprime en formato de tabla el estado de todos los pares NTP (peers), retraso, offset y jitter."
+              "* (asterisco)",
+              "Par sincronizado y seleccionado como fuente principal"
             ],
             [
-              "Símbolo * (asterisco)",
-              "",
-              "Par actualmente sincronizado y utilizado como fuente principal de tiempo."
+              "+ (más) / - (menos)",
+              "+ es candidato de respaldo válido; - fue descartado por el algoritmo de agrupamiento"
             ],
             [
-              "Símbolo + (más)",
-              "",
-              "Candidato válido de respaldo listo para reemplazar al principal si falla."
+              "remote · refid · st",
+              "Servidor, referencia usada y estrato del par"
             ],
             [
-              "Símbolo - (menos)",
-              "",
-              "Par descartado por el algoritmo de agrupamiento (cluster)."
+              "when · poll · reach",
+              "Segundos desde la última respuesta, intervalo de sondeo y registro de alcance"
             ],
             [
-              "ntpdate servidor",
-              "",
-              "(Obsoleto) Realiza un salto instantáneo hacia la hora del servidor (falla si ntpd está corriendo)."
+              "delay · offset · jitter",
+              "Retardo, desfase y variación de la última muestra"
+            ],
+            [
+              "ntpq -n, ntpq -pn",
+              "Sustituye los nombres por direcciones IP"
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Columnas y símbolos de ntpq -p"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: En la salida de 'ntpq -p': el asterisco (*) marca el par actualmente seleccionado como fuente primaria; el signo más (+) marca candidatos de respaldo aceptables."
+          "content": "🎯 Clave de Examen: el asterisco (*) marca la fuente seleccionada; el signo más (+), los candidatos de respaldo. Si la hora es 'insane' (más de 17 minutos de desfase): systemctl stop ntpd y después ntpdate pool.ntp.org."
         }
-      ],
-      "notes": "ntpdate ajusta la hora de golpe (step) y está oficialmente en desuso (obsoleto). No puede ejecutarse si ntpd ya tiene ocupado el puerto UDP 123."
+      ]
     },
     {
       "id": "108.1-slide-11",
@@ -511,23 +575,22 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: 'makestep 1.0 3' permite a chrony saltar la hora si el desfase es mayor de 1 segundo, pero SOLO durante las 3 primeras actualizaciones tras el arranque."
         }
-      ],
-      "notes": "Chrony sincroniza el reloj mucho más rápido que ntpd y tolera que el equipo se suspenda o pierda red."
+      ]
     },
     {
       "id": "108.1-slide-12",
       "slideNumber": 12,
-      "title": "Comando chronyc: Control y Diagnóstico de chronyd",
+      "title": "chronyc: diagnóstico de fuentes",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Comando chronyc: Control y Diagnóstico de chronyd"
+          "text": "chronyc: control y diagnóstico de chronyd"
         },
         {
           "type": "paragraph",
-          "text": "Comandos de diagnóstico en tiempo real de fuentes, seguimiento y actividad."
+          "text": "Consultas en tiempo real sobre las fuentes, las estadísticas de deriva y el reloj local."
         },
         {
           "type": "terminal",
@@ -542,38 +605,28 @@
         {
           "type": "table",
           "headers": [
-            "Opción / Bandera",
-            "Nombre",
-            "Descripción"
+            "Opción",
+            "Qué muestra"
           ],
           "rows": [
             [
               "sources [-v]",
-              "",
-              "Muestra las fuentes NTP configuradas y su estado (* actual, + candidato, ? inalcanzable)."
+              "Fuentes NTP configuradas y su estado (* actual, + candidato, ? inalcanzable)"
             ],
             [
               "sourcestats [-v]",
-              "",
-              "Muestra estadísticas de deriva y fluctuación de frecuencia de cada fuente."
+              "Estadísticas de deriva y fluctuación de frecuencia de cada fuente"
             ],
             [
               "tracking",
-              "",
-              "Vuelca los parámetros actuales del reloj local: Stratum, Reference ID, System time offset y Drift."
-            ],
-            [
-              "activity",
-              "",
-              "Informa de cuántas fuentes están online, offline o pendientes de resolución."
+              "Parámetros del reloj local: Stratum, Reference ID, System time offset y Drift"
             ],
             [
               "makestep",
-              "",
-              "Ordena a chronyd realizar un salto manual instantáneo para eliminar cualquier desfase."
+              "Fuerza un salto manual inmediato para eliminar el desfase"
             ]
           ],
-          "caption": "Opciones y parámetros del comando"
+          "caption": "Comandos de diagnóstico de chronyc"
         },
         {
           "type": "callout",
@@ -581,13 +634,12 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: 'chronyc sources -v' muestra la lista de servidores NTP y su estado. 'chronyc tracking' muestra los parámetros del reloj local (estrato, offset, frecuencia)."
         }
-      ],
-      "notes": "chronyc makestep fuerza un salto inmediato del reloj si no se desea esperar al slew."
+      ]
     },
     {
       "id": "108.1-slide-13",
       "slideNumber": 13,
-      "title": "Matriz Comparativa: ntpd vs chronyd vs systemd-timesyncd (SNTP)",
+      "title": "Matriz: ntpd vs chronyd vs systemd-timesyncd",
       "layout": "content",
       "blocks": [
         {
@@ -627,6 +679,18 @@
               "Aceptable"
             ],
             [
+              "Modos de ajuste",
+              "Steps y slews",
+              "Steps y slews",
+              "Solo steps (SNTP)"
+            ],
+            [
+              "Número de fuentes",
+              "Varias (elige la óptima)",
+              "Varias (elige la óptima)",
+              "Una sola"
+            ],
+            [
               "Soporte de Stratum 0 (Hardware PPS)",
               "✅ Sí",
               "✅ Sí",
@@ -645,14 +709,14 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Resumen LPIC-1: systemd-timesyncd es SOLO CLIENTE básico (SNTP sin filtrado complejo); ntpd es el clásico universal; chronyd es el estándar moderno rápido para clientes y servidores."
+          "content": "🎯 Resumen LPIC-1: systemd-timesyncd es SOLO CLIENTE básico (SNTP sin filtrado complejo, una sola fuente y ajustes por pasos); ntpd es el clásico universal; chronyd es el estándar moderno rápido para clientes y servidores."
         }
       ]
     },
     {
       "id": "108.1-slide-14",
       "slideNumber": 14,
-      "title": "Cheatsheet de Comandos: Gestión y Sincronización del Tiempo",
+      "title": "Cheatsheet de comandos de tiempo",
       "layout": "content",
       "blocks": [
         {
@@ -693,6 +757,11 @@
               "systemd-timesyncd / chronyd"
             ],
             [
+              "<code>timedatectl show-timesync --all</code>",
+              "Muestra el estado SNTP: servidores, intervalo de sondeo y mensaje NTP",
+              "systemd-timesyncd"
+            ],
+            [
               "<code>ntpq -p</code>",
               "Supervisa los pares y estado del demonio clásico ntpd",
               "<code>/etc/ntp.conf</code> (ntpd)"
@@ -714,7 +783,7 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Regla: El reloj de software lo miras con 'date' o 'timedatectl'; el RTC lo miras con 'hwclock -r'."
+          "content": "🎯 Regla: El reloj de software lo miras con 'date' o 'timedatectl'; el RTC lo miras con 'hwclock -r'. Si dudas de la sincronización SNTP, 'timedatectl show-timesync --all'."
         }
       ]
     },
@@ -779,7 +848,7 @@
     {
       "id": "108.1-slide-17",
       "slideNumber": 17,
-      "title": "Checklist de Examen: Trampas Críticas en el Subtema 108.1",
+      "title": "Checklist de trampas críticas del 108.1",
       "layout": "checkpoint",
       "blocks": [
         {
@@ -790,6 +859,40 @@
         {
           "type": "paragraph",
           "text": "Los errores más recurrentes en las preguntas de mantenimiento del tiempo."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Trampa",
+            "Respuesta correcta"
+          ],
+          "rows": [
+            [
+              "--systohc vs --hctosys",
+              "--systohc escribe el RTC desde el sistema; --hctosys carga el sistema desde el RTC"
+            ],
+            [
+              "date -s vs timedatectl set-time",
+              "date -s toca solo el kernel; timedatectl actualiza sistema y RTC, y exige NTP desactivado"
+            ],
+            [
+              "Nombre de zona inexacto",
+              "set-timezone pide Continente/Ciudad exacto: Africa/Cairo funciona; cairo no"
+            ],
+            [
+              "Hora insane (más de 17 minutos)",
+              "El demonio no ajusta: systemctl stop ntpd y ntpdate pool.ntp.org"
+            ],
+            [
+              "Umbral step/slew",
+              "Con más de 128 ms salta (step); con menos desliza (slew)"
+            ],
+            [
+              "systemd-timesyncd",
+              "Solo cliente SNTP: una fuente, ajustes por pasos y no sirve hora a otros equipos"
+            ]
+          ],
+          "caption": "Trampas críticas del subtema 108.1"
         },
         {
           "type": "callout",

@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="initsys-title initsys-desc">
+  <title id="initsys-title">Evolución de los sistemas de inicio: SysVinit secuencial, Upstart por eventos y systemd en paralelo (LPIC-1 101.2)</title>
+  <desc id="initsys-desc">SysVinit arranca los servicios en fila: cada script de /etc/rc0.d a /etc/rc6.d espera a que termine el anterior, se controla con runlevels y con service o telinit. Upstart, usado en Ubuntu entre 2006 y 2014, sustituyó la fila por eventos: reacciona cuando ocurre algo y guarda sus trabajos en /etc/init con las órdenes initctl, start y stop, emulando los runlevels de SysVinit. systemd, el estándar desde 2010 en Debian, Ubuntu y RHEL, enciende todos los servicios a la vez usando todos los núcleos, los declara como unidades .service en /lib/systemd/system y sustituye los runlevels por targets como multi-user.target y graphical.target.</desc>
+
+  <defs>
+    <style>
+      .canvas { fill: #FFFFFF; }
+      .frame { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 2; }
+      .eyebrow { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.08em; }
+      .title { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 28px; font-weight: 700; fill: #0F172A; }
+      .subtitle { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 400; fill: #475569; }
+      .panel-a { fill: #F1F5F9; stroke: #475569; stroke-width: 2; }
+      .panel-b { fill: #FFFBEB; stroke: #D97706; stroke-width: 2; }
+      .panel-c { fill: #EFF4FF; stroke: #2550EB; stroke-width: 2; }
+      .era { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #64748B; letter-spacing: 0.06em; }
+      .era-b { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #B45309; letter-spacing: 0.06em; }
+      .era-c { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; font-weight: 700; fill: #1E36AF; letter-spacing: 0.06em; }
+      .name-a { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 20px; font-weight: 700; fill: #0F172A; }
+      .name-b { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 20px; font-weight: 700; fill: #B45309; }
+      .name-c { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 20px; font-weight: 700; fill: #1E36AF; }
+      .mini { fill: #FFFFFF; stroke: #64748B; stroke-width: 1.5; }
+      .mini-text { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 600; fill: #334155; }
+      .hub { fill: #FFFFFF; stroke: #2550EB; stroke-width: 2; }
+      .hub-text { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 16px; font-weight: 700; fill: #1E36AF; text-anchor: middle; }
+      .svc { fill: #FFFFFF; stroke: #2550EB; stroke-width: 1.5; }
+      .svc-text { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; font-weight: 600; fill: #1E36AF; text-anchor: middle; }
+      .foot { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 400; fill: #475569; }
+      .foot-mono { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; font-weight: 500; fill: #1E36AF; }
+      .line-b { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 500; fill: #7C2D12; }
+      .line-b-mono { font-family: 'JetBrains Mono', Consolas, monospace; font-size: 13px; font-weight: 500; fill: #7C2D12; }
+      .verdict { fill: #FFFFFF; stroke: #475569; stroke-width: 2; }
+      .verdict-label { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; font-weight: 700; fill: #334155; letter-spacing: 0.06em; }
+      .verdict-text { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; font-weight: 500; fill: #0F172A; }
+      .edge { fill: none; stroke: #1D40D8; stroke-width: 2; }
+      .edge-slate { fill: none; stroke: #475569; stroke-width: 2; }
+    </style>
+
+    <marker id="initsys-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#1D40D8"/>
+    </marker>
+    <marker id="initsys-arrow-slate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <g id="diagram-background">
+    <rect class="canvas" x="0" y="0" width="960" height="540"/>
+    <rect class="frame" x="16" y="16" width="928" height="508" rx="14"/>
+    <text class="eyebrow" x="40" y="44">SISTEMAS DE INICIO · TRES GENERACIONES</text>
+    <text class="title" x="40" y="78">De la fila india al arranque en paralelo</text>
+    <text class="subtitle" x="40" y="102">Tres generaciones, un objetivo: arrancar antes.</text>
+  </g>
+
+  <g id="diagram-groups">
+    <g id="node-panel-sysv">
+      <rect class="panel-a" x="40" y="124" width="330" height="296" rx="10"/>
+      <text class="era" x="64" y="152">1980–2000 · SECUENCIAL</text>
+      <text class="name-a" x="64" y="182">SysVinit</text>
+      <text class="foot" x="64" y="380">scripts Bash enlazados en:</text>
+      <text class="foot-mono" x="64" y="402">/etc/rc0.d/ … /etc/rc6.d/</text>
+    </g>
+
+    <g id="node-panel-upstart">
+      <rect class="panel-b" x="390" y="124" width="200" height="296" rx="10"/>
+      <text class="era-b" x="414" y="152">2006–2014 · EVENTOS</text>
+      <text class="name-b" x="414" y="182">Upstart</text>
+      <text class="line-b" x="414" y="216">basado en eventos:</text>
+      <text class="line-b" x="414" y="238">reacciona cuando pasa</text>
+      <text class="line-b" x="414" y="260">algo (cable de red)</text>
+      <text class="line-b-mono" x="414" y="286">/etc/init/*.conf</text>
+      <text class="line-b" x="414" y="312">trabajos en .conf</text>
+      <text class="line-b-mono" x="414" y="338">initctl, start, stop</text>
+      <text class="line-b" x="414" y="364">emulaba los runlevels</text>
+    </g>
+
+    <g id="node-panel-systemd">
+      <rect class="panel-c" x="610" y="124" width="310" height="296" rx="10"/>
+      <text class="era-c" x="634" y="152">2010–HOY · PARALELO</text>
+      <text class="name-c" x="634" y="182">systemd</text>
+      <text class="foot-mono" x="634" y="380">/lib/systemd/system/</text>
+      <text class="foot" x="634" y="402">estándar en Debian, Ubuntu, RHEL</text>
+    </g>
+  </g>
+
+  <g id="diagram-relations">
+    <path id="initsys-rel-a1-a2" class="edge-slate" data-from="node-svc-1" data-to="node-svc-2" data-relation="waits-for"
+          d="M 204 230 V 256" marker-end="url(#initsys-arrow-slate)"/>
+    <path id="initsys-rel-a2-a3" class="edge-slate" data-from="node-svc-2" data-to="node-svc-3" data-relation="waits-for"
+          d="M 204 286 V 312" marker-end="url(#initsys-arrow-slate)"/>
+
+    <path id="initsys-rel-hub-1" class="edge" data-from="node-hub" data-to="node-app-1" data-relation="starts-all"
+          d="M 660 248 V 292" marker-end="url(#initsys-arrow)"/>
+    <path id="initsys-rel-hub-2" class="edge" data-from="node-hub" data-to="node-app-2" data-relation="starts-all"
+          d="M 762 248 V 292" marker-end="url(#initsys-arrow)"/>
+    <path id="initsys-rel-hub-3" class="edge" data-from="node-hub" data-to="node-app-3" data-relation="starts-all"
+          d="M 864 248 V 292" marker-end="url(#initsys-arrow)"/>
+
+    <path id="initsys-rel-evol-a-b" class="edge-slate" data-from="node-panel-sysv" data-to="node-panel-upstart" data-relation="evolves-to"
+          d="M 370 300 H 390" marker-end="url(#initsys-arrow-slate)"/>
+    <path id="initsys-rel-evol-b-c" class="edge" data-from="node-panel-upstart" data-to="node-panel-systemd" data-relation="evolves-to"
+          d="M 590 300 H 610" marker-end="url(#initsys-arrow)"/>
+  </g>
+
+  <g id="diagram-nodes">
+    <g id="node-svc-1">
+      <rect class="mini" x="64" y="200" width="280" height="30" rx="6"/>
+      <text class="mini-text" x="84" y="220">servicio 1</text>
+    </g>
+    <g id="node-svc-2">
+      <rect class="mini" x="64" y="256" width="280" height="30" rx="6"/>
+      <text class="mini-text" x="84" y="276">servicio 2</text>
+    </g>
+    <g id="node-svc-3">
+      <rect class="mini" x="64" y="312" width="280" height="30" rx="6"/>
+      <text class="mini-text" x="84" y="332">servicio 3</text>
+    </g>
+
+    <g id="node-hub">
+      <rect class="hub" x="634" y="200" width="262" height="48" rx="8"/>
+      <text class="hub-text" x="765" y="230">systemd (PID 1)</text>
+    </g>
+
+    <g id="node-app-1">
+      <rect class="svc" x="620" y="292" width="80" height="48" rx="6"/>
+      <text class="svc-text" x="660" y="321">red</text>
+    </g>
+    <g id="node-app-2">
+      <rect class="svc" x="722" y="292" width="80" height="48" rx="6"/>
+      <text class="svc-text" x="762" y="321">cron</text>
+    </g>
+    <g id="node-app-3">
+      <rect class="svc" x="824" y="292" width="80" height="48" rx="6"/>
+      <text class="svc-text" x="864" y="321">dbus</text>
+    </g>
+  </g>
+
+  <g id="diagram-labels">
+    <g id="node-veredicto">
+      <rect class="verdict" x="40" y="440" width="880" height="60" rx="10"/>
+      <text class="verdict-label" x="64" y="476">VEREDICTO</text>
+      <text class="verdict-text" x="196" y="476">SysVinit enciende en fila; systemd reparte todo a la vez.</text>
+    </g>
+  </g>
+</svg>

@@ -16,15 +16,21 @@
     "/etc/group",
     "/etc/gshadow",
     "/etc/login.defs",
+    "/etc/nsswitch.conf",
     "/etc/passwd",
     "/etc/shadow",
     "/etc/skel/",
     "/var/mail",
     "/var/spool/mail",
     "chage",
+    "CREATE_HOME",
+    "GECOS",
     "getent",
     "GID",
-    "UID"
+    "NSS",
+    "SUID",
+    "UID",
+    "USERGROUPS_ENAB"
   ],
   "commands": [
     "chage",
@@ -33,6 +39,7 @@
     "groupadd",
     "groupdel",
     "groupmod",
+    "groups",
     "id",
     "newgrp",
     "passwd",
@@ -57,8 +64,7 @@
           "type": "paragraph",
           "text": "Subtema 107.1 · Peso LPI: 5 · Examen LPIC-1 102-500"
         }
-      ],
-      "notes": "Bienvenido al Tema 107 (Tareas administrativas). El subtema 107.1 tiene el mayor peso de todo el examen 102 (5 puntos). Cubre la gestión de identidades, bases de datos locales, envejecimiento de claves y comandos esenciales."
+      ]
     },
     {
       "id": "107.1-slide-2",
@@ -85,8 +91,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: Para el kernel Linux los nombres de usuario son meras etiquetas decorativas; los permisos, pertenencia y cuotas se basan estrictamente en números enteros (UID y GID)."
         }
-      ],
-      "notes": "UID 0 es siempre root, sin importar el nombre en /etc/passwd. Los rangos se definen en /etc/login.defs."
+      ]
     },
     {
       "id": "107.1-slide-3",
@@ -113,8 +118,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: /etc/passwd tiene 7 campos separados por dos puntos (':'). La contraseña nunca se guarda aquí; se coloca una 'x' indicando que el hash reside en /etc/shadow."
         }
-      ],
-      "notes": "Permisos 644 (rw-r--r--). Todos los programas del sistema necesitan leerlo para mapear números UID a nombres."
+      ]
     },
     {
       "id": "107.1-slide-4",
@@ -141,8 +145,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: /etc/shadow tiene 9 campos. Las fechas son números enteros que representan los DÍAS transcurridos desde el Epoch Unix (1 de enero de 1970)."
         }
-      ],
-      "notes": "Permisos 640 o 600 propiedad de root:shadow. Si el hash empieza por !, la cuenta está bloqueada."
+      ]
     },
     {
       "id": "107.1-slide-5",
@@ -169,32 +172,72 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: Si 'frank' tiene como GID primario 1001 (grupo frank), 'frank' NO aparecerá en el 4º campo de 'frank:x:1001:'. Solo los miembros suplementarios aparecen listados."
         }
-      ],
-      "notes": "gshadow permite designar administradores de grupo para que usuarios no-root gestionen miembros con gpasswd."
+      ]
     },
     {
       "id": "107.1-slide-6",
       "slideNumber": 6,
-      "title": "Configuración Predeterminada: /etc/skel y Archivos Definitorios",
+      "title": "/etc/login.defs, /etc/skel y /etc/default/useradd",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Configuración Predeterminada: /etc/skel y Archivos Definitorios"
+          "text": "/etc/login.defs, /etc/skel y /etc/default/useradd"
         },
         {
           "type": "paragraph",
-          "text": "¿De dónde obtiene el sistema los archivos y valores por defecto al registrar un usuario?"
+          "text": "¿De dónde salen el UID, el home, la cola de correo y la política de claves de una cuenta nueva?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Directiva",
+            "Qué controla"
+          ],
+          "rows": [
+            [
+              "UID_MIN / UID_MAX",
+              "Rango de UID asignable a usuarios ordinarios."
+            ],
+            [
+              "GID_MIN / GID_MAX",
+              "Rango de GID asignable a grupos ordinarios."
+            ],
+            [
+              "CREATE_HOME",
+              "Si vale `yes`, crea el home por defecto y permite omitir `-m`."
+            ],
+            [
+              "USERGROUPS_ENAB",
+              "Si vale `yes`, crea un grupo con el nombre de la cuenta (y lo elimina al quedar vacío)."
+            ],
+            [
+              "MAIL_DIR",
+              "Directorio de la cola de correo."
+            ],
+            [
+              "PASS_MAX_DAYS / PASS_MIN_DAYS / PASS_MIN_LEN / PASS_WARN_AGE",
+              "Política de contraseñas: caducidad máxima y mínima, longitud y días de aviso."
+            ]
+          ],
+          "caption": "/etc/login.defs: valores por defecto del subsistema de cuentas"
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "`/etc/skel/`: esqueleto que se copia al home nuevo; se inspecciona con `ls -al /etc/skel`.",
+            "`/etc/default/useradd`: defaults propios de `useradd`; se consultan o cambian con `useradd -D`."
+          ]
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: /etc/default/useradd guarda los ajustes que useradd aplica si no se especifican flags. /etc/skel/ contiene los archivos copiados al home del usuario."
+          "content": "🎯 Clave de Examen: `/etc/login.defs` fija `UID/GID_MIN/MAX`, `CREATE_HOME`, `USERGROUPS_ENAB`, `MAIL_DIR` y `PASS_*`; `/etc/skel` se copia al crear el home y `/etc/default/useradd` guarda los defaults de `useradd`."
         }
-      ],
-      "notes": "useradd -D muestra o modifica /etc/default/useradd. /etc/login.defs gestiona límites generales del subsistema shadow."
+      ]
     },
     {
       "id": "107.1-slide-7",
@@ -209,7 +252,7 @@
         },
         {
           "type": "paragraph",
-          "text": "Sintaxis oficial, opciones evaluadas en LPIC-1 y buenas prácticas de administración."
+          "text": "Sintaxis oficial, opciones evaluadas en LPIC-1 y de dónde toma sus valores por defecto."
         },
         {
           "type": "terminal",
@@ -233,6 +276,11 @@
               "-m, --create-home",
               "",
               "Crea el directorio personal (/home/usuario) y copia el contenido de /etc/skel/."
+            ],
+            [
+              "-M, --no-create-home",
+              "",
+              "No crea el directorio personal de la cuenta."
             ],
             [
               "-s, --shell SHELL",
@@ -291,10 +339,9 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 'useradd' (bajo nivel estándar) NO crea el directorio home a menos que se indique explícitamente la opción '-m' (o '--create-home')."
+          "content": "🎯 Clave de Examen: `useradd` no crea el home salvo con `-m` (o si `CREATE_HOME` vale `yes` en `/etc/login.defs`); `-M` lo impide y `-k` solo es válido junto a `-m`."
         }
-      ],
-      "notes": "En Debian existe 'adduser' (script interactivo perl de alto nivel), pero el comando estándar y exigido por la certificación LPI es useradd."
+      ]
     },
     {
       "id": "107.1-slide-8",
@@ -340,9 +387,19 @@
               "Especifica la lista de grupos suplementarios (¡Ojo! Sin -a sobrescribe la lista anterior)."
             ],
             [
+              "-g, --gid GRUPO",
+              "",
+              "Cambia el grupo primario; el grupo debe existir."
+            ],
+            [
               "-l, --login NUEVO_LOGIN",
               "",
               "Cambia el nombre de usuario de la cuenta (login name)."
+            ],
+            [
+              "-u, --uid UID",
+              "",
+              "Cambia el UID; después hay que corregir la propiedad de archivos fuera del home."
             ],
             [
               "-d, --home RUTA",
@@ -358,6 +415,16 @@
               "-s, --shell SHELL",
               "",
               "Cambia el shell de inicio asignado al usuario (ej. /bin/bash, /bin/tcsh, /usr/sbin/nologin)."
+            ],
+            [
+              "-c, --comment COMENTARIO",
+              "",
+              "Añade o cambia el comentario GECOS de la cuenta."
+            ],
+            [
+              "-e, --expiredate FECHA",
+              "",
+              "Fija la fecha de caducidad de la cuenta (equivale a chage -E)."
             ],
             [
               "-f, --inactive DIAS",
@@ -381,10 +448,9 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Para mover el home físicamente hay que usar '-d NUEVA_RUTA -m' juntos. Para añadir grupos suplementarios sin borrar los actuales: '-a -G GRUPOS'."
+          "content": "🎯 Clave de Examen: para mover el home usa `-d NUEVA_RUTA -m`; para añadir grupos sin borrar los actuales, `-a -G`. Tras `-l` revisa el home y la cola de correo; tras `-u`, la propiedad de archivos fuera del home. `-e` equivale a `chage -E`."
         }
-      ],
-      "notes": "usermod no puede modificar una cuenta si el usuario tiene procesos en ejecución."
+      ]
     },
     {
       "id": "107.1-slide-9",
@@ -438,8 +504,7 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: Por defecto 'userdel usuario' elimina la cuenta de /etc/passwd y /etc/shadow pero DEJA intacto el directorio home. Para borrar el home y el buzón de correo (/var/mail o /var/spool/mail según la distribución) se DEBE usar '-r'."
         }
-      ],
-      "notes": "Los archivos que queden huérfanos tras un userdel sin -r mantendrán el UID numérico como propietario."
+      ]
     },
     {
       "id": "107.1-slide-10",
@@ -508,12 +573,44 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: 'groupmod -n NUEVO_NOMBRE antiguo' cambia el nombre del grupo; 'groupmod -g NUEVO_GID grupo' cambia el GID. No se puede eliminar el grupo primario de un usuario existente."
         }
-      ],
-      "notes": "groupadd -r crea un grupo de sistema con GID inferior a 1000."
+      ]
     },
     {
       "id": "107.1-slide-11",
       "slideNumber": 11,
+      "title": "Contraseñas de grupo: gpasswd y newgrp",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Contraseñas de grupo: gpasswd y newgrp"
+        },
+        {
+          "type": "paragraph",
+          "text": "Además de la contraseña de usuario, un grupo puede tener la suya: sirve para compartir recursos sin membresía permanente."
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "`gpasswd GRUPO` establece o cambia la contraseña del grupo; se guarda cifrada en `/etc/gshadow`.",
+            "Los administradores del grupo (tercer campo de `/etc/gshadow`) usan `gpasswd` para añadir o quitar miembros.",
+            "`newgrp GRUPO` permite a un no miembro unirse temporalmente al grupo si conoce la contraseña.",
+            "Si la contraseña del grupo en `/etc/gshadow` empieza por `!`, nadie puede acceder con `newgrp`."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Clave de Examen: `gpasswd` = Group passwd (contraseña y miembros del grupo); `newgrp` abre un nuevo shell con ese grupo activo. La contraseña vive en `/etc/gshadow`, no en `/etc/group`."
+        }
+      ]
+    },
+    {
+      "id": "107.1-slide-12",
+      "slideNumber": 12,
       "title": "Comando passwd: Claves, Bloqueos y Envejecimiento",
       "layout": "content",
       "blocks": [
@@ -588,12 +685,11 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: Un usuario ordinario sólo puede ejecutar 'passwd' para cambiar su propia clave. Sólo root puede cambiar claves ajenas o usar opciones como '-l', '-u', '-d' o '-S'."
         }
-      ],
-      "notes": "passwd tiene el bit SUID activo (permisos 4755) para poder escribir en /etc/shadow cuando un usuario cambia su clave."
+      ]
     },
     {
-      "id": "107.1-slide-12",
-      "slideNumber": 12,
+      "id": "107.1-slide-13",
+      "slideNumber": 13,
       "title": "Comando chage: Gestión Experta de Envejecimiento (Aging)",
       "layout": "content",
       "blocks": [
@@ -627,37 +723,37 @@
             [
               "-l, --list",
               "",
-              "Lista detallada del estado de envejecimiento de la cuenta y la clave."
+              "Lista el estado de envejecimiento de la cuenta y la clave. Es la única opción que un usuario ordinario puede usar sobre su propia cuenta."
             ],
             [
               "-m DÍAS",
               "",
-              "Días MÍNIMOS entre cambios de contraseña (campo 4 shadow; equiv. passwd -n)."
+              "Días MÍNIMOS entre cambios de contraseña (campo 4 de shadow)."
             ],
             [
               "-M DÍAS",
               "",
-              "Días MÁXIMOS de validez de la contraseña (campo 5 shadow; equiv. passwd -x)."
+              "Días MÁXIMOS de validez de la contraseña (campo 5 de shadow)."
             ],
             [
               "-W DÍAS",
               "",
-              "Días de AVISO antes de que expire la clave (campo 6 shadow; equiv. passwd -w)."
+              "Días de AVISO antes de que expire la clave (campo 6 de shadow)."
             ],
             [
               "-I DÍAS",
               "",
-              "Días de INACTIVIDAD antes de bloquearse tras expirar (campo 7 shadow; equiv. passwd -i)."
+              "Días de INACTIVIDAD antes de bloquearse tras expirar (campo 7 de shadow)."
             ],
             [
               "-E FECHA",
               "",
-              "Fecha de CADUCIDAD de la cuenta (formato YYYY-MM-DD o días epoch)."
+              "Fecha de CADUCIDAD de la cuenta (YYYY-MM-DD o días epoch; campo 8 de shadow)."
             ],
             [
               "-d DÍAS",
               "",
-              "Establece la fecha del último cambio de contraseña. '-d 0' fuerza cambio inmediato."
+              "Fecha del último cambio de contraseña (campo 3 de shadow); '-d 0' fuerza el cambio inmediato."
             ]
           ],
           "caption": "Opciones y parámetros del comando"
@@ -666,14 +762,13 @@
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: 'chage -l usuario' es el comando estándar para auditar cuándo caduca la contraseña, cuándo se cambió por última vez y cuándo expira la cuenta."
+          "content": "🎯 Clave de Examen: `chage -l usuario` lista el aging de su cuenta y es la única opción abierta a usuarios ordinarios; el resto exige root. Las equivalencias con `passwd` se resumen en la diapositiva siguiente."
         }
-      ],
-      "notes": "chage modifica los campos numéricos 3 a 8 de /etc/shadow. chage -d 0 fuerza el cambio de clave en el próximo login."
+      ]
     },
     {
-      "id": "107.1-slide-13",
-      "slideNumber": 13,
+      "id": "107.1-slide-14",
+      "slideNumber": 14,
       "title": "Mapeo Oficial LPIC-1: Equivalencias passwd frente a chage",
       "layout": "content",
       "blocks": [
@@ -749,19 +844,19 @@
       ]
     },
     {
-      "id": "107.1-slide-14",
-      "slideNumber": 14,
-      "title": "Comando getent: Consulta Unificada a Bases de Datos NSS",
+      "id": "107.1-slide-15",
+      "slideNumber": 15,
+      "title": "Consultar identidad: id, groups y getent",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Comando getent: Consulta Unificada a Bases de Datos NSS"
+          "text": "Consultar identidad: id, groups y getent"
         },
         {
           "type": "paragraph",
-          "text": "¿Por qué no basta con hacer grep en /etc/passwd en entornos corporativos?"
+          "text": "¿Cómo saber a qué UID, GID y grupos pertenece una cuenta sin abrir los archivos a mano?"
         },
         {
           "type": "terminal",
@@ -769,8 +864,16 @@
             {
               "prompt": "$ ",
               "command": "",
-              "output": "frank:x:1001:1001:Frank Miller:/home/frank:/bin/bash\nsudo:x:27:alumno,frank"
+              "output": "root@debian12:~# id kevin\nuid=1010(kevin) gid=1030(kevin) grupos=1030(kevin),1028(administrators),1029(developers),1031(web-designers)\nroot@debian12:~# groups kevin\nkevin : kevin administrators developers web-designers\nroot@debian12:~# getent passwd emma\nemma:x:1050:1028::/home/emma:/bin/sh"
             }
+          ]
+        },
+        {
+          "type": "list",
+          "ordered": false,
+          "items": [
+            "`id [usuario]`: muestra UID, GID y todos los grupos. Sin argumentos, la identidad de quien ejecuta el comando.",
+            "`groups [usuario]`: solo los nombres de los grupos, con el grupo primario en primer lugar."
           ]
         },
         {
@@ -810,47 +913,67 @@
           "title": "Clave de Examen LPIC-1",
           "content": "🎯 Clave de Examen: 'getent' consulta las fuentes configuradas en '/etc/nsswitch.conf'. Permite consultar 'passwd', 'group', 'shadow', 'hosts', 'services', etc., unificando archivos locales y servidores LDAP/AD."
         }
-      ],
-      "notes": "Sintaxis: getent base_de_datos [clave]. Si no se especifica clave, vuelca toda la base de datos."
+      ]
     },
     {
-      "id": "107.1-slide-15",
-      "slideNumber": 15,
-      "title": "Cuentas de Servicio y Métodos de Bloqueo Seguro",
+      "id": "107.1-slide-16",
+      "slideNumber": 16,
+      "title": "Bloquear y desbloquear cuentas de usuario",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Cuentas de Servicio y Métodos de Bloqueo Seguro"
+          "text": "Bloquear y desbloquear cuentas de usuario"
         },
         {
           "type": "paragraph",
-          "text": "¿Cómo impedir que una cuenta de servicio o un usuario despedido inicie sesión en el sistema?"
+          "text": "¿Cómo impedir que una cuenta de servicio o un usuario despedido inicie sesión?"
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Objetivo",
+            "Comandos y efecto"
+          ],
+          "rows": [
+            [
+              "Bloquear la contraseña",
+              "`usermod -L`, `usermod --lock` o `passwd -l` anteponen `!` al hash en `/etc/shadow`."
+            ],
+            [
+              "Desbloquear la contraseña",
+              "`usermod -U`, `usermod --unlock` o `passwd -u` retiran el `!`."
+            ],
+            [
+              "Bloquear el shell",
+              "Asignar `/usr/sbin/nologin` o `/bin/false` con `usermod -s`."
+            ]
+          ],
+          "caption": "Tres vías de bloqueo y sus equivalentes de desbloqueo"
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Clave de Examen: Hay dos formas de bloquear: a nivel de contraseña (añadiendo '!' con 'passwd -l' o 'usermod -L') o a nivel de shell (asignando '/usr/sbin/nologin' o '/bin/false')."
+          "content": "🎯 Clave de Examen: `-L`/`-l` solo deshabilitan el acceso con contraseña; para cerrar también el acceso por clave pública SSH hay que cambiar la shell a `nologin`."
         }
-      ],
-      "notes": "Cuidado: el bloqueo con 'passwd -l' no impide el acceso mediante claves públicas SSH a menos que se cambie también la shell."
+      ]
     },
     {
-      "id": "107.1-slide-16",
-      "slideNumber": 16,
-      "title": "Ejercicio Guiado LPI: Propósito de Opciones y Comandos",
+      "id": "107.1-slide-17",
+      "slideNumber": 17,
+      "title": "Caso Práctico: Propósito de Opciones y Comandos",
       "layout": "two-column",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Ejercicio Guiado LPI: Propósito de Opciones y Comandos"
+          "text": "Caso Práctico: Propósito de Opciones y Comandos"
         },
         {
           "type": "paragraph",
-          "text": "Pon a prueba tu dominio identificando la función exacta de cada comando extraído del manual oficial."
+          "text": "Pon a prueba tu dominio identificando la función exacta de cada comando clave del temario."
         },
         {
           "type": "code",
@@ -867,8 +990,8 @@
       ]
     },
     {
-      "id": "107.1-slide-17",
-      "slideNumber": 17,
+      "id": "107.1-slide-18",
+      "slideNumber": 18,
       "title": "Reto Práctico LPI: Creación de Cuenta de Auditoría Corporativa",
       "layout": "two-column",
       "blocks": [
@@ -896,42 +1019,35 @@
       ]
     },
     {
-      "id": "107.1-slide-18",
-      "slideNumber": 18,
-      "title": "Checklist de Examen: Trampas Críticas en el Subtema 107.1",
-      "layout": "checkpoint",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Checklist de Examen: Trampas Críticas en el Subtema 107.1"
-        },
-        {
-          "type": "paragraph",
-          "text": "Los 4 errores que más puntos restan a los candidatos en las preguntas de cuentas y grupos."
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Clave de Examen LPIC-1",
-          "content": "🎯 Regla de Oro: En comandos usermod, NUNCA uses '-G' solo si el enunciado dice 'añadir' o 'incorporar'; usa siempre '-aG' o '-a -G'."
-        }
-      ]
-    },
-    {
       "id": "107.1-slide-19",
       "slideNumber": 19,
-      "title": "Resumen del Subtema 107.1 y Preparación para el Laboratorio",
+      "title": "Checklist de trampas y resumen del subtema 107.1",
       "layout": "summary",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Resumen del Subtema 107.1 y Preparación para el Laboratorio"
+          "text": "Checklist de trampas y resumen del subtema 107.1"
         },
         {
           "type": "paragraph",
-          "text": "Conceptos dominados, archivos clave y puente hacia la práctica en máquina virtual."
+          "text": "Cuatro errores que restan puntos y el mapa mínimo para repasar antes del examen."
+        },
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "`usermod -G` sin `-a` BORRA los grupos secundarios: usa `-aG` si el enunciado dice 'añadir'.",
+            "`userdel` sin `-r` deja el home y el buzón; los archivos huérfanos conservan el UID numérico.",
+            "`useradd -k` solo vale con `-m`; y `-m` puede omitirse si `CREATE_HOME` está en `yes`.",
+            "`chage -m/-M/-W/-I` frente a `passwd -n/-x/-w/-i`; y `groupdel` falla si el grupo es primario de un usuario."
+          ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Clave de Examen LPIC-1",
+          "content": "🎯 Regla de Oro: en `usermod`, 'añadir' = `-aG` y 'establecer' = `-G`; en `chage`, minúscula = mínimo y MAYÚSCULA = máximo."
         }
       ]
     }

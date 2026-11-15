@@ -111,25 +111,8 @@ export class ListBlockComponent {
     const anchor = target?.closest('a.term-link, a.wiki-ref, [data-term-ref]') as HTMLElement | null;
     if (!anchor) return;
 
-    const cmd = anchor.getAttribute('data-cmd');
-    const term = anchor.getAttribute('data-term');
-    const termRef = anchor.getAttribute('data-term-ref');
-
-    if (cmd || term || termRef) {
-      const rect = anchor.getBoundingClientRect();
-      let type: 'command' | 'term' = cmd ? 'command' : 'term';
-      let id = cmd || term || '';
-      if (termRef) {
-        if (termRef.startsWith('cmd:')) {
-          type = 'command';
-          id = termRef.substring(4);
-        } else if (termRef.startsWith('term:')) {
-          type = 'term';
-          id = termRef.substring(5);
-        }
-      }
-      this.wikiRefService.resolveRef(type, id, rect.left, rect.bottom + window.scrollY);
-    }
+    event.preventDefault();
+    this.wikiRefService.openImmediately(anchor);
   }
 }
 

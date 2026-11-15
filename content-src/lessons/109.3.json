@@ -25,8 +25,10 @@
     "netcat (nc)",
     "Path MTU Discovery (PMTU)",
     "Recv-Q / Send-Q",
-    "Flags de enrutamiento (U, UG)",
-    "Caché ARP"
+    "Flags de enrutamiento (U, UG, !, n)",
+    "Caché ARP",
+    "Rutas IPv6 (ip -6 route / route -6 / netstat -6r)",
+    "Anatomía de ip route (proto, scope, metric, pref)"
   ],
   "commands": [
     "ip",
@@ -38,6 +40,7 @@
     "traceroute6",
     "tracepath",
     "tracepath6",
+    "nc",
     "netcat",
     "ifconfig",
     "netstat",
@@ -217,29 +220,27 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Asignación Manual, Máscaras Válidas y Alias"
+          "text": "Ayuda integrada, máscaras válidas y alias"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "# Mostrar todas las direcciones IP asignadas a las interfaces:\nip address show      # o en forma abreviada: ip a\n\n# Asignar una dirección IPv4 primaria con longitud de prefijo CIDR:\nsudo ip addr add 192.168.1.50/24 dev eth0\n\n# Añadir una segunda dirección IP con etiqueta (label) para compatibilidad:\nsudo ip addr add 172.16.15.16/16 dev eth0 label eth0:sub1\n\n# Eliminar una dirección IP específica de la interfaz:\nsudo ip addr del 172.16.15.16/16 dev eth0",
+          "code": "# Ayuda integrada del subcomando y página de manual correcta:\nip address help      # sintaxis: add|change|replace, del, show, flush...\nman ip-address       # correcto; 'man ip-addr' no existe\n\n# Mostrar las direcciones IP asignadas a las interfaces:\nip address show      # o en forma abreviada: ip a\n\n# Asignar una dirección IPv4 primaria con longitud de prefijo CIDR:\nsudo ip addr add 192.168.1.50/24 dev eth0\n\n# Añadir una segunda IP con etiqueta (label) para que la vea ifconfig:\nsudo ip addr add 172.16.15.16/16 dev eth0 label eth0:sub1\n\n# Eliminar una dirección IP concreta de la interfaz:\nsudo ip addr del 172.16.15.16/16 dev eth0",
           "title": "Manipulación de direcciones con ip addr"
         },
         {
           "type": "paragraph",
-          "text": "Las modificaciones realizadas con el comando 'ip' se aplican de forma inmediata en el kernel pero son volátiles (se pierden al reiniciar el sistema)."
+          "text": "`ip addr`, `ip a` e `ip address` son sinónimos, pero el subcomando oficial es `ip address`; por eso el manual se consulta con `man ip-address`, no con `man ip-addr`. Los cambios con `ip` se aplican al instante en el kernel, pero son volátiles: se pierden al reiniciar."
         },
         {
           "type": "callout",
           "calloutType": "warning",
           "title": "Regla de Máscaras de Subred en IPv4",
-          "content": "Una máscara de subred IPv4 solo es válida si posee bits 1 contiguos a la izquierda y bits 0 contiguos a la derecha. Por ejemplo: '255.252.0.0' (/14) y '/24' son máscaras válidas. Máscaras discontinuas como '255.0.255.0' o '0.0.0.255' son matemáticamente inválidas."
+          "content": "Una máscara IPv4 solo es válida si tiene bits 1 contiguos a la izquierda y bits 0 contiguos a la derecha. Por ejemplo, `255.252.0.0` (/14) y `/24` son válidas; máscaras discontinuas como `255.0.255.0` o `0.0.0.255` son matemáticamente inválidas porque no separan red y host."
         },
         {
-          "type": "callout",
-          "calloutType": "info",
-          "title": "Compatibilidad de Alias con ifconfig",
-          "content": "Si asignas una segunda dirección IP sin 'label <dev>:<alias>', la dirección funcionará perfectamente y se mostrará en 'ip addr', pero no será visible al ejecutar la herramienta heredada 'ifconfig'."
+          "type": "paragraph",
+          "text": "Si omites `label <dev>:<alias>`, la segunda dirección funciona y aparece en `ip addr`, pero no será visible al ejecutar la herramienta heredada `ifconfig`."
         }
       ]
     },
@@ -279,19 +280,62 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Rutas por Defecto, Subredes y Respaldo Binario"
+          "text": "Rutas por defecto, subredes y anatomía de la salida"
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "# Mostrar la tabla de enrutamiento actual del kernel:\nip route show            # o simplemente: ip r\n\n# Configurar la puerta de enlace predeterminada (default gateway):\nsudo ip route add default via 192.168.1.1 dev eth0\n\n# Añadir una ruta hacia una red o subred específica:\nsudo ip route add 10.0.0.0/8 via 192.168.1.254 dev eth0\n\n# Respaldar la tabla de enrutamiento completa en un archivo binario:\nsudo ip route save > /root/routes/route_backup\n\n# Restaurar la tabla de rutas previamente respaldada:\nsudo ip route restore < /root/routes/route_backup",
+          "code": "# Mostrar la tabla de enrutamiento actual del kernel:\nip route show            # o simplemente: ip r\n\n# Configurar la puerta de enlace predeterminada (default gateway):\nsudo ip route add default via 192.168.1.1 dev eth0\n\n# Añadir una ruta hacia una red o subred específica:\nsudo ip route add 10.0.0.0/8 via 192.168.1.254 dev eth0\n\n# Respaldar la tabla completa en un archivo binario y restaurarla:\nsudo ip route save > /root/routes/route_backup\nsudo ip route restore < /root/routes/route_backup",
           "title": "Gestión de tablas de rutas con iproute2"
         },
         {
-          "type": "callout",
-          "calloutType": "tip",
-          "title": "Respaldo y Restauración de Rutas",
-          "content": "Los subcomandos 'ip route save' e 'ip route restore' vuelcan y cargan una representación binaria exacta de la tabla de rutas del kernel, lo que resulta ideal para congelar el estado de red antes de aplicar cambios complejos."
+          "type": "terminal",
+          "lines": [
+            {
+              "prompt": "$",
+              "command": "ip route",
+              "output": "default via 10.0.2.2 dev enp0s3 proto dhcp metric 100"
+            },
+            {
+              "prompt": "$",
+              "command": "ip -6 route",
+              "output": "fc0::/64 dev enp0s8 proto kernel metric 256 pref medium"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Componente de la salida",
+            "Significado"
+          ],
+          "rows": [
+            [
+              "Destino",
+              "Red de la ruta; `default` es la ruta por defecto, la última que se consulta."
+            ],
+            [
+              "`via <IP>` y `dev <if>`",
+              "Puerta de enlace opcional (solo si hay router) e interfaz de salida."
+            ],
+            [
+              "`proto`",
+              "Protocolo que añadió la ruta: `dhcp`, `kernel`, `static`... y no es la familia del paquete."
+            ],
+            [
+              "`scope`",
+              "Ámbito de la ruta; si se omite es global o de puerta de enlace (`scope link` = solo el enlace local)."
+            ],
+            [
+              "`metric`",
+              "Coste de la ruta para el enrutamiento dinámico; la mayoría de sistemas no lo usa."
+            ],
+            [
+              "`pref`",
+              "Preferencia de ruta IPv6 según RFC 4191; en IPv4 no aparece (p. ej. `pref medium`)."
+            ]
+          ],
+          "caption": "Los seis componentes de la salida de ip route"
         }
       ]
     },
@@ -304,7 +348,7 @@
         {
           "type": "heading",
           "level": 2,
-          "text": "Lectura de Tablas Clásicas y Banderas de Enrutamiento"
+          "text": "Lectura de la tabla clásica y banderas de enrutamiento"
         },
         {
           "type": "terminal",
@@ -347,27 +391,101 @@
             [
               "H",
               "Host",
-              "El destino es una única dirección de máquina específica (/32), no una red."
+              "La ruta apunta a una única dirección de máquina (/32), no a una red."
             ],
             [
               "D / M",
               "Dynamic / Modified",
-              "Ruta generada por un demonio de enrutamiento o modificada por ICMP Redirect."
+              "Ruta creada por un demonio de enrutamiento o modificada por un ICMP Redirect."
+            ],
+            [
+              "!",
+              "Rejected",
+              "La ruta ha sido rechazada: el kernel no la utilizará."
+            ],
+            [
+              "n",
+              "Not cached",
+              "La ruta no está en caché; el kernel mantiene una caché de rutas aparte."
             ]
           ],
-          "caption": "Banderas de la tabla de enrutamiento en route y netstat -r"
+          "caption": "Banderas de la tabla de enrutamiento en route -n y netstat -r"
+        },
+        {
+          "type": "paragraph",
+          "text": "Las columnas `Metric`/`Met` (distancia administrativa) y `Ref` no las usa el kernel de Linux: las emplean los protocolos de enrutamiento dinámico. `Use` cuenta las búsquedas de esa ruta."
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "🎯 Pregunta Clásica: 'route add default gw'",
-          "content": "Recuerda la sintaxis exacta de la herramienta clásica: 'route add default gw <IP>'. En iproute2 su equivalente moderno es 'ip route add default via <IP>'."
+          "content": "Recuerda la sintaxis exacta de la herramienta clásica: `route add default gw <IP>`. Su equivalente moderno con iproute2 es `ip route add default via <IP>`."
         }
       ]
     },
     {
       "id": "109.3-slide-8",
       "slideNumber": 8,
+      "title": "Enrutamiento IPv6: ip -6 route, route -6 y netstat -6r",
+      "layout": "content",
+      "blocks": [
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Rutas y direcciones IPv6 en la práctica"
+        },
+        {
+          "type": "paragraph",
+          "text": "La tabla IPv4 no muestra ninguna ruta IPv6: hay que pedirla explícitamente. Con `ip` el mismo comando sirve para ambas familias añadiendo `-6`, mientras que las herramientas heredadas exigen su propia opción."
+        },
+        {
+          "type": "table",
+          "headers": [
+            "Herramienta",
+            "Sintaxis IPv6",
+            "Diferencia clave"
+          ],
+          "rows": [
+            [
+              "iproute2",
+              "ip -6 route",
+              "Muestra la tabla IPv6; con `ip route` solo se ve IPv4."
+            ],
+            [
+              "route",
+              "route -6",
+              "Ver y modificar rutas IPv6 con `add`/`del` y `gw`."
+            ],
+            [
+              "netstat",
+              "netstat -6r",
+              "Salida idéntica a `route -6` (también vale `netstat -r6`)."
+            ],
+            [
+              "ifconfig",
+              "ifconfig enp0s8 add 2001:db8::10/64",
+              "La palabra `add` es obligatoria o devuelve error."
+            ]
+          ],
+          "caption": "Variantes IPv6 de las herramientas de red"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "code": "# Ver la tabla de enrutamiento IPv6:\nip -6 route\n\n# Añadir la misma ruta IPv6 con iproute2 y con la herramienta heredada:\nsudo ip route add 2001:db8:1::/64 via 2001:db8::3\nsudo route -6 add 2001:db8:1::/64 gw 2001:db8::3\n\n# Añadir una dirección IPv6 a una interfaz (ifconfig exige 'add'):\nsudo ifconfig enp0s8 add 2001:db8::10/64\nsudo ip addr add 2001:db8::10/64 dev enp0s8",
+          "title": "IPv6 con iproute2 frente a net-tools"
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "Un comando para dos familias",
+          "content": "Con `ip` se usa el mismo comando para IPv4 e IPv6 (`ip -6 route`, `ip route add ...`). Con `route` hay que añadir `-6`, con `netstat` la opción `-6r` y en `ifconfig` la palabra `add` antes de la dirección IPv6."
+        }
+      ]
+    },
+    {
+      "id": "109.3-slide-9",
+      "slideNumber": 9,
       "title": "Auditoría de Puertos y Sockets: comando ss",
       "layout": "content",
       "blocks": [
@@ -429,40 +547,44 @@
       ]
     },
     {
-      "id": "109.3-slide-9",
-      "slideNumber": 9,
+      "id": "109.3-slide-10",
+      "slideNumber": 10,
       "title": "Inspección Heredada y de Procesos: netstat y lsof",
       "layout": "comparison",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "netstat (-tulnp) e Identificación de Procesos con lsof"
+          "text": "netstat (-tulnp) e identificación de procesos con lsof"
+        },
+        {
+          "type": "paragraph",
+          "text": "`netstat` se considera una herramienta heredada, pero comparte opciones y salidas con `ss`: `-a`, `-l`, `-p`, `-n`, `-t` y `-u` funcionan igual en ambas. `netstat -r` equivale a ejecutar `route`."
         },
         {
           "type": "code",
           "language": "bash",
-          "code": "# Auditoría clásica de puertos en escucha con netstat:\nnetstat -ln | grep \":80\"\nsudo netstat -lnp | grep \":22\"\n\n# Inspección de la tabla de rutas del kernel con netstat:\nnetstat -r   # Equivalente a ejecutar el comando 'route'\n\n# Identificar el proceso y PID exacto con lsof (List Open Files):\nsudo lsof -Pi:80    # Muestra el proceso escuchando en el puerto TCP 80\nsudo lsof -Pi:22    # Inspecciona sockets SSH en el puerto 22",
+          "code": "# Auditoría clásica de puertos en escucha con netstat:\nnetstat -ln | grep \":80\"\nsudo netstat -lnp | grep \":22\"\n\n# Inspección de la tabla de rutas del kernel con netstat:\nnetstat -r   # Equivalente a ejecutar el comando 'route'\n\n# Identificar el proceso y el PID exacto con lsof (List Open Files):\nsudo lsof -Pi:80    # Proceso que escucha en el puerto TCP 80\nsudo lsof -Pi:22    # Sockets SSH en el puerto 22",
           "title": "Consultas con netstat y lsof"
         },
         {
           "type": "callout",
           "calloutType": "info",
-          "title": "Parámetros de lsof en Diagnóstico de Red",
-          "content": "La opción '-i:<puerto>' filtra archivos abiertos correspondientes a sockets de red en ese puerto. La opción '-P' desactiva la conversión de puertos a nombres de servicio (evitando consultar /etc/services), proporcionando una salida inmediata."
+          "title": "lsof: útil, pero no es requisito de examen",
+          "content": "`lsof` no figura como requisito del examen 109.3, aunque resuelve el PID de forma directa. La opción `-i:<puerto>` filtra sockets de red en ese puerto y `-P` desactiva la conversión de puertos a nombres de servicio (evita consultar `/etc/services`), dando una salida inmediata."
         }
       ]
     },
     {
-      "id": "109.3-slide-10",
-      "slideNumber": 10,
+      "id": "109.3-slide-11",
+      "slideNumber": 11,
       "title": "Verificación de Conectividad: ping y ping6",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Sondeo ICMP Echo Request y Causas de Fallo"
+          "text": "Sondeo ICMP Echo Request y causas de fallo"
         },
         {
           "type": "terminal",
@@ -482,33 +604,37 @@
         {
           "type": "list",
           "items": [
-            "**ping -c <n>**: En Linux ping emite paquetes indefinidamente; '-c' fija el número exacto de paquetes a transmitir.",
-            "**ping -s <bytes>**: Modifica el tamaño de la carga útil del paquete ICMP para probar problemas de MTU y fragmentación.",
-            "**ping -i <seg>**: Establece el intervalo en segundos entre paquetes consecutivos."
+            "**ping -c <n>**: en Linux ping emite paquetes indefinidamente; `-c` fija el número exacto de paquetes a transmitir.",
+            "**ping -s <bytes>**: modifica el tamaño de la carga útil ICMP para probar problemas de MTU y fragmentación.",
+            "**ping -i <seg>**: establece el intervalo en segundos entre paquetes consecutivos."
           ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Que no se pueda hacer ping a un host no significa que no se pueda conectar a él: cortafuegos y ACL de routers bloquean las peticiones y respuestas de eco ICMP de forma silenciosa. Además, los paquetes de eco admiten datos arbitrarios y un atacante podría usarlos para exfiltrar información."
         },
         {
           "type": "callout",
           "calloutType": "warning",
           "title": "¿Por qué puede fallar el ping a un host remoto?",
-          "content": "Razones oficiales del manual LPI: 1. El host remoto está apagado o caído. 2. Un ACL en un router intermedio bloquea el tráfico ICMP. 3. El firewall local o remoto descarta las solicitudes Echo. 4. Error en la resolución DNS del nombre de host. 5. Configuración de subred/enrutamiento errónea o desconexión física de la interfaz. Para ver paquetes reales en el cable, recurre a 'tcpdump' o 'wireshark'."
+          "content": "Razones que cita el manual LPI: 1. El host remoto está apagado o caído. 2. Un ACL de un router intermedio bloquea ICMP. 3. El firewall local o remoto descarta las solicitudes Echo. 4. Error en la resolución de nombres del host. 5. Configuración de subred o enrutamiento incorrecta, o interfaz desconectada. Para ver los paquetes reales en el cable, usa `tcpdump` o Wireshark (no son objetivos oficiales)."
         }
       ]
     },
     {
-      "id": "109.3-slide-11",
-      "slideNumber": 11,
+      "id": "109.3-slide-12",
+      "slideNumber": 12,
       "title": "Descubrimiento de Saltos: traceroute y traceroute6",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Rastreo de Rutas por Incremento de TTL y Opciones Clave"
+          "text": "Rastreo por incremento de TTL y opciones clave"
         },
         {
           "type": "paragraph",
-          "text": "'traceroute' emite paquetes incrementando secuencialmente el campo TTL (Time-To-Live) desde 1. Cada router intermedio decrementa el TTL; al llegar a 0, descarta el paquete y responde con un mensaje 'ICMP Time Exceeded', revelando su dirección IP y tiempo de respuesta."
+          "text": "`traceroute` emite paquetes incrementando el TTL desde 1: cada router lo decrementa y, al llegar a 0, descarta el paquete y responde con `ICMP Time Exceeded`, revelando su IP y el tiempo de ida y vuelta. Por defecto envía **3 paquetes UDP** con datos basura al puerto **33434**, incrementando el puerto en cada envío. Cada línea de la salida es una interfaz de router; si puede, resuelve su nombre DNS."
         },
         {
           "type": "table",
@@ -526,22 +652,27 @@
             [
               "-i <interfaz>",
               "Fijar interfaz de salida",
-              "Fuerza la emisión de sondas por un adaptador específico (ej. -i eth1)."
+              "Fuerza la emisión de sondas por un adaptador específico (ej. `-i eth1`)."
             ],
             [
               "-I",
               "Sondas ICMP Echo",
-              "Utiliza paquetes ICMP Echo en lugar de datagramas UDP (comportamiento estándar en Linux)."
+              "Usa peticiones de eco ICMP en lugar de paquetes UDP; **requiere root**."
             ],
             [
-              "-T",
+              "-T -p <puerto>",
               "Sondas TCP SYN",
-              "Envía paquetes TCP SYN (ej. al puerto 80) para eludir cortafuegos que bloquean UDP/ICMP."
+              "TCP a un puerto abierto conocido (ej. `-T -p 80`) para eludir cortafuegos; **requiere root**."
+            ],
+            [
+              "-m <n>",
+              "Máximo de saltos",
+              "Limita el número de hops del rastreo (ej. `-m 60`)."
             ],
             [
               "--mtu",
               "Informe de MTU por salto",
-              "Descubre y reporta la MTU soportada en cada salto del recorrido hacia el destino."
+              "Descubre y reporta la MTU de cada salto (a menudo junto con `-I`)."
             ]
           ],
           "caption": "Modificadores fundamentales del comando traceroute"
@@ -553,21 +684,32 @@
               "prompt": "$",
               "command": "traceroute -n -i eth0 8.8.8.8",
               "output": "1  192.168.1.1  1.210 ms  1.104 ms  0.985 ms\n2  10.0.0.1  8.432 ms  7.912 ms  8.120 ms\n3  8.8.8.8  14.320 ms  14.110 ms  14.250 ms"
+            },
+            {
+              "prompt": "$",
+              "command": "traceroute6 2001:db8::11",
+              "output": "1  2001:db8::1  0.845 ms  0.792 ms  0.811 ms"
             }
           ]
+        },
+        {
+          "type": "callout",
+          "calloutType": "exam",
+          "title": "El asterisco y la variante IPv6",
+          "content": "Un `*` en lugar de un tiempo significa que nunca se recibió el mensaje de TTL excedido para ese paquete; suele indicar que la última respuesta es el último salto de la ruta. Para IPv6 existe `traceroute6`. Cortafuegos y routers pueden bloquear los paquetes y reducir la precisión del rastreo."
         }
       ]
     },
     {
-      "id": "109.3-slide-12",
-      "slideNumber": 12,
-      "title": "Detección de MTU en Ruta: comando tracepath",
+      "id": "109.3-slide-13",
+      "slideNumber": 13,
+      "title": "Detección de MTU en Ruta: tracepath y tracepath6",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Path MTU Discovery (PMTU) sin Privilegios de Root"
+          "text": "Path MTU Discovery (PMTU) y familia IPv6"
         },
         {
           "type": "terminal",
@@ -582,30 +724,30 @@
         {
           "type": "list",
           "items": [
-            "**Sin privilegios de superusuario**: 'tracepath' está diseñado para ser ejecutado por usuarios no privilegiados, a diferencia de muchas variantes de 'traceroute'.",
-            "**Detección de PMTU (Path MTU)**: Analiza a lo largo del recorrido cuál es el tamaño de paquete más grande que puede atravesar todos los enlaces intermedios sin requerir fragmentación.",
-            "**Opción -p <puerto>**: Permite configurar el puerto UDP base sobre el que se inician las consultas.",
-            "**tracepath6**: Herramienta homóloga para el diagnóstico y análisis de rutas sobre IPv6."
+            "**Detección de PMTU**: envía un datagrama UDP muy grande y se ajusta al tamaño que devuelve el `ICMP Destination Unreachable`; la última línea (`Resume: pmtu ...`) resume la MTU mínima de todo el recorrido.",
+            "**Sin privilegios de root**: está diseñado para usuarios no privilegiados, frente a `traceroute -I` o `-T`, que exigen root.",
+            "**IPv6 exige `tracepath6`**: `tracepath` con una dirección IPv6 falla con `Address family for hostname not supported`.",
+            "**Opción -p <puerto>**: fija el puerto UDP base sobre el que se inician las consultas."
           ]
         },
         {
           "type": "callout",
           "calloutType": "exam",
           "title": "Diferencia Clave: traceroute vs tracepath",
-          "content": "Para determinar la MTU máxima de una ruta sin privilegios de root, la herramienta idónea y requerida en el temario es 'tracepath'. Si se utiliza traceroute, debe pasarse explícitamente el flag '--mtu'."
+          "content": "Para determinar la MTU máxima de una ruta sin privilegios de root, la herramienta del temario es `tracepath`; con `traceroute` hay que pasar explícitamente `--mtu`. Y recuerda: para IPv6 se usa `tracepath6`, no `tracepath`."
         }
       ]
     },
     {
-      "id": "109.3-slide-13",
-      "slideNumber": 13,
+      "id": "109.3-slide-14",
+      "slideNumber": 14,
       "title": "La Navaja Suiza de Red: netcat (nc)",
       "layout": "content",
       "blocks": [
         {
           "type": "heading",
           "level": 2,
-          "text": "Comprobación de Puertos, Modo Escucha y Banners"
+          "text": "Comprobación de puertos, modo escucha y shell remoto"
         },
         {
           "type": "table",
@@ -628,12 +770,17 @@
             [
               "Protocolo UDP",
               "nc -u 192.168.1.1 53",
-              "Envía datagramas mediante UDP en lugar del protocolo TCP por defecto."
+              "Envía datagramas UDP en lugar de TCP, que es el protocolo por defecto."
+            ],
+            [
+              "Shell remoto rudimentario",
+              "nc -u -e /bin/bash -l 1234",
+              "Envía todo lo recibido a la entrada estándar del ejecutable indicado."
             ],
             [
               "Petición interactiva",
               "nc www.example.com 80",
-              "Abre un socket cliente para interactuar directamente con un servicio de red."
+              "Abre un socket cliente para interactuar con un servicio de red."
             ]
           ],
           "caption": "Modos fundamentales de netcat"
@@ -643,12 +790,18 @@
           "language": "bash",
           "code": "# Petición HTTP manual completa con netcat:\n$ nc www.example.com 80\nGET /index.html HTTP/1.1\nHost: www.example.com\n<Pulsar Enter dos veces>\n\n# Respuesta recibida directamente del servidor web:\nHTTP/1.1 200 OK\nContent-Type: text/html; charset=UTF-8\nContent-Length: 1256",
           "title": "Inyección manual de protocolo HTTP con netcat"
+        },
+        {
+          "type": "callout",
+          "calloutType": "warning",
+          "title": "-e: shell remoto y compatibilidad",
+          "content": "`-e` no está disponible en todas las instalaciones de `nc` y convierte al receptor en un intérprete de comandos accesible por red: úsalo solo en pruebas controladas y revisa `man nc` por sus implicaciones de seguridad y las alternativas existentes."
         }
       ]
     },
     {
-      "id": "109.3-slide-14",
-      "slideNumber": 14,
+      "id": "109.3-slide-15",
+      "slideNumber": 15,
       "title": "Resolución de Capa 2: ip neighbour y arp",
       "layout": "content",
       "blocks": [
@@ -717,8 +870,8 @@
       ]
     },
     {
-      "id": "109.3-slide-15",
-      "slideNumber": 15,
+      "id": "109.3-slide-16",
+      "slideNumber": 16,
       "title": "Árbol de Decisión: Detección Rápida de Averías de Red",
       "layout": "content",
       "blocks": [
@@ -756,45 +909,6 @@
               "description": "Comprueba con 'sudo ss -tulnp' o 'sudo lsof -Pi:<puerto>' que el servicio escucha localmente. Para servidores remotos, valida con 'nc -zv <host> <puerto>'."
             }
           ]
-        }
-      ]
-    },
-    {
-      "id": "109.3-slide-16",
-      "slideNumber": 16,
-      "title": "Trampas Críticas de Examen: 109.3 Diagnóstico",
-      "layout": "two-column",
-      "blocks": [
-        {
-          "type": "heading",
-          "level": 2,
-          "text": "Escenarios Engañosos en la Certificación LPIC-1"
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Trampa 1: netstat vs ss",
-          "content": "'netstat' lee de '/proc/net/' y es lento con miles de sockets; 'ss' utiliza la interfaz Netlink directa del kernel. En preguntas sobre utilidades modernas de alto rendimiento, la respuesta es siempre 'ss'."
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Trampa 2: Protocolo por defecto de traceroute",
-          "content": "En sistemas Linux, 'traceroute' emite por defecto datagramas UDP a puertos altos (>30000). Para que utilice paquetes ICMP Echo como en Windows, debes suministrar la opción '-I' (o '-T' para TCP SYN)."
-        }
-      ],
-      "secondaryBlocks": [
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Trampa 3: Banderas U frente a UG",
-          "content": "En 'route -n' y 'netstat -r', una bandera 'U' representa una red local directamente conectada. La combinación 'UG' (Up + Gateway) denota obligatoriamente una ruta que atraviesa una pasarela (como el default gateway)."
-        },
-        {
-          "type": "callout",
-          "calloutType": "exam",
-          "title": "Trampa 4: tracepath no requiere root",
-          "content": "'tracepath' está diseñado específicamente para descubrir la Path MTU sin requerir permisos de superusuario ni privilegios especiales sobre sockets, a diferencia de los modos avanzados de traceroute."
         }
       ]
     },

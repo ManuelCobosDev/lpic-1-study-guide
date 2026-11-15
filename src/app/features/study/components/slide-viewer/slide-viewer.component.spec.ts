@@ -16,8 +16,7 @@ describe('SlideViewerComponent', () => {
       blocks: [
         { type: 'heading', level: 1, text: 'Portada: Flujos y tuberías' },
         { type: 'paragraph', text: 'Objetivo 103.4' }
-      ],
-      notes: 'Nota del instructor para slide 1'
+      ]
     },
     {
       id: '103.4-2',
@@ -27,8 +26,7 @@ describe('SlideViewerComponent', () => {
       blocks: [
         { type: 'heading', level: 2, text: 'Los tres canales estándar' },
         { type: 'paragraph', text: '0 stdin, 1 stdout, 2 stderr' }
-      ],
-      notes: 'Nota del instructor para slide 2'
+      ]
     },
     {
       id: '103.4-3',

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { PracticeTabComponent } from './practice-tab.component';
 import { Question } from '../../../../core/models/question.model';
-import { LessonExercise } from '../../../../core/models/practice.model';
+import { FlashcardItem } from '../../../../core/models/flashcard.model';
 
 describe('PracticeTabComponent', () => {
   let fixture: ComponentFixture<PracticeTabComponent>;
@@ -39,22 +39,18 @@ describe('PracticeTabComponent', () => {
     }
   ];
 
-  const mockExercises: LessonExercise[] = [
+  const mockFlashcards: FlashcardItem[] = [
     {
-      id: '105.1-eg-01',
-      kind: 'guiado',
-      title: 'Clasificación de shells',
-      statement: 'Indique si gnome-terminal es un shell de login.',
-      answer: 'No, es un shell interactivo sin login.',
-      source: ['105.1#u288']
-    },
-    {
-      id: '105.1-ee-01',
-      kind: 'exploratorio',
-      title: 'Recargar configuración',
-      statement: '¿Qué orden recarga ~/.bashrc?',
-      answer: 'source ~/.bashrc o . ~/.bashrc',
-      source: ['105.1#u331']
+      id: 'fc-test-1',
+      topicId: '105',
+      subtopicIds: ['105.1'],
+      type: 'command',
+      frontTitle: 'export',
+      frontSubtitle: 'Variables',
+      prompt: 'Promueve una variable al entorno de los subshells.',
+      backTitle: 'export [variable[=valor]]',
+      backDescription: 'Marca variables para ser exportadas a procesos hijos.',
+      backSyntax: 'export VAR=valor'
     }
   ];
 
@@ -68,7 +64,7 @@ describe('PracticeTabComponent', () => {
     component = fixture.componentInstance;
     fixture.componentRef.setInput('subtopicId', '105.1');
     fixture.componentRef.setInput('questions', mockQuestions);
-    fixture.componentRef.setInput('exercises', mockExercises);
+    fixture.componentRef.setInput('flashcards', mockFlashcards);
     fixture.detectChanges();
   });
 
@@ -76,11 +72,11 @@ describe('PracticeTabComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('debe renderizar las secciones Bloque A, Bloque B y Bloque C', () => {
+  it('debe renderizar las secciones Bloque A (Test Rápido) y Bloque B (Mini-Flashcards)', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('[data-testid="quick-quiz"]')).toBeTruthy();
     expect(el.querySelector('[data-testid="mini-flashcards"]')).toBeTruthy();
-    expect(el.querySelector('[data-testid="manual-exercises"]')).toBeTruthy();
+    expect(el.querySelector('[data-testid="manual-exercises"]')).toBeFalsy();
   });
 
   it('debe permitir seleccionar una opción y comprobar la respuesta en el test rápido', () => {
@@ -93,17 +89,5 @@ describe('PracticeTabComponent', () => {
     expect(component.isAnswerChecked()).toBe(true);
     expect(component.isCurrentQuestionCorrect()).toBe(true);
     expect(component.quizScore()).toBe(1);
-  });
-
-  it('debe alternar la visibilidad de respuestas de ejercicios en el acordeón', () => {
-    expect(component.isAnswerVisible('105.1-eg-01')).toBe(false);
-    component.toggleShowAnswer('105.1-eg-01');
-    expect(component.isAnswerVisible('105.1-eg-01')).toBe(true);
-  });
-
-  it('debe permitir marcar y desmarcar un ejercicio como completado', () => {
-    expect(component.isExerciseDone('105.1-eg-01')).toBe(false);
-    component.toggleExerciseDone('105.1-eg-01');
-    expect(component.isExerciseDone('105.1-eg-01')).toBe(true);
   });
 });
