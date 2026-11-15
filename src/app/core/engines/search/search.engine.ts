@@ -280,22 +280,7 @@ export class SearchEngine {
       }
     }
 
-    // 6. Erratas
-    if (source.errata) {
-      for (const err of source.errata) {
-        const doc: SearchDocument = {
-          id: `errata:${err.id}`,
-          type: 'errata',
-          title: `Fe de erratas: ${err.title}`,
-          url: '/erratas',
-          breadcrumb: 'Fe de Erratas Oficial',
-          body: err.description
-        };
-        docs.push(doc);
-      }
-    }
-
-    // 7. Páginas de la aplicación
+    // 6. Páginas de la aplicación
     if (source.pages) {
       for (const pg of source.pages) {
         const doc: SearchDocument = {

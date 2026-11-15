@@ -76,6 +76,12 @@ describe('SettingsPageComponent', () => {
     expect(document.documentElement.getAttribute('data-text-size')).toBe('lg');
   });
 
+  it('debe actualizar las flashcards diarias y guardarlas de forma persistente', () => {
+    component.onNewCardsChange(20);
+    expect(preferencesService.newCardsPerDay()).toBe(20);
+    expect(component.toastMessage()).toContain('20');
+  });
+
   it('debe llamar a downloadBackupFile al pulsar exportar JSON', async () => {
     vi.spyOn(backupService, 'downloadBackupFile').mockReturnValue(Promise.resolve());
     await component.exportJson();

@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { FlashcardsPageComponent, BATCH_SIZE } from './flashcards-page.component';
 import { FlashcardsService } from '../../../core/services/flashcards.service';
+import { PreferencesService } from '../../../core/services/preferences.service';
 import { FlashcardItem, LeitnerStats } from '../../../core/models/flashcard.model';
 import { signal } from '@angular/core';
 
@@ -170,6 +171,26 @@ describe('FlashcardsPageComponent', () => {
 
     expect(component.totalCardsInSession()).toBe(BATCH_SIZE);
     expect(component.totalCardsInSession()).toBe(10);
+  });
+
+  it('debe respetar el límite de tarjetas por tanda configurado por el usuario', () => {
+    const preferencesService = TestBed.inject(PreferencesService);
+    preferencesService.setNewCardsPerDay(5);
+
+    const fifteenCards: FlashcardItem[] = Array.from({ length: 15 }, (_, i) => ({
+      id: `card-${i}`,
+      type: 'command',
+      frontTitle: `cmd-${i}`,
+      prompt: `¿Qué hace cmd-${i}?`,
+      backTitle: `cmd-${i}`,
+      backDescription: `Descripción ${i}`,
+      subtopicIds: ['101.1']
+    }));
+
+    component.allCards.set(fifteenCards);
+    component.setBoxFilter('all');
+
+    expect(component.totalCardsInSession()).toBe(5);
   });
 
   it('debe reflejar el conteo dinámico por caja en deckBoxCounts', () => {

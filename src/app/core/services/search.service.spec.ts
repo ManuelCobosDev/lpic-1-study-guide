@@ -49,7 +49,6 @@ describe('SearchService', () => {
           subtopicIds: ['103.4']
         }
       ]),
-      getErrata: vi.fn().mockResolvedValue([]),
       getLesson: vi.fn().mockResolvedValue({
         id: '103.4',
         topicId: '103',

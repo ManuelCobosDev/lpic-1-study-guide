@@ -110,10 +110,11 @@ export class SettingsPageComponent implements OnInit {
     this.preferencesService.setDefaultStudyView(view);
   }
 
-  onNewCardsChange(event: Event): void {
-    const val = Number((event.target as HTMLSelectElement).value);
+  onNewCardsChange(value: number | Event): void {
+    const val = typeof value === 'number' ? value : Number((value.target as HTMLSelectElement).value);
     if (!isNaN(val) && val > 0) {
-      this.preferencesService.updatePreferences({ newCardsPerDay: val });
+      this.preferencesService.setNewCardsPerDay(val);
+      this.showToast(`Flashcards diarias actualizadas a ${val} tarjetas.`);
     }
   }
 

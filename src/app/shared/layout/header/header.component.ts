@@ -1,5 +1,13 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal
+} from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter } from 'rxjs';
 import { ContainerComponent } from '../../ui/container/container.component';
 import { ButtonComponent } from '../../ui/button/button.component';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -13,12 +21,12 @@ import { SearchService } from '../../../core/services/search.service';
   template: `
     <header class="app-header sticky top-0 z-30 w-full border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur-md">
       <app-container>
-        <div class="flex h-16 items-center justify-between gap-4">
+        <div class="flex h-16 items-center justify-between gap-3 sm:gap-4 xl:gap-6 header-content">
           <!-- Logo & Marca -->
-          <div class="flex items-center gap-6">
+          <div class="flex items-center shrink-0">
             <a routerLink="/" class="flex items-center gap-2 text-decoration-none group shrink-0">
               <svg
-                class="w-7 h-7 text-[var(--primary)] shrink-0"
+                class="w-7 h-7 text-[var(--primary)] shrink-0 transition-transform group-hover:scale-105"
                 width="28"
                 height="28"
                 viewBox="0 0 28 28"
@@ -34,66 +42,92 @@ import { SearchService } from '../../../core/services/search.service';
                 <span class="hidden sm:inline text-[10px] font-medium text-[var(--text-muted)] tracking-tight whitespace-nowrap mt-0.5">Guía de apoyo visual · No oficial</span>
               </span>
             </a>
-
-            <!-- Navegacion escritorio -->
-            <nav class="hidden lg:flex items-center gap-1 xl:gap-1.5" aria-label="Navegación principal">
-              <a
-                routerLink="/temario"
-                routerLinkActive="nav-link-active"
-                class="nav-link"
-              >Temario</a>
-              <a
-                routerLink="/laboratorios"
-                routerLinkActive="nav-link-active"
-                class="nav-link"
-              >Laboratorios</a>
-              <a
-                routerLink="/simulador"
-                routerLinkActive="nav-link-active"
-                class="nav-link"
-              >Simulador</a>
-              <a
-                routerLink="/comandos"
-                routerLinkActive="nav-link-active"
-                class="nav-link"
-              >Comandos</a>
-              <a
-                routerLink="/glosario"
-                routerLinkActive="nav-link-active"
-                class="nav-link"
-              >Glosario</a>
-              <a
-                routerLink="/flashcards"
-                routerLinkActive="nav-link-active"
-                class="nav-link"
-              >Flashcards</a>
-              <a
-                routerLink="/mapa-mental"
-                routerLinkActive="nav-link-active"
-                class="nav-link"
-              >Mapa mental</a>
-              <a
-                routerLink="/progreso"
-                routerLinkActive="nav-link-active"
-                class="nav-link"
-              >Progreso</a>
-            </nav>
           </div>
 
-          <!-- Acciones Derecha -->
-          <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <app-button
-              variant="secondary"
-              size="sm"
-              routerLink="/buscar"
-              (btnClick)="openSearchPalette($event)"
+          <!-- Navegación escritorio con separación fluida y expansible -->
+          <nav
+            class="hidden lg:flex items-center main-nav"
+            [class.nav-home]="isHome()"
+            [class.nav-wide]="!isHome()"
+            aria-label="Navegación principal"
+          >
+            <a
+              routerLink="/temario"
+              routerLinkActive="nav-link-active"
+              class="nav-link"
+            >Temario</a>
+            <a
+              routerLink="/laboratorios"
+              routerLinkActive="nav-link-active"
+              class="nav-link"
+            >Laboratorios</a>
+            <a
+              routerLink="/simulador"
+              routerLinkActive="nav-link-active"
+              class="nav-link"
+            >Simulador</a>
+            <a
+              routerLink="/comandos"
+              routerLinkActive="nav-link-active"
+              class="nav-link"
+            >Comandos</a>
+            <a
+              routerLink="/glosario"
+              routerLinkActive="nav-link-active"
+              class="nav-link"
+            >Glosario</a>
+            <a
+              routerLink="/flashcards"
+              routerLinkActive="nav-link-active"
+              class="nav-link"
+            >Flashcards</a>
+            <a
+              routerLink="/mapa-mental"
+              routerLinkActive="nav-link-active"
+              class="nav-link"
+            >Mapa mental</a>
+            <a
+              routerLink="/progreso"
+              routerLinkActive="nav-link-active"
+              class="nav-link"
+            >Progreso</a>
+          </nav>
+
+          <!-- Acciones Derecha (Buscador expandible + Tema + Ajustes) -->
+          <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0 justify-end header-actions">
+            <!-- Disparador del Buscador tipo Command Palette con expansión transicionada -->
+            <button
+              type="button"
+              class="search-trigger group flex items-center justify-between h-9 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)]/70 hover:bg-[var(--surface-muted)] hover:border-[var(--border-strong)] text-[var(--text-muted)] hover:text-[var(--text)] px-3 text-xs sm:text-sm cursor-pointer shadow-xs focus-visible:outline-2 focus-visible:outline-[var(--ring)] focus-visible:outline-offset-2 select-none"
+              [class.search-home]="isHome()"
+              [class.search-wide]="!isHome()"
+              (click)="openSearchPalette($event)"
+              aria-label="Buscar en la guía LPIC-1 (Ctrl + K)"
             >
-              <svg class="w-4 h-4 sm:mr-1.5 shrink-0" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <span class="sr-only sm:not-sr-only sm:inline">Buscar…</span>
-              <kbd class="hidden md:inline-block ml-1 text-[11px] px-1 py-0.5 rounded border border-[var(--border)] bg-[var(--surface-muted)] text-[var(--text-muted)]">Ctrl K</kbd>
-            </app-button>
+              <div class="flex items-center gap-2 truncate min-w-0">
+                <svg
+                  class="w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--primary)] shrink-0 transition-colors"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span class="truncate font-normal hidden sm:inline">
+                  @if (isHome()) {
+                    Buscar en la guía...
+                  } @else {
+                    <span class="inline xl:hidden">Buscar en la guía...</span>
+                    <span class="hidden xl:inline">Buscar temas, comandos, glosario, preguntas...</span>
+                  }
+                </span>
+                <span class="sm:hidden font-normal text-[11px]">Buscar...</span>
+              </div>
+              <kbd class="hidden md:inline-flex items-center ml-2 text-[10px] xl:text-[11px] font-mono px-1.5 py-0.5 rounded border border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] shrink-0 shadow-2xs">Ctrl K</kbd>
+            </button>
 
             <!-- Theme Toggle -->
             <app-button
@@ -103,12 +137,10 @@ import { SearchService } from '../../../core/services/search.service';
               (btnClick)="toggleTheme()"
             >
               @if (themeService.isDark()) {
-                <!-- Icono Sol -->
                 <svg class="w-5 h-5" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               } @else {
-                <!-- Icono Luna -->
                 <svg class="w-5 h-5" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
@@ -159,19 +191,66 @@ import { SearchService } from '../../../core/services/search.service';
     </header>
   `,
   styles: [`
+    .header-content {
+      transition: gap 450ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .main-nav {
+      transition: gap 450ms cubic-bezier(0.16, 1, 0.3, 1), margin 450ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .nav-home {
+      gap: 2px;
+      margin-left: 0.5rem;
+    }
+    @media (min-width: 1280px) {
+      .nav-home {
+        gap: 6px;
+        margin-left: 1rem;
+      }
+    }
+    .nav-wide {
+      gap: 6px;
+      margin-left: 1rem;
+    }
+    @media (min-width: 1280px) {
+      .nav-wide {
+        gap: 12px;
+        margin-left: 1.5rem;
+      }
+    }
+    @media (min-width: 1536px) {
+      .nav-wide {
+        gap: 18px;
+        margin-left: 2rem;
+      }
+    }
+    @media (min-width: 1920px) {
+      .nav-wide {
+        gap: 24px;
+        margin-left: 2.5rem;
+      }
+    }
     .nav-link {
-      padding: 6px 10px;
+      padding: 6px 9px;
       font-size: 13px;
       font-weight: 500;
       color: var(--text-muted);
       border-radius: var(--radius-sm);
       text-decoration: none;
       white-space: nowrap;
-      transition: color var(--transition-fast), background-color var(--transition-fast);
+      transition: color var(--transition-fast), background-color var(--transition-fast), padding 450ms cubic-bezier(0.16, 1, 0.3, 1);
     }
     @media (min-width: 1280px) {
       .nav-link {
-        padding: 6px 12px;
+        padding: 6px 11px;
+        font-size: 14px;
+      }
+    }
+    .nav-wide .nav-link {
+      padding: 6px 11px;
+    }
+    @media (min-width: 1536px) {
+      .nav-wide .nav-link {
+        padding: 6px 13px;
         font-size: 14px;
       }
     }
@@ -185,12 +264,78 @@ import { SearchService } from '../../../core/services/search.service';
       border-bottom: 2px solid var(--primary);
       border-radius: 0;
     }
+
+    .search-trigger {
+      transition: width 450ms cubic-bezier(0.16, 1, 0.3, 1), max-width 450ms cubic-bezier(0.16, 1, 0.3, 1), background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+    }
+    .search-home {
+      width: 140px;
+    }
+    @media (min-width: 640px) {
+      .search-home {
+        width: 180px;
+      }
+    }
+    @media (min-width: 1280px) {
+      .search-home {
+        width: 220px;
+      }
+    }
+    .search-wide {
+      width: 150px;
+    }
+    @media (min-width: 640px) {
+      .search-wide {
+        width: 220px;
+      }
+    }
+    @media (min-width: 1024px) {
+      .search-wide {
+        width: 280px;
+      }
+    }
+    @media (min-width: 1280px) {
+      .search-wide {
+        width: 360px;
+      }
+    }
+    @media (min-width: 1536px) {
+      .search-wide {
+        width: 440px;
+      }
+    }
+    @media (min-width: 1920px) {
+      .search-wide {
+        width: 520px;
+      }
+    }
   `]
 })
 export class HeaderComponent {
+  private readonly router = inject(Router, { optional: true });
+  private readonly destroyRef = inject(DestroyRef, { optional: true });
+
   protected readonly themeService = inject(ThemeService);
   protected readonly searchService = inject(SearchService);
   protected readonly mobileMenuOpen = signal(false);
+
+  readonly currentUrl = signal<string>(this.router?.url ?? '/');
+
+  readonly isHome = computed(() => {
+    const withoutQuery = (this.currentUrl().split('?')[0] ?? '').split('#')[0] ?? '';
+    return withoutQuery === '' || withoutQuery === '/';
+  });
+
+  constructor() {
+    if (this.router) {
+      const sub = this.router.events
+        .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+        .subscribe((event) => {
+          this.currentUrl.set(event.urlAfterRedirects || event.url);
+        });
+      this.destroyRef?.onDestroy(() => sub.unsubscribe());
+    }
+  }
 
   openSearchPalette(event?: MouseEvent): void {
     if (event) {
@@ -211,4 +356,3 @@ export class HeaderComponent {
     this.mobileMenuOpen.set(false);
   }
 }
-

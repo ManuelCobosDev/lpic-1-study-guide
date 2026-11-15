@@ -25,7 +25,7 @@ export class PreferencesService {
 
   readonly theme = computed(() => this.preferences().theme);
   readonly defaultStudyView = computed(() => this.preferences().defaultStudyView);
-  readonly newCardsPerDay = computed(() => this.preferences().newCardsPerDay);
+  readonly newCardsPerDay = computed(() => this.preferences().newCardsPerDay ?? 10);
   readonly includeExampleContent = computed(() => this.preferences().includeExampleContent);
   readonly textSize = computed(() => this.preferences().textSize);
   readonly density = computed(() => this.preferences().density);
@@ -49,6 +49,12 @@ export class PreferencesService {
 
   setDefaultStudyView(defaultStudyView: DefaultStudyView): void {
     this.store.update(p => ({ ...p, defaultStudyView }));
+  }
+
+  setNewCardsPerDay(newCardsPerDay: number): void {
+    const validCount = Math.max(1, Math.min(100, Math.round(newCardsPerDay)));
+    this.store.update(p => ({ ...p, newCardsPerDay: validCount }));
+    this.store.flush();
   }
 
   setTextSize(textSize: TextSize): void {

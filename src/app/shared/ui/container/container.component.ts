@@ -26,6 +26,11 @@ import { filter } from 'rxjs';
     </div>
   `,
   styles: [`
+    .app-container-fixed,
+    .app-container-standard,
+    .app-container-wide {
+      transition: max-width 450ms cubic-bezier(0.16, 1, 0.3, 1), padding 350ms ease;
+    }
     .app-container-fixed {
       max-width: 1280px;
     }

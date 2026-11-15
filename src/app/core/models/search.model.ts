@@ -4,7 +4,6 @@ export type SearchDocType =
   | 'command'
   | 'term'
   | 'lab'
-  | 'errata'
   | 'page';
 
 export type SearchFilter = SearchDocType | 'all';
@@ -83,11 +82,6 @@ export interface SearchIndexSource {
     title: string;
     summary?: string;
     commands?: string[];
-  }[];
-  errata?: {
-    id: string;
-    title: string;
-    description: string;
   }[];
   pages?: {
     id: string;
