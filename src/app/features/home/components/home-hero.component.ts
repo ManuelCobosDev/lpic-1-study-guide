@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   BadgeComponent,
@@ -55,6 +55,30 @@ import {
                 routerLink="/temario"
               >
                 Explorar temario
+              </app-button>
+
+              <app-button
+                variant="ghost"
+                size="lg"
+                data-testid="home-start-tour-btn"
+                (btnClick)="startTour.emit()"
+              >
+                <svg
+                  class="w-4 h-4 shrink-0 text-[var(--primary)]"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+                </svg>
+                <span>Empezar tour guiado (~1 min)</span>
               </app-button>
             </div>
           </div>
@@ -264,5 +288,6 @@ export class HomeHeroComponent {
   readonly primaryCtaText = input.required<string>();
   readonly exam101Progress = input.required<number>();
   readonly exam102Progress = input.required<number>();
+  readonly startTour = output<void>();
 }
 

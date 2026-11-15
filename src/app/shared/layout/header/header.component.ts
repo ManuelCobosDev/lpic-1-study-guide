@@ -12,6 +12,7 @@ import { ContainerComponent } from '../../ui/container/container.component';
 import { ButtonComponent } from '../../ui/button/button.component';
 import { ThemeService } from '../../../core/services/theme.service';
 import { SearchService } from '../../../core/services/search.service';
+import { TourService } from '../../../core/services/tour.service';
 
 @Component({
   selector: 'app-header',
@@ -21,7 +22,7 @@ import { SearchService } from '../../../core/services/search.service';
   template: `
     <header class="app-header sticky top-0 z-30 w-full border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur-md">
       <app-container>
-        <div class="flex h-16 items-center justify-between gap-3 sm:gap-4 xl:gap-6 header-content">
+        <div class="flex h-16 items-center justify-between gap-2 sm:gap-3 xl:gap-4 header-content">
           <!-- Logo & Marca -->
           <div class="flex items-center shrink-0">
             <a routerLink="/" class="flex items-center gap-2 text-decoration-none group shrink-0">
@@ -38,8 +39,8 @@ import { SearchService } from '../../../core/services/search.service';
                 <path d="M7 20L14 7L21 20H7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
               <span class="flex flex-col leading-none">
-                <span class="font-bold text-base sm:text-lg text-[var(--text)] tracking-tight whitespace-nowrap"><span class="sm:hidden">LPIC-1</span><span class="hidden sm:inline">LPIC-1 Study Guide</span></span>
-                <span class="hidden sm:inline text-[10px] font-medium text-[var(--text-muted)] tracking-tight whitespace-nowrap mt-0.5">Guía de apoyo visual · No oficial</span>
+                <span class="font-bold text-base lg:text-sm xl:text-lg text-[var(--text)] tracking-tight whitespace-nowrap"><span class="sm:hidden">LPIC-1</span><span class="hidden sm:inline">LPIC-1 Study Guide</span></span>
+                <span class="hidden sm:inline lg:hidden xl:inline text-[10px] font-medium text-[var(--text-muted)] tracking-tight whitespace-nowrap mt-0.5">Guía de apoyo visual · No oficial</span>
               </span>
             </a>
           </div>
@@ -94,11 +95,11 @@ import { SearchService } from '../../../core/services/search.service';
           </nav>
 
           <!-- Acciones Derecha (Buscador expandible + Tema + Ajustes) -->
-          <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0 justify-end header-actions">
+          <div class="flex items-center gap-1 sm:gap-2.5 shrink-0 justify-end header-actions">
             <!-- Disparador del Buscador tipo Command Palette con expansión transicionada -->
             <button
               type="button"
-              class="search-trigger group flex items-center justify-between h-9 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)]/70 hover:bg-[var(--surface-muted)] hover:border-[var(--border-strong)] text-[var(--text-muted)] hover:text-[var(--text)] px-3 text-xs sm:text-sm cursor-pointer shadow-xs focus-visible:outline-2 focus-visible:outline-[var(--ring)] focus-visible:outline-offset-2 select-none"
+              class="search-trigger group flex items-center justify-between h-9 rounded-lg border border-[var(--border)] bg-[var(--surface-muted)]/70 hover:bg-[var(--surface-muted)] hover:border-[var(--border-strong)] text-[var(--text-muted)] hover:text-[var(--text)] px-2 sm:px-3 text-xs sm:text-sm cursor-pointer shadow-xs focus-visible:outline-2 focus-visible:outline-[var(--ring)] focus-visible:outline-offset-2 select-none"
               [class.search-home]="isHome()"
               [class.search-wide]="!isHome()"
               (click)="openSearchPalette($event)"
@@ -126,8 +127,36 @@ import { SearchService } from '../../../core/services/search.service';
                 </span>
                 <span class="sm:hidden font-normal text-[11px]">Buscar...</span>
               </div>
-              <kbd class="hidden md:inline-flex items-center ml-2 text-[10px] xl:text-[11px] font-mono px-1.5 py-0.5 rounded border border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] shrink-0 shadow-2xs">Ctrl K</kbd>
+              <kbd class="hidden xl:inline-flex items-center ml-2 text-[10px] xl:text-[11px] font-mono px-1.5 py-0.5 rounded border border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)] shrink-0 shadow-2xs">Ctrl K</kbd>
             </button>
+
+            <!-- Botón de Tour Guiado (visible en >= sm; en < sm vive en el menú móvil) -->
+            <span class="hidden sm:inline-flex">
+              <app-button
+                variant="ghost"
+                size="sm"
+                ariaLabel="Iniciar tour guiado por la aplicación"
+                data-testid="header-start-tour-btn"
+                (btnClick)="startTour()"
+              >
+                <svg
+                  class="w-4 h-4 text-[var(--primary)] shrink-0"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+                </svg>
+                <span class="hidden text-xs font-semibold" [class.2xl:inline]="!isHome()">Tour</span>
+              </app-button>
+            </span>
 
             <!-- Theme Toggle -->
             <app-button
@@ -185,6 +214,31 @@ import { SearchService } from '../../../core/services/search.service';
             <a routerLink="/flashcards" (click)="closeMobileMenu()" class="block px-3 py-2 rounded text-[var(--text)] hover:bg-[var(--surface-muted)]">Flashcards</a>
             <a routerLink="/mapa-mental" (click)="closeMobileMenu()" class="block px-3 py-2 rounded text-[var(--text)] hover:bg-[var(--surface-muted)]">Mapa mental</a>
             <a routerLink="/progreso" (click)="closeMobileMenu()" class="block px-3 py-2 rounded text-[var(--text)] hover:bg-[var(--surface-muted)]">Progreso</a>
+            <div class="pt-2 mt-2 border-t border-[var(--border)]">
+              <button
+                type="button"
+                data-testid="mobile-start-tour-btn"
+                (click)="startTourFromMobile()"
+                class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left text-sm font-semibold text-[var(--primary-text)] bg-[var(--primary-soft)] hover:opacity-90 transition-opacity cursor-pointer"
+              >
+                <svg
+                  class="w-4 h-4 shrink-0"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+                </svg>
+                <span>Empezar tour guiado (~1 min)</span>
+              </button>
+            </div>
           </div>
         }
       </app-container>
@@ -199,28 +253,28 @@ import { SearchService } from '../../../core/services/search.service';
     }
     .nav-home {
       gap: 2px;
-      margin-left: 0.5rem;
+      margin-left: 0.25rem;
     }
     @media (min-width: 1280px) {
       .nav-home {
+        gap: 4px;
+        margin-left: 0.75rem;
+      }
+    }
+    .nav-wide {
+      gap: 2px;
+      margin-left: 0.25rem;
+    }
+    @media (min-width: 1280px) {
+      .nav-wide {
         gap: 6px;
         margin-left: 1rem;
       }
     }
-    .nav-wide {
-      gap: 6px;
-      margin-left: 1rem;
-    }
-    @media (min-width: 1280px) {
-      .nav-wide {
-        gap: 12px;
-        margin-left: 1.5rem;
-      }
-    }
     @media (min-width: 1536px) {
       .nav-wide {
-        gap: 18px;
-        margin-left: 2rem;
+        gap: 14px;
+        margin-left: 1.5rem;
       }
     }
     @media (min-width: 1920px) {
@@ -230,8 +284,8 @@ import { SearchService } from '../../../core/services/search.service';
       }
     }
     .nav-link {
-      padding: 6px 9px;
-      font-size: 13px;
+      padding: 5px 6px;
+      font-size: 12.5px;
       font-weight: 500;
       color: var(--text-muted);
       border-radius: var(--radius-sm);
@@ -241,16 +295,13 @@ import { SearchService } from '../../../core/services/search.service';
     }
     @media (min-width: 1280px) {
       .nav-link {
-        padding: 6px 11px;
-        font-size: 14px;
+        padding: 6px 8px;
+        font-size: 13px;
       }
-    }
-    .nav-wide .nav-link {
-      padding: 6px 11px;
     }
     @media (min-width: 1536px) {
       .nav-wide .nav-link {
-        padding: 6px 13px;
+        padding: 6px 12px;
         font-size: 14px;
       }
     }
@@ -269,39 +320,49 @@ import { SearchService } from '../../../core/services/search.service';
       transition: width 450ms cubic-bezier(0.16, 1, 0.3, 1), max-width 450ms cubic-bezier(0.16, 1, 0.3, 1), background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
     }
     .search-home {
-      width: 140px;
+      width: clamp(88px, 26vw, 130px);
     }
     @media (min-width: 640px) {
       .search-home {
-        width: 180px;
+        width: 168px;
+      }
+    }
+    @media (min-width: 1024px) {
+      .search-home {
+        width: 112px;
       }
     }
     @media (min-width: 1280px) {
       .search-home {
-        width: 220px;
+        width: 196px;
       }
     }
     .search-wide {
-      width: 150px;
+      width: clamp(88px, 26vw, 130px);
     }
     @media (min-width: 640px) {
       .search-wide {
-        width: 220px;
+        width: 168px;
       }
     }
     @media (min-width: 1024px) {
       .search-wide {
-        width: 280px;
+        width: 112px;
       }
     }
     @media (min-width: 1280px) {
       .search-wide {
-        width: 360px;
+        width: 240px;
+      }
+    }
+    @media (min-width: 1400px) {
+      .search-wide {
+        width: 270px;
       }
     }
     @media (min-width: 1536px) {
       .search-wide {
-        width: 440px;
+        width: 360px;
       }
     }
     @media (min-width: 1920px) {
@@ -317,6 +378,7 @@ export class HeaderComponent {
 
   protected readonly themeService = inject(ThemeService);
   protected readonly searchService = inject(SearchService);
+  private readonly tourService = inject(TourService);
   protected readonly mobileMenuOpen = signal(false);
 
   readonly currentUrl = signal<string>(this.router?.url ?? '/');
@@ -354,5 +416,14 @@ export class HeaderComponent {
 
   closeMobileMenu(): void {
     this.mobileMenuOpen.set(false);
+  }
+
+  startTour(): void {
+    void this.tourService.startTour();
+  }
+
+  startTourFromMobile(): void {
+    this.closeMobileMenu();
+    void this.tourService.startTour();
   }
 }

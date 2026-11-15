@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ContainerComponent } from '../../ui/container/container.component';
 import { APP_VERSION } from '../../../core/constants/version';
+import { TourService } from '../../../core/services/tour.service';
 
 @Component({
   selector: 'app-footer',
@@ -19,6 +20,14 @@ import { APP_VERSION } from '../../../core/constants/version';
 
           <!-- Enlaces de utilidad -->
           <div class="flex flex-wrap items-center justify-center gap-4 text-xs">
+            <button
+              type="button"
+              data-testid="footer-start-tour-btn"
+              (click)="startTour()"
+              class="hover:text-[var(--text)] transition-colors cursor-pointer"
+            >
+              Tour guiado
+            </button>
             <a routerLink="/acerca-de" class="hover:text-[var(--text)] transition-colors">Acerca de</a>
             <a routerLink="/legal" class="hover:text-[var(--text)] transition-colors">Aviso Legal y Privacidad</a>
             <a routerLink="/ajustes" class="hover:text-[var(--text)] transition-colors">Ajustes</a>
@@ -30,6 +39,12 @@ import { APP_VERSION } from '../../../core/constants/version';
   `
 })
 export class FooterComponent {
+  private readonly tourService = inject(TourService);
+
   readonly appVersion = APP_VERSION;
+
+  startTour(): void {
+    void this.tourService.startTour();
+  }
 }
 
